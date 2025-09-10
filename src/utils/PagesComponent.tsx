@@ -7,8 +7,9 @@ import MasterRole from "../pages/Master/MasterRole";
 import CreateRole from "../pages/Master/MasterRole/Screen/CreateRole";
 import UpdateRole from "../pages/Master/MasterRole/Screen/UpdateRole";
 
-import Inbound from "../pages/Inbound/InboundPlanning";
-import CreateInbound from "../pages/Inbound/InboundPlanning/Table/Create/CreateInbound";
+import Inbound from "../pages/InboundProcess/Inbound/index";
+import CreateInbound from "../pages/InboundProcess/Inbound/Form";
+
 import MasterPallet from "../pages/Master/MasterPallet";
 import MasterUOM from "../pages/Master/MasterUOM";
 import MasterIO from "../pages/Master/MasterIO";
@@ -18,7 +19,9 @@ import MasterClassification from "../pages/Master/MasterClassification";
 import MasterVehicle from "../pages/Master/MasterVehicle";
 import MasterSubWarehouse from "../pages/Master/MasterSubWarehouse";
 import MasterBin from "../pages/Master/MasterBin";
-import MasterSource from '../pages/Master/MasterSource';
+import MasterSource from "../pages/Master/MasterSource";
+import MasterSupplier from "../pages/Master/MasterSupplier";
+
 
 export {
   // PAGE MASTER
@@ -34,6 +37,7 @@ export {
   MasterSubWarehouse,
   MasterBin,
   MasterSource,
+  MasterSupplier,
 
   // MASTER ROLES PAGE
   MasterRole,
@@ -43,4 +47,8 @@ export {
   // INBOUND PLANNING
   Inbound,
   CreateInbound,
+
+
+  // GOOD RECEIVING
+
 };

@@ -16,7 +16,15 @@ export interface Option {
 export type FieldConfig = {
   name: string;
   label: string;
-  type: "text" | "textarea" | "select" | "custom" | "date" | "radio" | "file";
+  type:
+    | "text"
+    | "textarea"
+    | "select"
+    | "custom"
+    | "date"
+    | "radio"
+    | "file"
+    | "number";
   options?: Option[];
   element?: React.ReactNode;
   disabled?: boolean;
@@ -60,8 +68,6 @@ const DynamicForm: React.FC<DynamicFormProps> = ({
     });
   }, [defaultValues, setValue]);
 
-  console.log("defaultValues:", defaultValues);
-
   const commonClasses =
     "w-full px-3 py-[6px] border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm";
   const errorClasses =
@@ -76,8 +82,8 @@ const DynamicForm: React.FC<DynamicFormProps> = ({
   };
 
   return (
-      <form
-        onSubmit={handleSubmit(onSubmit)}
+    <form
+      onSubmit={handleSubmit(onSubmit)}
       className="grid grid-cols-1 md:grid-cols-4 gap-4"
     >
       {fields.map((field) => {
@@ -96,6 +102,19 @@ const DynamicForm: React.FC<DynamicFormProps> = ({
             {field.type === "text" && (
               <input
                 type="text"
+                {...register(field.name, field.validation)}
+                className={`${fieldError ? errorClasses : commonClasses} ${
+                  isDisabled ? disabledClasses : ""
+                }`}
+                disabled={isDisabled}
+                readOnly={isDisabled}
+              />
+            )}
+
+            {/* NUMBER */}
+            {field.type === "number" && (
+              <input
+                type="number"
                 {...register(field.name, field.validation)}
                 className={`${fieldError ? errorClasses : commonClasses} ${
                   isDisabled ? disabledClasses : ""
@@ -164,7 +183,7 @@ const DynamicForm: React.FC<DynamicFormProps> = ({
                   <DatePicker
                     id={controllerField.name}
                     label=""
-                    defaultDate={controllerField.value}
+                    value={controllerField.value}
                     onChange={([date]: Date[]) =>
                       controllerField.onChange(date)
                     }

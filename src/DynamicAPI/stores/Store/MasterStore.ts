@@ -8,7 +8,7 @@ import {
     ParentMenuService,
     ItemService,
     supplierService,
-    InboundPlanningService,
+    InboundGoodStockService,
     UserService,
     CheckerAssignService,
     ClassificationService,
@@ -16,7 +16,8 @@ import {
     TransporterService,
     subWarehouseService,
     binService,
-    sourceService
+    sourceService,
+    checkerScanService
 } from "../../services/Service/MasterService";
 
 import { Uom, CreateUom, UpdateUom } from "../../types/UomTypes";
@@ -26,7 +27,6 @@ import { Warehouse, CreateWarehouse, UpdateWarehouse } from "../../types/Warehou
 import { Menu, CreateMenu, UpdateMenu } from "../../types/MenuTypes";
 import { Item, CreateItem, UpdateItem } from "../../types/ItemTypes";
 import { CreateSupplier, Supplier, UpdateSupplier } from "../../types/SupplierTypes.tsx";
-import { InboundPlanning, CreateInboundPlanning, UpdateInboundPlanning } from "../../types/InboundPlanningTypes.tsx";
 import { CreateUser, User, UpdateUser } from "../../types/UserTypes.tsx";
 import { CreateCheckerAssign, CheckerAssign, UpdateCheckerAssign } from "../../types/CheckerAssignTypes.tsx";
 import { CreateClassification, Classification, UpdateClassification } from "../../types/ClassificationTypes.tsx";
@@ -35,6 +35,10 @@ import { CreateTransporter, Transporter, UpdateTransporter } from "../../types/T
 import { SubWarehouse, CreateSubWarehouse, UpdateSubWarehouse } from "../../types/SubWarehouseTypes";
 import { Bin, CreateBin, UpdateBin } from "../../types/MasterBinTypes";
 import { Source, CreateSource, UpdateSource } from "../../types/MasterSourceTypes";
+import { CheckerScan, CreateCheckerScan, UpdateCheckerScan } from '../../types/CheckerScanTypes'
+
+import { InboundPlanning, CreateInboundPlanning, UpdateInboundPlanning } from "../../types/InboundGoodStock.tsx";
+
 
 
 
@@ -78,11 +82,6 @@ export const useStoreSupplier = createCrudStore<Supplier, CreateSupplier, Update
     service: supplierService,
 });
 
-export const useStoreInboundPlanning = createCrudStore<InboundPlanning, CreateInboundPlanning, UpdateInboundPlanning>({
-    name: "InboundPlanning",
-    service: InboundPlanningService,
-});
-
 export const useStoreUser = createCrudStore<User, CreateUser, UpdateUser>({
     name: "User",
     service: UserService,
@@ -121,4 +120,15 @@ export const useStoreBin = createCrudStore<Bin, CreateBin, UpdateBin>({
 export const useStoreSource = createCrudStore<Source, CreateSource, UpdateSource>({
     name: "Source",
     service: sourceService,
+});
+
+
+export const useStoreCheckerScan = createCrudStore<CheckerScan, CreateCheckerScan, UpdateCheckerScan>({
+    name: "CheckerScan",
+    service: checkerScanService,
+});
+
+export const useStoreInboundGoodStock = createCrudStore<InboundPlanning, CreateInboundPlanning, UpdateInboundPlanning>({
+    name: "InboundGoodStockService",
+    service: InboundGoodStockService,
 });

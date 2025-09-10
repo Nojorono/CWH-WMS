@@ -25,10 +25,10 @@ import {
   MasterVehicle,
   MasterSubWarehouse,
   MasterBin,
-  MasterSource
+  MasterSource,
+  MasterSupplier,
 } from "./utils/PagesComponent";
-import MasterSupplier from "./pages/Master/MasterSupplier";
-import DetailInbound from "./pages/Inbound/InboundPlanning/Table/Detail/DetailInbound";
+
 import dummyRoutes from "./helper/dummyRoutes";
 
 const DefaultPage = () => (
@@ -81,8 +81,11 @@ export function AppRoutes() {
     ],
     "/inbound_planning": [
       { path: "create", element: <CreateInbound /> },
-      { path: "detail", element: <DetailInbound /> },
     ],
+    // "/good_receiving": [
+    //   { path: "create", element: <CreateInbound /> },
+    //   { path: "detail", element: <DetailInbound /> },
+    // ],
   };
 
   const getElementByPath = (path: string): JSX.Element | null => {

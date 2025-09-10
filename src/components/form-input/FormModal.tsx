@@ -58,7 +58,7 @@ const ModalForm: React.FC<FormInputProps> = ({
     if (defaultValues) {
       reset(defaultValues);
     }
-  }, [defaultValues, reset]);
+  }, [defaultValues, reset]);  
 
   const handleSubmit = (data: FormValues) => {
     onSubmit(data); // Kirim data ke parent
@@ -89,8 +89,12 @@ const ModalForm: React.FC<FormInputProps> = ({
             control={control}
             rules={{
               validate: (value) =>
-                (value !== undefined && value !== null) ||
-                field.validation?.required,
+                (value !== undefined &&
+                  value !== null &&
+                  value !== "") ||
+                field.validation?.required ||
+                "Required",
+              ...field.validation,
             }}
             render={({ field: controllerField }) => (
               <Select

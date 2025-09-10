@@ -11,12 +11,16 @@ import Spinner from "../../../../components/ui/spinner";
 import { usePagePermissions } from "../../../../utils/UserPermission/UserPagePermissions";
 import { showErrorToast } from "../../../../components/toast";
 import { useDebounce } from "../../../../helper/useDebounce";
-import { useStoreInboundPlanning } from "../../../../DynamicAPI/stores/Store/MasterStore";
+import { useStoreInboundGoodStock } from "../../../../DynamicAPI/stores/Store/MasterStore";
 
-const TableMasterMenu = () => {
+const MainTable = () => {
   const navigate = useNavigate();
 
-  const { list: inboundPlanningData, fetchAll } = useStoreInboundPlanning();
+  const {
+    list: inboundPrincipalData,
+    fetchAll,
+    fetchUsingParam,
+  } = useStoreInboundGoodStock();
 
   const [globalFilter, setGlobalFilter] = useState<string>("");
   const debouncedFilter = useDebounce(globalFilter, 500);
@@ -24,8 +28,8 @@ const TableMasterMenu = () => {
   const [startDate, setStartDate] = useState<Date | null>(null);
 
   const options = [
-    { value: "A", label: "Active" },
-    { value: "I", label: "Inactive" },
+    { value: "CREATED", label: "CREATED" },
+    { value: "PENDING", label: "PENDING" },
   ];
 
   const handleResetFilters = () => {
@@ -36,9 +40,20 @@ const TableMasterMenu = () => {
     fetchAll();
   }, []);
 
+  const handleFetchParams = (status: string) => {
+    fetchUsingParam({
+      page: 1,
+      status: status,
+      // limit: 100,
+      // createdBy: "f00a21ad-0811-473e-89d2-97b23cd29390",
+    });
+  };
+
   const handleDetail = (id: any) => {
     console.log(`Navigating to detail page for ID: ${id}`);
   };
+
+  console.log("inboundPrincipalData", inboundPrincipalData);
 
   return (
     <>
@@ -68,25 +83,11 @@ const TableMasterMenu = () => {
 
         <div className="flex justify-between items-center mt-5">
           <div className="space-x-4">
-            <Label htmlFor="search">Inbound Planning No</Label>
-            <Input type="text" id="search" placeholder="Inbound plan no.." />
-          </div>
-
-          <div className="space-x-4">
-            <Label htmlFor="date-picker">Plan Delivery Date</Label>
-            <DatePicker
-              id="start-date-salesman"
-              placeholder="Select a date"
-              defaultDate={startDate || undefined}
-            />
-          </div>
-
-          <div className="space-x-4">
-            <Label htmlFor="jenis-kunjungan-select">Order Type</Label>
-            <Select
-              options={options}
-              placeholder="Pilih"
-              onChange={(value) => console.log("Selected value:", value)}
+            <Label htmlFor="search">Inbound No</Label>
+            <Input
+              type="text"
+              id="search"
+              placeholder="Inbound no.."
             />
           </div>
 
@@ -95,7 +96,7 @@ const TableMasterMenu = () => {
             <Select
               options={options}
               placeholder="Pilih"
-              onChange={(value) => console.log("Selected value:", value)}
+              onChange={(value) => handleFetchParams(value)}
             />
           </div>
 
@@ -108,7 +109,7 @@ const TableMasterMenu = () => {
       </div>
 
       <AdjustTable
-        data={inboundPlanningData}
+        data={inboundPrincipalData}
         globalFilter={debouncedFilter}
         setGlobalFilter={setGlobalFilter}
         onDetail={handleDetail}
@@ -118,4 +119,4 @@ const TableMasterMenu = () => {
   );
 };
 
-export default TableMasterMenu;
+export default MainTable;

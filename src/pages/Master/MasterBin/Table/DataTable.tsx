@@ -51,7 +51,7 @@ const DataTable = () => {
       },
       {
         accessorKey: "warehouse_sub_id",
-        header: "Sub Warehouse",
+        header: "Zone",
         cell: ({ row }: any) => {
           const subWh = subWHList.find(
             (item: any) => item.id === row.original.warehouse_sub_id
@@ -80,7 +80,7 @@ const DataTable = () => {
     },
     {
       name: "warehouse_sub_id",
-      label: "Sub Warehouse",
+      label: "Zone",
       type: "select",
       options: subWHList.map((item: any) => ({
         label: item.name,

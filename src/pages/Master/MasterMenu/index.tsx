@@ -5,7 +5,6 @@ export default function MasterMenu() {
   return (
     <div>
       <PageBreadcrumb breadcrumbs={[{ title: "Master Menu" }]} />
-      {/* <TableMasterMenu /> */}
       <DataTable />
     </div>
   );

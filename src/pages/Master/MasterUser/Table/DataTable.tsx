@@ -66,11 +66,6 @@ const DataTable = () => {
 
   const columns = useMemo(
     () => [
-      // {
-      //   accessorKey: "rowNumber",
-      //   header: "No",
-      //   cell: (info: any) => info.row.index + 1,
-      // },
       {
         accessorKey: "username",
         header: "Username",

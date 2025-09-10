@@ -30,8 +30,21 @@ const handleAxios = async <T>(request: Promise<{ data: BaseResponse<T> }>): Prom
 
 
 export const createCrudService = <TData, TCreate, TUpdate>(baseUrl: string) => ({
+
     fetchAll: async (): Promise<TData[]> => {
         return handleAxios<TData[]>(axiosInstance.get(baseUrl));
+    },
+
+    fetchUsingParam: async (params: Record<string, any>): Promise<TData[]> => {
+        const searchParams = new URLSearchParams();
+        Object.entries(params).forEach(([key, value]) => {
+            if (value !== undefined && value !== null && value !== "") {
+                searchParams.append(key, value);
+            }
+        });
+        const queryString = searchParams.toString();
+        console.log("baseURL", `${baseUrl}?${queryString}`);
+        return handleAxios<TData[]>(axiosInstance.get(`${baseUrl}?${queryString}`));
     },
 
     fetchById: async (id: number): Promise<TData> => {

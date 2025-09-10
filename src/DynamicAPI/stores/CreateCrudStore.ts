@@ -7,8 +7,9 @@ interface CrudStoreOptions<TData, TCreate, TUpdate> {
         fetchAll: () => Promise<TData[]>;
         fetchById: (id: any) => Promise<TData>;
         create: (payload: TCreate) => Promise<TData>;
-        update: (id: number, payload: TUpdate) => Promise<TData>;
-        delete: (id: number) => Promise<boolean>;
+        update: (id: any, payload: TUpdate) => Promise<TData>;
+        delete: (id: any) => Promise<boolean>;
+        fetchUsingParam: (param: any) => Promise<TData[]>;
     };
 }
 
@@ -26,8 +27,10 @@ export const createCrudStore = <TData, TCreate, TUpdate>({
         fetchAll: () => Promise<{ success: boolean; message?: string }>;
         fetchById: (id: any) => Promise<void>;
         createData: (payload: TCreate) => Promise<{ success: boolean; message?: string }>;
-        updateData: (id: number, payload: TUpdate) => Promise<{ success: boolean; message?: string }>;
-        deleteData: (id: number) => Promise<void>;
+        updateData: (id: any, payload: TUpdate) => Promise<{ success: boolean; message?: string }>;
+        deleteData: (id: any) => Promise<void>;
+        fetchUsingParam: (param: any) => Promise<void>;
+
         resetDetail: () => void;
         setCurrentId: (id: any) => void;
         loadDetail: (id: any) => Promise<void>;
@@ -49,6 +52,20 @@ export const createCrudStore = <TData, TCreate, TUpdate>({
                 showErrorToast(msg);
                 set({ error: msg });
                 return { success: false, message: msg };
+            } finally {
+                set({ isLoading: false });
+            }
+        },
+
+        fetchUsingParam: async (param: any) => {
+            set({ isLoading: true, error: null });
+            try {
+                const data = await service.fetchUsingParam(param);
+                set({ list: data });
+            } catch (err: any) {
+                const msg = err.message || `Failed to fetch ${name} using param`;
+                showErrorToast(msg);
+                set({ error: msg });
             } finally {
                 set({ isLoading: false });
             }
