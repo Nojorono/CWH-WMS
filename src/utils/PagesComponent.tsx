@@ -8,7 +8,7 @@ import CreateRole from "../pages/Master/MasterRole/Screen/CreateRole";
 import UpdateRole from "../pages/Master/MasterRole/Screen/UpdateRole";
 
 import Inbound from "../pages/InboundProcess/Inbound/index";
-import InboundProcess from "../pages/InboundProcess/Inbound/TableAndForm";
+import InboundProcess from "../pages/InboundProcess/Inbound/TableAndForm/InboundPlanningFormContainer";
 
 import MasterPallet from "../pages/Master/MasterPallet";
 import MasterUOM from "../pages/Master/MasterUOM";

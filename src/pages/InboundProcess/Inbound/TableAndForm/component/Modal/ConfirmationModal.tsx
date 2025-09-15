@@ -1,7 +1,7 @@
 import { Dialog, DialogPanel, DialogTitle } from "@headlessui/react";
 import { useState } from "react";
-import Button from "../../../../../components/ui/button/Button";
-import { FormValues } from "./formTypes";
+import Button from "../../../../../../components/ui/button/Button";
+import { FormValues } from "../formTypes";
 import React from "react";
 import { FaChevronDown, FaChevronRight } from "react-icons/fa";
 

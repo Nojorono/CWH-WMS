@@ -10,7 +10,7 @@ import {
     supplierService,
     InboundGoodStockService,
     UserService,
-    CheckerAssignService,
+    HelperAssignService,
     ClassificationService,
     VehicleService,
     TransporterService,
@@ -28,7 +28,7 @@ import { Menu, CreateMenu, UpdateMenu } from "../../types/MenuTypes";
 import { Item, CreateItem, UpdateItem } from "../../types/ItemTypes";
 import { CreateSupplier, Supplier, UpdateSupplier } from "../../types/SupplierTypes.tsx";
 import { CreateUser, User, UpdateUser } from "../../types/UserTypes.tsx";
-import { CreateCheckerAssign, CheckerAssign, UpdateCheckerAssign } from "../../types/CheckerAssignTypes.tsx";
+import { CreateHelperAssign, HelperAssign, UpdateHelperAssign } from "../../types/HelperAssignTypes.tsx";
 import { CreateClassification, Classification, UpdateClassification } from "../../types/ClassificationTypes.tsx";
 import { CreateVehicle, Vehicle, UpdateVehicle } from "../../types/VehicleTypes.tsx";
 import { CreateTransporter, Transporter, UpdateTransporter } from "../../types/TransporterTypes.tsx";
@@ -87,9 +87,9 @@ export const useStoreUser = createCrudStore<User, CreateUser, UpdateUser>({
     service: UserService,
 });
 
-export const useStoreCheckerAssign = createCrudStore<CheckerAssign, CreateCheckerAssign, UpdateCheckerAssign>({
-    name: "CheckerAssign",
-    service: CheckerAssignService,
+export const useStoreHelperAssign = createCrudStore<HelperAssign, CreateHelperAssign, UpdateHelperAssign>({
+    name: "HelperAssign",
+    service: HelperAssignService,
 });
 
 export const useStoreClassification = createCrudStore<Classification, CreateClassification, UpdateClassification>({

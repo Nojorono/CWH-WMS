@@ -5,8 +5,8 @@ import {
   ColumnDef,
 } from "@tanstack/react-table";
 import { useFormContext } from "react-hook-form";
-import { ItemForm, FormValues } from "./formTypes";
-import { classificationOptions } from "./constants";
+import { ItemForm, FormValues } from "../formTypes";
+import { classificationOptions } from "../constants";
 
 export default function ItemTable({
   data,

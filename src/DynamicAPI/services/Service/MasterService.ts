@@ -8,7 +8,7 @@ import { Warehouse, CreateWarehouse, UpdateWarehouse } from "../../types/Warehou
 import { Menu, CreateMenu, UpdateMenu } from "../../types/MenuTypes";
 import { Item, CreateItem, UpdateItem } from "../../types/ItemTypes";
 import { User, CreateUser, UpdateUser } from "../../types/UserTypes";
-import { CheckerAssign, CreateCheckerAssign, UpdateCheckerAssign } from "../../types/CheckerAssignTypes";
+import { HelperAssign, CreateHelperAssign, UpdateHelperAssign } from "../../types/HelperAssignTypes";
 import { Classification, CreateClassification, UpdateClassification } from "../../types/ClassificationTypes";
 import { Vehicle, CreateVehicle, UpdateVehicle } from "../../types/VehicleTypes";
 import { Transporter, CreateTransporter, UpdateTransporter } from "../../types/TransporterTypes";
@@ -16,7 +16,7 @@ import { SubWarehouse, CreateSubWarehouse, UpdateSubWarehouse } from "../../type
 import { Bin, CreateBin, UpdateBin } from "../../types/MasterBinTypes";
 import { Source, CreateSource, UpdateSource } from "../../types/MasterSourceTypes";
 import { CheckerScan, CreateCheckerScan, UpdateCheckerScan } from '../../types/CheckerScanTypes'
-import {InboundPlanning, CreateInboundPlanning, UpdateInboundPlanning} from '../../types/InboundGoodStock'
+import { InboundPlanning, CreateInboundPlanning, UpdateInboundPlanning } from '../../types/InboundGoodStock'
 
 
 
@@ -30,7 +30,7 @@ export const MenuService = createCrudService<Menu, CreateMenu, UpdateMenu>("/men
 export const ParentMenuService = createCrudService<Menu, CreateMenu, UpdateMenu>("/menu/parent");
 export const ItemService = createCrudService<Item, CreateItem, UpdateItem>("/master-item");
 export const UserService = createCrudService<User, CreateUser, UpdateUser>("/user");
-export const CheckerAssignService = createCrudService<CheckerAssign, CreateCheckerAssign, UpdateCheckerAssign>("/checker-assign");
+export const HelperAssignService = createCrudService<HelperAssign, CreateHelperAssign, UpdateHelperAssign>("/assigned-helper");
 export const ClassificationService = createCrudService<Classification, CreateClassification, UpdateClassification>("/master-classification-item");
 export const VehicleService = createCrudService<Vehicle, CreateVehicle, UpdateVehicle>("/master-vehicle");
 export const TransporterService = createCrudService<Transporter, CreateTransporter, UpdateTransporter>("/inbound-transporter");

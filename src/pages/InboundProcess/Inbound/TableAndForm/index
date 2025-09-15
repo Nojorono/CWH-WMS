@@ -2,10 +2,9 @@ import { FormProvider, useForm, useFieldArray } from "react-hook-form";
 import { useEffect, useState, useMemo, useRef } from "react";
 import { useLocation, useNavigate } from "react-router";
 import { FaPlus, FaRedoAlt } from "react-icons/fa";
-
 import { FormValues } from "./component/formTypes";
-import DeliveryOrderCard from "./component/DeliveryOrderCard";
-import ConfirmationModal from "./component/ConfirmationModal";
+import DeliveryOrderCard from "./component/Form/DeliveryOrderCard";
+import ConfirmationModal from "./component/Modal/ConfirmationModal";
 import { toLocalISOString } from "../../../../helper/FormatDate";
 import DynamicForm, {
   FieldConfig,
@@ -16,6 +15,7 @@ import { showErrorToast } from "../../../../components/toast";
 import PageBreadcrumb from "../../../../components/common/PageBreadCrumb";
 import Button from "../../../../components/ui/button/Button";
 import TabsSection from "../../../../components/wms-components/inbound-component/tabs/TabsSection";
+import HelperAssign from "./component/Tabs/HelperAssign";
 
 // --- Default empty form values
 const emptyFormValues: FormValues = {
@@ -226,6 +226,8 @@ export default function InboundPlanningForm() {
       reset(emptyFormValues);
     }
   }, [isEditMode, isDetailMode, isCreateMode, detail, dataInbound, reset]);
+
+  console.log("detail Inbound", detail);
 
   useEffect(() => {
     if (listRef.current) {
@@ -444,6 +446,10 @@ export default function InboundPlanningForm() {
                     label: "Scan History",
                     content: <>Scan History</>,
                   },
+                  {
+                    label: "Helper Assign",
+                    content: <HelperAssign />,
+                  },
                 ]}
                 activeTab={activeTab}
                 onTabChange={setActiveTab}
@@ -473,3 +479,5 @@ export default function InboundPlanningForm() {
     </>
   );
 }
+
+

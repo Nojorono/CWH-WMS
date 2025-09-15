@@ -5,8 +5,8 @@ import {
   DialogTitle,
 } from "@headlessui/react";
 import { useState } from "react";
-import { masterItems, classificationOptions, inputCls } from "./constants";
-import { ItemForm } from "./formTypes";
+import { masterItems, classificationOptions, inputCls } from "../constants";
+import { ItemForm } from "../formTypes";
 
 export default function AddItemModal({
   isOpen,

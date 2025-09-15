@@ -25,6 +25,7 @@ export type DOForm = {
 };
 
 export type FormValues = {
+    id: any;
     inbound_plan_no?: string;
     inbound_type: string | { value: string; label: string };
     expedition?: string;

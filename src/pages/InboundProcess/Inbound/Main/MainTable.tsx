@@ -44,16 +44,14 @@ const MainTable = () => {
     fetchUsingParam({
       page: 1,
       status: status,
-      // limit: 100,
-      // createdBy: "f00a21ad-0811-473e-89d2-97b23cd29390",
+      limit: "",
+      createdBy: "",
     });
   };
 
   const handleDetail = (id: any) => {
     console.log(`Navigating to detail page for ID: ${id}`);
   };
-
-  console.log("inboundPrincipalData", inboundPrincipalData);
 
   const handleCreate = () => {
     navigate("/inbound_planning/process", {
