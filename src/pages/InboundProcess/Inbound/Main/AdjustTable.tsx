@@ -94,14 +94,14 @@ const AdjustTable = ({
 
   const handleDetail = (data: any) => {
     console.log("data", data);
-    navigate("/inbound_planning/update", {
+    navigate("/inbound_planning/process", {
       state: { data, mode: "detail" },
     });
   };
 
   const handleUpdate = (data: any) => {
     console.log("data", data);
-    navigate("/inbound_planning/update", {
+    navigate("/inbound_planning/process", {
       state: { data, mode: "edit", title: "Update Inbound Planning" },
     });
   };

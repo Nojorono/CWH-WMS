@@ -36,6 +36,7 @@ const emptyFormValues: FormValues = {
       pos: [{ po_no: "", items: [] }],
     },
   ],
+  id: "",
 };
 
 // --- Header field config
@@ -139,6 +140,7 @@ function mapDetailToFormValues(detail: any): FormValues {
       });
       return acc;
     }, []),
+    id: undefined,
   };
 }
 
@@ -185,14 +187,15 @@ function mapToPayload(data: FormValues): CreateInboundPlanning {
 export default function InboundPlanningForm() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { data, mode, title: formTitle } = location.state || {};
+  const { data: dataInbound, mode, title: formTitle } = location.state || {};
   const listRef = useRef<HTMLDivElement | null>(null);
 
   const isCreateMode = mode === "create";
   const isEditMode = mode === "edit";
   const isDetailMode = mode === "detail";
 
-  const { fetchById, detail, createData } = useStoreInboundGoodStock();
+  const { fetchById, detail, createData, updateData } =
+    useStoreInboundGoodStock();
 
   // --- Setup form
   const methods = useForm<FormValues>({ defaultValues: emptyFormValues });
@@ -208,21 +211,21 @@ export default function InboundPlanningForm() {
 
   // --- Fetch detail if edit
   useEffect(() => {
-    if (isEditMode && data?.id) {
-      fetchById(data.id);
+    if (isEditMode && dataInbound?.id) {
+      fetchById(dataInbound.id);
     }
-  }, [isEditMode, data?.id, fetchById]);
+  }, [isEditMode, dataInbound?.id, fetchById]);
 
   // --- Reset form sesuai mode
   useEffect(() => {
     if (isEditMode && detail) {
       reset(mapDetailToFormValues(detail));
-    } else if (isDetailMode && data) {
-      reset(mapDetailToFormValues(data));
+    } else if (isDetailMode && dataInbound) {
+      reset(mapDetailToFormValues(dataInbound));
     } else if (isCreateMode) {
       reset(emptyFormValues);
     }
-  }, [isEditMode, isDetailMode, isCreateMode, detail, data, reset]);
+  }, [isEditMode, isDetailMode, isCreateMode, detail, dataInbound, reset]);
 
   useEffect(() => {
     if (listRef.current) {
@@ -294,13 +297,24 @@ export default function InboundPlanningForm() {
     setIsConfirmOpen(true);
   };
 
-  const onSubmit = async (data: FormValues) => {
+  const onFinalSubmit = async (data: FormValues) => {
     const payload = mapToPayload(data);
-    const res = await createData(payload);
-    if (res?.success) {
-      reset(emptyFormValues);
-      setIsConfirmOpen(false);
-      navigate("/inbound_planning");
+    const InboundId = dataInbound.id;
+
+    if (isCreateMode) {
+      const res = await createData(payload);
+      if (res?.success) {
+        reset(emptyFormValues);
+        setIsConfirmOpen(false);
+        navigate("/inbound_planning");
+      }
+    } else if (isEditMode) {
+      const res = await updateData(InboundId, payload);
+      if (res?.success) {
+        reset(emptyFormValues);
+        setIsConfirmOpen(false);
+        navigate("/inbound_planning");
+      }
     }
   };
 
@@ -334,7 +348,7 @@ export default function InboundPlanningForm() {
               : isEditMode
               ? formTitle
               : "Detail Inbound Planning",
-            path: "/inbound_planning/update",
+            path: "/inbound_planning/process",
           },
         ]}
       />
@@ -353,7 +367,7 @@ export default function InboundPlanningForm() {
           <section className="bg-white p-4 rounded-xl shadow-sm mb-6">
             <DynamicForm
               fields={fieldsConfig}
-              onSubmit={methods.handleSubmit(onSubmit)}
+              onSubmit={methods.handleSubmit(onFinalSubmit)}
               defaultValues={{}}
               control={methods.control}
               register={methods.register}
@@ -451,7 +465,7 @@ export default function InboundPlanningForm() {
           <ConfirmationModal
             isOpen={isConfirmOpen}
             onClose={() => setIsConfirmOpen(false)}
-            onSubmit={handleSubmit(onSubmit)}
+            onSubmit={handleSubmit(onFinalSubmit)}
             formData={previewData}
           />
         )}

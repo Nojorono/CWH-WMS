@@ -16,8 +16,7 @@ import {
   CreateRole,
   UpdateRole,
   Inbound,
-  CreateInbound,
-  UpdateInbound,
+  InboundProcess,
   MasterUOM,
   MasterIO,
   MasterWarehouse,
@@ -81,7 +80,7 @@ export function AppRoutes() {
       { path: "update", element: <UpdateRole /> },
     ],
     "/inbound_planning": [
-      { path: "update", element: <UpdateInbound /> },
+      { path: "process", element: <InboundProcess /> },
     ],
     // "/good_receiving": [
     //   { path: "create", element: <CreateInbound /> },

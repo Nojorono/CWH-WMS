@@ -56,7 +56,7 @@ const MainTable = () => {
   console.log("inboundPrincipalData", inboundPrincipalData);
 
   const handleCreate = () => {
-    navigate("/inbound_planning/update", {
+    navigate("/inbound_planning/process", {
       state: { data: [], mode: "create", title: "Create Inbound Planning" },
     });
   };
