@@ -1,10 +1,10 @@
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
-import ViewTable from "./Table/MainTable";
+import ViewTable from "./Main/MainTable";
 
 export default function InboundPlanning() {
   return (
     <div>
-      <PageBreadcrumb breadcrumbs={[{ title: "New Inbound Planning List" }]} />
+      <PageBreadcrumb breadcrumbs={[{ title: "Inbound Planning List" }]} />
       <ViewTable />
     </div>
   );

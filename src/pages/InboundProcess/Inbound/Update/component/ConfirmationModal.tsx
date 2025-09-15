@@ -1,6 +1,6 @@
 import { Dialog, DialogPanel, DialogTitle } from "@headlessui/react";
 import { useState } from "react";
-import Button from "../../../../components/ui/button/Button";
+import Button from "../../../../../components/ui/button/Button";
 import { FormValues } from "./formTypes";
 import React from "react";
 import { FaChevronDown, FaChevronRight } from "react-icons/fa";
@@ -29,13 +29,17 @@ export default function ConfirmationModal({
     do_.pos.flatMap((po) => po.items)
   );
 
-  const totalQty = allItems.reduce((sum, i) => sum + (i.qty || 0), 0);
+  const totalQty = allItems.reduce(
+    (sum, i) => sum + (typeof i.qty === "number" ? i.qty : 0),
+    0
+  );
   const totalSKU = allItems.length;
 
   // summary per SKU
   const skuSummary = allItems.reduce((acc: Record<string, number>, item) => {
     const key = item.description ?? "Unknown SKU";
-    acc[key] = (acc[key] || 0) + (typeof item.qty === "number" ? item.qty : 0);
+    acc[key] =
+      (acc[key] || 0) + (typeof item.qty === "number" ? item.qty : 0);
     return acc;
   }, {});
 

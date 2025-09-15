@@ -42,13 +42,12 @@ const PageBreadcrumb: React.FC<PageBreadcrumbProps> = ({ breadcrumbs }) => {
       <nav aria-label="breadcrumb">
         <ol className="flex items-center gap-1.5">
           <li>
-            <Link
-              to="/"
+            <div
               className="inline-flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400"
             >
               Home
               <BreadcrumbArrow />
-            </Link>
+            </div>
           </li>
 
           {/* Dynamic Breadcrumbs */}

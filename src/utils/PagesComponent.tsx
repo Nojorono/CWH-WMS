@@ -8,7 +8,8 @@ import CreateRole from "../pages/Master/MasterRole/Screen/CreateRole";
 import UpdateRole from "../pages/Master/MasterRole/Screen/UpdateRole";
 
 import Inbound from "../pages/InboundProcess/Inbound/index";
-import CreateInbound from "../pages/InboundProcess/Inbound/Form";
+import CreateInbound from "../pages/InboundProcess/Inbound/Create";
+import UpdateInbound from "../pages/InboundProcess/Inbound/Update";
 
 import MasterPallet from "../pages/Master/MasterPallet";
 import MasterUOM from "../pages/Master/MasterUOM";
@@ -47,6 +48,7 @@ export {
   // INBOUND PLANNING
   Inbound,
   CreateInbound,
+  UpdateInbound,
 
 
   // GOOD RECEIVING

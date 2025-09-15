@@ -2,20 +2,22 @@ import { useFormContext, useFieldArray, Controller } from "react-hook-form";
 import { FormValues } from "./formTypes";
 import { inputCls } from "./constants";
 import POCard from "./POCard";
-import Button from "../../../../components/ui/button/Button";
-import DatePicker from "../../../../components/form/date-picker";
+import Button from "../../../../../components/ui/button/Button";
+import DatePicker from "../../../../../components/form/date-picker";
 import { FaPlus, FaTrash, FaChevronDown, FaChevronRight } from "react-icons/fa";
 import { useEffect, useRef, useState } from "react";
-import { toLocalISOString } from "../../../../helper/FormatDate";
+import { toLocalISOString } from "../../../../../helper/FormatDate";
 
 export default function DeliveryOrderCard({
   doIndex,
   removeDO,
   totalDO,
+  isEditMode,
 }: {
   doIndex: number;
   removeDO: () => void;
   totalDO: number;
+  isEditMode: boolean;
 }) {
   const { control, register, setValue } = useFormContext<FormValues>();
   const {
@@ -42,7 +44,6 @@ export default function DeliveryOrderCard({
     <div className="bg-white rounded-lg shadow p-3">
       <details ref={detailsRef}>
         <summary className="flex justify-between items-center cursor-pointer px-3 py-2 bg-orange-100 rounded">
-          {/* Kiri: marker custom + label */}
           <div className="flex items-center gap-2">
             {open ? (
               <FaChevronDown className="transition-transform" />
@@ -54,61 +55,75 @@ export default function DeliveryOrderCard({
             </span>
           </div>
 
-          {/* Kanan: tombol */}
-          <div className="flex gap-2 items-center">
-            <Button
-              size="xsm"
-              type="button"
-              variant="secondary"
-              onClick={() =>
-                appendPos({ po_no: "", inbound_type: "", items: [] })
-              }
-            >
-              <FaPlus className="inline" />
-              Add PO
-            </Button>
-            {totalDO > 1 && (
+          {isEditMode && (
+            <div className="flex gap-2 items-center">
               <Button
                 size="xsm"
                 type="button"
-                variant="danger"
-                onClick={removeDO}
+                variant="secondary"
+                onClick={() => appendPos({ po_no: "", items: [] })}
               >
-                <FaTrash className="inline" />
-                Discard
+                <FaPlus className="inline" />
+                Add PO
               </Button>
-            )}
-          </div>
+              {totalDO > 1 && (
+                <Button
+                  size="xsm"
+                  type="button"
+                  variant="danger"
+                  onClick={removeDO}
+                >
+                  <FaTrash className="inline" />
+                  Discard
+                </Button>
+              )}
+            </div>
+          )}
         </summary>
+
         <div className="p-3 space-y-3">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            {/* Delivery Order No */}
             <div>
               <label className="block text-xs text-slate-600 mb-1">
-                Delivery Order No
+                No Surat Jalan
               </label>
               <input
                 {...register(`deliveryOrders.${doIndex}.do_no` as const)}
-                className={inputCls}
+                className={`${inputCls} ${
+                  !isEditMode
+                    ? "bg-gray-100 text-gray-500 cursor-not-allowed"
+                    : ""
+                }`}
+                disabled={!isEditMode}
               />
             </div>
 
+            {/* Attachment */}
             <div>
               <label className="block text-xs text-slate-600 mb-1">
                 Attachment
               </label>
               <input
                 type="file"
-                className={inputCls}
+                className={`${inputCls} ${
+                  !isEditMode
+                    ? "bg-gray-100 text-gray-500 cursor-not-allowed"
+                    : ""
+                }`}
+                disabled={!isEditMode}
                 onChange={(e) => {
+                  if (!isEditMode) return; // prevent change in view mode
                   const file = e.target.files?.[0] || null;
                   setValue(`deliveryOrders.${doIndex}.attachment`, file);
                 }}
               />
             </div>
 
+            {/* DO Date */}
             <div>
               <label className="block text-xs text-slate-600 mb-1">
-                DO Date
+                Tanggal Surat Jalan
               </label>
               <Controller
                 control={control}
@@ -117,13 +132,16 @@ export default function DeliveryOrderCard({
                   <DatePicker
                     id="date-picker"
                     placeholder="Select a date"
+                    value={field.value ? new Date(field.value) : undefined}
                     onChange={(date: Date | Date[]) => {
+                      if (!isEditMode) return;
                       const selectedDate = Array.isArray(date) ? date[0] : date;
                       const formattedDate = selectedDate
                         ? toLocalISOString(selectedDate)
                         : "";
                       field.onChange(formattedDate);
                     }}
+                    readOnly={!isEditMode}
                   />
                 )}
               />
@@ -138,6 +156,7 @@ export default function DeliveryOrderCard({
                 posIndex={posIndex}
                 removePos={() => removePos(posIndex)}
                 totalPO={posFields.length}
+                isEditMode={isEditMode} // <-- teruskan ke child POCard
               />
             ))}
           </div>

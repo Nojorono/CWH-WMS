@@ -1,10 +1,10 @@
 import React, { useMemo, useState } from "react";
-import { FaEye, FaCheck } from "react-icons/fa";
+import { FaEye, FaCheck, FaEdit } from "react-icons/fa";
 import { ColumnDef } from "@tanstack/react-table";
 import TableComponent from "../../../../components/tables/MasterDataTable/TableComponent";
 import Badge from "../../../../components/ui/badge/Badge";
 import Button from "../../../../components/ui/button/Button";
-import { InboundPlanning } from "../../../../DynamicAPI/types/InboundPlanningTypes";
+import { InboundPlanning } from "../../../../DynamicAPI/types/InboundGoodStock";
 import { useNavigate } from "react-router-dom";
 import { showErrorToast, showSuccessToast } from "../../../../components/toast";
 import { toLocalISOString } from "../../../../helper/FormatDate";
@@ -71,14 +71,20 @@ const AdjustTable = ({
         header: "Action",
         cell: ({ row }) => {
           return (
-            <Button
-              variant="outline"
-              size="xsm"
-              onClick={() => handleModalTab(row.original)}
-              startIcon={<FaEye className="size-5" />}
-            >
-              Detail
-            </Button>
+            <div style={{ display: "flex", gap: "8px" }}>
+              <FaEye
+                className="size-5 cursor-pointer"
+                style={{ color: "green" }}
+                onClick={() => handleDetail(row.original)}
+                title="Detail"
+              />
+              <FaEdit
+                className="size-5 cursor-pointer"
+                style={{ color: "blue" }}
+                onClick={() => handleUpdate(row.original)}
+                title="Edit"
+              />
+            </div>
           );
         },
       },
@@ -86,54 +92,19 @@ const AdjustTable = ({
     [onDetail]
   );
 
-  // const [openMdlTab, setOpenMdlTab] = useState(false);
-
-  const handleModalTab = (data: any) => {
-    navigate("/inbound_planning/detail", { state: { data } });
+  const handleDetail = (data: any) => {
+    console.log("data", data);
+    navigate("/inbound_planning/update", {
+      state: { data, mode: "detail" },
+    });
   };
 
-  // const onClose = () => {
-  //   setOpenMdlTab(false);
-  // };
-
-  // const handleSubmit = (data: any) => {
-  //   console.log("Submitted Data:", data);
-  // };
-
-  // const handleConfirmInbound = async (id: number) => {
-  //   try {
-  //     const token = localStorage.getItem("token");
-  //     const response = await fetch(
-  //       `http://10.0.29.47:9005/inbound-plan/status-in-progress/${id}`,
-  //       {
-  //         method: "POST",
-  //         headers: {
-  //           "Content-Type": "application/json",
-  //           Authorization: `Bearer ${token}`,
-  //         },
-  //       }
-  //     );
-  //     const result = await response.json();
-  //     console.log("Confirm Inbound Result:", result);
-
-  //     if (!response.ok || !result.success) {
-  //       throw new Error(result.message || "Failed to update status");
-  //     }
-  //     if (onRefresh) {
-  //       console.log("onRefresh called");
-  //       onRefresh();
-  //     }
-
-  //     showSuccessToast("Inbound confirmed successfully!");
-  //     // Optionally, show success message or refresh data here
-  //   } catch (error: any) {
-  //     // Handle error, e.g., show notification
-  //     console.error("Error confirming inbound:", error.message || error);
-  //     showErrorToast(
-  //       error.message || "Failed to confirm inbound. Please try again."
-  //     );
-  //   }
-  // };
+  const handleUpdate = (data: any) => {
+    console.log("data", data);
+    navigate("/inbound_planning/update", {
+      state: { data, mode: "edit", title: "Update Inbound Planning" },
+    });
+  };
 
   return (
     <>

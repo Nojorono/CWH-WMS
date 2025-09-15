@@ -55,6 +55,12 @@ const MainTable = () => {
 
   console.log("inboundPrincipalData", inboundPrincipalData);
 
+  const handleCreate = () => {
+    navigate("/inbound_planning/update", {
+      state: { data: [], mode: "create", title: "Create Inbound Planning" },
+    });
+  };
+
   return (
     <>
       <div className="p-4 bg-white shadow rounded-md mb-5">
@@ -74,7 +80,7 @@ const MainTable = () => {
               size="sm"
               variant="primary"
               startIcon={<FaPlus className="size-5" />}
-              onClick={() => navigate("/inbound_planning/create")}
+              onClick={() => handleCreate()}
             >
               Add Inbound Planning
             </Button>
@@ -84,11 +90,7 @@ const MainTable = () => {
         <div className="flex justify-between items-center mt-5">
           <div className="space-x-4">
             <Label htmlFor="search">Inbound No</Label>
-            <Input
-              type="text"
-              id="search"
-              placeholder="Inbound no.."
-            />
+            <Input type="text" id="search" placeholder="Inbound no.." />
           </div>
 
           <div className="space-x-4">

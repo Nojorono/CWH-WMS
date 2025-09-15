@@ -13,11 +13,13 @@ export default function ItemTable({
   doIndex,
   posIndex,
   removeItem,
+  isEditMode,
 }: {
   data: ItemForm[];
   doIndex: number;
   posIndex: number;
   removeItem: (rowIndex: number) => void;
+  isEditMode: boolean;
 }) {
   const { register } = useFormContext<FormValues>();
 
@@ -32,21 +34,11 @@ export default function ItemTable({
       header: "Item Name",
       cell: (info) => <div>{info.getValue() as string}</div>,
     },
+
     {
       accessorKey: "qty",
       header: "Qty Plan",
-      cell: (info) => {
-        const rowIndex = info.row.index;
-        const name =
-          `deliveryOrders.${doIndex}.pos.${posIndex}.items.${rowIndex}.qty` as const;
-        return (
-          <input
-            type="number"
-            className="w-20 border rounded px-2 py-1 text-sm"
-            {...(register(name) as any)}
-          />
-        );
-      },
+      cell: (info) => <div>{info.getValue() as string}</div>,
     },
     {
       accessorKey: "uom",
@@ -64,6 +56,7 @@ export default function ItemTable({
           <select
             className="border rounded px-2 py-1 text-sm"
             {...(register(name) as any)}
+            disabled={!isEditMode}
           >
             <option value="">--</option>
             {classificationOptions.map((c) => (
@@ -80,14 +73,15 @@ export default function ItemTable({
       header: "Action",
       cell: (info) => {
         const rowIndex = info.row.index;
-        return (
+        return isEditMode ? (
           <button
             className="text-xs text-rose-600"
             onClick={() => removeItem(rowIndex)}
+            disabled={!isEditMode}
           >
             Remove
           </button>
-        );
+        ) : null;
       },
     },
   ];
