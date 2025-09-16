@@ -19,7 +19,12 @@ export default function DeliveryOrderCard({
   totalDO: number;
   isEditMode: boolean;
 }) {
-  const { control, register, setValue } = useFormContext<FormValues>();
+  const {
+    control,
+    register,
+    setValue,
+    formState: { errors },
+  } = useFormContext<FormValues>();
   const {
     fields: posFields,
     append: appendPos,
@@ -39,6 +44,16 @@ export default function DeliveryOrderCard({
     el.addEventListener("toggle", handleToggle);
     return () => el.removeEventListener("toggle", handleToggle);
   }, []);
+
+  // ✅ helper untuk ambil error field
+  const getError = (field: "do_no" | "attachment" | "date") =>
+    errors.deliveryOrders?.[doIndex]?.[field];
+
+  // ✅ helper untuk bikin className input
+  const inputClass = (hasError?: boolean) =>
+    `${inputCls} ${hasError ? "border-red-500 focus:ring-red-500" : ""} ${
+      !isEditMode ? "bg-gray-100 text-gray-500 cursor-not-allowed" : ""
+    }`;
 
   return (
     <div className="bg-white rounded-lg shadow p-3">
@@ -86,48 +101,55 @@ export default function DeliveryOrderCard({
             {/* Delivery Order No */}
             <div>
               <label className="block text-xs text-slate-600 mb-1">
-                No Surat Jalan
+                No Surat Jalan <span className="text-red-500">*</span>
               </label>
               <input
-                {...register(`deliveryOrders.${doIndex}.do_no` as const)}
-                className={`${inputCls} ${
-                  !isEditMode
-                    ? "bg-gray-100 text-gray-500 cursor-not-allowed"
-                    : ""
-                }`}
+                {...register(`deliveryOrders.${doIndex}.do_no` as const, {
+                  required: "No Surat Jalan wajib diisi",
+                })}
+                className={inputClass(!!getError("do_no"))}
                 disabled={!isEditMode}
               />
+              {getError("do_no") && (
+                <p className="text-red-500 text-xs mt-1">
+                  {getError("do_no")?.message as string}
+                </p>
+              )}
             </div>
 
             {/* Attachment */}
             <div>
               <label className="block text-xs text-slate-600 mb-1">
-                Attachment
+                Attachment <span className="text-red-500">*</span>
               </label>
               <input
                 type="file"
-                className={`${inputCls} ${
-                  !isEditMode
-                    ? "bg-gray-100 text-gray-500 cursor-not-allowed"
-                    : ""
-                }`}
+                className={inputClass(!!getError("attachment"))}
                 disabled={!isEditMode}
                 onChange={(e) => {
-                  if (!isEditMode) return; // prevent change in view mode
+                  if (!isEditMode) return;
                   const file = e.target.files?.[0] || null;
-                  setValue(`deliveryOrders.${doIndex}.attachment`, file);
+                  setValue(`deliveryOrders.${doIndex}.attachment`, file, {
+                    shouldValidate: true,
+                  });
                 }}
               />
+              {getError("attachment") && (
+                <p className="text-red-500 text-xs mt-1">
+                  {getError("attachment")?.message as string}
+                </p>
+              )}
             </div>
 
             {/* DO Date */}
             <div>
               <label className="block text-xs text-slate-600 mb-1">
-                Tanggal Surat Jalan
+                Tanggal Surat Jalan <span className="text-red-500">*</span>
               </label>
               <Controller
                 control={control}
                 name={`deliveryOrders.${doIndex}.date` as const}
+                rules={{ required: "Tanggal wajib diisi" }}
                 render={({ field }) => (
                   <DatePicker
                     id="date-picker"
@@ -145,9 +167,15 @@ export default function DeliveryOrderCard({
                   />
                 )}
               />
+              {getError("date") && (
+                <p className="text-red-500 text-xs mt-1">
+                  {getError("date")?.message as string}
+                </p>
+              )}
             </div>
           </div>
 
+          {/* PO Cards */}
           <div className="space-y-3">
             {posFields.map((posField, posIndex) => (
               <POCard
@@ -156,7 +184,7 @@ export default function DeliveryOrderCard({
                 posIndex={posIndex}
                 removePos={() => removePos(posIndex)}
                 totalPO={posFields.length}
-                isEditMode={isEditMode} // <-- teruskan ke child POCard
+                isEditMode={isEditMode}
               />
             ))}
           </div>

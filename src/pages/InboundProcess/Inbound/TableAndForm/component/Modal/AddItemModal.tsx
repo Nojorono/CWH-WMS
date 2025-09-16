@@ -4,9 +4,13 @@ import {
   DialogPanel,
   DialogTitle,
 } from "@headlessui/react";
-import { useState } from "react";
-import { masterItems, classificationOptions, inputCls } from "../constants";
+import { useEffect, useState } from "react";
+import { classificationOptions, inputCls } from "../constants";
 import { ItemForm } from "../formTypes";
+import {
+  useStoreItem,
+  useStoreUom,
+} from "../../../../../../DynamicAPI/stores/Store/MasterStore";
 
 export default function AddItemModal({
   isOpen,
@@ -17,34 +21,57 @@ export default function AddItemModal({
   onClose: () => void;
   onSave: (item: ItemForm) => void;
 }) {
+  const { fetchAll, list } = useStoreItem();
+  const { fetchAll: fetchAllUom, list: uomList } = useStoreUom();
+
+  useEffect(() => {
+    fetchAll();
+    fetchAllUom();
+  }, [fetchAll, fetchAllUom]);
+
   const [tempSku, setTempSku] = useState("");
   const [tempQty, setTempQty] = useState<number | "">("");
   const [tempClassification, setTempClassification] = useState("");
+  const [tempUom, setTempUom] = useState("");
 
-  const selectedMaster = masterItems.find((m) => m.sku === tempSku);
+  // defaultkan UoM ke "DUS" kalau ada
+  useEffect(() => {
+    if (uomList.length > 0 && !tempUom) {
+      const dus = uomList.find((u: any) => u.code === "DUS");
+      if (dus) {
+        setTempUom(dus.code);
+      }
+    }
+  }, [uomList, tempUom]);
+
+  const selectedMaster = list.find((m: any) => m.sku === tempSku);
 
   const handleSave = () => {
-    if (!tempSku || !tempQty || !tempClassification) {
-      alert("Please select SKU, Qty, and Classification");
+    if (!tempSku || !tempQty || !tempClassification || !tempUom) {
+      alert("Please select SKU, Qty, UoM, and Classification");
       return;
     }
+
     onSave({
-      item_id: selectedMaster?.item_id ?? "",
+      item_id: selectedMaster?.id ?? "", // atau inventory_item_id sesuai kebutuhan backend
       sku: tempSku,
       item_number: selectedMaster?.item_number ?? tempSku,
       description: selectedMaster?.description ?? "",
       qty: Number(tempQty),
-      uom: selectedMaster?.uom ?? "",
+      uom: tempUom,
       classification: tempClassification,
       expired_date: null,
       qty_plan: function (qty_plan: any): number {
         throw new Error("Function not implemented.");
       },
-      item_name: "",
+      item_name: selectedMaster?.description ?? "",
     });
+
+    // reset state
     setTempSku("");
     setTempQty("");
     setTempClassification("");
+    setTempUom("DUS"); // reset default ke DUS lagi
     onClose();
   };
 
@@ -56,6 +83,7 @@ export default function AddItemModal({
           <DialogTitle className="text-xl font-semibold">Add Item</DialogTitle>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            {/* SKU Dropdown */}
             <div>
               <label className="text-xs text-slate-600">SKU</label>
               <select
@@ -64,7 +92,7 @@ export default function AddItemModal({
                 onChange={(e) => setTempSku(e.target.value)}
               >
                 <option value="">-- Select SKU --</option>
-                {masterItems.map((m) => (
+                {list.map((m: any) => (
                   <option key={m.sku} value={m.sku}>
                     {m.sku} - {m.item_number}
                   </option>
@@ -72,6 +100,7 @@ export default function AddItemModal({
               </select>
             </div>
 
+            {/* Item Name */}
             <div>
               <label className="text-xs text-slate-600">Item Name</label>
               <input
@@ -81,15 +110,24 @@ export default function AddItemModal({
               />
             </div>
 
+            {/* UoM Dropdown */}
             <div>
               <label className="text-xs text-slate-600">UoM</label>
-              <input
+              <select
                 className={inputCls}
-                value={selectedMaster?.uom ?? ""}
-                readOnly
-              />
+                value={tempUom}
+                onChange={(e) => setTempUom(e.target.value)}
+              >
+                <option value="">-- Select UoM --</option>
+                {uomList.map((u: any) => (
+                  <option key={u.id} value={u.code}>
+                    {u.code} - {u.name}
+                  </option>
+                ))}
+              </select>
             </div>
 
+            {/* Qty */}
             <div>
               <label className="text-xs text-slate-600">Qty Plan</label>
               <input
@@ -104,6 +142,7 @@ export default function AddItemModal({
               />
             </div>
 
+            {/* Classification */}
             <div>
               <label className="text-xs text-slate-600">Classification</label>
               <select
@@ -121,6 +160,7 @@ export default function AddItemModal({
             </div>
           </div>
 
+          {/* Action Buttons */}
           <div className="flex justify-end gap-3 mt-4">
             <button className="border px-3 py-1 rounded" onClick={onClose}>
               Cancel

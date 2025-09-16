@@ -48,17 +48,49 @@ const buildFieldsConfig = (isDetailMode: boolean): FieldConfig[] =>
         { value: "PRINCIPAL", label: "PRINCIPAL" },
         { value: "RETUR", label: "RETUR" },
       ],
+      validation: { required: "Tipe inbound wajib diisi" }, // ✅ wajib
     },
-    { name: "expedition", label: "Ekspedisi", type: "text" as const },
-    { name: "driver", label: "Driver", type: "text" as const },
-    { name: "no_pol", label: "No Polisi", type: "text" as const },
-    { name: "origin", label: "Origin", type: "text" as const },
-    { name: "destination", label: "Tujuan", type: "text" as const },
-    { name: "driver_phone", label: "No Telp Driver", type: "text" as const },
+    {
+      name: "expedition",
+      label: "Ekspedisi",
+      type: "text" as const,
+      validation: { required: "Ekspedisi wajib diisi" }, // ✅
+    },
+    {
+      name: "driver",
+      label: "Driver",
+      type: "text" as const,
+      validation: { required: "Nama driver wajib diisi" },
+    },
+    {
+      name: "no_pol",
+      label: "No Polisi",
+      type: "text" as const,
+      validation: { required: "No polisi wajib diisi" },
+    },
+    {
+      name: "origin",
+      label: "Origin",
+      type: "text" as const,
+      validation: { required: "Origin wajib diisi" },
+    },
+    {
+      name: "destination",
+      label: "Tujuan",
+      type: "text" as const,
+      validation: { required: "Tujuan wajib diisi" },
+    },
+    {
+      name: "driver_phone",
+      label: "No Telp Driver",
+      type: "text" as const,
+      validation: { required: "No telp driver wajib diisi" },
+    },
     {
       name: "arrival_date",
       label: "Tanggal Kedatangan",
       type: "date" as const,
+      validation: { required: "Tanggal kedatangan wajib diisi" },
     },
   ].map((f) => ({
     ...f,
@@ -118,8 +150,6 @@ const DetailTabs = ({
 }: Pick<Props, "doFields" | "removeDO" | "inboundID">) => {
   const [activeTab, setActiveTab] = useState(0);
 
-  console.log("inboundID", inboundID);
-
   return (
     <TabsSection
       tabs={[
@@ -152,11 +182,11 @@ const DetailTabs = ({
 };
 
 const SubmitSection = ({ isCreateMode, isEditMode, handlePreview }: Props) => {
-  if (!(isCreateMode || isEditMode)) return null;
+  if (!(isCreateMode || isEditMode)) return null;  
 
   return (
     <div className="mt-4 flex justify-end">
-      <Button type="button" variant="secondary" onClick={handlePreview}>
+      <Button type="button" variant="action" onClick={handlePreview}>
         Preview & Submit
       </Button>
     </div>

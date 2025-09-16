@@ -7,6 +7,11 @@ import {
 import { useFormContext } from "react-hook-form";
 import { ItemForm, FormValues } from "../formTypes";
 import { classificationOptions } from "../constants";
+import {
+  useStoreItem,
+  useStoreUom,
+} from "../../../../../../DynamicAPI/stores/Store/MasterStore";
+import { use, useEffect } from "react";
 
 export default function ItemTable({
   data,
@@ -22,6 +27,13 @@ export default function ItemTable({
   isEditMode: boolean;
 }) {
   const { register } = useFormContext<FormValues>();
+  const { fetchAll: fetchAllUom, list: uomList } = useStoreUom();
+  const { fetchAll: fetchAllItem, list: itemList } = useStoreItem();
+
+  // useEffect(() => {
+  //   fetchAllUom();
+  //   fetchAllItem();
+  // }, [fetchAllUom, fetchAllItem]);
 
   const columns: ColumnDef<ItemForm>[] = [
     {
@@ -45,29 +57,29 @@ export default function ItemTable({
       header: "UoM",
       cell: (info) => <div>{info.getValue() as string}</div>,
     },
-    {
-      accessorKey: "classification",
-      header: "Classification",
-      cell: (info) => {
-        const rowIndex = info.row.index;
-        const name =
-          `deliveryOrders.${doIndex}.pos.${posIndex}.items.${rowIndex}.classification` as const;
-        return (
-          <select
-            className="border rounded px-2 py-1 text-sm"
-            {...(register(name) as any)}
-            disabled={!isEditMode}
-          >
-            <option value="">--</option>
-            {classificationOptions.map((c) => (
-              <option key={c.value} value={c.value}>
-                {c.label}
-              </option>
-            ))}
-          </select>
-        );
-      },
-    },
+    // {
+    //   accessorKey: "classification",
+    //   header: "Classification",
+    //   cell: (info) => {
+    //     const rowIndex = info.row.index;
+    //     const name =
+    //       `deliveryOrders.${doIndex}.pos.${posIndex}.items.${rowIndex}.classification` as const;
+    //     return (
+    //       <select
+    //         className="border rounded px-2 py-1 text-sm"
+    //         {...(register(name) as any)}
+    //         disabled={!isEditMode}
+    //       >
+    //         <option value="">--</option>
+    //         {classificationOptions.map((c) => (
+    //           <option key={c.value} value={c.value}>
+    //             {c.label}
+    //           </option>
+    //         ))}
+    //       </select>
+    //     );
+    //   },
+    // },
     {
       id: "actions",
       header: "Action",

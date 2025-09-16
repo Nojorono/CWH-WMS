@@ -151,46 +151,74 @@ export default function InboundPlanningFormContainer() {
   const [previewData, setPreviewData] = useState<FormValues | null>(null);
 
   const handlePreview = async () => {
-    const values = getValues();
-    const isValid = await trigger([
-      "inbound_type",
-      "expedition",
-      "driver",
-      "no_pol",
-      "origin",
-      "destination",
-      "driver_phone",
-      "arrival_date",
-    ]);
+    const isValid = await trigger(); // validasi field basic
     if (!isValid) {
-      showErrorToast("Lengkapi data inbound planning terlebih dahulu.");
+      showErrorToast("Lengkapi semua data inbound planning terlebih dahulu.");
       return;
     }
+
+    const values = getValues();
+
+    // --- Validasi tambahan untuk DO, PO, Item ---
+    if (!values.deliveryOrders || values.deliveryOrders.length === 0) {
+      showErrorToast("Minimal 1 Delivery Order harus diisi.");
+      return;
+    }
+
+    for (const [i, doItem] of values.deliveryOrders.entries()) {
+      if (!doItem.do_no || !doItem.date) {
+        showErrorToast(`Delivery Order ke-${i + 1} wajib punya DO No & Date.`);
+        return;
+      }
+
+      if (!doItem.pos || doItem.pos.length === 0) {
+        showErrorToast(`Delivery Order ${doItem.do_no} belum punya PO.`);
+        return;
+      }
+
+      for (const [j, poItem] of doItem.pos.entries()) {
+        if (!poItem.po_no) {
+          showErrorToast(
+            `DO ${doItem.do_no} → PO ke-${j + 1} wajib punya PO No.`
+          );
+          return;
+        }
+
+        if (!poItem.items || poItem.items.length === 0) {
+          showErrorToast(`PO ${poItem.po_no} belum punya Item.`);
+          return;
+        }
+      }
+    }
+
+    // --- Kalau semua valid ---
+    console.log("inbound values", values);
     setPreviewData(values);
     setIsConfirmOpen(true);
   };
 
   const onFinalSubmit = async (data: FormValues) => {
     const payload = mapToPayload(data);
-    const id = dataInbound?.id;
-    if (isCreateMode) {
-      const res = await createData(payload);
-      if (res?.success) {
-        reset(emptyFormValues);
-        setIsConfirmOpen(false);
-        navigate("/inbound_planning");
-      }
-    } else if (isEditMode && id) {
-      const res = await updateData(id, payload);
-      if (res?.success) {
-        reset(emptyFormValues);
-        setIsConfirmOpen(false);
-        navigate("/inbound_planning");
-      }
-    }
-  };
 
-  console.log("dataInbound ID", dataInbound.id);
+    console.log("Payload to submit:", payload);
+
+    // const id = dataInbound?.id;
+    // if (isCreateMode) {
+    //   const res = await createData(payload);
+    //   if (res?.success) {
+    //     reset(emptyFormValues);
+    //     setIsConfirmOpen(false);
+    //     navigate("/inbound_planning");
+    //   }
+    // } else if (isEditMode && id) {
+    //   const res = await updateData(id, payload);
+    //   if (res?.success) {
+    //     reset(emptyFormValues);
+    //     setIsConfirmOpen(false);
+    //     navigate("/inbound_planning");
+    //   }
+    // }
+  };
 
   return (
     <FormProvider {...methods}>
