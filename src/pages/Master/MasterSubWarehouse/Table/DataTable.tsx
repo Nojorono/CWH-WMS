@@ -33,13 +33,14 @@ const DataTable = () => {
     fetchAllIo();
     fetchSubWH();
   }, []);
+
   const columns = useMemo(
     () => [
-      { accessorKey: "id", header: "ID" },
+      // { accessorKey: "id", header: "ID" },
       {
         accessorKey: "organization_id",
         header: "Organization",
-        cell: ({ row }: any) => {
+        cell: ({ row }: { row: { original: any } }) => {
           const org = ioList.find(
             (item: any) => item.organization_id === row.original.organization_id
           );
@@ -49,17 +50,19 @@ const DataTable = () => {
       {
         accessorKey: "warehouse_id",
         header: "Warehouse",
-        cell: ({ row }: any) => {
+        cell: ({ row }: { row: { original: any } }) => {
           const wh = Warehouse.find(
             (item: any) => item.id === row.original.warehouse_id
           );
           return wh ? wh.name : row.original.warehouse_id;
         },
       },
-      { accessorKey: "name", header: "Nama" },
-      { accessorKey: "code", header: "Kode" },
-      { accessorKey: "description", header: "Deskripsi" },
-      { accessorKey: "capacity_bin", header: "Kapasitas Bin" },
+      { accessorKey: "name", header: "Zone Name" },
+      { accessorKey: "code", header: "Code" },
+      { accessorKey: "description", header: "Description" },
+      { accessorKey: "capacity_bin", header: "Bin Capacity" },
+      { accessorKey: "barcode_image_url", header: "Barcode Image URL" },
+      { accessorKey: "is_staging", header: "Staging Area" },
     ],
     [ioList, Warehouse]
   );
@@ -87,7 +90,7 @@ const DataTable = () => {
     },
     {
       name: "name",
-      label: "Nama Gudang",
+      label: "Zone Name",
       type: "text",
       validation: { required: "Required" },
     },
@@ -98,19 +101,31 @@ const DataTable = () => {
       validation: { required: "Required" },
     },
     {
+      name: "is_staging",
+      label: "Is Staging Area?",
+      type: "select",
+      options: [
+        { label: "NO", value: "NO" },
+        { label: "INBOUND", value: "INBOUND" },
+        { label: "OUTBOUND", value: "OUTBOUND" },
+      ],
+      validation: { required: "Required" },
+    },
+    {
       name: "description",
-      label: "Deskripsi",
+      label: "Description",
       type: "text",
       validation: { required: "Required" },
     },
     {
       name: "capacity_bin",
-      label: "Kapasitas Bin",
+      label: "Bin Capacity",
       type: "number",
       validation: {
-        required: "Required",
         min: { value: 0, message: "Harus >= 0" },
       },
+      hiddenWhen: (values: any) =>
+        values.is_staging === "INBOUND" || values.is_staging === "OUTBOUND",
     },
   ];
 
@@ -123,15 +138,28 @@ const DataTable = () => {
       code,
       description,
       capacity_bin,
+      barcode_image_url,
+      is_staging,
     } = data;
-    return createData({
+
+    const payload: any = {
       organization_id: Number(organization_id),
       warehouse_id,
       name,
       code,
       description,
-      capacity_bin: Number(capacity_bin),
-    });
+      barcode_image_url,
+    };
+
+    if (is_staging === "NO") {
+      payload.capacity_bin =
+        capacity_bin !== undefined ? Number(capacity_bin) : undefined;
+      // is_staging tidak dibawa
+    } else {
+      payload.is_staging = is_staging;
+      // capacity_bin tidak dibawa
+    }
+    return createData(payload);
   };
 
   // Fungsi untuk format payload update
@@ -144,15 +172,29 @@ const DataTable = () => {
       code,
       description,
       capacity_bin,
+      barcode_image_url,
+      is_staging,
     } = data;
-    return updateData(id, {
+
+    const payload: any = {
       organization_id: Number(organization_id),
       warehouse_id,
       name,
       code,
       description,
-      capacity_bin: Number(capacity_bin),
-    });
+      barcode_image_url,
+    };
+
+    if (is_staging === "NO") {
+      payload.capacity_bin =
+        capacity_bin !== undefined ? Number(capacity_bin) : undefined;
+      // is_staging tidak dibawa
+    } else {
+      payload.is_staging = is_staging;
+      // capacity_bin tidak dibawa
+    }
+
+    return updateData(id, payload);
   };
 
   return (

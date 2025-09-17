@@ -1,10 +1,8 @@
 import axios from "axios";
-import EnPoint from "../../utils/EndPoint";
-
-const baseURL = EnPoint;
+import { EndPoint } from "../../utils/EndPoint"
 
 const axiosInstance = axios.create({
-  baseURL: baseURL,
+  baseURL: EndPoint,
   timeout: 10000,
 });
 

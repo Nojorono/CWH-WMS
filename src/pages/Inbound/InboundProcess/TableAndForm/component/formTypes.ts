@@ -20,7 +20,7 @@ export type POForm = {
 export type DOForm = {
     do_no: string;
     date?: string;
-    attachment?: File | null;
+    attachment?: string;
     pos: POForm[];
 };
 

@@ -7,6 +7,9 @@ import DatePicker from "../../../../../../components/form/date-picker";
 import { FaPlus, FaTrash, FaChevronDown, FaChevronRight } from "react-icons/fa";
 import { useEffect, useRef, useState } from "react";
 import { toLocalISOString } from "../../../../../../helper/FormatDate";
+import { uploadFileToS3 } from "../Helper/uploadFileToS3";
+import { deleteFileFromS3 } from "../Helper/deleteFileFromS3";
+import { showErrorToast } from "../../../../../../components/toast";
 
 export default function DeliveryOrderCard({
   doIndex,
@@ -23,8 +26,10 @@ export default function DeliveryOrderCard({
     control,
     register,
     setValue,
+    watch, // ✅ sekarang ada
     formState: { errors },
   } = useFormContext<FormValues>();
+
   const {
     fields: posFields,
     append: appendPos,
@@ -35,6 +40,9 @@ export default function DeliveryOrderCard({
   });
 
   const [open, setOpen] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
   const detailsRef = useRef<HTMLDetailsElement>(null);
 
   useEffect(() => {
@@ -54,6 +62,42 @@ export default function DeliveryOrderCard({
     `${inputCls} ${hasError ? "border-red-500 focus:ring-red-500" : ""} ${
       !isEditMode ? "bg-gray-100 text-gray-500 cursor-not-allowed" : ""
     }`;
+
+  // ✅ helper untuk hapus file
+  const handleDeleteFile = async (fileUrl: string) => {
+    setDeleting(true);
+    try {
+      await deleteFileFromS3(fileUrl);
+      setValue(`deliveryOrders.${doIndex}.attachment`, "", {
+        shouldValidate: true,
+      });
+    } catch {
+      showErrorToast("Gagal menghapus file");
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  // ✅ helper untuk upload file
+  const handleUploadFile = async (file: File) => {
+    setUploading(true);
+    try {
+      const fileUrl = await uploadFileToS3(file);
+      if (fileUrl) {
+        setValue(`deliveryOrders.${doIndex}.attachment`, fileUrl, {
+          shouldValidate: true,
+        });
+      } else {
+        showErrorToast(`Upload gagal untuk ${file.name}`);
+      }
+    } catch {
+      showErrorToast(`Upload error untuk ${file.name}`);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const fileUrl = watch(`deliveryOrders.${doIndex}.attachment`);
 
   return (
     <div className="bg-white rounded-lg shadow p-3">
@@ -122,18 +166,48 @@ export default function DeliveryOrderCard({
               <label className="block text-xs text-slate-600 mb-1">
                 Attachment <span className="text-red-500">*</span>
               </label>
-              <input
-                type="file"
-                className={inputClass(!!getError("attachment"))}
-                disabled={!isEditMode}
-                onChange={(e) => {
-                  if (!isEditMode) return;
-                  const file = e.target.files?.[0] || null;
-                  setValue(`deliveryOrders.${doIndex}.attachment`, file, {
-                    shouldValidate: true,
-                  });
-                }}
-              />
+
+              {fileUrl ? (
+                <div className="flex items-center gap-2">
+                  <a
+                    href={fileUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm text-blue-600 underline"
+                  >
+                    Lihat file
+                  </a>
+                  {isEditMode && (
+                    <button
+                      type="button"
+                      className="text-red-600 text-xs flex items-center gap-1 disabled:opacity-50"
+                      disabled={deleting}
+                      onClick={() => handleDeleteFile(fileUrl)}
+                    >
+                      {deleting ? "Deleting..." : <FaTrash size={12} />}
+                      {!deleting && "Delete"}
+                    </button>
+                  )}
+                </div>
+              ) : (
+                <input
+                  type="file"
+                  className={inputClass(!!getError("attachment"))}
+                  disabled={!isEditMode || uploading}
+                  onChange={async (e) => {
+                    if (!isEditMode) return;
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      await handleUploadFile(file);
+                    }
+                  }}
+                />
+              )}
+
+              {uploading && (
+                <p className="text-xs text-slate-500 mt-1">Uploading...</p>
+              )}
+
               {getError("attachment") && (
                 <p className="text-red-500 text-xs mt-1">
                   {getError("attachment")?.message as string}

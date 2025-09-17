@@ -5,7 +5,9 @@ export interface SubWarehouse {
   name: string;
   code: string;
   description: string;
-  capacity_bin: number;
+  capacity_bin?: number;
+  barcode_image_url?: string;
+  is_staging?: string;
 }
 
 export type CreateSubWarehouse = Omit<SubWarehouse, "id">;

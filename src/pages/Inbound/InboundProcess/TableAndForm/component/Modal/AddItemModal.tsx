@@ -35,8 +35,6 @@ export default function AddItemModal({
   const [tempClassification, setTempClassification] = useState("");
   const [tempUom, setTempUom] = useState("");
 
-  console.log("list", list);
-
   // defaultkan UoM ke "DUS" kalau ada
   useEffect(() => {
     if (uomList.length > 0 && !tempUom) {

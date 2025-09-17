@@ -20,7 +20,7 @@ import MasterWarehouse from "../pages/Master/MasterWarehouse";
 import MasterItem from "../pages/Master/MasterItem";
 import MasterClassification from "../pages/Master/MasterClassification";
 import MasterVehicle from "../pages/Master/MasterVehicle";
-import MasterSubWarehouse from "../pages/Master/MasterSubWarehouse";
+import MasterZone from "../pages/Master/MasterSubWarehouse";
 import MasterBin from "../pages/Master/MasterBin";
 import MasterSource from "../pages/Master/MasterSource";
 import MasterSupplier from "../pages/Master/MasterSupplier";
@@ -37,7 +37,7 @@ export {
   MasterItem,
   MasterClassification,
   MasterVehicle,
-  MasterSubWarehouse,
+  MasterZone,
   MasterBin,
   MasterSource,
   MasterSupplier,

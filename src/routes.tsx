@@ -23,7 +23,7 @@ import {
   MasterItem,
   MasterClassification,
   MasterVehicle,
-  MasterSubWarehouse,
+  MasterZone,
   MasterBin,
   MasterSource,
   MasterSupplier,
@@ -80,10 +80,6 @@ export function AppRoutes() {
       { path: "update", element: <UpdateRole /> },
     ],
     "/inbound_planning": [{ path: "process", element: <InboundProcess /> }],
-    // "/good_receiving": [
-    //   { path: "create", element: <CreateInbound /> },
-    //   { path: "detail", element: <DetailInbound /> },
-    // ],
   };
 
   const getElementByPath = (path: string): JSX.Element | null => {
@@ -100,7 +96,7 @@ export function AppRoutes() {
       "/master_supplier": <MasterSupplier />,
       "/master_classification": <MasterClassification />,
       "/master_vehicle": <MasterVehicle />,
-      "/master_sub_warehouse": <MasterSubWarehouse />,
+      "/master_sub_warehouse": <MasterZone />,
       "/master_bin": <MasterBin />,
       "/master_source": <MasterSource />,
 
