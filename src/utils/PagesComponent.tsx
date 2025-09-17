@@ -7,8 +7,11 @@ import MasterRole from "../pages/Master/MasterRole";
 import CreateRole from "../pages/Master/MasterRole/Screen/CreateRole";
 import UpdateRole from "../pages/Master/MasterRole/Screen/UpdateRole";
 
-import Inbound from "../pages/InboundProcess/Inbound/index";
-import InboundProcess from "../pages/InboundProcess/Inbound/TableAndForm/InboundPlanningFormContainer";
+import Inbound from "../pages/Inbound/InboundProcess/index";
+import InboundProcess from "../pages/Inbound/InboundProcess/TableAndForm/InboundPlanningFormContainer";
+import Inventory from "../pages/Inventory";
+
+
 
 import MasterPallet from "../pages/Master/MasterPallet";
 import MasterUOM from "../pages/Master/MasterUOM";
@@ -49,6 +52,7 @@ export {
   InboundProcess,
 
 
-  // GOOD RECEIVING
+  // Inventory
+  Inventory
 
 };

@@ -18,6 +18,7 @@ interface Props {
   onRefresh: () => void;
   getRowId?: (row: any) => any;
   title?: string;
+  noActions?: boolean;
 }
 
 const DynamicTable = ({
@@ -33,10 +34,14 @@ const DynamicTable = ({
   onRefresh,
   getRowId = (row) => row.id,
   title,
+  noActions,
 }: Props) => {
   const [selectedItem, setSelectedItem] = useState<any | null>(null);
 
   const enhancedColumns = useMemo(() => {
+    if (noActions) {
+      return columns;
+    }
     return [
       ...columns,
       {
@@ -44,14 +49,12 @@ const DynamicTable = ({
         header: "Action",
         cell: ({ row }) => (
           <div className="flex gap-2">
-
             <button
               className="text-green-600"
               onClick={() => setSelectedItem(row.original)}
             >
               <FaEye />
             </button>
-
             <button
               onClick={() => handleDelete(getRowId(row.original))}
               className="text-red-500"

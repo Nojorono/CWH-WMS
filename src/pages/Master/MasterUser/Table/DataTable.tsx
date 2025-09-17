@@ -21,7 +21,6 @@ const DataTable = () => {
   } = useStoreUser();
 
   const { list: IoList, fetchAll: fetchIO } = useStoreIo();
-
   const { fetchRoles, roles } = useRoleStore();
 
   const [search, setSearch] = useState("");
@@ -34,16 +33,13 @@ const DataTable = () => {
     fetchIO();
   }, []);
 
+  console.log("userData:", userData);
+
   // Fungsi untuk format payload create
   const handleCreate = (data: any) => {
-    console.log("Data to create:", data);
-
     const formattedData = {
       username: data.username,
-      organizationId: Number(data.organizationId),
       password: data.password,
-      firstName: data.firstName,
-      lastName: data.lastName,
       isActive: data.isActive,
       roleId: Number(data.roleId),
     };
@@ -55,38 +51,17 @@ const DataTable = () => {
     const { id, ...rest } = data;
     return updateData(id, {
       username: rest.username,
-      organizationId: Number(rest.organizationId),
       password: rest.password,
-      firstName: rest.firstName,
-      lastName: rest.lastName,
       isActive: rest.isActive,
       roleId: Number(rest.roleId),
     });
-  };  
+  };
 
   const columns = useMemo(
     () => [
       {
         accessorKey: "username",
         header: "Username",
-      },
-      {
-        accessorKey: "firstName",
-        header: "First Name",
-      },
-      {
-        accessorKey: "lastName",
-        header: "Last Name",
-      },
-      {
-        accessorKey: "organizationId",
-        header: "Organization",
-        cell: (info: any) => {
-          const org = IoList?.find(
-            (org: any) => org.organization_id === info.getValue()
-          );
-          return org ? org.organization_name : "-";
-        },
       },
       {
         accessorKey: "roleId",
@@ -116,29 +91,6 @@ const DataTable = () => {
       name: "password",
       label: "Password",
       type: "password",
-      validation: { required: "Required" },
-    },
-    {
-      name: "firstName",
-      label: "First Name",
-      type: "text",
-      validation: { required: "Required" },
-    },
-    {
-      name: "lastName",
-      label: "Last Name",
-      type: "text",
-      validation: { required: "Required" },
-    },
-    {
-      name: "organizationId",
-      label: "Organization",
-      type: "select",
-      options:
-        IoList?.map((org: any) => ({
-          label: org.organization_name,
-          value: org.organization_id,
-        })) || [],
       validation: { required: "Required" },
     },
     {

@@ -395,7 +395,7 @@ const FormDetailUser: React.FC<FormDetailUserProps> = ({
               <DatePicker
                 id="valid-to"
                 {...field}
-                defaultDate={field.value || processedValues.valid_to}
+                value={field.value || processedValues.valid_to}
                 onChange={(date) => field.onChange(date)}
                 readOnly={!isEditable}
               />

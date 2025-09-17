@@ -8,6 +8,7 @@ import DynamicTable from "../../../../components/wms-components/DynamicTable";
 import {
   useStorePallet,
   useStoreIo,
+  useStoreUom,
 } from "../../../../DynamicAPI/stores/Store/MasterStore";
 
 const DataTable = () => {
@@ -19,6 +20,7 @@ const DataTable = () => {
     fetchAll: fetchPallet,
   } = useStorePallet();
 
+  const { list: uomList, fetchAll: fetchUom } = useStoreUom();
   const { list: IoList, fetchAll: fetchIO } = useStoreIo();
 
   const [search, setSearch] = useState("");
@@ -28,18 +30,25 @@ const DataTable = () => {
   useEffect(() => {
     fetchPallet();
     fetchIO();
+    fetchUom();
   }, []);
 
   // Fungsi untuk format payload create
-  const handleCreate = (data: any) => {
+  const handleCreate = async (data: any) => {
     const formattedData = {
-      ...data,
       organization_id: Number(data.organization_id),
+      pallet_code: String(data.pallet_code),
       capacity: Number(data.capacity),
       isActive: data.isActive === "true" || data.isActive === true,
-      isEmpty: data.isEmpty === "true" || data.isEmpty === true,
+      isFull: data.isFull === "true" || data.isFull === true,
+      uom: String(data.uom),
+      qr_image_url : "",
+      currentQuantity: 0,
     };
-    return createData(formattedData);
+
+    console.log("Formatted Create Data:", formattedData);
+
+    return await createData(formattedData);
   };
 
   // Fungsi untuk format payload update
@@ -48,10 +57,11 @@ const DataTable = () => {
     return updateData(id, {
       organization_id: Number(rest.organization_id),
       pallet_code: String(rest.pallet_code),
-      uom_name: String(rest.uom_name),
       capacity: Number(rest.capacity),
       isActive: rest.isActive === "true" || rest.isActive === true,
-      isEmpty: rest.isEmpty === "true" || rest.isEmpty === true,
+      isFull: rest.isFull === "true" || rest.isFull === true,
+      uom: String(rest.uom),
+      currentQuantity: Number(rest.currentQuantity),
     });
   };
 
@@ -72,20 +82,28 @@ const DataTable = () => {
         header: "Pallet Code",
       },
       {
-        accessorKey: "uom_name",
-        header: "UOM Name",
-      },
-      {
         accessorKey: "capacity",
         header: "Capacity",
       },
       {
         accessorKey: "isActive",
         header: "Active",
+        cell: ({ row }: { row: { original: any } }) =>
+          row.original.isActive ? "Active" : "Inactive",
       },
       {
-        accessorKey: "isEmpty",
-        header: "Is Empty",
+        accessorKey: "isFull",
+        header: "Is Full",
+        cell: ({ row }: { row: { original: any } }) =>
+          row.original.isFull ? "Full" : "Not Full",
+      },
+      {
+        accessorKey: "uom",
+        header: "UOM",
+      },
+      {
+        accessorKey: "currentQuantity",
+        header: "Current Qty",
       },
     ],
     [IoList]
@@ -112,12 +130,6 @@ const DataTable = () => {
       validation: { required: "Required" },
     },
     {
-      name: "uom_name",
-      label: "UOM Name",
-      type: "text",
-      validation: { required: "Required" },
-    },
-    {
       name: "capacity",
       label: "Capacity",
       type: "number",
@@ -132,23 +144,26 @@ const DataTable = () => {
         { label: "Active", value: true },
         { label: "Inactive", value: false },
       ],
-      validation: { required: "Required" },
     },
     {
-      name: "isEmpty",
-      label: "Is Empty",
+      name: "isFull",
+      label: "Is Full",
       type: "select",
       options: [
         { label: "--Select--", value: "" },
-        { label: "Yes", value: true },
-        { label: "No", value: false },
+        { label: "Full", value: true },
+        { label: "Not Full", value: false },
       ],
+    },
+    {
+      name: "uom",
+      label: "UOM",
+      type: "text",
       validation: { required: "Required" },
     },
   ];
 
-  console.log("pallet", pallet);
-  
+  console.log("uomList", uomList);
 
   return (
     <>

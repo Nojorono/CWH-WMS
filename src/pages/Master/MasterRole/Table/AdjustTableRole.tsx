@@ -4,7 +4,7 @@ import Badge from "../../../../components/ui/badge/Badge";
 import { ColumnDef } from "@tanstack/react-table";
 import TableComponent from "../../../../components/tables/MasterDataTable/TableComponent";
 import { useNavigate } from "react-router-dom";
-// import { usePagePermissions } from "../../../../utils/UserPermission/UserPagePermissions";
+import { usePagePermissions } from "../../../../utils/UserPermission/UserPagePermissions";
 
 type Role = {
   id: number;
@@ -29,7 +29,7 @@ const AdjustTableRole = ({
   onDelete,
 }: RoleTableProps) => {
   const navigate = useNavigate();
-  // const { canUpdate, canDelete, canManage } = usePagePermissions();
+  const { canUpdate, canDelete, canManage } = usePagePermissions();
 
   function navigateToUpdateRole(roleData: Role) {
     const { id } = roleData;
@@ -75,34 +75,26 @@ const AdjustTableRole = ({
         header: "Actions",
         cell: ({ row }) => (
           <div className="space-x-4">
-            {/* {canUpdate && canManage && (
-            )} */}
-            <button
-              className="text-blue-600"
-              onClick={() => {
-                const roleData = row.original;
-                navigateToUpdateRole(roleData);
-              }}
-            >
-              <FaEdit />
-            </button>
+            {canUpdate && canManage && (
+              <button
+                className="text-blue-600"
+                onClick={() => {
+                  const roleData = row.original;
+                  navigateToUpdateRole(roleData);
+                }}
+              >
+                <FaEdit />
+              </button>
+            )}
 
-            {/* {canDelete && canManage && (
-            )} */}
-            <button
-              className="text-red-600"
-              onClick={() => onDelete(row.original.id)}
-            >
-              <FaTrash />
-            </button>
-            {/* {canManage && (
-            )} */}
-            <button
-              className="text-green-600"
-              onClick={() => onDetail(row.original.id)}
-            >
-              <FaEye />
-            </button>
+            {canDelete && canManage && (
+              <button
+                className="text-red-600"
+                onClick={() => onDelete(row.original.id)}
+              >
+                <FaTrash />
+              </button>
+            )}
           </div>
         ),
       },

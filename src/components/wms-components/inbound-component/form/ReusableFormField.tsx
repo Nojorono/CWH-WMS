@@ -41,7 +41,7 @@ const ReusableFormField = ({
             <DatePicker
               id="tanggal-po"
               label=""
-              defaultDate={field.value}
+              value={field.value}
               onChange={([date]: Date[]) => field.onChange(date)}
             />
           )}

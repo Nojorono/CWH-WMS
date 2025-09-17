@@ -99,10 +99,13 @@ const DataTable = () => {
       name: "parentId",
       label: "Parent Menu",
       type: "select",
-      options: parentMenu.map((menu: any) => ({
-        label: menu.name,
-        value: menu.id,
-      })),
+      options: [
+        { label: "Tidak Ada Parent", value: "" },
+        ...parentMenu.map((menu: any) => ({
+          label: menu.name,
+          value: menu.id,
+        })),
+      ],
       placeholder: "Pilih Parent Menu (opsional)",
     },
   ];

@@ -7,7 +7,7 @@ import Checkbox from "../../../../components/form/input/Checkbox";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { showErrorToast } from "../../../../components/toast";
 import { useDebounce } from "../../../../helper/useDebounce";
-import { useEmployeeStore } from "../../../../API/store/MasterStore/MasterEmployeeStore";
+// import { useEmployeeStore } from "../../../../API/store/MasterStore/MasterEmployeeStore";
 
 /* -------------------------------------------------------------------------- */
 /*                                   Types                                    */
@@ -143,7 +143,7 @@ const FormCreateUser: React.FC<UserFormInputProps> = ({
     clearErrors, //  <-- tambahkan
   } = useForm<FormValues>({ defaultValues, mode: "onChange" });
 
-  const { checkingEmployee, employeeData } = useEmployeeStore();
+  // const { checkingEmployee, employeeData } = useEmployeeStore();
 
   /* ---------------------- cek nilai role “TSF” ---------------------- */
   const rolesValue = useWatch({ control, name: "roles" }) as {

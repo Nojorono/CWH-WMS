@@ -1,11 +1,12 @@
 export interface User {
-  username: any;
-  organizationId: number;
+  username: string;
   password: string;
-  firstName: string;
-  lastName: string;
-  isActive: string;
+  isActive: boolean;
   roleId: number;
+  employeeId?: string;
+  email?: string;
+  phone?: string;
+  organizationId?: string;
 }
 
 export type CreateUser = Omit<User, "id">;

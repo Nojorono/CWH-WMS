@@ -17,7 +17,7 @@ import {
     subWarehouseService,
     binService,
     sourceService,
-    checkerScanService
+    InboundScanService
 } from "../../services/Service/MasterService";
 
 import { Uom, CreateUom, UpdateUom } from "../../types/UomTypes";
@@ -35,7 +35,7 @@ import { CreateTransporter, Transporter, UpdateTransporter } from "../../types/T
 import { SubWarehouse, CreateSubWarehouse, UpdateSubWarehouse } from "../../types/SubWarehouseTypes";
 import { Bin, CreateBin, UpdateBin } from "../../types/MasterBinTypes";
 import { Source, CreateSource, UpdateSource } from "../../types/MasterSourceTypes";
-import { CheckerScan, CreateCheckerScan, UpdateCheckerScan } from '../../types/CheckerScanTypes'
+import { InboundScan, CreateInboundScan, UpdateInboundScan } from '../../types/InboundScanTypes.tsx'
 
 import { InboundPlanning, CreateInboundPlanning, UpdateInboundPlanning } from "../../types/InboundGoodStock.tsx";
 
@@ -123,9 +123,9 @@ export const useStoreSource = createCrudStore<Source, CreateSource, UpdateSource
 });
 
 
-export const useStoreCheckerScan = createCrudStore<CheckerScan, CreateCheckerScan, UpdateCheckerScan>({
-    name: "CheckerScan",
-    service: checkerScanService,
+export const useStoreInboundScan = createCrudStore<InboundScan, CreateInboundScan, UpdateInboundScan>({
+    name: "InboundScan",
+    service: InboundScanService,
 });
 
 export const useStoreInboundGoodStock = createCrudStore<InboundPlanning, CreateInboundPlanning, UpdateInboundPlanning>({

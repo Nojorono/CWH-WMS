@@ -15,7 +15,7 @@ import { Transporter, CreateTransporter, UpdateTransporter } from "../../types/T
 import { SubWarehouse, CreateSubWarehouse, UpdateSubWarehouse } from "../../types/SubWarehouseTypes";
 import { Bin, CreateBin, UpdateBin } from "../../types/MasterBinTypes";
 import { Source, CreateSource, UpdateSource } from "../../types/MasterSourceTypes";
-import { CheckerScan, CreateCheckerScan, UpdateCheckerScan } from '../../types/CheckerScanTypes'
+import { InboundScan, CreateInboundScan, UpdateInboundScan } from '../../types/InboundScanTypes'
 import { InboundPlanning, CreateInboundPlanning, UpdateInboundPlanning } from '../../types/InboundGoodStock'
 
 
@@ -37,6 +37,6 @@ export const TransporterService = createCrudService<Transporter, CreateTransport
 export const subWarehouseService = createCrudService<SubWarehouse, CreateSubWarehouse, UpdateSubWarehouse>("/master-warehouse-sub");
 export const binService = createCrudService<Bin, CreateBin, UpdateBin>("/master-warehouse-bin");
 export const sourceService = createCrudService<Source, CreateSource, UpdateSource>("/master-source");
-export const checkerScanService = createCrudService<CheckerScan, CreateCheckerScan, UpdateCheckerScan>("/checker-scanning/inbound-plan");
 
 export const InboundGoodStockService = createCrudService<InboundPlanning, CreateInboundPlanning, UpdateInboundPlanning>("/inbound");
+export const InboundScanService = createCrudService<InboundScan, CreateInboundScan, UpdateInboundScan>("/transaction-scan-inbound");

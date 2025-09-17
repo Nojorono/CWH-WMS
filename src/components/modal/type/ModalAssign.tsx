@@ -1,6 +1,5 @@
 import React, { useState, useMemo } from "react";
 import ModalComponent from "../ModalComponent";
-import AssignChecker from "../../../pages/Inbound/InboundPlanning/Screen/AssignChecker";
 import Button from "../../ui/button/Button";
 import { FaEye, FaPlus } from "react-icons/fa";
 
@@ -34,7 +33,7 @@ const ReusableFormModal: React.FC<ReusableFormModalProps> = ({
         title={isEditMode ? "Update Detail" : title}
         size="medium"
       >
-        <AssignChecker formFields={formFields} parmeters={parmeters} onClose={onClose} />
+        content
       </ModalComponent>
     </>
   );

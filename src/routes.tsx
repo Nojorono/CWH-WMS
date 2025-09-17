@@ -27,9 +27,9 @@ import {
   MasterBin,
   MasterSource,
   MasterSupplier,
+  Inventory,
 } from "./utils/PagesComponent";
-
-import dummyRoutes from "./helper/dummyRoutes";
+// import dummyRoutes from "./helper/dummyRoutes";
 
 const DefaultPage = () => (
   <div style={{ textAlign: "center", marginTop: "50px" }}>
@@ -79,9 +79,7 @@ export function AppRoutes() {
       { path: "create", element: <CreateRole /> },
       { path: "update", element: <UpdateRole /> },
     ],
-    "/inbound_planning": [
-      { path: "process", element: <InboundProcess /> },
-    ],
+    "/inbound_planning": [{ path: "process", element: <InboundProcess /> }],
     // "/good_receiving": [
     //   { path: "create", element: <CreateInbound /> },
     //   { path: "detail", element: <DetailInbound /> },
@@ -105,6 +103,8 @@ export function AppRoutes() {
       "/master_sub_warehouse": <MasterSubWarehouse />,
       "/master_bin": <MasterBin />,
       "/master_source": <MasterSource />,
+
+      "/inventory": <Inventory />,
     };
     return map[path] || <DefaultPage />;
   };
