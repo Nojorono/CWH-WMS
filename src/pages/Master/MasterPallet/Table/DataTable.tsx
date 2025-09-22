@@ -42,7 +42,7 @@ const DataTable = () => {
       isActive: data.isActive === "true" || data.isActive === true,
       isFull: data.isFull === "true" || data.isFull === true,
       uom: String(data.uom),
-      qr_image_url : "",
+      qr_image_url: "",
       currentQuantity: 0,
     };
 
@@ -86,6 +86,10 @@ const DataTable = () => {
         header: "Capacity",
       },
       {
+        accessorKey: "currentQuantity",
+        header: "Current Qty",
+      },
+      {
         accessorKey: "isActive",
         header: "Active",
         cell: ({ row }: { row: { original: any } }) =>
@@ -100,13 +104,18 @@ const DataTable = () => {
       {
         accessorKey: "uom",
         header: "UOM",
+        cell: ({ row }: { row: { original: any } }) => {
+          const uom = uomList.find((item: any) => item.id === row.original.uom);
+          return uom ? uom.name : row.original.uom;
+        },
       },
+
       {
-        accessorKey: "currentQuantity",
-        header: "Current Qty",
+        accessorKey: "qr_image_url",
+        header: "QR Code",
       },
     ],
-    [IoList]
+    [IoList, uomList]
   );
 
   const formFields = [
@@ -158,12 +167,17 @@ const DataTable = () => {
     {
       name: "uom",
       label: "UOM",
-      type: "text",
+      type: "select",
+      options: [
+        { label: "--Select--", value: "" },
+        ...uomList.map((item: any) => ({
+          label: item.name,
+          value: item.id,
+        })),
+      ],
       validation: { required: "Required" },
     },
   ];
-
-  console.log("uomList", uomList);
 
   return (
     <>

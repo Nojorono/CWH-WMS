@@ -10,6 +10,7 @@ import { ItemForm } from "../formTypes";
 import {
   useStoreItem,
   useStoreUom,
+  useStoreClassification,
 } from "../../../../../../DynamicAPI/stores/Store/MasterStore";
 import Select from "../../../../../../components/form/Select";
 
@@ -24,11 +25,16 @@ export default function AddItemModal({
 }) {
   const { fetchAll, list } = useStoreItem();
   const { fetchAll: fetchAllUom, list: uomList } = useStoreUom();
+  const { fetchAll: fetchAllClassification, list: classificationList } =
+    useStoreClassification();
+
+  console.log("classificationList", classificationList);
 
   useEffect(() => {
     fetchAll();
     fetchAllUom();
-  }, [fetchAll, fetchAllUom]);
+    fetchAllClassification();
+  }, [fetchAll, fetchAllUom, fetchAllClassification]);
 
   const [tempSku, setTempSku] = useState("");
   const [tempQty, setTempQty] = useState<number | "">("");
@@ -94,7 +100,9 @@ export default function AddItemModal({
           <div className="grid grid-cols-1 gap-3">
             {/* SKU Dropdown */}
             <div className="flex flex-col">
-              <label className="text-xs text-slate-600 font-bold mb-1">SKU</label>
+              <label className="text-xs text-slate-600 font-bold mb-1">
+                SKU
+              </label>
               <Select
                 options={list.map((m: any) => ({
                   value: m.sku,
@@ -172,7 +180,10 @@ export default function AddItemModal({
                 Classification
               </label>
               <Select
-                options={classificationOptions}
+                options={classificationList.map((c: any) => ({
+                  value: c.id,
+                  label: c.classification_name,
+                }))}
                 value={tempClassification}
                 onChange={setTempClassification}
                 placeholder="-- Classification --"

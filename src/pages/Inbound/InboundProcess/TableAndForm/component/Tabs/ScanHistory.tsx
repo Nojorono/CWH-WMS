@@ -21,6 +21,7 @@ const DataTable = ({ inboundID }: { inboundID?: string }) => {
   useEffect(() => {
     fetchUsingParam({
       inbound_id: inboundID,
+      // status: "PENDING",
     });
   }, [fetchUsingParam]);
 

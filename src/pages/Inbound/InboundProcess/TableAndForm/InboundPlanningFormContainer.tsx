@@ -20,7 +20,7 @@ const emptyFormValues: FormValues = {
   inbound_type: "",
   arrival_date: "",
   deliveryOrders: [
-    { do_no: "", date: "", attachment: null, pos: [{ po_no: "", items: [] }] },
+    { do_no: "", date: "", attachment: "", pos: [{ po_no: "", items: [] }] },
   ],
   id: "",
 };
@@ -226,7 +226,7 @@ export default function InboundPlanningFormContainer() {
         methods={methods}
         doFields={doFields}
         appendDO={() =>
-          append({ do_no: "", date: "", attachment: null, pos: [] })
+          append({ do_no: "", date: "", attachment: "", pos: [] })
         }
         removeDO={remove}
         isCreateMode={isCreateMode}

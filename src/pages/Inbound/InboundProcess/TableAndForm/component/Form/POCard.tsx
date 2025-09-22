@@ -117,7 +117,7 @@ export default function POCard({
     <div className="border rounded-md p-3 bg-slate-50">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3 items-end">
         <div>
-          <label className="block text-xs text-slate-600 mb-1">PO No</label>
+          <label className="block text-xs text-slate-600 mb-1">Nomor PO</label>
           <div className="flex gap-2">
             <input
               className={`${inputCls} ${getDisabledCls(!isEditMode)}`}
@@ -142,7 +142,7 @@ export default function POCard({
         </div>
 
         <div>
-          <label className="block text-xs text-slate-600 mb-1">PO Date</label>
+          <label className="block text-xs text-slate-600 mb-1">Tanggal PO</label>
           <Controller
             control={control}
             name={`deliveryOrders.${doIndex}.pos.${posIndex}.po_date` as const}

@@ -28,6 +28,8 @@ import {
   MasterSource,
   MasterSupplier,
   Inventory,
+  PutAway,
+  PutAwayProcess,
 } from "./utils/PagesComponent";
 // import dummyRoutes from "./helper/dummyRoutes";
 
@@ -80,6 +82,7 @@ export function AppRoutes() {
       { path: "update", element: <UpdateRole /> },
     ],
     "/inbound_planning": [{ path: "process", element: <InboundProcess /> }],
+    "/putaway": [{ path: "process", element: <PutAwayProcess /> }],
   };
 
   const getElementByPath = (path: string): JSX.Element | null => {
@@ -89,6 +92,7 @@ export function AppRoutes() {
       "/master_role": <MasterRole />,
       "/master_pallet": <MasterPallet />,
       "/inbound_planning": <Inbound />,
+      "/putaway": <PutAway />,
       "/master_uom": <MasterUOM />,
       "/master_io": <MasterIO />,
       "/master_warehouse": <MasterWarehouse />,
@@ -99,7 +103,6 @@ export function AppRoutes() {
       "/master_sub_warehouse": <MasterZone />,
       "/master_bin": <MasterBin />,
       "/master_source": <MasterSource />,
-
       "/inventory": <Inventory />,
     };
     return map[path] || <DefaultPage />;
