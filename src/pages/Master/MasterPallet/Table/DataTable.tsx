@@ -45,9 +45,6 @@ const DataTable = () => {
       qr_image_url: "",
       currentQuantity: 0,
     };
-
-    console.log("Formatted Create Data:", formattedData);
-
     return await createData(formattedData);
   };
 
@@ -64,6 +61,9 @@ const DataTable = () => {
       currentQuantity: Number(rest.currentQuantity),
     });
   };
+
+  const [qrModalOpen, setQrModalOpen] = useState(false);
+  const [qrImageUrl, setQrImageUrl] = useState<string | null>(null);
 
   const columns = useMemo(
     () => [
@@ -109,10 +109,24 @@ const DataTable = () => {
           return uom ? uom.name : row.original.uom;
         },
       },
-
       {
         accessorKey: "qr_image_url",
         header: "QR Code",
+        cell: ({ row }: { row: { original: any } }) =>
+          row.original.qr_image_url ? (
+            <button
+              className="text-blue-600 underline"
+              onClick={() => {
+                setQrImageUrl(row.original.qr_image_url);
+                setQrModalOpen(true);
+              }}
+              type="button"
+            >
+              {row.original.qr_image_url ? "Lihat QR" : "No QR"}
+            </button>
+          ) : (
+            <span className="text-gray-400">No QR</span>
+          ),
       },
     ],
     [IoList, uomList]
@@ -220,6 +234,33 @@ const DataTable = () => {
         getRowId={(row) => row.id}
         title="Form Data"
       />
+
+      {qrModalOpen && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-white bg-opacity-40">
+          <div className="bg-white rounded shadow-lg p-4 relative max-w-xs w-full">
+            <button
+              className="absolute top-2 right-2 text-gray-500"
+              onClick={() => setQrModalOpen(false)}
+            >
+              ✕
+            </button>
+            {/* Tampilkan pallet_code di atas gambar QR */}
+            <div className="mb-2 font-semibold">
+              {pallet.find((item: any) => item.qr_image_url === qrImageUrl)
+                ?.pallet_code || "-"}
+            </div>
+            {qrImageUrl ? (
+              <img
+                src={qrImageUrl}
+                alt="QR Code"
+                className="max-w-full max-h-80 mx-auto"
+              />
+            ) : (
+              <div>Tidak ada gambar</div>
+            )}
+          </div>
+        </div>
+      )}
     </>
   );
 };

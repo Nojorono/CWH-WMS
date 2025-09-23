@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from "react";
-import { FaPlus } from "react-icons/fa";
+import { FaPlus, FaSyncAlt } from "react-icons/fa";
 import Input from "../../../../components/form/input/InputField";
 import Label from "../../../../components/form/Label";
 import Button from "../../../../components/ui/button/Button";
@@ -9,6 +9,8 @@ import {
   useStoreItem,
   useStoreIo,
 } from "../../../../DynamicAPI/stores/Store/MasterStore";
+import { showErrorToast, showSuccessToast } from "../../../../components/toast";
+import { EndPoint } from "../../../../utils/EndPoint";
 
 const DataTable = () => {
   const {
@@ -59,6 +61,37 @@ const DataTable = () => {
       bks_per_press: Number(rest.bks_per_press),
       btg_per_bks: Number(rest.btg_per_bks),
     });
+  };
+  const [isLoadingFetch, setIsLoadingFetch] = useState(false);
+
+  const handleFetchItem = async () => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      alert("Token not found");
+      return;
+    }
+    setIsLoadingFetch(true);
+    try {
+      const response = await fetch(
+        `${EndPoint}master-item/sync-from-meta-oracle`,
+        {
+          method: "POST",
+          headers: {
+            accept: "*/*",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      if (!response.ok) {
+        throw new Error("Failed to fetch item from Meta Oracle");
+      }
+      showSuccessToast("Sync from Meta Oracle successful");
+      fetchAll();
+    } catch (error: any) {
+      showErrorToast(error.message || "Error syncing from Meta Oracle");
+    } finally {
+      setIsLoadingFetch(false);
+    }
   };
 
   const columns = useMemo(
@@ -164,6 +197,7 @@ const DataTable = () => {
               type="text"
               id="search"
               placeholder="🔍 Masukan data.."
+              disabled={isLoadingFetch}
             />
           </div>
           <div className="space-x-4">
@@ -171,29 +205,48 @@ const DataTable = () => {
               variant="primary"
               size="sm"
               onClick={() => setCreateModalOpen(true)}
+              disabled={isLoadingFetch}
             >
               <FaPlus className="mr-2" /> Tambah Data
+            </Button>
+
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={() => handleFetchItem()}
+              disabled={isLoadingFetch}
+            >
+              <FaSyncAlt className="mr-2" /> Sync Data from Meta
             </Button>
           </div>
         </div>
       </div>
 
-      <DynamicTable
-        data={items}
-        globalFilter={debouncedSearch}
-        isCreateModalOpen={isCreateModalOpen}
-        onCloseCreateModal={() => setCreateModalOpen(false)}
-        columns={columns}
-        formFields={formFields}
-        onSubmit={handleCreate}
-        onUpdate={handleUpdate}
-        onDelete={async (id) => {
-          await deleteData(id);
-        }}
-        onRefresh={fetchAll}
-        getRowId={(row) => row.id}
-        title="Form Data"
-      />
+      {isLoadingFetch ? (
+        <div className="flex justify-center items-center py-10">
+          <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-blue-500"></div>
+          <span className="ml-4 text-blue-500 font-semibold">
+            Syncing data...
+          </span>
+        </div>
+      ) : (
+        <DynamicTable
+          data={items}
+          globalFilter={debouncedSearch}
+          isCreateModalOpen={isCreateModalOpen}
+          onCloseCreateModal={() => setCreateModalOpen(false)}
+          columns={columns}
+          formFields={formFields}
+          onSubmit={handleCreate}
+          onUpdate={handleUpdate}
+          onDelete={async (id) => {
+            await deleteData(id);
+          }}
+          onRefresh={fetchAll}
+          getRowId={(row) => row.id}
+          title="Form Data"
+        />
+      )}
     </>
   );
 };
