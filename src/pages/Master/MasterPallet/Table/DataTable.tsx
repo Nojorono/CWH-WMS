@@ -68,6 +68,11 @@ const DataTable = () => {
   const columns = useMemo(
     () => [
       {
+        accessorKey: "id",
+        header: "ID",
+        selectedRow: true,
+      },
+      {
         accessorKey: "organization_id",
         header: "Organization",
         cell: ({ row }: { row: { original: any } }) => {

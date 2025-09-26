@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import {
   useReactTable,
   getCoreRowModel,
@@ -12,20 +12,19 @@ import PaginationControls from "./Pagination";
 
 interface TableComponentProps<T> {
   data: T[];
-  columns: ColumnDef<T>[];
+  columns: (ColumnDef<T> & { selectedRow?: boolean })[]; // 👈 custom flag
   globalFilter?: string;
   setGlobalFilter?: (value: string) => void;
-  onDetail?: (id?: any) => void;
-  enableSelection?: boolean;
+  onSelectionChange?: (selectedIds: any[]) => void;
   pageSize?: number;
 }
 
-const TableComponent = <T extends { id?: any }>({
+const TableComponent = <T extends { [key: string]: any }>({
   data,
   columns,
   globalFilter,
   setGlobalFilter,
-  enableSelection = true,
+  onSelectionChange,
   pageSize,
 }: TableComponentProps<T>) => {
   const [pagination, setPagination] = useState(() => ({
@@ -33,15 +32,43 @@ const TableComponent = <T extends { id?: any }>({
     pageSize: pageSize ?? 20,
   }));
 
+  // 🔥 cari kolom yang punya flag selectedRow
+  const selectionColumn = columns.find((col: any) => col.selectedRow);
+
+  const enhancedColumns = useMemo<ColumnDef<T>[]>(() => {
+    if (!selectionColumn) return columns;
+
+    const accessorKey = (selectionColumn as any).accessorKey;
+
+    return [
+      {
+        id: "select",
+        header: ({ table }) => (
+          <input
+            type="checkbox"
+            checked={table.getIsAllPageRowsSelected()}
+            onChange={table.getToggleAllPageRowsSelectedHandler()}
+          />
+        ),
+        cell: ({ row }) => (
+          <input
+            type="checkbox"
+            checked={row.getIsSelected()}
+            disabled={!row.getCanSelect()}
+            onChange={row.getToggleSelectedHandler()}
+          />
+        ),
+      },
+      ...columns,
+    ];
+  }, [columns, selectionColumn]);
+
   const table = useReactTable<T>({
     data,
-    columns,
+    columns: enhancedColumns,
     state: {
       globalFilter,
       pagination,
-      columnVisibility: {
-        select: enableSelection,
-      },
     },
     onPaginationChange: setPagination,
     onGlobalFilterChange: setGlobalFilter,
@@ -49,8 +76,19 @@ const TableComponent = <T extends { id?: any }>({
     getPaginationRowModel: getPaginationRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getSortedRowModel: getSortedRowModel(),
-    enableRowSelection: enableSelection,
+    enableRowSelection: !!selectionColumn, // 👈 aktif kalau ada selectedRow
   });
+
+  // 🔥 kirimkan ID terpilih ke parent
+  useEffect(() => {
+    if (onSelectionChange && selectionColumn) {
+      const accessorKey = (selectionColumn as any).accessorKey;
+      const selectedIds = table
+        .getSelectedRowModel()
+        .rows.map((row) => row.original[accessorKey]);
+      onSelectionChange(selectedIds);
+    }
+  }, [table.getSelectedRowModel().rows, selectionColumn, onSelectionChange]);
 
   return (
     <>

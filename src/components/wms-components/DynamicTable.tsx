@@ -1,9 +1,9 @@
-import React, { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { ColumnDef } from "@tanstack/react-table";
 import TableComponent from "../../components/tables/MasterDataTable/TableComponent";
-import Badge from "../../components/ui/badge/Badge";
-import { FaEye, FaTrash } from "react-icons/fa";
+import { FaEye, FaPrint, FaTrash } from "react-icons/fa";
 import DynamicFormModal from "./DynamicFormModal";
+import Badge from "../../components/ui/badge/Badge";
 
 interface Props {
   data: any[];
@@ -80,6 +80,10 @@ const DynamicTable = ({
     onCloseCreateModal();
   };
 
+  const [selectedIds, setSelectedIds] = useState<any[]>([]);
+
+  console.log("Selected IDs:", selectedIds);
+
   return (
     <>
       <DynamicFormModal
@@ -94,10 +98,18 @@ const DynamicTable = ({
         title={title}
       />
 
+      <button
+        onClick={() => console.log("Selected IDs:", selectedIds)}
+        className="text-red-500"
+      >
+        <FaPrint />
+      </button>
+
       <TableComponent
         data={data}
         columns={enhancedColumns}
         globalFilter={globalFilter}
+        onSelectionChange={setSelectedIds}
       />
     </>
   );

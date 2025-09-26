@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { FaPlus } from "react-icons/fa";
 import Input from "../../../../../../components/form/input/InputField";
 import Label from "../../../../../../components/form/Label";
@@ -25,14 +25,11 @@ const DataTable = ({ inboundID }: { inboundID?: string }) => {
     });
   }, [fetchUsingParam]);
 
-
   const handleFetch = () => {
     fetchUsingParam({
       inbound_id: inboundID,
     });
   };
-
-  console.log("InboundScan", InboundScan);
 
   const columns = useMemo(
     () => [

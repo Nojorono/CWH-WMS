@@ -74,7 +74,7 @@ const MainTable = () => {
           </div>
 
           <div className="space-x-4">
-            <Button
+            <Button 
               size="sm"
               variant="primary"
               startIcon={<FaPlus className="size-5" />}
@@ -107,7 +107,7 @@ const MainTable = () => {
           </div>
         </div>
       </div>
-
+       
       <AdjustTable
         data={inboundPrincipalData}
         globalFilter={debouncedFilter}

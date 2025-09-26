@@ -53,12 +53,16 @@ const AdjustTable = ({
         header: "Status",
         cell: ({ row }) => {
           const status = row.original.status;
-          let color: "default" | "info" | "warning" | "success" | undefined;
-          if (status === "CREATED") color = "default"; // abu
+          let color: "grey" | "info" | "warning" | "success" | undefined;
+          if (status === "CREATED") color = "grey"; // abu
           else if (status === "UNLOADING") color = "info"; // biru
           else if (status === "INSPECTION") color = "warning"; // kuning/orange
           else if (status === "RECEIVED") color = "success"; // hijau
-          return <Badge variant="light">{status}</Badge>;
+          return (
+            <Badge variant="solid" color={color}>
+              {status}
+            </Badge>
+          );
         },
       },
       {
