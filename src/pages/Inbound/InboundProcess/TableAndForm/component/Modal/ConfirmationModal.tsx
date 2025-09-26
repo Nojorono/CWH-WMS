@@ -193,7 +193,7 @@ export default function ConfirmationModal({
                 </div>
               </div>
 
-              <h3 className="font-medium text-gray-700 mb-2">Summary SKU</h3>
+              <h3 className="font-medium text-gray-700 mb-2">Summary Qty SKU</h3>
               <ul className="text-sm list-disc list-inside space-y-1 text-gray-700">
                 {Object.entries(skuSummary).map(([desc, qty]) => (
                   <li key={desc}>
@@ -213,7 +213,7 @@ export default function ConfirmationModal({
                   <thead className="bg-gray-100 text-gray-700">
                     <tr>
                       <th className="px-3 py-2 border text-center"></th>
-                      <th className="px-3 py-2 border">DO No</th>
+                      <th className="px-3 py-2 border">Nomor Surat Jalan</th>
                       <th className="px-3 py-2 border text-center">Total PO</th>
                       <th className="px-3 py-2 border text-center">
                         Total SKU

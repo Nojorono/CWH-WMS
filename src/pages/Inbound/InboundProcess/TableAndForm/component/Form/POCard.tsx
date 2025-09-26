@@ -10,6 +10,7 @@ import { toLocalISOString } from "../../../../../../helper/FormatDate";
 import { FaSearch } from "react-icons/fa";
 
 import { useStoreItem } from "../../../../../../DynamicAPI/stores/Store/MasterStore";
+import { showErrorToast } from "../../../../../../components/toast";
 
 export default function POCard({
   doIndex,
@@ -78,6 +79,10 @@ export default function POCard({
       );
       if (!res.ok) throw new Error("Gagal fetch PO");
       const data = await res.json();
+      if (Array.isArray(data) && data.length === 0) {
+        showErrorToast(`Detail PO ${poNo} tidak ditemukan di META.`);
+        return;
+      }
 
       if (data && data.length > 0) {
         const po = data[0];
@@ -90,20 +95,45 @@ export default function POCard({
           );
         }
 
-        // Map items ke bentuk ItemForm
-        const items: ItemForm[] = po.ITEM.map((it: any) => ({
-          item_id: it.PO_LINE_NUM.toString(),
-          sku: it.SKU,
-          description: it.DESKRIPSI_ITEM_LINE_PO,
-          item_number: it.KODE_ITEM,
-          qty: Number(it.PO_LINE_QUANTITY),
-          uom: it.UOM,
-          expired_date: "",
-          classification: "",
-        }));
+        // Cek mapping item dengan masterItems (list)
+        const items: ItemForm[] = [];
+        let notFound: string[] = [];
 
-        // Replace items di form
-        replaceItems(items);
+        po.ITEM.forEach((it: any) => {
+          // cari di master list berdasarkan kode item atau SKU
+          const master = list.find(
+            (m) => m.item_number === it.KODE_ITEM || m.sku === it.SKU
+          );
+
+          if (!master) {
+            notFound.push(`${it.KODE_ITEM} (${it.DESKRIPSI_ITEM_LINE_PO})`);
+          } else {
+            items.push({
+              item_id: String(master.id ?? ""),
+              item_name: master.description ?? "", // wajib isi karena di type tidak optional
+              sku: master.sku ?? "",
+              item_number: master.item_number ?? "", // ✅ fallback dari null jadi ""
+              description: master.description ?? "",
+              qty: Number(it.PO_LINE_QUANTITY),
+              uom: it.UOM ?? "",
+              expired_date: "",
+              classification: "",
+              qty_plan: function (qty_plan: any): number {
+                throw new Error("Function not implemented.");
+              },
+            });
+          }
+        });
+
+        if (notFound.length > 0) {
+          showErrorToast(
+            `Item berikut tidak ada di Master Item:\n- ${notFound.join("\n- ")}`
+          );
+        }
+
+        if (items.length > 0) {
+          replaceItems(items);
+        }
       }
     } catch (err) {
       console.error(err);
@@ -120,7 +150,7 @@ export default function POCard({
           <label className="block text-xs text-slate-600 mb-1">Nomor PO</label>
           <div className="flex gap-2">
             <input
-              className={`${inputCls} ${getDisabledCls(!isEditMode)}`}
+              className={`${inputCls} ${getDisabledCls(!isEditMode)}  w-40 md:w-60`}
               {...register(
                 `deliveryOrders.${doIndex}.pos.${posIndex}.po_no` as const
               )}
@@ -135,14 +165,16 @@ export default function POCard({
                 disabled={!isEditMode || loading}
               >
                 <FaSearch />
-                {loading ? "Loading..." : "Search"}
+                {loading ? "Loading..." : "Cari PO"}
               </Button>
             )}
           </div>
         </div>
 
         <div>
-          <label className="block text-xs text-slate-600 mb-1">Tanggal PO</label>
+          <label className="block text-xs text-slate-600 mb-1">
+            Tanggal PO
+          </label>
           <Controller
             control={control}
             name={`deliveryOrders.${doIndex}.pos.${posIndex}.po_date` as const}

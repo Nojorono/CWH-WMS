@@ -19,6 +19,7 @@ const emptyFormValues: FormValues = {
   destination: "",
   inbound_type: "",
   arrival_date: "",
+  flag_validated: undefined,
   deliveryOrders: [
     { do_no: "", date: "", attachment: "", pos: [{ po_no: "", items: [] }] },
   ],
@@ -70,6 +71,8 @@ function mapDetailToFormValues(detail: any): FormValues {
 
 // --- Mapper Form → API payload
 function mapToPayload(data: FormValues): CreateInboundPlanning {
+  console.log("mapToPayload data", data);
+
   const inboundType =
     typeof data.inbound_type === "string"
       ? data.inbound_type
@@ -97,7 +100,7 @@ function mapToPayload(data: FormValues): CreateInboundPlanning {
         inbound_po_date: po.po_date
           ? toLocalISOString(new Date(po.po_date))
           : "",
-        flag_validated: false,
+        flag_validated: doItem.flag_validated ?? false, // <-- ensure flag_validated is included
         inbound_items: po.items.map((item) => ({
           item_id: item.item_id ?? "",
           quantity: item.qty ? Number(item.qty) : 0,
@@ -198,26 +201,26 @@ export default function InboundPlanningFormContainer() {
   };
 
   const onFinalSubmit = async (data: FormValues) => {
-    const payload = mapToPayload(data);
-
-    console.log("Payload to submit:", payload);
-
+    const payload = mapToPayload(data);    
     const id = dataInbound?.id;
-    if (isCreateMode) {
-      const res = await createData(payload);
-      if (res?.success) {
-        reset(emptyFormValues);
-        setIsConfirmOpen(false);
-        navigate("/inbound_planning");
-      }
-    } else if (isEditMode && id) {
-      const res = await updateData(id, payload);
-      if (res?.success) {
-        reset(emptyFormValues);
-        setIsConfirmOpen(false);
-        navigate("/inbound_planning");
-      }
-    }
+
+    console.log("Final submit payload:", payload, " | id:", id);
+    
+    // if (isCreateMode) {
+    //   const res = await createData(payload);
+    //   if (res?.success) {
+    //     reset(emptyFormValues);
+    //     setIsConfirmOpen(false);
+    //     navigate("/inbound_planning");
+    //   }
+    // } else if (isEditMode && id) {
+    //   const res = await updateData(id, payload);
+    //   if (res?.success) {
+    //     reset(emptyFormValues);
+    //     setIsConfirmOpen(false);
+    //     navigate("/inbound_planning");
+    //   }
+    // }
   };
 
   return (

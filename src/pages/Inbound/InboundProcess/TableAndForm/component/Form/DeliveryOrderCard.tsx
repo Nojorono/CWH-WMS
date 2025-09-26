@@ -4,12 +4,22 @@ import { inputCls } from "../constants";
 import POCard from "./POCard";
 import Button from "../../../../../../components/ui/button/Button";
 import DatePicker from "../../../../../../components/form/date-picker";
-import { FaPlus, FaTrash, FaChevronDown, FaChevronRight } from "react-icons/fa";
+import {
+  FaPlus,
+  FaTrash,
+  FaChevronDown,
+  FaChevronRight,
+  FaSearch,
+} from "react-icons/fa";
 import { useEffect, useRef, useState } from "react";
 import { toLocalISOString } from "../../../../../../helper/FormatDate";
 import { uploadFileToS3 } from "../Helper/uploadFileToS3";
 import { deleteFileFromS3 } from "../Helper/deleteFileFromS3";
-import { showErrorToast } from "../../../../../../components/toast";
+import {
+  showErrorToast,
+  showSuccessToast,
+} from "../../../../../../components/toast";
+import { EndPoint } from "../../../../../../utils/EndPoint";
 
 export default function DeliveryOrderCard({
   doIndex,
@@ -99,6 +109,78 @@ export default function DeliveryOrderCard({
 
   const fileUrl = watch(`deliveryOrders.${doIndex}.attachment`);
 
+  const handleCheckDO = async () => {
+    const doNo = watch(`deliveryOrders.${doIndex}.do_no`);
+    if (!doNo) {
+      showErrorToast("No Surat Jalan wajib diisi");
+      return;
+    }
+    const token = localStorage.getItem("token");
+    if (!token) {
+      showErrorToast("Token tidak ditemukan");
+      return;
+    }
+    try {
+      const res = await fetch(`${EndPoint}inbound/do-validation/${doNo}`, {
+        method: "GET",
+        headers: {
+          accept: "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const data = await res.json();
+
+      console.log("DO validation response:", data);
+
+      // Jika data.data.data adalah array kosong, anggap tidak tervalidasi
+      if (
+        res.ok &&
+        data?.success &&
+        data?.data?.status &&
+        Array.isArray(data?.data?.data) &&
+        data?.data?.data.length > 0
+      ) {
+        const daftarPO = data?.data?.data?.[0]?.DAFTAR_NO_PO;
+        const jmlPO = data?.data?.data?.[0]?.JML_NO_PO;
+
+        setValue(`deliveryOrders.${doIndex}.flag_validated`, true, {
+          shouldValidate: true,
+        });
+
+        showSuccessToast(
+          `Validasi berhasil: ${
+            data?.data?.message || "Berhasil"
+          }\nPO: ${daftarPO}\nJumlah PO: ${jmlPO}`
+        );
+      } else {
+        setValue(`deliveryOrders.${doIndex}.flag_validated`, false, {
+          shouldValidate: true,
+        });
+        // Jika array kosong, tampilkan pesan khusus
+        if (
+          res.ok &&
+          data?.success &&
+          data?.data?.status &&
+          Array.isArray(data?.data?.data) &&
+          data?.data?.data.length === 0
+        ) {
+          showErrorToast(
+            "Surat Jalan tidak ditemukan di database (tidak tervalidasi)"
+          );
+        } else {
+          showErrorToast(
+            data?.data?.message || data?.message || "Validasi gagal"
+          );
+        }
+      }
+    } catch (err) {
+      setValue(`deliveryOrders.${doIndex}.flag_validated`, false, {
+        shouldValidate: true,
+      });
+      showErrorToast("Gagal cek Surat Jalan");
+    }
+  };
+
   return (
     <div className="bg-white rounded-lg shadow p-3">
       <details ref={detailsRef}>
@@ -147,13 +229,27 @@ export default function DeliveryOrderCard({
               <label className="block text-xs text-slate-600 mb-1">
                 No Surat Jalan <span className="text-red-500">*</span>
               </label>
-              <input
-                {...register(`deliveryOrders.${doIndex}.do_no` as const, {
-                  required: "No Surat Jalan wajib diisi",
-                })}
-                className={inputClass(!!getError("do_no"))}
-                disabled={!isEditMode}
-              />
+              <div className="flex gap-2">
+                <input
+                  {...register(`deliveryOrders.${doIndex}.do_no` as const, {
+                    required: "No Surat Jalan wajib diisi",
+                  })}
+                  className={`${inputClass(!!getError("do_no"))} w-40 md:w-60`} // atur lebar di sini
+                  disabled={!isEditMode}
+                />
+                <Button
+                  type="button"
+                  size="xsm"
+                  variant="primary"
+                  onClick={() => {
+                    handleCheckDO();
+                  }}
+                  disabled={!isEditMode}
+                >
+                  <FaSearch />
+                  Cek Surat Jalan
+                </Button>
+              </div>
               {getError("do_no") && (
                 <p className="text-red-500 text-xs mt-1">
                   {getError("do_no")?.message as string}

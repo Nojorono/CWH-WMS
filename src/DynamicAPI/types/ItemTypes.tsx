@@ -1,5 +1,5 @@
 export interface Item {
-  id?: string;
+  id?: string | number;
   sku: string;
   item_number?: string | null;
   description: string;

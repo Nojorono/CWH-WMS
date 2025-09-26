@@ -12,6 +12,7 @@ export type ItemForm = {
 };
 
 export type POForm = {
+    flag_validated?: boolean;
     po_no: string;
     po_date?: string;
     items: ItemForm[];
@@ -22,6 +23,7 @@ export type DOForm = {
     date?: string;
     attachment?: string;
     pos: POForm[];
+    flag_validated?: boolean;
 };
 
 export type FormValues = {
@@ -36,4 +38,5 @@ export type FormValues = {
     driver_phone?: string;
     arrival_date?: string;
     deliveryOrders: DOForm[];
+    flag_validated?: boolean;
 };

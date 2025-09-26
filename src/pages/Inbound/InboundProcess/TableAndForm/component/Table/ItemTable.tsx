@@ -6,12 +6,11 @@ import {
 } from "@tanstack/react-table";
 import { useFormContext } from "react-hook-form";
 import { ItemForm, FormValues } from "../formTypes";
-import { classificationOptions } from "../constants";
 import {
   useStoreItem,
   useStoreUom,
 } from "../../../../../../DynamicAPI/stores/Store/MasterStore";
-import { use, useEffect } from "react";
+import { useEffect } from "react";
 
 export default function ItemTable({
   data,
@@ -30,10 +29,10 @@ export default function ItemTable({
   const { fetchAll: fetchAllUom, list: uomList } = useStoreUom();
   const { fetchAll: fetchAllItem, list: itemList } = useStoreItem();
 
-  // useEffect(() => {
-  //   fetchAllUom();
-  //   fetchAllItem();
-  // }, [fetchAllUom, fetchAllItem]);
+  useEffect(() => {
+    fetchAllUom();
+    fetchAllItem();
+  }, [fetchAllUom, fetchAllItem]);
 
   const columns: ColumnDef<ItemForm>[] = [
     {
@@ -49,12 +48,46 @@ export default function ItemTable({
     {
       accessorKey: "qty",
       header: "Qty Plan",
-      cell: (info) => <div>{info.getValue() as string}</div>,
+      cell: (info) => {
+        const rowIndex = info.row.index;
+        return isEditMode ? (
+          <input
+            type="number"
+            className="border px-2 py-1 w-20 text-right rounded"
+            {...register(
+              `deliveryOrders.${doIndex}.pos.${posIndex}.items.${rowIndex}.qty` as const,
+              { valueAsNumber: true }
+            )}
+          />
+        ) : (
+          <div>{info.getValue() as string}</div>
+        );
+      },
     },
     {
       accessorKey: "uom",
       header: "UoM",
-      cell: (info) => <div>{info.getValue() as string}</div>,
+      cell: (info) => {
+        const rowIndex = info.row.index;
+        return isEditMode ? (
+          <select
+            className="border px-2 py-1 rounded"
+            {...register(
+              `deliveryOrders.${doIndex}.pos.${posIndex}.items.${rowIndex}.uom` as const,
+              { required: "UoM wajib dipilih" }
+            )}
+          >
+            <option value="">-- Select UoM --</option>
+            {uomList.map((u) => (
+              <option key={u.id} value={u.code}>
+                {u.name}
+              </option>
+            ))}
+          </select>
+        ) : (
+          <div>{info.getValue() as string}</div>
+        );
+      },
     },
     // Only show actions column in edit mode
     ...(isEditMode

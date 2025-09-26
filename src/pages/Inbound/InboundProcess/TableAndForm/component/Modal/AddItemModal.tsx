@@ -28,8 +28,6 @@ export default function AddItemModal({
   const { fetchAll: fetchAllClassification, list: classificationList } =
     useStoreClassification();
 
-  console.log("classificationList", classificationList);
-
   useEffect(() => {
     fetchAll();
     fetchAllUom();
