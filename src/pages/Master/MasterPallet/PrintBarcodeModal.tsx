@@ -1,7 +1,7 @@
 // PrintBarcodeModal.tsx
 import React, { useState, useEffect } from "react";
 import Barcode from "react-barcode";
-import { QRCodeCanvas } from "qrcode.react";
+import { QRCodeSVG } from "qrcode.react"; // ✅ gunakan SVG agar aman di print
 
 type Item = {
   id: string | number;
@@ -35,17 +35,29 @@ const PrintBarcodeModal: React.FC<Props> = ({
   if (!open) return null;
 
   const handlePrint = () => {
-    const printContent = document.getElementById("print-area")?.innerHTML;
+    const printArea = document.getElementById("print-area");
+    if (!printArea) return;
+
     const printWindow = window.open("", "", "width=800,height=600");
-    if (printWindow && printContent) {
-      printWindow.document.write(`
-        <html>
-          <head><title>Print Barcode</title></head>
-          <body>${printContent}</body>
-        </html>
-      `);
+    if (printWindow) {
+      // clone isi print-area (supaya canvas/SVG ikut)
+      const clone = printArea.cloneNode(true) as HTMLElement;
+
+      printWindow.document.title = "Print Barcode";
+      printWindow.document.head.innerHTML = `
+        <style>
+          body { font-family: sans-serif; padding: 20px; }
+          .barcode-item { display: inline-block; margin: 10px; text-align: center; }
+          img, svg { max-width: 100%; height: auto; }
+        </style>
+      `;
+      printWindow.document.body.innerHTML = "";
+      printWindow.document.body.appendChild(clone);
+
       printWindow.document.close();
+      printWindow.focus();
       printWindow.print();
+      printWindow.close();
     }
   };
 
@@ -85,15 +97,21 @@ const PrintBarcodeModal: React.FC<Props> = ({
           {items.map((item) => (
             <div
               key={item.id}
-              className="flex flex-col items-center border p-2 rounded"
+              className="barcode-item flex flex-col items-center border p-2 rounded"
             >
               {useQRCode ? (
-                <QRCodeCanvas
+                <QRCodeSVG
                   value={`Pallet: ${item.pallet_code}, ID: ${item.id}`}
-                  size={size}
+                  width={size}
+                  height={size}
                 />
               ) : (
-                <Barcode value={item.pallet_code} width={2} height={size / 2} />
+                <Barcode
+                  value={item.pallet_code}
+                  width={2}
+                  height={size / 2}
+                  displayValue
+                />
               )}
               <p className="mt-2 text-sm">{item.pallet_code}</p>
             </div>
