@@ -1,4 +1,5 @@
 export interface Pallet {
+  id?: any;
   organization_id: number;
   pallet_code: string;
   capacity: number;

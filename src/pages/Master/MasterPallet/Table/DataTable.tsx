@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from "react";
-import { FaPlus } from "react-icons/fa";
+import { FaBarcode, FaPlus, FaPrint, FaQrcode } from "react-icons/fa";
 import Input from "../../../../components/form/input/InputField";
 import Label from "../../../../components/form/Label";
 import Button from "../../../../components/ui/button/Button";
@@ -10,6 +10,7 @@ import {
   useStoreIo,
   useStoreUom,
 } from "../../../../DynamicAPI/stores/Store/MasterStore";
+import PrintBarcodeModal from "../PrintBarcodeModal";
 
 const DataTable = () => {
   const {
@@ -26,6 +27,10 @@ const DataTable = () => {
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounce(search, 500);
   const [isCreateModalOpen, setCreateModalOpen] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  // 🔑 tambahan state untuk modal preview
+  const [isPrintModalOpen, setPrintModalOpen] = useState(false);
+  const [selectedPallets, setSelectedPallets] = useState<any[]>([]);
 
   useEffect(() => {
     fetchPallet();
@@ -33,7 +38,6 @@ const DataTable = () => {
     fetchUom();
   }, []);
 
-  // Fungsi untuk format payload create
   const handleCreate = async (data: any) => {
     const formattedData = {
       organization_id: Number(data.organization_id),
@@ -48,7 +52,6 @@ const DataTable = () => {
     return await createData(formattedData);
   };
 
-  // Fungsi untuk format payload update
   const handleUpdate = (data: any) => {
     const { id, ...rest } = data;
     return updateData(id, {
@@ -61,9 +64,6 @@ const DataTable = () => {
       currentQuantity: Number(rest.currentQuantity),
     });
   };
-
-  const [qrModalOpen, setQrModalOpen] = useState(false);
-  const [qrImageUrl, setQrImageUrl] = useState<string | null>(null);
 
   const columns = useMemo(
     () => [
@@ -114,25 +114,25 @@ const DataTable = () => {
           return uom ? uom.name : row.original.uom;
         },
       },
-      {
-        accessorKey: "qr_image_url",
-        header: "QR Code",
-        cell: ({ row }: { row: { original: any } }) =>
-          row.original.qr_image_url ? (
-            <button
-              className="text-blue-600 underline"
-              onClick={() => {
-                setQrImageUrl(row.original.qr_image_url);
-                setQrModalOpen(true);
-              }}
-              type="button"
-            >
-              {row.original.qr_image_url ? "Lihat QR" : "No QR"}
-            </button>
-          ) : (
-            <span className="text-gray-400">No QR</span>
-          ),
-      },
+      // {
+      //   accessorKey: "qr_image_url",
+      //   header: "QR Code",
+      //   //   cell: ({ row }: { row: { original: any } }) =>
+      //   //     row.original.qr_image_url ? (
+      //   //       <button
+      //   //         className="text-blue-600 underline"
+      //   //         onClick={() => {
+      //   //           setQrImageUrl(row.original.qr_image_url);
+      //   //           setQrModalOpen(true);
+      //   //         }}
+      //   //         type="button"
+      //   //       >
+      //   //         {row.original.qr_image_url ? "Lihat QR" : "No QR"}
+      //   //       </button>
+      //   //     ) : (
+      //   //       <span className="text-gray-400">No QR</span>
+      //   //     ),
+      // },
     ],
     [IoList, uomList]
   );
@@ -198,6 +198,16 @@ const DataTable = () => {
     },
   ];
 
+  const handlePrintBarcode = () => {
+    if (selectedIds.length === 0) {
+      alert("Pilih minimal 1 data untuk dicetak!");
+      return;
+    }
+    const selected = pallet.filter((p) => selectedIds.includes(p.id));
+    setSelectedPallets(selected);
+    setPrintModalOpen(true); // buka modal preview
+  };
+
   return (
     <>
       <div className="p-4 bg-white shadow rounded-md mb-5">
@@ -219,6 +229,15 @@ const DataTable = () => {
             >
               <FaPlus className="mr-2" /> Tambah Data
             </Button>
+
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={handlePrintBarcode}
+              disabled={selectedIds.length === 0} // UX: disabled kalau belum pilih
+            >
+              <FaQrcode className="mr-2" /> Print Barcode
+            </Button>
           </div>
         </div>
       </div>
@@ -238,34 +257,16 @@ const DataTable = () => {
         onRefresh={fetchPallet}
         getRowId={(row) => row.id}
         title="Form Data"
+        onSelectedChange={setSelectedIds}
       />
 
-      {qrModalOpen && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-white bg-opacity-40">
-          <div className="bg-white rounded shadow-lg p-4 relative max-w-xs w-full">
-            <button
-              className="absolute top-2 right-2 text-gray-500"
-              onClick={() => setQrModalOpen(false)}
-            >
-              ✕
-            </button>
-            {/* Tampilkan pallet_code di atas gambar QR */}
-            <div className="mb-2 font-semibold">
-              {pallet.find((item: any) => item.qr_image_url === qrImageUrl)
-                ?.pallet_code || "-"}
-            </div>
-            {qrImageUrl ? (
-              <img
-                src={qrImageUrl}
-                alt="QR Code"
-                className="max-w-full max-h-80 mx-auto"
-              />
-            ) : (
-              <div>Tidak ada gambar</div>
-            )}
-          </div>
-        </div>
-      )}
+      {/* 🔑 Modal preview + print */}
+      <PrintBarcodeModal
+        open={isPrintModalOpen}
+        onClose={() => setPrintModalOpen(false)}
+        items={selectedPallets}
+        useQRCode={true} // true kalau QR, false kalau barcode
+      />
     </>
   );
 };

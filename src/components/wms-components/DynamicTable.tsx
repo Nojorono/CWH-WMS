@@ -1,9 +1,8 @@
 import { useState, useMemo, useCallback } from "react";
 import { ColumnDef } from "@tanstack/react-table";
 import TableComponent from "../../components/tables/MasterDataTable/TableComponent";
-import { FaEye, FaPrint, FaTrash } from "react-icons/fa";
+import { FaEye, FaTrash } from "react-icons/fa";
 import DynamicFormModal from "./DynamicFormModal";
-import Badge from "../../components/ui/badge/Badge";
 
 interface Props {
   data: any[];
@@ -19,6 +18,7 @@ interface Props {
   getRowId?: (row: any) => any;
   title?: string;
   noActions?: boolean;
+  onSelectedChange?: (ids: any[]) => void; // ✅ callback ke parent
 }
 
 const DynamicTable = ({
@@ -35,13 +35,26 @@ const DynamicTable = ({
   getRowId = (row) => row.id,
   title,
   noActions,
+  onSelectedChange,
 }: Props) => {
   const [selectedItem, setSelectedItem] = useState<any | null>(null);
+  const [selectedIds, setSelectedIds] = useState<any[]>([]);
+
+  const handleDelete = useCallback(
+    async (id: any) => {
+      await onDelete(id);
+      await onRefresh();
+    },
+    [onDelete, onRefresh]
+  );
+
+  const handleCloseModal = () => {
+    setSelectedItem(null);
+    onCloseCreateModal();
+  };
 
   const enhancedColumns = useMemo(() => {
-    if (noActions) {
-      return columns;
-    }
+    if (noActions) return columns;
     return [
       ...columns,
       {
@@ -65,24 +78,19 @@ const DynamicTable = ({
         ),
       },
     ];
-  }, [columns]);
+  }, [columns, getRowId, handleDelete]);
 
-  const handleDelete = useCallback(
-    async (id: any) => {
-      await onDelete(id);
-      await onRefresh();
+  // ✅ hanya update saat ada event, bukan di render
+  const handleSelectionChange = useCallback(
+    (ids: any[]) => {
+      setSelectedIds(ids);
+      if (onSelectedChange) {
+        onSelectedChange(ids); // kirim ke parent
+      }
     },
-    [onDelete, onRefresh]
+    [onSelectedChange]
   );
-
-  const handleCloseModal = () => {
-    setSelectedItem(null);
-    onCloseCreateModal();
-  };
-
-  const [selectedIds, setSelectedIds] = useState<any[]>([]);
-
-  console.log("Selected IDs:", selectedIds);
+  
 
   return (
     <>
@@ -98,18 +106,11 @@ const DynamicTable = ({
         title={title}
       />
 
-      <button
-        onClick={() => console.log("Selected IDs:", selectedIds)}
-        className="text-red-500"
-      >
-        <FaPrint />
-      </button>
-
       <TableComponent
         data={data}
         columns={enhancedColumns}
         globalFilter={globalFilter}
-        onSelectionChange={setSelectedIds}
+        onSelectionChange={handleSelectionChange} // ✅ trigger saat user checklist
       />
     </>
   );
