@@ -4,13 +4,14 @@ import Input from "../../../../components/form/input/InputField";
 import Label from "../../../../components/form/Label";
 import Button from "../../../../components/ui/button/Button";
 import { useDebounce } from "../../../../helper/useDebounce";
-import DynamicTable from "../../../../components/wms-components/DynamicTable";
+import DynamicTable from "../Table/TableComponent";
 import {
   useStorePallet,
   useStoreIo,
   useStoreUom,
 } from "../../../../DynamicAPI/stores/Store/MasterStore";
-import PrintBarcodeModal from "../PrintBarcodeModal";
+import PrintBarcodeModal from "../Modal/PrintBarcodeModal";
+import TabsSection from "../../../../components/wms-components/inbound-component/tabs/TabsSection";
 
 const DataTable = () => {
   const {
@@ -208,6 +209,8 @@ const DataTable = () => {
     setPrintModalOpen(true); // buka modal preview
   };
 
+  const [activeTab, setActiveTab] = useState(0);
+
   return (
     <>
       <div className="p-4 bg-white shadow rounded-md mb-5">
@@ -259,6 +262,8 @@ const DataTable = () => {
         title="Form Data"
         onSelectedChange={setSelectedIds}
       />
+
+
 
       {/* 🔑 Modal preview + print */}
       <PrintBarcodeModal

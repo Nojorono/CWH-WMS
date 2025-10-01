@@ -30,6 +30,7 @@ import {
   Inventory,
   PutAway,
   PutAwayProcess,
+  MainTabPallet,
 } from "./utils/PagesComponent";
 // import dummyRoutes from "./helper/dummyRoutes";
 
@@ -81,6 +82,7 @@ export function AppRoutes() {
       { path: "create", element: <CreateRole /> },
       { path: "update", element: <UpdateRole /> },
     ],
+    "/master_pallet": [{ path: "detail", element: <MainTabPallet /> }],
     "/inbound_planning": [{ path: "process", element: <InboundProcess /> }],
     "/putaway": [{ path: "process", element: <PutAwayProcess /> }],
   };

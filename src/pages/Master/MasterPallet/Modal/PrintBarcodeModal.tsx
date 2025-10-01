@@ -76,19 +76,19 @@ const PrintBarcodeModal: React.FC<Props> = ({
           <label className="text-sm font-medium">Ukuran (px):</label>
           <input
             type="number"
-            min={50}
+            min={150}
             max={400}
             value={size}
             onChange={(e) => {
               let val = Number(e.target.value);
-              if (val < 50) val = 50;
+              if (val < 150) val = 150;
               if (val > 400) val = 400;
               setSize(val);
             }}
             className="w-24 border rounded px-2 py-1 focus:ring focus:ring-blue-200"
           />
           <span className="text-xs text-gray-500">
-            Minimal 50px, maksimal 400px, default {defaultSize}px
+            Minimal 150px, maksimal 400px, default {defaultSize}px
           </span>
         </div>
 

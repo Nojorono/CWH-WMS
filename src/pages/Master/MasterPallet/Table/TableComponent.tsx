@@ -1,8 +1,9 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, use } from "react";
 import { ColumnDef } from "@tanstack/react-table";
-import TableComponent from "../../components/tables/MasterDataTable/TableComponent";
+import TableComponent from "../../../../components/tables/MasterDataTable/TableComponent";
 import { FaEdit, FaEye, FaTrash } from "react-icons/fa";
-import DynamicFormModal from "./DynamicFormModal";
+import DynamicFormModal from "../../../../components/wms-components/DynamicFormModal";
+import { useNavigate } from "react-router";
 
 interface Props {
   data: any[];
@@ -37,6 +38,7 @@ const DynamicTable = ({
   noActions,
   onSelectedChange,
 }: Props) => {
+  const navigate = useNavigate();
   const [selectedItem, setSelectedItem] = useState<any | null>(null);
   const [selectedIds, setSelectedIds] = useState<any[]>([]);
 
@@ -68,19 +70,18 @@ const DynamicTable = ({
             >
               <FaEdit />
             </button>
-            <button
+            {/* <button
               onClick={() => handleDelete(getRowId(row.original))}
               className="text-red-500"
             >
               <FaTrash />
-            </button>
-
-            {/* <button
-              onClick={() => console.log("View", getRowId(row.original))}
-              className="text-red-500"
+            </button> */}
+            <button
+              onClick={() => goToDetailPage(getRowId(row.original))}
+              className="text-blue-500"
             >
               <FaEye />
-            </button> */}
+            </button>
           </div>
         ),
       },
@@ -97,6 +98,12 @@ const DynamicTable = ({
     },
     [onSelectedChange]
   );
+
+  const goToDetailPage = (idPallet: string) => {
+    navigate("/master_pallet/detail", {
+      state: { idPallet }, // kirim state
+    });
+  };
 
   return (
     <>

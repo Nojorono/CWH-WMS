@@ -114,7 +114,6 @@ const AdjustTable = ({
         columns={columns}
         globalFilter={globalFilter}
         setGlobalFilter={setGlobalFilter}
-        onDetail={onDetail}
         pageSize={5}
       />
     </>

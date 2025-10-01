@@ -17,6 +17,8 @@ import PutAwayProcess from '../pages/Inbound/PutAway/TableAndForm/PutAwayProcess
 import Inventory from "../pages/Inventory";
 
 import MasterPallet from "../pages/Master/MasterPallet";
+import MainTabPallet from '../pages/Master/MasterPallet/Tabs/Main'
+
 import MasterUOM from "../pages/Master/MasterUOM";
 import MasterIO from "../pages/Master/MasterIO";
 import MasterWarehouse from "../pages/Master/MasterWarehouse";
@@ -33,6 +35,8 @@ export {
   MasterUser,
   MasterMenu,
   MasterPallet,
+  MainTabPallet,
+  
   MasterUOM,
   MasterIO,
   MasterWarehouse,
