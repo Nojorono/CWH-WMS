@@ -11,18 +11,24 @@ export type ItemForm = {
     expired_date?: string | null;
 };
 
-export type POForm = {
-    flag_validated?: boolean;
-    po_no: string;
+export type POSForm = {
+    // Untuk PO
+    po_no?: string;
     po_date?: string;
+
+    // Untuk SO
+    so_no?: string;
+    so_date?: string;
+
     items: ItemForm[];
+    flag_validated?: boolean;
 };
 
 export type DOForm = {
     do_no: string;
     date?: string;
     attachment?: string;
-    pos: POForm[];
+    pos: POSForm[];  // ✅ ganti dari POForm ke POSForm
     flag_validated?: boolean;
 };
 

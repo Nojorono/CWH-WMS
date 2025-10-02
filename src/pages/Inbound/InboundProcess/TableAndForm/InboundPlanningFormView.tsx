@@ -128,24 +128,6 @@ const ActionButtons = ({
   );
 };
 
-// const DOSection = ({ doFields, removeDO, isDetailMode }: Props) => {
-//   if (!doFields.length) return null;
-//   return (
-//     <section className="space-y-4 mt-4">
-//       {doFields.map((doField, doIndex) => (
-//         <DeliveryOrderCard
-//           key={doField.id}
-//           doIndex={doIndex}
-//           removeDO={() => removeDO(doIndex)}
-//           totalDO={doFields.length}
-//           isEditMode={!isDetailMode}
-//           inbType={"PO"}
-//         />
-//       ))}
-//     </section>
-//   );
-// };
-
 const DOSection = ({
   doFields,
   removeDO,
@@ -175,48 +157,6 @@ const DOSection = ({
     </section>
   );
 };
-
-// const DetailTabs = ({
-//   doFields,
-//   removeDO,
-//   inboundID,
-// }: Pick<Props, "doFields" | "removeDO" | "inboundID">) => {
-//   const [activeTab, setActiveTab] = useState(0);
-
-//   return (
-//     <TabsSection
-//       tabs={[
-//         {
-//           label: "Item Details",
-//           content: (
-//             <>
-//               {doFields.map((doField, doIndex) => (
-//                 <DeliveryOrderCard
-//                   key={doField.id}
-//                   doIndex={doIndex}
-//                   removeDO={() => removeDO(doIndex)}
-//                   totalDO={doFields.length}
-//                   isEditMode={false}
-//                   inbType={"PO"}
-//                 />
-//               ))}
-//             </>
-//           ),
-//         },
-//         {
-//           label: "Scan History",
-//           content: <ScanHistory inboundID={inboundID} />,
-//         },
-//         {
-//           label: "Helper Assign",
-//           content: <HelperAssign inboundID={inboundID} />,
-//         },
-//       ]}
-//       activeTab={activeTab}
-//       onTabChange={setActiveTab} // update state saat tab dipilih
-//     />
-//   );
-// };
 
 const DetailTabs = ({
   doFields,
@@ -337,6 +277,7 @@ export default function InboundPlanningFormView(props: Props) {
           doFields={doFields}
           removeDO={removeDO}
           inboundID={props.inboundID}
+          methods={methods}
         />
       )}
 

@@ -34,6 +34,10 @@ export default function ItemTable({
     fetchAllItem();
   }, [fetchAllUom, fetchAllItem]);
 
+
+  console.log("Rendering ItemTable -DATA List:", data);
+  
+
   const columns: ColumnDef<ItemForm>[] = [
     {
       accessorKey: "sku",

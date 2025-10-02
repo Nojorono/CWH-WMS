@@ -205,6 +205,7 @@ export default function InboundPlanningFormContainer() {
     const id = dataInbound?.id;
 
     console.log("Final submit payload:", payload, " | id:", id);
+    alert(`Final submit payload (lihat di console): ${JSON.stringify(payload)}`);
     
     // if (isCreateMode) {
     //   const res = await createData(payload);
