@@ -18,7 +18,7 @@ export default function POCard({
   removePos,
   totalPO,
   isEditMode,
-  InbType
+  InbType,
 }: {
   doIndex: number;
   posIndex: number;
@@ -159,6 +159,33 @@ export default function POCard({
               )}  w-40 md:w-60`}
               {...register(
                 `deliveryOrders.${doIndex}.pos.${posIndex}.po_no` as const
+              )}
+              disabled={!isEditMode}
+            />
+            {isEditMode && (
+              <Button
+                type="button"
+                variant="primary"
+                size="xsm"
+                onClick={handleSearchPO}
+                disabled={!isEditMode || loading}
+              >
+                <FaSearch />
+                {loading ? "Loading..." : "Cari PO"}
+              </Button>
+            )}
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-xs text-slate-600 mb-1">Nomor SO</label>
+          <div className="flex gap-2">
+            <input
+              className={`${inputCls} ${getDisabledCls(
+                !isEditMode
+              )}  w-40 md:w-60`}
+              {...register(
+                `deliveryOrders.${doIndex}.pos.${posIndex}.so_no` as const
               )}
               disabled={!isEditMode}
             />

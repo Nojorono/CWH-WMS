@@ -357,7 +357,7 @@ export default function DeliveryOrderCard({
                 removePos={() => removePos(posIndex)}
                 totalPO={posFields.length}
                 isEditMode={isEditMode}
-                inbType={inbType.value}
+                InbType={inbType}
               />
             ))}
           </div> 

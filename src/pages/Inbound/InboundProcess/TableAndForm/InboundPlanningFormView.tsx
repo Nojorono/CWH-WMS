@@ -152,7 +152,11 @@ const DOSection = ({
   isDetailMode,
   methods,
 }: Props & { methods: UseFormReturn<FormValues> }) => {
-  const inboundType = methods.watch("inbound_type") || "PO"; // default ke PO
+  const inboundTypeObj = methods.watch("inbound_type");
+  const inboundType =
+    typeof inboundTypeObj === "string"
+      ? inboundTypeObj
+      : inboundTypeObj?.value || "PO";
 
   if (!doFields.length) return null;
 
