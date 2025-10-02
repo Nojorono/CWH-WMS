@@ -33,12 +33,14 @@ export default function CurrentQuantityTable({ palletCode }: HistoryProps) {
     setIsLoading(true);
     const token = localStorage.getItem("token");
     axios
-      .get(`http://10.0.29.47:9005/master-pallet/by-code/${palletCode}/items`, {
+      .get(`http://10.0.29.47:9005/master-pallet/by-code/${palletCode}/current`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       })
       .then((res) => {
+        console.log("Fetched items:", res.data.data);
+
         setData(res.data.data);
       })
       .catch((err) => {
