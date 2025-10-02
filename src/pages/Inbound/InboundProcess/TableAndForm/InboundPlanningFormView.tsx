@@ -46,7 +46,8 @@ const buildFieldsConfig = (isDetailMode: boolean): FieldConfig[] =>
       label: "Tipe Inbound",
       type: "select" as const,
       options: [
-        { value: "PRINCIPAL", label: "PRINCIPAL" },
+        { value: "PO", label: "PO" },
+        { value: "SO", label: "SO" },
         { value: "RETUR", label: "RETUR" },
       ],
       validation: { required: "Tipe inbound wajib diisi" }, // ✅ wajib
@@ -127,8 +128,34 @@ const ActionButtons = ({
   );
 };
 
-const DOSection = ({ doFields, removeDO, isDetailMode }: Props) => {
+// const DOSection = ({ doFields, removeDO, isDetailMode }: Props) => {
+//   if (!doFields.length) return null;
+//   return (
+//     <section className="space-y-4 mt-4">
+//       {doFields.map((doField, doIndex) => (
+//         <DeliveryOrderCard
+//           key={doField.id}
+//           doIndex={doIndex}
+//           removeDO={() => removeDO(doIndex)}
+//           totalDO={doFields.length}
+//           isEditMode={!isDetailMode}
+//           inbType={"PO"}
+//         />
+//       ))}
+//     </section>
+//   );
+// };
+
+const DOSection = ({
+  doFields,
+  removeDO,
+  isDetailMode,
+  methods,
+}: Props & { methods: UseFormReturn<FormValues> }) => {
+  const inboundType = methods.watch("inbound_type") || "PO"; // default ke PO
+
   if (!doFields.length) return null;
+
   return (
     <section className="space-y-4 mt-4">
       {doFields.map((doField, doIndex) => (
@@ -138,17 +165,64 @@ const DOSection = ({ doFields, removeDO, isDetailMode }: Props) => {
           removeDO={() => removeDO(doIndex)}
           totalDO={doFields.length}
           isEditMode={!isDetailMode}
+          inbType={inboundType as "PO" | "SO" | "RETUR"} // 👈 passing langsung ke prop
         />
       ))}
     </section>
   );
 };
 
+// const DetailTabs = ({
+//   doFields,
+//   removeDO,
+//   inboundID,
+// }: Pick<Props, "doFields" | "removeDO" | "inboundID">) => {
+//   const [activeTab, setActiveTab] = useState(0);
+
+//   return (
+//     <TabsSection
+//       tabs={[
+//         {
+//           label: "Item Details",
+//           content: (
+//             <>
+//               {doFields.map((doField, doIndex) => (
+//                 <DeliveryOrderCard
+//                   key={doField.id}
+//                   doIndex={doIndex}
+//                   removeDO={() => removeDO(doIndex)}
+//                   totalDO={doFields.length}
+//                   isEditMode={false}
+//                   inbType={"PO"}
+//                 />
+//               ))}
+//             </>
+//           ),
+//         },
+//         {
+//           label: "Scan History",
+//           content: <ScanHistory inboundID={inboundID} />,
+//         },
+//         {
+//           label: "Helper Assign",
+//           content: <HelperAssign inboundID={inboundID} />,
+//         },
+//       ]}
+//       activeTab={activeTab}
+//       onTabChange={setActiveTab} // update state saat tab dipilih
+//     />
+//   );
+// };
+
 const DetailTabs = ({
   doFields,
   removeDO,
   inboundID,
-}: Pick<Props, "doFields" | "removeDO" | "inboundID">) => {
+  methods,
+}: Pick<Props, "doFields" | "removeDO" | "inboundID"> & {
+  methods: UseFormReturn<FormValues>;
+}) => {
+  const inboundType = methods.watch("inbound_type") || "PO"; // 👈 default PO
   const [activeTab, setActiveTab] = useState(0);
 
   return (
@@ -165,6 +239,7 @@ const DetailTabs = ({
                   removeDO={() => removeDO(doIndex)}
                   totalDO={doFields.length}
                   isEditMode={false}
+                  inbType={inboundType as "PO" | "SO" | "RETUR"}
                 />
               ))}
             </>
@@ -180,7 +255,7 @@ const DetailTabs = ({
         },
       ]}
       activeTab={activeTab}
-      onTabChange={setActiveTab} // update state saat tab dipilih
+      onTabChange={setActiveTab}
     />
   );
 };
@@ -250,7 +325,9 @@ export default function InboundPlanningFormView(props: Props) {
       <ActionButtons {...props} />
 
       {/* Delivery Orders / Tabs */}
-      {(isCreateMode || isEditMode) && <DOSection {...props} />}
+      {(isCreateMode || isEditMode) && (
+        <DOSection {...props} methods={methods} />
+      )}
       {isDetailMode && (
         <DetailTabs
           doFields={doFields}

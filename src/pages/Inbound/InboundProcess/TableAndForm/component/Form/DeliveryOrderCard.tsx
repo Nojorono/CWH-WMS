@@ -26,11 +26,13 @@ export default function DeliveryOrderCard({
   removeDO,
   totalDO,
   isEditMode,
+  inbType
 }: {
   doIndex: number;
   removeDO: () => void;
   totalDO: number;
   isEditMode: boolean;
+  inbType: 'PO' | 'SO' | 'RETUR';
 }) {
   const {
     control,
@@ -47,7 +49,7 @@ export default function DeliveryOrderCard({
   } = useFieldArray({
     control,
     name: `deliveryOrders.${doIndex}.pos`,
-  });
+  });  
 
   const [open, setOpen] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -355,9 +357,10 @@ export default function DeliveryOrderCard({
                 removePos={() => removePos(posIndex)}
                 totalPO={posFields.length}
                 isEditMode={isEditMode}
+                inbType={inbType.value}
               />
             ))}
-          </div>
+          </div> 
         </div>
       </details>
     </div>

@@ -18,14 +18,18 @@ export default function POCard({
   removePos,
   totalPO,
   isEditMode,
+  InbType
 }: {
   doIndex: number;
   posIndex: number;
   removePos: () => void;
   totalPO: number;
   isEditMode: boolean;
+  InbType: string;
 }) {
   const { fetchAll, list } = useStoreItem();
+
+  console.log("InbType di POCard:", InbType);
 
   useEffect(() => {
     fetchAll();
@@ -137,7 +141,7 @@ export default function POCard({
       }
     } catch (err) {
       console.error(err);
-      alert("Gagal mencari PO");
+      showErrorToast(`Gagal mencari PO, ${(err as Error).message}`);
     } finally {
       setLoading(false);
     }
@@ -150,7 +154,9 @@ export default function POCard({
           <label className="block text-xs text-slate-600 mb-1">Nomor PO</label>
           <div className="flex gap-2">
             <input
-              className={`${inputCls} ${getDisabledCls(!isEditMode)}  w-40 md:w-60`}
+              className={`${inputCls} ${getDisabledCls(
+                !isEditMode
+              )}  w-40 md:w-60`}
               {...register(
                 `deliveryOrders.${doIndex}.pos.${posIndex}.po_no` as const
               )}

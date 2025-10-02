@@ -209,7 +209,6 @@ const DataTable = () => {
     setPrintModalOpen(true); // buka modal preview
   };
 
-  const [activeTab, setActiveTab] = useState(0);
 
   return (
     <>
@@ -262,7 +261,6 @@ const DataTable = () => {
         title="Form Data"
         onSelectedChange={setSelectedIds}
       />
-
 
 
       {/* 🔑 Modal preview + print */}
