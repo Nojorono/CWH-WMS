@@ -11,7 +11,6 @@ import {
   useStoreUom,
 } from "../../../../DynamicAPI/stores/Store/MasterStore";
 import PrintBarcodeModal from "../Modal/PrintBarcodeModal";
-import TabsSection from "../../../../components/wms-components/inbound-component/tabs/TabsSection";
 
 const DataTable = () => {
   const {
@@ -28,8 +27,8 @@ const DataTable = () => {
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounce(search, 500);
   const [isCreateModalOpen, setCreateModalOpen] = useState(false);
-  const [selectedIds, setSelectedIds] = useState<string[]>([]);
   // 🔑 tambahan state untuk modal preview
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [isPrintModalOpen, setPrintModalOpen] = useState(false);
   const [selectedPallets, setSelectedPallets] = useState<any[]>([]);
 
@@ -66,8 +65,7 @@ const DataTable = () => {
     });
   };
 
-  const columns = useMemo(
-    () => [
+  const columns = useMemo(() => [
       {
         accessorKey: "id",
         header: "ID",
@@ -115,25 +113,6 @@ const DataTable = () => {
           return uom ? uom.name : row.original.uom;
         },
       },
-      // {
-      //   accessorKey: "qr_image_url",
-      //   header: "QR Code",
-      //   //   cell: ({ row }: { row: { original: any } }) =>
-      //   //     row.original.qr_image_url ? (
-      //   //       <button
-      //   //         className="text-blue-600 underline"
-      //   //         onClick={() => {
-      //   //           setQrImageUrl(row.original.qr_image_url);
-      //   //           setQrModalOpen(true);
-      //   //         }}
-      //   //         type="button"
-      //   //       >
-      //   //         {row.original.qr_image_url ? "Lihat QR" : "No QR"}
-      //   //       </button>
-      //   //     ) : (
-      //   //       <span className="text-gray-400">No QR</span>
-      //   //     ),
-      // },
     ],
     [IoList, uomList]
   );

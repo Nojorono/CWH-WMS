@@ -1,5 +1,5 @@
 // src/pages/inbound/PutAwayDetail.tsx
-import React from "react";
+import React, { useCallback, useState } from "react";
 import { useMemo } from "react";
 import {
   useReactTable,
@@ -9,6 +9,7 @@ import {
 } from "@tanstack/react-table";
 import { FaEye, FaCheck, FaEdit } from "react-icons/fa";
 import Button from "../../../../components/ui/button/Button";
+import TableComponent from "../../../../components/tables/MasterDataTable/TableComponent";
 
 type Pallet = {
   palletId: string;
@@ -19,6 +20,11 @@ type Pallet = {
   suggestBin: string;
   driver: string;
 };
+
+interface Props {
+  globalFilter?: string;
+  onSelectedChange?: (ids: any[]) => void; // ✅ callback ke parent
+}
 
 const palletData: Pallet[] = [
   {
@@ -77,25 +83,52 @@ const palletData: Pallet[] = [
   },
 ];
 
-const PutAwayDetail: React.FC = () => {
+const PutAwayDetail: React.FC<Props> = ({ onSelectedChange, globalFilter }) => {
+
+  
   const columns = useMemo<ColumnDef<Pallet>[]>(
     () => [
-      { accessorKey: "palletId", header: "Pallet ID" },
+      { accessorKey: "palletId", header: "Pallet ID", selectedRow: true },
       { accessorKey: "totalSku", header: "Total SKU" },
       { accessorKey: "totalQty", header: "Total Qty" },
       { accessorKey: "staging", header: "Staging Area" },
       { accessorKey: "suggestZone", header: "Suggest Zone" },
       { accessorKey: "suggestBin", header: "Suggest Bin" },
       { accessorKey: "driver", header: "Forklift Driver" },
+      {
+        id: "actions",
+        header: "Action",
+        cell: ({ row }) => (
+          <div className="flex gap-2">
+            <button
+              className="text-green-600"
+              onClick={() => console.log(row.original)}
+            >
+              <FaEdit />
+            </button>
+          </div>
+        ),
+      },
     ],
     []
   );
 
-  const table = useReactTable({
-    data: palletData,
-    columns,
-    getCoreRowModel: getCoreRowModel(),
-  });
+  const [selectedIds, setSelectedIds] = useState<any[]>([]);
+
+  const handleSelectionChange = useCallback(
+    (ids: any[]) => {
+      setSelectedIds(ids);
+      if (onSelectedChange) {
+        onSelectedChange(ids);
+      }
+    },
+    [onSelectedChange]
+  );
+
+  const createPutAway = () => {
+    console.log("Selected IDs:", selectedIds);
+
+  };
 
   return (
     <div className="p-6 space-y-6">
@@ -107,36 +140,12 @@ const PutAwayDetail: React.FC = () => {
         </p>
       </div>
 
-      {/* Table */}
-      <div className="overflow-x-auto border rounded-lg shadow-sm">
-        <table className="min-w-full border-collapse text-sm">
-          <thead className="bg-orange-500 text-white">
-            {table.getHeaderGroups().map((hg) => (
-              <tr key={hg.id}>
-                {hg.headers.map((header) => (
-                  <th key={header.id} className="px-4 py-2 text-left">
-                    {flexRender(
-                      header.column.columnDef.header,
-                      header.getContext()
-                    )}
-                  </th>
-                ))}
-              </tr>
-            ))}
-          </thead>
-          <tbody>
-            {table.getRowModel().rows.map((row) => (
-              <tr key={row.id} className="border-b hover:bg-gray-50">
-                {row.getVisibleCells().map((cell) => (
-                  <td key={cell.id} className="px-4 py-2">
-                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                  </td>
-                ))}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <TableComponent
+        data={palletData}
+        columns={columns}
+        globalFilter={globalFilter}
+        onSelectionChange={handleSelectionChange}
+      />
 
       {/* Put Away Details Form */}
       <div className="border rounded-lg p-4 shadow-md space-y-4">
@@ -159,74 +168,11 @@ const PutAwayDetail: React.FC = () => {
             placeholder="Forklift Driver Phone"
           />
         </div>
-        <Button variant="primary">Create Put Away</Button>
       </div>
-
-      {/* Suggest Location + Warehouse List */}
-      <div className="grid grid-cols-2 gap-4">
-        <div className="border rounded-lg p-4 shadow-md">
-          <h2 className="font-semibold mb-2">Suggest Location</h2>
-          <ul className="space-y-2 text-sm">
-            <li className="flex justify-between border p-2 rounded">
-              <span>ZONE JT1 BIN A</span> <span>Remaining: 50</span>
-            </li>
-            <li className="flex justify-between border p-2 rounded">
-              <span>ZONE JT2 BIN A</span> <span>Remaining: 70</span>
-            </li>
-            <li className="flex justify-between border p-2 rounded">
-              <span>ZONE JT6 BIN A</span> <span>Remaining: 25</span>
-            </li>
-          </ul>
-        </div>
-        <div className="border rounded-lg p-4 shadow-md">
-          <h2 className="font-semibold mb-2">
-            List Location in Central Warehouse
-          </h2>
-          <input
-            placeholder="Search bar"
-            className="border p-2 rounded w-full mb-2"
-          />
-          <ul className="space-y-2 text-sm">
-            <li className="flex justify-between border p-2 rounded">
-              <span>ZONE JT1 BIN A</span> <span>70</span>
-            </li>
-            <li className="flex justify-between border p-2 rounded">
-              <span>ZONE JT2 BIN A</span> <span>10</span>
-            </li>
-            <li className="flex justify-between border p-2 rounded">
-              <span>ZONE JT6 BIN A</span> <span>75</span>
-            </li>
-          </ul>
-        </div>
-      </div>
-
-      {/* List SKU */}
-      <div className="border rounded-lg shadow-sm overflow-x-auto">
-        <h2 className="bg-orange-500 text-white p-2 font-semibold">List SKU</h2>
-        <table className="min-w-full text-sm">
-          <thead>
-            <tr className="bg-orange-100">
-              <th className="px-4 py-2 text-left">Delivery Order</th>
-              <th className="px-4 py-2">Total SKU</th>
-              <th className="px-4 py-2">Total Qty Plan</th>
-              <th className="px-4 py-2">UoM</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr className="border-b">
-              <td className="px-4 py-2">188258</td>
-              <td className="px-4 py-2">1</td>
-              <td className="px-4 py-2">138</td>
-              <td className="px-4 py-2">DUS</td>
-            </tr>
-            <tr className="border-b">
-              <td className="px-4 py-2">188260</td>
-              <td className="px-4 py-2">3</td>
-              <td className="px-4 py-2">700</td>
-              <td className="px-4 py-2">DUS</td>
-            </tr>
-          </tbody>
-        </table>
+      <div className="flex justify-end space-x-4">
+        <Button variant="primary" onClick={createPutAway}>
+          Create Put Away
+        </Button>
       </div>
     </div>
   );

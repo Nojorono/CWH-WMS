@@ -1,20 +1,29 @@
 import React, { useEffect, useState, useMemo } from "react";
-import { FaPlus } from "react-icons/fa";
+import { FaPlus, FaQrcode } from "react-icons/fa";
 import Input from "../../../../components/form/input/InputField";
 import Label from "../../../../components/form/Label";
 import Button from "../../../../components/ui/button/Button";
 import { useDebounce } from "../../../../helper/useDebounce";
-import DynamicTable from "../../../../components/wms-components/DynamicTable";
+import DynamicTable from "../Table/TableComponent";
 import {
   useStoreWarehouse,
   useStoreIo,
   useStoreSubWarehouse,
 } from "../../../../DynamicAPI/stores/Store/MasterStore";
+import PrintBarcodeModal from "../Modal/PrintBarcodeModal";
 
 const DataTable = () => {
   const { list: Warehouse, fetchAll } = useStoreWarehouse();
-
   const { fetchAll: fetchAllIo, list: ioList } = useStoreIo();
+
+  const [search, setSearch] = useState("");
+  const debouncedSearch = useDebounce(search, 500);
+  const [isCreateModalOpen, setCreateModalOpen] = useState(false);
+
+  // STATE UNTUK MODAL PRINT BARCODE
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [selectedPallets, setSelectedPallets] = useState<any[]>([]);
+  const [isPrintModalOpen, setPrintModalOpen] = useState(false);
 
   const {
     fetchAll: fetchSubWH,
@@ -24,10 +33,6 @@ const DataTable = () => {
     deleteData,
   } = useStoreSubWarehouse();
 
-  const [search, setSearch] = useState("");
-  const debouncedSearch = useDebounce(search, 500);
-  const [isCreateModalOpen, setCreateModalOpen] = useState(false);
-
   useEffect(() => {
     fetchAll();
     fetchAllIo();
@@ -36,7 +41,11 @@ const DataTable = () => {
 
   const columns = useMemo(
     () => [
-      // { accessorKey: "id", header: "ID" },
+      {
+        accessorKey: "id",
+        header: "ID",
+        selectedRow: true,
+      },
       {
         accessorKey: "organization_id",
         header: "Organization",
@@ -61,7 +70,6 @@ const DataTable = () => {
       { accessorKey: "code", header: "Code" },
       { accessorKey: "description", header: "Description" },
       { accessorKey: "capacity_bin", header: "Bin Capacity" },
-      { accessorKey: "barcode_image_url", header: "Barcode Image URL" },
       { accessorKey: "is_staging", header: "Staging Area" },
     ],
     [ioList, Warehouse]
@@ -197,6 +205,16 @@ const DataTable = () => {
     return updateData(id, payload);
   };
 
+  const handlePrintBarcode = () => {
+    if (selectedIds.length === 0) {
+      alert("Pilih minimal 1 data untuk dicetak!");
+      return;
+    }
+    const selected = subWHList.filter((p) => selectedIds.includes(p.id));
+    setSelectedPallets(selected);
+    setPrintModalOpen(true); // buka modal preview
+  };
+
   return (
     <>
       <div className="p-4 bg-white shadow rounded-md mb-5">
@@ -218,6 +236,15 @@ const DataTable = () => {
             >
               <FaPlus className="mr-2" /> Tambah Data
             </Button>
+
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={handlePrintBarcode}
+              disabled={selectedIds.length === 0} // UX: disabled kalau belum pilih
+            >
+              <FaQrcode className="mr-2" /> Print Barcode
+            </Button>
           </div>
         </div>
       </div>
@@ -237,6 +264,15 @@ const DataTable = () => {
         onRefresh={fetchAll}
         getRowId={(row) => row.id}
         title="Form UOM"
+        onSelectedChange={setSelectedIds}
+      />
+
+      {/* 🔑 Modal preview + print */}
+      <PrintBarcodeModal
+        open={isPrintModalOpen}
+        onClose={() => setPrintModalOpen(false)}
+        items={selectedPallets}
+        useQRCode={true} // true kalau QR, false kalau barcode
       />
     </>
   );

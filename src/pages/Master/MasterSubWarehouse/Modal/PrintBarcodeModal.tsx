@@ -5,7 +5,7 @@ import { QRCodeSVG } from "qrcode.react"; // ✅ gunakan SVG agar aman di print
 
 type Item = {
   id: string | number;
-  pallet_code: string;
+  code: string;
 };
 
 type Props = {
@@ -24,6 +24,8 @@ const PrintBarcodeModal: React.FC<Props> = ({
   defaultSize = 200,
 }) => {
   const [size, setSize] = useState(defaultSize);
+
+  console.log("PrintBarcodeModal items", items);
 
   // 🔄 reset size setiap kali modal dibuka
   useEffect(() => {
@@ -101,19 +103,19 @@ const PrintBarcodeModal: React.FC<Props> = ({
             >
               {useQRCode ? (
                 <QRCodeSVG
-                  value={`Pallet: ${item.pallet_code}, ID: ${item.id}`}
+                  value={JSON.stringify({ pallet: item.code, id: item.id })}
                   width={size}
                   height={size}
                 />
               ) : (
                 <Barcode
-                  value={item.pallet_code}
+                  value={JSON.stringify({ pallet: item.code, id: item.id })}
                   width={2}
                   height={size / 2}
                   displayValue
                 />
               )}
-              <p className="mt-2 text-xl font-bold">{item.pallet_code}</p>
+              <p className="mt-2 text-xl">{item.code}</p>
             </div>
           ))}
         </div>

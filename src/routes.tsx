@@ -31,6 +31,8 @@ import {
   PutAway,
   PutAwayProcess,
   MainTabPallet,
+  MainTabZone,
+  InventoryDetail,
 } from "./utils/PagesComponent";
 // import dummyRoutes from "./helper/dummyRoutes";
 
@@ -83,8 +85,10 @@ export function AppRoutes() {
       { path: "update", element: <UpdateRole /> },
     ],
     "/master_pallet": [{ path: "detail", element: <MainTabPallet /> }],
+    "/master_zone": [{ path: "detail", element: <MainTabZone /> }],
     "/inbound_planning": [{ path: "process", element: <InboundProcess /> }],
     "/putaway": [{ path: "process", element: <PutAwayProcess /> }],
+    "/inventory": [{ path: "detail", element: <InventoryDetail /> }],
   };
 
   const getElementByPath = (path: string): JSX.Element | null => {
@@ -102,7 +106,7 @@ export function AppRoutes() {
       "/master_supplier": <MasterSupplier />,
       "/master_classification": <MasterClassification />,
       "/master_vehicle": <MasterVehicle />,
-      "/master_sub_warehouse": <MasterZone />,
+      "/master_zone": <MasterZone />,
       "/master_bin": <MasterBin />,
       "/master_source": <MasterSource />,
       "/inventory": <Inventory />,

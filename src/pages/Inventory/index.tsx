@@ -1,9 +1,11 @@
-import React from 'react'
+import PageBreadcrumb from "../../components/common/PageBreadCrumb";
+import DataTable from "./Table/DataTable";
 
-function index() {
+export default function Inventory() {
   return (
-    <div>index</div>
-  )
+    <div>
+      <PageBreadcrumb breadcrumbs={[{ title: "Inventory" }]} />
+      <DataTable />
+    </div>
+  );
 }
-
-export default index

@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect } from "react";
 import {
   useReactTable,
   getCoreRowModel,
@@ -35,39 +35,9 @@ const TableComponent = <T extends { [key: string]: any }>({
   // 🔥 cari kolom yang punya flag selectedRow
   const selectionColumn = columns.find((col: any) => col.selectedRow);
 
-  // const enhancedColumns = useMemo<ColumnDef<T>[]>(() => {
-  //   if (!selectionColumn) return columns;
-
-  //   const accessorKey = (selectionColumn as any).accessorKey;
-
-  //   return [
-  //     {
-  //       id: "select",
-  //       header: ({ table }) => (
-  //         <input
-  //           type="checkbox"
-  //           checked={table.getIsAllPageRowsSelected()}
-  //           onChange={table.getToggleAllPageRowsSelectedHandler()}
-  //         />
-  //       ),
-  //       cell: ({ row }) => (
-  //         <input
-  //           type="checkbox"
-  //           checked={row.getIsSelected()}
-  //           disabled={!row.getCanSelect()}
-  //           onChange={row.getToggleSelectedHandler()}
-  //         />
-  //       ),
-  //     },
-  //     ...columns,
-  //   ];
-  // }, [columns, selectionColumn]);
-
   const enhancedColumns = useMemo<ColumnDef<T>[]>(() => {
     if (!selectionColumn) return columns;
-
     const accessorKey = (selectionColumn as any).accessorKey;
-
     return [
       {
         id: "select",

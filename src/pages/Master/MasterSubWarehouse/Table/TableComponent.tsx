@@ -1,8 +1,9 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, use } from "react";
 import { ColumnDef } from "@tanstack/react-table";
-import TableComponent from "../../components/tables/MasterDataTable/TableComponent";
+import TableComponent from "../../../../components/tables/MasterDataTable/TableComponent";
 import { FaEdit, FaEye, FaTrash } from "react-icons/fa";
-import DynamicFormModal from "./DynamicFormModal";
+import DynamicFormModal from "../../../../components/wms-components/DynamicFormModal";
+import { useNavigate } from "react-router";
 
 interface Props {
   data: any[];
@@ -11,16 +12,13 @@ interface Props {
   onCloseCreateModal: () => void;
   columns: ColumnDef<any>[];
   formFields: any[];
-  onSubmit?: (data: any) => Promise<any>;
-  onUpdate?: (data: any) => Promise<any>;
-  onDelete?: (id: any) => Promise<void>;
+  onSubmit: (data: any) => Promise<any>;
+  onUpdate: (data: any) => Promise<any>;
+  onDelete: (id: any) => Promise<void>;
   onRefresh: () => void;
   getRowId?: (row: any) => any;
   title?: string;
   noActions?: boolean;
-  isDeleted?: boolean;
-  isEdited?: boolean;
-  isView?: boolean;
   onSelectedChange?: (ids: any[]) => void; // ✅ callback ke parent
 }
 
@@ -38,19 +36,15 @@ const DynamicTable = ({
   getRowId = (row) => row.id,
   title,
   noActions,
-  isDeleted = true,
-  isEdited = true,
-  isView = false,
   onSelectedChange,
 }: Props) => {
+  const navigate = useNavigate();
   const [selectedItem, setSelectedItem] = useState<any | null>(null);
   const [selectedIds, setSelectedIds] = useState<any[]>([]);
 
   const handleDelete = useCallback(
     async (id: any) => {
-      if (onDelete) {
-        await onDelete(id);
-      }
+      await onDelete(id);
       await onRefresh();
     },
     [onDelete, onRefresh]
@@ -70,32 +64,18 @@ const DynamicTable = ({
         header: "Action",
         cell: ({ row }) => (
           <div className="flex gap-2">
-            {isEdited && (
-              <button
-                className="text-green-600"
-                onClick={() => setSelectedItem(row.original)}
-              >
-                <FaEdit />
-              </button>
-            )}
-
-            {isDeleted && (
-              <button
-                onClick={() => handleDelete(getRowId(row.original))}
-                className="text-red-500"
-              >
-                <FaTrash />
-              </button>
-            )}
-
-            {isView && (
-              <button
-                onClick={() => console.log("View", getRowId(row.original))}
-                className="text-blue-500"
-              >
-                <FaEye />
-              </button>
-            )}
+            <button
+              className="text-green-600"
+              onClick={() => setSelectedItem(row.original)}
+            >
+              <FaEdit />
+            </button>
+            <button
+              onClick={() => goToDetailPage(getRowId(row.original))}
+              className="text-blue-500"
+            >
+              <FaEye />
+            </button>
           </div>
         ),
       },
@@ -112,6 +92,12 @@ const DynamicTable = ({
     },
     [onSelectedChange]
   );
+
+  const goToDetailPage = (idZone: string) => {    
+    navigate("/master_zone/detail", {
+      state: { idZone }, // kirim state
+    });
+  };
 
   return (
     <>

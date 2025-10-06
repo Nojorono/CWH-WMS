@@ -57,7 +57,7 @@ const DataTable = () => {
       type: "text",
       validation: { required: "Required" },
     },
-    { name: "isActive", label: "", type: "checkbox" },
+    { name: "isActive", label: "is Active?", type: "checkbox" },
   ];
 
   // Fungsi untuk format payload create

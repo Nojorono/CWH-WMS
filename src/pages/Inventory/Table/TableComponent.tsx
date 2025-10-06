@@ -1,8 +1,9 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, use } from "react";
 import { ColumnDef } from "@tanstack/react-table";
-import TableComponent from "../../components/tables/MasterDataTable/TableComponent";
+import TableComponent from "../../../components/tables/MasterDataTable/TableComponent";
 import { FaEdit, FaEye, FaTrash } from "react-icons/fa";
-import DynamicFormModal from "./DynamicFormModal";
+import { useNavigate } from "react-router";
+// import DynamicFormModal from "./DynamicFormModal";
 
 interface Props {
   data: any[];
@@ -43,6 +44,7 @@ const DynamicTable = ({
   isView = false,
   onSelectedChange,
 }: Props) => {
+  const navigate = useNavigate();
   const [selectedItem, setSelectedItem] = useState<any | null>(null);
   const [selectedIds, setSelectedIds] = useState<any[]>([]);
 
@@ -56,9 +58,9 @@ const DynamicTable = ({
     [onDelete, onRefresh]
   );
 
-  const handleCloseModal = () => {
-    setSelectedItem(null);
-    onCloseCreateModal();
+  const handleViewDetail = (invDetail: any) => {
+    navigate(`/inventory/detail`, { state: { invDetail: invDetail } });
+    console.log("View detail", invDetail);
   };
 
   const enhancedColumns = useMemo(() => {
@@ -90,7 +92,7 @@ const DynamicTable = ({
 
             {isView && (
               <button
-                onClick={() => console.log("View", getRowId(row.original))}
+                onClick={() => handleViewDetail(getRowId(row.original))}
                 className="text-blue-500"
               >
                 <FaEye />
@@ -115,18 +117,6 @@ const DynamicTable = ({
 
   return (
     <>
-      <DynamicFormModal
-        isOpen={!!selectedItem || isCreateModalOpen}
-        onClose={handleCloseModal}
-        defaultValues={selectedItem || undefined}
-        isEditMode={!!selectedItem}
-        onSubmit={onSubmit}
-        onUpdate={onUpdate}
-        onRefresh={onRefresh}
-        formFields={formFields}
-        title={title}
-      />
-
       <TableComponent
         data={data}
         columns={enhancedColumns}

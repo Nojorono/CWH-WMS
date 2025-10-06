@@ -5,8 +5,8 @@ interface Props {
   isOpen: boolean;
   onClose: () => void;
   onRefresh: () => void;
-  onSubmit: (data: any) => Promise<{ success: boolean }>;
-  onUpdate: (data: any) => Promise<{ success: boolean }>;
+  onSubmit?: (data: any) => Promise<{ success: boolean }>;
+  onUpdate?: (data: any) => Promise<{ success: boolean }>;
   defaultValues?: any;
   isEditMode?: boolean;
   formFields: any[];
@@ -25,13 +25,22 @@ const DynamicFormModal = ({
   title,
 }: Props) => {
   const handleSubmit = async (data: any) => {
-    const res = isEditMode ? await onUpdate(data) : await onSubmit(data);
+    let res;
+    if (isEditMode) {
+      if (onUpdate) {
+        res = await onUpdate(data);
+      }
+    } else {
+      if (onSubmit) {
+        res = await onSubmit(data);
+      }
+    }
     if (res?.success) {
       onRefresh();
       onClose();
     }
   };
-  
+
   return (
     <ReusableFormModal
       isEditMode={isEditMode}

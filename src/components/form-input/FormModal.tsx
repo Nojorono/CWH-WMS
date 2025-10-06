@@ -1,3 +1,259 @@
+import React, { useEffect, useState } from "react";
+import { useForm, SubmitHandler, Controller } from "react-hook-form";
+import Select from "react-select";
+import DatePicker from "../form/date-picker";
+import Button from "../ui/button/Button";
+import Checkbox from "../form/input/Checkbox";
+
+type OptionType = { value: string | boolean; label: string };
+
+export type FormField = {
+  name: string;
+  label: string;
+  type:
+    | "text"
+    | "textarea"
+    | "select"
+    | "number"
+    | "file"
+    | "date"
+    | "checkbox"
+    | "radio";
+  options?: OptionType[];
+  validation?: {
+    required?: boolean | string;
+    [key: string]: any;
+  };
+  info?: string;
+  hiddenWhen?: (values: Record<string, any>) => boolean;
+};
+
+export type FormValues = Record<string, any>;
+
+type ModalFormProps = {
+  formFields: FormField[];
+  onSubmit: SubmitHandler<FormValues>;
+  onClose: () => void;
+  defaultValues?: FormValues;
+  isEditMode?: boolean;
+};
+
+const ModalForm: React.FC<ModalFormProps> = ({
+  formFields,
+  onSubmit,
+  onClose,
+  defaultValues,
+  isEditMode = false,
+}) => {
+  const {
+    register,
+    handleSubmit,
+    control,
+    formState: { errors },
+    reset,
+    watch,
+  } = useForm<FormValues>({ defaultValues });
+
+  const [isEditing, setIsEditing] = useState(false);
+  const values = watch();
+
+  useEffect(() => {
+    if (defaultValues) reset(defaultValues);
+  }, [defaultValues, reset]);
+
+  const inputCls =
+    "w-full px-3 py-2 border rounded-md focus:outline-none focus:ring focus:ring-blue-300";
+  const disabledCls =
+    "w-full px-3 py-2 border rounded-md bg-gray-100 cursor-not-allowed text-gray-500";
+
+  const isDisabled = isEditMode && !isEditing;
+
+  const renderField = (field: FormField) => {
+    if (field.hiddenWhen?.(values)) return null;
+
+    switch (field.type) {
+      case "textarea":
+        return (
+          <textarea
+            {...register(field.name, field.validation)}
+            className={isDisabled ? disabledCls : inputCls}
+            disabled={isDisabled}
+          />
+        );
+
+      case "select":
+        return (
+          <Controller
+            name={field.name}
+            control={control}
+            rules={{
+              ...(field.validation?.required
+                ? {
+                    validate: (value) =>
+                      (value !== undefined && value !== null && value !== "") ||
+                      field.validation?.required ||
+                      "Required",
+                  }
+                : {}),
+              ...field.validation,
+            }}
+            render={({ field: controllerField }) => (
+              <Select
+                {...controllerField}
+                options={field.options}
+                placeholder="Select an option"
+                className="react-select-container"
+                classNamePrefix="react-select"
+                value={field.options?.find(
+                  (opt) => opt.value === controllerField.value
+                )}
+                onChange={(option) =>
+                  controllerField.onChange(option?.value ?? "")
+                }
+                isDisabled={isDisabled}
+                menuPortalTarget={document.body}
+                styles={{
+                  menuPortal: (base) => ({ ...base, zIndex: 9999 }),
+                }}
+              />
+            )}
+          />
+        );
+
+      case "file":
+        return (
+          <input
+            type="file"
+            {...register(field.name, field.validation)}
+            className={isDisabled ? disabledCls : inputCls}
+            disabled={isDisabled}
+          />
+        );
+
+      case "date":
+        return (
+          <Controller
+            name={field.name}
+            control={control}
+            rules={field.validation}
+            render={({ field: controllerField }) => (
+              <DatePicker
+                id={`date-${field.name}`}
+                placeholder="Select a date"
+                onChange={(date: Date | Date[]) =>
+                  controllerField.onChange(Array.isArray(date) ? date[0] : date)
+                }
+                readOnly={isDisabled}
+              />
+            )}
+          />
+        );
+
+      case "checkbox":
+        return (
+          <>
+            <Controller
+              name={field.name}
+              control={control}
+              render={({ field: controllerField }) => (
+                <Checkbox
+                  label={field.label}
+                  checked={controllerField.value || false}
+                  onChange={controllerField.onChange}
+                  disabled={isDisabled}
+                />
+              )}
+            />
+            {field.info && (
+              <p className="text-sm text-gray-500 mt-1 italic">{field.info}</p>
+            )}
+          </>
+        );
+
+      default:
+        return (
+          <input
+            type={field.type}
+            {...register(field.name, field.validation)}
+            className={isDisabled ? disabledCls : inputCls}
+            disabled={isDisabled}
+          />
+        );
+    }
+  };
+
+  const splitFields = (fields: FormField[]) => {
+    if (fields.length <= 6) return { left: fields, right: [] };
+    const mid = Math.ceil(fields.length / 2);
+    return { left: fields.slice(0, mid), right: fields.slice(mid) };
+  };
+
+  const { left, right } = splitFields(formFields);
+
+  return (
+    <div className="mx-auto mt-5 p-6 rounded-md bg-white shadow">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 mb-5">
+        <div
+          className={`grid ${
+            right.length > 0 ? "grid-cols-1 md:grid-cols-2" : "grid-cols-1"
+          } gap-6`}
+        >
+          {[left, right].map(
+            (fields, idx) =>
+              fields.length > 0 && (
+                <div key={idx}>
+                  {fields.map((field) => {
+                    // kalau kondisi hidden terpenuhi, jangan render apapun
+                    if (field.hiddenWhen?.(values)) return null;
+
+                    return (
+                      <div key={field.name} className="mb-4">
+                        {field.type !== "checkbox" && (
+                          <label className="block text-sm font-medium mb-1">
+                            {field.label}
+                          </label>
+                        )}
+                        {renderField(field)}
+                        {errors[field.name] && (
+                          <p className="text-red-500 text-sm mt-1">
+                            {(errors[field.name] as any).message}
+                          </p>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )
+          )}
+        </div>
+
+        <div className="flex justify-end space-x-2 mt-6 pt-4 border-t">
+          {(!isEditMode || isEditing) && (
+            <Button type="submit" variant="secondary" size="md">
+              Submit
+            </Button>
+          )}
+          {isEditMode && !isEditing && (
+            <Button
+              type="button"
+              variant="primary"
+              size="md"
+              onClick={() => setIsEditing(true)}
+            >
+              Update
+            </Button>
+          )}
+          <Button type="button" variant="danger" size="md" onClick={onClose}>
+            Close
+          </Button>
+        </div>
+      </form>
+    </div>
+  );
+};
+
+export default ModalForm;
+
 // import React, { useEffect, useState } from "react";
 // import { useForm, SubmitHandler, Controller } from "react-hook-form";
 // import Select from "react-select";
@@ -279,259 +535,3 @@
 // };
 
 // export default ModalForm;
-
-import React, { useEffect, useState } from "react";
-import { useForm, SubmitHandler, Controller } from "react-hook-form";
-import Select from "react-select";
-import DatePicker from "../form/date-picker";
-import Button from "../ui/button/Button";
-import Checkbox from "../form/input/Checkbox";
-
-type OptionType = { value: string | boolean; label: string };
-
-export type FormField = {
-  name: string;
-  label: string;
-  type:
-    | "text"
-    | "textarea"
-    | "select"
-    | "number"
-    | "file"
-    | "date"
-    | "checkbox"
-    | "radio";
-  options?: OptionType[];
-  validation?: {
-    required?: boolean | string;
-    [key: string]: any;
-  };
-  info?: string;
-  hiddenWhen?: (values: Record<string, any>) => boolean;
-};
-
-export type FormValues = Record<string, any>;
-
-type ModalFormProps = {
-  formFields: FormField[];
-  onSubmit: SubmitHandler<FormValues>;
-  onClose: () => void;
-  defaultValues?: FormValues;
-  isEditMode?: boolean;
-};
-
-const ModalForm: React.FC<ModalFormProps> = ({
-  formFields,
-  onSubmit,
-  onClose,
-  defaultValues,
-  isEditMode = false,
-}) => {
-  const {
-    register,
-    handleSubmit,
-    control,
-    formState: { errors },
-    reset,
-    watch,
-  } = useForm<FormValues>({ defaultValues });
-
-  const [isEditing, setIsEditing] = useState(false);
-  const values = watch();
-
-  useEffect(() => {
-    if (defaultValues) reset(defaultValues);
-  }, [defaultValues, reset]);
-
-  const inputCls =
-    "w-full px-3 py-2 border rounded-md focus:outline-none focus:ring focus:ring-blue-300";
-  const disabledCls =
-    "w-full px-3 py-2 border rounded-md bg-gray-100 cursor-not-allowed text-gray-500";
-
-  const isDisabled = isEditMode && !isEditing;
-
-  const renderField = (field: FormField) => {
-    if (field.hiddenWhen?.(values)) return null;
-
-    switch (field.type) {
-      case "textarea":
-        return (
-          <textarea
-            {...register(field.name, field.validation)}
-            className={isDisabled ? disabledCls : inputCls}
-            disabled={isDisabled}
-          />
-        );
-
-      case "select":
-        return (
-          <Controller
-            name={field.name}
-            control={control}
-            rules={{
-              ...(field.validation?.required
-                ? {
-                    validate: (value) =>
-                      (value !== undefined && value !== null && value !== "") ||
-                      field.validation?.required ||
-                      "Required",
-                  }
-                : {}),
-              ...field.validation,
-            }}
-            render={({ field: controllerField }) => (
-              <Select
-                {...controllerField}
-                options={field.options}
-                placeholder="Select an option"
-                className="react-select-container"
-                classNamePrefix="react-select"
-                value={field.options?.find(
-                  (opt) => opt.value === controllerField.value
-                )}
-                onChange={(option) =>
-                  controllerField.onChange(option?.value ?? "")
-                }
-                isDisabled={isDisabled}
-                menuPortalTarget={document.body}
-                styles={{
-                  menuPortal: (base) => ({ ...base, zIndex: 9999 }),
-                }}
-              />
-            )}
-          />
-        );
-
-      case "file":
-        return (
-          <input
-            type="file"
-            {...register(field.name, field.validation)}
-            className={isDisabled ? disabledCls : inputCls}
-            disabled={isDisabled}
-          />
-        );
-
-      case "date":
-        return (
-          <Controller
-            name={field.name}
-            control={control}
-            rules={field.validation}
-            render={({ field: controllerField }) => (
-              <DatePicker
-                id={`date-${field.name}`}
-                placeholder="Select a date"
-                onChange={(date: Date | Date[]) =>
-                  controllerField.onChange(Array.isArray(date) ? date[0] : date)
-                }
-                readOnly={isDisabled}
-              />
-            )}
-          />
-        );
-
-      case "checkbox":
-        return (
-          <>
-            <Controller
-              name={field.name}
-              control={control}
-              render={({ field: controllerField }) => (
-                <Checkbox
-                  label={field.label}
-                  checked={controllerField.value || false}
-                  onChange={controllerField.onChange}
-                  disabled={isDisabled}
-                />
-              )}
-            />
-            {field.info && (
-              <p className="text-sm text-gray-500 mt-1 italic">{field.info}</p>
-            )}
-          </>
-        );
-
-      default:
-        return (
-          <input
-            type={field.type}
-            {...register(field.name, field.validation)}
-            className={isDisabled ? disabledCls : inputCls}
-            disabled={isDisabled}
-          />
-        );
-    }
-  };
-
-  const splitFields = (fields: FormField[]) => {
-    if (fields.length <= 6) return { left: fields, right: [] };
-    const mid = Math.ceil(fields.length / 2);
-    return { left: fields.slice(0, mid), right: fields.slice(mid) };
-  };
-
-  const { left, right } = splitFields(formFields);
-
-  return (
-    <div className="mx-auto mt-5 p-6 rounded-md bg-white shadow">
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 mb-5">
-        <div
-          className={`grid ${
-            right.length > 0 ? "grid-cols-1 md:grid-cols-2" : "grid-cols-1"
-          } gap-6`}
-        >
-          {[left, right].map(
-            (fields, idx) =>
-              fields.length > 0 && (
-                <div key={idx}>
-                  {fields.map((field) => {
-                    // kalau kondisi hidden terpenuhi, jangan render apapun
-                    if (field.hiddenWhen?.(values)) return null;
-
-                    return (
-                      <div key={field.name} className="mb-4">
-                        {field.type !== "checkbox" && (
-                          <label className="block text-sm font-medium mb-1">
-                            {field.label}
-                          </label>
-                        )}
-                        {renderField(field)}
-                        {errors[field.name] && (
-                          <p className="text-red-500 text-sm mt-1">
-                            {(errors[field.name] as any).message}
-                          </p>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              )
-          )}
-        </div>
-
-        <div className="flex justify-end space-x-2 mt-6 pt-4 border-t">
-          {(!isEditMode || isEditing) && (
-            <Button type="submit" variant="secondary" size="md">
-              Submit
-            </Button>
-          )}
-          {isEditMode && !isEditing && (
-            <Button
-              type="button"
-              variant="primary"
-              size="md"
-              onClick={() => setIsEditing(true)}
-            >
-              Update
-            </Button>
-          )}
-          <Button type="button" variant="danger" size="md" onClick={onClose}>
-            Close
-          </Button>
-        </div>
-      </form>
-    </div>
-  );
-};
-
-export default ModalForm;

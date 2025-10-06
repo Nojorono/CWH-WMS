@@ -17,7 +17,8 @@ import {
     subWarehouseService,
     binService,
     sourceService,
-    InboundScanService
+    InboundScanService,
+    InventoryTrackingService
 } from "../../services/Service/MasterService";
 
 import { Uom, CreateUom, UpdateUom } from "../../types/UomTypes";
@@ -36,8 +37,8 @@ import { SubWarehouse, CreateSubWarehouse, UpdateSubWarehouse } from "../../type
 import { Bin, CreateBin, UpdateBin } from "../../types/MasterBinTypes";
 import { Source, CreateSource, UpdateSource } from "../../types/MasterSourceTypes";
 import { InboundScan, CreateInboundScan, UpdateInboundScan } from '../../types/InboundScanTypes.tsx'
-
 import { InboundPlanning, CreateInboundPlanning, UpdateInboundPlanning } from "../../types/InboundGoodStock.tsx";
+import { InventoryResponse } from '../../types/InventoryTypes'
 
 
 
@@ -131,4 +132,9 @@ export const useStoreInboundScan = createCrudStore<InboundScan, CreateInboundSca
 export const useStoreInboundGoodStock = createCrudStore<InboundPlanning, CreateInboundPlanning, UpdateInboundPlanning>({
     name: "InboundGoodStockService",
     service: InboundGoodStockService,
+});
+
+export const useStoreInventoryTracking = createCrudStore<InventoryResponse, null, null>({
+    name: "Inventory Tracking",
+    service: InventoryTrackingService,
 });

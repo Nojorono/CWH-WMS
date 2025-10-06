@@ -18,6 +18,8 @@ import { Source, CreateSource, UpdateSource } from "../../types/MasterSourceType
 import { InboundScan, CreateInboundScan, UpdateInboundScan } from '../../types/InboundScanTypes'
 import { InboundPlanning, CreateInboundPlanning, UpdateInboundPlanning } from '../../types/InboundGoodStock'
 
+import { InventoryResponse } from '../../types/InventoryTypes'
+
 
 
 // Daftar semua entitas service di sini
@@ -37,6 +39,7 @@ export const TransporterService = createCrudService<Transporter, CreateTransport
 export const subWarehouseService = createCrudService<SubWarehouse, CreateSubWarehouse, UpdateSubWarehouse>("/master-warehouse-sub");
 export const binService = createCrudService<Bin, CreateBin, UpdateBin>("/master-warehouse-bin");
 export const sourceService = createCrudService<Source, CreateSource, UpdateSource>("/master-source");
-
 export const InboundGoodStockService = createCrudService<InboundPlanning, CreateInboundPlanning, UpdateInboundPlanning>("/inbound");
 export const InboundScanService = createCrudService<InboundScan, CreateInboundScan, UpdateInboundScan>("/transaction-scan-inbound");
+
+export const InventoryTrackingService = createCrudService<InventoryResponse, null, null>("/inventory-tracking");
