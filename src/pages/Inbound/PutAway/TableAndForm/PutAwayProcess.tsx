@@ -1,100 +1,104 @@
-// src/pages/inbound/PutAwayDetail.tsx
-import React, { useCallback, useState } from "react";
-import { useMemo } from "react";
-import {
-  useReactTable,
-  getCoreRowModel,
-  flexRender,
-  ColumnDef,
-} from "@tanstack/react-table";
-import { FaEye, FaCheck, FaEdit } from "react-icons/fa";
+"use client";
+
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { ColumnDef } from "@tanstack/react-table";
+import { FaEdit } from "react-icons/fa";
 import Button from "../../../../components/ui/button/Button";
 import TableComponent from "../../../../components/tables/MasterDataTable/TableComponent";
+import PageBreadcrumb from "../../../../components/common/PageBreadCrumb";
+import { useStorePutAwaySuggestion } from "../../../../DynamicAPI/stores/Store/MasterStore";
+import {
+  PutAwaySuggestionResponse,
+  PutAwaySuggestion,
+} from "../../../../DynamicAPI/types/PutawaySuggestionTypes";
 
-type Pallet = {
+// ==========================
+// 🧩 Type Definitions
+// ==========================
+type PutAwayRow = {
   palletId: string;
-  totalSku: number;
+  palletCode: string;
   totalQty: number;
-  staging: string;
+  warehouseName: string;
+  stagingArea: string;
   suggestZone: string;
   suggestBin: string;
   driver: string;
 };
 
-interface Props {
-  globalFilter?: string;
-  onSelectedChange?: (ids: any[]) => void; // ✅ callback ke parent
-}
+// ==========================
+// 🧱 Component
+// ==========================
+const PutAwayDetail: React.FC = () => {
+  const { list: putAwaySuggestions, fetchAll: fetchPutAwaySuggestions } =
+    useStorePutAwaySuggestion();
 
-const palletData: Pallet[] = [
-  {
-    palletId: "P1",
-    totalSku: 3,
-    totalQty: 120,
-    staging: "Stag-1",
-    suggestZone: "-",
-    suggestBin: "-",
-    driver: "Hari",
-  },
-  {
-    palletId: "P2",
-    totalSku: 3,
-    totalQty: 120,
-    staging: "Stag-1",
-    suggestZone: "-",
-    suggestBin: "-",
-    driver: "Hari",
-  },
-  {
-    palletId: "P3",
-    totalSku: 3,
-    totalQty: 120,
-    staging: "Stag-1",
-    suggestZone: "-",
-    suggestBin: "-",
-    driver: "Hari",
-  },
-  {
-    palletId: "P4",
-    totalSku: 3,
-    totalQty: 120,
-    staging: "Stag-1",
-    suggestZone: "-",
-    suggestBin: "-",
-    driver: "Hari",
-  },
-  {
-    palletId: "P5",
-    totalSku: 3,
-    totalQty: 120,
-    staging: "Stag-2",
-    suggestZone: "-",
-    suggestBin: "-",
-    driver: "Hari",
-  },
-  {
-    palletId: "P6",
-    totalSku: 3,
-    totalQty: 120,
-    staging: "Stag-2",
-    suggestZone: "-",
-    suggestBin: "-",
-    driver: "Hari",
-  },
-];
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
-const PutAwayDetail: React.FC<Props> = ({ onSelectedChange, globalFilter }) => {
+  // ==========================
+  // 🔁 Fetch Data on Mount
+  // ==========================
+  useEffect(() => {
+    fetchPutAwaySuggestions();
+  }, [fetchPutAwaySuggestions]);
 
-  
-  const columns = useMemo<ColumnDef<Pallet>[]>(
+  // ==========================
+  // 🔍 Data Mapping (Response → Table)
+  // ==========================
+  const mappedData: PutAwayRow[] = useMemo(() => {
+    console.log("Mapping Put Away Suggestions:", putAwaySuggestions);
+
+    if (!putAwaySuggestions) return [];
+
+    // ✅ Jika API kamu langsung mengembalikan object { palletSuggestions: [...] }
+    //    maka cukup ambil langsung dari situ
+    const suggestions =
+      (putAwaySuggestions as any).palletSuggestions ||
+      // fallback kalau nanti bentuknya jadi array
+      (Array.isArray(putAwaySuggestions)
+        ? putAwaySuggestions.flatMap(
+            (res: any) =>
+              res.data?.palletSuggestions || res.palletSuggestions || []
+          )
+        : []);
+
+    console.log("Extracted Suggestions:", suggestions);
+
+    // Mapping ke bentuk tabel
+    return suggestions.map((suggestion: PutAwaySuggestion) => {
+      const staging = suggestion.stagingPallet;
+      const pallet = staging?.pallet;
+      const warehouse = staging?.warehouse;
+      const stagingArea = staging?.warehouseSub;
+      const zone = suggestion.suggestedZone;
+      const bin = suggestion.suggestedBin;
+
+      return {
+        palletId: pallet?.id || "-",
+        palletCode: pallet?.pallet_code || "-",
+        totalQty: pallet?.currentQuantity || 0,
+        warehouseName: warehouse?.name || "-",
+        stagingArea: stagingArea?.name || "-",
+        suggestZone: zone?.name || "-",
+        suggestBin: bin?.name || "-",
+        driver: "Forklift Driver 1",
+      };
+    });
+  }, [putAwaySuggestions]);
+
+  console.log("Mapped Put Away Rows:", mappedData);
+
+  // ==========================
+  // 🧾 Table Columns
+  // ==========================
+  const columns = useMemo<ColumnDef<PutAwayRow>[]>(
     () => [
-      { accessorKey: "palletId", header: "Pallet ID", selectedRow: true },
-      { accessorKey: "totalSku", header: "Total SKU" },
+      { accessorKey: "palletCode", header: "Pallet Code" },
       { accessorKey: "totalQty", header: "Total Qty" },
-      { accessorKey: "staging", header: "Staging Area" },
+      { accessorKey: "warehouseName", header: "Warehouse" },
+      { accessorKey: "stagingArea", header: "Staging Area" },
       { accessorKey: "suggestZone", header: "Suggest Zone" },
       { accessorKey: "suggestBin", header: "Suggest Bin" },
-      { accessorKey: "driver", header: "Forklift Driver" },
       {
         id: "actions",
         header: "Action",
@@ -102,7 +106,9 @@ const PutAwayDetail: React.FC<Props> = ({ onSelectedChange, globalFilter }) => {
           <div className="flex gap-2">
             <button
               className="text-green-600"
-              onClick={() => console.log(row.original)}
+              onClick={() =>
+                console.log("Selected Pallet ID:", row.original.palletId)
+              }
             >
               <FaEdit />
             </button>
@@ -113,41 +119,42 @@ const PutAwayDetail: React.FC<Props> = ({ onSelectedChange, globalFilter }) => {
     []
   );
 
-  const [selectedIds, setSelectedIds] = useState<any[]>([]);
+  // ==========================
+  // 📦 Selection Handler
+  // ==========================
+  const handleSelectionChange = useCallback((ids: string[]) => {
+    setSelectedIds(ids);
+  }, []);
 
-  const handleSelectionChange = useCallback(
-    (ids: any[]) => {
-      setSelectedIds(ids);
-      if (onSelectedChange) {
-        onSelectedChange(ids);
-      }
-    },
-    [onSelectedChange]
-  );
-
+  // ==========================
+  // 🚀 Create Put Away
+  // ==========================
   const createPutAway = () => {
-    console.log("Selected IDs:", selectedIds);
-
+    console.log("Selected Pallet IDs:", selectedIds);
+    // TODO: POST ke endpoint /putaway/process
   };
 
   return (
     <div className="p-6 space-y-6">
-      {/* Breadcrumb */}
-      <div>
-        <h1 className="text-xl font-bold text-indigo-800">Put Away</h1>
-        <p className="text-sm text-orange-500">
-          Put Away &gt; Put Away List &gt; Put Away Detail
-        </p>
-      </div>
+      <PageBreadcrumb
+        breadcrumbs={[
+          { title: "Put Away List", path: "/putaway" },
+          { title: "Put Away Process", path: "/putaway/process" },
+        ]}
+      />
 
+      {/* ==========================
+          📊 Table Section
+      =========================== */}
       <TableComponent
-        data={palletData}
+        data={mappedData}
         columns={columns}
-        globalFilter={globalFilter}
         onSelectionChange={handleSelectionChange}
       />
 
-      {/* Put Away Details Form */}
+      {/* ==========================
+          🧠 Put Away Details Section
+      =========================== */}
       <div className="border rounded-lg p-4 shadow-md space-y-4">
         <h2 className="font-semibold text-lg">Put Away Details</h2>
         <div className="grid grid-cols-2 gap-4">
@@ -169,6 +176,7 @@ const PutAwayDetail: React.FC<Props> = ({ onSelectedChange, globalFilter }) => {
           />
         </div>
       </div>
+
       <div className="flex justify-end space-x-4">
         <Button variant="primary" onClick={createPutAway}>
           Create Put Away

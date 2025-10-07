@@ -17,8 +17,10 @@ import { Bin, CreateBin, UpdateBin } from "../../types/MasterBinTypes";
 import { Source, CreateSource, UpdateSource } from "../../types/MasterSourceTypes";
 import { InboundScan, CreateInboundScan, UpdateInboundScan } from '../../types/InboundScanTypes'
 import { InboundPlanning, CreateInboundPlanning, UpdateInboundPlanning } from '../../types/InboundGoodStock'
+import { InventoryListResponse } from '../../types/InventoryTypes'
 
-import { InventoryResponse } from '../../types/InventoryTypes'
+import { PutAwaySuggestionResponse } from '../../types/PutawaySuggestionTypes'
+
 
 
 
@@ -41,5 +43,6 @@ export const binService = createCrudService<Bin, CreateBin, UpdateBin>("/master-
 export const sourceService = createCrudService<Source, CreateSource, UpdateSource>("/master-source");
 export const InboundGoodStockService = createCrudService<InboundPlanning, CreateInboundPlanning, UpdateInboundPlanning>("/inbound");
 export const InboundScanService = createCrudService<InboundScan, CreateInboundScan, UpdateInboundScan>("/transaction-scan-inbound");
+export const InventoryTrackingService = createCrudService<InventoryListResponse, null, null>("/inventory-tracking");
 
-export const InventoryTrackingService = createCrudService<InventoryResponse, null, null>("/inventory-tracking");
+export const PutAwaySuggestionService = createCrudService<PutAwaySuggestionResponse, null, null>("/master-warehouse-bin/suggestion/put-away");

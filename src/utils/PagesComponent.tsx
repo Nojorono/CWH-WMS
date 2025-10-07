@@ -36,6 +36,10 @@ import MasterBin from "../pages/Master/MasterBin";
 import MasterSource from "../pages/Master/MasterSource";
 import MasterSupplier from "../pages/Master/MasterSupplier";
 
+
+//OUTBOUND
+import CreateMemo from "../pages/Outbound/CreateMemo";
+
 export {
   // PAGE MASTER
   MasterUser,
@@ -70,4 +74,7 @@ export {
   // Inventory
   Inventory,
   InventoryDetail,
+
+  // OUTBOUND
+  CreateMemo,
 };

@@ -1,119 +1,144 @@
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
-import Button from "../../../components/ui/button/Button";
+import { useEffect } from "react";
+import { useLocation } from "react-router-dom";
+import { useForm } from "react-hook-form";
 import DynamicForm, {
   FieldConfig,
 } from "../../../components/wms-components/inbound-component/form/DynamicForm";
-import { FaPlus, FaRedoAlt } from "react-icons/fa";
-import { UseFormReturn } from "react-hook-form";
-import { useState } from "react";
-// ==== Main Component ====
-import { useForm } from "react-hook-form";
+import { useStoreInventoryTracking } from "../../../DynamicAPI/stores/Store/MasterStore";
+import MovementHistoryTable from "../Table/HistoryTable";
 
-// ==== Helpers ====
-const buildFieldsConfig = (isDetailMode: boolean): FieldConfig[] =>
-  [
+// === Helper Function: Mapping Data API → Form ===
+function mapDetailToForm(detail: any) {
+  if (!detail) return {};
+
+  return {
+    id: detail.id || "",
+    inventory_date: detail.inventory_date
+      ? detail.inventory_date.split("T")[0]
+      : "",
+    inventory_status: detail.inventory_status || "",
+    inventory_note: detail.inventory_note || "",
+    warehouse_name: detail.warehouse?.name || "",
+    warehouse_sub_name: detail.warehouseSub?.name || "",
+    pallet_code: detail.pallet?.pallet_code || "",
+    pallet_capacity: detail.pallet?.capacity || "",
+    pallet_current_quantity: detail.pallet?.currentQuantity || "",
+  };
+}
+
+// === Helper Function: Field Configuration ===
+function buildFieldsConfig(isDetailMode: boolean): FieldConfig[] {
+  return [
     {
-      name: "inbound_plan_no",
-      label: "Inbound Plan No",
-      type: "text" as const,
+      name: "pallet_code",
+      label: "Pallet Code",
+      type: "text",
       disabled: true,
     },
     {
-      name: "inbound_type",
-      label: "Tipe Inbound",
-      type: "select" as const,
-      options: [
-        { value: "PO", label: "PO" },
-        { value: "SO", label: "SO" },
-        { value: "RETUR", label: "RETUR" },
-      ],
-      validation: { required: "Tipe inbound wajib diisi" }, // ✅ wajib
+      name: "pallet_capacity",
+      label: "Pallet Capacity",
+      type: "number",
+      disabled: true,
     },
     {
-      name: "expedition",
-      label: "Ekspedisi",
-      type: "text" as const,
-      validation: { required: "Ekspedisi wajib diisi" }, // ✅
+      name: "pallet_current_quantity",
+      label: "Current Quantity",
+      type: "number",
+      disabled: true,
     },
     {
-      name: "driver",
-      label: "Driver",
-      type: "text" as const,
-      validation: { required: "Nama driver wajib diisi" },
+      name: "inventory_date",
+      label: "Inventory Date",
+      type: "date",
+      disabled: isDetailMode,
     },
     {
-      name: "no_pol",
-      label: "No Polisi",
-      type: "text" as const,
-      validation: { required: "No polisi wajib diisi" },
+      name: "inventory_status",
+      label: "Inventory Status",
+      type: "text",
+      disabled: true,
     },
     {
-      name: "origin",
-      label: "Origin",
-      type: "text" as const,
-      validation: { required: "Origin wajib diisi" },
+      name: "warehouse_name",
+      label: "Warehouse",
+      type: "text",
+      disabled: true,
     },
     {
-      name: "destination",
-      label: "Tujuan",
-      type: "text" as const,
-      validation: { required: "Tujuan wajib diisi" },
+      name: "warehouse_sub_name",
+      label: "Warehouse Sub",
+      type: "text",
+      disabled: true,
     },
-    {
-      name: "driver_phone",
-      label: "No Telp Driver",
-      type: "text" as const,
-      validation: { required: "No telp driver wajib diisi" },
-    },
-    {
-      name: "arrival_date",
-      label: "Tanggal Kedatangan",
-      type: "date" as const,
-      validation: { required: "Tanggal kedatangan wajib diisi" },
-    },
-  ].map((f) => ({
-    ...f,
-    disabled: f.name === "inbound_plan_no" ? true : isDetailMode,
-  }));
+  ];
+}
 
-const onFinalSubmit = () => {
-  console.log("submit");
-};
+// === Main Component ===
+export default function DetailInventory() {
+  const location = useLocation();
+  const { invListId } = location.state || {};
 
-export default function InboundPlanningFormView() {
-  const methods = useForm();
-  const isDetailMode = false; // Set this according to your logic
+  // === Zustand Store ===
+  const { fetchById, detail } = useStoreInventoryTracking();
+
+  // === React Hook Form ===
+  const methods = useForm({
+    defaultValues: {},
+  });
+  const { setValue, reset, control, register, handleSubmit, watch } = methods;
+
+  // === Mode (View Only) ===
+  const isDetailMode = true;
+
+  // === Fetch data by ID ===
+  useEffect(() => {
+    if (invListId) fetchById(invListId);
+  }, [fetchById, invListId]);
+
+  // === Set data to form ===
+  useEffect(() => {
+    if (detail && Object.keys(detail).length > 0) {
+      reset(mapDetailToForm(detail));
+    }
+  }, [detail, reset]);
+
+  // === Submit Handler ===
+  const onFinalSubmit = (data: any) => {
+    console.log("Form submitted:", data);
+  };
+
+  const palletId = detail?.pallet_id || "";
 
   return (
     <div className="p-6 bg-slate-50 min-h-screen">
+      {/* Breadcrumb Header */}
       <PageBreadcrumb
         breadcrumbs={[
           { title: "Inventory List", path: "/inventory" },
-          // {
-          //   title: isCreateMode
-          //     ? "Create Inbound Planning"
-          //     : isEditMode
-          //     ? formTitle
-          //     : "Detail Inbound Planning",
-          //   path: "/inbound_planning/process",
-          // },
+          { title: "Inventory Detail", path: "/inventory/detail" },
         ]}
       />
 
-      {/* Header Form */}
-      <section className="bg-white p-4 rounded-xl shadow-sm mb-6">
-        <DynamicForm
-          fields={buildFieldsConfig(isDetailMode)}
-          onSubmit={methods.handleSubmit(onFinalSubmit)}
-          defaultValues={{}}
-          control={methods.control}
-          register={methods.register}
-          setValue={methods.setValue}
-          handleSubmit={methods.handleSubmit}
-          isEditMode={!isDetailMode}
-          watch={methods.watch}
-        />
+      {/* Form Section */}
+      <section className="mt-6 flex justify-center">
+        <div className="bg-white rounded-lg shadow-md p-8 w-full">
+          <DynamicForm
+            fields={buildFieldsConfig(isDetailMode)}
+            onSubmit={handleSubmit(onFinalSubmit)}
+            defaultValues={mapDetailToForm(detail)}
+            control={control}
+            register={register}
+            setValue={setValue}
+            handleSubmit={handleSubmit}
+            isEditMode={!isDetailMode}
+            watch={watch}
+          />
+        </div>
       </section>
+
+      <MovementHistoryTable palletId={palletId} />
     </div>
   );
 }

@@ -115,7 +115,7 @@ const MainTable = () => {
               startIcon={<FaPlus className="size-5" />}
               onClick={() => handleCreate()}
             >
-              Add Inbound Planning
+              Create Put Away
             </Button>
           </div>
         </div>

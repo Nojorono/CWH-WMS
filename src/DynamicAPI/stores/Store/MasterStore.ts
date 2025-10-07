@@ -18,7 +18,8 @@ import {
     binService,
     sourceService,
     InboundScanService,
-    InventoryTrackingService
+    InventoryTrackingService,
+    PutAwaySuggestionService
 } from "../../services/Service/MasterService";
 
 import { Uom, CreateUom, UpdateUom } from "../../types/UomTypes";
@@ -38,7 +39,9 @@ import { Bin, CreateBin, UpdateBin } from "../../types/MasterBinTypes";
 import { Source, CreateSource, UpdateSource } from "../../types/MasterSourceTypes";
 import { InboundScan, CreateInboundScan, UpdateInboundScan } from '../../types/InboundScanTypes.tsx'
 import { InboundPlanning, CreateInboundPlanning, UpdateInboundPlanning } from "../../types/InboundGoodStock.tsx";
-import { InventoryResponse } from '../../types/InventoryTypes'
+import { InventoryListResponse } from '../../types/InventoryTypes'
+
+import { PutAwaySuggestionResponse } from '../../types/PutawaySuggestionTypes.tsx'
 
 
 
@@ -134,7 +137,12 @@ export const useStoreInboundGoodStock = createCrudStore<InboundPlanning, CreateI
     service: InboundGoodStockService,
 });
 
-export const useStoreInventoryTracking = createCrudStore<InventoryResponse, null, null>({
+export const useStoreInventoryTracking = createCrudStore<InventoryListResponse, null, null>({
     name: "Inventory Tracking",
     service: InventoryTrackingService,
+});
+
+export const useStorePutAwaySuggestion = createCrudStore<PutAwaySuggestionResponse, null, null>({
+    name: "PutAwaySuggestion",
+    service: PutAwaySuggestionService,
 });
