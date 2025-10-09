@@ -8,20 +8,24 @@ interface ItemData {
   qty_plan: number;
   uom: string;
   notes: string;
+  itemData: [];
+  classificationData: [];
+  uomData: [];
 }
 
-const ItemTable: React.FC = () => {
+const ItemTable: React.FC = (props: Props) => {
   const [data, setData] = useState<ItemData[]>([
-    {
-      item_name: "CLAS MILD - 12",
-      classification: "ROKOK",
-      qty_plan: 1,
-      uom: "DUS",
-      notes: "LOREM IPSUM",
-    },
+    // {
+    //   item_name: "CLAS MILD - 12",
+    //   classification: "ROKOK",
+    //   qty_plan: 1,
+    //   uom: "DUS",
+    //   notes: "LOREM IPSUM",
+    // },
   ]);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const { itemData, classificationData, uomData } = props;
 
   const columns = useMemo(
     () => [
@@ -78,6 +82,9 @@ const ItemTable: React.FC = () => {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onSubmit={handleAddItem}
+        itemData={itemData}
+        classificationData={classificationData}
+        uomData={uomData}
       />
     </div>
   );

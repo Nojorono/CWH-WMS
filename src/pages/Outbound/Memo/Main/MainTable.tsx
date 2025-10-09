@@ -12,12 +12,21 @@ import { FaPlus, FaUndo } from "react-icons/fa";
 // import { usePagePermissions } from "../../../../utils/UserPermission/UserPagePermissions";
 // import { showErrorToast } from "../../../../components/toast";
 import { useDebounce } from "../../../../helper/useDebounce";
-import { useStoreMemo } from "../../../../DynamicAPI/stores/Store/MasterStore";
+import {
+  useStoreMemo,
+  useStoreItem,
+  useStoreClassification,
+  useStoreUom,
+} from "../../../../DynamicAPI/stores/Store/MasterStore";
 
 const MainTable = () => {
   const navigate = useNavigate();
 
   const { list: memoData, fetchAll, fetchUsingParam } = useStoreMemo();
+  const { fetchAll: fetchAllItem, list: itemData } = useStoreItem();
+  const { fetchAll: fetchAllClassification, list: classificationData } =
+    useStoreClassification();
+  const { fetchAll: fetchAllUom, list: uomData } = useStoreUom();
 
   const [globalFilter, setGlobalFilter] = useState<string>("");
   const debouncedFilter = useDebounce(globalFilter, 500);
@@ -37,6 +46,9 @@ const MainTable = () => {
 
   useEffect(() => {
     fetchAll();
+    fetchAllItem();
+    fetchAllClassification();
+    fetchAllUom();
   }, []);
 
   const handleFetchParams = (status: string) => {
@@ -54,7 +66,14 @@ const MainTable = () => {
 
   const handleCreate = () => {
     navigate("/memo/create_memo", {
-      state: { data: [], mode: "create", title: "Create MEMO" },
+      state: {
+        data: [],
+        itemData,
+        classificationData,
+        uomData,
+        mode: "create",
+        title: "Create MEMO",
+      },
     });
   };
 
@@ -126,7 +145,10 @@ const MainTable = () => {
         </div>
       </div>
       <AdjustTable
-        data={memoData}
+        memoData={memoData}
+        itemData={itemData}
+        classificationData={classificationData}
+        uomData={uomData}
         globalFilter={debouncedFilter}
         setGlobalFilter={setGlobalFilter}
         onDetail={handleDetail}

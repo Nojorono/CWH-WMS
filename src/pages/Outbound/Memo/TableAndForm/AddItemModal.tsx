@@ -17,21 +17,15 @@ const AddItemModal: React.FC<AddItemModalProps> = ({
   isOpen,
   onClose,
   onSubmit,
+  itemData,
+  classificationData,
+  uomData,
 }) => {
   const [itemName, setItemName] = useState("");
   const [classification, setClassification] = useState("");
   const [qtyPlan, setQtyPlan] = useState<number>(0);
   const [uom, setUom] = useState("DUS");
   const [notes, setNotes] = useState("");
-
-  // Dummy data
-  const itemOptions = [
-    "CLAS MILD - 12",
-    "CLAS MILD - 16",
-    "CLAS MILD REDMAX - 16",
-  ];
-  const classificationOptions = ["ROKOK", "RYO"];
-  const uomOptions = ["PACK", "DUS", "CARTON"];
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -80,9 +74,9 @@ const AddItemModal: React.FC<AddItemModalProps> = ({
               required
             >
               <option value="">Select Item</option>
-              {itemOptions.map((item) => (
-                <option key={item} value={item}>
-                  {item}
+              {itemData.map((item) => (
+                <option key={item.sku} value={item.sku}>
+                  {item.sku}
                 </option>
               ))}
             </select>
@@ -96,9 +90,12 @@ const AddItemModal: React.FC<AddItemModalProps> = ({
               required
             >
               <option value="">Select Classification</option>
-              {classificationOptions.map((cls) => (
-                <option key={cls} value={cls}>
-                  {cls}
+              {classificationData.map((cls) => (
+                <option
+                  key={cls.classification_name}
+                  value={cls.classification_name}
+                >
+                  {cls.classification_name}
                 </option>
               ))}
             </select>
@@ -123,9 +120,9 @@ const AddItemModal: React.FC<AddItemModalProps> = ({
                 className="w-full border rounded px-2 py-1 mt-1"
               >
                 <option value="">Select UoM</option>
-                {uomOptions.map((uom) => (
-                  <option key={uom} value={uom}>
-                    {uom}
+                {uomData.map((uom) => (
+                  <option key={uom.code} value={uom.code}>
+                    {uom.code}
                   </option>
                 ))}
                 <option value="PACK">PACK</option>

@@ -28,7 +28,10 @@ type MenuTableProps = {
 };
 
 const AdjustTable = ({
-  data,
+  memoData,
+  itemData,
+  classificationData,
+  uomData,
   globalFilter,
   setGlobalFilter,
   onDetail,
@@ -97,14 +100,20 @@ const AdjustTable = ({
 
   const handleDetail = (data: any) => {
     navigate("/memo/create_memo", {
-      state: { data, mode: "detail" },
+      state: {
+        data: memoData,
+        itemData,
+        classificationData,
+        uomData,
+        mode: "detail",
+      },
     });
   };
 
   return (
     <>
       <TableComponent
-        data={data}
+        data={memoData}
         columns={columns}
         globalFilter={globalFilter}
         setGlobalFilter={setGlobalFilter}

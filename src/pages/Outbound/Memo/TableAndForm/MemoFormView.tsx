@@ -21,6 +21,9 @@ type Props = {
   formTitle: string;
   onFinalSubmit: (data: FormValues) => void;
   emptyFormValues: FormValues;
+  itemData: [];
+  classificationData: [];
+  uomData: [];
 };
 
 // MEMO Details
@@ -36,31 +39,31 @@ const buildFieldsConfig = (isDetailMode: boolean): FieldConfig[] =>
       name: "delivery_date",
       label: "Delivery Date",
       type: "date" as const,
-      validation: { required: "Tanggal kedatangan wajib diisi" },
+      validation: { required: "Tanggal delivery wajib diisi" },
     },
     {
       name: "origin",
       label: "Origin",
       type: "text" as const,
-      validation: { required: "Ekspedisi wajib diisi" }, // ✅
+      validation: { required: "Origin wajib diisi" },
     },
     {
       name: "destination",
       label: "Destination",
       type: "text" as const,
-      validation: { required: "Nama driver wajib diisi" },
+      validation: { required: "Destination wajib diisi" },
     },
     {
       name: "ship_to",
       label: "Ship To",
       type: "text" as const,
-      validation: { required: "No polisi wajib diisi" },
+      validation: { required: "Ship to wajib diisi" },
     },
     {
       name: "requestor",
       label: "Requestor",
       type: "text" as const,
-      validation: { required: "Origin wajib diisi" },
+      validation: { required: "Requestor wajib diisi" },
     },
   ].map((f) => ({
     ...f,
@@ -68,9 +71,18 @@ const buildFieldsConfig = (isDetailMode: boolean): FieldConfig[] =>
   }));
 
 const MemoFormView = (props: Props) => {
-  const { methods, isDetailMode, onFinalSubmit } = props;
+  const {
+    methods,
+    isDetailMode,
+    onFinalSubmit,
+    itemData,
+    classificationData,
+    uomData,
+  } = props;
 
   const fieldsConfig = buildFieldsConfig(isDetailMode);
+
+  console.log("classificationData", classificationData);
 
   return (
     <div className="p-6 bg-slate-50 min-h-screen">
@@ -102,7 +114,11 @@ const MemoFormView = (props: Props) => {
         />
       </section>
 
-      <ItemTable />
+      <ItemTable
+        itemData={itemData}
+        classificationData={classificationData}
+        uomData={uomData}
+      />
 
       {/* Footer Buttons */}
       <div className="flex justify-end gap-2 mt-4">
@@ -111,7 +127,7 @@ const MemoFormView = (props: Props) => {
           // onClick={onClose}
           className="border border-gray-300 text-gray-600 px-4 py-1 rounded hover:bg-gray-100 transition"
         >
-          Back
+          Reset
         </button>
         <button
           type="submit"
