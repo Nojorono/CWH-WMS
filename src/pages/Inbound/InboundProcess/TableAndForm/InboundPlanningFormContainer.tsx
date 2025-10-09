@@ -201,12 +201,14 @@ export default function InboundPlanningFormContainer() {
   };
 
   const onFinalSubmit = async (data: FormValues) => {
-    const payload = mapToPayload(data);    
+    const payload = mapToPayload(data);
     const id = dataInbound?.id;
 
     console.log("Final submit payload:", payload, " | id:", id);
-    alert(`Final submit payload (lihat di console): ${JSON.stringify(payload)}`);
-    
+    alert(
+      `Final submit payload (lihat di console): ${JSON.stringify(payload)}`
+    );
+
     // if (isCreateMode) {
     //   const res = await createData(payload);
     //   if (res?.success) {

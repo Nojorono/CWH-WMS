@@ -13,6 +13,10 @@ import InboundProcess from "../pages/Inbound/InboundProcess/TableAndForm/Inbound
 import PutAway from "../pages/Inbound/PutAway";
 import PutAwayProcess from "../pages/Inbound/PutAway/TableAndForm/PutAwayProcess";
 
+// OUTBOUND
+import Memo from "../pages/Outbound/Memo/index";
+import CreateMemo from "../pages/Outbound/Memo/TableAndForm/MemoFormContainer";
+
 // INVENTORY
 import Inventory from "../pages/Inventory";
 import InventoryDetail from "../pages/Inventory/Form/Detail";
@@ -66,6 +70,10 @@ export {
   InboundProcess,
   PutAway,
   PutAwayProcess,
+
+  // OUTBOUND
+  Memo,
+  CreateMemo,
 
   // Inventory
   Inventory,
