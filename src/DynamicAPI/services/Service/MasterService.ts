@@ -18,9 +18,8 @@ import { Source, CreateSource, UpdateSource } from "../../types/MasterSourceType
 import { InboundScan, CreateInboundScan, UpdateInboundScan } from '../../types/InboundScanTypes'
 import { InboundPlanning, CreateInboundPlanning, UpdateInboundPlanning } from '../../types/InboundGoodStock'
 import { InventoryListResponse } from '../../types/InventoryTypes'
-
-import { PutAwaySuggestionResponse } from '../../types/PutawaySuggestionTypes'
-
+import { PutAwaySuggestionResponse } from '../../types/PutAwaySuggestionTypes.tsx'
+import { PutAway, CreatePutAway, UpdatePutAway } from '../../types/PutAwayTypes.tsx'
 
 
 
@@ -40,9 +39,12 @@ export const VehicleService = createCrudService<Vehicle, CreateVehicle, UpdateVe
 export const TransporterService = createCrudService<Transporter, CreateTransporter, UpdateTransporter>("/inbound-transporter");
 export const subWarehouseService = createCrudService<SubWarehouse, CreateSubWarehouse, UpdateSubWarehouse>("/master-warehouse-sub");
 export const binService = createCrudService<Bin, CreateBin, UpdateBin>("/master-warehouse-bin");
+export const binByZoneService = createCrudService<Bin, CreateBin, UpdateBin>("/master-warehouse-bin/warehouse-sub");
+
 export const sourceService = createCrudService<Source, CreateSource, UpdateSource>("/master-source");
 export const InboundGoodStockService = createCrudService<InboundPlanning, CreateInboundPlanning, UpdateInboundPlanning>("/inbound");
 export const InboundScanService = createCrudService<InboundScan, CreateInboundScan, UpdateInboundScan>("/transaction-scan-inbound");
 export const InventoryTrackingService = createCrudService<InventoryListResponse, null, null>("/inventory-tracking");
-
 export const PutAwaySuggestionService = createCrudService<PutAwaySuggestionResponse, null, null>("/master-warehouse-bin/suggestion/put-away");
+export const PutAwayService = createCrudService<PutAway, CreatePutAway, UpdatePutAway>("/put-away");
+export const PutAwayBulkService = createCrudService<PutAway, CreatePutAway, UpdatePutAway>("/put-away/create-many");

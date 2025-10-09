@@ -33,7 +33,7 @@ import {
   MainTabPallet,
   MainTabZone,
   InventoryDetail,
-  CreateMemo,
+  // Memo,
 } from "./utils/PagesComponent";
 // import dummyRoutes from "./helper/dummyRoutes";
 
@@ -111,7 +111,7 @@ export function AppRoutes() {
       "/master_bin": <MasterBin />,
       "/master_source": <MasterSource />,
       "/inventory": <Inventory />,
-      "/create_memo": <CreateMemo />,
+      // "/memo": <Memo />,
     };
     return map[path] || <DefaultPage />;
   };

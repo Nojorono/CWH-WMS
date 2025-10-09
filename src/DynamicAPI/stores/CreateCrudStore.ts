@@ -7,6 +7,7 @@ interface CrudStoreOptions<TData, TCreate, TUpdate> {
         fetchAll: () => Promise<TData[]>;
         fetchById: (id: any) => Promise<TData>;
         create: (payload: TCreate) => Promise<TData>;
+        createBulk?: (payload: { data: TCreate[] }) => Promise<TData[]>;
         update: (id: any, payload: TUpdate) => Promise<TData>;
         delete: (id: any) => Promise<boolean>;
         fetchUsingParam: (param: any) => Promise<TData[]>;
@@ -27,6 +28,7 @@ export const createCrudStore = <TData, TCreate, TUpdate>({
         fetchAll: () => Promise<{ success: boolean; message?: string }>;
         fetchById: (id: any) => Promise<void>;
         createData: (payload: TCreate) => Promise<{ success: boolean; message?: string }>;
+        createBulkData?: (payload: { data: TCreate[] }) => Promise<{ success: boolean; message?: string }>; 
         updateData: (id: any, payload: TUpdate) => Promise<{ success: boolean; message?: string }>;
         deleteData: (id: any) => Promise<void>;
         fetchUsingParam: (param: any) => Promise<void>;
@@ -101,6 +103,35 @@ export const createCrudStore = <TData, TCreate, TUpdate>({
                 set({ isLoading: false });
             }
         },
+
+        // ✅ Fungsi baru khusus untuk bulk insert (pakai { data: [...] })
+        createBulkData: async (payload: { data: TCreate[] }) => {  // ✅ ubah di sini
+            set({ isLoading: true, error: null });
+
+            console.log("Payload for bulk create:", payload);  // Debugging line
+
+            try {
+                if (!Array.isArray(payload.data) || payload.data.length === 0) {
+                    throw new Error("Bulk payload must be a non-empty array");
+                }
+
+                if (!service.createBulk) {
+                    throw new Error("createBulk not implemented in service");
+                }
+
+                await service.createBulk(payload);
+                showSuccessToast(`${name} bulk created successfully`);
+                return { success: true };
+            } catch (err: any) {
+                const msg = err.message || `Failed to bulk create ${name}`;
+                showErrorToast(msg);
+                set({ error: msg });
+                return { success: false, message: msg };
+            } finally {
+                set({ isLoading: false });
+            }
+        },
+
 
         updateData: async (id: number, payload: TUpdate) => {
             set({ isLoading: true, error: null });

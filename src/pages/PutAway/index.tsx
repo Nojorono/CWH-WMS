@@ -1,4 +1,4 @@
-import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
+import PageBreadcrumb from "../../components/common/PageBreadCrumb";
 import ViewTable from "./Main/MainTable";
 
 export default function PutAway() {

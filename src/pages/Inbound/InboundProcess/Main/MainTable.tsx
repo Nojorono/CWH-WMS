@@ -20,6 +20,9 @@ const MainTable = () => {
     list: inboundPrincipalData,
     fetchAll,
     fetchUsingParam,
+    fetchById,
+    detail,
+
   } = useStoreInboundGoodStock();
 
   const [globalFilter, setGlobalFilter] = useState<string>("");

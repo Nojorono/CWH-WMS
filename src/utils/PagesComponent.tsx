@@ -10,8 +10,10 @@ import UpdateRole from "../pages/Master/MasterRole/Screen/UpdateRole";
 // INBOUND PLANNING
 import Inbound from "../pages/Inbound/InboundProcess/index";
 import InboundProcess from "../pages/Inbound/InboundProcess/TableAndForm/InboundPlanningFormContainer";
-import PutAway from "../pages/Inbound/PutAway";
-import PutAwayProcess from "../pages/Inbound/PutAway/TableAndForm/PutAwayProcess";
+
+// PUTAWAY
+import PutAway from "../pages/PutAway";
+import PutAwayProcess from "../pages/PutAway/TableAndForm/PutAwayProcess";
 
 // INVENTORY
 import Inventory from "../pages/Inventory";
@@ -36,9 +38,8 @@ import MasterBin from "../pages/Master/MasterBin";
 import MasterSource from "../pages/Master/MasterSource";
 import MasterSupplier from "../pages/Master/MasterSupplier";
 
-
 //OUTBOUND
-import CreateMemo from "../pages/Outbound/CreateMemo";
+// import Memo from "../pages/Outbound/CreateMemo";
 
 export {
   // PAGE MASTER
@@ -68,6 +69,8 @@ export {
   // INBOUND PLANNING
   Inbound,
   InboundProcess,
+
+  // PUTAWAY
   PutAway,
   PutAwayProcess,
 
@@ -76,5 +79,5 @@ export {
   InventoryDetail,
 
   // OUTBOUND
-  CreateMemo,
+  // Memo,
 };

@@ -19,7 +19,10 @@ import {
     sourceService,
     InboundScanService,
     InventoryTrackingService,
-    PutAwaySuggestionService
+    PutAwaySuggestionService,
+    binByZoneService,
+    PutAwayService,
+    PutAwayBulkService
 } from "../../services/Service/MasterService";
 
 import { Uom, CreateUom, UpdateUom } from "../../types/UomTypes";
@@ -40,10 +43,8 @@ import { Source, CreateSource, UpdateSource } from "../../types/MasterSourceType
 import { InboundScan, CreateInboundScan, UpdateInboundScan } from '../../types/InboundScanTypes.tsx'
 import { InboundPlanning, CreateInboundPlanning, UpdateInboundPlanning } from "../../types/InboundGoodStock.tsx";
 import { InventoryListResponse } from '../../types/InventoryTypes'
-
-import { PutAwaySuggestionResponse } from '../../types/PutawaySuggestionTypes.tsx'
-
-
+import { PutAwaySuggestionResponse } from '../../types/PutAwaySuggestionTypes.tsx'
+import { PutAway, CreatePutAway, UpdatePutAway } from '../../types/PutAwayTypes.tsx'
 
 
 export const useStoreUom = createCrudStore<Uom, CreateUom, UpdateUom>({
@@ -121,11 +122,15 @@ export const useStoreBin = createCrudStore<Bin, CreateBin, UpdateBin>({
     service: binService,
 });
 
+export const useStoreBinByZone = createCrudStore<Bin, CreateBin, UpdateBin>({
+    name: "BinByZone",
+    service: binByZoneService,
+});
+
 export const useStoreSource = createCrudStore<Source, CreateSource, UpdateSource>({
     name: "Source",
     service: sourceService,
 });
-
 
 export const useStoreInboundScan = createCrudStore<InboundScan, CreateInboundScan, UpdateInboundScan>({
     name: "InboundScan",
@@ -145,4 +150,14 @@ export const useStoreInventoryTracking = createCrudStore<InventoryListResponse, 
 export const useStorePutAwaySuggestion = createCrudStore<PutAwaySuggestionResponse, null, null>({
     name: "PutAwaySuggestion",
     service: PutAwaySuggestionService,
+});
+
+export const useStorePutAway = createCrudStore<PutAway, CreatePutAway, UpdatePutAway>({
+    name: "PutAway",
+    service: PutAwayService,
+});
+
+export const useStoreBulkPutAway = createCrudStore<PutAway, CreatePutAway, UpdatePutAway>({
+    name: "PutAway",
+    service: PutAwayBulkService,
 });
