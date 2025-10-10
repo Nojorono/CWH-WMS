@@ -116,7 +116,6 @@ export function AppRoutes() {
       "/master_bin": <MasterBin />,
       "/master_source": <MasterSource />,
       "/inventory": <Inventory />,
-      "/memo": <Memo />,
     };
     return map[path] || <DefaultPage />;
   };
