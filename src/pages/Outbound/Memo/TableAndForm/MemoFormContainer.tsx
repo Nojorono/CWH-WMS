@@ -105,6 +105,7 @@ const MemoFormContainer = () => {
         reset={reset}
         emptyFormValues={emptyFormValues}
         memoID={memoData.id}
+        detail={data}
         itemData={itemData}
         classificationData={classificationData}
         uomData={uomData}

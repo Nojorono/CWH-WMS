@@ -1,46 +1,40 @@
-import React, { useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import TableComponent from "../../../../components/tables/MasterDataTable/TableComponent";
 import AddItemModal from "./AddItemModal";
 
 interface ItemData {
-  item_name: string;
-  classification: string;
-  qty_plan: number;
+  id: string;
+  quantity_plan: string;
   uom: string;
-  notes: string;
   itemData: [];
   classificationData: [];
   uomData: [];
 }
 
 const ItemTable: React.FC = (props: Props) => {
-  const [data, setData] = useState<ItemData[]>([
-    // {
-    //   item_name: "CLAS MILD - 12",
-    //   classification: "ROKOK",
-    //   qty_plan: 1,
-    //   uom: "DUS",
-    //   notes: "LOREM IPSUM",
-    // },
-  ]);
+  const [data, setData] = useState<ItemData[]>([]);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const { itemData, classificationData, uomData } = props;
+  const { detail, itemData, classificationData, uomData } = props;
+
+  useEffect(() => {
+    setData(detail.outbound_memo_items);
+  }, [detail]);
 
   const columns = useMemo(
     () => [
       {
-        accessorKey: "item_name",
+        accessorKey: "item.sku",
         header: "Item Name",
         cell: (info: any) => info.getValue(),
       },
       {
-        accessorKey: "classification",
+        accessorKey: "",
         header: "Classification",
         cell: (info: any) => info.getValue(),
       },
       {
-        accessorKey: "qty_plan",
+        accessorKey: "quantity_plan",
         header: "Qty Plan",
         cell: (info: any) => info.getValue(),
       },
@@ -50,7 +44,7 @@ const ItemTable: React.FC = (props: Props) => {
         cell: (info: any) => info.getValue(),
       },
       {
-        accessorKey: "notes",
+        accessorKey: "item.description",
         header: "Notes",
         cell: (info: any) => info.getValue(),
       },

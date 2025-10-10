@@ -75,6 +75,7 @@ const MemoFormView = (props: Props) => {
     methods,
     isDetailMode,
     onFinalSubmit,
+    detail,
     itemData,
     classificationData,
     uomData,
@@ -113,6 +114,7 @@ const MemoFormView = (props: Props) => {
       </section>
 
       <ItemTable
+        detail={detail}
         itemData={itemData}
         classificationData={classificationData}
         uomData={uomData}
