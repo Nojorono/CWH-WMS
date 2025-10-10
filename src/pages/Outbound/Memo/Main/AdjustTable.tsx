@@ -101,7 +101,8 @@ const AdjustTable = ({
   const handleDetail = (data: any) => {
     navigate("/memo/create_memo", {
       state: {
-        data: memoData,
+        data,
+        memoData,
         itemData,
         classificationData,
         uomData,

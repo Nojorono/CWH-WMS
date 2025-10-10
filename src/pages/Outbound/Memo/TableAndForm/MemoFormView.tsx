@@ -82,8 +82,6 @@ const MemoFormView = (props: Props) => {
 
   const fieldsConfig = buildFieldsConfig(isDetailMode);
 
-  console.log("classificationData", classificationData);
-
   return (
     <div className="p-6 bg-slate-50 min-h-screen">
       <PageBreadcrumb

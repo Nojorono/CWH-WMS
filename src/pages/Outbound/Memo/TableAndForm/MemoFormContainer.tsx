@@ -2,7 +2,6 @@ import { useEffect, useState, useMemo, useRef } from "react";
 import { useForm, useFieldArray, FormProvider } from "react-hook-form";
 import { useLocation, useNavigate } from "react-router";
 import { FormValues } from "./component/formTypes";
-// import { CreateMemo } from "../../../../DynamicAPI/types/MemoTypes";
 // import { toLocalISOString } from "../../../../helper/FormatDate";
 // import { showErrorToast } from "../../../../components/toast";
 import MemoFormView from "./MemoFormView";
@@ -64,7 +63,8 @@ function mapToPayload(data: FormValues) {
 const MemoFormContainer = () => {
   const location = useLocation();
   const {
-    data: memoData,
+    data,
+    memoData,
     itemData,
     classificationData,
     uomData,
@@ -80,7 +80,7 @@ const MemoFormContainer = () => {
 
   // Reset sesuai mode
   useEffect(() => {
-    if (isDetailMode && memoData) reset(mapDetailToFormValues(memoData));
+    if (isDetailMode && data) reset(mapDetailToFormValues(data));
     else if (isCreateMode) reset(emptyFormValues);
   }, [isDetailMode, isCreateMode, memoData, reset]);
 
@@ -98,20 +98,11 @@ const MemoFormContainer = () => {
     <FormProvider {...methods}>
       <MemoFormView
         methods={methods}
-        // doFields={doFields}
-        // appendDO={() =>
-        //   append({ do_no: "", date: "", attachment: "", pos: [] })
-        // }
-        // removeDO={remove}
         isCreateMode={isCreateMode}
         isDetailMode={isDetailMode}
         formTitle={formTitle}
         onFinalSubmit={onFinalSubmit}
-        // handlePreview={handlePreview}
-        // previewData={previewData}
-        // isConfirmOpen={isConfirmOpen}
-        // setIsConfirmOpen={setIsConfirmOpen}
-        // reset={reset}
+        reset={reset}
         emptyFormValues={emptyFormValues}
         memoID={memoData.id}
         itemData={itemData}
