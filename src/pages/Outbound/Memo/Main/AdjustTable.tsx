@@ -49,9 +49,9 @@ const AdjustTable = ({
   console.log("Data in AdjustTable:", data);
   
 
-  const handleDetail = (data: MemoData) => {
+  const handleDetail = (id: string) => {
     navigate("/memo/process", {
-      state: { data, mode: "detail", title: "Detail Memo" },
+      state: { data: id, mode: "detail", title: "Detail Memo" },
     });
   };
 
@@ -79,7 +79,7 @@ const AdjustTable = ({
           <div className="flex gap-3">
             <FaEye
               className="size-5 cursor-pointer text-green-600 hover:scale-110 transition"
-              onClick={() => handleDetail(row.original)}
+              onClick={() => handleDetail(row.original.id)}
               title="Detail"
             />
             <FaEdit
