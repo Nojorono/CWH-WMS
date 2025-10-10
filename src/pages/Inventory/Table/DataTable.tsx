@@ -60,10 +60,10 @@ const DataTable = () => {
         cell: ({ row }: any) => row.original.warehouseBin?.name ?? "Preload",
       },
       {
-        accessorKey: "inventory_status",
-        header: "Status",
+        accessorKey: "progression_status",
+        header: "Progression Status",
         cell: ({ row }: any) => {
-          const status = row.original.inventory_status || "-";
+          const status = row.original.progression_status || "-";
           return (
             <span
               className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(

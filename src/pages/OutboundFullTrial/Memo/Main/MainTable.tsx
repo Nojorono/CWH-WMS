@@ -11,88 +11,60 @@ import DatePicker from "../../../../components/form/date-picker";
 import Spinner from "../../../../components/ui/spinner";
 import { usePagePermissions } from "../../../../utils/UserPermission/UserPagePermissions";
 import { showErrorToast } from "../../../../components/toast";
-import { useStoreInboundGoodStock } from "../../../../DynamicAPI/stores/Store/MasterStore";
-
-type PutAway = {
-  palletId: string;
-  inboundId: string;
-  totalSku: number;
-  totalQty: number;
-  suggestZone: string;
-  suggestBin: string;
-  forkliftDriver: string;
-};
-
-const sampleData: PutAway[] = [
-  {
-    palletId: "P1",
-    inboundId: "CWH01-001-002",
-    totalSku: 3,
-    totalQty: 120,
-    suggestZone: "JT1",
-    suggestBin: "A",
-    forkliftDriver: "Not Yet Assigned",
-  },
-  {
-    palletId: "P2",
-    inboundId: "CWH01-001-002",
-    totalSku: 3,
-    totalQty: 120,
-    suggestZone: "JT2",
-    suggestBin: "A",
-    forkliftDriver: "Not Yet Assigned",
-  },
-];
+import { useStoreOutboundMemo } from "../../../../DynamicAPI/stores/Store/MasterStore";
 
 const MainTable = () => {
   const navigate = useNavigate();
-
-  //   const {
-  //     list: inboundPrincipalData,
-  //     fetchAll,
-  //     fetchUsingParam,
-  //   } = useStoreInboundGoodStock();
+  const { fetchAll, list } = useStoreOutboundMemo();
 
   const [globalFilter, setGlobalFilter] = useState<string>("");
   const debouncedFilter = useDebounce(globalFilter, 500);
 
-  //   const [startDate, setStartDate] = useState<Date | null>(null);
-
-  //   const options = [
-  //     { value: "CREATED", label: "CREATED" },
-  //     { value: "PENDING", label: "PENDING" },
-  //   ];
+  useEffect(() => {
+    fetchAll();
+  }, [fetchAll]);
 
   const handleResetFilters = () => {
-    console.log("Resetting filters");
-  };
-
-  //   useEffect(() => {
-  //     fetchAll();
-  //   }, []);
-
-  //   const handleFetchParams = (status: string) => {
-  //     fetchUsingParam({
-  //       page: 1,
-  //       status: status,
-  //       limit: "",
-  //       createdBy: "",
-  //     });
-  //   };
-
-  const handleDetail = (id: any) => {
-    console.log(`Navigating to detail page for ID: ${id}`);
+    setGlobalFilter("");
+    // Reset filter lain jika ada
   };
 
   const handleCreate = () => {
-    navigate("/putaway/process", {
-      state: { data: [], mode: "create", title: "Create Inbound Planning" },
+    navigate("/memo/process", {
+      state: { data: [], mode: "create", title: "Create Memo" },
     });
   };
 
-  const handleFetchParams = () => {
-    console.log("Fetching with params");
-  };
+  // Mapping API data to table data
+  const mappedList = (list || []).map((item: any, index: number) => ({
+    no: index + 1,
+    id: item.id,
+    memoId: `M${(index + 1).toString().padStart(3, "0")}`,
+    deliveryDate: new Date(item.delivery_date).toLocaleDateString("en-GB"),
+    origin: item.origin || "-",
+    destination: item.destination || "-",
+    shipTo: item.ship_to || "-",
+    requestor: item.requestor || "-",
+    status: item.status || "PENDING",
+    createdDate: new Date(item.createdAt).toLocaleDateString("en-GB"),
+    // Add required AdjustData properties below, fallback to null/empty if not present
+    createdAt: item.createdAt || null,
+    updatedAt: item.updatedAt || null,
+    deletedAt: item.deletedAt || null,
+    inventory_tracking_id: item.inventory_tracking_id || "",
+    outbound_memo_id: item.outbound_memo_id || "",
+    outbound_memo_detail_id: item.outbound_memo_detail_id || "",
+    product_id: item.product_id || "",
+    product_name: item.product_name || "",
+    qty: item.qty || 0,
+    uom: item.uom || "",
+    warehouse_id: item.warehouse_id || "",
+    // Add any other required fields from AdjustData here
+  }));
+
+  const handleFetchParams = (): void => {
+    throw new Error("Function not implemented.");
+  };  
 
   return (
     <>
@@ -105,6 +77,7 @@ const MainTable = () => {
               type="text"
               id="search"
               placeholder="🔍 Masukan data.."
+              value={globalFilter}
             />
           </div>
 
@@ -113,27 +86,18 @@ const MainTable = () => {
               size="sm"
               variant="primary"
               startIcon={<FaPlus className="size-5" />}
-              onClick={() => handleCreate()}
+              onClick={handleCreate}
             >
-              Add Inbound Planning
+              Create Memo
             </Button>
           </div>
         </div>
 
         <div className="flex justify-between items-center mt-5">
           <div className="space-x-4">
-            <Label htmlFor="search">Inbound No</Label>
-            <Input type="text" id="search" placeholder="Inbound no.." />
+            <Label htmlFor="inbound-no">Inbound No</Label>
+            <Input type="text" id="inbound-no" placeholder="Inbound no.." />
           </div>
-
-          {/* <div className="space-x-4">
-            <Label htmlFor="jenis-kunjungan-select">Status</Label>
-            <Select
-              options={options}
-              placeholder="Pilih"
-              onChange={(value) => handleFetchParams(value)}
-            />
-          </div> */}
 
           <div className="flex justify-center items-center mt-5">
             <Button variant="rounded" size="sm" onClick={handleResetFilters}>
@@ -144,10 +108,9 @@ const MainTable = () => {
       </div>
 
       <AdjustTable
-        data={sampleData}
+        data={mappedList}
         globalFilter={debouncedFilter}
         setGlobalFilter={setGlobalFilter}
-        onDetail={handleDetail}
         onRefresh={handleFetchParams}
       />
     </>

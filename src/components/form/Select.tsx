@@ -11,7 +11,9 @@ interface SelectProps {
   placeholder?: string;
   onChange: (value: string) => void;
   className?: string;
-  value?: string; // Tambahkan properti value untuk kontrol eksplisit
+  value?: string;
+  width?: string | number;
+  disabled?: boolean; // ✅ tambahkan prop disabled
 }
 
 const Select: React.FC<SelectProps> = ({
@@ -20,11 +22,15 @@ const Select: React.FC<SelectProps> = ({
   onChange,
   className = "",
   value,
+  width = "200px",
+  disabled = false, // ✅ default false
 }) => {
   const selectedOption = options.find((option) => option.value === value);
 
   const handleChange = (selectedOption: SingleValue<Option>) => {
-    onChange(selectedOption?.value || ""); // Trigger parent handler
+    if (!disabled) {
+      onChange(selectedOption?.value || "");
+    }
   };
 
   return (
@@ -32,7 +38,7 @@ const Select: React.FC<SelectProps> = ({
       className={className}
       options={options}
       placeholder={placeholder}
-      value={selectedOption || null} // Gunakan value untuk kontrol eksplisit
+      value={selectedOption || null}
       onChange={handleChange}
       classNamePrefix="react-select"
       styles={{
@@ -42,24 +48,27 @@ const Select: React.FC<SelectProps> = ({
           borderColor: "#d1d5db",
           boxShadow: "none",
           "&:hover": { borderColor: "#a1a1aa" },
-          width: "200px",
+          width,
+          backgroundColor: disabled ? "#f3f4f6" : base.backgroundColor, // ✅ warna jika disable
+          cursor: disabled ? "not-allowed" : "pointer", // ✅ cursor jika disable
+        }),
+        menu: (base) => ({
+          ...base,
+          width,
         }),
         placeholder: (base) => ({
           ...base,
           color: "#9ca3af",
         }),
-        menu: (base) => ({
-          ...base,
-          width: "200px",
-        }),
         singleValue: (base) => ({
           ...base,
-          width: "200px",
+          width,
           overflow: "hidden",
           textOverflow: "ellipsis",
           whiteSpace: "nowrap",
         }),
       }}
+      isDisabled={disabled} // ✅ react-select prop
     />
   );
 };

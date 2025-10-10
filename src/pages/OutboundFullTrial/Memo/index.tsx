@@ -1,10 +1,10 @@
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import ViewTable from "./Main/MainTable";
 
-export default function PutAway() {
+export default function Memo() {
   return (
     <div>
-      <PageBreadcrumb breadcrumbs={[{ title: "Put Away List" }]} />
+      <PageBreadcrumb breadcrumbs={[{ title: "Memo List" }]} />
       <ViewTable />
     </div>
   );

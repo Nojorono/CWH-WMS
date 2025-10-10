@@ -1,25 +1,30 @@
 import { createCrudStore } from "../CreateCrudStore";
 import {
-  uomService,
-  palletService,
-  IoService,
-  warehouseService,
-  MenuService,
-  ParentMenuService,
-  ItemService,
-  supplierService,
-  InboundGoodStockService,
-  UserService,
-  HelperAssignService,
-  ClassificationService,
-  VehicleService,
-  TransporterService,
-  subWarehouseService,
-  binService,
-  sourceService,
-  InboundScanService,
-  InventoryTrackingService,
+    uomService,
+    palletService,
+    IoService,
+    warehouseService,
+    MenuService,
+    ParentMenuService,
+    ItemService,
+    supplierService,
+    InboundGoodStockService,
+    UserService,
+    HelperAssignService,
+    ClassificationService,
+    VehicleService,
+    TransporterService,
+    subWarehouseService,
+    binService,
+    sourceService,
+    InboundScanService,
+    InventoryTrackingService,
+    PutAwaySuggestionService,
+    binByZoneService,
+    PutAwayService,
+    PutAwayBulkService,
   MemoService,
+    OutboundMemoService,
 } from "../../services/Service/MasterService";
 
 import { Uom, CreateUom, UpdateUom } from "../../types/UomTypes";
@@ -81,7 +86,13 @@ import {
 } from "../../types/InboundGoodStock.tsx";
 import { InventoryResponse } from "../../types/InventoryTypes";
 import { Memo, CreateMemo } from "../../types/MemoTypes.tsx";
+import { InventoryListResponse } from '../../types/InventoryTypes'
+import { PutAwaySuggestionResponse } from '../../types/PutAwaySuggestionTypes.tsx'
+import { PutAway, CreatePutAway, UpdatePutAway } from '../../types/PutAwayTypes.tsx'
 
+import { OutboundMemo, OutboundMemoCreate, OutboundMemoUpdateItem } from '../../types/MemoTypes.tsx'
+
+// Daftar semua store di sini
 export const useStoreUom = createCrudStore<Uom, CreateUom, UpdateUom>({
   name: "UOM",
   service: uomService,
@@ -216,6 +227,9 @@ export const useStoreInboundGoodStock = createCrudStore<
 >({
   name: "InboundGoodStockService",
   service: InboundGoodStockService,
+export const useStoreBinByZone = createCrudStore<Bin, CreateBin, UpdateBin>({
+    name: "BinByZone",
+    service: binByZoneService,
 });
 
 export const useStoreInventoryTracking = createCrudStore<
@@ -230,4 +244,24 @@ export const useStoreInventoryTracking = createCrudStore<
 export const useStoreMemo = createCrudStore<Memo, CreateMemo, null>({
   name: "Memo",
   service: MemoService,
+});
+
+export const useStorePutAwaySuggestion = createCrudStore<PutAwaySuggestionResponse, null, null>({
+    name: "PutAwaySuggestion",
+    service: PutAwaySuggestionService,
+});
+
+export const useStorePutAway = createCrudStore<PutAway, CreatePutAway, UpdatePutAway>({
+    name: "PutAway",
+    service: PutAwayService,
+});
+
+export const useStoreBulkPutAway = createCrudStore<PutAway, CreatePutAway, UpdatePutAway>({
+    name: "PutAway",
+    service: PutAwayBulkService,
+});
+
+export const useStoreOutboundMemo = createCrudStore<OutboundMemo, OutboundMemoCreate, OutboundMemoUpdateItem>({
+    name: "OutboundMemo",
+    service: OutboundMemoService,
 });

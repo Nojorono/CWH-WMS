@@ -7,7 +7,7 @@ import { useNavigate } from "react-router-dom";
 import { usePagePermissions } from "../../../../utils/UserPermission/UserPagePermissions";
 
 type Role = {
-  id: number;
+  id?: any;
   name: string;
   description: string;
 };
@@ -16,8 +16,8 @@ type RoleTableProps = {
   data: Role[];
   globalFilter: string;
   setGlobalFilter: (value: string) => void;
-  onDetail: (id: number) => void;
-  onDelete: (id: number) => void;
+  onDetail: (id: any) => void;
+  onDelete: (id: any) => void;
   onEdit?: (data: Role) => void;
 };
 

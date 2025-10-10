@@ -1,6 +1,4 @@
-"use client";
-
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   useReactTable,
   getCoreRowModel,
@@ -10,6 +8,7 @@ import {
 } from "@tanstack/react-table";
 import axios from "axios";
 import DataTable from "./TableTab";
+import { EndPoint } from "../../../../utils/EndPoint";
 
 type ItemData = {
   item_id: string;
@@ -33,7 +32,7 @@ export default function CurrentQuantityTable({ palletCode }: HistoryProps) {
     setIsLoading(true);
     const token = localStorage.getItem("token");
     axios
-      .get(`http://10.0.29.47:9005/master-pallet/by-code/${palletCode}/current`, {
+      .get(`${EndPoint}master-pallet/by-code/${palletCode}/current`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },

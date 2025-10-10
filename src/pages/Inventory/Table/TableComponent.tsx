@@ -28,16 +28,10 @@ interface Props {
 const DynamicTable = ({
   data,
   globalFilter,
-  isCreateModalOpen,
-  onCloseCreateModal,
   columns,
-  formFields,
-  onSubmit,
-  onUpdate,
   onDelete,
   onRefresh,
   getRowId = (row) => row.id,
-  title,
   noActions,
   isDeleted = true,
   isEdited = true,
@@ -58,9 +52,8 @@ const DynamicTable = ({
     [onDelete, onRefresh]
   );
 
-  const handleViewDetail = (invDetail: any) => {
-    navigate(`/inventory/detail`, { state: { invDetail: invDetail } });
-    console.log("View detail", invDetail);
+  const handleViewDetail = (id: any) => {
+    navigate(`/inventory/detail`, { state: { invListId: id } });
   };
 
   const enhancedColumns = useMemo(() => {
