@@ -3,9 +3,11 @@ import TableComponent from "../../../../components/tables/MasterDataTable/TableC
 import AddItemModal from "./AddItemModal";
 
 interface ItemData {
-  id: string;
-  quantity_plan: string;
+  item_name: string;
+  classification: string;
+  quantity_plan: number;
   uom: string;
+  notes: string;
   itemData: [];
   classificationData: [];
   uomData: [];
@@ -13,23 +15,28 @@ interface ItemData {
 
 const ItemTable: React.FC = (props: Props) => {
   const [data, setData] = useState<ItemData[]>([]);
-
   const [isModalOpen, setIsModalOpen] = useState(false);
   const { detail, itemData, classificationData, uomData } = props;
 
   useEffect(() => {
-    setData(detail.outbound_memo_items);
+    let newItemList = [];
+    detail?.outbound_memo_items?.map((memoItem) => {
+      let innerItem = memoItem.item;
+      let newItem = Object.assign({}, memoItem, innerItem);
+      newItemList.push(newItem);
+    });
+    setData(newItemList);
   }, [detail]);
 
   const columns = useMemo(
     () => [
       {
-        accessorKey: "item.sku",
+        accessorKey: "sku",
         header: "Item Name",
         cell: (info: any) => info.getValue(),
       },
       {
-        accessorKey: "",
+        accessorKey: "classification",
         header: "Classification",
         cell: (info: any) => info.getValue(),
       },
@@ -44,7 +51,7 @@ const ItemTable: React.FC = (props: Props) => {
         cell: (info: any) => info.getValue(),
       },
       {
-        accessorKey: "item.description",
+        accessorKey: "notes",
         header: "Notes",
         cell: (info: any) => info.getValue(),
       },

@@ -24,7 +24,7 @@ const AddItemModal: React.FC<AddItemModalProps> = ({
   const [itemName, setItemName] = useState("");
   const [classification, setClassification] = useState("");
   const [qtyPlan, setQtyPlan] = useState<number>(0);
-  const [uom, setUom] = useState("DUS");
+  const [uom, setUom] = useState("");
   const [notes, setNotes] = useState("");
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -32,9 +32,9 @@ const AddItemModal: React.FC<AddItemModalProps> = ({
     if (!itemName || !classification || qtyPlan <= 0) return;
 
     onSubmit({
-      item_name: itemName,
+      sku: itemName,
       classification,
-      qty_plan: qtyPlan,
+      quantity_plan: qtyPlan,
       uom,
       notes,
     });

@@ -104,7 +104,7 @@ const MemoFormContainer = () => {
         onFinalSubmit={onFinalSubmit}
         reset={reset}
         emptyFormValues={emptyFormValues}
-        memoID={memoData.id}
+        memoID={memoData?.id ?? null}
         detail={data}
         itemData={itemData}
         classificationData={classificationData}
