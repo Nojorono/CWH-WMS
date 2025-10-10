@@ -17,11 +17,11 @@ interface RoleStore {
     error: string | null;
 
     fetchRoles: () => Promise<void>;
-    fetchRoleById: (id: number) => Promise<Role>;
+    fetchRoleById: (id: any) => Promise<Role>;
 
     createRole: (payload: RolePayload) => Promise<Result>;
-    updateRole: (id: number, payload: RolePayload) => Promise<Result>;
-    deleteRole: (id: number) => Promise<Result>;
+    updateRole: (id: any, payload: RolePayload) => Promise<Result>;
+    deleteRole: (id: any) => Promise<Result>;
 }
 
 export const useRoleStore = create<RoleStore>((set) => ({

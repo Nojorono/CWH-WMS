@@ -33,7 +33,8 @@ import {
   MainTabPallet,
   MainTabZone,
   InventoryDetail,
-  // Memo,
+  Memo,
+  MemoProcess,
 } from "./utils/PagesComponent";
 // import dummyRoutes from "./helper/dummyRoutes";
 
@@ -90,6 +91,7 @@ export function AppRoutes() {
     "/inbound_planning": [{ path: "process", element: <InboundProcess /> }],
     "/putaway": [{ path: "process", element: <PutAwayProcess /> }],
     "/inventory": [{ path: "detail", element: <InventoryDetail /> }],
+    "/memo": [{ path: "process", element: <MemoProcess /> }],
   };
 
   const getElementByPath = (path: string): JSX.Element | null => {
@@ -111,7 +113,7 @@ export function AppRoutes() {
       "/master_bin": <MasterBin />,
       "/master_source": <MasterSource />,
       "/inventory": <Inventory />,
-      // "/memo": <Memo />,
+      "/memo": <Memo />,
     };
     return map[path] || <DefaultPage />;
   };

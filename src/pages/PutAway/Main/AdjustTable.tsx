@@ -99,30 +99,20 @@ const AdjustTable = ({
         accessorKey: "status",
         header: "Status",
       },
-      // {
-      //   accessorKey: "notes",
-      //   header: "Notes",
-      // },
-      // {
-      //   id: "actions",
-      //   header: "Action",
-      //   cell: ({ row }) => (
-      //     <div style={{ display: "flex", gap: "8px" }}>
-      //       <FaEye
-      //         className="size-5 cursor-pointer"
-      //         style={{ color: "green" }}
-      //         onClick={() => handleDetail(row.original)}
-      //         title="Detail"
-      //       />
-      //       <FaEdit
-      //         className="size-5 cursor-pointer"
-      //         style={{ color: "blue" }}
-      //         onClick={() => handleUpdate(row.original)}
-      //         title="Edit"
-      //       />
-      //     </div>
-      //   ),
-      // },
+      {
+        id: "actions",
+        header: "Action",
+        cell: ({ row }) => (
+          <div style={{ display: "flex", gap: "8px" }}>
+            <FaEye
+              className="size-5 cursor-pointer"
+              style={{ color: "green" }}
+              onClick={() => handleDetail(row.original)}
+              title="Detail"
+            />
+          </div>
+        ),
+      },
     ],
     []
   );

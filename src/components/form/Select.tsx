@@ -12,7 +12,8 @@ interface SelectProps {
   onChange: (value: string) => void;
   className?: string;
   value?: string;
-  width?: string | number; // ✅ bisa dikirim dari luar, misal "100%" atau 300
+  width?: string | number;
+  disabled?: boolean; // ✅ tambahkan prop disabled
 }
 
 const Select: React.FC<SelectProps> = ({
@@ -21,12 +22,15 @@ const Select: React.FC<SelectProps> = ({
   onChange,
   className = "",
   value,
-  width = "200px", // ✅ default width 200px
+  width = "200px",
+  disabled = false, // ✅ default false
 }) => {
   const selectedOption = options.find((option) => option.value === value);
 
   const handleChange = (selectedOption: SingleValue<Option>) => {
-    onChange(selectedOption?.value || "");
+    if (!disabled) {
+      onChange(selectedOption?.value || "");
+    }
   };
 
   return (
@@ -44,7 +48,9 @@ const Select: React.FC<SelectProps> = ({
           borderColor: "#d1d5db",
           boxShadow: "none",
           "&:hover": { borderColor: "#a1a1aa" },
-          width, // ✅ dinamis: pakai prop width dari luar
+          width,
+          backgroundColor: disabled ? "#f3f4f6" : base.backgroundColor, // ✅ warna jika disable
+          cursor: disabled ? "not-allowed" : "pointer", // ✅ cursor jika disable
         }),
         menu: (base) => ({
           ...base,
@@ -62,6 +68,7 @@ const Select: React.FC<SelectProps> = ({
           whiteSpace: "nowrap",
         }),
       }}
+      isDisabled={disabled} // ✅ react-select prop
     />
   );
 };

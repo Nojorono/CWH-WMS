@@ -17,6 +17,7 @@ interface TableComponentProps<T> {
   setGlobalFilter?: (value: string) => void;
   onSelectionChange?: (selectedIds: any[]) => void;
   pageSize?: number;
+  onDetail?: (id: any) => void;
 }
 
 const TableComponent = <T extends { [key: string]: any }>({
@@ -26,6 +27,7 @@ const TableComponent = <T extends { [key: string]: any }>({
   setGlobalFilter,
   onSelectionChange,
   pageSize,
+  onDetail,
 }: TableComponentProps<T>) => {
   const [pagination, setPagination] = useState(() => ({
     pageIndex: 0,

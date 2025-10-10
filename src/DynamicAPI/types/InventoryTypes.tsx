@@ -54,12 +54,12 @@ export interface WarehouseBin {
 // =============================
 
 export interface Inventory {
-  id: string;
+  id?: any;
   createdAt: string;
   updatedAt: string;
   deletedAt: string | null;
 
-  pallet_id: string;
+  pallet_id?: any;
   pallet: Pallet;
 
   warehouse_id: string;

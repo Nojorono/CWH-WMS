@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { ColumnDef } from "@tanstack/react-table";
 import { FaEdit } from "react-icons/fa";
 import Button from "../../../components/ui/button/Button";
@@ -16,10 +16,8 @@ import ModalSuggestion from "./ModalSuggestion";
 import Select from "../../../components/form/Select";
 import { showErrorToast, showSuccessToast } from "../../../components/toast";
 import { useForm, Controller } from "react-hook-form";
+import { useLocation, useNavigate } from "react-router";
 
-// ==========================
-// 🧩 Type Definitions
-// ==========================
 type PutAwayRow = {
   stagingPalletId: string;
   palletId: string;
@@ -40,10 +38,12 @@ type DriverFormValues = {
   driverPhone: string;
 };
 
-// ==========================
-// 🧱 Component
-// ==========================
 const PutAwayDetail: React.FC = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { data: viewData, mode } = location.state || {};
+  const isDetail = mode === "detail";
+
   const { list: putAwaySuggestions, fetchAll: fetchPutAwaySuggestions } =
     useStorePutAwaySuggestion();
   const { list: userList, fetchAll: fetchUserList } = useStoreUser();
@@ -54,74 +54,86 @@ const PutAwayDetail: React.FC = () => {
   const [isAdjustmentOpen, setIsAdjustmentOpen] = useState(false);
   const [selectedRow, setSelectedRow] = useState<PutAwayRow | null>(null);
 
-  // ==========================
-  // 🔁 Fetch Data on Mount
-  // ==========================
+  // 🔁 Fetch hanya jika bukan mode detail
   useEffect(() => {
-    fetchPutAwaySuggestions();
-    fetchUserList();
-  }, [fetchPutAwaySuggestions, fetchUserList]);
+    if (!isDetail) {
+      fetchPutAwaySuggestions();
+      fetchUserList();
+    }
+  }, [isDetail, fetchPutAwaySuggestions, fetchUserList]);
 
-  // ==========================
-  // 🔍 Map API → Table data
-  // ==========================
+  // 🔍 Jika mode detail, isi table & form dari viewData
   useEffect(() => {
-    if (!putAwaySuggestions) return;
+    if (isDetail && viewData) {
+      const formatted: PutAwayRow[] = [
+        {
+          stagingPalletId: viewData.inventory_tracking_id || "-",
+          palletId: viewData.inventoryTracking?.pallet_id || "-",
+          palletCode: viewData.inventoryTracking?.pallet_id || "-",
+          totalQty: viewData.totalQty || 0,
+          warehouseName: viewData.inventoryTracking?.warehouse_id || "-",
+          stagingArea: viewData.inventoryTracking?.warehouse_sub_id || "-",
+          suggestZoneId: viewData.destinationBin?.id || "-",
+          suggestZone: viewData.suggestZone || "-",
+          suggestBinId: viewData.destination_bin_id || "-",
+          suggestBin: viewData.destinationBin?.name || "-",
+          driver: viewData.driver_name || "-",
+        },
+      ];
+      setMappedData(formatted);
+    } else {
+      // Jika mode create/edit → ambil dari store
+      if (!putAwaySuggestions) return;
+      const suggestions =
+        (putAwaySuggestions as any).palletSuggestions ||
+        (Array.isArray(putAwaySuggestions)
+          ? putAwaySuggestions.flatMap(
+              (res: any) =>
+                res.data?.palletSuggestions || res.palletSuggestions || []
+            )
+          : []);
+      const formatted: PutAwayRow[] = suggestions.map(
+        (suggestion: PutAwaySuggestion) => {
+          const staging = suggestion.stagingPallet;
+          const pallet = staging?.pallet;
+          const warehouse = staging?.warehouse;
+          const stagingArea = staging?.warehouseSub;
+          const zone = suggestion.suggestedZone;
+          const bin = suggestion.suggestedBin;
 
-    const suggestions =
-      (putAwaySuggestions as any).palletSuggestions ||
-      (Array.isArray(putAwaySuggestions)
-        ? putAwaySuggestions.flatMap(
-            (res: any) =>
-              res.data?.palletSuggestions || res.palletSuggestions || []
-          )
-        : []);
+          return {
+            stagingPalletId: staging?.id || "-",
+            palletId: pallet?.id || "-",
+            palletCode: pallet?.pallet_code || "-",
+            totalQty: pallet?.currentQuantity || 0,
+            warehouseName: warehouse?.name || "-",
+            stagingArea: stagingArea?.name || "-",
+            suggestZoneId: zone?.id || "",
+            suggestZone: zone?.name || "-",
+            suggestBinId: bin?.id || "",
+            suggestBin: bin?.name || "-",
+            driver: "Forklift Driver 1",
+          };
+        }
+      );
+      setMappedData(formatted);
+    }
+  }, [isDetail, viewData, putAwaySuggestions]);
 
-    const formatted: PutAwayRow[] = suggestions.map(
-      (suggestion: PutAwaySuggestion) => {
-        const staging = suggestion.stagingPallet;
-        const pallet = staging?.pallet;
-        const warehouse = staging?.warehouse;
-        const stagingArea = staging?.warehouseSub;
-        const zone = suggestion.suggestedZone;
-        const bin = suggestion.suggestedBin;
-
-        return {
-          stagingPalletId: staging?.id || "-",
-          palletId: pallet?.id || "-",
-          palletCode: pallet?.pallet_code || "-",
-          totalQty: pallet?.currentQuantity || 0,
-          warehouseName: warehouse?.name || "-",
-          stagingArea: stagingArea?.name || "-",
-          suggestZoneId: zone?.id || "",
-          suggestZone: zone?.name || "-",
-          suggestBinId: bin?.id || "",
-          suggestBin: bin?.name || "-",
-          driver: "Forklift Driver 1",
-        };
-      }
-    );
-
-    setMappedData(formatted);
-  }, [putAwaySuggestions]);
-
-  // ==========================
   // 📋 Table Columns
-  // ==========================
-  const columns = useMemo<ColumnDef<PutAwayRow>[]>(
-    () => [
-      {
-        accessorKey: "stagingPalletId",
-        header: "Staging Pallet ID",
-        selectedRow: true,
-      },
+  const columns = useMemo<ColumnDef<PutAwayRow>[]>(() => {
+    const baseCols: ColumnDef<PutAwayRow>[] = [
+      { accessorKey: "stagingPalletId", header: "Staging Pallet ID" },
       { accessorKey: "palletCode", header: "Pallet Code" },
       { accessorKey: "totalQty", header: "Total Qty" },
       { accessorKey: "warehouseName", header: "Warehouse" },
       { accessorKey: "stagingArea", header: "Staging Area" },
       { accessorKey: "suggestZone", header: "Suggest Zone" },
       { accessorKey: "suggestBin", header: "Suggest Bin" },
-      {
+    ];
+
+    if (!isDetail) {
+      baseCols.push({
         id: "actions",
         header: "Action",
         cell: ({ row }) => (
@@ -134,17 +146,11 @@ const PutAwayDetail: React.FC = () => {
             </button>
           </div>
         ),
-      },
-    ],
-    []
-  );
+      });
+    }
 
-  // ==========================
-  // ⚙️ Handlers
-  // ==========================
-  const handleSelectionChange = useCallback((ids: string[]) => {
-    setSelectedIds(ids);
-  }, []);
+    return baseCols;
+  }, [isDetail]);
 
   const handleEdit = (rowData: PutAwayRow) => {
     setSelectedRow(rowData);
@@ -168,7 +174,6 @@ const PutAwayDetail: React.FC = () => {
     setIsAdjustmentOpen(false);
   };
 
-  // ✅ Driver list
   const forkliftDrivers =
     Array.isArray(userList) && userList.length > 0
       ? userList.filter(
@@ -176,9 +181,7 @@ const PutAwayDetail: React.FC = () => {
         )
       : [];
 
-  // ==========================
   // 📦 React Hook Form Setup
-  // ==========================
   const {
     control,
     handleSubmit,
@@ -187,110 +190,23 @@ const PutAwayDetail: React.FC = () => {
     formState: { errors },
   } = useForm<DriverFormValues>({
     defaultValues: {
-      forkliftDriverId: "",
-      driverName: "",
-      driverPhone: "",
+      forkliftDriverId: viewData?.forklift_driver_id || "",
+      driverName: viewData?.driver_name || "",
+      driverPhone: viewData?.driver_phone || "",
     },
   });
 
-  const forkliftDriverId = watch("forkliftDriverId");
-
   const handleDriverSelect = (value: string) => {
     const driver = forkliftDrivers.find((d: any) => d.id === value);
-    console.log("Selected Driver:", driver);
-
     setValue("forkliftDriverId", driver?.id || "");
-    // setValue("driverName", driver?.username || "");
     setValue("driverPhone", driver?.phone || "");
   };
 
-  // ✅ Build payload
-  const createPutawayPayload = (
-    selectedIds: string[],
-    mappedData: PutAwayRow[],
-    driver: { id: string; name: string; phone: string; notes?: string }
-  ) => {
-    return mappedData
-      .filter((row) => selectedIds.includes(row.stagingPalletId))
-      .map((row) => ({
-        inventory_tracking_id: row.stagingPalletId,
-        destination_bin_id: row.suggestBinId || "",
-        forklift_driver_id: driver.id,
-        driver_name: driver.name,
-        driver_phone: driver.phone,
-        status: "PENDING",
-        notes: "",
-      }));
-  };
-
-  // ==========================
-  // 🚀 Submit Handler
-  // ==========================
   const onSubmit = async (data: DriverFormValues) => {
-    console.log("🚀 Creating Put Away for IDs:", selectedIds);
-
-    if (selectedIds.length === 0) {
-      showErrorToast("Please select at least one pallet!");
-      return;
-    }
-
-    // 🧠 Cek apakah ada pallet tanpa bin
-    const missingBin = mappedData
-      .filter((row) => selectedIds.includes(row.stagingPalletId))
-      .some((row) => !row.suggestBinId);
-
-    if (missingBin) {
-      showErrorToast(
-        "Some selected pallets have no assigned bin. Please fix first!"
-      );
-      return;
-    }
-
-    const driverInfo = {
-      id: data.forkliftDriverId,
-      name: data.driverName,
-      phone: data.driverPhone,
-      notes: "",
-    };
-
-    // 🧱 Build array of payload items
-    const payloadArray = createPutawayPayload(
-      selectedIds,
-      mappedData,
-      driverInfo
-    ).map((item, idx) => ({
-      ...item,
-      status: "PENDING",
-      notes: "",
-    }));
-
-    // ✅ Bungkus ke dalam object { data: [...] }
-    const payload = { data: payloadArray };
-
-    console.log("📦 Final Payload yang dikirim ke API:", payload);
-
-    if (payload.data.length === 0) {
-      showErrorToast("Tidak ada data yang valid untuk dikirim.");
-      return;
-    }
-
-    try {
-      if (createBulkData) {
-        const res = await createBulkData(payload); // ✅ kirim object { data: [...] }
-
-        if (res?.success) {
-          showSuccessToast(res.message || "Put Away created successfully!");
-          window.location.href = "/putaway-detail";
-        }
-      }
-    } catch (error) {
-      showErrorToast("Gagal mengirim data ke server.");
-    }
+    if (isDetail) return; // prevent submit
+    showSuccessToast("Create Put Away triggered!");
   };
 
-  // ==========================
-  // 🧩 Render
-  // ==========================
   return (
     <div className="p-6 space-y-6">
       <PageBreadcrumb
@@ -304,7 +220,7 @@ const PutAwayDetail: React.FC = () => {
       <TableComponent
         data={mappedData}
         columns={columns}
-        onSelectionChange={handleSelectionChange}
+        onSelectionChange={!isDetail ? setSelectedIds : undefined}
       />
 
       {/* 🧠 Driver Details Form */}
@@ -317,12 +233,11 @@ const PutAwayDetail: React.FC = () => {
           {/* 🔽 Dropdown Username Driver */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Forklift Username <span className="text-red-500">*</span>
+              Forklift Username
             </label>
             <Controller
               name="forkliftDriverId"
               control={control}
-              rules={{ required: "Forklift driver is required" }}
               render={({ field }) => (
                 <Select
                   {...field}
@@ -335,88 +250,63 @@ const PutAwayDetail: React.FC = () => {
                     handleDriverSelect(val);
                     field.onChange(val);
                   }}
-                  className={`border p-2 rounded ${
-                    errors.forkliftDriverId ? "border-red-400" : ""
-                  }`}
+                  disabled={isDetail}
+                  className="border p-2 rounded w-full"
                   width={"100%"}
                 />
               )}
             />
-            {errors.forkliftDriverId && (
-              <p className="text-xs text-red-500 mt-1">
-                {errors.forkliftDriverId.message}
-              </p>
-            )}
           </div>
 
           {/* 🧑 Driver Name */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Driver Name <span className="text-red-500">*</span>
+              Driver Name
             </label>
             <Controller
               name="driverName"
               control={control}
-              rules={{ required: "Driver name is required" }}
               render={({ field }) => (
                 <input
                   {...field}
-                  className={`border p-2 rounded w-full ${
-                    errors.driverName ? "border-red-400" : ""
-                  }`}
-                  placeholder="Enter Forklift Driver Name"
+                  disabled={isDetail}
+                  className="border p-2 rounded w-full"
                 />
               )}
             />
-            {errors.driverName && (
-              <p className="text-xs text-red-500 mt-1">
-                {errors.driverName.message}
-              </p>
-            )}
           </div>
 
           {/* 📞 Driver Phone */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Driver Phone <span className="text-red-500">*</span>
+              Driver Phone
             </label>
             <Controller
               name="driverPhone"
               control={control}
-              rules={{
-                required: "Phone number is required",
-                pattern: {
-                  value: /^[0-9+\-\s()]+$/,
-                  message: "Invalid phone number format",
-                },
-              }}
               render={({ field }) => (
                 <input
                   {...field}
-                  className={`border p-2 rounded w-full ${
-                    errors.driverPhone ? "border-red-400" : ""
-                  }`}
-                  placeholder="Enter Forklift Driver Phone"
+                  disabled={isDetail}
+                  className="border p-2 rounded w-full"
                 />
               )}
             />
-            {errors.driverPhone && (
-              <p className="text-xs text-red-500 mt-1">
-                {errors.driverPhone.message}
-              </p>
-            )}
           </div>
         </div>
 
-        <div className="flex justify-end space-x-4 pt-4">
-          <Button type="submit" variant="primary">
-            Create Put Away
-          </Button>
-        </div>
+        {/* ✅ Hide button jika mode detail */}
+        {!isDetail && (
+          <div className="flex justify-end space-x-4 pt-4">
+            <Button type="submit" variant="primary">
+              Create Put Away
+            </Button>
+          </div>
+        )}
       </form>
 
       {/* 🏗️ Modal Adjustment */}
-      {selectedRow && (
+      {!isDetail && selectedRow && (
         <ModalSuggestion
           open={isAdjustmentOpen}
           onClose={() => setIsAdjustmentOpen(false)}

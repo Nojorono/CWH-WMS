@@ -16,16 +16,12 @@ type MovementRecord = {
   warehouse: string;
   zone: string;
   bin: string;
-  staff: string;
-  reason: string;
+  inventory_status: string;
+  inventory_note: string;
+  progression_status?: string;
 };
 
-
-export default function MovementHistoryTable({
-  palletId,
-}: {
-  palletId: string;
-}) {
+export default function MovementHistoryTable({ palletId }: { palletId?: any }) {
   const [data, setData] = useState<MovementRecord[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -46,6 +42,8 @@ export default function MovementHistoryTable({
         );
         const inventory = res.data.data;
 
+        console.log("Fetched movement history:", inventory);
+
         // Kamu bisa mapping sesuai dengan struktur backend (sementara dummy 1 baris)
         const mapped: MovementRecord[] = [
           {
@@ -54,8 +52,9 @@ export default function MovementHistoryTable({
             warehouse: inventory.warehouse?.name || "-",
             zone: inventory.warehouseSub?.code || "-",
             bin: inventory.warehouseBin?.code || "-",
-            staff: "WH Staff 1",
-            reason: "Good Received",
+            inventory_status: inventory.inventory_status || "-",
+            inventory_note: inventory.inventory_note || "-",
+            progression_status: inventory.progression_status || "-",
           },
         ];
 
@@ -77,30 +76,6 @@ export default function MovementHistoryTable({
         accessorKey: "datetime",
       },
       {
-        header: "Action",
-        accessorKey: "action",
-        cell: ({ getValue }) => {
-          const val = getValue() as string;
-          const color =
-            val === "In Inventory"
-              ? "bg-blue-100 text-blue-700"
-              : val === "Movement"
-              ? "bg-orange-100 text-orange-700"
-              : val === "Put Away"
-              ? "bg-green-100 text-green-700"
-              : val === "Received"
-              ? "bg-emerald-100 text-emerald-700"
-              : "bg-gray-100 text-gray-700";
-          return (
-            <span
-              className={`px-2 py-1 rounded-full text-xs font-semibold ${color}`}
-            >
-              {val}
-            </span>
-          );
-        },
-      },
-      {
         header: "Warehouse",
         accessorKey: "warehouse",
       },
@@ -113,12 +88,16 @@ export default function MovementHistoryTable({
         accessorKey: "bin",
       },
       {
-        header: "Staff",
-        accessorKey: "staff",
+        header: "Inventory Status",
+        accessorKey: "inventory_status",
       },
       {
-        header: "Reason",
-        accessorKey: "reason",
+        header: "Inventory Note",
+        accessorKey: "inventory_note",
+      },
+      {
+        header: "Progression Status",
+        accessorKey: "progression_status",
       },
     ],
     []

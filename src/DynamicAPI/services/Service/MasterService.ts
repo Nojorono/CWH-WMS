@@ -21,6 +21,9 @@ import { InventoryListResponse } from '../../types/InventoryTypes'
 import { PutAwaySuggestionResponse } from '../../types/PutAwaySuggestionTypes.tsx'
 import { PutAway, CreatePutAway, UpdatePutAway } from '../../types/PutAwayTypes.tsx'
 
+import { OutboundMemo, OutboundMemoCreate, OutboundMemoUpdateItem } from '../../types/MemoTypes.tsx'
+
+
 
 
 // Daftar semua entitas service di sini
@@ -40,7 +43,6 @@ export const TransporterService = createCrudService<Transporter, CreateTransport
 export const subWarehouseService = createCrudService<SubWarehouse, CreateSubWarehouse, UpdateSubWarehouse>("/master-warehouse-sub");
 export const binService = createCrudService<Bin, CreateBin, UpdateBin>("/master-warehouse-bin");
 export const binByZoneService = createCrudService<Bin, CreateBin, UpdateBin>("/master-warehouse-bin/warehouse-sub");
-
 export const sourceService = createCrudService<Source, CreateSource, UpdateSource>("/master-source");
 export const InboundGoodStockService = createCrudService<InboundPlanning, CreateInboundPlanning, UpdateInboundPlanning>("/inbound");
 export const InboundScanService = createCrudService<InboundScan, CreateInboundScan, UpdateInboundScan>("/transaction-scan-inbound");
@@ -48,3 +50,5 @@ export const InventoryTrackingService = createCrudService<InventoryListResponse,
 export const PutAwaySuggestionService = createCrudService<PutAwaySuggestionResponse, null, null>("/master-warehouse-bin/suggestion/put-away");
 export const PutAwayService = createCrudService<PutAway, CreatePutAway, UpdatePutAway>("/put-away");
 export const PutAwayBulkService = createCrudService<PutAway, CreatePutAway, UpdatePutAway>("/put-away/create-many");
+
+export const OutboundMemoService = createCrudService<OutboundMemo, OutboundMemoCreate, OutboundMemoUpdateItem>("/outbound-memo");

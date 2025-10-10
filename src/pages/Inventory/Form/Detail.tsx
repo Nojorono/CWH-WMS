@@ -109,7 +109,7 @@ export default function DetailInventory() {
     console.log("Form submitted:", data);
   };
 
-  const palletId = detail?.pallet_id || "";
+  const palletId = detail && "pallet_id" in detail ? detail.pallet_id : "";  
 
   return (
     <div className="p-6 bg-slate-50 min-h-screen">
