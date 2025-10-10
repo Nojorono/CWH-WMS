@@ -15,6 +15,10 @@ import InboundProcess from "../pages/Inbound/InboundProcess/TableAndForm/Inbound
 import PutAway from "../pages/PutAway";
 import PutAwayProcess from "../pages/PutAway/TableAndForm/PutAwayProcess";
 
+// OUTBOUND
+import Memo from "../pages/Outbound/Memo/index";
+import CreateMemo from "../pages/Outbound/Memo/TableAndForm/MemoFormContainer";
+
 // INVENTORY
 import Inventory from "../pages/Inventory";
 import InventoryDetail from "../pages/Inventory/Form/Detail";
@@ -39,9 +43,8 @@ import MasterSource from "../pages/Master/MasterSource";
 import MasterSupplier from "../pages/Master/MasterSupplier";
 
 //OUTBOUND
-import Memo from "../pages/OutboundFullTrial/Memo";
-import MemoProcess from "../pages/OutboundFullTrial/Memo/TableAndForm/MemoCreateProcess";
-
+// import Memo from "../pages/OutboundFullTrial/Memo";
+// import MemoProcess from "../pages/OutboundFullTrial/Memo/TableAndForm/MemoCreateProcess";
 
 export {
   // PAGE MASTER
@@ -76,11 +79,14 @@ export {
   PutAway,
   PutAwayProcess,
 
+  // OUTBOUND
+  Memo,
+  CreateMemo,
+
   // Inventory
   Inventory,
   InventoryDetail,
 
   // OUTBOUND
-  Memo,
-  MemoProcess
+  // MemoProcess,
 };

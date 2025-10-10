@@ -17,6 +17,8 @@ import {
   UpdateRole,
   Inbound,
   InboundProcess,
+  Memo,
+  CreateMemo,
   MasterUOM,
   MasterIO,
   MasterWarehouse,
@@ -33,7 +35,6 @@ import {
   MainTabPallet,
   MainTabZone,
   InventoryDetail,
-  Memo,
   MemoProcess,
 } from "./utils/PagesComponent";
 // import dummyRoutes from "./helper/dummyRoutes";
@@ -90,8 +91,9 @@ export function AppRoutes() {
     "/master_zone": [{ path: "detail", element: <MainTabZone /> }],
     "/inbound_planning": [{ path: "process", element: <InboundProcess /> }],
     "/putaway": [{ path: "process", element: <PutAwayProcess /> }],
+    "/memo": [{ path: "create_memo", element: <CreateMemo /> }],
     "/inventory": [{ path: "detail", element: <InventoryDetail /> }],
-    "/memo": [{ path: "process", element: <MemoProcess /> }],
+    // "/memo": [{ path: "process", element: <MemoProcess /> }],
   };
 
   const getElementByPath = (path: string): JSX.Element | null => {
@@ -102,6 +104,7 @@ export function AppRoutes() {
       "/master_pallet": <MasterPallet />,
       "/inbound_planning": <Inbound />,
       "/putaway": <PutAway />,
+      "/memo": <Memo />,
       "/master_uom": <MasterUOM />,
       "/master_io": <MasterIO />,
       "/master_warehouse": <MasterWarehouse />,
