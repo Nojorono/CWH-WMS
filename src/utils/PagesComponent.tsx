@@ -43,9 +43,8 @@ import MasterSource from "../pages/Master/MasterSource";
 import MasterSupplier from "../pages/Master/MasterSupplier";
 
 //OUTBOUND
-import Memo from "../pages/OutboundFullTrial/Memo";
-import MemoProcess from "../pages/OutboundFullTrial/Memo/TableAndForm/MemoCreateProcess";
-
+// import Memo from "../pages/OutboundFullTrial/Memo";
+// import MemoProcess from "../pages/OutboundFullTrial/Memo/TableAndForm/MemoCreateProcess";
 
 export {
   // PAGE MASTER
@@ -89,6 +88,5 @@ export {
   InventoryDetail,
 
   // OUTBOUND
-  Memo,
-  MemoProcess
+  // MemoProcess,
 };

@@ -58,9 +58,13 @@ import {
   UpdateInboundPlanning,
 } from "../../types/InboundGoodStock";
 import { Memo, CreateMemo } from "../../types/MemoTypes";
-import { InventoryListResponse } from '../../types/InventoryTypes'
-import { PutAwaySuggestionResponse } from '../../types/PutAwaySuggestionTypes.tsx'
-import { PutAway, CreatePutAway, UpdatePutAway } from '../../types/PutAwayTypes.tsx'
+import { InventoryListResponse } from "../../types/InventoryTypes";
+import { PutAwaySuggestionResponse } from "../../types/PutAwaySuggestionTypes.tsx";
+import {
+  PutAway,
+  CreatePutAway,
+  UpdatePutAway,
+} from "../../types/PutAwayTypes.tsx";
 // import { OutboundMemo, OutboundMemoCreate, OutboundMemoUpdateItem } from '../../types/MemoTypes.tsx'
 
 import { InventoryResponse } from "../../types/InventoryTypes";
@@ -154,11 +158,22 @@ export const InventoryTrackingService = createCrudService<
 export const MemoService = createCrudService<Memo, CreateMemo, null>(
   "/outbound-memo"
 );
-export const binByZoneService = createCrudService<Bin, CreateBin, UpdateBin>("/master-warehouse-bin/warehouse-sub");
-export const InboundGoodStockService = createCrudService<InboundPlanning, CreateInboundPlanning, UpdateInboundPlanning>("/inbound");
-export const InboundScanService = createCrudService<InboundScan, CreateInboundScan, UpdateInboundScan>("/transaction-scan-inbound");
-export const InventoryTrackingService = createCrudService<InventoryListResponse, null, null>("/inventory-tracking");
-export const PutAwaySuggestionService = createCrudService<PutAwaySuggestionResponse, null, null>("/master-warehouse-bin/suggestion/put-away");
-export const PutAwayService = createCrudService<PutAway, CreatePutAway, UpdatePutAway>("/put-away");
-export const PutAwayBulkService = createCrudService<PutAway, CreatePutAway, UpdatePutAway>("/put-away/create-many");
+export const binByZoneService = createCrudService<Bin, CreateBin, UpdateBin>(
+  "/master-warehouse-bin/warehouse-sub"
+);
+export const PutAwaySuggestionService = createCrudService<
+  PutAwaySuggestionResponse,
+  null,
+  null
+>("/master-warehouse-bin/suggestion/put-away");
+export const PutAwayService = createCrudService<
+  PutAway,
+  CreatePutAway,
+  UpdatePutAway
+>("/put-away");
+export const PutAwayBulkService = createCrudService<
+  PutAway,
+  CreatePutAway,
+  UpdatePutAway
+>("/put-away/create-many");
 // export const OutboundMemoService = createCrudService<OutboundMemo, OutboundMemoCreate, OutboundMemoUpdateItem>("/outbound-memo");
