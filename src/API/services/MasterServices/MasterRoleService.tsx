@@ -2,7 +2,7 @@
 import axiosInstance from "../AxiosInstance";
 
 export interface Role {
-  id: number;
+  id?: any;
   name: string;
   description: string;
   permissions: { menu_id: number; permission_type: string }[];

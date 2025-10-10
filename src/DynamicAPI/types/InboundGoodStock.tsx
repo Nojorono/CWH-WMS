@@ -3,7 +3,7 @@
 // =============================
 
 export interface InboundDOItemCreate {
-    item_id: string;
+    item_id?: string;
     quantity: number;
     uom: string;
 }
@@ -47,7 +47,7 @@ export interface InboundDOItemRead {
     deletedAt: string | null;
     inbound_id: string;
     inbound_do_id: string;
-    item_id: string;
+    item_id?: string;
     quantity: number;
     classification_id: string | null;
     uom: string;

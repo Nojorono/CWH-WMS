@@ -203,27 +203,21 @@ export default function InboundPlanningFormContainer() {
   const onFinalSubmit = async (data: FormValues) => {
     const payload = mapToPayload(data);
     const id = dataInbound?.id;
-
-    console.log("Final submit payload:", payload, " | id:", id);
-    alert(
-      `Final submit payload (lihat di console): ${JSON.stringify(payload)}`
-    );
-
-    // if (isCreateMode) {
-    //   const res = await createData(payload);
-    //   if (res?.success) {
-    //     reset(emptyFormValues);
-    //     setIsConfirmOpen(false);
-    //     navigate("/inbound_planning");
-    //   }
-    // } else if (isEditMode && id) {
-    //   const res = await updateData(id, payload);
-    //   if (res?.success) {
-    //     reset(emptyFormValues);
-    //     setIsConfirmOpen(false);
-    //     navigate("/inbound_planning");
-    //   }
-    // }
+    if (isCreateMode) {
+      const res = await createData(payload);
+      if (res?.success) {
+        reset(emptyFormValues);
+        setIsConfirmOpen(false);
+        navigate("/inbound_planning");
+      }
+    } else if (isEditMode && id) {
+      const res = await updateData(id, payload);
+      if (res?.success) {
+        reset(emptyFormValues);
+        setIsConfirmOpen(false);
+        navigate("/inbound_planning");
+      }
+    }
   };
 
   return (

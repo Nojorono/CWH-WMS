@@ -106,7 +106,7 @@ const DataTable = () => {
     },
     {
       name: "isActive",
-      label: "",
+      label: "is Active?",
       type: "checkbox",
       options: [
         { label: "Active", value: true },

@@ -1,3 +1,7 @@
+// =============================
+// SHARED TYPES
+// =============================
+
 export interface Pallet {
   id: string;
   createdAt: string;
@@ -39,31 +43,66 @@ export interface WarehouseSub {
 }
 
 export interface WarehouseBin {
-  // Define fields if not null, otherwise keep as 'any' or 'null'
-  // Example:
-  // id: string;
-  // ...
+  id?: string;
+  name?: string;
+  code?: string;
+  [key: string]: any;
 }
 
+// =============================
+// MAIN INVENTORY TYPE
+// =============================
+
 export interface Inventory {
-  id: string;
+  id?: any;
   createdAt: string;
   updatedAt: string;
   deletedAt: string | null;
-  pallet_id: string;
+
+  pallet_id?: any;
   pallet: Pallet;
+
   warehouse_id: string;
   warehouse: Warehouse;
+
   warehouse_sub_id: string;
   warehouseSub: WarehouseSub;
+
   warehouse_bin_id: string | null;
   warehouseBin: WarehouseBin | null;
+
   inventory_date: string;
   inventory_status: string;
   inventory_note: string;
 }
 
-// Untuk response GET ALL:
-export interface InventoryResponse {
+// =============================
+// API RESPONSE TYPES
+// =============================
+
+// GET ALL
+export interface InventoryListResponse {
+  success: boolean;
+  message: string;
   data: Inventory[];
+  timestamp: string;
+  path: string;
+}
+
+// GET BY ID
+export interface InventoryDetailResponse {
+  success: boolean;
+  message: string;
+  data: Inventory;
+  timestamp: string;
+  path: string;
+}
+
+// GET BY PALLET ID (history)
+export interface InventoryByPalletResponse {
+  success: boolean;
+  message: string;
+  data: Inventory;
+  timestamp: string;
+  path: string;
 }

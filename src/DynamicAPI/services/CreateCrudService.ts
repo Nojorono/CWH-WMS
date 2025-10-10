@@ -55,6 +55,16 @@ export const createCrudService = <TData, TCreate, TUpdate>(baseUrl: string) => (
         return handleAxios<TData>(axiosInstance.post(baseUrl, payload));
     },
 
+    // ✅ Fungsi baru untuk bulk create
+    // createBulk: async (payload: TCreate[]): Promise<TData[]> => {
+    //     return handleAxios<TData[]>(axiosInstance.post(baseUrl, payload));
+    // },
+
+    createBulk: async (payload: { data: TCreate[] }): Promise<TData[]> => {
+        return handleAxios<TData[]>(axiosInstance.post(baseUrl, payload));
+    },
+
+
     update: async (id: number, payload: TUpdate): Promise<TData> => {
         try {
             return await handleAxios<TData>(axiosInstance.patch(`${baseUrl}/${id}`, payload));

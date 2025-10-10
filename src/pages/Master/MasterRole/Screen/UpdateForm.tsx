@@ -198,8 +198,6 @@ export default function UpdateFormWithTable(paramRole: any) {
       return;
     }
 
-    console.log("Final Payload:", finalPayload);
-
     const res = await updateRole(updateId, finalPayload);
     if (!res.ok) {
       showErrorToast(res.message);
