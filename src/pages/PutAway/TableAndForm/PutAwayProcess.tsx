@@ -30,7 +30,10 @@ type PutAwayRow = {
   suggestBinId: string;
   suggestBin: string;
   driver: string;
+  selectedRow?: boolean;
 };
+
+type ExtendedColumnDef<T> = ColumnDef<T> & { selectedRow?: boolean };
 
 type DriverFormValues = {
   forkliftDriverId: string;
@@ -121,9 +124,13 @@ const PutAwayDetail: React.FC = () => {
   }, [isDetail, viewData, putAwaySuggestions]);
 
   // 📋 Table Columns
-  const columns = useMemo<ColumnDef<PutAwayRow>[]>(() => {
-    const baseCols: ColumnDef<PutAwayRow>[] = [
-      { accessorKey: "stagingPalletId", header: "Staging Pallet ID" },
+  const columns = useMemo<ExtendedColumnDef<PutAwayRow>[]>(() => {
+    const baseCols: ExtendedColumnDef<PutAwayRow>[] = [
+      {
+        accessorKey: "stagingPalletId",
+        header: "Staging Pallet ID",
+        ...(!isDetail && { selectedRow: true }),
+      },
       { accessorKey: "palletCode", header: "Pallet Code" },
       { accessorKey: "totalQty", header: "Total Qty" },
       { accessorKey: "warehouseName", header: "Warehouse" },
@@ -202,9 +209,66 @@ const PutAwayDetail: React.FC = () => {
     setValue("driverPhone", driver?.phone || "");
   };
 
+  // ✅ Build payload
+  const createPutawayPayload = (
+    selectedIds: string[],
+    mappedData: PutAwayRow[],
+    driver: { id: string; name: string; phone: string; notes?: string }
+  ) => {
+    return mappedData
+      .filter((row) => selectedIds.includes(row.stagingPalletId))
+      .map((row) => ({
+        inventory_tracking_id: row.stagingPalletId,
+        destination_bin_id: row.suggestBinId || "",
+        forklift_driver_id: driver.id,
+        driver_name: driver.name,
+        driver_phone: driver.phone,
+        status: "PENDING",
+        notes: "",
+      }));
+  };
+
+  // ========================== // 🚀 Submit Handler // ========================== //
   const onSubmit = async (data: DriverFormValues) => {
-    if (isDetail) return; // prevent submit
-    showSuccessToast("Create Put Away triggered!");
+    console.log("🚀 Creating Put Away for IDs:", selectedIds);
+    if (selectedIds.length === 0) {
+      showErrorToast("Please select at least one pallet!");
+      return;
+    }
+    // 🧠 Cek apakah ada pallet tanpa bin
+    const missingBin = mappedData
+      .filter((row) => selectedIds.includes(row.stagingPalletId))
+      .some((row) => !row.suggestBinId);
+    if (missingBin) {
+      showErrorToast(
+        "Some selected pallets have no assigned bin. Please fix first!"
+      );
+      return;
+    }
+    const driverInfo = {
+      id: data.forkliftDriverId,
+      name: data.driverName,
+      phone: data.driverPhone,
+      notes: "",
+    };
+    // 🧱 Build array of payload items
+    const payloadArray = createPutawayPayload(
+      selectedIds,
+      mappedData,
+      driverInfo
+    ).map((item, idx) => ({ ...item, status: "PENDING", notes: "" }));
+    // ✅ Bungkus ke dalam object { data: [...] }
+    const payload = { data: payloadArray };
+    try {
+      if (createBulkData) {
+        const res = await createBulkData(payload);
+        if (res?.success) {
+          navigate("/putaway");
+        }
+      }
+    } catch (error) {
+      showErrorToast("Gagal mengirim data ke server.");
+    }
   };
 
   return (
