@@ -35,7 +35,7 @@ import {
   MainTabPallet,
   MainTabZone,
   InventoryDetail,
-  MemoProcess,
+  // MemoProcess,
 } from "./utils/PagesComponent";
 // import dummyRoutes from "./helper/dummyRoutes";
 
@@ -93,7 +93,7 @@ export function AppRoutes() {
     "/putaway": [{ path: "process", element: <PutAwayProcess /> }],
     "/memo": [{ path: "create_memo", element: <CreateMemo /> }],
     "/inventory": [{ path: "detail", element: <InventoryDetail /> }],
-    // "/memo": [{ path: "process", element: <MemoProcess /> }],
+    // "/memo": [{ path: "process", element: <CreateMemo /> }],
   };
 
   const getElementByPath = (path: string): JSX.Element | null => {
@@ -116,7 +116,7 @@ export function AppRoutes() {
       "/master_bin": <MasterBin />,
       "/master_source": <MasterSource />,
       "/inventory": <Inventory />,
-      "/memo": <Memo />,
+      // "/memo": <Memo />,
     };
     return map[path] || <DefaultPage />;
   };
