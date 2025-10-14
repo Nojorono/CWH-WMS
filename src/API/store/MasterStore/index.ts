@@ -1,2 +1,2 @@
 export * from './MasterUserStore';
-export * from  "./masterRoleStore";
+export * from  "./MasterRoleStore"

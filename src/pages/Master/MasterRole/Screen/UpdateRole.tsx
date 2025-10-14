@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import UpdateForm from "./UpdateForm";
 import PageBreadcrumb from "../../../../components/common/PageBreadCrumb";
-import { useRoleStore } from "../../../../API/store/MasterStore/masterRoleStore";
+import { useRoleStore } from "../../../../API/store/MasterStore/MasterRoleStore";
 
 export default function NewUpdateRole() {
   const location = useLocation();

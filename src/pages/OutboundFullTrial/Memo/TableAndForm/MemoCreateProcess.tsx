@@ -9,10 +9,9 @@ import ModalAddItem from "./ModalAddItem";
 import DynamicForm, {
   FieldConfig,
 } from "../../../../components/wms-components/inbound-component/form/DynamicForm";
-import { showErrorToast, showSuccessToast } from "../../../../components/toast";
+import { showErrorToast } from "../../../../components/toast";
 import { useStoreOutboundMemo } from "../../../../DynamicAPI/stores/Store/MasterStore";
 import { useLocation, useNavigate } from "react-router";
-import { formatDateIndo } from "../../../../helper/FormatDate";
 
 type MemoFormValues = {
   requestor: string;
@@ -31,6 +30,15 @@ type ItemRow = {
   uom?: string;
   uom_name?: string;
   notes?: string;
+};
+
+export const formatDate = (date: Date | string | null): string => {
+  if (!date) return "";
+  const d = typeof date === "string" ? new Date(date) : date;
+  // Hapus pengaruh timezone, biar tetap lokal (WIB)
+  const tzOffset = d.getTimezoneOffset() * 60000;
+  const localISO = new Date(d.getTime() - tzOffset).toISOString().slice(0, 10);
+  return localISO; // Hasil: "2025-10-14"
 };
 
 const CreateMemo: React.FC = () => {
@@ -92,7 +100,7 @@ const CreateMemo: React.FC = () => {
     // jika tidak ada detail atau sedang create, stop
     if (!detail || (!isDetail && !isEdit)) return;
 
-    const dateOnly = formatDateIndo(detail.delivery_date);
+    const dateOnly = formatDate(detail.delivery_date);
 
     methods.reset({
       requestor: detail.requestor || "",
@@ -167,6 +175,8 @@ const CreateMemo: React.FC = () => {
 
   // submit handler (create or update)
   const onFinalSubmit = async (data: MemoFormValues) => {
+    console.log("Form data:", data);
+
     if (items.length === 0) {
       showErrorToast("Please add at least one item!");
       return;
@@ -177,47 +187,40 @@ const CreateMemo: React.FC = () => {
       ...data,
       requestor: userID ?? "",
       status: "PENDING",
+      delivery_date: formatDate(data.delivery_date), // 👈 gunakan helper
       outbound_memo_items: items.map((i) => ({
         item_id: i.item_id,
         quantity_plan: Number(i.quantity_plan ?? 0),
-        uom: (i.uom ?? i.uom_name ?? "") as string, // ensure string
+        uom: (i.uom ?? i.uom_name ?? "") as string,
       })),
     };
 
-    console.log("Submitting payload:", payload);
-    
+    try {
+      let res: any = null;
+      if (isEdit && memoId) {
+        res = await updateData(memoId, payload as any);
+      } else {
+        res = await createData(payload as any);
+      }
 
-    // try {
-    //   let res: any = null;
-    //   if (isEdit && memoId) {
-    //     res = await updateData(memoId, payload as any);
-    //   } else {
-    //     res = await createData(payload as any);
-    //   }
-
-    //   // createData/updateData dari store mengembalikan objek { success: boolean, message?: string }
-    //   if (res && res.success) {
-    //     showSuccessToast(
-    //       isEdit ? "Memo updated successfully!" : "Memo created successfully!"
-    //     );
-    //     methods.reset();
-    //     setItems([]);
-    //     navigate("/memo");
-    //   } else {
-    //     showErrorToast(res?.message || "Operation failed");
-    //   }
-    // } catch (err: any) {
-    //   console.error("Submit error:", err);
-    //   showErrorToast("Gagal menyimpan data.");
-    // }
+      // createData/updateData dari store mengembalikan objek { success: boolean, message?: string }
+      if (res && res.success) {
+        methods.reset();
+        setItems([]);
+        navigate("/memo");
+      } else {
+        showErrorToast(res?.message || "Operation failed");
+      }
+    } catch (err: any) {
+      console.error("Submit error:", err);
+      showErrorToast("Gagal menyimpan data.");
+    }
   };
 
   const columnsTableItem = [
     { accessorKey: "item_name", header: "Item Name" },
-    // { accessorKey: "classification_name", header: "Classification" },
     { accessorKey: "quantity_plan", header: "Qty Plan" },
     { accessorKey: "uom_name", header: "UoM" },
-    { accessorKey: "notes", header: "Notes" },
     {
       accessorKey: "action",
       header: "Action",
@@ -235,9 +238,7 @@ const CreateMemo: React.FC = () => {
 
   const handleReset = () => {
     if (isEdit && detail) {
-      const dateOnly = formatDateIndo(detail.delivery_date)
-        ? detail.delivery_date.split("T")[0]
-        : "";
+      const dateOnly = formatDate(detail.delivery_date);
 
       methods.reset({
         requestor: detail.requestor || "",
@@ -279,7 +280,6 @@ const CreateMemo: React.FC = () => {
   };
 
   console.log("detail:", detail);
-  
 
   return (
     <div className="p-6 space-y-6">
