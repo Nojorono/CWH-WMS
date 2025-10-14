@@ -11,7 +11,7 @@ import DynamicForm, {
 } from "../../../../components/wms-components/inbound-component/form/DynamicForm";
 import { showErrorToast, showSuccessToast } from "../../../../components/toast";
 import { useStoreOutboundMemo } from "../../../../DynamicAPI/stores/Store/MasterStore";
-import { useLocation } from "react-router";
+import { useLocation, useNavigate } from "react-router";
 
 type MemoFormValues = {
   requestor: string;
@@ -34,6 +34,7 @@ type ItemRow = {
 
 const CreateMemo: React.FC = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const { data: memoId, mode, title } = location.state || {};
   const isDetail = mode === "detail";
   const isEdit = mode === "edit";
@@ -199,6 +200,7 @@ const CreateMemo: React.FC = () => {
         );
         methods.reset();
         setItems([]);
+        navigate("/memo");
       } else {
         showErrorToast(res?.message || "Operation failed");
       }
@@ -296,6 +298,26 @@ const CreateMemo: React.FC = () => {
           isEditMode={!isDetail}
           watch={methods.watch}
         />
+
+        {localStorage.getItem("roleName") === "SUPERVISOR" && (
+          <div className="flex justify-end mt-4 gap-3">
+            <Button
+              type="button"
+              variant="danger"
+              onClick={() => setOpenModal(true)}
+            >
+              Reject Memo
+            </Button>
+
+            <Button
+              type="button"
+              variant="primary"
+              onClick={() => setOpenModal(true)}
+            >
+              Approve Memo
+            </Button>
+          </div>
+        )}
       </section>
 
       {/* ITEM DETAILS */}

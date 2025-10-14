@@ -57,7 +57,7 @@ const AdjustTable = ({
     });
   };
 
-
+  const roleName = localStorage.getItem("role_name");
 
   const columns: ColumnDef<MemoData>[] = useMemo(
     () => [
@@ -80,27 +80,29 @@ const AdjustTable = ({
               onClick={() => handleDetail(row.original.id)}
               title="Detail"
             />
-            <FaEdit
-              className={`size-5 cursor-pointer ${
-                row.original.status === "PENDING"
-                  ? "text-blue-600 hover:scale-110"
-                  : "text-gray-400 cursor-not-allowed"
-              } transition`}
-              onClick={() => {
-                if (row.original.status === "PENDING") {
-                  handleUpdate(row.original.id);
+            {roleName !== "SUPERVISOR" && (
+              <FaEdit
+                className={`size-5 cursor-pointer ${
+                  row.original.status === "PENDING"
+                    ? "text-blue-600 hover:scale-110"
+                    : "text-gray-400 cursor-not-allowed"
+                } transition`}
+                onClick={() => {
+                  if (row.original.status === "PENDING") {
+                    handleUpdate(row.original.id);
+                  }
+                }}
+                title={
+                  row.original.status === "PENDING"
+                    ? "Edit"
+                    : "Edit hanya bisa jika status PENDING"
                 }
-              }}
-              title={
-                row.original.status === "PENDING"
-                  ? "Edit"
-                  : "Edit hanya bisa jika status PENDING"
-              }
-              style={{
-                pointerEvents:
-                  row.original.status === "PENDING" ? "auto" : "none",
-              }}
-            />
+                style={{
+                  pointerEvents:
+                    row.original.status === "PENDING" ? "auto" : "none",
+                }}
+              />
+            )}
           </div>
         ),
       },
