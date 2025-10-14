@@ -23,6 +23,7 @@ const DataTable = () => {
     switch (status) {
       case "INVENTORY":
       case "NOT_STARTED":
+      case "INSPECTION_COMPLETED":
         return "bg-yellow-100 text-yellow-700";
       case "IN_PROGRESS":
         return "bg-blue-100 text-blue-700";
@@ -70,6 +71,11 @@ const DataTable = () => {
             </span>
           );
         },
+      },
+      {
+        accessorKey: "inventory_status",
+        header: "Inventory Status",
+        cell: ({ row }: any) => row.original.inventory_status ?? "",
       },
     ],
     []

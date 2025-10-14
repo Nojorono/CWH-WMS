@@ -192,16 +192,6 @@ const ModalAddItem: React.FC<Props> = ({ open, onClose, onSubmit }) => {
               </p>
             )}
           </div>
-
-          {/* Notes */}
-          <div>
-            <label className="block text-sm font-medium">Notes</label>
-            <textarea
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              className="border rounded p-2 w-full"
-            />
-          </div>
         </div>
 
         {/* ACTION BUTTONS */}

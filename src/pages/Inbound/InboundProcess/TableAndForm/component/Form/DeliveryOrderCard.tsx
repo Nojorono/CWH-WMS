@@ -12,7 +12,7 @@ import {
   FaSearch,
 } from "react-icons/fa";
 import { useEffect, useRef, useState } from "react";
-import { toLocalISOString } from "../../../../../../helper/FormatDate";
+import { formatDateIndo } from "../../../../../../helper/FormatDate";
 import { uploadFileToS3 } from "../Helper/uploadFileToS3";
 import { deleteFileFromS3 } from "../Helper/deleteFileFromS3";
 import {
@@ -331,7 +331,7 @@ export default function DeliveryOrderCard({
                       if (!isEditMode) return;
                       const selectedDate = Array.isArray(date) ? date[0] : date;
                       const formattedDate = selectedDate
-                        ? toLocalISOString(selectedDate)
+                        ? formatDateIndo(selectedDate)
                         : "";
                       field.onChange(formattedDate);
                     }}

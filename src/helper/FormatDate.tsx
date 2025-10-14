@@ -1,4 +1,4 @@
-export const toLocalISOString = (date: Date | string | null): string => {
+export const formatDateIndo = (date: Date | string | null): string => {
   if (!date) return "";
   const d = typeof date === "string" ? new Date(date) : date;
   const tzOffset = d.getTimezoneOffset() * 60000;

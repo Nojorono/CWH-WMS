@@ -6,7 +6,7 @@ import ItemTable from "../Table/ItemTable";
 import AddItemModal from "../Modal/AddItemModal";
 import Button from "../../../../../../components/ui/button/Button";
 import DatePicker from "../../../../../../components/form/date-picker";
-import { toLocalISOString } from "../../../../../../helper/FormatDate";
+import { formatDateIndo } from "../../../../../../helper/FormatDate";
 import { FaSearch } from "react-icons/fa";
 
 import {
@@ -182,7 +182,7 @@ export default function POCard({
       if (so.ORDERED_DATE) {
         setValue(
           `deliveryOrders.${doIndex}.pos.${posIndex}.so_date`,
-          toLocalISOString(new Date(so.ORDERED_DATE))
+          formatDateIndo(new Date(so.ORDERED_DATE))
         );
       }
 
@@ -320,7 +320,7 @@ export default function POCard({
                   if (!isEditMode) return;
                   const selectedDate = Array.isArray(date) ? date[0] : date;
                   field.onChange(
-                    selectedDate ? toLocalISOString(selectedDate) : ""
+                    selectedDate ? formatDateIndo(selectedDate) : ""
                   );
                 }}
                 readOnly={!isEditMode}
@@ -346,7 +346,7 @@ export default function POCard({
                   if (!isEditMode) return;
                   const selectedDate = Array.isArray(date) ? date[0] : date;
                   field.onChange(
-                    selectedDate ? toLocalISOString(selectedDate) : ""
+                    selectedDate ? formatDateIndo(selectedDate) : ""
                   );
                 }}
                 readOnly={!isEditMode}
@@ -368,7 +368,7 @@ export default function POCard({
                   if (!isEditMode) return;
                   const selectedDate = Array.isArray(date) ? date[0] : date;
                   field.onChange(
-                    selectedDate ? toLocalISOString(selectedDate) : ""
+                    selectedDate ? formatDateIndo(selectedDate) : ""
                   );
                 }}
                 readOnly={!isEditMode}
@@ -390,7 +390,7 @@ export default function POCard({
                   if (!isEditMode) return;
                   const selectedDate = Array.isArray(date) ? date[0] : date;
                   field.onChange(
-                    selectedDate ? toLocalISOString(selectedDate) : ""
+                    selectedDate ? formatDateIndo(selectedDate) : ""
                   );
                 }}
                 readOnly={!isEditMode}

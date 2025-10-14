@@ -5,7 +5,7 @@
 // import { FormValues } from "./component/formTypes";
 // import DeliveryOrderCard from "./component/Form/DeliveryOrderCard";
 // import ConfirmationModal from "./component/Modal/ConfirmationModal";
-// import { toLocalISOString } from "../../../../helper/FormatDate";
+// import { formatDateIndo } from "../../../../helper/FormatDate";
 // import DynamicForm, {
 //   FieldConfig,
 // } from "../../../../components/wms-components/inbound-component/form/DynamicForm";
@@ -166,12 +166,12 @@
 //       doItem.pos.map((po) => ({
 //         inbound_do_number: doItem.do_no ?? "",
 //         inbound_do_date: doItem.date
-//           ? toLocalISOString(new Date(doItem.date))
+//           ? formatDateIndo(new Date(doItem.date))
 //           : "",
 //         attachment: doItem.attachment ? String(doItem.attachment) : "",
 //         inbound_po_number: po.po_no ?? "",
 //         inbound_po_date: po.po_date
-//           ? toLocalISOString(new Date(po.po_date))
+//           ? formatDateIndo(new Date(po.po_date))
 //           : "",
 //         flag_validated: false,
 //         inbound_items: po.items.map((item) => ({

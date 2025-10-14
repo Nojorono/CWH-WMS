@@ -12,6 +12,7 @@ import DynamicForm, {
 import { showErrorToast, showSuccessToast } from "../../../../components/toast";
 import { useStoreOutboundMemo } from "../../../../DynamicAPI/stores/Store/MasterStore";
 import { useLocation, useNavigate } from "react-router";
+import { formatDateIndo } from "../../../../helper/FormatDate";
 
 type MemoFormValues = {
   requestor: string;
@@ -91,9 +92,7 @@ const CreateMemo: React.FC = () => {
     // jika tidak ada detail atau sedang create, stop
     if (!detail || (!isDetail && !isEdit)) return;
 
-    const dateOnly = detail.delivery_date
-      ? detail.delivery_date.split("T")[0]
-      : "";
+    const dateOnly = formatDateIndo(detail.delivery_date);
 
     methods.reset({
       requestor: detail.requestor || "",
@@ -185,34 +184,37 @@ const CreateMemo: React.FC = () => {
       })),
     };
 
-    try {
-      let res: any = null;
-      if (isEdit && memoId) {
-        res = await updateData(memoId, payload as any);
-      } else {
-        res = await createData(payload as any);
-      }
+    console.log("Submitting payload:", payload);
+    
 
-      // createData/updateData dari store mengembalikan objek { success: boolean, message?: string }
-      if (res && res.success) {
-        showSuccessToast(
-          isEdit ? "Memo updated successfully!" : "Memo created successfully!"
-        );
-        methods.reset();
-        setItems([]);
-        navigate("/memo");
-      } else {
-        showErrorToast(res?.message || "Operation failed");
-      }
-    } catch (err: any) {
-      console.error("Submit error:", err);
-      showErrorToast("Gagal menyimpan data.");
-    }
+    // try {
+    //   let res: any = null;
+    //   if (isEdit && memoId) {
+    //     res = await updateData(memoId, payload as any);
+    //   } else {
+    //     res = await createData(payload as any);
+    //   }
+
+    //   // createData/updateData dari store mengembalikan objek { success: boolean, message?: string }
+    //   if (res && res.success) {
+    //     showSuccessToast(
+    //       isEdit ? "Memo updated successfully!" : "Memo created successfully!"
+    //     );
+    //     methods.reset();
+    //     setItems([]);
+    //     navigate("/memo");
+    //   } else {
+    //     showErrorToast(res?.message || "Operation failed");
+    //   }
+    // } catch (err: any) {
+    //   console.error("Submit error:", err);
+    //   showErrorToast("Gagal menyimpan data.");
+    // }
   };
 
   const columnsTableItem = [
     { accessorKey: "item_name", header: "Item Name" },
-    { accessorKey: "classification_name", header: "Classification" },
+    // { accessorKey: "classification_name", header: "Classification" },
     { accessorKey: "quantity_plan", header: "Qty Plan" },
     { accessorKey: "uom_name", header: "UoM" },
     { accessorKey: "notes", header: "Notes" },
@@ -233,7 +235,7 @@ const CreateMemo: React.FC = () => {
 
   const handleReset = () => {
     if (isEdit && detail) {
-      const dateOnly = detail.delivery_date
+      const dateOnly = formatDateIndo(detail.delivery_date)
         ? detail.delivery_date.split("T")[0]
         : "";
 
@@ -275,6 +277,9 @@ const CreateMemo: React.FC = () => {
       setItems([]);
     }
   };
+
+  console.log("detail:", detail);
+  
 
   return (
     <div className="p-6 space-y-6">

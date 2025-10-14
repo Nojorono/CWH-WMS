@@ -6,7 +6,7 @@ import Badge from "../../../../components/ui/badge/Badge";
 import Button from "../../../../components/ui/button/Button";
 import { InboundPlanning } from "../../../../DynamicAPI/types/InboundGoodStock";
 import { useNavigate } from "react-router-dom";
-import { toLocalISOString } from "../../../../helper/FormatDate";
+import { formatDateIndo } from "../../../../helper/FormatDate";
 
 type MenuTableProps = {
   data: InboundPlanning[];
@@ -34,7 +34,7 @@ const AdjustTable = ({
       {
         accessorKey: "createdAt",
         header: "Created At",
-        cell: ({ row }) => toLocalISOString(row.original.createdAt),
+        cell: ({ row }) => formatDateIndo(row.original.createdAt),
       },
       {
         accessorKey: "license_plate",

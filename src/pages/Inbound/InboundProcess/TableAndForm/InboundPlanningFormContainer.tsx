@@ -4,7 +4,7 @@ import { useLocation, useNavigate } from "react-router";
 import { FormValues } from "./component/formTypes";
 import { useStoreInboundGoodStock } from "../../../../DynamicAPI/stores/Store/MasterStore";
 import { CreateInboundPlanning } from "../../../../DynamicAPI/types/InboundGoodStock";
-import { toLocalISOString } from "../../../../helper/FormatDate";
+import { formatDateIndo } from "../../../../helper/FormatDate";
 import { showErrorToast } from "../../../../components/toast";
 import InboundPlanningFormView from "./InboundPlanningFormView";
 
@@ -93,12 +93,12 @@ function mapToPayload(data: FormValues): CreateInboundPlanning {
       doItem.pos.map((po) => ({
         inbound_do_number: doItem.do_no ?? "",
         inbound_do_date: doItem.date
-          ? toLocalISOString(new Date(doItem.date))
+          ? formatDateIndo(new Date(doItem.date))
           : "",
         attachment: doItem.attachment ? String(doItem.attachment) : "",
         inbound_po_number: po.po_no ?? "",
         inbound_po_date: po.po_date
-          ? toLocalISOString(new Date(po.po_date))
+          ? formatDateIndo(new Date(po.po_date))
           : "",
         flag_validated: doItem.flag_validated ?? false, // <-- ensure flag_validated is included
         inbound_items: po.items.map((item) => ({

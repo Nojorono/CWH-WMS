@@ -9,6 +9,7 @@ import {
 } from "@tanstack/react-table";
 import axios from "axios";
 import { EndPoint } from "../../../utils/EndPoint";
+import { formatDateIndo } from "../../../helper/FormatDate";
 
 type MovementRecord = {
   datetime: string;
@@ -40,23 +41,20 @@ export default function MovementHistoryTable({ palletId }: { palletId?: any }) {
             },
           }
         );
-        const inventory = res.data.data;
+        const inventoryArr = res.data.data as any[];
 
-        console.log("Fetched movement history:", inventory);
+        console.log("Fetched movement history:", inventoryArr);
 
-        // Kamu bisa mapping sesuai dengan struktur backend (sementara dummy 1 baris)
-        const mapped: MovementRecord[] = [
-          {
-            datetime: new Date(inventory.inventory_date).toLocaleString(),
-            action: "Received",
-            warehouse: inventory.warehouse?.name || "-",
-            zone: inventory.warehouseSub?.code || "-",
-            bin: inventory.warehouseBin?.code || "-",
-            inventory_status: inventory.inventory_status || "-",
-            inventory_note: inventory.inventory_note || "-",
-            progression_status: inventory.progression_status || "-",
-          },
-        ];
+        const mapped: MovementRecord[] = inventoryArr.map((item) => ({
+          datetime: formatDateIndo(item.inventory_date),
+          action: item.action || "-",
+          warehouse: item.warehouse?.name || "-",
+          zone: item.warehouseSub?.code || "-",
+          bin: item.warehouseBin?.code || "-",
+          inventory_status: item.inventory_status || "-",
+          inventory_note: item.inventory_note || "-",
+          progression_status: item.progression_status || "-",
+        }));
 
         setData(mapped);
       } catch (err) {
