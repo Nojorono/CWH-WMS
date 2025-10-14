@@ -53,7 +53,7 @@ export default function CurrentQuantityTable({ palletCode }: HistoryProps) {
   const columns: ColumnDef<ItemData>[] = [
     {
       accessorKey: "item_name",
-      header: "Item Name",
+      header: "SKU Name",
       cell: (info) => info.getValue(),
     },
     {
@@ -74,7 +74,7 @@ export default function CurrentQuantityTable({ palletCode }: HistoryProps) {
       accessorKey: "week_number",
       header: "Week Number",
       cell: (info) => info.getValue(),
-    }
+    },
   ];
 
   const table = useReactTable({
