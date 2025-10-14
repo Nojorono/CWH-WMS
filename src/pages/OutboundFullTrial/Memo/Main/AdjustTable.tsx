@@ -57,6 +57,8 @@ const AdjustTable = ({
     });
   };
 
+
+
   const columns: ColumnDef<MemoData>[] = useMemo(
     () => [
       { accessorKey: "no", header: "No" },

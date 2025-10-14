@@ -72,7 +72,7 @@ const PrintBarcodeModal: React.FC<Props> = ({
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50">
       <div className="bg-white p-6 rounded-xl w-[1000px] max-h-[85vh] overflow-y-auto">
-        <h2 className="text-lg font-bold mb-4">Preview Barcode</h2>
+        <h2 className="text-lg font-bold mb-4">Preview Barcode BIN</h2>
 
         {/* Input ukuran */}
         <div className="mb-4 flex items-center gap-3">
@@ -104,13 +104,13 @@ const PrintBarcodeModal: React.FC<Props> = ({
             >
               {useQRCode ? (
                 <QRCodeSVG
-                  value={JSON.stringify({ palet_code: item.code, palet_name: item.name, id: item.id })}
+                  value={JSON.stringify({ bin_code: item.code, bin_name: item.name, id: item.id })}
                   width={size}
                   height={size}
                 />
               ) : (
                 <Barcode
-                  value={JSON.stringify({ palet_code: item.code, palet_name: item.name, id: item.id })}
+                  value={JSON.stringify({ bin_code: item.code, bin_name: item.name, id: item.id })}
                   width={2}
                   height={size / 2}
                   displayValue
