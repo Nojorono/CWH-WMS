@@ -47,7 +47,7 @@ export const createCrudService = <TData, TCreate, TUpdate>(baseUrl: string) => (
         return handleAxios<TData[]>(axiosInstance.get(`${baseUrl}?${queryString}`));
     },
 
-    fetchById: async (id: number): Promise<TData> => {
+    fetchById: async (id: any): Promise<TData> => {
         return handleAxios<TData>(axiosInstance.get(`${baseUrl}/${id}`));
     },
 

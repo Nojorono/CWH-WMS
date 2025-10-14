@@ -45,19 +45,15 @@ const AdjustTable = ({
 }: MenuTableProps) => {
   const navigate = useNavigate();
 
-
-  console.log("Data in AdjustTable:", data);
-  
-
   const handleDetail = (id: string) => {
     navigate("/memo/process", {
       state: { data: id, mode: "detail", title: "Detail Memo" },
     });
   };
 
-  const handleUpdate = (data: MemoData) => {
+  const handleUpdate = (id: string) => {
     navigate("/memo/process", {
-      state: { data, mode: "edit", title: "Update Memo" },
+      state: { data: id, mode: "edit", title: "Update Memo" },
     });
   };
 
@@ -83,9 +79,25 @@ const AdjustTable = ({
               title="Detail"
             />
             <FaEdit
-              className="size-5 cursor-pointer text-blue-600 hover:scale-110 transition"
-              onClick={() => handleUpdate(row.original)}
-              title="Edit"
+              className={`size-5 cursor-pointer ${
+                row.original.status === "PENDING"
+                  ? "text-blue-600 hover:scale-110"
+                  : "text-gray-400 cursor-not-allowed"
+              } transition`}
+              onClick={() => {
+                if (row.original.status === "PENDING") {
+                  handleUpdate(row.original.id);
+                }
+              }}
+              title={
+                row.original.status === "PENDING"
+                  ? "Edit"
+                  : "Edit hanya bisa jika status PENDING"
+              }
+              style={{
+                pointerEvents:
+                  row.original.status === "PENDING" ? "auto" : "none",
+              }}
             />
           </div>
         ),

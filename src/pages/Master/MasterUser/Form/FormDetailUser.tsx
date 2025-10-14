@@ -65,7 +65,6 @@ const FormDetailUser: React.FC<FormDetailUserProps> = ({
       : null;
   })();
 
-  // console.log("defaultValues", defaultValues);
 
   const processedValues = {
     ...defaultValues,
@@ -133,22 +132,6 @@ const FormDetailUser: React.FC<FormDetailUserProps> = ({
   const isTSF = labelRole === ROLE_TSF;
   const isSalesman = labelRole === ROLE_SALESMAN;
   const showIsSales = !isSalesman && !isTSF;
-
-  // Reset fields on role change
-  // useEffect(() => {
-  //   if (isRegional) {
-  //     setValue("branches", null);
-  //     setValue("tsf_type", null);
-  //     setValue("is_sales", defaultValues.is_sales ?? false);
-  //   } else if (isTSF) {
-  //     setValue("branches", null);
-  //     setValue("regions", null);
-  //     setValue("is_sales", defaultValues.is_sales ?? false);
-  //   } else {
-  //     setValue("regions", null);
-  //     setValue("tsf_type", null);
-  //   }
-  // }, [labelRole, setValue, isRegional, isTSF]);
 
   const getChangedFields = (newData: any, originalData: any) => {
     const changes: Record<string, any> = {};
