@@ -11,22 +11,22 @@ import {
 import {
   FaRegFileAlt,
   FaClipboardList,
-  FaRoute,
   FaPlus,
   FaWarehouse,
   FaCog,
   FaBoxes,
-  FaTruckMoving,
+  FaShippingFast,
+  FaPeopleCarry 
 } from "react-icons/fa";
 
 const iconOptions = [
   { value: "FaRegFileAlt", label: "Master Data", icon: <FaRegFileAlt /> },
-  { value: "FaWarehouse  ", label: "Inbound", icon: <FaWarehouse /> },
-  { value: "FaTruckMoving ", label: "Outbound", icon: <FaTruckMoving /> },
-  { value: "FaBoxes ", label: "Inventory", icon: <FaBoxes /> },
-  { value: "FaCog ", label: "Settings", icon: <FaCog /> },
+  { value: "FaWarehouse", label: "Inbound", icon: <FaWarehouse /> },
+  { value: "FaShippingFast", label: "Outbound", icon: <FaShippingFast /> },
+  { value: "FaBoxes", label: "Inventory", icon: <FaBoxes /> },
+  { value: "FaCog", label: "Settings", icon: <FaCog /> },
   { value: "FaClipboardList", label: "Report", icon: <FaClipboardList /> },
-  { value: "FaRoute", label: "Route", icon: <FaRoute /> },
+  { value: "FaPeopleCarry", label: "PutAway", icon: <FaPeopleCarry /> },
 ];
 
 const DataTable = () => {
