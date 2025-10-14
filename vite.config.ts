@@ -1,4 +1,4 @@
-import { defineConfig } from "vite";
+import { defineConfig, splitVendorChunkPlugin } from "vite";
 import react from "@vitejs/plugin-react";
 import svgr from "vite-plugin-svgr";
 
@@ -12,26 +12,37 @@ export default defineConfig({
         namedExport: "ReactComponent",
       },
     }),
+    // otomatis pisahkan vendor besar
+    splitVendorChunkPlugin(),
   ],
+
   server: {
-    open: '/signin',
+    open: "/signin",
     proxy: {
       "/api": {
         target: "http://10.0.29.49:9000",
         changeOrigin: true,
-        secure: false, // jika backend tidak menggunakan HTTPS
+        secure: false,
       },
     },
   },
+
   build: {
-    cssMinify: "lightningcss", // lebih toleran ke CSS error bawaan template
-    chunkSizeWarningLimit: 2000, // naikkan limit biar warning size hilang
+    cssMinify: "lightningcss",
+    chunkSizeWarningLimit: 2500, // naikkan sedikit biar warning gak muncul
+    sourcemap: false, // bisa true kalau mau debug bundle
     rollupOptions: {
       output: {
-        manualChunks: {
-          react: ["react", "react-dom"],
-          vendor: ["axios", "zustand", "react-router-dom"], // pisahkan vendor biar chunk lebih kecil
-          charts: ["react-apexcharts", "apexcharts"],
+        manualChunks(id) {
+          if (id.includes("node_modules")) {
+            if (id.includes("react")) return "react-vendor";
+            if (id.includes("zustand")) return "zustand";
+            if (id.includes("axios")) return "axios";
+            if (id.includes("react-router-dom")) return "router";
+            if (id.includes("apexcharts")) return "charts";
+            if (id.includes("react-data-table-component")) return "datatable";
+            return "vendor";
+          }
         },
       },
     },

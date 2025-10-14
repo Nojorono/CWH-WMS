@@ -183,7 +183,7 @@ const DataTable = () => {
       alert("Pilih minimal 1 data untuk dicetak!");
       return;
     }
-    const selected = pallet.filter((p) => selectedIds.includes(p.id));
+    const selected = pallet.filter((p) => typeof p.id === "string" && selectedIds.includes(p.id));
     setSelectedPallets(selected);
     setPrintModalOpen(true); // buka modal preview
   };
