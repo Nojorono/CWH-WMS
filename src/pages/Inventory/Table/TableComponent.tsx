@@ -3,7 +3,6 @@ import { ColumnDef } from "@tanstack/react-table";
 import TableComponent from "../../../components/tables/MasterDataTable/TableComponent";
 import { FaEdit, FaEye, FaTrash } from "react-icons/fa";
 import { useNavigate } from "react-router";
-// import DynamicFormModal from "./DynamicFormModal";
 
 interface Props {
   data: any[];

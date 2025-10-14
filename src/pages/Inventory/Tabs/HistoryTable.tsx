@@ -111,9 +111,9 @@ export default function MovementHistoryTable({ palletId }: { palletId?: any }) {
 
   return (
     <div className="bg-white p-4 rounded-xl shadow-md">
-      <h2 className="text-md font-semibold mb-3 border-l-4 border-orange-500 pl-2">
+      {/* <h2 className="text-md font-semibold mb-3 border-l-4 border-orange-500 pl-2">
         Movement History
-      </h2>
+      </h2> */}
 
       {isLoading ? (
         <p className="text-sm text-gray-500">Loading data...</p>

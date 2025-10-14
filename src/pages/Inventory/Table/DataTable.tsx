@@ -22,16 +22,12 @@ const DataTable = () => {
   const getStatusColor = (status: string) => {
     switch (status) {
       case "INVENTORY":
-      case "INVENTORY_COMPLETED":
-        return "bg-blue-100 text-blue-700";
-      case "PUT_AWAY":
-        return "bg-green-100 text-green-700";
-      case "RECEIVED":
-        return "bg-lime-100 text-lime-700";
-      case "INSPECTION_COMPLETED":
+      case "NOT_STARTED":
         return "bg-yellow-100 text-yellow-700";
-      case "PICKING":
-        return "bg-orange-100 text-orange-700";
+      case "IN_PROGRESS":
+        return "bg-blue-100 text-blue-700";
+      case "COMPLETED":
+        return "bg-green-100 text-green-700";
       default:
         return "bg-gray-100 text-gray-700";
     }

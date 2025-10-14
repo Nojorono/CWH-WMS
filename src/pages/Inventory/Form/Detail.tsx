@@ -1,12 +1,14 @@
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import DynamicForm, {
   FieldConfig,
 } from "../../../components/wms-components/inbound-component/form/DynamicForm";
 import { useStoreInventoryTracking } from "../../../DynamicAPI/stores/Store/MasterStore";
-import MovementHistoryTable from "../Table/HistoryTable";
+import MovementHistoryTable from "../Tabs/HistoryTable";
+import TabsSection from "../../../components/wms-components/inbound-component/tabs/TabsSection";
+import CurrentQuantityTable from "../../Master/MasterPallet/Tabs/Current";
 
 // === Helper Function: Mapping Data API → Form ===
 function mapDetailToForm(detail: any) {
@@ -109,7 +111,18 @@ export default function DetailInventory() {
     console.log("Form submitted:", data);
   };
 
-  const palletId = detail && "pallet_id" in detail ? detail.pallet_id : "";  
+  console.log("Detail Inventory Data:", detail);
+
+  // const palletId = detail && "pallet_id" in detail ? detail.pallet_id : "";
+  // const palletCode = detail && "pallet_code" in detail ? String(detail.pallet_code) : "";
+
+  const palletId = (detail as any)?.pallet_id ?? "";
+  const palletCode = (detail as any)?.pallet?.pallet_code ?? "";
+
+  console.log("Extracted palletId:", palletId);
+  console.log("Extracted palletCode:", palletCode);
+
+  const [activeTab, setActiveTab] = useState(0);
 
   return (
     <div className="p-6 bg-slate-50 min-h-screen">
@@ -138,7 +151,22 @@ export default function DetailInventory() {
         </div>
       </section>
 
-      <MovementHistoryTable palletId={palletId} />
+      <div className="mt-6">
+        <TabsSection
+          tabs={[
+            {
+              label: "Movement History",
+              content: <MovementHistoryTable palletId={palletId} />,
+            },
+            {
+              label: "Current Assets",
+              content: <CurrentQuantityTable palletCode={palletCode} />,
+            },
+          ]}
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+        />
+      </div>
     </div>
   );
 }

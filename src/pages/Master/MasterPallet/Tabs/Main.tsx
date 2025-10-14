@@ -28,8 +28,6 @@ export default function MainScreen() {
 
   const [activeTab, setActiveTab] = useState(0);
 
-  console.log("Detail Pallet Data:", palletDetail);
-
   return (
     <div className="p-6">
       <PageBreadcrumb
