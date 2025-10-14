@@ -104,13 +104,21 @@ const PrintBarcodeModal: React.FC<Props> = ({
             >
               {useQRCode ? (
                 <QRCodeSVG
-                  value={JSON.stringify({ palet_code: item.code, palet_name: item.name, id: item.id })}
+                  value={JSON.stringify({
+                    zone_code: item.code,
+                    zone_name: item.name,
+                    id: item.id,
+                  })}
                   width={size}
                   height={size}
                 />
               ) : (
                 <Barcode
-                  value={JSON.stringify({ palet_code: item.code, palet_name: item.name, id: item.id })}
+                  value={JSON.stringify({
+                    zone_code: item.code,
+                    zone_name: item.name,
+                    id: item.id,
+                  })}
                   width={2}
                   height={size / 2}
                   displayValue
