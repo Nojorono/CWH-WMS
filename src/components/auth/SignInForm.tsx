@@ -65,12 +65,8 @@ export default function SignInForm() {
       if (!resData) {
         throw new Error("Invalid response from server");
       }
-
       const { user, menus } = resData; // ✅ langsung ambil dari return authLogin
-
-      console.log("User data after login:", user); // Debugging line
-      console.log("Menus after login:", menus); // Debugging line
-
+      
       if (!user) {
         throw new Error("User data missing from response");
       }
@@ -82,8 +78,6 @@ export default function SignInForm() {
       // ✅ Cari path menu pertama yang bisa diakses user
       const firstAccessibleMenu = menus.find((m: any) => m.path);
       const navigatePath = firstAccessibleMenu?.path || "/";
-
-      console.log("Navigating to:", navigatePath); // Debugging line
 
       setTimeout(() => {
         navigate(navigatePath);
