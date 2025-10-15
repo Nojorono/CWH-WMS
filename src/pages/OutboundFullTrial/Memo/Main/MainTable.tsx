@@ -95,8 +95,8 @@ const MainTable = () => {
 
         <div className="flex justify-between items-center mt-5">
           <div className="space-x-4">
-            <Label htmlFor="inbound-no">Inbound No</Label>
-            <Input type="text" id="inbound-no" placeholder="Inbound no.." />
+            {/* <Label htmlFor="memo-no">Search</Label>
+            <Input type="text" id="memo-no" placeholder="Search.." /> */}
           </div>
 
           <div className="flex justify-center items-center mt-5">

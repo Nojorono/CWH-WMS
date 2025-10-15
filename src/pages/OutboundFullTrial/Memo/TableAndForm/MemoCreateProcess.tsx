@@ -345,7 +345,7 @@ const CreateMemo: React.FC = () => {
           )}
         </div>
 
-        <TableComponent data={items} columns={columnsTableItem} pageSize={5} />
+        <TableComponent data={items} columns={columnsTableItem} pageSize={10} />
       </section>
 
       {/* ACTIONS */}

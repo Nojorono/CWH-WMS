@@ -66,7 +66,7 @@ export default function SignInForm() {
         throw new Error("Invalid response from server");
       }
       const { user, menus } = resData; // ✅ langsung ambil dari return authLogin
-      
+
       if (!user) {
         throw new Error("User data missing from response");
       }
@@ -75,9 +75,11 @@ export default function SignInForm() {
         throw new Error("No menu available for this user!");
       }
 
-      // ✅ Cari path menu pertama yang bisa diakses user
-      const firstAccessibleMenu = menus.find((m: any) => m.path);
-      const navigatePath = firstAccessibleMenu?.path || "/";
+      // Cari menu pertama yang memiliki parentId (bukan root menu)
+      const firstChildMenu = menus.find(
+        (m: any) => m.parentId !== null && m.path
+      );
+      const navigatePath = firstChildMenu?.path || "/";
 
       setTimeout(() => {
         navigate(navigatePath);
