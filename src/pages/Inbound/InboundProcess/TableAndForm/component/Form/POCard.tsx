@@ -245,28 +245,33 @@ export default function POCard({
               <label className="block text-xs text-slate-600 mb-1">
                 Nomor PO
               </label>
-              <div className="flex flex-col sm:flex-row gap-2">
+              <div className="flex flex-col gap-2 w-full sm:flex-row">
                 <input
                   className={`${inputCls} ${getDisabledCls(
                     !isEditMode
-                  )} w-full sm:w-auto flex-1`}
+                  )} w-full flex-1 min-w-0`}
                   {...register(
                     `deliveryOrders.${doIndex}.pos.${posIndex}.po_no` as const
                   )}
                   disabled={!isEditMode}
                 />
                 {isEditMode && (
-                  <Button
-                    type="button"
-                    variant="primary"
-                    size="xsm"
-                    onClick={handleSearchPO}
-                    disabled={!isEditMode || loading}
-                    className="flex-shrink-0 sm:w-auto w-full"
-                  >
-                    <FaSearch />
-                    {loading ? "Loading..." : "Cari PO"}
-                  </Button>
+                  <div className="relative group">
+                    <Button
+                      type="button"
+                      variant="primary"
+                      size="xsm"
+                      onClick={handleSearchPO}
+                      disabled={!isEditMode || loading}
+                      className="flex-shrink-0 w-full sm:w-auto"
+                    >
+                      <FaSearch />
+                      {/* {loading ? "Loading..." : "Cari PO"} */}
+                    </Button>
+                    <div className="absolute left-1/2 -translate-x-1/2 mt-1 z-10 hidden group-hover:block bg-gray-800 text-white text-xs rounded px-2 py-1 whitespace-nowrap">
+                      Cari PO
+                    </div>
+                  </div>
                 )}
               </div>
             </div>
@@ -288,17 +293,22 @@ export default function POCard({
                   disabled={!isEditMode}
                 />
                 {isEditMode && (
-                  <Button
-                    type="button"
-                    variant="primary"
-                    size="xsm"
-                    onClick={handleSearchSO}
-                    disabled={!isEditMode || loading}
-                    className="flex-shrink-0 sm:w-auto w-full"
-                  >
-                    <FaSearch />
-                    {loading ? "Loading..." : "Cari SO"}
-                  </Button>
+                  <div className="relative group">
+                    <Button
+                      type="button"
+                      variant="primary"
+                      size="xsm"
+                      onClick={handleSearchSO}
+                      disabled={!isEditMode || loading}
+                      className="flex-shrink-0 sm:w-auto w-full"
+                    >
+                      <FaSearch />
+                      {/* {loading ? "Loading..." : "Cari SO"} */}
+                    </Button>
+                    <div className="absolute left-1/2 -translate-x-1/2 mt-1 z-10 hidden group-hover:block bg-gray-800 text-white text-xs rounded px-2 py-1 whitespace-nowrap">
+                      Cari SO
+                    </div>
+                  </div>
                 )}
               </div>
             </div>
@@ -306,36 +316,8 @@ export default function POCard({
         </div>
 
         {/* ======= Tanggal PO / SO ======= */}
-        {/* {(InbType === "PO" || InbType === "SO") && (
-          <div>
-            <label className="block text-xs text-slate-600 mb-1">
-              {InbType === "PO" ? "Tanggal PO" : "Tanggal SO"}
-            </label>
-            <Controller
-              control={control}
-              name={`deliveryOrders.${doIndex}.pos.${posIndex}.${InbType.toLowerCase()}_date`}
-              render={({ field }) => (
-                <DatePicker
-                  id={`deliveryOrders.${doIndex}.pos.${posIndex}.${InbType.toLowerCase()}_date`}
-                  placeholder="Select a date"
-                  value={field.value ? new Date(field.value) : undefined}
-                  onChange={(date: Date | Date[]) => {
-                    if (!isEditMode) return;
-                    const selectedDate = Array.isArray(date) ? date[0] : date;
-                    field.onChange(
-                      selectedDate ? formatDateIndo(selectedDate) : ""
-                    );
-                  }}
-                  readOnly={!isEditMode}
-                />
-              )}
-            />
-          </div>
-        )} */}
-
-        {/* ======= Tanggal PO / SO ======= */}
         {(InbType === "PO" || InbType === "SO") && (
-          <div>
+          <div className="w-full">
             <label className="block text-xs text-slate-600 mb-1">
               {InbType === "PO" ? "Tanggal PO" : "Tanggal SO"}
             </label>

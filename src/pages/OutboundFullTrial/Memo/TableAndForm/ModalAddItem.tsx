@@ -39,7 +39,7 @@ const ModalAddItem: React.FC<Props> = ({ open, onClose, onSubmit }) => {
   useEffect(() => {
     if (uomList.length > 0 && !selectedUom) {
       const dus = uomList.find((u: any) => u.code === "DUS");
-      if (dus) setSelectedUom(dus.code);
+      if (dus) setSelectedUom(String(dus.id)); // gunakan dus.id, bukan dus.code
     }
   }, [uomList, selectedUom]);
 
@@ -50,8 +50,6 @@ const ModalAddItem: React.FC<Props> = ({ open, onClose, onSubmit }) => {
     if (!selectedSku) newErrors.sku = "SKU wajib dipilih";
     if (!qty || qty <= 0) newErrors.qty = "Qty harus lebih besar dari 0";
     if (!selectedUom) newErrors.uom = "UOM wajib dipilih";
-    if (!selectedClassification)
-      newErrors.classification = "Classification wajib dipilih";
     return newErrors;
   };
 
@@ -92,7 +90,7 @@ const ModalAddItem: React.FC<Props> = ({ open, onClose, onSubmit }) => {
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-[9999]">
       <div className="bg-white rounded-xl shadow-lg w-[450px] p-6 space-y-4 relative z-[10000]">
-        <h2 className="text-xl font-bold text-indigo-800">Add Item</h2>
+        <h2 className="text-xl font-bold text-indigo-800">Add Item Memo</h2>
 
         <div className="space-y-3">
           {/* SKU Dropdown */}
@@ -173,7 +171,7 @@ const ModalAddItem: React.FC<Props> = ({ open, onClose, onSubmit }) => {
           </div>
 
           {/* Classification Dropdown */}
-          <div>
+          {/* <div>
             <label className="block text-sm font-medium">Classification</label>
             <Select
               options={classificationList.map((c: any) => ({
@@ -191,7 +189,7 @@ const ModalAddItem: React.FC<Props> = ({ open, onClose, onSubmit }) => {
                 {errors.classification}
               </p>
             )}
-          </div>
+          </div> */}
         </div>
 
         {/* ACTION BUTTONS */}

@@ -89,7 +89,7 @@ const MainTable = () => {
         </div>
 
         <div className="flex justify-between items-center mt-5">
-          <div className="space-x-4">
+          {/* <div className="space-x-4">
             <Label htmlFor="search">Inbound No</Label>
             <Input type="text" id="search" placeholder="Inbound no.." />
           </div>
@@ -107,7 +107,7 @@ const MainTable = () => {
             <Button variant="rounded" size="sm" onClick={handleResetFilters}>
               <FaUndo />
             </Button>
-          </div>
+          </div> */}
         </div>
       </div>
        

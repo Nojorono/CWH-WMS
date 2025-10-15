@@ -247,17 +247,22 @@ export default function DeliveryOrderCard({
                   )} w-full sm:flex-1`}
                   disabled={!isEditMode}
                 />
-                <Button
-                  type="button"
-                  size="xsm"
-                  variant="primary"
-                  onClick={handleCheckDO}
-                  disabled={!isEditMode}
-                  className="w-full sm:w-auto flex items-center justify-center gap-1"
-                >
-                  <FaSearch />
-                  <span className="hidden sm:inline">Cek Surat Jalan</span>
-                </Button>
+                <div className="relative group">
+                  <Button
+                    type="button"
+                    size="xsm"
+                    variant="primary"
+                    onClick={handleCheckDO}
+                    disabled={!isEditMode}
+                    className="w-full sm:w-auto flex items-center justify-center gap-1"
+                  >
+                    <FaSearch />
+                    {/* <span className="hidden sm:inline">Cek Surat Jalan</span> */}
+                  </Button>
+                  <div className="absolute left-1/2 -translate-x-1/2 mt-1 z-10 hidden group-hover:block bg-gray-800 text-white text-xs rounded px-2 py-1 whitespace-nowrap">
+                    Cek Surat Jalan ke META
+                  </div>
+                </div>
               </div>
               {getError("do_no") && (
                 <p className="text-red-500 text-xs mt-1">

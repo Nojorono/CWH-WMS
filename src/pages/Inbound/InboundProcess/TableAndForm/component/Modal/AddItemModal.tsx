@@ -52,8 +52,8 @@ export default function AddItemModal({
   const selectedMaster = list.find((m: any) => m.sku === tempSku);
 
   const handleSave = () => {
-    if (!tempSku || !tempQty || !tempClassification || !tempUom) {
-      alert("Please select SKU, Qty, UoM, and Classification");
+    if (!tempSku || !tempQty || !tempUom) {
+      alert("Please select SKU, Qty, and UoM");
       return;
     }
 
@@ -110,6 +110,7 @@ export default function AddItemModal({
                 onChange={setTempSku}
                 placeholder="-- Select SKU --"
                 className="w-full"
+                width="100%"
               />
             </div>
 
@@ -151,13 +152,13 @@ export default function AddItemModal({
                 onChange={setTempUom}
                 placeholder="-- Select UoM --"
                 className="w-full"
+                width="100%"
               />
             </div>
 
             {/* Qty */}
             <div className="flex flex-col">
               <label className="text-xs text-slate-600 font-bold mb-1">
-                {" "}
                 Qty Plan
               </label>
               <input
@@ -173,7 +174,7 @@ export default function AddItemModal({
             </div>
 
             {/* Classification */}
-            <div className="flex flex-col">
+            {/* <div className="flex flex-col">
               <label className="text-xs text-slate-600 font-bold mb-1">
                 Classification
               </label>
@@ -186,8 +187,9 @@ export default function AddItemModal({
                 onChange={setTempClassification}
                 placeholder="-- Classification --"
                 className="w-full"
+                width="100%"
               />
-            </div>
+            </div> */}
           </div>
 
           {/* Action Buttons */}

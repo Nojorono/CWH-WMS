@@ -76,12 +76,6 @@ const buildFieldsConfig = (isDetailMode: boolean): FieldConfig[] =>
       type: "text" as const,
       validation: { required: "Origin wajib diisi" },
     },
-    // {
-    //   name: "destination",
-    //   label: "Tujuan",
-    //   type: "text" as const,
-    //   validation: { required: "Tujuan wajib diisi" },
-    // },
     {
       name: "driver_phone",
       label: "No Telp Driver",
