@@ -12,6 +12,7 @@ import DynamicForm, {
 import { showErrorToast } from "../../../../components/toast";
 import { useStoreOutboundMemo } from "../../../../DynamicAPI/stores/Store/MasterStore";
 import { useLocation, useNavigate } from "react-router";
+import { EndPoint } from "../../../../utils/EndPoint";
 
 type MemoFormValues = {
   requestor: string;
@@ -198,7 +199,7 @@ const CreateMemo: React.FC = () => {
         quantity_plan: Number(i.quantity_plan ?? 0),
         uom: (i.uom ?? i.uom_name ?? "") as string,
       })),
-    };    
+    };
 
     try {
       let res: any = null;
@@ -284,7 +285,33 @@ const CreateMemo: React.FC = () => {
     }
   };
 
-  console.log("detail:", detail);
+  const handleApproveMemo = (memoId: string) => {
+    // Implementasi logika untuk menyetujui memo
+    console.log("Approve memo with ID:", memoId);
+
+    const approveMemo = async (memoId: string) => {
+      const token = localStorage.getItem("token");
+      try {
+        const res = await fetch(`${EndPoint}outbound-memo/${memoId}/approved`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        const data = await res.json();
+        if (res.ok) {
+          navigate("/memo");
+        } else {
+          showErrorToast(data?.message || "Failed to approve memo");
+        }
+      } catch (err) {
+        showErrorToast("Network error approving memo");
+      }
+    };
+
+    approveMemo(memoId);
+  };
 
   return (
     <div className="p-6 space-y-6">
@@ -309,25 +336,26 @@ const CreateMemo: React.FC = () => {
           watch={methods.watch}
         />
 
-        {localStorage.getItem("roleName") === "SUPERVISOR" && (
-          <div className="flex justify-end mt-4 gap-3">
-            <Button
-              type="button"
-              variant="danger"
-              onClick={() => setOpenModal(true)}
-            >
-              Reject Memo
-            </Button>
+        {localStorage.getItem("role_name") === "TRANSPORT SUPERVISOR" &&
+          detail?.status !== "APPROVED" && (
+            <div className="flex justify-end mt-4 gap-3">
+              <Button
+                type="button"
+                variant="danger"
+                // onClick={() => setOpenModal(true)}
+              >
+                Reject Memo
+              </Button>
 
-            <Button
-              type="button"
-              variant="primary"
-              onClick={() => setOpenModal(true)}
-            >
-              Approve Memo
-            </Button>
-          </div>
-        )}
+              <Button
+                type="button"
+                variant="primary"
+                onClick={() => handleApproveMemo(memoId)}
+              >
+                Approve Memo
+              </Button>
+            </div>
+          )}
       </section>
 
       {/* ITEM DETAILS */}
