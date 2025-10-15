@@ -1,18 +1,124 @@
-import { create } from 'zustand';
-import { loginService } from '../../services/AuthServices/AuthService';
+// import { create } from 'zustand';
+// import { loginService } from '../../services/AuthServices/AuthService';
 
 
-interface AuthState {
-  resetAuth: any;
-  isLoading: boolean;
-  error: string | null;
-  accessToken: string | null;
-  refreshToken: string | null;
-  user: User | null;
-  menus: Menu[] | null;
-  permissions: Permission[] | null; // Tambahkan ini
-  authLogin: (data: LoginPayload) => Promise<void>;
-}
+// interface AuthState {
+//   resetAuth: any;
+//   isLoading: boolean;
+//   error: string | null;
+//   accessToken: string | null;
+//   refreshToken: string | null;
+//   user: User | null;
+//   menus: Menu[] | null;
+//   permissions: Permission[] | null; // Tambahkan ini
+//   authLogin: (data: LoginPayload) => Promise<void>;
+// }
+
+// interface LoginPayload {
+//   username?: string;
+//   password?: string;
+//   employee_id?: string;
+//   ip_address?: string;
+//   device_info?: string;
+//   platform?: string;
+// }
+
+// interface User {
+//   id: number;
+//   employee_id: string;
+//   username: string;
+//   picture: string;
+//   role_id: number;
+//   last_login: string;
+// }
+
+// interface Menu {
+//   id: number;
+//   name: string;
+//   path: string;
+//   icon: string | null;
+//   parentId: number | null;
+//   order: number;
+//   created_at: string;
+//   updated_at: string;
+//   permissions: Permission[]; // Tambahkan ini
+// }
+
+// interface Permission {
+//   id: number;
+//   role_id: number;
+//   menu_id: number;
+//   permission_type: string;
+//   created_at: string;
+//   updated_at: string;
+// }
+
+// export const useAuthStore = create<AuthState>((set) => ({
+//   isLoading: false,
+//   error: null,
+//   accessToken: null,
+//   refreshToken: null,
+//   user: null,
+//   menus: null,
+//   permissions: null,
+
+//   authLogin: async (data: LoginPayload) => {
+//     set({ isLoading: true, error: null });
+//     try {
+//       const response = await loginService(data);
+//       const accessToken = response.data.token;
+//       const refreshToken = response.data.refreshToken;
+//       const user = response.data.user;
+//       const menus = response.data.menus;
+//       const permissions = response.data.permissions;
+
+//       // Simpan ke localStorage
+//       localStorage.setItem(
+//         "user_login_data",
+//         JSON.stringify({ accessToken, refreshToken, user, menus, permissions })
+//       );
+
+//            // Get role name from user.role.name
+//       const roleName = user?.role?.name || "";
+
+//       localStorage.setItem("role_id", user?.roleId?.toString() || "");
+//       localStorage.setItem("role_name", roleName);
+//       localStorage.setItem("token", accessToken);
+//       localStorage.setItem("user_id", user?.id?.toString() || "");
+
+//       set({
+//         accessToken,
+//         refreshToken,
+//         user,
+//         menus,
+//         permissions,
+//       });
+//     } catch (err: any) {
+//       set({ error: err.message });
+//     } finally {
+//       set({ isLoading: false });
+//     }
+//   },
+
+//   resetAuth: () => {
+//     set({
+//       isLoading: false,
+//       error: null,
+//       accessToken: null,
+//       refreshToken: null,
+//       user: null,
+//       menus: null,
+//       permissions: null,
+//     });
+//     localStorage.removeItem("user_login_data");
+//     localStorage.removeItem("role_id");
+//     localStorage.removeItem("token");
+//   },
+// }));
+
+
+import { create } from "zustand";
+import { loginService } from "../../services/AuthServices/AuthService";
 
 interface LoginPayload {
   username?: string;
@@ -24,12 +130,14 @@ interface LoginPayload {
 }
 
 interface User {
-  id: number;
-  employee_id: string;
+  id: string;
   username: string;
-  picture: string;
-  role_id: number;
-  last_login: string;
+  roleId: number;
+  role: {
+    id: number;
+    name: string;
+    description: string;
+  };
 }
 
 interface Menu {
@@ -39,9 +147,7 @@ interface Menu {
   icon: string | null;
   parentId: number | null;
   order: number;
-  created_at: string;
-  updated_at: string;
-  permissions: Permission[]; // Tambahkan ini
+  actions: string[];
 }
 
 interface Permission {
@@ -51,6 +157,27 @@ interface Permission {
   permission_type: string;
   created_at: string;
   updated_at: string;
+}
+
+// ✅ Tambahkan tipe return khusus untuk authLogin
+interface AuthLoginResponse {
+  user: User;
+  menus: Menu[];
+  permissions: Permission[];
+  accessToken: string;
+  refreshToken?: string | null;
+}
+
+interface AuthState {
+  resetAuth: () => void;
+  isLoading: boolean;
+  error: string | null;
+  accessToken: string | null;
+  refreshToken: string | null;
+  user: User | null;
+  menus: Menu[] | null;
+  permissions: Permission[] | null;
+  authLogin: (data: LoginPayload) => Promise<AuthLoginResponse>; // ✅ perbaikan di sini
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
@@ -64,13 +191,21 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   authLogin: async (data: LoginPayload) => {
     set({ isLoading: true, error: null });
+
     try {
       const response = await loginService(data);
-      const accessToken = response.data.token;
-      const refreshToken = response.data.refreshToken;
-      const user = response.data.user;
-      const menus = response.data.menus;
-      const permissions = response.data.permissions;
+
+      const resData = response.data?.data || response.data || response;
+
+      if (!resData || !resData.token || !resData.user) {
+        throw new Error("Invalid login response structure");
+      }
+
+      const accessToken = resData.token;
+      const refreshToken = resData.refreshToken || null;
+      const user = resData.user;
+      const menus = resData.menus || [];
+      const permissions = resData.permissions || [];
 
       // Simpan ke localStorage
       localStorage.setItem(
@@ -78,25 +213,28 @@ export const useAuthStore = create<AuthState>((set) => ({
         JSON.stringify({ accessToken, refreshToken, user, menus, permissions })
       );
 
-           // Get role name from user.role.name
-      const roleName = user?.role?.name || "";
-
       localStorage.setItem("role_id", user?.roleId?.toString() || "");
-      localStorage.setItem("role_name", roleName);
+      localStorage.setItem("role_name", user?.role?.name || "");
       localStorage.setItem("token", accessToken);
       localStorage.setItem("user_id", user?.id?.toString() || "");
 
+      // Update state global
       set({
         accessToken,
         refreshToken,
         user,
         menus,
         permissions,
+        isLoading: false,
+        error: null,
       });
+
+      // ✅ Return data agar bisa digunakan di SignInForm
+      return { user, menus, permissions, accessToken, refreshToken };
     } catch (err: any) {
-      set({ error: err.message });
-    } finally {
-      set({ isLoading: false });
+      console.error("Login failed:", err);
+      set({ error: err.message, isLoading: false });
+      throw err;
     }
   },
 

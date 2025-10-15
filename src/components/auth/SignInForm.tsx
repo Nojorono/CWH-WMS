@@ -21,7 +21,7 @@ interface SignInFormValues {
 export default function SignInForm() {
   const navigate = useNavigate();
   const { authLogin } = useAuthStore();
-  const { fetchAll: fetchMenus } = useStoreMenu();
+  const { fetchAll: fetchMenus, list: menuList } = useStoreMenu();
 
   const [showPassword, setShowPassword] = useState(false);
   const toggleShowPassword = () => setShowPassword((prev) => !prev);
@@ -29,6 +29,8 @@ export default function SignInForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [ipAddress, setIpAddress] = useState<string>("");
+
+  console.log("menuList after login:", menuList); // Debugging line
 
   const {
     register,
@@ -49,22 +51,67 @@ export default function SignInForm() {
     fetchIP();
   }, []);
 
+  // const handleLogin = async (data: SignInFormValues) => {
+  //   setIsLoading(true);
+  //   setError(null);
+
+  //   try {
+  //     await authLogin({
+  //       ...data,
+  //     });
+  //     const { accessToken } = useAuthStore.getState();
+  //     if (!accessToken) {
+  //       throw new Error("Login failed!");
+  //     }
+  //     fetchMenus();
+  //     showSuccessToast("Login successful!");
+  //     setTimeout(() => {
+  //       navigate("/inbound_planning");
+  //     }, 800);
+  //   } catch (err: any) {
+  //     console.error("Login failed:", err);
+  //     setError(err.message || "Login failed!");
+  //   } finally {
+  //     setIsLoading(false);
+  //   }
+  // };
+
   const handleLogin = async (data: SignInFormValues) => {
     setIsLoading(true);
     setError(null);
 
     try {
-      await authLogin({
+      // 🔹 Panggil API login dari Zustand
+      const resData = await authLogin({
         ...data,
       });
-      const { accessToken } = useAuthStore.getState();
-      if (!accessToken) {
-        throw new Error("Login failed!");
+
+      // 🔹 Validasi hasil login
+      if (!resData) {
+        throw new Error("Invalid response from server");
       }
-      fetchMenus();
-      showSuccessToast("Login successful!");
+
+      const { user, menus } = resData; // ✅ langsung ambil dari return authLogin
+
+      console.log("User data after login:", user); // Debugging line
+      console.log("Menus after login:", menus); // Debugging line
+
+      if (!user) {
+        throw new Error("User data missing from response");
+      }
+
+      if (!menus || menus.length === 0) {
+        throw new Error("No menu available for this user!");
+      }
+
+      // ✅ Cari path menu pertama yang bisa diakses user
+      const firstAccessibleMenu = menus.find((m: any) => m.path);
+      const navigatePath = firstAccessibleMenu?.path || "/";
+
+      console.log("Navigating to:", navigatePath); // Debugging line
+
       setTimeout(() => {
-        navigate("/inbound_planning");
+        navigate(navigatePath);
       }, 800);
     } catch (err: any) {
       console.error("Login failed:", err);

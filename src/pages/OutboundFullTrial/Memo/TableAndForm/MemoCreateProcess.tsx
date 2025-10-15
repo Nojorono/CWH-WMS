@@ -166,6 +166,12 @@ const CreateMemo: React.FC = () => {
       validation: { required: "Ship To is required" },
     },
     {
+      name: "requestor",
+      label: "Requestor",
+      type: "text",
+      validation: { required: "Requestor is required" },
+    },
+    {
       name: "notes",
       label: "Notes",
       type: "textarea",
@@ -185,7 +191,6 @@ const CreateMemo: React.FC = () => {
     // build payload ensuring uom is string (fallback "")
     const payload = {
       ...data,
-      requestor: userID ?? "",
       status: "PENDING",
       delivery_date: formatDate(data.delivery_date), // 👈 gunakan helper
       outbound_memo_items: items.map((i) => ({
@@ -193,7 +198,7 @@ const CreateMemo: React.FC = () => {
         quantity_plan: Number(i.quantity_plan ?? 0),
         uom: (i.uom ?? i.uom_name ?? "") as string,
       })),
-    };
+    };    
 
     try {
       let res: any = null;

@@ -14,10 +14,6 @@ export const loginService = async (payload: LoginPayload) => {
   try {
     const { data } = await axiosInstance.post("/auth/login", payload);
     return data;
-
-    // if (data.statusCode === 200) {
-    //   return data;
-    // }
   } catch (error: any) {
     showErrorToast(
       `Error response: ${error.response?.data?.message || "Unknown error"}`

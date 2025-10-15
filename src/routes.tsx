@@ -36,11 +36,12 @@ import {
   Memo,
   MemoProcess,
 } from "./utils/PagesComponent";
+
 // import dummyRoutes from "./helper/dummyRoutes";
 
 const DefaultPage = () => (
   <div style={{ textAlign: "center", marginTop: "50px" }}>
-    <h1>Halaman ini masih dalam proses development</h1>
+    <h1>Selamat Datang di Aplikasi Manajemen Warehouse!</h1>
   </div>
 );
 
