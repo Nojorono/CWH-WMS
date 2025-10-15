@@ -4,6 +4,7 @@ import { ColumnDef } from "@tanstack/react-table";
 import TableComponent from "../../../../components/tables/MasterDataTable/TableComponent";
 import { useNavigate } from "react-router-dom";
 import Button from "../../../../components/ui/button/Button";
+import Badge from "../../../../components/ui/badge/Badge";
 
 type MemoData = {
   no: number;
@@ -68,7 +69,21 @@ const AdjustTable = ({
       { accessorKey: "destination", header: "Destination" },
       { accessorKey: "shipTo", header: "Ship To" },
       { accessorKey: "requestor", header: "Requestor" },
-      { accessorKey: "status", header: "Status" },
+      {
+        accessorKey: "status",
+        header: "Status",
+        cell: ({ row }) => {
+          const status = row.original.status;
+          let color: "grey" | "info" | "warning" | "success" | undefined;
+          if (status === "PENDING") color = "grey";
+          else if (status === "APPROVED") color = "success";
+          return (
+            <Badge variant="solid" color={color}>
+              {status}
+            </Badge>
+          );
+        },
+      },
       { accessorKey: "createdDate", header: "Created Date" },
       {
         id: "actions",
@@ -107,7 +122,7 @@ const AdjustTable = ({
         ),
       },
     ],
-    []
+    [roleName]
   );
 
   return (

@@ -33,6 +33,12 @@ type ItemRow = {
   notes?: string;
 };
 
+const LoadingIndicator = () => (
+  <div className="flex justify-center items-center min-h-[300px]">
+    <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-orange-500 border-solid"></div>
+  </div>
+);
+
 export const formatDate = (date: Date | string | null): string => {
   if (!date) return "";
   const d = typeof date === "string" ? new Date(date) : date;
@@ -49,6 +55,7 @@ const CreateMemo: React.FC = () => {
   const isDetail = mode === "detail";
   const isEdit = mode === "edit";
   const userID = localStorage.getItem("user_id");
+  const [isLoading, setIsLoading] = useState(false);
 
   const methods = useForm<MemoFormValues>({
     defaultValues: {
@@ -312,6 +319,20 @@ const CreateMemo: React.FC = () => {
 
     approveMemo(memoId);
   };
+
+  if (isLoading && (isEdit || isDetail)) {
+    return (
+      <div className="p-6">
+        <PageBreadcrumb
+          breadcrumbs={[
+            { title: "Memo List", path: "/memo" },
+            { title: title || "Loading...", path: "#" },
+          ]}
+        />
+        <LoadingIndicator />
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 space-y-6">
