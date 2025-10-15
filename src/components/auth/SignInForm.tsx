@@ -51,31 +51,6 @@ export default function SignInForm() {
     fetchIP();
   }, []);
 
-  // const handleLogin = async (data: SignInFormValues) => {
-  //   setIsLoading(true);
-  //   setError(null);
-
-  //   try {
-  //     await authLogin({
-  //       ...data,
-  //     });
-  //     const { accessToken } = useAuthStore.getState();
-  //     if (!accessToken) {
-  //       throw new Error("Login failed!");
-  //     }
-  //     fetchMenus();
-  //     showSuccessToast("Login successful!");
-  //     setTimeout(() => {
-  //       navigate("/inbound_planning");
-  //     }, 800);
-  //   } catch (err: any) {
-  //     console.error("Login failed:", err);
-  //     setError(err.message || "Login failed!");
-  //   } finally {
-  //     setIsLoading(false);
-  //   }
-  // };
-
   const handleLogin = async (data: SignInFormValues) => {
     setIsLoading(true);
     setError(null);
