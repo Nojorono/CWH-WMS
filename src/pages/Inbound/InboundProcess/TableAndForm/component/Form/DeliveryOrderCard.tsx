@@ -26,13 +26,13 @@ export default function DeliveryOrderCard({
   removeDO,
   totalDO,
   isEditMode,
-  inbType
+  inbType,
 }: {
   doIndex: number;
   removeDO: () => void;
   totalDO: number;
   isEditMode: boolean;
-  inbType: 'PO' | 'SO' | 'RETUR';
+  inbType: "PO" | "SO" | "RETUR";
 }) {
   const {
     control,
@@ -49,7 +49,7 @@ export default function DeliveryOrderCard({
   } = useFieldArray({
     control,
     name: `deliveryOrders.${doIndex}.pos`,
-  });  
+  });
 
   const [open, setOpen] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -184,9 +184,10 @@ export default function DeliveryOrderCard({
   };
 
   return (
-    <div className="bg-white rounded-lg shadow p-3">
+    <div className="bg-white rounded-lg shadow p-3 md:p-4 lg:p-5">
       <details ref={detailsRef}>
-        <summary className="flex justify-between items-center cursor-pointer px-3 py-2 bg-orange-100 rounded">
+        {/* ======= HEADER ======= */}
+        <summary className="flex flex-col sm:flex-row justify-between items-start sm:items-center cursor-pointer px-3 py-2 bg-orange-100 rounded-md gap-2">
           <div className="flex items-center gap-2">
             {open ? (
               <FaChevronDown className="transition-transform" />
@@ -199,57 +200,63 @@ export default function DeliveryOrderCard({
           </div>
 
           {isEditMode && (
-            <div className="flex gap-2 items-center">
+            <div className="flex flex-wrap gap-2">
               <Button
                 size="xsm"
                 type="button"
                 variant="secondary"
                 onClick={() => appendPos({ po_no: "", items: [] })}
+                className="w-full sm:w-auto"
               >
                 <FaPlus className="inline" />
-                Add PO
+                <span className="ml-1">Add PO</span>
               </Button>
+
               {totalDO > 1 && (
                 <Button
                   size="xsm"
                   type="button"
                   variant="danger"
                   onClick={removeDO}
+                  className="w-full sm:w-auto"
                 >
                   <FaTrash className="inline" />
-                  Discard
+                  <span className="ml-1">Discard</span>
                 </Button>
               )}
             </div>
           )}
         </summary>
 
-        <div className="p-3 space-y-3">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            {/* Delivery Order No */}
-            <div>
+        {/* ======= FORM SECTION ======= */}
+        <div className="p-3 space-y-4">
+          {/* FORM GRID */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {/* === Delivery Order No === */}
+            <div className="flex flex-col">
               <label className="block text-xs text-slate-600 mb-1">
                 No Surat Jalan <span className="text-red-500">*</span>
               </label>
-              <div className="flex gap-2">
+              <div className="flex flex-col sm:flex-row gap-2">
                 <input
                   {...register(`deliveryOrders.${doIndex}.do_no` as const, {
                     required: "No Surat Jalan wajib diisi",
                   })}
-                  className={`${inputClass(!!getError("do_no"))} w-40 md:w-60`} // atur lebar di sini
+                  className={`${inputClass(
+                    !!getError("do_no")
+                  )} w-full sm:flex-1`}
                   disabled={!isEditMode}
                 />
                 <Button
                   type="button"
                   size="xsm"
                   variant="primary"
-                  onClick={() => {
-                    handleCheckDO();
-                  }}
+                  onClick={handleCheckDO}
                   disabled={!isEditMode}
+                  className="w-full sm:w-auto flex items-center justify-center gap-1"
                 >
                   <FaSearch />
-                  Cek Surat Jalan
+                  <span className="hidden sm:inline">Cek Surat Jalan</span>
                 </Button>
               </div>
               {getError("do_no") && (
@@ -259,19 +266,19 @@ export default function DeliveryOrderCard({
               )}
             </div>
 
-            {/* Attachment */}
-            <div>
+            {/* === Attachment === */}
+            <div className="flex flex-col">
               <label className="block text-xs text-slate-600 mb-1">
                 Attachment <span className="text-red-500">*</span>
               </label>
 
               {fileUrl ? (
-                <div className="flex items-center gap-2">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
                   <a
                     href={fileUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-sm text-blue-600 underline"
+                    className="text-sm text-blue-600 underline break-all"
                   >
                     Lihat file
                   </a>
@@ -290,14 +297,12 @@ export default function DeliveryOrderCard({
               ) : (
                 <input
                   type="file"
-                  className={inputClass(!!getError("attachment"))}
+                  className={`${inputClass(!!getError("attachment"))} text-xs`}
                   disabled={!isEditMode || uploading}
                   onChange={async (e) => {
                     if (!isEditMode) return;
                     const file = e.target.files?.[0];
-                    if (file) {
-                      await handleUploadFile(file);
-                    }
+                    if (file) await handleUploadFile(file);
                   }}
                 />
               )}
@@ -313,8 +318,8 @@ export default function DeliveryOrderCard({
               )}
             </div>
 
-            {/* DO Date */}
-            <div>
+            {/* === DO Date === */}
+            <div className="flex flex-col">
               <label className="block text-xs text-slate-600 mb-1">
                 Tanggal Surat Jalan <span className="text-red-500">*</span>
               </label>
@@ -347,8 +352,8 @@ export default function DeliveryOrderCard({
             </div>
           </div>
 
-          {/* PO Cards */}
-          <div className="space-y-3">
+          {/* === PO Cards Section === */}
+          <div className="space-y-4">
             {posFields.map((posField, posIndex) => (
               <POCard
                 key={posField.id}
@@ -360,9 +365,196 @@ export default function DeliveryOrderCard({
                 InbType={inbType}
               />
             ))}
-          </div> 
+          </div>
         </div>
       </details>
     </div>
   );
+
+  // return (
+  //   <div className="bg-white rounded-lg shadow p-3">
+  //     <details ref={detailsRef}>
+  //       <summary className="flex justify-between items-center cursor-pointer px-3 py-2 bg-orange-100 rounded">
+  //         <div className="flex items-center gap-2">
+  //           {open ? (
+  //             <FaChevronDown className="transition-transform" />
+  //           ) : (
+  //             <FaChevronRight className="transition-transform" />
+  //           )}
+  //           <span className="text-sm font-medium">
+  //             Surat Jalan #{doIndex + 1}
+  //           </span>
+  //         </div>
+
+  //         {isEditMode && (
+  //           <div className="flex gap-2 items-center">
+  //             <Button
+  //               size="xsm"
+  //               type="button"
+  //               variant="secondary"
+  //               onClick={() => appendPos({ po_no: "", items: [] })}
+  //             >
+  //               <FaPlus className="inline" />
+  //               Add PO
+  //             </Button>
+  //             {totalDO > 1 && (
+  //               <Button
+  //                 size="xsm"
+  //                 type="button"
+  //                 variant="danger"
+  //                 onClick={removeDO}
+  //               >
+  //                 <FaTrash className="inline" />
+  //                 Discard
+  //               </Button>
+  //             )}
+  //           </div>
+  //         )}
+  //       </summary>
+
+  //       <div className="p-3 space-y-3">
+  //         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+  //           {/* Delivery Order No */}
+  //           <div className="flex flex-col">
+  //             <label className="block text-xs text-slate-600 mb-1">
+  //               No Surat Jalan <span className="text-red-500">*</span>
+  //             </label>
+  //             <div className="flex flex-col sm:flex-row gap-2">
+  //               <input
+  //                 {...register(`deliveryOrders.${doIndex}.do_no` as const, {
+  //                   required: "No Surat Jalan wajib diisi",
+  //                 })}
+  //                 className={`${inputClass(
+  //                   !!getError("do_no")
+  //                 )} w-full sm:w-40 md:w-60`}
+  //                 disabled={!isEditMode}
+  //               />
+  //               <Button
+  //                 type="button"
+  //                 size="xsm"
+  //                 variant="primary"
+  //                 onClick={() => {
+  //                   handleCheckDO();
+  //                 }}
+  //                 disabled={!isEditMode}
+  //                 className="w-full sm:w-auto"
+  //               >
+  //                 <FaSearch />
+  //                 <span className="hidden sm:inline">Cek Surat Jalan</span>
+  //               </Button>
+  //             </div>
+  //             {getError("do_no") && (
+  //               <p className="text-red-500 text-xs mt-1">
+  //                 {getError("do_no")?.message as string}
+  //               </p>
+  //             )}
+  //           </div>
+
+  //           {/* Attachment */}
+  //           <div className="flex flex-col">
+  //             <label className="block text-xs text-slate-600 mb-1">
+  //               Attachment <span className="text-red-500">*</span>
+  //             </label>
+
+  //             {fileUrl ? (
+  //               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
+  //                 <a
+  //                   href={fileUrl}
+  //                   target="_blank"
+  //                   rel="noopener noreferrer"
+  //                   className="text-sm text-blue-600 underline"
+  //                 >
+  //                   Lihat file
+  //                 </a>
+  //                 {isEditMode && (
+  //                   <button
+  //                     type="button"
+  //                     className="text-red-600 text-xs flex items-center gap-1 disabled:opacity-50"
+  //                     disabled={deleting}
+  //                     onClick={() => handleDeleteFile(fileUrl)}
+  //                   >
+  //                     {deleting ? "Deleting..." : <FaTrash size={12} />}
+  //                     {!deleting && "Delete"}
+  //                   </button>
+  //                 )}
+  //               </div>
+  //             ) : (
+  //               <input
+  //                 type="file"
+  //                 className={inputClass(!!getError("attachment"))}
+  //                 disabled={!isEditMode || uploading}
+  //                 onChange={async (e) => {
+  //                   if (!isEditMode) return;
+  //                   const file = e.target.files?.[0];
+  //                   if (file) {
+  //                     await handleUploadFile(file);
+  //                   }
+  //                 }}
+  //               />
+  //             )}
+
+  //             {uploading && (
+  //               <p className="text-xs text-slate-500 mt-1">Uploading...</p>
+  //             )}
+
+  //             {getError("attachment") && (
+  //               <p className="text-red-500 text-xs mt-1">
+  //                 {getError("attachment")?.message as string}
+  //               </p>
+  //             )}
+  //           </div>
+
+  //           {/* DO Date */}
+  //           <div className="flex flex-col">
+  //             <label className="block text-xs text-slate-600 mb-1">
+  //               Tanggal Surat Jalan <span className="text-red-500">*</span>
+  //             </label>
+  //             <Controller
+  //               control={control}
+  //               name={`deliveryOrders.${doIndex}.date` as const}
+  //               rules={{ required: "Tanggal wajib diisi" }}
+  //               render={({ field }) => (
+  //                 <DatePicker
+  //                   id="date-picker"
+  //                   placeholder="Select a date"
+  //                   value={field.value ? new Date(field.value) : undefined}
+  //                   onChange={(date: Date | Date[]) => {
+  //                     if (!isEditMode) return;
+  //                     const selectedDate = Array.isArray(date) ? date[0] : date;
+  //                     const formattedDate = selectedDate
+  //                       ? formatDateIndo(selectedDate)
+  //                       : "";
+  //                     field.onChange(formattedDate);
+  //                   }}
+  //                   readOnly={!isEditMode}
+  //                   width="100%"
+  //                 />
+  //               )}
+  //             />
+  //             {getError("date") && (
+  //               <p className="text-red-500 text-xs mt-1">
+  //                 {getError("date")?.message as string}
+  //               </p>
+  //             )}
+  //           </div>
+  //         </div>
+
+  //         {/* PO Cards */}
+  //         <div className="space-y-3">
+  //           {posFields.map((posField, posIndex) => (
+  //             <POCard
+  //               key={posField.id}
+  //               doIndex={doIndex}
+  //               posIndex={posIndex}
+  //               removePos={() => removePos(posIndex)}
+  //               totalPO={posFields.length}
+  //               isEditMode={isEditMode}
+  //               InbType={inbType}
+  //             />
+  //           ))}
+  //         </div>
+  //       </div>
+  //     </details>
+  //   </div>
+  // );
 }

@@ -16,7 +16,7 @@ const emptyFormValues: FormValues = {
   driver_phone: "",
   no_pol: "",
   origin: "",
-  destination: "",
+  // destination: "",
   inbound_type: "",
   arrival_date: "",
   flag_validated: undefined,
@@ -37,7 +37,7 @@ function mapDetailToFormValues(detail: any): FormValues {
     driver: detail.driver_name ?? "",
     no_pol: detail.license_plate ?? "",
     origin: detail.origin ?? "",
-    destination: detail.destination ?? "",
+    // destination: detail.destination ?? "",
     driver_phone: detail.driver_phone ?? "",
     arrival_date: detail.arrival_date ?? "",
     deliveryOrders: detail.inbound_dos.reduce((acc: any[], doItem: any) => {
@@ -202,6 +202,7 @@ export default function InboundPlanningFormContainer() {
 
   const onFinalSubmit = async (data: FormValues) => {
     const payload = mapToPayload(data);
+    
     const id = dataInbound?.id;
     if (isCreateMode) {
       const res = await createData(payload);

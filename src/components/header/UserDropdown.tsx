@@ -77,7 +77,8 @@ export default function UserDropdown() {
             {user_login ? (
               <>
                 <span className="block text-theme-xs text-gray-500 dark:text-gray-400">
-                  {user_login.firstName + " " + user_login.lastName}
+                  {/* {user_login.firstName + " " + user_login.lastName} */}
+                  &nbsp;
                 </span>
                 <span className="block mr-1 font-medium text-theme-sm">
                   {user_login.username}
@@ -104,7 +105,7 @@ export default function UserDropdown() {
 
         {/* other menu items */}
         <ul className="flex flex-col gap-1 pt-4 pb-3 border-b border-gray-200 dark:border-gray-800">
-          <li>
+          {/* <li>
             <DropdownItem
               onItemClick={closeDropdown}
               tag="a"
@@ -128,7 +129,7 @@ export default function UserDropdown() {
               </svg>
               Account settings
             </DropdownItem>
-          </li>
+          </li> */}
         </ul>
 
         {/* SIGN OUT BUTTON */}

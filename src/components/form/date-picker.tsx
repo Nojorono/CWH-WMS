@@ -15,6 +15,7 @@ type PropsType = {
   placeholder?: string;
   readOnly?: boolean;
   hasError?: boolean;
+  width?: string | number;
   position?:
     | "auto"
     | "above"
@@ -40,6 +41,7 @@ export default function DatePicker({
   readOnly = false,
   hasError = false,
   position = "auto",
+  width,
 }: PropsType) {
   const inputRef = useRef<HTMLInputElement>(null);
   const fpRef = useRef<flatpickr.Instance | null>(null);
@@ -93,6 +95,7 @@ export default function DatePicker({
           readOnly={readOnly}
           className={`${inputClass} flatpickr-input`}
           style={{
+            widows: width,
             ...(readOnly ? { cursor: "not-allowed" } : {}),
             ...(hasError ? { borderColor: "red", borderWidth: "1px" } : {}),
           }}

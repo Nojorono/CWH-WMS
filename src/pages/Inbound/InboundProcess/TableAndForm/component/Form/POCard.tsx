@@ -33,8 +33,6 @@ export default function POCard({
   const { fetchAll, list } = useStoreItem();
   const { fetchAll: fetchAllUom, list: uomList } = useStoreUom();
 
-  console.log("Rendering POCard - UoM List:", uomList);
-
   useEffect(() => {
     fetchAll();
     fetchAllUom();
@@ -231,19 +229,27 @@ export default function POCard({
   };
 
   return (
-    <div className="border rounded-md p-3 bg-slate-50">
+    <div className="relative border rounded-md p-3 bg-slate-50">
+      {loading && (
+        <div className="absolute inset-0 flex items-center justify-center bg-white/70 z-50">
+          <span className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></span>
+          <span className="ml-2 text-blue-600 font-semibold">Loading...</span>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3 items-end">
+        {/* ======= Nomor PO / SO ======= */}
         <div>
           {InbType === "PO" && (
             <div>
               <label className="block text-xs text-slate-600 mb-1">
                 Nomor PO
               </label>
-              <div className="flex gap-2">
+              <div className="flex flex-col sm:flex-row gap-2">
                 <input
                   className={`${inputCls} ${getDisabledCls(
                     !isEditMode
-                  )} w-40 md:w-60`}
+                  )} w-full sm:w-auto flex-1`}
                   {...register(
                     `deliveryOrders.${doIndex}.pos.${posIndex}.po_no` as const
                   )}
@@ -256,6 +262,7 @@ export default function POCard({
                     size="xsm"
                     onClick={handleSearchPO}
                     disabled={!isEditMode || loading}
+                    className="flex-shrink-0 sm:w-auto w-full"
                   >
                     <FaSearch />
                     {loading ? "Loading..." : "Cari PO"}
@@ -270,11 +277,11 @@ export default function POCard({
               <label className="block text-xs text-slate-600 mb-1">
                 Nomor SO
               </label>
-              <div className="flex gap-2">
+              <div className="flex flex-col sm:flex-row gap-2">
                 <input
                   className={`${inputCls} ${getDisabledCls(
                     !isEditMode
-                  )} w-40 md:w-60`}
+                  )} w-full sm:w-auto flex-1`}
                   {...register(
                     `deliveryOrders.${doIndex}.pos.${posIndex}.so_no` as const
                   )}
@@ -287,6 +294,7 @@ export default function POCard({
                     size="xsm"
                     onClick={handleSearchSO}
                     disabled={!isEditMode || loading}
+                    className="flex-shrink-0 sm:w-auto w-full"
                   >
                     <FaSearch />
                     {loading ? "Loading..." : "Cari SO"}
@@ -297,115 +305,75 @@ export default function POCard({
           )}
         </div>
 
-        {/* tanggal PO / SO */}
-        {/* <div>
-          <label className="block text-xs text-slate-600 mb-1">
-            {InbType === "PO" ? "Tanggal PO" : "Tanggal SO"}
-          </label>
-          <Controller
-            control={control}
-            name={
-              `deliveryOrders.${doIndex}.pos.${posIndex}.${
-                InbType === "PO" ? "po_date" : "so_date"
-              }` as const
-            }
-            render={({ field }) => (
-              <DatePicker
-                id={`deliveryOrders.${doIndex}.pos.${posIndex}.${
-                  InbType === "PO" ? "po_date" : "so_date"
-                }`}
-                placeholder="Select a date"
-                value={field.value ? new Date(field.value) : undefined}
-                onChange={(date: Date | Date[]) => {
-                  if (!isEditMode) return;
-                  const selectedDate = Array.isArray(date) ? date[0] : date;
-                  field.onChange(
-                    selectedDate ? formatDateIndo(selectedDate) : ""
-                  );
-                }}
-                readOnly={!isEditMode}
-              />
-            )}
-          />
-        </div> */}
+        {/* ======= Tanggal PO / SO ======= */}
+        {/* {(InbType === "PO" || InbType === "SO") && (
+          <div>
+            <label className="block text-xs text-slate-600 mb-1">
+              {InbType === "PO" ? "Tanggal PO" : "Tanggal SO"}
+            </label>
+            <Controller
+              control={control}
+              name={`deliveryOrders.${doIndex}.pos.${posIndex}.${InbType.toLowerCase()}_date`}
+              render={({ field }) => (
+                <DatePicker
+                  id={`deliveryOrders.${doIndex}.pos.${posIndex}.${InbType.toLowerCase()}_date`}
+                  placeholder="Select a date"
+                  value={field.value ? new Date(field.value) : undefined}
+                  onChange={(date: Date | Date[]) => {
+                    if (!isEditMode) return;
+                    const selectedDate = Array.isArray(date) ? date[0] : date;
+                    field.onChange(
+                      selectedDate ? formatDateIndo(selectedDate) : ""
+                    );
+                  }}
+                  readOnly={!isEditMode}
+                />
+              )}
+            />
+          </div>
+        )} */}
 
-        {/* Tanggal PO lama */}
-        {/* <div>
-          <label className="block text-xs text-slate-600 mb-1">
-            Tanggal PO
-          </label>
-          <Controller
-            control={control}
-            name={`deliveryOrders.${doIndex}.pos.${posIndex}.po_date` as const}
-            render={({ field }) => (
-              <DatePicker
-                id={`deliveryOrders.${doIndex}.pos.${posIndex}.po_date`}
-                placeholder="Select a date"
-                value={field.value ? new Date(field.value) : undefined}
-                onChange={(date: Date | Date[]) => {
-                  if (!isEditMode) return;
-                  const selectedDate = Array.isArray(date) ? date[0] : date;
-                  field.onChange(
-                    selectedDate ? formatDateIndo(selectedDate) : ""
-                  );
-                }}
-                readOnly={!isEditMode}
-              />
-            )}
-          />
-        </div> */}
-
-        {InbType === "PO" && (
-          <Controller
-            control={control}
-            name={`deliveryOrders.${doIndex}.pos.${posIndex}.po_date`}
-            render={({ field }) => (
-              <DatePicker
-                id={`deliveryOrders.${doIndex}.pos.${posIndex}.po_date`}
-                placeholder="Select a date"
-                value={field.value ? new Date(field.value) : undefined}
-                onChange={(date: Date | Date[]) => {
-                  if (!isEditMode) return;
-                  const selectedDate = Array.isArray(date) ? date[0] : date;
-                  field.onChange(
-                    selectedDate ? formatDateIndo(selectedDate) : ""
-                  );
-                }}
-                readOnly={!isEditMode}
-              />
-            )}
-          />
+        {/* ======= Tanggal PO / SO ======= */}
+        {(InbType === "PO" || InbType === "SO") && (
+          <div>
+            <label className="block text-xs text-slate-600 mb-1">
+              {InbType === "PO" ? "Tanggal PO" : "Tanggal SO"}
+            </label>
+            <Controller
+              control={control}
+              name={
+                InbType === "PO"
+                  ? (`deliveryOrders.${doIndex}.pos.${posIndex}.po_date` as const)
+                  : (`deliveryOrders.${doIndex}.pos.${posIndex}.so_date` as const)
+              }
+              render={({ field }) => (
+                <DatePicker
+                  id={`deliveryOrders.${doIndex}.pos.${posIndex}.${InbType.toLowerCase()}_date`}
+                  placeholder="Select a date"
+                  value={field.value ? new Date(field.value) : undefined}
+                  onChange={(date: Date | Date[]) => {
+                    if (!isEditMode) return;
+                    const selectedDate = Array.isArray(date) ? date[0] : date;
+                    field.onChange(
+                      selectedDate ? formatDateIndo(selectedDate) : ""
+                    );
+                  }}
+                  readOnly={!isEditMode}
+                />
+              )}
+            />
+          </div>
         )}
 
-        {InbType === "SO" && (
-          <Controller
-            control={control}
-            name={`deliveryOrders.${doIndex}.pos.${posIndex}.so_date`}
-            render={({ field }) => (
-              <DatePicker
-                id={`deliveryOrders.${doIndex}.pos.${posIndex}.so_date`}
-                placeholder="Select a date"
-                value={field.value ? new Date(field.value) : undefined}
-                onChange={(date: Date | Date[]) => {
-                  if (!isEditMode) return;
-                  const selectedDate = Array.isArray(date) ? date[0] : date;
-                  field.onChange(
-                    selectedDate ? formatDateIndo(selectedDate) : ""
-                  );
-                }}
-                readOnly={!isEditMode}
-              />
-            )}
-          />
-        )}
-
-        {isEditMode && (
-          <div className="flex gap-2 justify-end">
+        {/* ======= Tombol Add / Remove ======= */}
+        {isEditMode && (InbType === "SO" || InbType === "PO") && (
+          <div className="flex flex-wrap gap-2 justify-end">
             <Button
               type="button"
               variant="secondary"
               size="xsm"
               onClick={() => setIsOpen(true)}
+              className="w-full sm:w-auto"
             >
               + Add Item
             </Button>
@@ -415,6 +383,7 @@ export default function POCard({
                 variant="danger"
                 size="xsm"
                 onClick={removePos}
+                className="w-full sm:w-auto"
               >
                 Remove PO
               </Button>
@@ -423,14 +392,18 @@ export default function POCard({
         )}
       </div>
 
-      <ItemTable
-        data={mappedItems}
-        doIndex={doIndex}
-        posIndex={posIndex}
-        removeItem={removeItem}
-        isEditMode={isEditMode}
-      />
+      {/* ======= Item Table ======= */}
+      <div className="mt-3 overflow-x-auto">
+        <ItemTable
+          data={mappedItems}
+          doIndex={doIndex}
+          posIndex={posIndex}
+          removeItem={removeItem}
+          isEditMode={isEditMode}
+        />
+      </div>
 
+      {/* ======= Modal ======= */}
       {isEditMode && (
         <AddItemModal
           isOpen={isOpen}
@@ -440,4 +413,173 @@ export default function POCard({
       )}
     </div>
   );
+
+  // return (
+  //   <div className="border rounded-md p-3 bg-slate-50">
+  //     {loading && (
+  //       <div className="absolute inset-0 flex items-center justify-center bg-white/70 z-50">
+  //         <span className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></span>
+  //         <span className="ml-2 text-blue-600 font-semibold">Loading...</span>
+  //       </div>
+  //     )}
+  //     <div className="grid grid-cols-1 md:grid-cols-3 gap-3 items-end">
+  //       <div>
+  //         {InbType === "PO" && (
+  //           <div>
+  //             <label className="block text-xs text-slate-600 mb-1">
+  //               Nomor PO
+  //             </label>
+  //             <div className="flex gap-2">
+  //               <input
+  //                 className={`${inputCls} ${getDisabledCls(
+  //                   !isEditMode
+  //                 )} w-40 md:w-60`}
+  //                 {...register(
+  //                   `deliveryOrders.${doIndex}.pos.${posIndex}.po_no` as const
+  //                 )}
+  //                 disabled={!isEditMode}
+  //               />
+  //               {isEditMode && (
+  //                 <Button
+  //                   type="button"
+  //                   variant="primary"
+  //                   size="xsm"
+  //                   onClick={handleSearchPO}
+  //                   disabled={!isEditMode || loading}
+  //                 >
+  //                   <FaSearch />
+  //                   {loading ? "Loading..." : "Cari PO"}
+  //                 </Button>
+  //               )}
+  //             </div>
+  //           </div>
+  //         )}
+
+  //         {InbType === "SO" && (
+  //           <div>
+  //             <label className="block text-xs text-slate-600 mb-1">
+  //               Nomor SO
+  //             </label>
+  //             <div className="flex gap-2">
+  //               <input
+  //                 className={`${inputCls} ${getDisabledCls(
+  //                   !isEditMode
+  //                 )} w-40 md:w-60`}
+  //                 {...register(
+  //                   `deliveryOrders.${doIndex}.pos.${posIndex}.so_no` as const
+  //                 )}
+  //                 disabled={!isEditMode}
+  //               />
+  //               {isEditMode && (
+  //                 <Button
+  //                   type="button"
+  //                   variant="primary"
+  //                   size="xsm"
+  //                   onClick={handleSearchSO}
+  //                   disabled={!isEditMode || loading}
+  //                 >
+  //                   <FaSearch />
+  //                   {loading ? "Loading..." : "Cari SO"}
+  //                 </Button>
+  //               )}
+  //             </div>
+  //           </div>
+  //         )}
+  //       </div>
+
+  //       {InbType === "PO" && (
+  //         <div>
+  //           <label className="block text-xs text-slate-600 mb-1">
+  //             Tanggal PO
+  //           </label>
+  //           <Controller
+  //             control={control}
+  //             name={`deliveryOrders.${doIndex}.pos.${posIndex}.po_date`}
+  //             render={({ field }) => (
+  //               <DatePicker
+  //                 id={`deliveryOrders.${doIndex}.pos.${posIndex}.po_date`}
+  //                 placeholder="Select a date"
+  //                 value={field.value ? new Date(field.value) : undefined}
+  //                 onChange={(date: Date | Date[]) => {
+  //                   if (!isEditMode) return;
+  //                   const selectedDate = Array.isArray(date) ? date[0] : date;
+  //                   field.onChange(
+  //                     selectedDate ? formatDateIndo(selectedDate) : ""
+  //                   );
+  //                 }}
+  //                 readOnly={!isEditMode}
+  //               />
+  //             )}
+  //           />
+  //         </div>
+  //       )}
+
+  //       {InbType === "SO" && (
+  //         <div>
+  //           <label className="block text-xs text-slate-600 mb-1">
+  //             Tanggal SO
+  //           </label>
+  //           <Controller
+  //             control={control}
+  //             name={`deliveryOrders.${doIndex}.pos.${posIndex}.so_date`}
+  //             render={({ field }) => (
+  //               <DatePicker
+  //                 id={`deliveryOrders.${doIndex}.pos.${posIndex}.so_date`}
+  //                 placeholder="Select a date"
+  //                 value={field.value ? new Date(field.value) : undefined}
+  //                 onChange={(date: Date | Date[]) => {
+  //                   if (!isEditMode) return;
+  //                   const selectedDate = Array.isArray(date) ? date[0] : date;
+  //                   field.onChange(
+  //                     selectedDate ? formatDateIndo(selectedDate) : ""
+  //                   );
+  //                 }}
+  //                 readOnly={!isEditMode}
+  //               />
+  //             )}
+  //           />
+  //         </div>
+  //       )}
+
+  //       {isEditMode && (InbType === "SO" || InbType === "PO") && (
+  //         <div className="flex gap-2 justify-end">
+  //           <Button
+  //             type="button"
+  //             variant="secondary"
+  //             size="xsm"
+  //             onClick={() => setIsOpen(true)}
+  //           >
+  //             + Add Item
+  //           </Button>
+  //           {totalPO > 1 && (
+  //             <Button
+  //               type="button"
+  //               variant="danger"
+  //               size="xsm"
+  //               onClick={removePos}
+  //             >
+  //               Remove PO
+  //             </Button>
+  //           )}
+  //         </div>
+  //       )}
+  //     </div>
+
+  //     <ItemTable
+  //       data={mappedItems}
+  //       doIndex={doIndex}
+  //       posIndex={posIndex}
+  //       removeItem={removeItem}
+  //       isEditMode={isEditMode}
+  //     />
+
+  //     {isEditMode && (
+  //       <AddItemModal
+  //         isOpen={isOpen}
+  //         onClose={() => setIsOpen(false)}
+  //         onSave={(item) => appendItem(item)}
+  //       />
+  //     )}
+  //   </div>
+  // );
 }

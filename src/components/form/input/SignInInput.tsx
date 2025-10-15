@@ -63,6 +63,7 @@ const SignInInput: FC<InputProps> = ({
           disabled={disabled}
           className={inputClasses}
           {...register}
+          autoComplete="current-password"
         />
 
         {rightIcon && (

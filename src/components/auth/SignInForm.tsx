@@ -21,7 +21,7 @@ interface SignInFormValues {
 export default function SignInForm() {
   const navigate = useNavigate();
   const { authLogin } = useAuthStore();
-  const { fetchAll: fetchMenus, list: menuList } = useStoreMenu();
+  const { fetchAll: fetchMenus } = useStoreMenu();
 
   const [showPassword, setShowPassword] = useState(false);
   const toggleShowPassword = () => setShowPassword((prev) => !prev);
@@ -29,8 +29,6 @@ export default function SignInForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [ipAddress, setIpAddress] = useState<string>("");
-
-  console.log("menuList after login:", menuList); // Debugging line
 
   const {
     register,
@@ -80,6 +78,8 @@ export default function SignInForm() {
         (m: any) => m.parentId !== null && m.path
       );
       const navigatePath = firstChildMenu?.path || "/";
+
+      fetchMenus(); // Pastikan menu di-fetch ulang
 
       setTimeout(() => {
         navigate(navigatePath);
