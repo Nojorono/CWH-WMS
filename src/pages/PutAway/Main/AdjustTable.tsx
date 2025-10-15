@@ -110,6 +110,14 @@ const AdjustTable = ({
               onClick={() => handleDetail(row.original)}
               title="Detail"
             />
+            {row.original.status === "PENDING" && (
+              <FaEdit
+                className="size-5 cursor-pointer"
+                style={{ color: "blue" }}
+                onClick={() => handleUpdate(row.original)}
+                title="Edit"
+              />
+            )}
           </div>
         ),
       },
@@ -135,7 +143,7 @@ const AdjustTable = ({
       columns={columns}
       globalFilter={globalFilter}
       setGlobalFilter={setGlobalFilter}
-      pageSize={5}
+      pageSize={10}
     />
   );
 };
