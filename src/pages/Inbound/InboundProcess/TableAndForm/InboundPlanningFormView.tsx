@@ -48,7 +48,6 @@ const buildFieldsConfig = (isDetailMode: boolean): FieldConfig[] =>
       options: [
         { value: "PO", label: "PO" },
         { value: "SO", label: "SO" },
-        { value: "RETUR", label: "RETUR" },
       ],
       validation: { required: "Tipe inbound wajib diisi" }, // ✅ wajib
     },

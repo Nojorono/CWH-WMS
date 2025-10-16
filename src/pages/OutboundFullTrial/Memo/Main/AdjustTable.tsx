@@ -1,10 +1,10 @@
-import React, { useMemo } from "react";
-import { FaEye, FaEdit, FaPlus } from "react-icons/fa";
+import { useMemo } from "react";
+import { FaEye, FaEdit } from "react-icons/fa";
 import { ColumnDef } from "@tanstack/react-table";
 import TableComponent from "../../../../components/tables/MasterDataTable/TableComponent";
 import { useNavigate } from "react-router-dom";
-import Button from "../../../../components/ui/button/Button";
-import Badge from "../../../../components/ui/badge/Badge";
+import StatusBadge from "../../../../common/statusBadge";
+import { STATUS_MAP_MEMO } from "../../../../constants/statusMaps";
 
 type MemoData = {
   no: number;
@@ -72,17 +72,14 @@ const AdjustTable = ({
       {
         accessorKey: "status",
         header: "Status",
-        cell: ({ row }) => {
-          const status = row.original.status;
-          let color: "grey" | "info" | "warning" | "success" | undefined;
-          if (status === "PENDING") color = "grey";
-          else if (status === "APPROVED") color = "success";
-          return (
-            <Badge variant="solid" color={color}>
-              {status}
-            </Badge>
-          );
-        },
+        cell: ({ row }) => (
+          <StatusBadge
+            status={row.original.status}
+            colorMap={STATUS_MAP_MEMO}
+            variant="solid"
+            size="sm"
+          />
+        ),
       },
       { accessorKey: "createdDate", header: "Created Date" },
       {

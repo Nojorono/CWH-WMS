@@ -38,7 +38,6 @@ import {
 } from "./utils/PagesComponent";
 import NotFound from "./pages/OtherPage/NotFound";
 
-
 // import dummyRoutes from "./helper/dummyRoutes";
 
 const DefaultPage = () => (

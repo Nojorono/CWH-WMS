@@ -1,12 +1,12 @@
-import React, { useMemo, useState } from "react";
-import { FaEye, FaCheck, FaEdit } from "react-icons/fa";
+import { useMemo } from "react";
+import { FaEye, FaEdit } from "react-icons/fa";
 import { ColumnDef } from "@tanstack/react-table";
 import TableComponent from "../../../../components/tables/MasterDataTable/TableComponent";
-import Badge from "../../../../components/ui/badge/Badge";
-import Button from "../../../../components/ui/button/Button";
 import { InboundPlanning } from "../../../../DynamicAPI/types/InboundGoodStock";
 import { useNavigate } from "react-router-dom";
 import { formatDateIndo } from "../../../../helper/FormatDate";
+import StatusBadge from "../../../../common/statusBadge";
+import { STATUS_MAP_INBOUND } from "../../../../constants/statusMaps";
 
 type MenuTableProps = {
   data: InboundPlanning[];
@@ -51,19 +51,14 @@ const AdjustTable = ({
       {
         accessorKey: "status",
         header: "Status",
-        cell: ({ row }) => {
-          const status = row.original.status;
-          let color: "grey" | "info" | "warning" | "success" | undefined;
-          if (status === "CREATED") color = "grey"; // abu
-          else if (status === "UNLOADING") color = "info"; // biru
-          else if (status === "INSPECTION") color = "warning"; // kuning/orange
-          else if (status === "RECEIVED") color = "success"; // hijau
-          return (
-            <Badge variant="solid" color={color}>
-              {status}
-            </Badge>
-          );
-        },
+        cell: ({ row }) => (
+          <StatusBadge
+            status={row.original.status}
+            colorMap={STATUS_MAP_INBOUND}
+            variant="solid"
+            size="sm"
+          />
+        ),
       },
       {
         id: "actions",
@@ -77,7 +72,9 @@ const AdjustTable = ({
                 onClick={() => handleDetail(row.original)}
                 title="Detail"
               />
-              {row.original.status === "CREATED" && (
+              {["CREATED", "WAITING FOR REVISION"].includes(
+                row.original.status
+              ) && (
                 <FaEdit
                   className="size-5 cursor-pointer"
                   style={{ color: "blue" }}
