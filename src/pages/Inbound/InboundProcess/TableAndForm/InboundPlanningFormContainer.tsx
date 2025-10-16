@@ -97,9 +97,7 @@ function mapToPayload(data: FormValues): CreateInboundPlanning {
           : "",
         attachment: doItem.attachment ? String(doItem.attachment) : "",
         inbound_po_number: po.po_no ?? "",
-        inbound_po_date: po.po_date
-          ? formatDateIndo(new Date(po.po_date))
-          : "",
+        inbound_po_date: po.po_date ? formatDateIndo(new Date(po.po_date)) : "",
         flag_validated: doItem.flag_validated ?? false, // <-- ensure flag_validated is included
         inbound_items: po.items.map((item) => ({
           item_id: item.item_id ?? "",
@@ -162,6 +160,8 @@ export default function InboundPlanningFormContainer() {
 
     const values = getValues();
 
+    console.log("handlePreview values", values);
+
     // --- Validasi tambahan untuk DO, PO, Item ---
     if (!values.deliveryOrders || values.deliveryOrders.length === 0) {
       showErrorToast("Minimal 1 Delivery Order harus diisi.");
@@ -180,15 +180,17 @@ export default function InboundPlanningFormContainer() {
       }
 
       for (const [j, poItem] of doItem.pos.entries()) {
-        if (!poItem.po_no) {
+        // validasi baru: minimal salah satu dari po_no atau so_no harus terisi
+        if (!poItem.po_no && !poItem.so_no) {
           showErrorToast(
-            `DO ${doItem.do_no} → PO ke-${j + 1} wajib punya PO No.`
+            `DO ${doItem.do_no} → PO ke-${j + 1} wajib punya PO No atau SO No.`
           );
           return;
         }
 
         if (!poItem.items || poItem.items.length === 0) {
-          showErrorToast(`PO ${poItem.po_no} belum punya Item.`);
+          const poLabel = poItem.po_no || poItem.so_no || `ke-${j + 1}`;
+          showErrorToast(`PO ${poLabel} belum punya Item.`);
           return;
         }
       }
@@ -202,7 +204,7 @@ export default function InboundPlanningFormContainer() {
 
   const onFinalSubmit = async (data: FormValues) => {
     const payload = mapToPayload(data);
-    
+
     const id = dataInbound?.id;
     if (isCreateMode) {
       const res = await createData(payload);

@@ -4,6 +4,7 @@ import Button from "../../../../../../components/ui/button/Button";
 import { FormValues } from "../formTypes";
 import React from "react";
 import { FaChevronDown, FaChevronRight } from "react-icons/fa";
+import { formatDateIndo } from "../../../../../../helper/FormatDate";
 
 interface ConfirmationModalProps {
   isOpen: boolean;
@@ -38,8 +39,7 @@ export default function ConfirmationModal({
   // summary per SKU
   const skuSummary = allItems.reduce((acc: Record<string, number>, item) => {
     const key = item.description ?? "Unknown SKU";
-    acc[key] =
-      (acc[key] || 0) + (typeof item.qty === "number" ? item.qty : 0);
+    acc[key] = (acc[key] || 0) + (typeof item.qty === "number" ? item.qty : 0);
     return acc;
   }, {});
 
@@ -131,18 +131,6 @@ export default function ConfirmationModal({
 
                 <div>
                   <label className="block text-sm font-medium text-gray-600 mb-1">
-                    Tujuan
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.destination}
-                    disabled
-                    className="w-full rounded-md border-gray-300 bg-gray-100 text-gray-700 text-sm px-3 py-2 focus:outline-none"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-600 mb-1">
                     No. Telp Driver
                   </label>
                   <input
@@ -159,7 +147,7 @@ export default function ConfirmationModal({
                   </label>
                   <input
                     type="text"
-                    value={formData.arrival_date}
+                    value={formatDateIndo(formData.arrival_date ?? null)}
                     disabled
                     className="w-full rounded-md border-gray-300 bg-gray-100 text-gray-700 text-sm px-3 py-2 focus:outline-none"
                   />
@@ -193,7 +181,9 @@ export default function ConfirmationModal({
                 </div>
               </div>
 
-              <h3 className="font-medium text-gray-700 mb-2">Summary Qty SKU</h3>
+              <h3 className="font-medium text-gray-700 mb-2">
+                Summary Qty SKU
+              </h3>
               <ul className="text-sm list-disc list-inside space-y-1 text-gray-700">
                 {Object.entries(skuSummary).map(([desc, qty]) => (
                   <li key={desc}>

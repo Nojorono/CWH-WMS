@@ -13,6 +13,7 @@ import {
   useStoreClassification,
 } from "../../../../../../DynamicAPI/stores/Store/MasterStore";
 import Select from "../../../../../../components/form/Select";
+import { showErrorToast } from "../../../../../../components/toast";
 
 export default function AddItemModal({
   isOpen,
@@ -53,7 +54,7 @@ export default function AddItemModal({
 
   const handleSave = () => {
     if (!tempSku || !tempQty || !tempUom) {
-      alert("Please select SKU, Qty, and UoM");
+      showErrorToast("Please select SKU, Qty, and UoM");
       return;
     }
 
