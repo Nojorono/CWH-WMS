@@ -22,9 +22,20 @@ const MainTable = () => {
     const destinationBin = item.destinationBin || {};
     const warehouseSub = inventory.warehouseSub || {};
 
-    const totalSku = (item.palletItems || []).length;
-    const totalQty = (item.palletItems || []).reduce(
-      (sum: number, pi: any) => sum + (Number(pi.current_quantity) || 0),
+    // Map palletItems to a table-friendly shape using the provided data structure
+    const palletItems = (item.palletItems || []).map((pi: any) => ({
+      itemId: pi.item_id || pi.id || "-",
+      itemName: pi.item_name || pi.name || "-",
+      currentQuantity: Number(pi.current_quantity) || 0,
+      uom: pi.uom || "-",
+      lastUpdated: pi.last_updated || null,
+      productionDate: pi.production_date || null,
+      weekNumber: pi.week_number ?? null,
+    }));
+
+    const totalSku = palletItems.length;
+    const totalQty = palletItems.reduce(
+      (sum: number, pi: any) => sum + (Number(pi.currentQuantity) || 0),
       0
     );
 
@@ -43,18 +54,23 @@ const MainTable = () => {
       progressionStatus: inventory.progression_status || "-",
 
       // pallet info
-      palletId: pallet.id || inventory.pallet_id || "-",
-      palletCode: pallet.pallet_code || "-",
-      palletCurrentQuantity: pallet.currentQuantity ?? 0,
-      palletUom: pallet.uom || "-",
+      palletId: pallet.id || inventory.pallet_id || item.palletId || "-",
+      palletCode: pallet.pallet_code || item.palletCode || "-",
+      palletCurrentQuantity:
+        pallet.currentQuantity ?? Number(item.palletCurrentQuantity) ?? 0,
+      palletUom: pallet.uom || item.palletUom || "-",
 
       // warehouse / bin
-      warehouseSubId: inventory.warehouse_sub_id || "-",
-      warehouseSubName: warehouseSub.name || "-",
-      warehouse_bin_id: inventory.warehouse_bin_id || item.destination_bin_id || "-",
+      warehouseSubId: inventory.warehouse_sub_id || item.warehouseSubId || "-",
+      warehouseSubName: warehouseSub.name || item.warehouseSubName || "-",
+      warehouse_bin_id:
+        inventory.warehouse_bin_id ||
+        item.destination_bin_id ||
+        item.warehouse_bin_id ||
+        "-",
       destination_bin_id: item.destination_bin_id,
-      suggestZone: destinationBin.name || "-",
-      suggestBin: destinationBin.code || "-",
+      suggestZone: warehouseSub.name || item.suggestZone || "-",
+      suggestBin: destinationBin.code || item.suggestBin || "-",
 
       // driver / forklift
       forklift_driver_id: item.forklift_driver_id || "-",
@@ -67,14 +83,12 @@ const MainTable = () => {
       notes: item.notes || "-",
 
       // pallet items summary (for table columns)
-      palletItems: item.palletItems || [],
+      palletItems,
       totalSku,
       totalQty,
+      palletItemUom: palletItems.length > 0 ? palletItems[0].uom : "-",
     };
   });
-
-  console.log("Mapped PutAway list data:", mappedList);
-  
 
   useEffect(() => {
     fetchAll();

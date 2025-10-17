@@ -22,6 +22,7 @@ type AdjustData = {
   suggestBin: string;
   totalSku: number;
   totalQty: number;
+  palletItemUom: string;
 };
 
 type MenuTableProps = {
@@ -47,12 +48,6 @@ const AdjustTable = ({
         accessorKey: "palletCode",
         header: "Pallet Code",
       },
-
-      {
-        accessorKey: "warehouseSubName",
-        header: "Zone Name",
-      },
-
       {
         accessorKey: "suggestZone",
         header: "Suggest Zone",
@@ -92,14 +87,14 @@ const AdjustTable = ({
               onClick={() => handleDetail(row.original)}
               title="Detail"
             />
-            {/* {row.original.status !== "COMPLETED" && ( */}
+            {row.original.status !== "COMPLETED" && (
               <FaEdit
                 className="size-5 cursor-pointer"
                 style={{ color: "blue" }}
                 onClick={() => handleUpdate(row.original)}
                 title="Edit"
               />
-            {/* )} */}
+            )}
           </div>
         ),
       },
@@ -118,6 +113,8 @@ const AdjustTable = ({
       state: { data, mode: "edit", title: "Update PutAway" },
     });
   };
+
+  console.log("🔵 Adjust Table Data:", data);
 
   return (
     <TableComponent

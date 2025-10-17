@@ -33,6 +33,7 @@ type PutAwayRow = {
   driver: string;
   selectedRow?: boolean;
   SKUname: string;
+  palletItemUom?: string;
 };
 
 type ExtendedColumnDef<T> = ColumnDef<T> & { selectedRow?: boolean };
@@ -190,12 +191,11 @@ const PutAwayDetail: React.FC = () => {
       },
       { accessorKey: "palletCode", header: "Pallet Code" },
       { accessorKey: "SKUname", header: "SKU Name" },
+      { accessorKey: "palletItemUom", header: "UoM" },
       {
         accessorKey: "totalQty",
         header: "Total Qty",
       },
-      { accessorKey: "warehouseName", header: "Warehouse" },
-      { accessorKey: "stagingArea", header: "Staging Area" },
       { accessorKey: "suggestZone", header: "Suggest Zone" },
       { accessorKey: "suggestBin", header: "Suggest Bin" },
     ];
@@ -218,7 +218,27 @@ const PutAwayDetail: React.FC = () => {
     return cols;
   }, [isDetail]);
 
+  const [tableKey, setTableKey] = useState(0);
+
+  // const handleEdit = (row: PutAwayRow) => {
+  //   // 1️⃣ Kosongkan semua checkbox
+  //   setSelectedIds([]);
+
+  //   // 2️⃣ Simpan baris yang akan diedit ke state modal
+  //   setSelectedRow(row);
+
+  //   // 3️⃣ Buka modal edit (adjustment)
+  //   setIsAdjustmentOpen(true);
+  // };
+
+  // handleEdit
   const handleEdit = (row: PutAwayRow) => {
+    // kosongkan selected ids
+    setSelectedIds([]);
+
+    // paksa remount tabel agar internal selection reset
+    setTableKey((k) => k + 1);
+
     setSelectedRow(row);
     setIsAdjustmentOpen(true);
   };
@@ -363,11 +383,10 @@ const PutAwayDetail: React.FC = () => {
         ]}
       />
 
-      {/* Table Section */}
       <TableComponent
+        key={tableKey}
         data={mappedData}
         columns={columns}
-        // 🟢 Nonaktifkan checkbox kalau edit/detail
         onSelectionChange={!isDetail && isCreate ? setSelectedIds : undefined}
       />
 
