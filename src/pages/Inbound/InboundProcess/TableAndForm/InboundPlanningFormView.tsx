@@ -78,7 +78,7 @@ const buildFieldsConfig = (isDetailMode: boolean): FieldConfig[] =>
     {
       name: "driver_phone",
       label: "No Telp Driver",
-      type: "text" as const,
+      type: "number" as const,
       validation: { required: "No telp driver wajib diisi" },
     },
     {

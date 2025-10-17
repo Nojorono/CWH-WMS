@@ -4,55 +4,9 @@ import Input from "../../../components/form/input/InputField";
 import AdjustTable from "./AdjustTable";
 import Label from "../../../components/form/Label";
 import Button from "../../../components/ui/button/Button";
-import { FaPlus, FaFileImport, FaFileDownload, FaUndo } from "react-icons/fa";
+import { FaPlus } from "react-icons/fa";
 import { useDebounce } from "../../../helper/useDebounce";
-import Select from "../../../components/form/Select";
-import DatePicker from "../../../components/form/date-picker";
-import Spinner from "../../../components/ui/spinner";
-import { usePagePermissions } from "../../../utils/UserPermission/UserPagePermissions";
-import { showErrorToast } from "../../../components/toast";
 import { useStorePutAway } from "../../../DynamicAPI/stores/Store/MasterStore";
-
-type PutAway = {
-  id: string;
-  createdAt: string;
-  updatedAt: string;
-  deletedAt: string | null;
-  inventory_tracking_id: string;
-  inventoryTracking: {
-    id: string;
-    createdAt: string;
-    updatedAt: string;
-    deletedAt: string | null;
-    pallet_id: string;
-    warehouse_id: string;
-    warehouse_sub_id: string;
-    warehouse_bin_id: string | null;
-    inventory_date: string;
-    inventory_status: string;
-    inventory_note: string;
-  };
-  destination_bin_id: string;
-  destinationBin: {
-    id: string;
-    createdAt: string;
-    updatedAt: string;
-    deletedAt: string | null;
-    organization_id: number;
-    warehouse_sub_id: string;
-    name: string;
-    code: string;
-    description: string;
-    capacity_pallet: number;
-    barcode_image_url: string;
-    current_pallet: string | null;
-  };
-  forklift_driver_id: string;
-  driver_name: string;
-  driver_phone: string;
-  status: string;
-  notes: string;
-};
 
 const MainTable = () => {
   const navigate = useNavigate();
@@ -61,29 +15,66 @@ const MainTable = () => {
   const [globalFilter, setGlobalFilter] = useState<string>("");
   const debouncedFilter = useDebounce(globalFilter, 500);
 
-  // Mapping API data to table data
-  const mappedList = (list || []).map((item: any) => ({
-    id: item.id,
-    createdAt: item.createdAt,
-    updatedAt: item.updatedAt,
-    deletedAt: item.deletedAt,
-    inventory_tracking_id: item.inventory_tracking_id,
-    inventoryTracking: item.inventoryTracking,
-    destination_bin_id: item.destination_bin_id,
-    destinationBin: item.destinationBin,
-    forklift_driver_id: item.forklift_driver_id,
-    driver_name: item.driver_name,
-    driver_phone: item.driver_phone,
-    status: item.status,
-    notes: item.notes,
-    palletId: item.inventoryTracking?.pallet_id || "-",
-    inboundId: item.inventory_tracking_id || "-",
-    totalSku: 0, // Data tidak tersedia di API, isi default
-    totalQty: 0, // Data tidak tersedia di API, isi default
-    suggestZone: item.destinationBin?.name || "-",
-    suggestBin: item.destinationBin?.code || "-",
-    forkliftDriver: item.driver_name || "-",
-  }));
+  // Mapping API data to table-friendly shape
+  const mappedList = (list || []).map((item: any) => {
+    const inventory = item.inventoryTracking || {};
+    const pallet = inventory.pallet || {};
+    const destinationBin = item.destinationBin || {};
+    const warehouseSub = inventory.warehouseSub || {};
+
+    const totalSku = (item.palletItems || []).length;
+    const totalQty = (item.palletItems || []).reduce(
+      (sum: number, pi: any) => sum + (Number(pi.current_quantity) || 0),
+      0
+    );
+
+    return {
+      // raw ids / timestamps
+      id: item.id,
+      createdAt: item.createdAt,
+      updatedAt: item.updatedAt,
+      deletedAt: item.deletedAt,
+
+      // inbound / inventory tracking
+      inventory_tracking_id: item.inventory_tracking_id,
+      inboundId: item.inventory_tracking_id || "-",
+      inventoryDate: inventory.inventory_date || null,
+      inventoryStatus: inventory.inventory_status || "-",
+      progressionStatus: inventory.progression_status || "-",
+
+      // pallet info
+      palletId: pallet.id || inventory.pallet_id || "-",
+      palletCode: pallet.pallet_code || "-",
+      palletCurrentQuantity: pallet.currentQuantity ?? 0,
+      palletUom: pallet.uom || "-",
+
+      // warehouse / bin
+      warehouseSubId: inventory.warehouse_sub_id || "-",
+      warehouseSubName: warehouseSub.name || "-",
+      warehouse_bin_id: inventory.warehouse_bin_id || item.destination_bin_id || "-",
+      destination_bin_id: item.destination_bin_id,
+      suggestZone: destinationBin.name || "-",
+      suggestBin: destinationBin.code || "-",
+
+      // driver / forklift
+      forklift_driver_id: item.forklift_driver_id || "-",
+      driver_name: item.driver_name || "-",
+      driver_phone: item.driver_phone || "-",
+      forkliftDriver: item.driver_name || "-",
+
+      // status / notes
+      status: item.status || "-",
+      notes: item.notes || "-",
+
+      // pallet items summary (for table columns)
+      palletItems: item.palletItems || [],
+      totalSku,
+      totalQty,
+    };
+  });
+
+  console.log("Mapped PutAway list data:", mappedList);
+  
 
   useEffect(() => {
     fetchAll();
@@ -131,19 +122,6 @@ const MainTable = () => {
               onClick={handleCreate}
             >
               Create Put Away
-            </Button>
-          </div>
-        </div>
-
-        <div className="flex justify-between items-center mt-5">
-          <div className="space-x-4">
-            <Label htmlFor="inbound-no">Inbound No</Label>
-            <Input type="text" id="inbound-no" placeholder="Inbound no.." />
-          </div>
-
-          <div className="flex justify-center items-center mt-5">
-            <Button variant="rounded" size="sm" onClick={handleResetFilters}>
-              <FaUndo />
             </Button>
           </div>
         </div>

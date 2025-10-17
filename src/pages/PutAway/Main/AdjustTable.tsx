@@ -10,39 +10,18 @@ type AdjustData = {
   updatedAt: string;
   deletedAt: string | null;
   inventory_tracking_id: string;
-  inventoryTracking: {
-    id: string;
-    createdAt: string;
-    updatedAt: string;
-    deletedAt: string | null;
-    pallet_id: string;
-    warehouse_id: string;
-    warehouse_sub_id: string;
-    warehouse_bin_id: string | null;
-    inventory_date: string;
-    inventory_status: string;
-    inventory_note: string;
-  };
   destination_bin_id: string;
-  destinationBin: {
-    id: string;
-    createdAt: string;
-    updatedAt: string;
-    deletedAt: string | null;
-    organization_id: number;
-    warehouse_sub_id: string;
-    name: string;
-    code: string;
-    description: string;
-    capacity_pallet: number;
-    barcode_image_url: string;
-    current_pallet: string | null;
-  };
   forklift_driver_id: string;
   driver_name: string;
   driver_phone: string;
   status: string;
   notes: string;
+  palletCode: string;
+  warehouseSubName: string;
+  suggestZone: string;
+  suggestBin: string;
+  totalSku: number;
+  totalQty: number;
 };
 
 type MenuTableProps = {
@@ -62,30 +41,33 @@ const AdjustTable = ({
 }: MenuTableProps) => {
   const navigate = useNavigate();
 
-  const columns: ColumnDef<AdjustData>[] = useMemo(
+  const columns: ColumnDef<any>[] = useMemo(
     () => [
       {
-        accessorKey: "id",
-        header: "Put Away ID",
+        accessorKey: "palletCode",
+        header: "Pallet Code",
+      },
+
+      {
+        accessorKey: "warehouseSubName",
+        header: "Zone Name",
+      },
+
+      {
+        accessorKey: "suggestZone",
+        header: "Suggest Zone",
       },
       {
-        accessorKey: "inventoryTracking.pallet_id",
-        header: "Pallet ID",
-        cell: ({ row }) => row.original.inventoryTracking?.pallet_id ?? "-",
+        accessorKey: "suggestBin",
+        header: "Suggest Bin",
       },
       {
-        accessorKey: "inventory_tracking_id",
-        header: "Inventory Tracking ID",
+        accessorKey: "totalSku",
+        header: "Total SKU",
       },
       {
-        accessorKey: "destinationBin.code",
-        header: "Bin Code",
-        cell: ({ row }) => row.original.destinationBin?.code ?? "-",
-      },
-      {
-        accessorKey: "destinationBin.name",
-        header: "Bin Name",
-        cell: ({ row }) => row.original.destinationBin?.name ?? "-",
+        accessorKey: "totalQty",
+        header: "Total Qty",
       },
       {
         accessorKey: "driver_name",
@@ -110,14 +92,14 @@ const AdjustTable = ({
               onClick={() => handleDetail(row.original)}
               title="Detail"
             />
-            {row.original.status === "PENDING" && (
+            {/* {row.original.status !== "COMPLETED" && ( */}
               <FaEdit
                 className="size-5 cursor-pointer"
                 style={{ color: "blue" }}
                 onClick={() => handleUpdate(row.original)}
                 title="Edit"
               />
-            )}
+            {/* )} */}
           </div>
         ),
       },

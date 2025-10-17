@@ -47,6 +47,7 @@ const AdjustTable = ({
       {
         accessorKey: "driver_phone",
         header: "Driver Phone",
+        type: "number",
       },
       {
         accessorKey: "status",
