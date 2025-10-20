@@ -55,6 +55,9 @@ const PutAwayDetail: React.FC = () => {
 
   const { list: putAwaySuggestions, fetchAll: fetchPutAwaySuggestions } =
     useStorePutAwaySuggestion();
+
+  console.log("🚩 Put Away Suggestions:", putAwaySuggestions);
+
   const { list: userList, fetchAll: fetchUserList } = useStoreUser();
   const { createBulkData } = useStoreBulkPutAway();
   const { updateData } = useStorePutAway();
@@ -122,6 +125,9 @@ const PutAwayDetail: React.FC = () => {
           suggestBin: viewData.suggestBin || "-",
           driver: viewData.driver_name || "-",
           SKUname: SKUname,
+          // Ambil UoM dari palletItems (robust terhadap nama field uom / item_uom)
+          palletItemUom:
+            palletItems?.[0]?.uom || palletItems?.[0]?.item_uom || "-",
         },
       ];
 
@@ -144,7 +150,7 @@ const PutAwayDetail: React.FC = () => {
       const formatted: PutAwayRow[] = suggestions.map(
         (suggestion: PutAwaySuggestion) => {
           const staging = suggestion.stagingPallet;
-          const palletItems = suggestion.palletItems;
+          const palletItems = suggestion.palletItems || [];
 
           const pallet = staging?.pallet;
           const warehouse = staging?.warehouse;
@@ -166,6 +172,8 @@ const PutAwayDetail: React.FC = () => {
             suggestBin: bin?.name || "-",
             driver: "",
             SKUname: SKUname,
+            // Ambil UoM dari palletItems (API contoh menggunakan "uom")
+            palletItemUom: palletItems?.[0]?.uom || palletItems?.[0]?.item_uom || "-",
           };
         }
       );

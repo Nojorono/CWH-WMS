@@ -92,6 +92,7 @@
 
 // 🟩 Item di dalam pallet
 export interface PalletItem {
+  item_uom: string;
   item_id: string;
   item_name: string;
   current_quantity: number;
