@@ -165,8 +165,7 @@ const AdjustmentModal: React.FC<AdjustmentModalProps> = ({
         <form onSubmit={handleSubmit} className="space-y-3">
           {/* Readonly fields */}
           {[
-            { label: "SKU Name", value: formValues.palletCode },
-            { label: "Total Quantity", value: formValues.totalQty },      
+            { label: "Pallet Code", value: formValues.palletCode },
             { label: "Suggestion Zone", value: formValues.suggestZone },
             { label: "Suggestion Bin", value: formValues.suggestBin },
           ].map((field, idx) => (
