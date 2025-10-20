@@ -90,8 +90,8 @@ export default function AddItemModal({
   };
 
   return (
-    <Dialog open={isOpen} onClose={onClose} className="relative z-50">
-      <DialogBackdrop className="fixed inset-0 bg-black/30" />
+    <Dialog open={isOpen} onClose={onClose} className="fixed inset-0 z-[99999]">
+      <DialogBackdrop className="fixed inset-0 bg-black/30 z-0" />
       <div className="fixed inset-0 flex items-center justify-center">
         <DialogPanel className="bg-white rounded p-6 w-[500px] max-w-full space-y-4 z-10">
           <DialogTitle className="text-xl font-semibold">Add Item</DialogTitle>

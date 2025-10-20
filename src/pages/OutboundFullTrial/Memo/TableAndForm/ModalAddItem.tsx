@@ -88,8 +88,16 @@ const ModalAddItem: React.FC<Props> = ({ open, onClose, onSubmit }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-[9999]">
-      <div className="bg-white rounded-xl shadow-lg w-[450px] p-6 space-y-4 relative z-[10000]">
+    <div
+      className="fixed inset-0 bg-black/40 flex items-center justify-center"
+      style={{ zIndex: 2147483647 }}
+      aria-modal="true"
+      role="dialog"
+    >
+      <div
+        className="bg-white rounded-xl shadow-lg w-[450px] p-6 space-y-4 relative"
+        style={{ zIndex: 2147483648 }}
+      >
         <h2 className="text-xl font-bold text-indigo-800">Add Item Memo</h2>
 
         <div className="space-y-3">
