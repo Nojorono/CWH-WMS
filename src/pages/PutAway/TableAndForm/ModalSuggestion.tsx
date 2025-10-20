@@ -166,8 +166,9 @@ const AdjustmentModal: React.FC<AdjustmentModalProps> = ({
           {/* Readonly fields */}
           {[
             { label: "SKU Name", value: formValues.palletCode },
-            { label: "Total Quantity", value: formValues.totalQty },
-            // { label: "Staging Area", value: formValues.stagingArea },
+            { label: "Total Quantity", value: formValues.totalQty },      
+            { label: "Suggestion Zone", value: formValues.suggestZone },
+            { label: "Suggestion Bin", value: formValues.suggestBin },
           ].map((field, idx) => (
             <div key={idx}>
               <label className="block text-sm font-semibold text-gray-700">

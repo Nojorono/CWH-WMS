@@ -22,7 +22,7 @@ const PrintBarcodeModal: React.FC<Props> = ({
   onClose,
   items,
   useQRCode = false,
-  defaultSize = 200,
+  defaultSize = 800,
 }) => {
   const [size, setSize] = useState(defaultSize);
 
@@ -79,19 +79,19 @@ const PrintBarcodeModal: React.FC<Props> = ({
           <label className="text-sm font-medium">Ukuran (px):</label>
           <input
             type="number"
-            min={150}
-            max={400}
+            min={0}
+            max={1000}
             value={size}
             onChange={(e) => {
               let val = Number(e.target.value);
-              if (val < 150) val = 150;
-              if (val > 400) val = 400;
+              if (val < 0) val = 0;
+              if (val > 1000) val = 1000;
               setSize(val);
             }}
             className="w-24 border rounded px-2 py-1 focus:ring focus:ring-blue-200"
           />
           <span className="text-xs text-gray-500">
-            Minimal 150px, maksimal 400px, default {defaultSize}px
+            Minimal 0px, maksimal 1000px, default {defaultSize}px
           </span>
         </div>
 
