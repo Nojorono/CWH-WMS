@@ -34,6 +34,8 @@ type PutAwayRow = {
   selectedRow?: boolean;
   SKUname: string;
   palletItemUom?: string;
+  destinationWarehouseSubCode?: string;
+  destinationBinCode?: string;
 };
 
 type ExtendedColumnDef<T> = ColumnDef<T> & { selectedRow?: boolean };
@@ -47,7 +49,9 @@ type DriverFormValues = {
 const PutAwayDetail: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { data: viewData, mode } = location.state || {};
+  const { data: detailDataPutaway, mode } = location.state || {};
+
+  console.log("Detail Data Putaway:", detailDataPutaway);
 
   const isDetail = mode === "detail";
   const isEdit = mode === "edit";
@@ -83,56 +87,60 @@ const PutAwayDetail: React.FC = () => {
     watch,
   } = useForm<DriverFormValues>({
     defaultValues: {
-      forkliftDriverId: viewData?.forklift_driver_id || "",
-      driverName: viewData?.driver_name || "",
-      driverPhone: viewData?.driver_phone || "",
+      forkliftDriverId: detailDataPutaway?.forkliftDriverId || "",
+      driverName: detailDataPutaway?.driverName || "",
+      driverPhone: detailDataPutaway?.driverPhone || "",
     },
   });
 
   useEffect(() => {
-    if (viewData) {
+    if (detailDataPutaway) {
       reset({
-        forkliftDriverId: viewData.forklift_driver_id || "",
-        driverName: viewData.driver_name || "",
-        driverPhone: viewData.driver_phone || "",
+        forkliftDriverId: detailDataPutaway.forkliftDriverId || "",
+        driverName: detailDataPutaway.driverName || "",
+        driverPhone: detailDataPutaway.driverPhone || "",
       });
     }
-  }, [viewData, reset]);
+  }, [detailDataPutaway, reset]);
 
   // Mapping data tabel
   // ==============================
   // 🔹 TABLE DATA (EDIT/CREATE)
   // ==============================
   useEffect(() => {
-    if ((isDetail || isEdit) && viewData) {
-      const palletItems = viewData.palletItems || [];
+    if ((isDetail || isEdit) && detailDataPutaway) {
+      const palletItems = detailDataPutaway.palletItems || [];
+
+      console.log("🟢 detailDataPutaway:", detailDataPutaway);
 
       const formatted: PutAwayRow[] = [
         {
-          stagingPalletId: viewData.inventory_tracking_id || "-",
-          palletId: viewData.palletId || "-",
-          palletCode: viewData.palletCode || "-",
-          totalQty: viewData.totalQty || 0,
-          warehouseName: viewData.warehouseSubName || "-",
-          stagingArea: viewData.warehouseSubName || "-", // atau ubah jika ada field stagingArea terpisah
-          suggestZoneId:
-            viewData.warehouse_bin_id || viewData.destination_bin_id || "-",
-          suggestZone: viewData.suggestZone || "-",
-          suggestBinId: viewData.destination_bin_id || "-",
-          suggestBin: viewData.suggestBin || "-",
-          driver: viewData.driver_name || "-",
+          stagingPalletId: detailDataPutaway.inventory_tracking_id || "-",
+          palletId: detailDataPutaway.palletId || "-",
+          palletCode: detailDataPutaway.palletCode || "-",
+          totalQty: detailDataPutaway.totalQty || 0,
+          warehouseName: detailDataPutaway.warehouseSubName || "-",
+          stagingArea: detailDataPutaway.warehouseSubName || "-",
+          suggestZoneId: detailDataPutaway.destination_bin_id || "-",
+          suggestZone: detailDataPutaway.suggestZone || "-",
+          suggestBinId: detailDataPutaway.destination_bin_id || "-",
+          suggestBin: detailDataPutaway.suggestBin || "-",
+          driver: detailDataPutaway.driverName || "-",
           SKUname: palletItems?.[0]?.itemName || "-",
           palletItemUom:
             palletItems?.[0]?.uom || palletItems?.[0]?.item_uom || "-",
+          destinationWarehouseSubCode:
+            detailDataPutaway.destinationWarehouseSubCode || "-",
+          destinationBinCode: detailDataPutaway.destinationBinCode || "-",
         },
       ];
 
       setMappedData(formatted);
 
       // Isi form driver
-      setValue("forkliftDriverId", viewData.forklift_driver_id || "");
-      setValue("driverName", viewData.driver_name || "");
-      setValue("driverPhone", viewData.driver_phone || "");
+      setValue("forkliftDriverId", detailDataPutaway.forkliftDriverId || "");
+      setValue("driverName", detailDataPutaway.driverName || "");
+      setValue("driverPhone", detailDataPutaway.driverPhone || "");
     } else if (isCreate && putAwaySuggestions) {
       const suggestions =
         (putAwaySuggestions as any).palletSuggestions ||
@@ -176,7 +184,14 @@ const PutAwayDetail: React.FC = () => {
       );
       setMappedData(formatted);
     }
-  }, [isDetail, isEdit, isCreate, viewData, putAwaySuggestions, setValue]);
+  }, [
+    isDetail,
+    isEdit,
+    isCreate,
+    detailDataPutaway,
+    putAwaySuggestions,
+    setValue,
+  ]);
 
   // 🟢 Auto-select baris pertama kalau edit
   useEffect(() => {
@@ -187,24 +202,69 @@ const PutAwayDetail: React.FC = () => {
   }, [isEdit, mappedData]);
 
   // Table columns
+  // Table columns
   const columns = useMemo<ExtendedColumnDef<PutAwayRow>[]>(() => {
-    const cols: ExtendedColumnDef<PutAwayRow>[] = [
-      {
-        accessorKey: "stagingPalletId",
-        header: "Staging Pallet ID",
-        ...(!isDetail && { selectedRow: true }),
-      },
-      { accessorKey: "palletCode", header: "Pallet Code" },
-      { accessorKey: "SKUname", header: "SKU Name" },
-      { accessorKey: "palletItemUom", header: "UoM" },
-      {
-        accessorKey: "totalQty",
-        header: "Total Qty",
-      },
-      { accessorKey: "suggestZone", header: "Suggest Zone" },
-      { accessorKey: "suggestBin", header: "Suggest Bin" },
-    ];
+    const cols: ExtendedColumnDef<PutAwayRow>[] = [];
 
+    // === EDIT / DETAIL MODE ===
+    if (!isCreate) {
+      // tampilkan hanya jika bukan detail
+      if (!isDetail) {
+        cols.push({
+          accessorKey: "stagingPalletId",
+          header: "Staging Pallet ID",
+          selectedRow: true,
+        });
+      }
+
+      cols.push(
+        { accessorKey: "palletCode", header: "Pallet Code" },
+        { accessorKey: "SKUname", header: "SKU Name" },
+        { accessorKey: "palletItemUom", header: "UoM" },
+        { accessorKey: "totalQty", header: "Total Qty" },
+        {
+          accessorKey: "destinationWarehouseSubCode",
+          header: "Destination Zone",
+        },
+        { accessorKey: "destinationBinCode", header: "Destination Bin" }
+      );
+
+      // kolom tambahan hanya jika bukan detail
+      if (!isDetail) {
+        cols.push(
+          { accessorKey: "suggestZone", header: "Update Zone" },
+          { accessorKey: "suggestBin", header: "Update Bin" }
+        );
+      }
+
+      // === CREATE MODE ===
+    } else {
+      // tampilkan hanya jika bukan detail
+      if (!isDetail) {
+        cols.push({
+          accessorKey: "stagingPalletId",
+          header: "Staging Pallet ID",
+          selectedRow: true,
+        });
+      }
+
+      cols.push(
+        { accessorKey: "palletCode", header: "Pallet Code" },
+        { accessorKey: "SKUname", header: "SKU Name" },
+        { accessorKey: "palletItemUom", header: "UoM" },
+        { accessorKey: "totalQty", header: "Total Qty" }
+      );
+
+      // kolom tambahan hanya jika bukan detail
+      if (!isDetail) {
+        cols.push(
+          { accessorKey: "suggestZone", header: "Suggest Zone" },
+          { accessorKey: "suggestBin", header: "Suggest Bin" }
+        );
+      }
+    }
+
+    // tombol action hanya muncul jika bukan detail
     if (!isDetail) {
       cols.push({
         id: "actions",
@@ -221,7 +281,7 @@ const PutAwayDetail: React.FC = () => {
     }
 
     return cols;
-  }, [isDetail]);
+  }, [isCreate, isDetail]);
 
   const [tableKey, setTableKey] = useState(0);
 
@@ -318,7 +378,7 @@ const PutAwayDetail: React.FC = () => {
 
         console.log("🟢 Create Payload:", payload);
         if (typeof createBulkData === "function") {
-          const res = await createBulkData(payload);
+          const res = await createBulkData(payload as any);
           if (res?.success) {
             navigate("/putaway");
           }
@@ -328,19 +388,22 @@ const PutAwayDetail: React.FC = () => {
       }
 
       // 🔸 MODE EDIT → single update
-      if (isEdit && viewData?.id) {
+      if (isEdit && detailDataPutaway?.id) {
         const payload = {
-          inventory_tracking_id: viewData.inventory_tracking_id,
+          inventory_tracking_id: detailDataPutaway.inventory_tracking_id,
           destination_bin_id: mappedData[0]?.suggestBinId || "",
           forklift_driver_id: data.forkliftDriverId,
           driver_name: data.driverName,
           driver_phone: data.driverPhone,
-          status: viewData.status || "PENDING",
-          notes: viewData.notes || "",
+          status: detailDataPutaway.status || "PENDING",
+          notes: detailDataPutaway.notes || "",
         };
 
+        console.log("🟡 mappedData Payload:", mappedData);
+
         console.log("🟡 Edit Payload:", payload);
-        const res = await updateData(viewData.id, payload);
+
+        const res = await updateData(detailDataPutaway.id, payload);
         if (res?.success) {
           navigate("/putaway");
         }
@@ -381,7 +444,7 @@ const PutAwayDetail: React.FC = () => {
             <Controller
               name="forkliftDriverId"
               control={control}
-              defaultValue={viewData?.forklift_driver_id || ""}
+              defaultValue={detailDataPutaway?.forkliftDriverId || ""}
               render={({ field }) => (
                 <Select
                   {...field}
@@ -455,8 +518,12 @@ const PutAwayDetail: React.FC = () => {
             stagingArea: selectedRow.stagingArea,
             suggestZone: selectedRow.suggestZone,
             suggestBin: selectedRow.suggestBin,
+            destinationWarehouseSubCode:
+              selectedRow.destinationWarehouseSubCode,
+            destinationBinCode: selectedRow.destinationBinCode,
           }}
           onSave={handleSaveAdjustment}
+          mode={isEdit ? "edit" : "create"}
         />
       )}
     </div>

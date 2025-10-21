@@ -4,6 +4,8 @@
 // Base Interface
 // ===========================
 export interface PutAway {
+  palletItems: never[];
+  destinationBin: {};
   id?: string;
   inventory_tracking_id: string;
   destination_bin_id: string;

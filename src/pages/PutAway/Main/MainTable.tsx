@@ -19,10 +19,11 @@ const MainTable = () => {
   const mappedList = (list || []).map((item: any) => {
     const inventory = item.inventoryTracking || {};
     const pallet = inventory.pallet || {};
+    const sourceSub = inventory.warehouseSub || {};
     const destinationBin = item.destinationBin || {};
-    const warehouseSub = inventory.warehouseSub || {};
+    const destinationSub = destinationBin.warehouseSub || {};
 
-    // Map palletItems to a table-friendly shape using the provided data structure
+    // Map palletItems for detail display
     const palletItems = (item.palletItems || []).map((pi: any) => ({
       itemId: pi.item_id || pi.id || "-",
       itemName: pi.item_name || pi.name || "-",
@@ -40,53 +41,66 @@ const MainTable = () => {
     );
 
     return {
-      // raw ids / timestamps
+      // --- Metadata ---
       id: item.id,
       createdAt: item.createdAt,
       updatedAt: item.updatedAt,
       deletedAt: item.deletedAt,
 
-      // inbound / inventory tracking
-      inventory_tracking_id: item.inventory_tracking_id,
-      inboundId: item.inventory_tracking_id || "-",
+      // --- Source (Inventory Tracking) ---
+      inventoryTrackingId: inventory.id || item.inventory_tracking_id || "-",
       inventoryDate: inventory.inventory_date || null,
       inventoryStatus: inventory.inventory_status || "-",
       progressionStatus: inventory.progression_status || "-",
+      inventoryNote: inventory.inventory_note || "-",
 
-      // pallet info
-      palletId: pallet.id || inventory.pallet_id || item.palletId || "-",
-      palletCode: pallet.pallet_code || item.palletCode || "-",
-      palletCurrentQuantity:
-        pallet.currentQuantity ?? Number(item.palletCurrentQuantity) ?? 0,
-      palletUom: pallet.uom || item.palletUom || "-",
+      // --- Source Warehouse Info ---
+      sourceWarehouseId: inventory.warehouse_id || "-",
+      sourceWarehouseSubId: inventory.warehouse_sub_id || "-",
+      sourceWarehouseSubName: sourceSub.name || "-",
+      sourceWarehouseSubCode: sourceSub.code || "-",
+      sourceWarehouseSubDesc: sourceSub.description || "-",
+      sourceWarehouseSubIsStaging: sourceSub.is_staging || "-",
+      sourceBinCode: inventory.bin_code || "-",
 
-      // warehouse / bin
-      warehouseSubId: inventory.warehouse_sub_id || item.warehouseSubId || "-",
-      warehouseSubName: warehouseSub.name || item.warehouseSubName || "-",
-      warehouse_bin_id:
-        inventory.warehouse_bin_id ||
-        item.destination_bin_id ||
-        item.warehouse_bin_id ||
-        "-",
-      destination_bin_id: item.destination_bin_id,
-      suggestZone: warehouseSub.name || item.suggestZone || "-",
-      suggestBin: destinationBin.code || item.suggestBin || "-",
+      // --- Source Pallet Info ---
+      palletId: pallet.id || inventory.pallet_id || "-",
+      palletCode: pallet.pallet_code || "-",
+      palletCapacity: pallet.capacity ?? 0,
+      palletCurrentQuantity: Number(pallet.currentQuantity) || 0,
+      palletUom: pallet.uom || "-",
+      palletIsFull: pallet.isFull ?? false,
+      palletQrUrl: pallet.qr_image_url || null,
 
-      // driver / forklift
-      forklift_driver_id: item.forklift_driver_id || "-",
-      driver_name: item.driver_name || "-",
-      driver_phone: item.driver_phone || "-",
-      forkliftDriver: item.driver_name || "-",
+      // --- Destination Info ---
+      destinationBinId: item.destination_bin_id || "-",
+      destinationBinCode: destinationBin.code || "-",
+      destinationBinName: destinationBin.name || "-",
+      destinationBinDesc: destinationBin.description || "-",
+      destinationBinCapacity: destinationBin.capacity_pallet ?? 0,
+      destinationBinQrUrl: destinationBin.barcode_image_url || null,
 
-      // status / notes
+      destinationWarehouseSubId: destinationSub.id || "-",
+      destinationWarehouseSubName: destinationSub.name || "-",
+      destinationWarehouseSubCode: destinationSub.code || "-",
+      destinationWarehouseSubDesc: destinationSub.description || "-",
+
+      // --- Driver / Forklift ---
+      forkliftDriverId: item.forklift_driver_id || "-",
+      driverName: item.driver_name || "-",
+      driverPhone: item.driver_phone || "-",
+
+      // --- Status / Notes ---
       status: item.status || "-",
       notes: item.notes || "-",
 
-      // pallet items summary (for table columns)
-      palletItems,
+      // --- Summary Info ---
       totalSku,
       totalQty,
       palletItemUom: palletItems.length > 0 ? palletItems[0].uom : "-",
+
+      // --- Detail Items ---
+      palletItems,
     };
   });
 
@@ -111,7 +125,7 @@ const MainTable = () => {
 
   const handleFetchParams = () => {
     // Implementasi fetch dengan parameter filter jika diperlukan
-  };
+  };  
 
   return (
     <>

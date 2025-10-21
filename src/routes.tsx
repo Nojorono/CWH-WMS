@@ -212,8 +212,8 @@ export function AppRoutes() {
           </Route>
         )}
 
-        {/* 404 */}
-        <Route path="*" element={<NotFound />} />
+        {/* Route fallback */}
+        <Route path="/signin" element={<SignIn />} />
       </Routes>
     </>
   );

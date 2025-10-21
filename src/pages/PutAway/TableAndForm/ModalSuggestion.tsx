@@ -8,6 +8,7 @@ import {
   useStoreBinByZone,
   useStoreSubWarehouse,
 } from "../../../DynamicAPI/stores/Store/MasterStore";
+import { EndPoint } from "../../../utils/EndPoint";
 
 type AdjustmentForm = {
   palletId: string;
@@ -18,6 +19,8 @@ type AdjustmentForm = {
   suggestBin: string;
   bin_id?: string;
   zone_id?: string;
+  destinationWarehouseSubCode?: string;
+  destinationBinCode?: string;
 };
 
 interface AdjustmentModalProps {
@@ -25,45 +28,82 @@ interface AdjustmentModalProps {
   onClose: () => void;
   data: AdjustmentForm | null;
   onSave: (updated: AdjustmentForm) => void;
+  mode?: "edit" | "create";
 }
+
+// 🔹 Default form value
+const defaultFormValues: AdjustmentForm = {
+  palletId: "",
+  palletCode: "",
+  totalQty: 0,
+  stagingArea: "",
+  suggestZone: "",
+  suggestBin: "",
+  bin_id: "",
+  zone_id: "",
+};
 
 const AdjustmentModal: React.FC<AdjustmentModalProps> = ({
   open,
   onClose,
   data,
   onSave,
+  mode = "create",
 }) => {
   const {
     detail: binList,
     fetchById: fetchBinList,
     isLoading: binLoading,
   } = useStoreBinByZone();
-  const {
-    list: subWarehouseList,
-    fetchAll: fetchSubWarehouseList,
-    isLoading: zoneLoading,
-  } = useStoreSubWarehouse();
 
   const [formValues, setFormValues] = useState<AdjustmentForm>(
-    data ?? {
-      palletId: "",
-      palletCode: "",
-      totalQty: 0,
-      stagingArea: "",
-      suggestZone: "",
-      suggestBin: "",
-      bin_id: "",
-      zone_id: "",
-    }
+    data ?? defaultFormValues
   );
 
-  // 🌀 Fetch Sub Warehouse (Zone) saat modal terbuka
+  // local state untuk sub-warehouse (zone) dan loading
+  const [subWarehouseList, setSubWarehouseList] = useState<any[] | null>(null);
+  const [zoneLoading, setZoneLoading] = useState(false);
+
+  // Fetch Sub Warehouse (Zone)
+  const fetchSubWarehouseList = useCallback(async () => {
+    setZoneLoading(true);
+    try {
+      const token = localStorage.getItem("token");
+
+      const headers: Record<string, string> = {
+        Accept: "application/json",
+      };
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+      }
+
+      const res = await fetch(
+        `${EndPoint}master-warehouse-sub/is-staging?is_staging=null`,
+        {
+          method: "GET",
+          headers,
+        }
+      );
+      if (!res.ok) throw new Error(`Failed to fetch: ${res.status}`);
+      const json = await res.json();
+
+      const list = Array.isArray(json) ? json : json.data ?? json;
+      setSubWarehouseList(list);
+    } catch (error) {
+      console.error("Error fetching sub warehouses:", error);
+      setSubWarehouseList([]);
+    } finally {
+      setZoneLoading(false);
+    }
+  }, []);
+
+  // 🌀 Fetch Zone + set data awal saat modal dibuka
   useEffect(() => {
     if (open) {
       fetchSubWarehouseList();
       if (data) setFormValues(data);
     }
-  }, [open, data]);
+  }, [open, data, fetchSubWarehouseList]);
 
   // 📦 Fetch Bin berdasarkan Zone terpilih
   useEffect(() => {
@@ -72,7 +112,14 @@ const AdjustmentModal: React.FC<AdjustmentModalProps> = ({
     }
   }, [formValues.zone_id]);
 
-  // 🧠 Memo: daftar Zone
+  // 🔄 Reset form saat modal ditutup
+  useEffect(() => {
+    if (!open) {
+      setFormValues(defaultFormValues);
+    }
+  }, [open]);
+
+  // 🧠 Daftar Zone
   const availableZones = useMemo(() => {
     return (
       subWarehouseList?.map((zone: any) => ({
@@ -82,7 +129,7 @@ const AdjustmentModal: React.FC<AdjustmentModalProps> = ({
     );
   }, [subWarehouseList]);
 
-  // 🧠 Memo: daftar Bin
+  // 🧠 Daftar Bin
   const availableBins = useMemo(() => {
     const binsArray = Array.isArray(binList) ? binList : [];
     return binsArray.map((bin: any) => ({
@@ -93,7 +140,7 @@ const AdjustmentModal: React.FC<AdjustmentModalProps> = ({
     }));
   }, [binList]);
 
-  // ⚙️ Handle perubahan Zone
+  // ⚙️ Handle Zone Change
   const handleZoneChange = useCallback(
     (zoneId: string) => {
       const selectedZone = availableZones.find((z) => z.value === zoneId);
@@ -101,9 +148,8 @@ const AdjustmentModal: React.FC<AdjustmentModalProps> = ({
 
       setFormValues((prev) => ({
         ...prev,
-        suggestZone: selectedZone.value,
-        suggestZoneName: selectedZone.label,
-        zone_id: zoneId,
+        suggestZone: selectedZone.label, // tampilkan nama zone di UI
+        zone_id: selectedZone.value, // simpan id zone untuk API
         suggestBin: "",
         bin_id: "",
       }));
@@ -111,7 +157,7 @@ const AdjustmentModal: React.FC<AdjustmentModalProps> = ({
     [availableZones]
   );
 
-  // ⚙️ Handle perubahan Bin
+  // ⚙️ Handle Bin Change
   const handleBinChange = useCallback(
     (binId: string) => {
       const selectedBin = availableBins.find((b) => b.value === binId);
@@ -120,7 +166,6 @@ const AdjustmentModal: React.FC<AdjustmentModalProps> = ({
       setFormValues((prev) => ({
         ...prev,
         suggestBin: selectedBin.code,
-        suggestZone: selectedBin.zoneId, // jika ingin tampil id zone-nya
         bin_id: selectedBin.value,
       }));
     },
@@ -129,9 +174,6 @@ const AdjustmentModal: React.FC<AdjustmentModalProps> = ({
 
   // 🧩 Handle Submit
   const handleSubmit = (e: React.FormEvent) => {
-
-    console.log("Submitting form with values:", formValues);
-    
     e.preventDefault();
 
     if (!formValues.zone_id || !formValues.bin_id) {
@@ -166,6 +208,18 @@ const AdjustmentModal: React.FC<AdjustmentModalProps> = ({
           {/* Readonly fields */}
           {[
             { label: "Pallet Code", value: formValues.palletCode },
+            ...(mode !== "create"
+              ? [
+                  {
+                    label: "Destination Zone",
+                    value: formValues.destinationWarehouseSubCode,
+                  },
+                  {
+                    label: "Destination Bin Code",
+                    value: formValues.destinationBinCode,
+                  },
+                ]
+              : []),
             { label: "Suggestion Zone", value: formValues.suggestZone },
             { label: "Suggestion Bin", value: formValues.suggestBin },
           ].map((field, idx) => (
