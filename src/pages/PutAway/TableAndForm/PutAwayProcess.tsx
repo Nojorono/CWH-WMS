@@ -56,8 +56,6 @@ const PutAwayDetail: React.FC = () => {
   const { list: putAwaySuggestions, fetchAll: fetchPutAwaySuggestions } =
     useStorePutAwaySuggestion();
 
-  console.log("🚩 Put Away Suggestions:", putAwaySuggestions);
-
   const { list: userList, fetchAll: fetchUserList } = useStoreUser();
   const { createBulkData } = useStoreBulkPutAway();
   const { updateData } = useStorePutAway();
@@ -69,11 +67,11 @@ const PutAwayDetail: React.FC = () => {
 
   // Fetch data awal
   useEffect(() => {
-    if (isCreate || isEdit) {
+    if (isCreate || isEdit || isDetail) {
       fetchPutAwaySuggestions();
       fetchUserList();
     }
-  }, [isCreate, isEdit, fetchPutAwaySuggestions, fetchUserList]);
+  }, [isCreate, isEdit, isDetail, fetchPutAwaySuggestions, fetchUserList]);
 
   // react-hook-form setup
   const {
@@ -108,7 +106,6 @@ const PutAwayDetail: React.FC = () => {
   useEffect(() => {
     if ((isDetail || isEdit) && viewData) {
       const palletItems = viewData.palletItems || [];
-      const SKUname = palletItems.map((item: any) => item.item_name).join(", ");
 
       const formatted: PutAwayRow[] = [
         {
@@ -124,8 +121,7 @@ const PutAwayDetail: React.FC = () => {
           suggestBinId: viewData.destination_bin_id || "-",
           suggestBin: viewData.suggestBin || "-",
           driver: viewData.driver_name || "-",
-          SKUname: SKUname,
-          // Ambil UoM dari palletItems (robust terhadap nama field uom / item_uom)
+          SKUname: palletItems?.[0]?.itemName || "-",
           palletItemUom:
             palletItems?.[0]?.uom || palletItems?.[0]?.item_uom || "-",
         },
@@ -173,7 +169,8 @@ const PutAwayDetail: React.FC = () => {
             driver: "",
             SKUname: SKUname,
             // Ambil UoM dari palletItems (API contoh menggunakan "uom")
-            palletItemUom: palletItems?.[0]?.uom || palletItems?.[0]?.item_uom || "-",
+            palletItemUom:
+              palletItems?.[0]?.uom || palletItems?.[0]?.item_uom || "-",
           };
         }
       );
@@ -228,17 +225,6 @@ const PutAwayDetail: React.FC = () => {
 
   const [tableKey, setTableKey] = useState(0);
 
-  // const handleEdit = (row: PutAwayRow) => {
-  //   // 1️⃣ Kosongkan semua checkbox
-  //   setSelectedIds([]);
-
-  //   // 2️⃣ Simpan baris yang akan diedit ke state modal
-  //   setSelectedRow(row);
-
-  //   // 3️⃣ Buka modal edit (adjustment)
-  //   setIsAdjustmentOpen(true);
-  // };
-
   // handleEdit
   const handleEdit = (row: PutAwayRow) => {
     // kosongkan selected ids
@@ -285,23 +271,6 @@ const PutAwayDetail: React.FC = () => {
       setValue("driverPhone", driver.phone || "");
     }
   };
-
-  // const createPutawayPayload = (
-  //   selectedIds: string[],
-  //   mapped: PutAwayRow[],
-  //   driver: { id: string; name: string; phone: string }
-  // ) =>
-  //   mapped
-  //     .filter((r) => selectedIds.includes(r.stagingPalletId))
-  //     .map((r) => ({
-  //       inventory_tracking_id: r.stagingPalletId,
-  //       destination_bin_id: r.suggestBinId,
-  //       forklift_driver_id: driver.id,
-  //       driver_name: driver.name,
-  //       driver_phone: driver.phone,
-  //       status: "PENDING",
-  //       notes: "",
-  //     }));
 
   // Submit handler
   // ==============================
@@ -412,6 +381,7 @@ const PutAwayDetail: React.FC = () => {
             <Controller
               name="forkliftDriverId"
               control={control}
+              defaultValue={viewData?.forklift_driver_id || ""}
               render={({ field }) => (
                 <Select
                   {...field}

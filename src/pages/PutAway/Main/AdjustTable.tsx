@@ -114,8 +114,6 @@ const AdjustTable = ({
     });
   };
 
-  console.log("🔵 Adjust Table Data:", data);
-
   return (
     <TableComponent
       data={data}
