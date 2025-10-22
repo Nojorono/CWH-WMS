@@ -42,7 +42,8 @@ import NotFound from "./pages/OtherPage/NotFound";
 
 const DefaultPage = () => (
   <div style={{ textAlign: "center", marginTop: "50px" }}>
-    <NotFound />
+    {/* <NotFound /> */}
+    <></>
   </div>
 );
 
@@ -157,32 +158,29 @@ export function AppRoutes() {
     return routes;
   }, [userMenus]);
 
+  const getFirstAccessiblePath = (menus: any[]): string => {
+    // flatten recursive
+    const findChildPath = (list: any[]): string | null => {
+      for (const item of list) {
+        // jika punya anak, cari ke dalam dulu (prioritas menu anakan)
+        if (item.children && item.children.length > 0) {
+          const childPath = findChildPath(item.children);
+          if (childPath) return childPath;
+        }
+        // jika tidak punya anak dan ada path valid, ini target kita
+        if (!item.children?.length && item.path) {
+          return item.path;
+        }
+      }
+      return null;
+    };
+
+    return findChildPath(menus) || "/";
+  };
+
   return (
     <>
       <ScrollToTop />
-      {/* <Routes>
-        {isAuthenticated() ? (
-          <Route
-            element={
-              <ProtectedRoute>
-                <AppLayout />
-              </ProtectedRoute>
-            }
-          >
-            <Route path="/" element={<SignIn />} />
-            {userRoutes.map((route) => (
-              <Route
-                key={route.id}
-                path={route.path}
-                element={<ProtectedRoute>{route.element}</ProtectedRoute>}
-              />
-            ))}
-          </Route>
-        ) : (
-          <Route path="*" element={<Navigate to="/signin" replace />} />
-        )}
-        <Route path="/signin" element={<SignIn />} />
-      </Routes> */}
 
       <Routes>
         {/* Jika belum login, redirect ke /signin */}
@@ -191,7 +189,16 @@ export function AppRoutes() {
         )}
 
         {/* Route login */}
-        <Route path="/signin" element={<SignIn />} />
+        <Route
+          path="/signin"
+          element={
+            isAuthenticated() ? (
+              <Navigate to={getFirstAccessiblePath(userMenus)} replace />
+            ) : (
+              <SignIn />
+            )
+          }
+        />
 
         {/* Jika sudah login */}
         {isAuthenticated() && (
@@ -212,8 +219,8 @@ export function AppRoutes() {
           </Route>
         )}
 
-        {/* Route fallback */}
-        <Route path="/signin" element={<SignIn />} />
+        {/* 404 */}
+        {/* <Route path="*" element={<NotFound />} /> */}
       </Routes>
     </>
   );

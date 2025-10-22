@@ -37,7 +37,7 @@ const formatName = (name: string): string =>
 const resolveIcon = (iconName: string): React.ReactNode => {
   const cleanIconName = iconName?.trim().replace(/\u200B/g, "");
   const IconComponent = Icons[cleanIconName as keyof typeof Icons];
-  if (!IconComponent) console.warn(`Icon not found: ${cleanIconName}`);
+  // if (!IconComponent) console.warn(`Icon not found: ${cleanIconName}`);
   return IconComponent ? <IconComponent /> : <Icons.FaFile />;
 };
 
