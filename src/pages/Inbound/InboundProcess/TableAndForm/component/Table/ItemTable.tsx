@@ -20,7 +20,7 @@ export default function ItemTable({
   posIndex,
   removeItem,
   isEditMode,
-  isDetailMode
+  isDetailMode,
 }: {
   data: ItemForm[];
   doIndex: number;
@@ -73,9 +73,13 @@ export default function ItemTable({
           {
             accessorKey: "quantity_inspection",
             header: "Quantity Inspection",
-            cell: (info: CellContext<ItemForm, unknown>) => (
-              <div>{info.getValue() as string}</div>
-            ),
+            cell: (info: CellContext<ItemForm, unknown>) => {
+              const val = info.getValue();
+              const str = val === null || val === undefined ? "" : String(val);
+              // remove trailing .00, .0, .000 etc.
+              const formatted = str.replace(/\.0+$/, "");
+              return <div>{formatted}</div>;
+            },
           } as ColumnDef<ItemForm>,
         ]
       : []),
