@@ -16,7 +16,6 @@ const emptyFormValues: FormValues = {
   driver_phone: "",
   no_pol: "",
   origin: "",
-  // destination: "",
   inbound_type: "",
   arrival_date: "",
   flag_validated: undefined,
@@ -37,7 +36,6 @@ function mapDetailToFormValues(detail: any): FormValues {
     driver: detail.driver_name ?? "",
     no_pol: detail.license_plate ?? "",
     origin: detail.origin ?? "",
-    // destination: detail.destination ?? "",
     driver_phone: detail.driver_phone ?? "",
     arrival_date: detail.arrival_date ?? "",
     deliveryOrders: detail.inbound_dos.reduce((acc: any[], doItem: any) => {
@@ -56,8 +54,8 @@ function mapDetailToFormValues(detail: any): FormValues {
         po_date: doItem.inbound_po_date ?? "",
         items: (doItem.inbound_items || []).map((item: any) => ({
           item_id: item.item_id ?? "",
-          sku: item.sku ?? "",
-          description: item.item_name ?? "",
+          sku: item.item?.sku ?? "",
+          description: item.item?.description ?? "",
           qty: item.quantity ?? 0,
           uom: item.uom ?? "",
           classification: item.classification ?? "",
@@ -71,8 +69,6 @@ function mapDetailToFormValues(detail: any): FormValues {
 
 // --- Mapper Form → API payload
 function mapToPayload(data: FormValues): CreateInboundPlanning {
-  console.log("mapToPayload data", data);
-
   const inboundType =
     typeof data.inbound_type === "string"
       ? data.inbound_type
@@ -160,8 +156,6 @@ export default function InboundPlanningFormContainer() {
 
     const values = getValues();
 
-    console.log("handlePreview values", values);
-
     // --- Validasi tambahan untuk DO, PO, Item ---
     if (!values.deliveryOrders || values.deliveryOrders.length === 0) {
       showErrorToast("Minimal 1 Delivery Order harus diisi.");
@@ -197,7 +191,6 @@ export default function InboundPlanningFormContainer() {
     }
 
     // --- Kalau semua valid ---
-    console.log("inbound values", values);
     setPreviewData(values);
     setIsConfirmOpen(true);
   };

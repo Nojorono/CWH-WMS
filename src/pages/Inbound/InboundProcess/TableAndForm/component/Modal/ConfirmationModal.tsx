@@ -21,6 +21,9 @@ export default function ConfirmationModal({
 }: ConfirmationModalProps) {
   const [expandedDO, setExpandedDO] = useState<string | null>(null);
 
+  console.log("Confirmation Modal formData", formData);
+  
+
   if (!isOpen) return null;
 
   // === summary calculation ===
