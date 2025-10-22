@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo, useRef } from "react";
+import { useEffect, useState } from "react";
 import { useForm, useFieldArray, FormProvider } from "react-hook-form";
 import { useLocation, useNavigate } from "react-router";
 import { FormValues } from "./component/formTypes";
@@ -80,9 +80,9 @@ function mapToPayload(data: FormValues): CreateInboundPlanning {
 
   return {
     expedition: data.expedition ?? "",
-    origin: data.origin ?? "",
-    license_plate: data.no_pol ?? "",
-    driver_name: data.driver ?? "",
+    origin: data.origin?.toUpperCase() ?? "",
+    license_plate: data.no_pol?.toUpperCase().replace(/\s+/g, "").trim() ?? "",
+    driver_name: data.driver?.toUpperCase() ?? "",
     driver_phone: data.driver_phone ?? "",
     status: "CREATED",
     inbound_type: inboundType,
@@ -202,6 +202,7 @@ export default function InboundPlanningFormContainer() {
     setIsConfirmOpen(true);
   };
 
+  // SUBMIT CREATE OR UPDATE
   const onFinalSubmit = async (data: FormValues) => {
     const payload = mapToPayload(data);
 

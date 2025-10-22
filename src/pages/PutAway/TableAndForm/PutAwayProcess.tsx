@@ -52,8 +52,6 @@ const PutAwayDetail: React.FC = () => {
   const location = useLocation();
   const { data: detailDataPutaway, mode } = location.state || {};
 
-  console.log("Detail Data Putaway:", detailDataPutaway);
-
   const isDetail = mode === "detail";
   const isEdit = mode === "edit";
   const isCreate = !isEdit && !isDetail;
@@ -375,7 +373,6 @@ const PutAwayDetail: React.FC = () => {
             })),
         };
 
-        console.log("🟢 Create Payload:", payload);
         if (typeof createBulkData === "function") {
           const res = await createBulkData(payload as any);
           if (res?.success) {
@@ -398,9 +395,6 @@ const PutAwayDetail: React.FC = () => {
           notes: detailDataPutaway.notes || "",
         };
 
-        console.log("🟡 mappedData Payload:", mappedData);
-
-        console.log("🟡 Edit Payload:", payload);
 
         const res = await updateData(detailDataPutaway.id, payload);
         if (res?.success) {

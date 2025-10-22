@@ -35,8 +35,6 @@ export default function POCard({
   const { fetchAll, list } = useStoreItem();
   const { fetchAll: fetchAllUom, list: uomList } = useStoreUom();
 
-  console.log("dataPO di POCard:", dataPO);
-
   useEffect(() => {
     fetchAll();
     fetchAllUom();
@@ -58,6 +56,8 @@ export default function POCard({
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  const doNo = getValues(`deliveryOrders.${doIndex}.do_no`);
+
   // mapping sebelum dilempar ke ItemTable, gunakan data dari list
   const mappedItems: ItemForm[] = itemFields.map((item) => {
     const master = list.find((m) => m.id === item.item_id);
@@ -75,6 +75,11 @@ export default function POCard({
 
   // fungsi search PO
   const handleSearchPO = async () => {
+    if (!doNo) {
+      showErrorToast("Isi Surat Jalan terlebih dahulu sebelum mencari PO.");
+      return;
+    }
+
     const poNo = getValues(
       `deliveryOrders.${doIndex}.pos.${posIndex}.po_no`
     ) as string;
@@ -250,16 +255,19 @@ export default function POCard({
                 Nomor PO
               </label>
               <div className="flex flex-col gap-2 w-full sm:flex-row">
-  
                 <input
                   className={`${inputCls} ${getDisabledCls(
                     !isEditMode
-                  )} w-full flex-1 min-w-0`}
+                  )} w-full flex-1 min-w-0 ${
+                    !isEditMode || !doNo
+                      ? "bg-gray-400 text-gray-300 cursor-not-allowed"
+                      : "bg-white text-black"
+                  }`}
                   {...register(
                     `deliveryOrders.${doIndex}.pos.${posIndex}.po_no` as const
                   )}
                   defaultValue={dataPO || ""}
-                  disabled={!isEditMode}
+                  disabled={!isEditMode || !doNo}
                 />
 
                 {isEditMode && (
@@ -273,7 +281,6 @@ export default function POCard({
                       className="flex-shrink-0 w-full sm:w-auto"
                     >
                       <FaSearch />
-                      {/* {loading ? "Loading..." : "Cari PO"} */}
                     </Button>
                     <div className="absolute left-1/2 -translate-x-1/2 mt-1 z-10 hidden group-hover:block bg-gray-800 text-white text-xs rounded px-2 py-1 whitespace-nowrap">
                       Cari PO
@@ -293,12 +300,18 @@ export default function POCard({
                 <input
                   className={`${inputCls} ${getDisabledCls(
                     !isEditMode
-                  )} w-full sm:w-auto flex-1`}
+                  )} w-full flex-1 min-w-0 ${
+                    !isEditMode || !doNo
+                      ? "bg-gray-400 text-gray-300 cursor-not-allowed"
+                      : "bg-white text-black"
+                  }`}
                   {...register(
                     `deliveryOrders.${doIndex}.pos.${posIndex}.so_no` as const
                   )}
-                  disabled={!isEditMode}
+                  defaultValue={dataPO || ""}
+                  disabled={!isEditMode || !doNo}
                 />
+
                 {isEditMode && (
                   <div className="relative group">
                     <Button
@@ -310,7 +323,6 @@ export default function POCard({
                       className="flex-shrink-0 sm:w-auto w-full"
                     >
                       <FaSearch />
-                      {/* {loading ? "Loading..." : "Cari SO"} */}
                     </Button>
                     <div className="absolute left-1/2 -translate-x-1/2 mt-1 z-10 hidden group-hover:block bg-gray-800 text-white text-xs rounded px-2 py-1 whitespace-nowrap">
                       Cari SO
@@ -347,7 +359,7 @@ export default function POCard({
                       selectedDate ? formatDateIndo(selectedDate) : ""
                     );
                   }}
-                  readOnly={!isEditMode}
+                  readOnly={!isEditMode || !doNo}
                 />
               )}
             />
@@ -357,15 +369,17 @@ export default function POCard({
         {/* ======= Tombol Add / Remove ======= */}
         {isEditMode && (InbType === "SO" || InbType === "PO") && (
           <div className="flex flex-wrap gap-2 justify-end">
-            <Button
-              type="button"
-              variant="secondary"
-              size="xsm"
-              onClick={() => setIsOpen(true)}
-              className="w-full sm:w-auto"
-            >
-              + Add Item
-            </Button>
+            {doNo && (
+              <Button
+                type="button"
+                variant="secondary"
+                size="xsm"
+                onClick={() => setIsOpen(true)}
+                className="w-full sm:w-auto"
+              >
+                + Add Item
+              </Button>
+            )}
             {totalPO > 1 && (
               <Button
                 type="button"
@@ -403,172 +417,3 @@ export default function POCard({
     </div>
   );
 }
-
-// return (
-//   <div className="border rounded-md p-3 bg-slate-50">
-//     {loading && (
-//       <div className="absolute inset-0 flex items-center justify-center bg-white/70 z-50">
-//         <span className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></span>
-//         <span className="ml-2 text-blue-600 font-semibold">Loading...</span>
-//       </div>
-//     )}
-//     <div className="grid grid-cols-1 md:grid-cols-3 gap-3 items-end">
-//       <div>
-//         {InbType === "PO" && (
-//           <div>
-//             <label className="block text-xs text-slate-600 mb-1">
-//               Nomor PO
-//             </label>
-//             <div className="flex gap-2">
-//               <input
-//                 className={`${inputCls} ${getDisabledCls(
-//                   !isEditMode
-//                 )} w-40 md:w-60`}
-//                 {...register(
-//                   `deliveryOrders.${doIndex}.pos.${posIndex}.po_no` as const
-//                 )}
-//                 disabled={!isEditMode}
-//               />
-//               {isEditMode && (
-//                 <Button
-//                   type="button"
-//                   variant="primary"
-//                   size="xsm"
-//                   onClick={handleSearchPO}
-//                   disabled={!isEditMode || loading}
-//                 >
-//                   <FaSearch />
-//                   {loading ? "Loading..." : "Cari PO"}
-//                 </Button>
-//               )}
-//             </div>
-//           </div>
-//         )}
-
-//         {InbType === "SO" && (
-//           <div>
-//             <label className="block text-xs text-slate-600 mb-1">
-//               Nomor SO
-//             </label>
-//             <div className="flex gap-2">
-//               <input
-//                 className={`${inputCls} ${getDisabledCls(
-//                   !isEditMode
-//                 )} w-40 md:w-60`}
-//                 {...register(
-//                   `deliveryOrders.${doIndex}.pos.${posIndex}.so_no` as const
-//                 )}
-//                 disabled={!isEditMode}
-//               />
-//               {isEditMode && (
-//                 <Button
-//                   type="button"
-//                   variant="primary"
-//                   size="xsm"
-//                   onClick={handleSearchSO}
-//                   disabled={!isEditMode || loading}
-//                 >
-//                   <FaSearch />
-//                   {loading ? "Loading..." : "Cari SO"}
-//                 </Button>
-//               )}
-//             </div>
-//           </div>
-//         )}
-//       </div>
-
-//       {InbType === "PO" && (
-//         <div>
-//           <label className="block text-xs text-slate-600 mb-1">
-//             Tanggal PO
-//           </label>
-//           <Controller
-//             control={control}
-//             name={`deliveryOrders.${doIndex}.pos.${posIndex}.po_date`}
-//             render={({ field }) => (
-//               <DatePicker
-//                 id={`deliveryOrders.${doIndex}.pos.${posIndex}.po_date`}
-//                 placeholder="Select a date"
-//                 value={field.value ? new Date(field.value) : undefined}
-//                 onChange={(date: Date | Date[]) => {
-//                   if (!isEditMode) return;
-//                   const selectedDate = Array.isArray(date) ? date[0] : date;
-//                   field.onChange(
-//                     selectedDate ? formatDateIndo(selectedDate) : ""
-//                   );
-//                 }}
-//                 readOnly={!isEditMode}
-//               />
-//             )}
-//           />
-//         </div>
-//       )}
-
-//       {InbType === "SO" && (
-//         <div>
-//           <label className="block text-xs text-slate-600 mb-1">
-//             Tanggal SO
-//           </label>
-//           <Controller
-//             control={control}
-//             name={`deliveryOrders.${doIndex}.pos.${posIndex}.so_date`}
-//             render={({ field }) => (
-//               <DatePicker
-//                 id={`deliveryOrders.${doIndex}.pos.${posIndex}.so_date`}
-//                 placeholder="Select a date"
-//                 value={field.value ? new Date(field.value) : undefined}
-//                 onChange={(date: Date | Date[]) => {
-//                   if (!isEditMode) return;
-//                   const selectedDate = Array.isArray(date) ? date[0] : date;
-//                   field.onChange(
-//                     selectedDate ? formatDateIndo(selectedDate) : ""
-//                   );
-//                 }}
-//                 readOnly={!isEditMode}
-//               />
-//             )}
-//           />
-//         </div>
-//       )}
-
-//       {isEditMode && (InbType === "SO" || InbType === "PO") && (
-//         <div className="flex gap-2 justify-end">
-//           <Button
-//             type="button"
-//             variant="secondary"
-//             size="xsm"
-//             onClick={() => setIsOpen(true)}
-//           >
-//             + Add Item
-//           </Button>
-//           {totalPO > 1 && (
-//             <Button
-//               type="button"
-//               variant="danger"
-//               size="xsm"
-//               onClick={removePos}
-//             >
-//               Remove PO
-//             </Button>
-//           )}
-//         </div>
-//       )}
-//     </div>
-
-//     <ItemTable
-//       data={mappedItems}
-//       doIndex={doIndex}
-//       posIndex={posIndex}
-//       removeItem={removeItem}
-//       isEditMode={isEditMode}
-//     />
-
-//     {isEditMode && (
-//       <AddItemModal
-//         isOpen={isOpen}
-//         onClose={() => setIsOpen(false)}
-//         onSave={(item) => appendItem(item)}
-//       />
-//     )}
-//   </div>
-// );
