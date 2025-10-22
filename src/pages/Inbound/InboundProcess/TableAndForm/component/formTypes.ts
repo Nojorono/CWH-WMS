@@ -9,6 +9,7 @@ export type ItemForm = {
     uom?: string;
     classification?: string;
     expired_date?: string | null;
+    quantity_inspection?: number;
 };
 
 export type POSForm = {
@@ -45,4 +46,5 @@ export type FormValues = {
     arrival_date?: string;
     deliveryOrders: DOForm[];
     flag_validated?: boolean;
+    integration_status?: string;
 };

@@ -73,16 +73,16 @@ const AdjustTable = ({
                 onClick={() => handleDetail(row.original)}
                 title="Detail"
               />
-              {["CREATED", "WAITING FOR REVISION"].includes(
+              {/* {["CREATED", "WAITING FOR REVISION"].includes(
                 row.original.status
-              ) && (
+              ) && ( */}
                 <FaEdit
                   className="size-5 cursor-pointer"
                   style={{ color: "blue" }}
                   onClick={() => handleUpdate(row.original)}
                   title="Edit"
                 />
-              )}
+              {/* )} */}
             </div>
           );
         },

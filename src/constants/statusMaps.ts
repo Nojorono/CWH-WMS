@@ -13,10 +13,19 @@ export type StatusMap = Record<string, BadgeColor>;
 
 // 🏗️ Inbound Module
 export const STATUS_MAP_INBOUND: StatusMap = {
-  CREATED: "info",
-  UNLOADING: "warning",
-  COMPLETED: "success",
-  CANCELLED: "error",
+  CREATED: 'grey',
+  UNLOADING: 'warning',
+  INSPECTION: 'secondary',
+  READY_INTEGRATION: 'info',
+  INTEGRATED: 'success',
+  FAILED: 'error',
+};
+
+export const STATUS_MAP_INTEGRATION_INBOUND: StatusMap = {
+  PENDING: 'grey',
+  READY: 'secondary',
+  SUCCESS: 'success',
+  FAILED: 'error',
 };
 
 // 🧾 Memo Module

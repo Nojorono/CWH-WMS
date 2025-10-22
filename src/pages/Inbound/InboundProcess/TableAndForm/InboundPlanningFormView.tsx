@@ -32,9 +32,9 @@ type Props = {
   inboundID?: string;
 };
 
-// ==== Helpers ====
-const buildFieldsConfig = (isDetailMode: boolean): FieldConfig[] =>
-  [
+// ==== Helpers ==== //
+const buildFieldsConfig = (isDetailMode: boolean): FieldConfig[] => {
+  const baseFields: FieldConfig[] = [
     {
       name: "inbound_plan_no",
       label: "Inbound Plan No",
@@ -49,13 +49,13 @@ const buildFieldsConfig = (isDetailMode: boolean): FieldConfig[] =>
         { value: "PO", label: "PO" },
         { value: "SO", label: "SO" },
       ],
-      validation: { required: "Tipe inbound wajib diisi" }, // ✅ wajib
+      validation: { required: "Tipe inbound wajib diisi" },
     },
     {
       name: "expedition",
       label: "Ekspedisi",
       type: "text" as const,
-      validation: { required: "Ekspedisi wajib diisi" }, // ✅
+      validation: { required: "Ekspedisi wajib diisi" },
     },
     {
       name: "driver",
@@ -87,10 +87,14 @@ const buildFieldsConfig = (isDetailMode: boolean): FieldConfig[] =>
       type: "date" as const,
       validation: { required: "Tanggal kedatangan wajib diisi" },
     },
-  ].map((f) => ({
+  ];
+
+  return baseFields.map((f) => ({
     ...f,
-    disabled: f.name === "inbound_plan_no" ? true : isDetailMode,
+    disabled:
+      f.name === "inbound_plan_no" ? true : isDetailMode || f.disabled || false,
   }));
+};
 
 // ==== Sub Components ====
 const ActionButtons = ({
@@ -124,9 +128,12 @@ const ActionButtons = ({
 const DOSection = ({
   doFields,
   removeDO,
+  isCreateMode,
   isDetailMode,
+  isEditMode,
   methods,
 }: Props & { methods: UseFormReturn<FormValues> }) => {
+
   const inboundTypeObj = methods.watch("inbound_type");
   const inboundType =
     typeof inboundTypeObj === "string"
@@ -143,8 +150,10 @@ const DOSection = ({
           doIndex={doIndex}
           removeDO={() => removeDO(doIndex)}
           totalDO={doFields.length}
-          isEditMode={!isDetailMode}
-          inbType={inboundType as "PO" | "SO" | "RETUR"} // 👈 passing langsung ke prop
+          isCreateMode={isCreateMode}
+          isDetailMode={isDetailMode}
+          isEditMode={isEditMode}
+          inbType={inboundType as "PO" | "SO" | "RETUR"}
         />
       ))}
     </section>
@@ -176,6 +185,8 @@ const DetailTabs = ({
                   removeDO={() => removeDO(doIndex)}
                   totalDO={doFields.length}
                   isEditMode={false}
+                  isDetailMode={true}
+                  // isCreateMode={false}
                   inbType={inboundType as "PO" | "SO" | "RETUR"}
                 />
               ))}

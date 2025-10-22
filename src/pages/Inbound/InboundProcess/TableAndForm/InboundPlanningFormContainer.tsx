@@ -7,6 +7,7 @@ import { CreateInboundPlanning } from "../../../../DynamicAPI/types/InboundGoodS
 import { formatDateIndo } from "../../../../helper/FormatDate";
 import { showErrorToast } from "../../../../components/toast";
 import InboundPlanningFormView from "./InboundPlanningFormView";
+import { mapDetailToFormValues } from "./component/Helper/mapperData";
 
 // --- Default empty values
 const emptyFormValues: FormValues = {
@@ -24,48 +25,6 @@ const emptyFormValues: FormValues = {
   ],
   id: "",
 };
-
-// --- Mapper API → Form
-function mapDetailToFormValues(detail: any): FormValues {
-  return {
-    inbound_plan_no: detail.inbound_number ?? "AUTO GENERATED",
-    inbound_type: detail.inbound_type
-      ? { value: detail.inbound_type, label: detail.inbound_type }
-      : "",
-    expedition: detail.expedition ?? "",
-    driver: detail.driver_name ?? "",
-    no_pol: detail.license_plate ?? "",
-    origin: detail.origin ?? "",
-    driver_phone: detail.driver_phone ?? "",
-    arrival_date: detail.arrival_date ?? "",
-    deliveryOrders: detail.inbound_dos.reduce((acc: any[], doItem: any) => {
-      let existingDO = acc.find((d) => d.do_no === doItem.inbound_do_number);
-      if (!existingDO) {
-        existingDO = {
-          do_no: doItem.inbound_do_number ?? "",
-          date: doItem.inbound_do_date ?? "",
-          attachment: doItem.attachment ?? null,
-          pos: [],
-        };
-        acc.push(existingDO);
-      }
-      existingDO.pos.push({
-        po_no: doItem.inbound_po_number ?? "",
-        po_date: doItem.inbound_po_date ?? "",
-        items: (doItem.inbound_items || []).map((item: any) => ({
-          item_id: item.item_id ?? "",
-          sku: item.item?.sku ?? "",
-          description: item.item?.description ?? "",
-          qty: item.quantity ?? 0,
-          uom: item.uom ?? "",
-          classification: item.classification ?? "",
-        })),
-      });
-      return acc;
-    }, []),
-    id: undefined,
-  };
-}
 
 // --- Mapper Form → API payload
 function mapToPayload(data: FormValues): CreateInboundPlanning {
