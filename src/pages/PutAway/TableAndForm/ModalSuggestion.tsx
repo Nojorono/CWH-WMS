@@ -11,6 +11,7 @@ import {
 import { EndPoint } from "../../../utils/EndPoint";
 
 type AdjustmentForm = {
+  destinationWarehouseSubName: string | undefined;
   palletId: string;
   palletCode: string;
   totalQty: number;
@@ -41,6 +42,9 @@ const defaultFormValues: AdjustmentForm = {
   suggestBin: "",
   bin_id: "",
   zone_id: "",
+  destinationBinCode: "",
+  destinationWarehouseSubCode: "",
+  destinationWarehouseSubName: "",
 };
 
 const AdjustmentModal: React.FC<AdjustmentModalProps> = ({
@@ -97,11 +101,28 @@ const AdjustmentModal: React.FC<AdjustmentModalProps> = ({
     }
   }, []);
 
-  // 🌀 Fetch Zone + set data awal saat modal dibuka
   useEffect(() => {
     if (open) {
       fetchSubWarehouseList();
-      if (data) setFormValues(data);
+
+      if (data) {
+        // isi fallback jika suggestZone / suggestBin kosong
+        setFormValues({
+          ...data,
+          suggestZone:
+            data.suggestZone ||
+            data.destinationWarehouseSubCode ||
+            data.destinationWarehouseSubName ||
+            "",
+          suggestBin:
+            data.suggestBin ||
+            data.destinationBinCode ||
+            data.destinationWarehouseSubName ||
+            "",
+        });
+      } else {
+        setFormValues(defaultFormValues);
+      }
     }
   }, [open, data, fetchSubWarehouseList]);
 

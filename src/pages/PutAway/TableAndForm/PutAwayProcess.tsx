@@ -36,6 +36,7 @@ type PutAwayRow = {
   palletItemUom?: string;
   destinationWarehouseSubCode?: string;
   destinationBinCode?: string;
+  destinationWarehouseSubName?: string;
 };
 
 type ExtendedColumnDef<T> = ColumnDef<T> & { selectedRow?: boolean };
@@ -110,8 +111,6 @@ const PutAwayDetail: React.FC = () => {
   useEffect(() => {
     if ((isDetail || isEdit) && detailDataPutaway) {
       const palletItems = detailDataPutaway.palletItems || [];
-
-      console.log("🟢 detailDataPutaway:", detailDataPutaway);
 
       const formatted: PutAwayRow[] = [
         {
@@ -304,7 +303,7 @@ const PutAwayDetail: React.FC = () => {
           ? {
               ...item,
               suggestZoneId: adjustPutaway.zone_id,
-              suggestZone: adjustPutaway.suggestZoneName,
+              suggestZone: adjustPutaway.suggestZone,
               suggestBinId: adjustPutaway.bin_id,
               suggestBin: adjustPutaway.suggestBin,
             }
@@ -521,6 +520,8 @@ const PutAwayDetail: React.FC = () => {
             destinationWarehouseSubCode:
               selectedRow.destinationWarehouseSubCode,
             destinationBinCode: selectedRow.destinationBinCode,
+            destinationWarehouseSubName:
+              selectedRow.destinationWarehouseSubName,
           }}
           onSave={handleSaveAdjustment}
           mode={isEdit ? "edit" : "create"}
