@@ -334,6 +334,12 @@ const PutAwayDetail: React.FC = () => {
   // 🔹 HANDLE SUBMIT
   // ==============================
   const onSubmit = async (data: DriverFormValues) => {
+
+    if (!data.forkliftDriverId || !data.driverName || !data.driverPhone) {
+      showErrorToast("Please fill in all driver fields");
+      return;
+    }
+
     try {
       if (isDetail) return;
 
@@ -395,7 +401,6 @@ const PutAwayDetail: React.FC = () => {
           notes: detailDataPutaway.notes || "",
         };
 
-
         const res = await updateData(detailDataPutaway.id, payload);
         if (res?.success) {
           navigate("/putaway");
@@ -430,64 +435,100 @@ const PutAwayDetail: React.FC = () => {
       >
         <h2 className="font-semibold text-lg">Driver Details</h2>
         <div className="grid grid-cols-2 gap-4">
+          {/* Forklift Username */}
           <div>
             <label className="block text-sm font-medium mb-1">
-              Forklift Username
+              Forklift Username <span className="text-red-500">*</span>
             </label>
             <Controller
               name="forkliftDriverId"
               control={control}
-              defaultValue={detailDataPutaway?.forkliftDriverId || ""}
+              rules={{ required: "Please select a forklift driver" }}
               render={({ field }) => (
-                <Select
-                  {...field}
-                  placeholder="Select Forklift Driver"
-                  options={forkliftDrivers.map((d: any) => ({
-                    value: d.id,
-                    label: d.username || d.name,
-                  }))}
-                  onChange={(val: string) => {
-                    handleDriverSelect(val);
-                    field.onChange(val);
-                  }}
-                  disabled={isDetail}
-                  width="100%"
-                />
+                <>
+                  <Select
+                    {...field}
+                    placeholder="Select Forklift Driver"
+                    options={forkliftDrivers.map((d: any) => ({
+                      value: d.id,
+                      label: d.username || d.name,
+                    }))}
+                    onChange={(val: string) => {
+                      handleDriverSelect(val);
+                      field.onChange(val);
+                    }}
+                    disabled={isDetail}
+                    width="100%"
+                  />
+                  {errors.forkliftDriverId && (
+                    <p className="text-red-500 text-sm mt-1">
+                      {errors.forkliftDriverId.message}
+                    </p>
+                  )}
+                </>
               )}
             />
           </div>
 
+          {/* Driver Name */}
           <div>
             <label className="block text-sm font-medium mb-1">
-              Driver Name
+              Driver Name <span className="text-red-500">*</span>
             </label>
             <Controller
               name="driverName"
               control={control}
+              rules={{ required: "Driver name is required" }}
               render={({ field }) => (
-                <input
-                  {...field}
-                  disabled={isDetail}
-                  className="border p-2 rounded w-full"
-                />
+                <>
+                  <input
+                    {...field}
+                    disabled={isDetail}
+                    className={`border p-2 rounded w-full ${
+                      errors.driverName ? "border-red-500" : ""
+                    }`}
+                  />
+                  {errors.driverName && (
+                    <p className="text-red-500 text-sm mt-1">
+                      {errors.driverName.message}
+                    </p>
+                  )}
+                </>
               )}
             />
           </div>
 
+          {/* Driver Phone */}
           <div>
             <label className="block text-sm font-medium mb-1">
-              Driver Phone
+              Driver Phone <span className="text-red-500">*</span>
             </label>
             <Controller
               name="driverPhone"
               control={control}
+              rules={{
+                required: "Driver phone number is required",
+                pattern: {
+                  value: /^[0-9]+$/,
+                  message: "Phone must contain only numbers",
+                },
+              }}
               render={({ field }) => (
-                <input
-                  {...field}
-                  disabled={isDetail}
-                  className="border p-2 rounded w-full"
-                  type="number"
-                />
+                <>
+                  <input
+                    {...field}
+                    disabled={isDetail}
+                    type="text"
+                    className={`border p-2 rounded w-full ${
+                      errors.driverPhone ? "border-red-500" : ""
+                    }`}
+                  />
+                  {errors.driverPhone && (
+                    <p className="text-red-500 text-sm mt-1">
+                      {errors.driverPhone.message}
+                    </p>
+                  )}
+                </>
               )}
             />
           </div>
