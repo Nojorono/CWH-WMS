@@ -65,10 +65,7 @@ const PrintBarcodeModal: React.FC<Props> = ({
   const handleCancel = () => {
     setSize(defaultSize); // reset ke default
     onClose(); // tutup modal
-  };
-
-  console.log("PrintBarcodeModal items", items);
-  
+  };  
 
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50">

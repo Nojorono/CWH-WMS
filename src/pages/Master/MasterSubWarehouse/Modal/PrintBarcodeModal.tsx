@@ -26,8 +26,6 @@ const PrintBarcodeModal: React.FC<Props> = ({
 }) => {
   const [size, setSize] = useState(defaultSize);
 
-  console.log("PrintBarcodeModal items", items);
-
   // 🔄 reset size setiap kali modal dibuka
   useEffect(() => {
     if (open) {

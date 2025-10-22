@@ -1,5 +1,11 @@
 import { JSX, useEffect, useMemo } from "react";
-import { Routes, Route, Navigate, useNavigate } from "react-router-dom";
+import {
+  Routes,
+  Route,
+  Navigate,
+  useNavigate,
+  useLocation,
+} from "react-router-dom";
 import AppLayout from "./layout/AppLayout";
 import SignIn from "./pages/AuthPages/SignIn";
 import { signOut } from "./utils/SignOut";
@@ -38,21 +44,18 @@ import {
 } from "./utils/PagesComponent";
 import NotFound from "./pages/OtherPage/NotFound";
 
-// import dummyRoutes from "./helper/dummyRoutes";
-
-const DefaultPage = () => (
-  <div style={{ textAlign: "center", marginTop: "50px" }}>
-    {/* <NotFound /> */}
-    <></>
-  </div>
-);
+const DefaultPage = () => <> </>;
 
 export function AppRoutes() {
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Ambil token dari store atau localStorage
   const token =
     useAuthStore((state) => state.accessToken) ||
     localStorage.getItem("accessToken");
 
+  // Ambil user menus dari store atau localStorage
   const localUserMenus = useMemo(() => {
     const stored = localStorage.getItem("user_login_data");
     try {
@@ -67,20 +70,31 @@ export function AppRoutes() {
 
   const userMenus = useAuthStore((state) => state.menus) || localUserMenus;
 
+  // Cek authenticated
   const isAuthenticated = () => {
     if (token) {
-      localStorage.setItem("accessToken", token);
+      localStorage.setItem("accessToken", token); // Keep token sync
       return true;
     }
     return false;
   };
 
+  // **Redirect jika user sudah login dan buka halaman /signin secara manual**
+  useEffect(() => {
+    if (isAuthenticated() && location.pathname === "/signin") {
+      // Redirect ke halaman pertama menu yang bisa diakses
+      navigate(getFirstAccessiblePath(userMenus), { replace: true });
+    }
+  }, [location.pathname, isAuthenticated, navigate, userMenus]);
+
+  // Jika tidak authenticated, langsung sign out
   useEffect(() => {
     if (!isAuthenticated()) {
       signOut(navigate);
     }
   }, [navigate]);
 
+  // Manual routes untuk child routes yang tidak otomatis dari userMenus
   const manualChildRoutes: Record<
     string,
     { path: string; element: JSX.Element }[]
@@ -97,7 +111,8 @@ export function AppRoutes() {
     "/memo": [{ path: "process", element: <MemoProcess /> }],
   };
 
-  const getElementByPath = (path: string): JSX.Element | null => {
+  // Map path ke komponen
+  const getElementByPath = (path: string): JSX.Element => {
     const map: Record<string, JSX.Element> = {
       "/master_user": <MasterUser />,
       "/master_menu": <MasterMenu />,
@@ -121,21 +136,23 @@ export function AppRoutes() {
     return map[path] || <DefaultPage />;
   };
 
+  // Buat array route dari userMenus dan manual child routes
   const userRoutes = useMemo(() => {
     const routes: { id: string; path: string; element: JSX.Element }[] = [];
 
     const traverse = (items: any[]) => {
       items.forEach((item) => {
         if (item.path) {
-          const Element = getElementByPath(item.path);
-          if (Element) {
+          const element = getElementByPath(item.path);
+          if (element) {
             routes.push({
               id: item.id || item.path,
               path: item.path,
-              element: Element,
+              element,
             });
           }
 
+          // Tambah child routes jika ada
           const childRoutes = manualChildRoutes[item.path];
           if (childRoutes) {
             childRoutes.forEach((child) => {
@@ -147,6 +164,7 @@ export function AppRoutes() {
             });
           }
 
+          // Rekursif ke anak-anak menu
           if (item.children?.length) {
             traverse(item.children);
           }
@@ -158,16 +176,14 @@ export function AppRoutes() {
     return routes;
   }, [userMenus]);
 
+  // Ambil path pertama yang accessible untuk redirect default setelah login
   const getFirstAccessiblePath = (menus: any[]): string => {
-    // flatten recursive
     const findChildPath = (list: any[]): string | null => {
       for (const item of list) {
-        // jika punya anak, cari ke dalam dulu (prioritas menu anakan)
         if (item.children && item.children.length > 0) {
           const childPath = findChildPath(item.children);
           if (childPath) return childPath;
         }
-        // jika tidak punya anak dan ada path valid, ini target kita
         if (!item.children?.length && item.path) {
           return item.path;
         }
@@ -181,26 +197,16 @@ export function AppRoutes() {
   return (
     <>
       <ScrollToTop />
-
       <Routes>
-        {/* Jika belum login, redirect ke /signin */}
+        {/* Routes untuk guest (belum login) */}
         {!isAuthenticated() && (
-          <Route path="/" element={<Navigate to="/signin" replace />} />
+          <>
+            <Route path="/signin" element={<SignIn />} />
+            <Route path="*" element={<Navigate to="/signin" replace />} />
+          </>
         )}
 
-        {/* Route login */}
-        <Route
-          path="/signin"
-          element={
-            isAuthenticated() ? (
-              <Navigate to={getFirstAccessiblePath(userMenus)} replace />
-            ) : (
-              <SignIn />
-            )
-          }
-        />
-
-        {/* Jika sudah login */}
+        {/* Routes untuk user sudah login */}
         {isAuthenticated() && (
           <Route
             element={
@@ -209,6 +215,12 @@ export function AppRoutes() {
               </ProtectedRoute>
             }
           >
+            <Route
+              path="/"
+              element={
+                <Navigate to={getFirstAccessiblePath(userMenus)} replace />
+              }
+            />
             {userRoutes.map((route) => (
               <Route
                 key={route.id}
@@ -216,6 +228,7 @@ export function AppRoutes() {
                 element={<ProtectedRoute>{route.element}</ProtectedRoute>}
               />
             ))}
+            <Route path="*" element={<></>} />
           </Route>
         )}
       </Routes>
