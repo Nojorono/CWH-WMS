@@ -43,6 +43,7 @@ import {
   MemoProcess,
 } from "./utils/PagesComponent";
 import NotFound from "./pages/OtherPage/NotFound";
+import ActIndicator from "./components/ui/activityIndicator";
 
 const DefaultPage = () => <> </>;
 
@@ -228,7 +229,14 @@ export function AppRoutes() {
                 element={<ProtectedRoute>{route.element}</ProtectedRoute>}
               />
             ))}
-            <Route path="*" element={<></>} />
+            <Route
+              path="*"
+              element={
+                <>
+                  <ActIndicator />
+                </>
+              }
+            />
           </Route>
         )}
       </Routes>

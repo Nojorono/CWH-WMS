@@ -11,6 +11,7 @@ import {
   useStoreUom,
 } from "../../../../DynamicAPI/stores/Store/MasterStore";
 import PrintBarcodeModal from "../Modal/PrintBarcodeModal";
+import { showErrorToast } from "../../../../components/toast";
 
 const DataTable = () => {
   const {
@@ -180,7 +181,7 @@ const DataTable = () => {
 
   const handlePrintBarcode = () => {
     if (selectedIds.length === 0) {
-      alert("Pilih minimal 1 data untuk dicetak!");
+      showErrorToast("Pilih minimal 1 data untuk dicetak!");
       return;
     }
     const selected = pallet.filter((p) => typeof p.id === "string" && selectedIds.includes(p.id));

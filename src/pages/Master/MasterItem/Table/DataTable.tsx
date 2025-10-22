@@ -67,7 +67,7 @@ const DataTable = () => {
   const handleFetchItem = async () => {
     const token = localStorage.getItem("token");
     if (!token) {
-      alert("Token not found");
+      showErrorToast("Token not found");
       return;
     }
     setIsLoadingFetch(true);

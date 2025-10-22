@@ -9,6 +9,7 @@ import {
   useStoreSubWarehouse,
 } from "../../../DynamicAPI/stores/Store/MasterStore";
 import { EndPoint } from "../../../utils/EndPoint";
+import { showErrorToast } from "../../../components/toast";
 
 type AdjustmentForm = {
   destinationWarehouseSubName: string | undefined;
@@ -198,7 +199,7 @@ const AdjustmentModal: React.FC<AdjustmentModalProps> = ({
     e.preventDefault();
 
     if (!formValues.zone_id || !formValues.bin_id) {
-      alert("Please select both Zone and Bin before saving.");
+      showErrorToast("Please select both Zone and Bin before saving.");
       return;
     }
 
