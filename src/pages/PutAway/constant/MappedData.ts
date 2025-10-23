@@ -1,5 +1,6 @@
 // src/types/putaway.ts
 export type MappedData = {
+    sourceBinCode: string;
     id: string;
     createdAt: string;
     updatedAt: string;
