@@ -265,7 +265,7 @@ const SubmitSection = ({
   // --- Pesan agar user tahu penyebab disable ---
   let validateMsg = "";
 
-  if (hasEmptyMainFields) validateMsg = "";
+  if (hasEmptyMainFields) validateMsg = "Isi field utama terlebih dahulu.";
   else if (hasNoDO) validateMsg = "Minimal harus ada 1 nomor Surat Jalan.";
   else if (hasMultiplePO)
     validateMsg = "Setiap Surat Jalan hanya boleh memiliki 1 nomor PO.";
