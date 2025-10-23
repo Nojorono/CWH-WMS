@@ -353,7 +353,7 @@ export default function DeliveryOrderCard({
                   />
                   {!isDOChecked && (
                     <div className="absolute inset-0 flex items-center justify-center bg-gray-100 bg-opacity-70 text-gray-500 text-xs rounded cursor-not-allowed">
-                      🔒 Harus validasi DO dulu
+                      🔒 Harus validasi SJ dahulu
                     </div>
                   )}
                 </div>
