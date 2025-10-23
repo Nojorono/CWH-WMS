@@ -96,16 +96,6 @@ export default function POCard({
   const canAddItem =
     resolvedMode === "edit" || (resolvedMode === "create" && isDOChecked);
 
-  // useEffect(() => {
-  //   console.log("🧭 Mode:", resolvedMode, {
-  //     doNo,
-  //     isDOChecked,
-  //     isPOFieldDisabled,
-  //     isDOFieldDisabled,
-  //     canAddItem,
-  //   });
-  // }, [resolvedMode, doNo, isDOChecked]);
-
   // =========================================
   // 🧩 Mapping item
   // =========================================
@@ -150,6 +140,8 @@ export default function POCard({
       const data = await res.json();
 
       if (Array.isArray(data) && data.length === 0) {
+        setValue(`deliveryOrders.${doIndex}.pos.${posIndex}.po_date`, "");
+        replaceItems([]);
         showErrorToast(
           `Detail PO ${poNo} tidak ditemukan di META. Tambahkan Item secara manual.`
         );
@@ -231,6 +223,9 @@ export default function POCard({
 
       const data = result?.data?.data || [];
       if (!Array.isArray(data) || data.length === 0) {
+        setValue(`deliveryOrders.${doIndex}.pos.${posIndex}.so_date`, "");
+        replaceItems([]);
+
         showErrorToast(`Detail SO ${soNo} tidak ditemukan di META.`);
         return;
       }

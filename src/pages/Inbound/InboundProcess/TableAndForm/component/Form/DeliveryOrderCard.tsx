@@ -120,9 +120,9 @@ export default function DeliveryOrderCard({
 
   // ✅ VALIDASI DO DAN AUTO-GENERATE PO
   const handleCheckDO = async () => {
-    if (!inbType) {
-      showErrorToast("Pilih Inbound Type terlebih dahulu");
-      return;
+    if (inbType === "SO") {
+      showErrorToast("Pilih Inbound Type PO terlebih dahulu");
+      return; 
     }
 
     const doNo = watch(`deliveryOrders.${doIndex}.do_no`);
@@ -146,6 +146,8 @@ export default function DeliveryOrderCard({
         },
       });
       const data = await res.json();
+      console.log("DO Validation Response:", data);
+      
 
       if (
         res.ok &&
@@ -241,7 +243,7 @@ export default function DeliveryOrderCard({
                 disabled={!doNo}
               >
                 <FaPlus className="inline mr-1" />
-                Add PO
+                Add PO/SO
               </Button>
 
               {totalDO > 1 && (
@@ -414,6 +416,9 @@ export default function DeliveryOrderCard({
     </div>
   );
 }
+
+
+
 
 // import { useFormContext, useFieldArray, Controller } from "react-hook-form";
 // import { FormValues } from "../formTypes";

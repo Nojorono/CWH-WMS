@@ -47,7 +47,7 @@ const buildFieldsConfig = (isDetailMode: boolean): FieldConfig[] => {
       type: "select" as const,
       options: [
         { value: "PO", label: "PO" },
-        { value: "SO", label: "SO" },
+        // { value: "SO", label: "SO" },
       ],
       validation: { required: "Tipe inbound wajib diisi" },
     },
