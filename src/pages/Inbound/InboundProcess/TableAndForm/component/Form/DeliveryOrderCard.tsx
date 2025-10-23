@@ -145,9 +145,7 @@ export default function DeliveryOrderCard({
           Authorization: `Bearer ${token}`,
         },
       });
-      const data = await res.json();
-      console.log("DO Validation Response:", data);
-      
+      const data = await res.json();      
 
       if (
         res.ok &&
