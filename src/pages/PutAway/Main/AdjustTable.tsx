@@ -45,105 +45,20 @@ const AdjustTable = ({
   };
 
   // ✅ Updated columns to reflect full mapped structure
-  // const columns: ColumnDef<MappedData>[] = useMemo(
-  //   () => [
-  //     {
-  //       accessorKey: "palletCode",
-  //       header: "Pallet Code",
-  //     },
-  //     {
-  //       accessorKey: "sourceWarehouseSubName",
-  //       header: "Source Zone",
-  //     },
-  //     {
-  //       accessorKey: "sourceBinCode",
-  //       header: "Source Bin",
-  //     },
-  //     {
-  //       accessorKey: "destinationWarehouseSubName",
-  //       header: "Destination Zone",
-  //     },
-  //     {
-  //       accessorKey: "destinationBinCode",
-  //       header: "Destination Bin",
-  //     },
-  //     {
-  //       accessorKey: "totalSku",
-  //       header: "Total SKU",
-  //     },
-  //     {
-  //       accessorKey: "totalQty",
-  //       header: "Total Qty",
-  //     },
-  //     {
-  //       accessorKey: "palletItemUom",
-  //       header: "UOM",
-  //     },
-  //     {
-  //       accessorKey: "driverName",
-  //       header: "Forklift Driver",
-  //     },
-  //     {
-  //       accessorKey: "driverPhone",
-  //       header: "Driver Phone",
-  //     },
-  // {
-  //   accessorKey: "status",
-  //   header: "Status",
-  //   cell: ({ row }) => {
-  //     const status = row.original.status;
-  //     let color = "text-gray-500";
-  //     if (status === "PENDING") color = "text-yellow-500";
-  //     else if (status === "IN_PROGRESS") color = "text-blue-500";
-  //     else if (status === "COMPLETED") color = "text-green-600";
-  //     return <span className={`${color} font-semibold`}>{status}</span>;
-  //   },
-  // },
-  //     {
-  //       id: "actions",
-  //       header: "Action",
-  //       cell: ({ row }) => (
-  //         <div className="flex items-center gap-3">
-  //           <FaEye
-  //             className="size-5 cursor-pointer text-green-600"
-  //             onClick={() => handleDetail(row.original)}
-  //             title="Detail"
-  //           />
-  //           {row.original.status !== "COMPLETED" && (
-  //             <>
-  //               <FaEdit
-  //                 className="size-5 cursor-pointer text-blue-600"
-  //                 onClick={() => handleUpdate(row.original)}
-  //                 title="Edit"
-  //               />
-  //               <FaTrash
-  //                 className="size-5 cursor-pointer text-red-600"
-  //                 onClick={() => handleDelete(row.original.id)}
-  //                 title="Delete"
-  //               />
-  //             </>
-  //           )}
-  //         </div>
-  //       ),
-  //     },
-  //   ],
-  //   []
-  // );
-
   const columns: ColumnDef<MappedData>[] = useMemo(() => {
     if (!data || data.length === 0) return []; // fallback
 
-    const hideSourceColumns = data.every((row) => row.status === "COMPLETED");
-
     const baseColumns: ColumnDef<MappedData>[] = [
       { accessorKey: "palletCode", header: "Pallet Code" },
-      // hanya tambahkan jika tidak semua status COMPLETED
-      ...(!hideSourceColumns
-        ? [
-            { accessorKey: "sourceWarehouseSubName", header: "Source Zone" },
-            { accessorKey: "sourceBinCode", header: "Source Bin" },
-          ]
-        : []),
+
+      {
+        accessorKey: "sourceWarehouseSubName",
+        header: "Source Zone",
+        cell: ({ row }) =>
+          row.original.status === "COMPLETED"
+            ? "-"
+            : row.original.sourceWarehouseSubName || "-",
+      },
       {
         accessorKey: "destinationWarehouseSubName",
         header: "Destination Zone",
@@ -157,16 +72,14 @@ const AdjustTable = ({
       {
         accessorKey: "status",
         header: "Status",
-        cell: ({ row }) => {
-          return (
-            <StatusBadge
-              status={row.original.status}
-              colorMap={STATUS_MAP_PUTAWAY}
-              variant="solid"
-              size="sm"
-            />
-          );
-        },
+        cell: ({ row }) => (
+          <StatusBadge
+            status={row.original.status}
+            colorMap={STATUS_MAP_PUTAWAY}
+            variant="solid"
+            size="sm"
+          />
+        ),
       },
       {
         id: "actions",

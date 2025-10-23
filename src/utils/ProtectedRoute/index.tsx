@@ -47,7 +47,7 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
   if (!listMenu || listMenu.length === 0) {
     return (
       <div className="text-center mt-10 text-blue-500 font-medium">
-        Memuat hak akses...
+        Memuat...
       </div>
     );
   }
