@@ -43,8 +43,7 @@ export default function POCard({
   isDOChecked?: boolean;
 }) {
   const { fetchAll, list } = useStoreItem();
-  const { fetchAll: fetchAllUom, list: uomList } = useStoreUom()
-  
+  const { fetchAll: fetchAllUom, list: uomList } = useStoreUom();
 
   useEffect(() => {
     fetchAll();
@@ -383,20 +382,29 @@ export default function POCard({
                   ? (`deliveryOrders.${doIndex}.pos.${posIndex}.po_date` as const)
                   : (`deliveryOrders.${doIndex}.pos.${posIndex}.so_date` as const)
               }
-              render={({ field }) => (
-                <DatePicker
-                  id={`deliveryOrders.${doIndex}.pos.${posIndex}.${InbType.toLowerCase()}_date`}
-                  placeholder="Select a date"
-                  value={field.value ? new Date(field.value) : undefined}
-                  onChange={(date: Date | Date[]) => {
-                    if (isPOFieldDisabled) return;
-                    const selectedDate = Array.isArray(date) ? date[0] : date;
-                    field.onChange(
-                      selectedDate ? formatDateIndo(selectedDate) : ""
-                    );
-                  }}
-                  readOnly={isPOFieldDisabled}
-                />
+              rules={{ required: "Tanggal wajib diisi" }}
+              render={({ field, fieldState }) => (
+                <>
+                  {/* ✅ tampilkan error jika ada */}
+                  {fieldState.error && (
+                    <p className="text-xs text-red-500 m-1">
+                      {fieldState.error.message}
+                    </p>
+                  )}
+                  <DatePicker
+                    id={`deliveryOrders.${doIndex}.pos.${posIndex}.${InbType.toLowerCase()}_date`}
+                    placeholder="Select a date"
+                    value={field.value ? new Date(field.value) : undefined}
+                    onChange={(date: Date | Date[]) => {
+                      if (isPOFieldDisabled) return;
+                      const selectedDate = Array.isArray(date) ? date[0] : date;
+                      field.onChange(
+                        selectedDate ? formatDateIndo(selectedDate) : ""
+                      );
+                    }}
+                    readOnly={isPOFieldDisabled}
+                  />
+                </>
               )}
             />
           </div>

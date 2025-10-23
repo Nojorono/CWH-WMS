@@ -30,6 +30,7 @@ export type DOForm = {
     date?: string;
     attachment?: string;
     pos: POSForm[];  // ✅ ganti dari POForm ke POSForm
+    validation_surat_jalan?: boolean;
     flag_validated?: boolean;
 };
 

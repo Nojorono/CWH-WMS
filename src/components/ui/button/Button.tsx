@@ -16,6 +16,7 @@ interface ButtonProps {
   disabled?: boolean; // Disabled state
   className?: string; // Additional class names
   type?: "button" | "submit" | "reset"; // Button type
+  title?: string;
 }
 
 const Button: React.FC<ButtonProps> = ({
@@ -28,6 +29,7 @@ const Button: React.FC<ButtonProps> = ({
   className = "",
   disabled = false,
   type = "button", // Default type is "button"
+  title, // ✅ optional title
 }) => {
   // Size Classes
   const sizeClasses = {
@@ -55,6 +57,7 @@ const Button: React.FC<ButtonProps> = ({
   return (
     <button
       type={type} // Set the button type
+      title={title}
       className={`inline-flex items-center justify-center gap-2 transition ${className} ${
         sizeClasses[size]
       } ${variantClasses[variant]} ${

@@ -24,6 +24,7 @@ export type FieldConfig = {
     | "date"
     | "radio"
     | "file"
+    | "tel"
     | "number";
   options?: Option[];
   element?: React.ReactNode;
@@ -198,6 +199,19 @@ const DynamicForm: React.FC<DynamicFormProps> = ({
             {field.type === "file" && (
               <input
                 type="file"
+                {...register(field.name, field.validation)}
+                className={`${fieldError ? errorClasses : commonClasses} ${
+                  isDisabled ? disabledClasses : ""
+                }`}
+                disabled={isDisabled}
+                readOnly={isDisabled}
+              />
+            )}
+
+            {/* TEL (nomor telepon) */}
+            {field.type === "tel" && (
+              <input
+                type="tel"
                 {...register(field.name, field.validation)}
                 className={`${fieldError ? errorClasses : commonClasses} ${
                   isDisabled ? disabledClasses : ""

@@ -50,10 +50,12 @@ function mapToPayload(data: FormValues): CreateInboundPlanning {
         inbound_do_date: doItem.date
           ? formatDateIndo(new Date(doItem.date))
           : "",
-        attachment: doItem.attachment ? String(doItem.attachment) : "",
+        attachment:
+          "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTzgjIAAURnMoFvRhgte0Va4hSBX7PglNzp5xwSNWDxZlmtxrd61wPkfhnOA2RBR-zJ5LA&usqp=CAU", //URL S3 masih HARDCODE
         inbound_po_number: po.po_no ?? "",
         inbound_po_date: po.po_date ? formatDateIndo(new Date(po.po_date)) : "",
         flag_validated: doItem.flag_validated ?? false, // <-- ensure flag_validated is included
+        validation_surat_jalan: doItem.validation_surat_jalan ?? false, // <-- include validation_surat_jalan
         inbound_items: po.items.map((item) => ({
           item_id: item.item_id ?? "",
           quantity: item.qty ? Number(item.qty) : 0,
@@ -117,18 +119,24 @@ export default function InboundPlanningFormContainer() {
 
     // --- Validasi tambahan untuk DO, PO, Item ---
     if (!values.deliveryOrders || values.deliveryOrders.length === 0) {
-      showErrorToast("Minimal 1 Delivery Order harus diisi.");
+      showErrorToast("Minimal 1 Nomor SJ harus diisi.");
       return;
     }
 
     for (const [i, doItem] of values.deliveryOrders.entries()) {
       if (!doItem.do_no || !doItem.date) {
-        showErrorToast(`Delivery Order ke-${i + 1} wajib punya DO No & Date.`);
+        showErrorToast(`Nomor SJ ke-${i + 1} wajib punya DO No & Date.`);
         return;
       }
 
       if (!doItem.pos || doItem.pos.length === 0) {
-        showErrorToast(`Delivery Order ${doItem.do_no} belum punya PO.`);
+        showErrorToast(`Nomor SJ ${doItem.do_no} belum punya PO.`);
+        return;
+      }
+
+      // ✅ Validasi baru: dalam 1 DO hanya boleh 1 PO
+      if (doItem.pos.length > 1) {
+        showErrorToast(`Nomor SJ ${doItem.do_no} hanya boleh memiliki 1 PO.`);
         return;
       }
 
@@ -136,7 +144,9 @@ export default function InboundPlanningFormContainer() {
         // validasi baru: minimal salah satu dari po_no atau so_no harus terisi
         if (!poItem.po_no && !poItem.so_no) {
           showErrorToast(
-            `DO ${doItem.do_no} → PO ke-${j + 1} wajib punya PO No atau SO No.`
+            `Nomor SJ ${doItem.do_no} → PO ke-${
+              j + 1
+            } wajib punya PO No atau SO No.`
           );
           return;
         }
@@ -157,6 +167,8 @@ export default function InboundPlanningFormContainer() {
   // SUBMIT CREATE OR UPDATE
   const onFinalSubmit = async (data: FormValues) => {
     const payload = mapToPayload(data);
+
+    console.log("Final payload to submit:", payload);
 
     const id = dataInbound?.id;
     if (isCreateMode) {

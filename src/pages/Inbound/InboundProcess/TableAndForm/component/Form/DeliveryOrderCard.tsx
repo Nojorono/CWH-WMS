@@ -415,20 +415,30 @@ export default function DeliveryOrderCard({
                 control={control}
                 name={`deliveryOrders.${doIndex}.date` as const}
                 rules={{ required: "Tanggal wajib diisi" }}
-                render={({ field }) => (
-                  <DatePicker
-                    id="date-picker"
-                    placeholder="Select a date"
-                    value={field.value ? new Date(field.value) : undefined}
-                    onChange={(date: Date | Date[]) => {
-                      if (isDetailMode) return;
-                      const selectedDate = Array.isArray(date) ? date[0] : date;
-                      field.onChange(
-                        selectedDate ? formatDateIndo(selectedDate) : ""
-                      );
-                    }}
-                    readOnly={isDetailMode || !isDOChecked}
-                  />
+                render={({ field, fieldState }) => (
+                  <>
+                    <DatePicker
+                      id="date-picker"
+                      placeholder="Select a date"
+                      value={field.value ? new Date(field.value) : undefined}
+                      onChange={(date: Date | Date[]) => {
+                        if (isDetailMode) return;
+                        const selectedDate = Array.isArray(date)
+                          ? date[0]
+                          : date;
+                        field.onChange(
+                          selectedDate ? formatDateIndo(selectedDate) : ""
+                        );
+                      }}
+                      readOnly={isDetailMode || !isDOChecked}
+                    />
+                    {/* ✅ tampilkan error jika ada */}
+                    {fieldState.error && (
+                      <p className="text-xs text-red-500 mt-1">
+                        {fieldState.error.message}
+                      </p>
+                    )}
+                  </>
                 )}
               />
             </div>

@@ -78,8 +78,15 @@ const buildFieldsConfig = (isDetailMode: boolean): FieldConfig[] => {
     {
       name: "driver_phone",
       label: "No Telp Driver",
-      type: "number" as const,
-      validation: { required: "No telp driver wajib diisi" },
+      type: "tel" as const,
+      validation: {
+        required: "No telp driver wajib diisi",
+        pattern: {
+          value: /^\+?[1-9][0-9]{7,14}$/, // sesuai format E.164
+          message:
+            "Format nomor tidak valid. Gunakan format internasional, misalnya +6281234567890.",
+        },
+      },
     },
     {
       name: "arrival_date",
@@ -133,7 +140,6 @@ const DOSection = ({
   isEditMode,
   methods,
 }: Props & { methods: UseFormReturn<FormValues> }) => {
-
   const inboundTypeObj = methods.watch("inbound_type");
   const inboundType =
     typeof inboundTypeObj === "string"
@@ -208,12 +214,75 @@ const DetailTabs = ({
   );
 };
 
-const SubmitSection = ({ isCreateMode, isEditMode, handlePreview }: Props) => {
+const SubmitSection = ({
+  isCreateMode,
+  isEditMode,
+  handlePreview,
+  methods,
+}: Props) => {
   if (!(isCreateMode || isEditMode)) return null;
+
+  const values = methods.watch();
+  const deliveryOrders = values.deliveryOrders || [];
+
+  // --- VALIDASI UTAMA ---
+  const hasMultiplePO = deliveryOrders.some(
+    (doItem: any) => doItem.pos?.length > 1
+  );
+
+  const hasDOWithoutPO = deliveryOrders.some(
+    (doItem: any) => !doItem.pos || doItem.pos.length === 0
+  );
+
+  const hasPOWithoutItem = deliveryOrders.some((doItem: any) =>
+    doItem.pos?.some((po: any) => !po.items || po.items.length === 0)
+  );
+
+  // const requiredFields: (keyof FormValues)[] = [
+  //   "inbound_type",
+  //   "expedition",
+  //   "driver",
+  //   "no_pol",
+  //   "origin",
+  //   "driver_phone",
+  //   "arrival_date",
+  // ];
+
+  // const hasEmptyMainFields = requiredFields.some((field) => {
+  //   const val = values[field];
+  //   return !val || (typeof val === "object" && !val.value);
+  // });
+
+  // --- Disable button jika ada kondisi tidak valid ---
+  const isDisabled = hasMultiplePO || hasDOWithoutPO || hasPOWithoutItem;
+
+  // --- Pesan agar user tahu penyebab disable ---
+  let validateMsg = "";
+  if (hasDOWithoutPO)
+    validateMsg = "Setiap Surat Jalan wajib memiliki 1 nomor PO.";
+  else if (hasMultiplePO)
+    validateMsg = "Setiap Surat Jalan hanya boleh memiliki 1 nomor PO.";
+  else if (hasPOWithoutItem)
+    validateMsg = "Setiap PO wajib memiliki minimal 1 item.";
+  // else if (hasEmptyMainFields) validateMsg = "Semua field utama harus diisi.";
+  else validateMsg = "";
 
   return (
     <div className="mt-4 flex justify-end">
-      <Button type="button" variant="action" onClick={handlePreview}>
+      {validateMsg && (
+        <p className="text-red-600 italic ml-4 self-center mt-2 mr-4">
+          * {validateMsg}
+        </p>
+      )}
+      <Button
+        type="button"
+        variant="action"
+        onClick={handlePreview}
+        disabled={isDisabled}
+        className={`transition-opacity ${
+          isDisabled ? "opacity-60 cursor-not-allowed" : ""
+        }`}
+      >
         Preview & Submit
       </Button>
     </div>
@@ -286,7 +355,7 @@ export default function InboundPlanningFormView(props: Props) {
       )}
 
       {/* Submit Button */}
-      <SubmitSection {...props} />
+      <SubmitSection {...props} methods={methods} />
 
       {/* Confirmation Modal */}
       {(isCreateMode || isEditMode) && previewData && (

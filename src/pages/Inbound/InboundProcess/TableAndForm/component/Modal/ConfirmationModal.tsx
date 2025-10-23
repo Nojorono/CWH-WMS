@@ -19,10 +19,7 @@ export default function ConfirmationModal({
   onSubmit,
   formData,
 }: ConfirmationModalProps) {
-  const [expandedDO, setExpandedDO] = useState<string | null>(null);
-
-  console.log("Confirmation Modal formData", formData);
-  
+  const [expandedDO, setExpandedDO] = useState<string | null>(null);  
 
   if (!isOpen) return null;
 
