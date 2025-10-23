@@ -121,8 +121,10 @@ export default function DeliveryOrderCard({
   // ✅ VALIDASI DO DAN AUTO-GENERATE PO
   const handleCheckDO = async () => {
     if (inbType === "SO") {
-      showErrorToast("Pilih Inbound Type PO terlebih dahulu");
-      return; 
+      showErrorToast(
+        "Validasi DO hanya untuk PO saja, untuk SO belum tersedia"
+      );
+      return;
     }
 
     const doNo = watch(`deliveryOrders.${doIndex}.do_no`);
@@ -145,7 +147,7 @@ export default function DeliveryOrderCard({
           Authorization: `Bearer ${token}`,
         },
       });
-      const data = await res.json();      
+      const data = await res.json();
 
       if (
         res.ok &&
@@ -414,9 +416,6 @@ export default function DeliveryOrderCard({
     </div>
   );
 }
-
-
-
 
 // import { useFormContext, useFieldArray, Controller } from "react-hook-form";
 // import { FormValues } from "../formTypes";
