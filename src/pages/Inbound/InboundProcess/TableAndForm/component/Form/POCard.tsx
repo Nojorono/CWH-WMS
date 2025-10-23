@@ -43,7 +43,8 @@ export default function POCard({
   isDOChecked?: boolean;
 }) {
   const { fetchAll, list } = useStoreItem();
-  const { fetchAll: fetchAllUom, list: uomList } = useStoreUom();
+  const { fetchAll: fetchAllUom, list: uomList } = useStoreUom()
+  
 
   useEffect(() => {
     fetchAll();
