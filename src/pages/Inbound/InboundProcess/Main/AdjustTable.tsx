@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { FaEye, FaEdit } from "react-icons/fa";
+import { FaEye, FaEdit, FaTrash } from "react-icons/fa";
 import { ColumnDef } from "@tanstack/react-table";
 import TableComponent from "../../../../components/tables/MasterDataTable/TableComponent";
 import { InboundPlanning } from "../../../../DynamicAPI/types/InboundGoodStock";
@@ -7,6 +7,7 @@ import { useNavigate } from "react-router-dom";
 import { formatDateIndo } from "../../../../helper/FormatDate";
 import StatusBadge from "../../../../common/statusBadge";
 import { STATUS_MAP_INBOUND } from "../../../../constants/statusMaps";
+import { useStoreInboundGoodStock } from "../../../../DynamicAPI/stores/Store/MasterStore";
 
 type MenuTableProps = {
   data: InboundPlanning[];
@@ -24,6 +25,7 @@ const AdjustTable = ({
   onRefresh,
 }: MenuTableProps) => {
   const navigate = useNavigate();
+  const { deleteData } = useStoreInboundGoodStock();
 
   const columns: ColumnDef<InboundPlanning>[] = useMemo(
     () => [
@@ -76,12 +78,21 @@ const AdjustTable = ({
               {["CREATED", "WAITING FOR REVISION"].includes(
                 row.original.status
               ) && (
-                <FaEdit
-                  className="size-5 cursor-pointer"
-                  style={{ color: "blue" }}
-                  onClick={() => handleUpdate(row.original)}
-                  title="Edit"
-                />
+                <>
+                  <FaEdit
+                    className="size-5 cursor-pointer"
+                    style={{ color: "blue" }}
+                    onClick={() => handleUpdate(row.original)}
+                    title="Edit"
+                  />
+
+                  <FaTrash
+                    className="size-5 cursor-pointer"
+                    style={{ color: "red" }}
+                    onClick={() => handleDelete(row.original.id)}
+                    title="Delete"
+                  />
+                </>
               )}
             </div>
           );
@@ -103,6 +114,11 @@ const AdjustTable = ({
     navigate("/inbound_planning/process", {
       state: { data, mode: "edit", title: "Update Inbound Planning" },
     });
+  };
+
+  const handleDelete = (id: any) => {
+    console.log("delete data with id", id);
+    deleteData(id);
   };
 
   return (
