@@ -51,10 +51,18 @@ export const STATUS_MAP_INVENTORY: StatusMap = {
   DAMAGED: "error",
 };
 
+export const STATUS_MAP_PUTAWAY: StatusMap = {
+  PENDING: "grey",
+  IN_PROGRESS: "warning",
+  COMPLETED: "success",
+  FAILED: "error",
+}
+
 // Lookup opsional
 export const STATUS_MAPS = {
   inbound: STATUS_MAP_INBOUND,
   memo: STATUS_MAP_MEMO,
   outbound: STATUS_MAP_OUTBOUND,
   inventory: STATUS_MAP_INVENTORY,
+  putaway: STATUS_MAP_PUTAWAY,
 } as const;
