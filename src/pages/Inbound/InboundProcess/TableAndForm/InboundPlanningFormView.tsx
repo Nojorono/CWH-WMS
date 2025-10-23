@@ -226,6 +226,8 @@ const SubmitSection = ({
   const deliveryOrders = values.deliveryOrders || [];
 
   // --- VALIDASI UTAMA ---
+  const hasNoDO = deliveryOrders.every((doItem: any) => !doItem.do_no?.trim());
+
   const hasMultiplePO = deliveryOrders.some(
     (doItem: any) => doItem.pos?.length > 1
   );
@@ -238,33 +240,40 @@ const SubmitSection = ({
     doItem.pos?.some((po: any) => !po.items || po.items.length === 0)
   );
 
-  // const requiredFields: (keyof FormValues)[] = [
-  //   "inbound_type",
-  //   "expedition",
-  //   "driver",
-  //   "no_pol",
-  //   "origin",
-  //   "driver_phone",
-  //   "arrival_date",
-  // ];
+  const requiredFields: (keyof FormValues)[] = [
+    "inbound_type",
+    "expedition",
+    "driver",
+    "no_pol",
+    "origin",
+    "driver_phone",
+  ];
 
-  // const hasEmptyMainFields = requiredFields.some((field) => {
-  //   const val = values[field];
-  //   return !val || (typeof val === "object" && !val.value);
-  // });
+  const hasEmptyMainFields = requiredFields.some((field) => {
+    const val = values[field];
+    return !val || (typeof val === "object" && !val.value);
+  });
 
   // --- Disable button jika ada kondisi tidak valid ---
-  const isDisabled = hasMultiplePO || hasDOWithoutPO || hasPOWithoutItem;
+  const isDisabled =
+    hasNoDO ||
+    hasMultiplePO ||
+    hasDOWithoutPO ||
+    hasPOWithoutItem ||
+    hasEmptyMainFields;
 
   // --- Pesan agar user tahu penyebab disable ---
   let validateMsg = "";
-  if (hasDOWithoutPO)
-    validateMsg = "Setiap Surat Jalan wajib memiliki 1 nomor PO.";
+
+  if (hasEmptyMainFields) validateMsg = "";
+  else if (hasNoDO) validateMsg = "Minimal harus ada 1 nomor Surat Jalan.";
   else if (hasMultiplePO)
     validateMsg = "Setiap Surat Jalan hanya boleh memiliki 1 nomor PO.";
   else if (hasPOWithoutItem)
-    validateMsg = "Setiap PO wajib memiliki minimal 1 item.";
-  // else if (hasEmptyMainFields) validateMsg = "Semua field utama harus diisi.";
+    validateMsg =
+      "Setiap 1 SJ hanya boleh 1 PO dan PO tersebut harus memiliki minimal 1 SKU.";
+  else if (hasDOWithoutPO)
+    validateMsg = "Setiap Surat Jalan wajib memiliki 1 nomor PO.";
   else validateMsg = "";
 
   return (
