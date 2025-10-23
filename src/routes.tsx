@@ -229,14 +229,7 @@ export function AppRoutes() {
                 element={<ProtectedRoute>{route.element}</ProtectedRoute>}
               />
             ))}
-            <Route
-              path="*"
-              element={
-                <>
-                  <ActIndicator />
-                </>
-              }
-            />
+            <Route path="*" element={<></>} />
           </Route>
         )}
       </Routes>
