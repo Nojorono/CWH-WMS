@@ -243,7 +243,7 @@ export default function DeliveryOrderCard({
                 disabled={!doNo}
               >
                 <FaPlus className="inline mr-1" />
-                Add PO/SO
+                Add PO
               </Button>
 
               {totalDO > 1 && (
