@@ -166,6 +166,14 @@ export default function DeliveryOrderCard({
 
         setDaftarPO(daftarPOArr);
 
+        // === ✅ Tandai sudah dicek (flag_validated)
+        setValue(`deliveryOrders.${doIndex}.flag_validated`, true);
+        // === ✅ Jika ada PO, berarti validasi surat jalan TRUE
+        setValue(
+          `deliveryOrders.${doIndex}.validation_surat_jalan`,
+          daftarPOArr.length > 0
+        );
+
         if (daftarPOArr.length > 0) {
           setDoStatus("success");
           replacePos(

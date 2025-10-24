@@ -28,6 +28,10 @@ const emptyFormValues: FormValues = {
 
 // --- Mapper Form → API payload
 function mapToPayload(data: FormValues): CreateInboundPlanning {
+
+console.log("Mapping form values to payload:", data);
+
+
   const inboundType =
     typeof data.inbound_type === "string"
       ? data.inbound_type
@@ -170,22 +174,22 @@ export default function InboundPlanningFormContainer() {
 
     console.log("Final payload to submit:", payload);
 
-    const id = dataInbound?.id;
-    if (isCreateMode) {
-      const res = await createData(payload);
-      if (res?.success) {
-        reset(emptyFormValues);
-        setIsConfirmOpen(false);
-        navigate("/inbound_planning");
-      }
-    } else if (isEditMode && id) {
-      const res = await updateData(id, payload);
-      if (res?.success) {
-        reset(emptyFormValues);
-        setIsConfirmOpen(false);
-        navigate("/inbound_planning");
-      }
-    }
+    // const id = dataInbound?.id;
+    // if (isCreateMode) {
+    //   const res = await createData(payload);
+    //   if (res?.success) {
+    //     reset(emptyFormValues);
+    //     setIsConfirmOpen(false);
+    //     navigate("/inbound_planning");
+    //   }
+    // } else if (isEditMode && id) {
+    //   const res = await updateData(id, payload);
+    //   if (res?.success) {
+    //     reset(emptyFormValues);
+    //     setIsConfirmOpen(false);
+    //     navigate("/inbound_planning");
+    //   }
+    // }
   };
 
   return (
