@@ -71,6 +71,11 @@ export default function DeliveryOrderCard({
     `deliveryOrders.${doIndex}.integration_status` as any
   );
 
+  const flagValidated = watch(`deliveryOrders.${doIndex}.flag_validated`);
+  const validationSuratJalan = watch(
+    `deliveryOrders.${doIndex}.validation_surat_jalan`
+  );
+
   useEffect(() => {
     const el = detailsRef.current;
     if (!el) return;
@@ -265,6 +270,12 @@ export default function DeliveryOrderCard({
                 />
               </div>
             )}
+
+            {/* {flagValidated && (
+              <span className="text-blue-600 text-xs ml-2">
+                <strong>Sudah Divalidasi</strong>
+              </span>
+            )} */}
           </div>
 
           {/* === RIGHT SECTION: Action Buttons === */}

@@ -38,11 +38,6 @@ const AdjustTable = ({
         header: "Created At",
         cell: ({ row }) => formatDateIndo(row.original.createdAt),
       },
-      // {
-      //   accessorKey: "updatedAt",
-      //   header: "Updated At",
-      //   cell: ({ row }) => formatDateIndo(row.original.updatedAt),
-      // },
       {
         accessorKey: "license_plate",
         header: "Plat No",
