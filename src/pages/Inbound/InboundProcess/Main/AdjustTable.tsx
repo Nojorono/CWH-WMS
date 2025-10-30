@@ -41,8 +41,6 @@ const AdjustTable = ({
     });
   }, [fetchUsingPagination, pageIndex, pageSize, globalFilter]);
 
-  console.log("list data in AdjustTable:", list);
-
   // 🔹 Kolom Table
   const columns: ColumnDef<any>[] = useMemo(
     () => [

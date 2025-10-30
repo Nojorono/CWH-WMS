@@ -151,15 +151,6 @@ export const createCrudStore = <TData, TCreate, TUpdate>({
                 const total = typeof result?.total === "number" ? result.total : data.length;
                 const totalPages = Math.max(1, Math.ceil(total / limit));
 
-                // 🧩 Debug log (sementara)
-                console.log(`[${name}] Pagination fetched:`, {
-                    page,
-                    limit,
-                    total,
-                    totalPages,
-                    receivedData: data.length,
-                });
-
                 // ✅ Set state aman
                 set({
                     list: data,
