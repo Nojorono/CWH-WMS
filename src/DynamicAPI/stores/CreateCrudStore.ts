@@ -97,43 +97,6 @@ export const createCrudStore = <TData, TCreate, TUpdate>({
             }
         },
 
-
-        // fetchUsingPagination: async (params: any) => {
-        //     if (!service.fetchUsingPagination) return;
-        //     set({ isLoading: true, error: null });
-
-        //     try {
-        //         const result = await service.fetchUsingPagination(params);
-
-        //         // 🚀 Patch: fallback total kalau backend cuma kirim data.length
-        //         const total = result.total && result.total > 0 ? result.total : result.data.length;
-        //         const totalPages = Math.ceil(total / (params.limit || 10));
-
-        //         console.log("Pagination Result (patched):", {
-        //             ...result,
-        //             total,
-        //             totalPages,
-        //         });
-
-        //         set({
-        //             list: result.data,
-        //             pagination: {
-        //                 page: result.page,
-        //                 limit: result.limit,
-        //                 total,
-        //                 totalPages,
-        //             },
-        //         });
-        //     } catch (err: any) {
-        //         const msg = err.message || `Failed to fetch ${name} with pagination`;
-        //         showErrorToast(msg);
-        //         set({ error: msg });
-        //     } finally {
-        //         set({ isLoading: false });
-        //     }
-        // },
-
-
         fetchUsingPagination: async (params: any) => {
             if (!service.fetchUsingPagination) return;
 
@@ -168,9 +131,6 @@ export const createCrudStore = <TData, TCreate, TUpdate>({
                 set({ isLoading: false });
             }
         },
-
-
-
 
         fetchById: async (id: any) => {
             set({ isLoading: true, error: null });

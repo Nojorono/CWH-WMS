@@ -4,13 +4,13 @@ import Input from "../../../../components/form/input/InputField";
 import AdjustTable from "./AdjustTable";
 import Label from "../../../../components/form/Label";
 import Button from "../../../../components/ui/button/Button";
-import { FaPlus } from "react-icons/fa";
+import { FaPlus, FaUndo } from "react-icons/fa";
 import { useDebounce } from "../../../../helper/useDebounce";
-import { useStoreInboundGoodStock } from "../../../../DynamicAPI/stores/Store/MasterStore";
+import Select from "../../../../components/form/Select";
 
 const MainTable = () => {
   const navigate = useNavigate();
-
+  const [selectedStatus, setSelectedStatus] = useState<any>(null);
   const [globalFilter, setGlobalFilter] = useState<string>("");
   const debouncedFilter = useDebounce(globalFilter, 500);
 
@@ -23,6 +23,15 @@ const MainTable = () => {
       state: { data: [], mode: "create", title: "Create Inbound Planning" },
     });
   };
+
+  const options = [
+    { value: "CREATED", label: "CREATED" },
+    { value: "UNLOADING", label: "UNLOADING" },
+    { value: "INSPECTION", label: "INSPECTION" },
+    { value: "READY_INTEGRATION", label: "READY_INTEGRATION" },
+    { value: "INTEGRATED", label: "INTEGRATED" },
+    { value: "FAILED", label: "FAILED" },
+  ];
 
   return (
     <>
@@ -52,24 +61,25 @@ const MainTable = () => {
 
         <div className="flex justify-between items-center mt-5">
           {/* <div className="space-x-4">
-            <Label htmlFor="search">Inbound No</Label>
-            <Input type="text" id="search" placeholder="Inbound no.." />
-          </div>
+            <Label htmlFor="inbound-no">Inbound No</Label>
+            <Input type="text" id="inbound-no" placeholder="Inbound no.." />
+          </div> */}
 
           <div className="space-x-4">
             <Label htmlFor="jenis-kunjungan-select">Status</Label>
             <Select
               options={options}
               placeholder="Pilih"
-              onChange={(value) => handleFetchParams(value)}
+              onChange={(value) => setSelectedStatus(value)}
+              value={selectedStatus}
             />
           </div>
 
           <div className="flex justify-center items-center mt-5">
-            <Button variant="rounded" size="sm" onClick={handleResetFilters}>
+            {/* <Button variant="rounded" size="sm" >
               <FaUndo />
-            </Button>
-          </div> */}
+            </Button> */}
+          </div>
         </div>
       </div>
 
@@ -77,6 +87,7 @@ const MainTable = () => {
         globalFilter={debouncedFilter}
         setGlobalFilter={setGlobalFilter}
         onDetail={handleDetail}
+        filteredStatus={selectedStatus} // Pass the selected status value
       />
     </>
   );

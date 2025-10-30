@@ -52,11 +52,13 @@ export const createCrudService = <TData, TCreate, TUpdate>(baseUrl: string) => (
         total: number;
         page: number;
         limit: number;
+        sortBy: "createdAt";
+        sortOrder: "DESC";
     }> => {
         const searchParams = new URLSearchParams();
         Object.entries(params).forEach(([key, value]) => {
             if (value !== undefined && value !== null && value !== "") {
-                searchParams.append(key, String(value));    
+                searchParams.append(key, String(value));
             }
         });
 
@@ -77,6 +79,8 @@ export const createCrudService = <TData, TCreate, TUpdate>(baseUrl: string) => (
             total: meta.total || (isArray ? rawData.length : rawData.total || 0),
             page: meta.page || (isArray ? (params.page || 1) : rawData.page || 1),
             limit: meta.limit || (isArray ? (params.limit || 10) : rawData.limit || 10),
+            sortBy: (params.sortBy as "createdAt") || "createdAt",
+            sortOrder: (params.sortOrder as "DESC") || "DESC",
         };
     },
 

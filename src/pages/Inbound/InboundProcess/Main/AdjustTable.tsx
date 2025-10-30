@@ -14,18 +14,18 @@ type MenuTableProps = {
   setGlobalFilter?: (value: string) => void;
   onDetail?: (id: number) => void;
   onRefresh?: () => void;
+  filteredStatus?: any;
 };
 
 const AdjustTable = ({
   globalFilter,
   setGlobalFilter,
-  onDetail,
-  onRefresh,
+  filteredStatus,
 }: MenuTableProps) => {
   const navigate = useNavigate();
 
   const { fetchUsingPagination, deleteData, list, pagination, isLoading } =
-    useStoreInboundGoodStock();
+    useStoreInboundGoodStock();    
 
   // 🔹 local state pagination
   const [pageIndex, setPageIndex] = useState(0);
@@ -38,8 +38,9 @@ const AdjustTable = ({
       page: pageIndex + 1, // jika backend 1-based
       limit: pageSize,
       search: globalFilter || "",
+      status: filteredStatus || "",
     });
-  }, [fetchUsingPagination, pageIndex, pageSize, globalFilter]);
+  }, [fetchUsingPagination, pageIndex, pageSize, globalFilter, filteredStatus]);
 
   // 🔹 Kolom Table
   const columns: ColumnDef<any>[] = useMemo(
