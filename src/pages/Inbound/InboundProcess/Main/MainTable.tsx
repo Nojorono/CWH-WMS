@@ -25,6 +25,7 @@ const MainTable = () => {
   };
 
   const options = [
+    { value: "", label: "All Status" },
     { value: "CREATED", label: "CREATED" },
     { value: "UNLOADING", label: "UNLOADING" },
     { value: "INSPECTION", label: "INSPECTION" },
@@ -65,8 +66,7 @@ const MainTable = () => {
             <Input type="text" id="inbound-no" placeholder="Inbound no.." />
           </div> */}
 
-          <div className="space-x-4">
-            <Label htmlFor="jenis-kunjungan-select">Status</Label>
+          <div className="flex items-center space-x-4">
             <Select
               options={options}
               placeholder="Pilih"
@@ -75,11 +75,11 @@ const MainTable = () => {
             />
           </div>
 
-          <div className="flex justify-center items-center mt-5">
-            {/* <Button variant="rounded" size="sm" >
+          {/* <div className="flex justify-center items-center mt-5">
+            <Button variant="rounded" size="sm" >
               <FaUndo />
-            </Button> */}
-          </div>
+            </Button>
+          </div> */}
         </div>
       </div>
 
