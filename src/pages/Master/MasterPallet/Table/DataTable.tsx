@@ -44,12 +44,13 @@ const DataTable = () => {
       organization_id: Number(data.organization_id),
       pallet_code: String(data.pallet_code),
       capacity: Number(data.capacity),
-      isActive: data.isActive === "true" || data.isActive === true,
-      isFull: data.isFull === "true" || data.isFull === true,
+      isActive: true,
+      isFull: false,
       uom: String(data.uom),
       qr_image_url: "",
       currentQuantity: 0,
     };
+
     return await createData(formattedData);
   };
 
@@ -66,7 +67,8 @@ const DataTable = () => {
     });
   };
 
-  const columns = useMemo(() => [
+  const columns = useMemo(
+    () => [
       {
         accessorKey: "id",
         header: "ID",
@@ -144,26 +146,26 @@ const DataTable = () => {
       type: "number",
       validation: { required: "Required" },
     },
-    {
-      name: "isActive",
-      label: "Is Active",
-      type: "select",
-      options: [
-        { label: "--Select--", value: "" },
-        { label: "Active", value: true },
-        { label: "Inactive", value: false },
-      ],
-    },
-    {
-      name: "isFull",
-      label: "Is Full",
-      type: "select",
-      options: [
-        { label: "--Select--", value: "" },
-        { label: "Full", value: true },
-        { label: "Not Full", value: false },
-      ],
-    },
+    // {
+    //   name: "isActive",
+    //   label: "Is Active",
+    //   type: "select",
+    //   options: [
+    //     { label: "--Select--", value: "" },
+    //     { label: "Active", value: true },
+    //     { label: "Inactive", value: false },
+    //   ],
+    // },
+    // {
+    //   name: "isFull",
+    //   label: "Is Full",
+    //   type: "select",
+    //   options: [
+    //     { label: "--Select--", value: "" },
+    //     { label: "Full", value: true },
+    //     { label: "Not Full", value: false },
+    //   ],
+    // },
     {
       name: "uom",
       label: "UOM",
@@ -172,7 +174,7 @@ const DataTable = () => {
         { label: "--Select--", value: "" },
         ...uomList.map((item: any) => ({
           label: item.name,
-          value: item.id,
+          value: item.name,
         })),
       ],
       validation: { required: "Required" },
@@ -184,11 +186,12 @@ const DataTable = () => {
       showErrorToast("Pilih minimal 1 data untuk dicetak!");
       return;
     }
-    const selected = pallet.filter((p) => typeof p.id === "string" && selectedIds.includes(p.id));
+    const selected = pallet.filter(
+      (p) => typeof p.id === "string" && selectedIds.includes(p.id)
+    );
     setSelectedPallets(selected);
     setPrintModalOpen(true); // buka modal preview
   };
-
 
   return (
     <>
@@ -241,7 +244,6 @@ const DataTable = () => {
         title="Form Data"
         onSelectedChange={setSelectedIds}
       />
-
 
       {/* 🔑 Modal preview + print */}
       <PrintBarcodeModal

@@ -120,7 +120,9 @@ const DataTable = () => {
         onSubmit={handleCreate}
         onUpdate={handleUpdate}
         onDelete={async (id) => {
-          await deleteData(id);
+          console.log("Deleting ID:", id);
+
+          await deleteData(String(id));
         }}
         onRefresh={fetchAll}
         getRowId={(row) => row.id}
