@@ -46,7 +46,16 @@ export function mapToPayload(data: FormValues): CreateInboundPlanning {
                             uom: item.uom ?? "",
                         };
                     } else {
-                        mergedItems[key].qty += qty;
+                        // Jika SKU sama tetapi UOM berbeda, jangan di-merge
+                        if (mergedItems[key].uom !== item.uom) {
+                            mergedItems[key + "_" + item.uom] = {
+                                item_id: item.item_id ?? "",
+                                qty,
+                                uom: item.uom ?? "",
+                            };
+                        } else {
+                            mergedItems[key].qty += qty;
+                        }
                     }
                 });
 
@@ -57,7 +66,6 @@ export function mapToPayload(data: FormValues): CreateInboundPlanning {
                         throw new Error(
                             `Quantity total untuk item "${merged.item_id}" harus bilangan bulat. Ditemukan: ${merged.qty}`
                         );
-
                     }
                 }
 

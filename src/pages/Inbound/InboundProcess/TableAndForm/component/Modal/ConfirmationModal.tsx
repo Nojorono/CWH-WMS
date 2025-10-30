@@ -34,6 +34,43 @@ export default function ConfirmationModal({
     (sum, i) => sum + (typeof i.qty === "number" ? i.qty : 0),
     0
   );
+
+  const skuSummaryWithDifferentUOM = formData.deliveryOrders.reduce(
+    (
+      acc: Record<
+        string,
+        { item_number: string; item_name: string; qty: number; uom: string }[]
+      >,
+      do_
+    ) => {
+      do_.pos.forEach((po) => {
+        po.items.forEach((item) => {
+          const key = item.item_id ?? "unknown_id";
+          const item_number = item.item_number ?? "-";
+          const item_name = item.item_name ?? "Unknown SKU";
+          const qty = typeof item.qty === "number" ? item.qty : 0;
+          const uom = item.uom ?? "-";
+
+          if (!acc[key]) {
+            acc[key] = [];
+          }
+
+          const existingEntry = acc[key].find((entry) => entry.uom === uom);
+          if (existingEntry) {
+            existingEntry.qty += qty;
+          } else {
+            acc[key].push({ item_number, item_name, qty, uom });
+          }
+        });
+      });
+
+      return acc;
+    },
+    {}
+  );
+
+  console.log("SKU Summary with Different UOM:", skuSummaryWithDifferentUOM);
+
   const totalSKU = allItems.length;
 
   // Summary per SKU (pakai item_id, tampilkan item_name, item_number, DO, dan PO breakdown)
@@ -45,7 +82,12 @@ export default function ConfirmationModal({
           item_number: string;
           item_name: string;
           qty: number;
-          breakdown: { do_no: string; po_no: string; qty: number }[];
+          breakdown: {
+            do_no: string;
+            po_no: string;
+            qty: number;
+            uom: string;
+          }[];
         }
       >,
       do_
@@ -56,17 +98,41 @@ export default function ConfirmationModal({
           const item_number = item.item_number ?? "-";
           const item_name = item.item_name ?? "Unknown SKU";
           const qty = typeof item.qty === "number" ? item.qty : 0;
+          const uom = item.uom ?? "-";
 
-          if (!acc[key]) {
+          // Check if the SKU already exists and has the same UOM
+          const existingEntry = acc[key];
+          if (existingEntry) {
+            const sameUOM = existingEntry.breakdown.some((b) => b.uom === uom);
+            if (sameUOM) {
+              existingEntry.qty += qty;
+              existingEntry.breakdown.push({
+                do_no: do_.do_no,
+                po_no: po.po_no ?? "-",
+                qty,
+                uom,
+              });
+            } else {
+              // If UOM is different, create a new entry
+              acc[`${key}_${uom}`] = {
+                item_number,
+                item_name,
+                qty,
+                breakdown: [
+                  { do_no: do_.do_no, po_no: po.po_no ?? "-", qty, uom },
+                ],
+              };
+            }
+          } else {
             acc[key] = { item_number, item_name, qty: 0, breakdown: [] };
+            acc[key].qty += qty;
+            acc[key].breakdown.push({
+              do_no: do_.do_no,
+              po_no: po.po_no ?? "-",
+              qty,
+              uom,
+            });
           }
-
-          acc[key].qty += qty;
-          acc[key].breakdown.push({
-            do_no: do_.do_no,
-            po_no: po.po_no ?? "-",
-            qty,
-          });
         });
       });
 
@@ -208,7 +274,20 @@ export default function ConfirmationModal({
                   <p className="text-xs text-gray-500">Total SKU</p>
                 </div>
                 <div className="p-3 bg-white rounded-lg shadow-sm">
-                  <p className="text-2xl font-bold text-gray-900">{totalQty}</p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {Object.entries(skuSummaryWithDifferentUOM)
+                      .map(([, items]) => {
+                        const uomSummary = items.reduce((acc, item) => {
+                          acc[item.uom] = (acc[item.uom] || 0) + item.qty;
+                          return acc;
+                        }, {} as Record<string, number>);
+
+                        return Object.entries(uomSummary)
+                          .map(([uom, qty]) => `${qty} ${uom}`)
+                          .join(", ");
+                      })
+                      .join(", ")}
+                  </p>
                   <p className="text-xs text-gray-500">Total Quantity</p>
                 </div>
               </div>
@@ -240,7 +319,7 @@ export default function ConfirmationModal({
                                 Item No: {item_number}
                               </p>
                             </div>
-                            <div className="text-right bg-green-100 text-green-800 px-2 py-1 rounded-md text-xs font-semibold">
+                            <div className="text-right bg-green-100 text-green-800 px-2 py-1 rounded-md text-md font-semibold">
                               Total Qty: {qty}
                             </div>
                           </div>
@@ -264,6 +343,9 @@ export default function ConfirmationModal({
                                     <th className="px-3 py-2 text-right border-b border-gray-200">
                                       Qty
                                     </th>
+                                    <th className="px-3 py-2 text-right border-b border-gray-200">
+                                      UoM
+                                    </th>
                                   </tr>
                                 </thead>
                                 <tbody>
@@ -281,6 +363,9 @@ export default function ConfirmationModal({
                                       <td className="px-3 py-2 text-right font-semibold text-gray-900">
                                         {b.qty}
                                       </td>
+                                      <td className="px-3 py-2 text-right text-gray-800">
+                                        {b.uom}
+                                      </td>
                                     </tr>
                                   ))}
                                 </tbody>
@@ -296,7 +381,7 @@ export default function ConfirmationModal({
             </section>
 
             {/* Section 3: DO Detail Table (Expandable) */}
-            <section>
+            {/* <section>
               <h2 className="text-lg font-semibold text-gray-700 mb-4">
                 Detail Surat Jalan
               </h2>
@@ -418,7 +503,7 @@ export default function ConfirmationModal({
                   </tbody>
                 </table>
               </div>
-            </section>
+            </section> */}
           </div>
 
           {/* Footer Buttons */}

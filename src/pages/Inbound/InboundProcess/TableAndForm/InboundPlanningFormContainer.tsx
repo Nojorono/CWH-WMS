@@ -127,8 +127,6 @@ export default function InboundPlanningFormContainer() {
   const onFinalSubmit = async (data: FormValues) => {
     const payload = mapToPayload(data);
 
-    console.log("Final Payload:", payload);
-
     const id = dataInbound?.id;
     if (isCreateMode) {
       const res = await createData(payload);
