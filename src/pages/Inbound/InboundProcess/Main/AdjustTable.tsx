@@ -1,16 +1,15 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { FaEye, FaEdit, FaTrash } from "react-icons/fa";
 import { ColumnDef } from "@tanstack/react-table";
-import TableComponent from "../../../../components/tables/MasterDataTable/TableComponent";
 import { InboundPlanning } from "../../../../DynamicAPI/types/InboundGoodStock";
 import { useNavigate } from "react-router-dom";
 import { formatDateIndo } from "../../../../helper/FormatDate";
 import StatusBadge from "../../../../common/statusBadge";
 import { STATUS_MAP_INBOUND } from "../../../../constants/statusMaps";
 import { useStoreInboundGoodStock } from "../../../../DynamicAPI/stores/Store/MasterStore";
+import TableComponent from "../TableAndForm/component/Table/TableComponent";
 
 type MenuTableProps = {
-  data: InboundPlanning[];
   globalFilter?: string;
   setGlobalFilter?: (value: string) => void;
   onDetail?: (id: number) => void;
@@ -18,16 +17,34 @@ type MenuTableProps = {
 };
 
 const AdjustTable = ({
-  data,
   globalFilter,
   setGlobalFilter,
   onDetail,
   onRefresh,
 }: MenuTableProps) => {
   const navigate = useNavigate();
-  const { deleteData } = useStoreInboundGoodStock();
 
-  const columns: ColumnDef<InboundPlanning>[] = useMemo(
+  const { fetchUsingPagination, deleteData, list, pagination, isLoading } =
+    useStoreInboundGoodStock();
+
+  // 🔹 local state pagination
+  const [pageIndex, setPageIndex] = useState(0);
+  const [pageSize, setPageSize] = useState(10);
+
+  // 🔹 Fetch data setiap kali pagination / search berubah
+  useEffect(() => {
+    if (!fetchUsingPagination) return;
+    fetchUsingPagination({
+      page: pageIndex + 1, // jika backend 1-based
+      limit: pageSize,
+      search: globalFilter || "",
+    });
+  }, [fetchUsingPagination, pageIndex, pageSize, globalFilter]);
+
+  console.log("list data in AdjustTable:", list);
+
+  // 🔹 Kolom Table
+  const columns: ColumnDef<any>[] = useMemo(
     () => [
       {
         accessorKey: "inbound_number",
@@ -49,7 +66,6 @@ const AdjustTable = ({
       {
         accessorKey: "driver_phone",
         header: "Driver Phone",
-        type: "number",
       },
       {
         accessorKey: "status",
@@ -67,29 +83,24 @@ const AdjustTable = ({
         id: "actions",
         header: "Action",
         cell: ({ row }) => {
+          const item = row.original;
           return (
             <div style={{ display: "flex", gap: "8px" }}>
               <FaEye
-                className="size-5 cursor-pointer"
-                style={{ color: "green" }}
-                onClick={() => handleDetail(row.original)}
+                className="size-5 cursor-pointer text-green-600"
+                onClick={() => handleDetail(item)}
                 title="Detail"
               />
-              {["CREATED", "WAITING FOR REVISION"].includes(
-                row.original.status
-              ) && (
+              {["CREATED", "WAITING FOR REVISION"].includes(item.status) && (
                 <>
                   <FaEdit
-                    className="size-5 cursor-pointer"
-                    style={{ color: "blue" }}
-                    onClick={() => handleUpdate(row.original)}
+                    className="size-5 cursor-pointer text-blue-600"
+                    onClick={() => handleUpdate(item)}
                     title="Edit"
                   />
-
                   <FaTrash
-                    className="size-5 cursor-pointer"
-                    style={{ color: "red" }}
-                    onClick={() => handleDelete(row.original.id)}
+                    className="size-5 cursor-pointer text-red-600"
+                    onClick={() => handleDelete(item.id)}
                     title="Delete"
                   />
                 </>
@@ -99,38 +110,47 @@ const AdjustTable = ({
         },
       },
     ],
-    [onDetail]
+    []
   );
 
   const handleDetail = (data: any) => {
-    console.log("passing for detail data", data);
     navigate("/inbound_planning/process", {
       state: { data, mode: "detail" },
     });
   };
 
   const handleUpdate = (data: any) => {
-    console.log("passing for update data", data);
     navigate("/inbound_planning/process", {
       state: { data, mode: "edit", title: "Update Inbound Planning" },
     });
   };
 
   const handleDelete = (id: any) => {
-    console.log("delete data with id", id);
     deleteData(id);
   };
 
   return (
-    <>
+    <div className="relative">
+      {isLoading && (
+        <div className="absolute inset-0 bg-white/70 flex items-center justify-center z-10">
+          <span className="text-gray-600 font-medium">Loading...</span>
+        </div>
+      )}
+
       <TableComponent
-        data={data}
+        data={list}
         columns={columns}
         globalFilter={globalFilter}
         setGlobalFilter={setGlobalFilter}
-        pageSize={5}
+        pageSize={pageSize}
+        pageIndex={pageIndex}
+        totalPages={pagination.totalPages}
+        onPageChange={(page, size) => {
+          setPageIndex(page);
+          setPageSize(size);
+        }}
       />
-    </>
+    </div>
   );
 };
 

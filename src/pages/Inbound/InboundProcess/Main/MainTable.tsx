@@ -11,36 +11,8 @@ import { useStoreInboundGoodStock } from "../../../../DynamicAPI/stores/Store/Ma
 const MainTable = () => {
   const navigate = useNavigate();
 
-  const {
-    list: inboundPrincipalData,
-    fetchAll,
-    fetchUsingParam,
-  } = useStoreInboundGoodStock();
-
   const [globalFilter, setGlobalFilter] = useState<string>("");
   const debouncedFilter = useDebounce(globalFilter, 500);
-
-  const options = [
-    { value: "CREATED", label: "CREATED" },
-    { value: "PENDING", label: "PENDING" },
-  ];
-
-  const handleResetFilters = () => {
-    console.log("Resetting filters");
-  };
-
-  useEffect(() => {
-    fetchAll();
-  }, []);
-
-  const handleFetchParams = (status: string) => {
-    fetchUsingParam({
-      page: 1,
-      status: status,
-      limit: "",
-      createdBy: "",
-    });
-  };
 
   const handleDetail = (id: any) => {
     console.log(`Navigating to detail page for ID: ${id}`);
@@ -102,11 +74,9 @@ const MainTable = () => {
       </div>
 
       <AdjustTable
-        data={inboundPrincipalData}
         globalFilter={debouncedFilter}
         setGlobalFilter={setGlobalFilter}
         onDetail={handleDetail}
-        onRefresh={fetchAll}
       />
     </>
   );

@@ -41,6 +41,7 @@ export type UpdateInboundPlanning = Partial<CreateInboundPlanning>;
 // =============================
 
 export interface InboundDOItemRead {
+    item: any;
     id: string;
     createdAt: string;
     updatedAt: string;

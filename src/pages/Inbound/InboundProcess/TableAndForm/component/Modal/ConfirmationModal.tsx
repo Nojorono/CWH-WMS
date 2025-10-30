@@ -19,7 +19,7 @@ export default function ConfirmationModal({
   onSubmit,
   formData,
 }: ConfirmationModalProps) {
-  const [expandedDO, setExpandedDO] = useState<string | null>(null);  
+  const [expandedDO, setExpandedDO] = useState<string | null>(null);
 
   if (!isOpen) return null;
 
@@ -36,12 +36,44 @@ export default function ConfirmationModal({
   );
   const totalSKU = allItems.length;
 
-  // summary per SKU
-  const skuSummary = allItems.reduce((acc: Record<string, number>, item) => {
-    const key = item.description ?? "Unknown SKU";
-    acc[key] = (acc[key] || 0) + (typeof item.qty === "number" ? item.qty : 0);
-    return acc;
-  }, {});
+  // Summary per SKU (pakai item_id, tampilkan item_name, item_number, DO, dan PO breakdown)
+  const skuSummary = formData.deliveryOrders.reduce(
+    (
+      acc: Record<
+        string,
+        {
+          item_number: string;
+          item_name: string;
+          qty: number;
+          breakdown: { do_no: string; po_no: string; qty: number }[];
+        }
+      >,
+      do_
+    ) => {
+      do_.pos.forEach((po) => {
+        po.items.forEach((item) => {
+          const key = item.item_id ?? "unknown_id";
+          const item_number = item.item_number ?? "-";
+          const item_name = item.item_name ?? "Unknown SKU";
+          const qty = typeof item.qty === "number" ? item.qty : 0;
+
+          if (!acc[key]) {
+            acc[key] = { item_number, item_name, qty: 0, breakdown: [] };
+          }
+
+          acc[key].qty += qty;
+          acc[key].breakdown.push({
+            do_no: do_.do_no,
+            po_no: po.po_no ?? "-",
+            qty,
+          });
+        });
+      });
+
+      return acc;
+    },
+    {}
+  );
 
   const toggleExpand = (do_no: string) => {
     setExpandedDO(expandedDO === do_no ? null : do_no);
@@ -55,7 +87,7 @@ export default function ConfirmationModal({
         aria-hidden="true"
       />
       <div className="flex items-center justify-center min-h-screen p-4 fixed inset-0 z-[9999]">
-        <DialogPanel className="bg-white rounded-2xl shadow-2xl max-w-[90vw] w-full max-h-[98vh] overflow-y-auto">
+        <DialogPanel className="bg-white rounded-2xl shadow-2xl max-w-[60vw] w-full max-h-[98vh] overflow-y-auto">
           {/* Header */}
           <div className="sticky top-0 bg-white border-b px-6 py-4 z-10">
             <DialogTitle className="text-2xl font-semibold text-gray-800">
@@ -181,16 +213,86 @@ export default function ConfirmationModal({
                 </div>
               </div>
 
-              <h3 className="font-medium text-gray-700 mb-2">
-                Summary Qty SKU
-              </h3>
-              <ul className="text-sm list-disc list-inside space-y-1 text-gray-700">
-                {Object.entries(skuSummary).map(([desc, qty]) => (
-                  <li key={desc}>
-                    {desc} — <b>{qty}</b>
-                  </li>
-                ))}
-              </ul>
+              <div className="bg-white border border-gray-200 rounded-xl shadow-sm p-4">
+                <h3 className="text-lg font-semibold text-gray-800 mb-3 border-b pb-2 sticky top-0 bg-white z-10">
+                  Summary per SKU
+                </h3>
+
+                {/* Scrollable container */}
+                <div className="max-h-[400px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 hover:scrollbar-thumb-gray-400">
+                  <div className="space-y-3">
+                    {Object.entries(skuSummary).map(
+                      ([
+                        item_id,
+                        { item_number, item_name, qty, breakdown },
+                      ]) => (
+                        <div
+                          key={item_id}
+                          className="border border-gray-200 rounded-lg p-3 bg-gray-50 hover:bg-gray-100 transition-colors duration-200"
+                        >
+                          {/* Header SKU */}
+                          <div className="flex justify-between items-start mb-2 bg-green-200 p-2 rounded-md">
+                            <div>
+                              <p className="text-sm font-semibold text-gray-900">
+                                {item_name}
+                              </p>
+                              <p className="text-xs text-gray-500">
+                                Item No: {item_number}
+                              </p>
+                            </div>
+                            <div className="text-right bg-green-100 text-green-800 px-2 py-1 rounded-md text-xs font-semibold">
+                              Total Qty: {qty}
+                            </div>
+                          </div>
+
+                          {/* Breakdown / Source */}
+                          <div className="border-t border-gray-200 mt-3 pt-2">
+                            <p className="text-xs font-semibold text-gray-600 mb-2">
+                              Source:
+                            </p>
+
+                            <div className="overflow-x-auto">
+                              <table className="min-w-full text-xs border border-gray-100 rounded-md">
+                                <thead className="bg-gray-100 text-gray-700 font-semibold">
+                                  <tr>
+                                    <th className="px-3 py-2 text-left border-b border-gray-200">
+                                      No. SJ
+                                    </th>
+                                    <th className="px-3 py-2 text-left border-b border-gray-200">
+                                      No. PO
+                                    </th>
+                                    <th className="px-3 py-2 text-right border-b border-gray-200">
+                                      Qty
+                                    </th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {breakdown.map((b, idx) => (
+                                    <tr
+                                      key={idx}
+                                      className="odd:bg-white even:bg-gray-50 hover:bg-gray-100 transition-colors"
+                                    >
+                                      <td className="px-3 py-2 text-gray-800">
+                                        {b.do_no}
+                                      </td>
+                                      <td className="px-3 py-2 text-gray-800">
+                                        {b.po_no}
+                                      </td>
+                                      <td className="px-3 py-2 text-right font-semibold text-gray-900">
+                                        {b.qty}
+                                      </td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            </div>
+                          </div>
+                        </div>
+                      )
+                    )}
+                  </div>
+                </div>
+              </div>
             </section>
 
             {/* Section 3: DO Detail Table (Expandable) */}
@@ -224,7 +326,6 @@ export default function ConfirmationModal({
 
                       return (
                         <React.Fragment key={do_.do_no}>
-                          {/* Parent Row */}
                           <tr
                             className="bg-white hover:bg-slate-50 transition"
                             onClick={() => toggleExpand(do_.do_no)}
@@ -253,7 +354,6 @@ export default function ConfirmationModal({
                             </td>
                           </tr>
 
-                          {/* Expandable Row */}
                           {expandedDO === do_.do_no && (
                             <tr>
                               <td

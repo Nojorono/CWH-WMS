@@ -47,6 +47,39 @@ export const createCrudService = <TData, TCreate, TUpdate>(baseUrl: string) => (
         return handleAxios<TData[]>(axiosInstance.get(`${baseUrl}?${queryString}`));
     },
 
+    fetchUsingPagination: async (params: Record<string, any>): Promise<{
+        data: TData[];
+        total: number;
+        page: number;
+        limit: number;
+    }> => {
+        const searchParams = new URLSearchParams();
+        Object.entries(params).forEach(([key, value]) => {
+            if (value !== undefined && value !== null && value !== "") {
+                searchParams.append(key, String(value));    
+            }
+        });
+
+        const queryString = searchParams.toString();
+        console.log("Pagination URL:", `${baseUrl}?${queryString}`);
+        const res = await axiosInstance.get(`${baseUrl}?${queryString}`);
+
+        if (!res.data.success) {
+            throw new Error(res.data.error || res.data.message);
+        }
+
+        const rawData = res.data.data;
+        const meta = res.data.meta || {};
+        const isArray = Array.isArray(rawData);
+
+        return {
+            data: isArray ? rawData : rawData.items || [],
+            total: meta.total || (isArray ? rawData.length : rawData.total || 0),
+            page: meta.page || (isArray ? (params.page || 1) : rawData.page || 1),
+            limit: meta.limit || (isArray ? (params.limit || 10) : rawData.limit || 10),
+        };
+    },
+
     fetchById: async (id: any): Promise<TData> => {
         return handleAxios<TData>(axiosInstance.get(`${baseUrl}/${id}`));
     },
@@ -55,15 +88,9 @@ export const createCrudService = <TData, TCreate, TUpdate>(baseUrl: string) => (
         return handleAxios<TData>(axiosInstance.post(baseUrl, payload));
     },
 
-    // ✅ Fungsi baru untuk bulk create
-    // createBulk: async (payload: TCreate[]): Promise<TData[]> => {
-    //     return handleAxios<TData[]>(axiosInstance.post(baseUrl, payload));
-    // },
-
     createBulk: async (payload: { data: TCreate[] }): Promise<TData[]> => {
         return handleAxios<TData[]>(axiosInstance.post(baseUrl, payload));
     },
-
 
     update: async (id: number, payload: TUpdate): Promise<TData> => {
         try {

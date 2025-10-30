@@ -3,11 +3,10 @@ import { useForm, useFieldArray, FormProvider } from "react-hook-form";
 import { useLocation, useNavigate } from "react-router";
 import { FormValues } from "./component/formTypes";
 import { useStoreInboundGoodStock } from "../../../../DynamicAPI/stores/Store/MasterStore";
-import { CreateInboundPlanning } from "../../../../DynamicAPI/types/InboundGoodStock";
-import { formatDateIndo } from "../../../../helper/FormatDate";
 import { showErrorToast } from "../../../../components/toast";
 import InboundPlanningFormView from "./InboundPlanningFormView";
 import { mapDetailToFormValues } from "./component/Helper/mapperData";
+import { mapToPayload } from "./component/Helper/mapperFinalPayload";
 
 // --- Default empty values
 const emptyFormValues: FormValues = {
@@ -25,46 +24,6 @@ const emptyFormValues: FormValues = {
   ],
   id: "",
 };
-
-// --- Mapper Form → API payload
-function mapToPayload(data: FormValues): CreateInboundPlanning {
-  const inboundType =
-    typeof data.inbound_type === "string"
-      ? data.inbound_type
-      : (data.inbound_type as any)?.value || "";
-
-  return {
-    expedition: data.expedition ?? "",
-    origin: data.origin?.toUpperCase() ?? "",
-    license_plate: data.no_pol?.toUpperCase().replace(/\s+/g, "").trim() ?? "",
-    driver_name: data.driver?.toUpperCase() ?? "",
-    driver_phone: data.driver_phone ?? "",
-    status: "CREATED",
-    inbound_type: inboundType,
-    arrival_date: data.arrival_date
-      ? new Date(data.arrival_date).toISOString()
-      : "",
-    inbound_dos: data.deliveryOrders.flatMap((doItem) =>
-      doItem.pos.map((po) => ({
-        inbound_do_number: doItem.do_no ?? "",
-        inbound_do_date: doItem.date
-          ? formatDateIndo(new Date(doItem.date))
-          : "",
-        attachment:
-          "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTzgjIAAURnMoFvRhgte0Va4hSBX7PglNzp5xwSNWDxZlmtxrd61wPkfhnOA2RBR-zJ5LA&usqp=CAU", //URL S3 masih HARDCODE
-        inbound_po_number: po.po_no ?? "",
-        inbound_po_date: po.po_date ? formatDateIndo(new Date(po.po_date)) : "",
-        flag_validated: doItem.flag_validated ?? false, // <-- ensure flag_validated is included
-        validation_surat_jalan: doItem.validation_surat_jalan ?? false, // <-- include validation_surat_jalan
-        inbound_items: po.items.map((item) => ({
-          item_id: item.item_id ?? "",
-          quantity: item.qty ? Number(item.qty) : 0,
-          uom: item.uom ?? "",
-        })),
-      }))
-    ),
-  };
-}
 
 export default function InboundPlanningFormContainer() {
   const navigate = useNavigate();
@@ -167,6 +126,8 @@ export default function InboundPlanningFormContainer() {
   // SUBMIT CREATE OR UPDATE
   const onFinalSubmit = async (data: FormValues) => {
     const payload = mapToPayload(data);
+
+    console.log("Final Payload:", payload);
 
     const id = dataInbound?.id;
     if (isCreateMode) {

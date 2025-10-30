@@ -1,6 +1,13 @@
 import { create } from "zustand";
 import { showErrorToast, showSuccessToast } from "../../components/toast";
 
+interface PaginationState {
+    totalPages: number;
+    page: number;
+    limit: number;
+    total: number;
+}
+
 interface CrudStoreOptions<TData, TCreate, TUpdate> {
     name: string;
     service: {
@@ -11,12 +18,26 @@ interface CrudStoreOptions<TData, TCreate, TUpdate> {
         update: (id: any, payload: TUpdate) => Promise<TData>;
         delete: (id: any) => Promise<boolean>;
         fetchUsingParam: (param: any) => Promise<TData[]>;
+        fetchUsingPagination?: (params: any) => Promise<{
+            data: TData[];
+            page: number;
+            limit: number;
+            total: number;
+            status?: string;
+        }>;
     };
+
+    pagination?: PaginationState;
 }
+
 
 export const createCrudStore = <TData, TCreate, TUpdate>({
     name,
     service,
+    pagination = {
+        page: 1, limit: 10, total: 0,
+        totalPages: 0
+    },
 }: CrudStoreOptions<TData, TCreate, TUpdate>) =>
     create<{
         list: TData[];
@@ -24,14 +45,16 @@ export const createCrudStore = <TData, TCreate, TUpdate>({
         isLoading: boolean;
         error: string | null;
         currentId: any;
+        pagination: PaginationState;
 
         fetchAll: () => Promise<{ success: boolean; message?: string }>;
         fetchById: (id: any) => Promise<void>;
         createData: (payload: TCreate) => Promise<{ success: boolean; message?: string }>;
-        createBulkData?: (payload: { data: TCreate[] }) => Promise<{ success: boolean; message?: string }>; 
+        createBulkData?: (payload: { data: TCreate[] }) => Promise<{ success: boolean; message?: string }>;
         updateData: (id: any, payload: TUpdate) => Promise<{ success: boolean; message?: string }>;
         deleteData: (id: any) => Promise<void>;
         fetchUsingParam: (param: any) => Promise<void>;
+        fetchUsingPagination?: (params: any) => Promise<void>;
 
         resetDetail: () => void;
         setCurrentId: (id: any) => void;
@@ -42,6 +65,7 @@ export const createCrudStore = <TData, TCreate, TUpdate>({
         isLoading: false,
         error: null,
         currentId: null,
+        pagination,
 
         fetchAll: async () => {
             set({ isLoading: true, error: null });
@@ -72,6 +96,90 @@ export const createCrudStore = <TData, TCreate, TUpdate>({
                 set({ isLoading: false });
             }
         },
+
+
+        // fetchUsingPagination: async (params: any) => {
+        //     if (!service.fetchUsingPagination) return;
+        //     set({ isLoading: true, error: null });
+
+        //     try {
+        //         const result = await service.fetchUsingPagination(params);
+
+        //         // 🚀 Patch: fallback total kalau backend cuma kirim data.length
+        //         const total = result.total && result.total > 0 ? result.total : result.data.length;
+        //         const totalPages = Math.ceil(total / (params.limit || 10));
+
+        //         console.log("Pagination Result (patched):", {
+        //             ...result,
+        //             total,
+        //             totalPages,
+        //         });
+
+        //         set({
+        //             list: result.data,
+        //             pagination: {
+        //                 page: result.page,
+        //                 limit: result.limit,
+        //                 total,
+        //                 totalPages,
+        //             },
+        //         });
+        //     } catch (err: any) {
+        //         const msg = err.message || `Failed to fetch ${name} with pagination`;
+        //         showErrorToast(msg);
+        //         set({ error: msg });
+        //     } finally {
+        //         set({ isLoading: false });
+        //     }
+        // },
+
+
+        fetchUsingPagination: async (params: any) => {
+            if (!service.fetchUsingPagination) return;
+
+            set({ isLoading: true, error: null });
+
+            try {
+                const result = await service.fetchUsingPagination(params);
+
+                // 🧠 Defensive handling untuk nilai undefined/null
+                const data = Array.isArray(result?.data) ? result.data : [];
+                const page = Number(result?.page) || params.page || 1;
+                const limit = Number(result?.limit) || params.limit || 10;
+
+                // 🚀 Patch: hitung total dan totalPages aman
+                const total = typeof result?.total === "number" ? result.total : data.length;
+                const totalPages = Math.max(1, Math.ceil(total / limit));
+
+                // 🧩 Debug log (sementara)
+                console.log(`[${name}] Pagination fetched:`, {
+                    page,
+                    limit,
+                    total,
+                    totalPages,
+                    receivedData: data.length,
+                });
+
+                // ✅ Set state aman
+                set({
+                    list: data,
+                    pagination: { page, limit, total, totalPages },
+                });
+
+                // Do not return any value to match the expected signature
+            } catch (err: any) {
+                const msg = err.message || `Failed to fetch ${name} with pagination`;
+                console.error(`[${name}] Pagination Error:`, err);
+                showErrorToast(msg);
+                set({ error: msg, list: [] });
+                // Do not return any value to match the expected signature
+            } finally {
+                set({ isLoading: false });
+            }
+        },
+
+
+
 
         fetchById: async (id: any) => {
             set({ isLoading: true, error: null });
