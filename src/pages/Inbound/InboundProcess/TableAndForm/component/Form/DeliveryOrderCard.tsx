@@ -83,6 +83,8 @@ export default function DeliveryOrderCard({
   const inputClass = (hasError?: boolean) =>
     `${inputCls} ${hasError ? "border-red-500 focus:ring-red-500" : ""}`;
 
+  const fileUrl = watch(`deliveryOrders.${doIndex}.attachment`);
+
   const handleDeleteFile = async (fileUrl: string) => {
     setDeleting(true);
     try {
@@ -98,26 +100,60 @@ export default function DeliveryOrderCard({
     }
   };
 
+  // const handleUploadFile = async (file: File) => {
+  //   setUploading(true);
+  //   try {
+  //     const fileUrl = await uploadFileToS3(file);
+  //     if (fileUrl) {
+  //       setValue(`deliveryOrders.${doIndex}.attachment`, fileUrl, {
+  //         shouldValidate: true,
+  //       });
+  //       showSuccessToast(`Upload berhasil: ${file.name}`);
+  //     } else {
+  //       showErrorToast(`Upload gagal untuk ${file.name}`);
+  //     }
+  //   } catch {
+  //     showErrorToast(`Upload error untuk ${file.name}`);
+  //   } finally {
+  //     setUploading(false);
+  //   }
+  // };
+
   const handleUploadFile = async (file: File) => {
     setUploading(true);
     try {
-      const fileUrl = await uploadFileToS3(file);
-      if (fileUrl) {
-        setValue(`deliveryOrders.${doIndex}.attachment`, fileUrl, {
+      // Ambil file lama (jika ada)
+      const oldFileUrl = watch(`deliveryOrders.${doIndex}.attachment`);
+
+      // Kalau ada file lama → hapus dulu dari S3
+      if (oldFileUrl) {
+        try {
+          await deleteFileFromS3(oldFileUrl);
+          console.log("✅ File lama dihapus:", oldFileUrl);
+        } catch (err) {
+          console.warn("⚠️ Gagal hapus file lama:", err);
+          // Tidak fatal, lanjut upload baru saja
+        }
+      }
+
+      // Upload file baru
+      const newFileUrl = await uploadFileToS3(file);
+
+      if (newFileUrl) {
+        setValue(`deliveryOrders.${doIndex}.attachment`, newFileUrl, {
           shouldValidate: true,
         });
         showSuccessToast(`Upload berhasil: ${file.name}`);
       } else {
         showErrorToast(`Upload gagal untuk ${file.name}`);
       }
-    } catch {
+    } catch (error) {
+      console.error("Upload error:", error);
       showErrorToast(`Upload error untuk ${file.name}`);
     } finally {
       setUploading(false);
     }
   };
-
-  const fileUrl = watch(`deliveryOrders.${doIndex}.attachment`);
 
   const [doStatus, setDoStatus] = useState<"success" | "failed" | null>(null);
   const [isCheckDisabled, setIsCheckDisabled] = useState(false);

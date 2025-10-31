@@ -210,15 +210,32 @@ const DynamicForm: React.FC<DynamicFormProps> = ({
 
             {/* TEL (nomor telepon) */}
             {field.type === "tel" && (
-              <input
-                type="tel"
-                {...register(field.name, field.validation)}
-                className={`${fieldError ? errorClasses : commonClasses} ${
-                  isDisabled ? disabledClasses : ""
-                }`}
-                disabled={isDisabled}
-                readOnly={isDisabled}
-              />
+              <div className="flex items-center">
+                {/* Prefix kode negara */}
+                <span className="px-2 py-2 text-sm text-gray-700 bg-gray-100 border border-r-0 border-gray-300 rounded-l-md select-none">
+                  +62
+                </span>
+
+                {/* Input nomor telepon */}
+                <input
+                  type="tel"
+                  {...register(field.name, {
+                    ...field.validation,
+                    onChange: (e: React.ChangeEvent<HTMLInputElement>) => {
+                      // Hanya izinkan angka
+                      e.target.value = e.target.value.replace(/\D/g, "");
+                    },
+                    setValueAs: (v: string) =>
+                      v ? `+62${v.replace(/^0+/, "")}` : "",
+                  })}
+                  placeholder="phone number"
+                  className={`${
+                    fieldError ? errorClasses : commonClasses
+                  } rounded-l-none ${isDisabled ? disabledClasses : ""}`}
+                  disabled={isDisabled}
+                  readOnly={isDisabled}
+                />
+              </div>
             )}
 
             {/* CUSTOM */}

@@ -9,10 +9,7 @@ import { showErrorToast } from "../../../../../../components/toast";
  * - Membersihkan dan menormalisasi field
  * - Melempar error jika hasil qty bukan bilangan bulat
  */
-export function mapToPayload(data: FormValues): CreateInboundPlanning {
-
-    console.log("Mapping to payload with data:", data);
-    
+export function mapToPayload(data: FormValues): CreateInboundPlanning {    
     const inboundType =
         typeof data.inbound_type === "string"
             ? data.inbound_type
