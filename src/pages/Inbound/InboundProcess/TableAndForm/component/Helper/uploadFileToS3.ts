@@ -20,9 +20,7 @@ export async function uploadFileToS3(file: File): Promise<string | null> {
             },
         });
 
-        console.log("Upload s3 res", res);
-
-        return res.data?.data?.data?.url ?? null;
+        return res.data?.data?.url ?? null;
     } catch (err) {
         console.error("Upload gagal:", err);
         return null;

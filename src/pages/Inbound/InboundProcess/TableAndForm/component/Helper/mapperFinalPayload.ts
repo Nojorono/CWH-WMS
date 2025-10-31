@@ -10,6 +10,9 @@ import { showErrorToast } from "../../../../../../components/toast";
  * - Melempar error jika hasil qty bukan bilangan bulat
  */
 export function mapToPayload(data: FormValues): CreateInboundPlanning {
+
+    console.log("Mapping to payload with data:", data);
+    
     const inboundType =
         typeof data.inbound_type === "string"
             ? data.inbound_type
@@ -74,8 +77,7 @@ export function mapToPayload(data: FormValues): CreateInboundPlanning {
                     inbound_do_date: doItem.date
                         ? formatDateIndo(new Date(doItem.date))
                         : "",
-                    attachment:
-                        "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTzgjIAAURnMoFvRhgte0Va4hSBX7PglNzp5xwSNWDxZlmtxrd61wPkfhnOA2RBR-zJ5LA&usqp=CAU",
+                    attachment: doItem.attachment ?? "",
                     inbound_po_number: po.po_no ?? "",
                     inbound_po_date: po.po_date
                         ? formatDateIndo(new Date(po.po_date))
