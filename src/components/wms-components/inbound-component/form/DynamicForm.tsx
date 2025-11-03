@@ -209,10 +209,36 @@ const DynamicForm: React.FC<DynamicFormProps> = ({
             )}
 
             {/* TEL (nomor telepon) */}
-            {field.type === "tel" && (
+            {/* {field.type === "tel" && (
               <div className="flex items-center">
-                {/* Prefix kode negara */}
                 <span className="px-2 py-2 text-sm text-gray-700 bg-gray-100 border border-r-0 border-gray-300 rounded-l-md select-none">
+                  +62
+                </span>
+
+                <input
+                  type="tel"
+                  {...register(field.name, {
+                    ...field.validation,
+                    onChange: (e: React.ChangeEvent<HTMLInputElement>) => {
+                      e.target.value = e.target.value.replace(/\D/g, "");
+                    },
+                    setValueAs: (v: string) =>
+                      v ? `+62${v.replace(/^0+/, "")}` : "",
+                  })}
+                  placeholder="phone number"
+                  className={`${
+                    fieldError ? errorClasses : commonClasses
+                  } rounded-l-none ${isDisabled ? disabledClasses : ""}`}
+                  disabled={isDisabled}
+                  readOnly={isDisabled}
+                />
+              </div>
+            )} */}
+
+            {field.type === "tel" && (
+              <div className="flex items-center w-full">
+                {/* Prefix kode negara */}
+                <span className="flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 border-r-0 rounded-l-md select-none">
                   +62
                 </span>
 
@@ -228,10 +254,16 @@ const DynamicForm: React.FC<DynamicFormProps> = ({
                     setValueAs: (v: string) =>
                       v ? `+62${v.replace(/^0+/, "")}` : "",
                   })}
-                  placeholder="phone number"
-                  className={`${
-                    fieldError ? errorClasses : commonClasses
-                  } rounded-l-none ${isDisabled ? disabledClasses : ""}`}
+                  placeholder="Masukkan nomor telepon"
+                  className={`w-full px-3 py-2 text-sm border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 rounded-r-md rounded-l-none transition-all ${
+                    fieldError
+                      ? "border-red-500 focus:ring-red-500 focus:border-red-500"
+                      : ""
+                  } ${
+                    isDisabled
+                      ? "bg-gray-100 text-gray-500 cursor-not-allowed"
+                      : ""
+                  }`}
                   disabled={isDisabled}
                   readOnly={isDisabled}
                 />
