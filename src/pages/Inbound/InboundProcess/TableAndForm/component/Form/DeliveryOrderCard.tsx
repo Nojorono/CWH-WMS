@@ -306,17 +306,6 @@ export default function DeliveryOrderCard({
           {/* === RIGHT SECTION: Action Buttons === */}
           {(isEditMode || isCreateMode) && (
             <div className="flex flex-wrap items-center justify-end gap-2 w-full sm:w-auto">
-              {/* <Button
-                size="xsm"
-                type="button"
-                variant="secondary"
-                onClick={() => appendPos({ po_no: "", items: [] })}
-                disabled={!doNo || posFields.length > 0}
-              >
-                <FaPlus className="inline mr-1" />
-                Add PO
-              </Button> */}
-
               {totalDO > 1 && (
                 <Button
                   size="xsm"
@@ -381,80 +370,10 @@ export default function DeliveryOrderCard({
               )}
             </div>
 
-            {/* === Attachment ===
-            <div className="flex flex-col">
-              <label className="block text-xs text-slate-600 mb-1">
-                Attachment <span className="text-red-500">*</span>
-              </label>
-
-              {fileUrl ? (
-                <div className="flex items-center gap-2">
-                  <a
-                    href={fileUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-sm text-blue-600 underline break-all"
-                  >
-                    Lihat file
-                  </a>
-                  {(isEditMode || isCreateMode) && (
-                    <button
-                      type="button"
-                      className={`text-xs flex items-center gap-1 ${
-                        deleting || isDetailMode || !isDOChecked
-                          ? "text-gray-400 cursor-not-allowed"
-                          : "text-red-600 hover:text-red-700"
-                      }`}
-                      disabled={deleting || isDetailMode || !isDOChecked}
-                      onClick={() => handleDeleteFile(fileUrl)}
-                    >
-                      {deleting ? "Deleting..." : <FaTrash size={12} />}
-                      {!deleting && "Delete"}
-                    </button>
-                  )}
-                </div>
-              ) : (
-                <div
-                  className={`relative w-full ${
-                    isDetailMode || uploading || !isDOChecked
-                      ? "bg-gray-100 cursor-not-allowed"
-                      : ""
-                  }`}
-                >
-                  <input
-                    type="file"
-                    className={`${inputClass(
-                      !!getError("attachment")
-                    )} text-xs w-full 
-          ${
-            isDetailMode || uploading || !isDOChecked
-              ? "bg-gray-100 cursor-not-allowed"
-              : ""
-          }
-        `}
-                    disabled={isDetailMode || uploading || !isDOChecked}
-                    onChange={async (e) => {
-                      if (isDetailMode) return;
-                      const file = e.target.files?.[0];
-                      if (file) await handleUploadFile(file);
-                    }}
-                  />
-                  {!isDOChecked && (
-                    <div className="absolute inset-0 flex items-center justify-center bg-gray-100 bg-opacity-70 text-gray-500 text-xs rounded cursor-not-allowed">
-                      🔒 Harus validasi SJ dahulu
-                    </div>
-                  )}
-                </div>
-              )}
-              {uploading && (
-                <p className="text-xs text-slate-500 mt-1">Uploading...</p>
-              )}
-            </div> */}
-
             {/* === Attachment === */}
             <div className="flex flex-col">
               <label className="block text-xs text-slate-600 mb-1">
-                Attachment <span className="text-red-500">*</span>
+                Attachment <span className="text-red-500">*tidak boleh dari 2 MB</span>
               </label>
 
               {fileUrl ? (

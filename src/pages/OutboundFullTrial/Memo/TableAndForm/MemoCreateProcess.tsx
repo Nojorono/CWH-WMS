@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form";
 import Button from "../../../../components/ui/button/Button";
 import PageBreadcrumb from "../../../../components/common/PageBreadCrumb";
 import TableComponent from "../../../../components/tables/MasterDataTable/TableComponent";
-import ModalAddItem from "./ModalAddItem";
+import ModalAddItem from "../Modal/ModalAddItem";
 import DynamicForm, {
   FieldConfig,
 } from "../../../../components/wms-components/inbound-component/form/DynamicForm";
@@ -412,7 +412,7 @@ const CreateMemo: React.FC = () => {
             variant="primary"
             onClick={methods.handleSubmit(onFinalSubmit)}
           >
-            {isEdit ? "Update Memo" : "Create Memo"}
+            {isEdit ? "Update Memo" : "Confirm Memo"}
           </Button>
         </div>
       )}

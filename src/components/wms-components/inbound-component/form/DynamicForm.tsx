@@ -103,7 +103,10 @@ const DynamicForm: React.FC<DynamicFormProps> = ({
             {field.type === "text" && (
               <input
                 type="text"
-                {...register(field.name, field.validation)}
+                {...register(field.name, {
+                  ...field.validation,
+                  required: true,
+                })}
                 className={`${fieldError ? errorClasses : commonClasses} ${
                   isDisabled ? disabledClasses : ""
                 }`}
@@ -116,7 +119,10 @@ const DynamicForm: React.FC<DynamicFormProps> = ({
             {field.type === "number" && (
               <input
                 type="number"
-                {...register(field.name, field.validation)}
+                {...register(field.name, {
+                  ...field.validation,
+                  required: true,
+                })}
                 className={`${fieldError ? errorClasses : commonClasses} ${
                   isDisabled ? disabledClasses : ""
                 }`}
@@ -128,7 +134,10 @@ const DynamicForm: React.FC<DynamicFormProps> = ({
             {/* TEXTAREA */}
             {field.type === "textarea" && (
               <textarea
-                {...register(field.name, field.validation)}
+                {...register(field.name, {
+                  ...field.validation,
+                  required: true,
+                })}
                 rows={3}
                 className={`${fieldError ? errorClasses : commonClasses} ${
                   isDisabled ? disabledClasses : ""
@@ -143,7 +152,7 @@ const DynamicForm: React.FC<DynamicFormProps> = ({
               <Controller
                 name={field.name}
                 control={control}
-                rules={field.validation}
+                rules={{ ...field.validation, required: true }}
                 render={({ field: controllerField }) => (
                   <Select
                     {...controllerField}
@@ -154,7 +163,7 @@ const DynamicForm: React.FC<DynamicFormProps> = ({
                       control: (base, state) => ({
                         ...base,
                         backgroundColor: isDisabled ? "#f3f4f6" : "white",
-                        borderColor: fieldError ? "#f87171" : base.borderColor, // merah jika error
+                        borderColor: fieldError ? "#f87171" : base.borderColor,
                         boxShadow: fieldError
                           ? "0 0 0 1px #f87171"
                           : state.isFocused
@@ -179,7 +188,7 @@ const DynamicForm: React.FC<DynamicFormProps> = ({
               <Controller
                 name={field.name}
                 control={control}
-                rules={field.validation}
+                rules={{ ...field.validation, required: true }}
                 render={({ field: controllerField, fieldState }) => (
                   <DatePicker
                     id={controllerField.name}
@@ -199,7 +208,10 @@ const DynamicForm: React.FC<DynamicFormProps> = ({
             {field.type === "file" && (
               <input
                 type="file"
-                {...register(field.name, field.validation)}
+                {...register(field.name, {
+                  ...field.validation,
+                  required: true,
+                })}
                 className={`${fieldError ? errorClasses : commonClasses} ${
                   isDisabled ? disabledClasses : ""
                 }`}
@@ -208,47 +220,18 @@ const DynamicForm: React.FC<DynamicFormProps> = ({
               />
             )}
 
-            {/* TEL (nomor telepon) */}
-            {/* {field.type === "tel" && (
-              <div className="flex items-center">
-                <span className="px-2 py-2 text-sm text-gray-700 bg-gray-100 border border-r-0 border-gray-300 rounded-l-md select-none">
-                  +62
-                </span>
-
-                <input
-                  type="tel"
-                  {...register(field.name, {
-                    ...field.validation,
-                    onChange: (e: React.ChangeEvent<HTMLInputElement>) => {
-                      e.target.value = e.target.value.replace(/\D/g, "");
-                    },
-                    setValueAs: (v: string) =>
-                      v ? `+62${v.replace(/^0+/, "")}` : "",
-                  })}
-                  placeholder="phone number"
-                  className={`${
-                    fieldError ? errorClasses : commonClasses
-                  } rounded-l-none ${isDisabled ? disabledClasses : ""}`}
-                  disabled={isDisabled}
-                  readOnly={isDisabled}
-                />
-              </div>
-            )} */}
-
             {field.type === "tel" && (
               <div className="flex items-center w-full">
-                {/* Prefix kode negara */}
                 <span className="flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 border-r-0 rounded-l-md select-none">
                   +62
                 </span>
 
-                {/* Input nomor telepon */}
                 <input
                   type="tel"
                   {...register(field.name, {
                     ...field.validation,
+                    required: true,
                     onChange: (e: React.ChangeEvent<HTMLInputElement>) => {
-                      // Hanya izinkan angka
                       e.target.value = e.target.value.replace(/\D/g, "");
                     },
                     setValueAs: (v: string) =>

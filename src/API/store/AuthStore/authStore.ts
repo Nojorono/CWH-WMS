@@ -98,6 +98,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       localStorage.setItem("role_name", user?.role?.name || "");
       localStorage.setItem("token", accessToken);
       localStorage.setItem("user_id", user?.id?.toString() || "");
+      localStorage.setItem("menus", JSON.stringify(menus));
 
       // Update state global
       set({

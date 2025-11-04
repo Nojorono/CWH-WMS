@@ -1,8 +1,16 @@
 // utils/uploadFileToS3.ts
 import axios from "axios";
 import { S3EndPoint } from "../../../../../../utils/EndPoint";
+import { showErrorToast } from "../../../../../../components/toast";
+
+const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2 MB
 
 export async function uploadFileToS3(file: File): Promise<string | null> {
+    if (file.size > MAX_FILE_SIZE) {
+        showErrorToast("File size exceeds 2 MB limit.");
+        return null;
+    }
+
     try {
         const token = localStorage.getItem("token");
         const formData = new FormData();
