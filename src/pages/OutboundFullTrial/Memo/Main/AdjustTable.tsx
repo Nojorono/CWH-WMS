@@ -60,6 +60,8 @@ const AdjustTable = ({
 
   const roleName = localStorage.getItem("role_name");
 
+  console.log("role name:", roleName);
+
   const columns: ColumnDef<MemoData>[] = useMemo(
     () => [
       { accessorKey: "no", header: "No" },

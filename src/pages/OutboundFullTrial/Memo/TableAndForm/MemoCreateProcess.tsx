@@ -308,6 +308,7 @@ const CreateMemo: React.FC = () => {
         });
         const data = await res.json();
         if (res.ok) {
+          showErrorToast("Memo approved successfully");
           navigate("/memo");
         } else {
           showErrorToast(data?.message || "Failed to approve memo");
@@ -318,6 +319,34 @@ const CreateMemo: React.FC = () => {
     };
 
     approveMemo(memoId);
+  };
+
+  const handleRejectedMemo = (memoId: string) => {
+    // Implementasi logika untuk menolak memo
+
+    const rejectMemo = async (memoId: string) => {
+      const token = localStorage.getItem("token");
+      try {
+        const res = await fetch(`${EndPoint}outbound-memo/${memoId}/rejected`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        const data = await res.json();
+        if (res.ok) {
+          showErrorToast("Memo rejected successfully");
+          navigate("/memo");
+        } else {
+          showErrorToast(data?.message || "Failed to reject memo");
+        }
+      } catch (err) {
+        showErrorToast("Network error rejecting memo");
+      }
+    };
+
+    rejectMemo(memoId);
   };
 
   if (isLoading && (isEdit || isDetail)) {
@@ -363,7 +392,7 @@ const CreateMemo: React.FC = () => {
               <Button
                 type="button"
                 variant="danger"
-                // onClick={() => setOpenModal(true)}
+                onClick={() => handleRejectedMemo(memoId)}
               >
                 Reject Memo
               </Button>

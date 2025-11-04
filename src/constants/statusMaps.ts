@@ -32,7 +32,7 @@ export const STATUS_MAP_INTEGRATION_INBOUND: StatusMap = {
 export const STATUS_MAP_MEMO: StatusMap = {
   PENDING: "grey",
   APPROVED: "success",
-  REJECT: "error",
+  REJECTED: "error",
 };
 
 // 🚛 Outbound Module
