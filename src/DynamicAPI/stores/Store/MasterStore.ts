@@ -24,6 +24,7 @@ import {
     PutAwayService,
     PutAwayBulkService,
     OutboundMemoService,
+    OutboundDeliveryService
 } from "../../services/Service/MasterService";
 
 import { Uom, CreateUom, UpdateUom } from "../../types/UomTypes";
@@ -46,8 +47,8 @@ import { InboundPlanning, CreateInboundPlanning, UpdateInboundPlanning } from ".
 import { InventoryListResponse } from '../../types/InventoryTypes'
 import { PutAwaySuggestionResponse } from '../../types/PutAwaySuggestionTypes.tsx'
 import { PutAway, CreatePutAway, UpdatePutAway } from '../../types/PutAwayTypes.tsx'
-
 import { OutboundMemo, OutboundMemoCreate, OutboundMemoUpdateItem } from '../../types/MemoTypes.tsx'
+import { OutboundDelivery, OutboundDeliveryCreateUpdate } from '../../types/DeliverOrderTypes.tsx'
 
 // Daftar semua store di sini
 export const useStoreUom = createCrudStore<Uom, CreateUom, UpdateUom>({
@@ -168,4 +169,9 @@ export const useStoreBulkPutAway = createCrudStore<PutAway, CreatePutAway, Updat
 export const useStoreOutboundMemo = createCrudStore<OutboundMemo, OutboundMemoCreate, OutboundMemoUpdateItem>({
     name: "OutboundMemo",
     service: OutboundMemoService,
+});
+
+export const useStoreOutboundDelivery = createCrudStore<OutboundDelivery, OutboundDeliveryCreateUpdate, OutboundDeliveryCreateUpdate>({
+    name: "OutboundDelivery",
+    service: OutboundDeliveryService,
 });

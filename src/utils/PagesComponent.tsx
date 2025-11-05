@@ -41,7 +41,9 @@ import MasterSupplier from "../pages/Master/MasterSupplier";
 //OUTBOUND
 import Memo from "../pages/OutboundFullTrial/Memo";
 import MemoProcess from "../pages/OutboundFullTrial/Memo/TableAndForm/MemoCreateProcess";
-import Outbound from "../pages/OutboundFullTrial/DO";
+import OutboundDO from "../pages/OutboundFullTrial/DO";
+import CreateDO from "../pages/OutboundFullTrial/DO/Main/CreateDO";
+
 
 export {
   // PAGE MASTER
@@ -83,5 +85,6 @@ export {
   // OUTBOUND
   Memo,
   MemoProcess,
-  Outbound,
+  OutboundDO,
+  CreateDO,
 };
