@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { FaEye, FaEdit } from "react-icons/fa";
+import { FaEye, FaEdit, FaAdjust, FaTasks } from "react-icons/fa";
 import { ColumnDef } from "@tanstack/react-table";
 import TableComponent from "../../../../components/tables/MasterDataTable/TableComponent";
 import { useNavigate } from "react-router-dom";
@@ -64,12 +64,21 @@ const AdjustTable = ({
     // });
   };
 
+  const handleAdjust = (data: MemoData) => {
+
+    console.log("Adjust Memo Data:", data);
+    
+    // navigate("/outbound_do/adjust_memo", {
+    //   state: { data: id, mode: "adjust", title: "Adjust Memo" },
+    // });
+  };
+
   const roleName = localStorage.getItem("role_name");
 
   const columns: ColumnDef<MemoData>[] = useMemo(
     () => [
       // { accessorKey: "no", header: "No" },
-      { accessorKey: "outboundDoNumber", header: "DO Number" },
+      { accessorKey: "outbound_do_number", header: "DO Number" },
       { accessorKey: "expedition", header: "Expedition" },
       { accessorKey: "origin", header: "Origin" },
       { accessorKey: "licensePlate", header: "License Plate" },
@@ -98,6 +107,7 @@ const AdjustTable = ({
               onClick={() => handleDetail(row.original.id)}
               title="Detail"
             />
+
             {roleName !== "SUPERVISOR" && (
               <FaEdit
                 className={`size-5 cursor-pointer ${
@@ -121,6 +131,12 @@ const AdjustTable = ({
                 }}
               />
             )}
+
+            <FaTasks
+              className="size-5 cursor-pointer text-yellow-600 hover:scale-110 transition"
+              onClick={() => handleAdjust(row.original)}
+              title="Adjust Memo"
+            />
           </div>
         ),
       },

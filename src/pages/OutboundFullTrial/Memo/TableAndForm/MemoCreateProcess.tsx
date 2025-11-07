@@ -13,7 +13,9 @@ import { showErrorToast } from "../../../../components/toast";
 import { useStoreOutboundMemo } from "../../../../DynamicAPI/stores/Store/MasterStore";
 import { useLocation, useNavigate } from "react-router";
 import { EndPoint } from "../../../../utils/EndPoint";
+import { useCustomerByOutboundType } from "./FetchCustomer";
 
+// ✅ Tambahkan selected_customer
 type MemoFormValues = {
   requestor: string;
   origin: string;
@@ -21,6 +23,17 @@ type MemoFormValues = {
   destination: string;
   delivery_date: string;
   notes: string;
+  address?: string;
+
+  type_outbound?: {
+    label: string;
+    value: string;
+  } | null;
+
+  selected_customer?: {
+    label: string;
+    value: string;
+  } | null;
 };
 
 type ItemRow = {
@@ -31,6 +44,7 @@ type ItemRow = {
   uom?: string;
   uom_name?: string;
   notes?: string;
+  address?: string;
 };
 
 const LoadingIndicator = () => (
@@ -65,11 +79,193 @@ const CreateMemo: React.FC = () => {
       destination: "",
       delivery_date: "",
       notes: "",
+      selected_customer: null,
     },
   });
 
   const [items, setItems] = useState<ItemRow[]>([]);
   const [openModal, setOpenModal] = useState(false);
+
+  // ✅ Watch type_outbound
+  const typeOutbound = methods.watch("type_outbound");
+
+  // ✅ Fetch customer berdasarkan type_outbound
+  const {
+    customerList,
+    customerRaw,
+    loading: loadingCustomer,
+  } = useCustomerByOutboundType(typeOutbound, methods);
+
+  // ✅ Watch selected_customer
+  const selectedCustomer = methods.watch("selected_customer");
+
+  // ✅ Auto set ship_to setelah pilih customer
+  useEffect(() => {
+    if (!selectedCustomer || !typeOutbound || customerRaw.length === 0) return;
+
+    const found = customerRaw.find(
+      (x: any) =>
+        x.locationCode === selectedCustomer.value ||
+        x.customerNumber === selectedCustomer.value
+    );
+
+    if (!found) return;
+
+    if (typeOutbound.value === "AMO") {
+      methods.setValue("ship_to", found.locationDescription || "");
+      methods.setValue("address", ""); // ✅ kosongkan
+    } else {
+      methods.setValue("ship_to", found.shipToLocation || "");
+      methods.setValue("address", found.address1 || ""); // ✅ isi address
+    }
+  }, [selectedCustomer, typeOutbound, customerRaw]);
+
+  // ✅ Field Config
+  // const fieldsConfig: FieldConfig[] = [
+  //   {
+  //     name: "delivery_date",
+  //     label: "Delivery Date",
+  //     type: "date",
+  //     validation: { required: "Delivery Date is required" },
+  //   },
+  //   {
+  //     name: "origin",
+  //     label: "Origin",
+  //     type: "text",
+  //     validation: { required: "Origin is required" },
+  //   },
+  //   {
+  //     name: "destination",
+  //     label: "Destination",
+  //     type: "text",
+  //     validation: { required: "Destination is required" },
+  //   },
+  //   {
+  //     name: "requestor",
+  //     label: "Requestor",
+  //     type: "text",
+  //     validation: { required: "Requestor is required" },
+  //   },
+  //   {
+  //     name: "type_outbound",
+  //     label: "Type Outbound",
+  //     type: "select",
+  //     options: [
+  //       { label: "AMO", value: "AMO" },
+  //       { label: "Subdist", value: "Subdist" },
+  //     ],
+  //   },
+  //   {
+  //     name: "selected_customer",
+  //     label: loadingCustomer ? "Loading..." : "Select Customer",
+  //     type: "select",
+  //     options: customerList,
+  //   },
+  //   {
+  //     name: "ship_to",
+  //     label: "Ship To",
+  //     type: "text",
+  //     disabled: true,
+  //     validation: { required: "Ship To is required" },
+  //   },
+  //   // ✅ FIELD ADDRESS — hanya tampil jika Subdist
+  //   ...(typeOutbound?.value === "Subdist"
+  //     ? [
+  //         {
+  //           name: "address",
+  //           label: "Address",
+  //           type: "textarea",
+  //           disabled: true,
+  //         } as FieldConfig,
+  //       ]
+  //     : []),
+  //   {
+  //     name: "notes",
+  //     label: "Notes",
+  //     type: "textarea",
+  //     validation: { required: "Notes is required" },
+  //   },
+  // ];
+  const fieldsConfig: FieldConfig[] = [
+    {
+      name: "delivery_date",
+      label: "Delivery Date",
+      type: "date",
+      validation: { required: "Delivery Date is required" },
+    },
+    {
+      name: "origin",
+      label: "Origin",
+      type: "text",
+      validation: { required: "Origin is required" },
+    },
+    {
+      name: "destination",
+      label: "Destination",
+      type: "text",
+      validation: { required: "Destination is required" },
+    },
+    {
+      name: "requestor",
+      label: "Requestor",
+      type: "text",
+      validation: { required: "Requestor is required" },
+    },
+
+    // ✅ HIDE type_outbound jika isDetail = true
+    ...(!isDetail
+      ? [
+          {
+            name: "type_outbound",
+            label: "Type Outbound",
+            type: "select",
+            options: [
+              { label: "AMO", value: "AMO" },
+              { label: "Subdist", value: "Subdist" },
+            ],
+          } as FieldConfig,
+        ]
+      : []),
+
+    // ✅ HIDE customer select jika isDetail = true
+    ...(!isDetail
+      ? [
+          {
+            name: "selected_customer",
+            label: loadingCustomer ? "Loading..." : "Select Customer",
+            type: "select",
+            options: customerList,
+          } as FieldConfig,
+        ]
+      : []),
+
+    {
+      name: "ship_to",
+      label: "Ship To",
+      type: "text",
+      disabled: true,
+      validation: { required: "Ship To is required" },
+    },
+
+    // ✅ FIELD ADDRESS muncul hanya jika Subdist DAN bukan mode detail
+    ...(typeOutbound?.value === "Subdist" && !isDetail
+      ? [
+          {
+            name: "address",
+            label: "Address",
+            type: "textarea",
+            disabled: true,
+          } as FieldConfig,
+        ]
+      : []),
+
+    {
+      name: "notes",
+      label: "Notes",
+      type: "textarea",
+      validation: { required: "Notes is required" },
+    },
+  ];
 
   // store
   const { createData, fetchById, detail, resetDetail, updateData } =
@@ -147,64 +343,26 @@ const CreateMemo: React.FC = () => {
     setItems((prev) => prev.filter((_, i) => i !== index));
   };
 
-  // fields config
-  const fieldsConfig: FieldConfig[] = [
-    {
-      name: "origin",
-      label: "Origin",
-      type: "text",
-      validation: { required: "Origin is required" },
-    },
-    {
-      name: "destination",
-      label: "Destination",
-      type: "text",
-      validation: { required: "Destination is required" },
-    },
-    {
-      name: "delivery_date",
-      label: "Delivery Date",
-      type: "date",
-      validation: { required: "Delivery Date is required" },
-    },
-    {
-      name: "ship_to",
-      label: "Ship To",
-      type: "text",
-      validation: { required: "Ship To is required" },
-    },
-    {
-      name: "requestor",
-      label: "Requestor",
-      type: "text",
-      validation: { required: "Requestor is required" },
-    },
-    {
-      name: "notes",
-      label: "Notes",
-      type: "textarea",
-      validation: { required: "Notes is required" },
-    },
-  ];
-
   // submit handler (create or update)
   const onFinalSubmit = async (data: MemoFormValues) => {
-    console.log("Form data:", data);
-
     if (items.length === 0) {
       showErrorToast("Please add at least one item!");
       return;
     }
 
-    // build payload ensuring uom is string (fallback "")
+    // ✅ Build only required schema
     const payload = {
-      ...data,
+      requestor: data.requestor,
+      origin: data.origin,
+      ship_to: data.ship_to,
+      destination: data.destination,
+      delivery_date: formatDate(data.delivery_date),
+      notes: data.notes,
       status: "PENDING",
-      delivery_date: formatDate(data.delivery_date), // 👈 gunakan helper
       outbound_memo_items: items.map((i) => ({
         item_id: i.item_id,
         quantity_plan: Number(i.quantity_plan ?? 0),
-        uom: (i.uom ?? i.uom_name ?? "") as string,
+        uom: i.uom ?? i.uom_name ?? "",
       })),
     };
 

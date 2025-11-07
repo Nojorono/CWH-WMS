@@ -9,7 +9,10 @@ import DynamicForm, {
   FieldConfig,
 } from "../../../../components/wms-components/inbound-component/form/DynamicForm";
 import { showErrorToast, showSuccessToast } from "../../../../components/toast";
-import { useStoreOutboundMemo } from "../../../../DynamicAPI/stores/Store/MasterStore";
+import {
+  useStoreOutboundMemo,
+  useStoreOutboundDelivery,
+} from "../../../../DynamicAPI/stores/Store/MasterStore";
 import { useLocation, useNavigate } from "react-router";
 import { formatDateIndo } from "../../../../helper/FormatDate";
 import ConfirmationModal from "../Modal/Sequence";
@@ -45,6 +48,7 @@ const CreateDO: React.FC = () => {
   });
 
   const { fetchAll, list } = useStoreOutboundMemo();
+  const { createData } = useStoreOutboundDelivery();
   const [selectedMemoIds, setSelectedMemoIds] = useState<string[]>([]);
   const [selectedMemos, setSelectedMemos] = useState<any[]>([]);
 
@@ -62,9 +66,6 @@ const CreateDO: React.FC = () => {
   );
 
   const fieldsConfig: FieldConfig[] = [
-    { name: "license_plate", label: "License Plate", type: "text" },
-    { name: "expedition", label: "Expedition", type: "text" },
-    { name: "driver", label: "Driver", type: "text" },
     {
       name: "type_outbound",
       label: "Type Outbound",
@@ -72,10 +73,13 @@ const CreateDO: React.FC = () => {
       options: [{ label: "AMO", value: "AMO" }],
     },
     { name: "origin", label: "Origin", type: "text" },
-    { name: "destination", label: "Destination", type: "text" },
-    { name: "driver_phone", label: "Driver Phone", type: "text" },
     { name: "delivery_date", label: "Delivery Date", type: "date" },
-    { name: "po_expedition", label: "PO Expedition", type: "text" },
+    // { name: "expedition", label: "Expedition", type: "text" },
+    // { name: "license_plate", label: "License Plate", type: "text" },
+    // { name: "driver", label: "Driver", type: "text" },
+    // { name: "destination", label: "Destination", type: "text" },
+    // { name: "driver_phone", label: "Driver Phone", type: "tel" },
+    // { name: "po_expedition", label: "PO Expedition", type: "text" },
   ];
 
   const columnsTableItem = [
@@ -125,7 +129,6 @@ const CreateDO: React.FC = () => {
 
     console.log("formData", formData);
     console.log("selectedMemos", selectedMemos);
-    
 
     const payload = {
       ...formData,
@@ -146,33 +149,35 @@ const CreateDO: React.FC = () => {
   };
 
   const handleConfirmSubmit = async (reorderedList: any[]) => {
-    // setIsConfirmOpen(false);
+    try {
+      const PAYLOAD = {
+        outbound_do_number: "", // akan di-generate oleh backend
+        origin: formDataPreview?.origin,
+        // expedition: formDataPreview?.expedition,
+        // license_plate: formDataPreview?.license_plate,
+        // driver_name: formDataPreview?.driver,
+        // driver_phone: formDataPreview?.driver_phone,
+        status: "PENDING",
+        outbound_type: formDataPreview?.type_outbound,
+        delivery_date: formDataPreview?.delivery_date,
+        outbound_memo_ids: reorderedList.map((m, index) => ({
+          memo_id: m.id || m.memo_id, // sesuaikan key ID
+          sequence: index + 1,
+        })),
+      };
 
-    // try {
-    //   const finalPayload = {
-    //     ...formDataPreview,
-    //     memo_list: reorderedList.map((m, index) => ({
-    //       sequence: index + 1, // Tambahkan urutan sequence
-    //       id: m.id,
-    //       memo_id: m.memo_id,
-    //       origin: m.origin,
-    //       destination: m.destination,
-    //       ship_to: m.ship_to,
-    //       requestor: m.requestor,
-    //     })),
-    //   };
+      console.log("Final PAYLOAD to submit:", PAYLOAD);
 
-    //   console.log("=== FINAL PAYLOAD CREATE DO ===");
-    //   console.log(finalPayload);
-
-    //   // TODO: kirim ke API
-    //   // await axios.post(EndPoint.CREATE_DO, finalPayload);
-
-    //   showSuccessToast("Delivery Order berhasil dibuat!");
-    // } catch (error) {
-    //   showErrorToast("Gagal membuat Delivery Order!");
-    //   console.error(error);
-    // }
+      const res = await createData(PAYLOAD as any);
+      if (res?.success) {
+        handleReset();
+        setIsConfirmOpen(false);
+        navigate("/outbound_do");
+      }
+    } catch (error) {
+      showErrorToast("Gagal membuat Delivery Order!");
+      console.error(error);
+    }
   };
 
   const handleReset = () => {
