@@ -1,10 +1,11 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { FaEye, FaEdit, FaAdjust, FaTasks } from "react-icons/fa";
 import { ColumnDef } from "@tanstack/react-table";
-import TableComponent from "../../../../components/tables/MasterDataTable/TableComponent";
+import TableComponent from "../Table/TableComponent";
 import { useNavigate } from "react-router-dom";
 import StatusBadge from "../../../../common/statusBadge";
 import { STATUS_MAP_MEMO } from "../../../../constants/statusMaps";
+import { useStoreOutboundDelivery } from "../../../../DynamicAPI/stores/Store/MasterStore";
 
 type OutboundMemo = {
   id: string;
@@ -37,20 +38,37 @@ type MemoData = {
 };
 
 type MenuTableProps = {
-  data: MemoData[];
   globalFilter?: string;
   setGlobalFilter?: (value: string) => void;
   onDetail?: (id: string) => void;
   onRefresh?: () => void;
+  filteredStatus?: any;
 };
 
 const AdjustTable = ({
-  data,
   globalFilter,
   setGlobalFilter,
   onRefresh,
+  filteredStatus,
 }: MenuTableProps) => {
   const navigate = useNavigate();
+
+  const { fetchUsingPagination, list, pagination } = useStoreOutboundDelivery();
+
+  // 🔹 local state pagination
+  const [pageIndex, setPageIndex] = useState(0);
+  const [pageSize, setPageSize] = useState(10);
+
+  // 🔹 Fetch data setiap kali pagination / search berubah
+  useEffect(() => {
+    if (!fetchUsingPagination) return;
+    fetchUsingPagination({
+      page: pageIndex + 1, // jika backend 1-based
+      limit: pageSize,
+      search: globalFilter || "",
+      status: filteredStatus || "",
+    });
+  }, [fetchUsingPagination, pageIndex, pageSize, globalFilter, filteredStatus]);
 
   const handleDetail = (id: string) => {
     console.log("Detail Memo ID:", id);
@@ -76,13 +94,8 @@ const AdjustTable = ({
 
   const columns: ColumnDef<MemoData>[] = useMemo(
     () => [
-      // { accessorKey: "no", header: "No" },
       { accessorKey: "outbound_do_number", header: "DO Number" },
       { accessorKey: "origin", header: "Origin" },
-      // { accessorKey: "expedition", header: "Expedition" },
-      // { accessorKey: "licensePlate", header: "License Plate" },
-      // { accessorKey: "driverName", header: "Driver Name" },
-      // { accessorKey: "driverPhone", header: "Driver Phone" },
       {
         accessorKey: "status",
         header: "Status",
@@ -143,14 +156,60 @@ const AdjustTable = ({
     [roleName]
   );
 
+  // Mapping API data to table data
+  const mappedList = (list || []).map((item: any, index: number) => ({
+    no: index + 1,
+    id: item.id,
+    outboundDoNumber: item.outbound_do_number || "",
+    expedition: item.expedition || "",
+    origin: item.origin || "-",
+    licensePlate: item.license_plate || "-",
+    driverName: item.driver_name || "-",
+    driverPhone: item.driver_phone || "-",
+    status: item.status || "PENDING",
+    outboundType: item.outbound_type || "",
+    deliveryDate: new Date(item.delivery_date).toLocaleDateString("en-GB"),
+    memoId: item.memo_id || [],
+    outboundMemos: (item.outbound_memos || []).map(
+      (memo: {
+        id: any;
+        requestor: any;
+        origin: any;
+        ship_to: any;
+        destination: any;
+        delivery_date: string | number | Date;
+        status: any;
+        notes: any;
+      }) => ({
+        id: memo.id,
+        requestor: memo.requestor || "-",
+        origin: memo.origin || "-",
+        shipTo: memo.ship_to || "-",
+        destination: memo.destination || "-",
+        deliveryDate: new Date(memo.delivery_date).toLocaleDateString("en-GB"),
+        status: memo.status || "PENDING",
+        notes: memo.notes || "",
+      })
+    ),
+    createdAt: item.createdAt || null,
+    updatedAt: item.updatedAt || null,
+    deletedAt: item.deletedAt || null,
+  }));
+
   return (
     <div className="flex flex-col gap-4">
       <TableComponent
-        data={data}
+        data={mappedList}
         columns={columns}
         globalFilter={globalFilter}
         setGlobalFilter={setGlobalFilter}
-        pageSize={5}
+        pageSize={pageSize}
+        pageIndex={pageIndex}
+        totalPages={pagination.totalPages}
+        onPageChange={(page, size) => {
+          setPageIndex(page);
+          setPageSize(size);
+        }}
       />
     </div>
   );

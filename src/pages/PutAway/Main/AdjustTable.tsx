@@ -25,7 +25,7 @@ const AdjustTable = ({
 }: AdjustTableProps) => {
   const navigate = useNavigate();
 
-  const { fetchUsingPagination, deleteData, list, pagination, isLoading } =
+  const { fetchUsingPagination, deleteData, list, pagination } =
     useStorePutAway();
 
   // 🔹 local state pagination

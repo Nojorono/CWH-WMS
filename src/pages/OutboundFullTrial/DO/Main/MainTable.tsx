@@ -7,20 +7,17 @@ import Button from "../../../../components/ui/button/Button";
 import { FaPlus, FaUndo } from "react-icons/fa";
 import { useDebounce } from "../../../../helper/useDebounce";
 import { useStoreOutboundDelivery } from "../../../../DynamicAPI/stores/Store/MasterStore";
+import Select from "../../../../components/form/Select";
 
 const MainTable = () => {
   const navigate = useNavigate();
-  const { fetchAll, list } = useStoreOutboundDelivery();
-
   const [globalFilter, setGlobalFilter] = useState<string>("");
   const debouncedFilter = useDebounce(globalFilter, 500);
-
-  useEffect(() => {
-    fetchAll();
-  }, [fetchAll]);
+  const [selectedStatus, setSelectedStatus] = useState<any>(null);
 
   const handleResetFilters = () => {
     setGlobalFilter("");
+    setSelectedStatus(null);
   };
 
   const handleCreate = () => {
@@ -29,49 +26,17 @@ const MainTable = () => {
     });
   };
 
-  // Mapping API data to table data
-  const mappedList = (list || []).map((item: any, index: number) => ({
-    no: index + 1,
-    id: item.id,
-    outboundDoNumber: item.outbound_do_number || "",
-    expedition: item.expedition || "",
-    origin: item.origin || "-",
-    licensePlate: item.license_plate || "-",
-    driverName: item.driver_name || "-",
-    driverPhone: item.driver_phone || "-",
-    status: item.status || "PENDING",
-    outboundType: item.outbound_type || "",
-    deliveryDate: new Date(item.delivery_date).toLocaleDateString("en-GB"),
-    memoId: item.memo_id || [],
-    outboundMemos: (item.outbound_memos || []).map(
-      (memo: {
-        id: any;
-        requestor: any;
-        origin: any;
-        ship_to: any;
-        destination: any;
-        delivery_date: string | number | Date;
-        status: any;
-        notes: any;
-      }) => ({
-        id: memo.id,
-        requestor: memo.requestor || "-",
-        origin: memo.origin || "-",
-        shipTo: memo.ship_to || "-",
-        destination: memo.destination || "-",
-        deliveryDate: new Date(memo.delivery_date).toLocaleDateString("en-GB"),
-        status: memo.status || "PENDING",
-        notes: memo.notes || "",
-      })
-    ),
-    createdAt: item.createdAt || null,
-    updatedAt: item.updatedAt || null,
-    deletedAt: item.deletedAt || null,
-  }));
-
   const handleFetchParams = (): void => {
     throw new Error("Function not implemented.");
   };
+
+  const options = [
+    { value: "", label: "All Status" },
+    { value: "PENDING", label: "PENDING" },
+    { value: "IN_PROGRESS", label: "IN_PROGRESS" },
+    { value: "COMPLETED", label: "COMPLETED" },
+    { value: "CANCELLED", label: "CANCELLED" },
+  ];
 
   return (
     <>
@@ -89,6 +54,15 @@ const MainTable = () => {
           </div>
 
           <div className="space-x-4">
+            <Select
+              options={options}
+              placeholder="Pilih"
+              onChange={(value) => setSelectedStatus(value)}
+              value={selectedStatus}
+            />
+          </div>
+
+          <div className="space-x-4">
             <Button
               size="sm"
               variant="primary"
@@ -99,26 +73,13 @@ const MainTable = () => {
             </Button>
           </div>
         </div>
-
-        <div className="flex justify-between items-center mt-5">
-          <div className="space-x-4">
-            {/* <Label htmlFor="memo-no">Search</Label>
-            <Input type="text" id="memo-no" placeholder="Search.." /> */}
-          </div>
-
-          <div className="flex justify-center items-center mt-5">
-            <Button variant="rounded" size="sm" onClick={handleResetFilters}>
-              <FaUndo />
-            </Button>
-          </div>
-        </div>
       </div>
 
       <AdjustTable
-        data={mappedList}
         globalFilter={debouncedFilter}
         setGlobalFilter={setGlobalFilter}
         onRefresh={handleFetchParams}
+        filteredStatus={selectedStatus}
       />
     </>
   );

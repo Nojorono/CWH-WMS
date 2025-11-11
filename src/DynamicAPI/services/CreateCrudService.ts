@@ -63,7 +63,7 @@ export const createCrudService = <TData, TCreate, TUpdate>(baseUrl: string) => (
         });
 
         const queryString = searchParams.toString();
-        console.log("Pagination URL:", `${baseUrl}?${queryString}`);
+        // console.log("Pagination URL:", `${baseUrl}?${queryString}`);
         const res = await axiosInstance.get(`${baseUrl}?${queryString}`);
 
         if (!res.data.success) {

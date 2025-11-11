@@ -91,5 +91,5 @@ export {
   MemoProcess,
   OutboundDO,
   CreateDO,
-  DetailDO
+  DetailDO,
 };
