@@ -49,6 +49,15 @@ const MainTable = () => {
           </div>
 
           <div className="space-x-4">
+            <Select
+              options={options}
+              placeholder="Pilih"
+              onChange={(value) => setSelectedStatus(value)}
+              value={selectedStatus}
+            />
+          </div>
+
+          <div className="space-x-4">
             <Button
               size="sm"
               variant="primary"
@@ -59,35 +68,13 @@ const MainTable = () => {
             </Button>
           </div>
         </div>
-
-        <div className="flex justify-between items-center mt-5">
-          {/* <div className="space-x-4">
-            <Label htmlFor="inbound-no">Inbound No</Label>
-            <Input type="text" id="inbound-no" placeholder="Inbound no.." />
-          </div> */}
-
-          <div className="flex items-center space-x-4">
-            <Select
-              options={options}
-              placeholder="Pilih"
-              onChange={(value) => setSelectedStatus(value)}
-              value={selectedStatus}
-            />
-          </div>
-
-          {/* <div className="flex justify-center items-center mt-5">
-            <Button variant="rounded" size="sm" >
-              <FaUndo />
-            </Button>
-          </div> */}
-        </div>
       </div>
 
       <AdjustTable
         globalFilter={debouncedFilter}
         setGlobalFilter={setGlobalFilter}
         onDetail={handleDetail}
-        filteredStatus={selectedStatus} // Pass the selected status value
+        filteredStatus={selectedStatus}
       />
     </>
   );

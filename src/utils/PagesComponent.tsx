@@ -13,7 +13,7 @@ import InboundProcess from "../pages/Inbound/InboundProcess/TableAndForm/Inbound
 
 // PUTAWAY
 import PutAway from "../pages/PutAway";
-import PutAwayProcess from "../pages/PutAway/TableAndForm/PutAwayProcess";
+import PutAwayProcess from "../pages/PutAway/Table/PutAwayProcess";
 
 // INVENTORY
 import Inventory from "../pages/Inventory";

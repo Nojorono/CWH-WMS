@@ -13,7 +13,7 @@ import {
   useStorePutAway,
 } from "../../../DynamicAPI/stores/Store/MasterStore";
 import { PutAwaySuggestion } from "../../../DynamicAPI/types/PutAwaySuggestionTypes";
-import ModalSuggestion from "./ModalSuggestion";
+import ModalSuggestion from "../Modal/ModalSuggestion";
 import Select from "../../../components/form/Select";
 import { showErrorToast } from "../../../components/toast";
 import { useForm, Controller } from "react-hook-form";
