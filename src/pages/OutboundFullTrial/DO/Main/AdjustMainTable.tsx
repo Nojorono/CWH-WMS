@@ -53,9 +53,10 @@ const AdjustTable = ({
   const navigate = useNavigate();
 
   const handleDetail = (id: string) => {
-    // navigate("/memo/process", {
-    //   state: { data: id, mode: "detail", title: "Detail Memo" },
-    // });
+    console.log("Detail Memo ID:", id);
+    navigate("/outbound_do/detail", {
+      state: { data: id, mode: "detail", title: "Detail Memo" },
+    });
   };
 
   const handleUpdate = (id: string) => {
@@ -64,11 +65,9 @@ const AdjustTable = ({
     // });
   };
 
-  const handleAdjust = (data: MemoData) => {
-
-    console.log("Adjust Memo Data:", data);
-    
-    // navigate("/outbound_do/adjust_memo", {
+  const handleAdjust = (id: string) => {
+    // console.log("Adjust Memo ID:", id);
+    // navigate("/outbound_do/detail", {
     //   state: { data: id, mode: "adjust", title: "Adjust Memo" },
     // });
   };
@@ -79,11 +78,11 @@ const AdjustTable = ({
     () => [
       // { accessorKey: "no", header: "No" },
       { accessorKey: "outbound_do_number", header: "DO Number" },
-      { accessorKey: "expedition", header: "Expedition" },
       { accessorKey: "origin", header: "Origin" },
-      { accessorKey: "licensePlate", header: "License Plate" },
-      { accessorKey: "driverName", header: "Driver Name" },
-      { accessorKey: "driverPhone", header: "Driver Phone" },
+      // { accessorKey: "expedition", header: "Expedition" },
+      // { accessorKey: "licensePlate", header: "License Plate" },
+      // { accessorKey: "driverName", header: "Driver Name" },
+      // { accessorKey: "driverPhone", header: "Driver Phone" },
       {
         accessorKey: "status",
         header: "Status",
@@ -134,7 +133,7 @@ const AdjustTable = ({
 
             <FaTasks
               className="size-5 cursor-pointer text-yellow-600 hover:scale-110 transition"
-              onClick={() => handleAdjust(row.original)}
+              onClick={() => handleAdjust(row.original.id)}
               title="Adjust Memo"
             />
           </div>

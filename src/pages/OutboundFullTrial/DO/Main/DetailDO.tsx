@@ -8,7 +8,7 @@ import TableComponent from "../Table/TableListMemo";
 import DynamicForm, {
   FieldConfig,
 } from "../../../../components/wms-components/inbound-component/form/DynamicForm";
-import { showErrorToast, showSuccessToast } from "../../../../components/toast";
+import { showErrorToast } from "../../../../components/toast";
 import {
   useStoreOutboundMemo,
   useStoreOutboundDelivery,
@@ -23,43 +23,67 @@ type MemoFormValues = {
   ship_to: string;
   destination: string;
   delivery_date: string;
-  license_plate?: string;
-  expedition?: string;
-  driver?: string;
   type_outbound?: { label: string; value: string };
-  driver_phone?: string;
-  po_expedition?: string;
 };
 
-const CreateDO: React.FC = () => {
+const DetailDO: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { mode } = location.state || {};
+  const { data, mode, title } = location.state || {};
   const isDetail = mode === "detail";
 
   const methods = useForm<MemoFormValues>({
     defaultValues: {
-      requestor: "",
       origin: "",
-      ship_to: "",
-      destination: "",
       delivery_date: "",
+      type_outbound: undefined,
     },
   });
 
-  const { fetchUsingParam, list: approvedMemos } = useStoreOutboundMemo();
-  const { createData } = useStoreOutboundDelivery();
+  const { fetchAll, list } = useStoreOutboundMemo();
+  const { createData, fetchById, detail } = useStoreOutboundDelivery();
+
   const [selectedMemoIds, setSelectedMemoIds] = useState<string[]>([]);
   const [selectedMemos, setSelectedMemos] = useState<any[]>([]);
-
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [formDataPreview, setFormDataPreview] = useState<any>(null);
 
   useEffect(() => {
-    fetchUsingParam({
-      status: "APPROVED",
+    fetchAll();
+    fetchById(data);
+  }, [fetchAll, fetchById, data]);
+
+  // ✅ APPROVED memo list (hanya untuk create)
+  const approvedMemos = useMemo(
+    () => list.filter((item) => item.status === "APPROVED"),
+    [list]
+  );
+
+  // ✅ SET FORM dan Memo jika mode DETAIL
+  useEffect(() => {
+    if (!detail) return;
+
+    // isi form
+    methods.setValue("type_outbound", {
+      label: detail.outbound_type || "",
+      value: detail.outbound_type || "",
     });
-  }, [fetchUsingParam]);
+
+    methods.setValue("origin", detail.origin || "");
+
+    methods.setValue(
+      "delivery_date",
+      detail.delivery_date ? detail.delivery_date.split("T")[0] : ""
+    );
+
+    // isi memo selected
+    if (detail.outbound_memos && detail.outbound_memos.length > 0) {
+      const memoIds = detail.outbound_memos.map((m: any) => m.id);
+
+      setSelectedMemoIds(memoIds);
+      setSelectedMemos(detail.outbound_memos);
+    }
+  }, [detail]);
 
   const fieldsConfig: FieldConfig[] = [
     {
@@ -70,16 +94,10 @@ const CreateDO: React.FC = () => {
     },
     { name: "origin", label: "Origin", type: "text" },
     { name: "delivery_date", label: "Delivery Date", type: "date" },
-    // { name: "expedition", label: "Expedition", type: "text" },
-    // { name: "license_plate", label: "License Plate", type: "text" },
-    // { name: "driver", label: "Driver", type: "text" },
-    // { name: "destination", label: "Destination", type: "text" },
-    // { name: "driver_phone", label: "Driver Phone", type: "tel" },
-    // { name: "po_expedition", label: "PO Expedition", type: "text" },
   ];
 
   const columnsTableItem = [
-    { accessorKey: "id", header: "Select", selectedRow: true }, // ✅ gunakan ID asli
+    // { accessorKey: "id", header: "Select", selectedRow: true },
     {
       accessorKey: "delivery_date",
       header: "Delivery Date",
@@ -101,11 +119,11 @@ const CreateDO: React.FC = () => {
     {
       accessorKey: "created_date",
       header: "Created Date",
-      cell: ({ row }: any) => formatDateIndo(row.original.created_date),
+      cell: ({ row }: any) => formatDateIndo(row.original.createdAt),
     },
   ];
 
-  // ✅ Selection Handler
+  // ✅ handle checkbox
   const handleSelectionChange = (selectedIds: string[]) => {
     const filtered = approvedMemos.filter(
       (m) => typeof m.id === "string" && selectedIds.includes(m.id)
@@ -114,7 +132,7 @@ const CreateDO: React.FC = () => {
     setSelectedMemos(filtered);
   };
 
-  // ✅ Submit Handler
+  // ✅ Submit DO
   const onFinalSubmit = (data: any) => {
     if (selectedMemos.length === 0) {
       showErrorToast("Pilih minimal satu memo sebelum membuat DO!");
@@ -122,9 +140,6 @@ const CreateDO: React.FC = () => {
     }
 
     const formData = methods.getValues();
-
-    console.log("formData", formData);
-    console.log("selectedMemos", selectedMemos);
 
     const payload = {
       ...formData,
@@ -139,7 +154,6 @@ const CreateDO: React.FC = () => {
       })),
     };
 
-    // 👇 tampilkan dulu di modal sebelum API call
     setFormDataPreview(payload);
     setIsConfirmOpen(true);
   };
@@ -147,12 +161,8 @@ const CreateDO: React.FC = () => {
   const handleConfirmSubmit = async (reorderedList: any[]) => {
     try {
       const PAYLOAD = {
-        outbound_do_number: "", // akan di-generate oleh backend
+        outbound_do_number: "",
         origin: formDataPreview?.origin,
-        // expedition: formDataPreview?.expedition,
-        // license_plate: formDataPreview?.license_plate,
-        // driver_name: formDataPreview?.driver,
-        // driver_phone: formDataPreview?.driver_phone,
         expedition: "",
         license_plate: "",
         driver_name: "",
@@ -161,14 +171,12 @@ const CreateDO: React.FC = () => {
         outbound_type: formDataPreview?.type_outbound,
         delivery_date: formDataPreview?.delivery_date,
         outbound_memo_ids: reorderedList.map((m, index) => ({
-          memo_id: m.id || m.memo_id, // sesuaikan key ID
+          memo_id: m.id || m.memo_id,
           sequence: index + 1,
         })),
       };
 
-      console.log("Final PAYLOAD Create DO to submit:", PAYLOAD);
-
-      const res = await createData(PAYLOAD as any);
+      const res = await createData(PAYLOAD);
       if (res?.success) {
         handleReset();
         setIsConfirmOpen(false);
@@ -191,15 +199,13 @@ const CreateDO: React.FC = () => {
       <PageBreadcrumb
         breadcrumbs={[
           { title: "Delivery Order List", path: "/outbound_do" },
-          { title: "Create Delivery Order", path: "#" },
+          { title: title || "Detail", path: "#" },
         ]}
       />
 
-      {/* === Delivery Order Details === */}
+      {/* === FORM DETAIL === */}
       <section className="bg-white p-5 rounded-xl shadow-sm border border-gray-200">
-        <h3 className="font-semibold text-gray-700 text-lg mb-3">
-          Delivery Order Details
-        </h3>
+        <h3 className="font-semibold text-gray-700 text-lg mb-3">{title}</h3>
 
         <DynamicForm
           fields={fieldsConfig}
@@ -213,14 +219,19 @@ const CreateDO: React.FC = () => {
         />
       </section>
 
-      {/* === MEMO List === */}
+      {/* === MEMO LIST === */}
       <section className="bg-white rounded-xl shadow-sm border border-gray-200">
         <div className="bg-orange-500 text-white rounded-t-xl px-5 py-3 font-semibold">
           Memo List
         </div>
         <div className="p-4">
           <TableComponent
-            data={approvedMemos}
+            data={
+              (isDetail
+                ? (detail?.outbound_memos || []).filter((m: any) => typeof m.id === "string")
+                : approvedMemos.filter((m: any) => typeof m.id === "string")
+              ) as import("d:/New-WMS/src/DynamicAPI/types/DeliverOrderTypes").OutboundMemo[]
+            }
             columns={columnsTableItem}
             pageSize={10}
             onSelectionChange={handleSelectionChange}
@@ -228,27 +239,29 @@ const CreateDO: React.FC = () => {
         </div>
       </section>
 
-      {/* === Buttons === */}
-      <div className="flex justify-end gap-3 mt-4">
-        <Button
-          type="button"
-          variant="secondary"
-          className="bg-gray-200 text-gray-700 hover:bg-gray-300"
-          onClick={handleReset}
-        >
-          Reset
-        </Button>
+      {/* === BUTTONS === */}
+      {!isDetail && (
+        <div className="flex justify-end gap-3 mt-4">
+          <Button
+            type="button"
+            variant="secondary"
+            className="bg-gray-200 text-gray-700 hover:bg-gray-300"
+            onClick={handleReset}
+          >
+            Reset
+          </Button>
 
-        <Button
-          type="button"
-          className="bg-orange-500 text-white hover:bg-orange-600"
-          onClick={methods.handleSubmit(onFinalSubmit)}
-        >
-          Confirm DO
-        </Button>
-      </div>
+          <Button
+            type="button"
+            className="bg-orange-500 text-white hover:bg-orange-600"
+            onClick={methods.handleSubmit(onFinalSubmit)}
+          >
+            Confirm DO
+          </Button>
+        </div>
+      )}
 
-      {/* Modal Konfirmasi */}
+      {/* === MODAL CONFIRM === */}
       <ConfirmationModal
         isOpen={isConfirmOpen}
         onClose={() => setIsConfirmOpen(false)}
@@ -259,4 +272,4 @@ const CreateDO: React.FC = () => {
   );
 };
 
-export default CreateDO;
+export default DetailDO;

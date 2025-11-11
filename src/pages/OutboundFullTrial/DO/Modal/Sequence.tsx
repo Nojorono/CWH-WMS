@@ -61,10 +61,6 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
         <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm text-gray-700">
           <DetailItem label="Origin" value={formData?.origin || "-"} />
           <DetailItem
-            label="Destination"
-            value={formData?.destination || "-"}
-          />
-          <DetailItem
             label="Delivery Date"
             value={
               formData?.delivery_date
@@ -72,7 +68,11 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
                 : "-"
             }
           />
-          <DetailItem
+          {/* <DetailItem
+              label="Destination"
+              value={formData?.destination || "-"}
+            /> */}
+          {/* <DetailItem
             label="License Plate"
             value={formData?.license_plate || "-"}
           />
@@ -89,7 +89,7 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
           <DetailItem
             label="Type Outbound"
             value={formData?.type_outbound || "-"}
-          />
+          /> */}
         </div>
 
         <div className="border-t my-5"></div>
@@ -113,7 +113,9 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
                 <table className="w-full text-sm">
                   <thead className="bg-gray-100 text-gray-700 font-medium">
                     <tr>
-                      <th className="p-2 border w-[40px] text-center">Sequence</th>
+                      <th className="p-2 border w-[40px] text-center">
+                        Sequence
+                      </th>
                       <th className="p-2 border text-left">Memo Id</th>
                       <th className="p-2 border text-left">Requestor</th>
                       <th className="p-2 border text-left">Origin</th>
@@ -153,13 +155,13 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
             onClick={onClose}
             className="px-4 py-2 rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-100 transition-all"
           >
-            Batal
+            Cancel
           </button>
           <button
             onClick={() => onConfirm(memoList)}
             className="px-5 py-2 rounded-lg bg-orange-500 text-white hover:bg-orange-600 transition-all"
           >
-            Konfirmasi
+            Confirm
           </button>
         </div>
       </div>

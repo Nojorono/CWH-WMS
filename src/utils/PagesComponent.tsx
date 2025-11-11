@@ -45,6 +45,8 @@ import MemoProcess from "../pages/OutboundFullTrial/Memo/TableAndForm/MemoCreate
 
 import OutboundDO from "../pages/OutboundFullTrial/DO";
 import CreateDO from "../pages/OutboundFullTrial/DO/Main/CreateDO";
+import DetailDO from "../pages/OutboundFullTrial/DO/Main/DetailDO";
+
 
 
 export {
@@ -89,4 +91,5 @@ export {
   MemoProcess,
   OutboundDO,
   CreateDO,
+  DetailDO
 };

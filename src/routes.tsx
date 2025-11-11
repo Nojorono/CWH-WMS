@@ -42,7 +42,8 @@ import {
   Memo,
   MemoProcess,
   OutboundDO,
-  CreateDO
+  CreateDO,
+  DetailDO,
 } from "./utils/PagesComponent";
 import NotFound from "./pages/OtherPage/NotFound";
 import ActIndicator from "./components/ui/activityIndicator";
@@ -112,7 +113,10 @@ export function AppRoutes() {
     "/putaway": [{ path: "process", element: <PutAwayProcess /> }],
     "/inventory": [{ path: "detail", element: <InventoryDetail /> }],
     "/memo": [{ path: "process", element: <MemoProcess /> }],
-    "/outbound_do": [{ path: "process", element: <CreateDO /> }],
+    "/outbound_do": [
+      { path: "process", element: <CreateDO /> },
+      { path: "detail", element: <DetailDO /> },
+    ],
   };
 
   // Map path ke komponen
