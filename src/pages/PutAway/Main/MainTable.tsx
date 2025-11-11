@@ -53,9 +53,10 @@ const MainTable = () => {
           </div>
 
           <div className="space-x-4">
+            <Label htmlFor="status">Status</Label>
             <Select
               options={options}
-              placeholder="Pilih"
+              placeholder="Pilih Status"
               onChange={(value) => setSelectedStatus(value)}
               value={selectedStatus}
             />

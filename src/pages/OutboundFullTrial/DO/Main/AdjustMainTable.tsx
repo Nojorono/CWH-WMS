@@ -48,7 +48,6 @@ type MenuTableProps = {
 const AdjustTable = ({
   globalFilter,
   setGlobalFilter,
-  onRefresh,
   filteredStatus,
 }: MenuTableProps) => {
   const navigate = useNavigate();
