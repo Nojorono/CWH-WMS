@@ -69,7 +69,6 @@ export default function ConfirmationModal({
     {}
   );
 
-  console.log("SKU Summary with Different UOM:", skuSummaryWithDifferentUOM);
 
   const totalSKU = allItems.length;
 

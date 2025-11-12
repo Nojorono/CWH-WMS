@@ -44,9 +44,9 @@ import {
   OutboundDO,
   CreateDO,
   DetailDO,
+  PickingSuggestion,
+  PickingList,
 } from "./utils/PagesComponent";
-import NotFound from "./pages/OtherPage/NotFound";
-import ActIndicator from "./components/ui/activityIndicator";
 
 const DefaultPage = () => <> </>;
 
@@ -116,6 +116,8 @@ export function AppRoutes() {
     "/outbound_do": [
       { path: "process", element: <CreateDO /> },
       { path: "detail", element: <DetailDO /> },
+      { path: "picking_suggestion", element: <PickingSuggestion /> },
+      { path: "picking_list", element: <PickingList /> },
     ],
   };
 

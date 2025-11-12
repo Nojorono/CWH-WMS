@@ -23,6 +23,11 @@ import { PutAway, CreatePutAway, UpdatePutAway } from '../../types/PutAwayTypes.
 import { OutboundMemo, OutboundMemoCreate, OutboundMemoUpdateItem } from '../../types/MemoTypes.tsx'
 import { OutboundDelivery, OutboundDeliveryCreateUpdate } from '../../types/DeliverOrderTypes.tsx'
 
+import { PickingSuggestion, CreatePickingSuggestion, UpdatePickingSuggestion } from '../../types/PickingSuggestionTypes.tsx'
+import { TransactionPicking, CreateTransactionPicking, UpdateTransactionPicking } from '../../types/TransactionPickingTypes.tsx'
+import { PickingList, CreatePickingList, UpdatePickingList } from '../../types/PickingList.tsx'
+
+
 // Daftar semua entitas service di sini
 export const uomService = createCrudService<Uom, CreateUom, UpdateUom>("/master-uom");
 export const palletService = createCrudService<Pallet, CreatePallet, UpdatePallet>("/master-pallet");
@@ -49,3 +54,7 @@ export const PutAwayService = createCrudService<PutAway, CreatePutAway, UpdatePu
 export const PutAwayBulkService = createCrudService<PutAway, CreatePutAway, UpdatePutAway>("/put-away/create-many");
 export const OutboundMemoService = createCrudService<OutboundMemo, OutboundMemoCreate, OutboundMemoUpdateItem>("/outbound-memo");
 export const OutboundDeliveryService = createCrudService<OutboundDelivery, OutboundDeliveryCreateUpdate, OutboundDeliveryCreateUpdate>("/outbound-do");
+
+export const PickingSuggestionService = createCrudService<PickingSuggestion, CreatePickingSuggestion, UpdatePickingSuggestion>("/picking-suggestion/memo");
+export const TransactionPickingService = createCrudService<TransactionPicking, CreateTransactionPicking, UpdateTransactionPicking>("/transaction-picking/bulk");
+export const PickingListService = createCrudService<PickingList, CreatePickingList, UpdatePickingList>("/transaction-picking/memo");

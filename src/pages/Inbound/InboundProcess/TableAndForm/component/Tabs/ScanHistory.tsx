@@ -13,9 +13,6 @@ interface HelperAssignProps {
 
 const DataTable = ({ inboundID }: { inboundID?: string }) => {
   const { list: InboundScan, fetchUsingParam } = useStoreInboundScan();
-
-  
-
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounce(search, 500);
   const [isCreateModalOpen, setCreateModalOpen] = useState(false);
@@ -23,7 +20,6 @@ const DataTable = ({ inboundID }: { inboundID?: string }) => {
   useEffect(() => {
     fetchUsingParam({
       inbound_id: inboundID,
-      // status: "PENDING",
     });
   }, [fetchUsingParam]);
 

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Input from "../../../../components/form/input/InputField";
 import AdjustTable from "./AdjustTable";

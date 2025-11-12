@@ -24,7 +24,10 @@ import {
     PutAwayService,
     PutAwayBulkService,
     OutboundMemoService,
-    OutboundDeliveryService
+    OutboundDeliveryService,
+    PickingSuggestionService,
+    TransactionPickingService,
+    PickingListService
 } from "../../services/Service/MasterService";
 
 import { Uom, CreateUom, UpdateUom } from "../../types/UomTypes";
@@ -49,6 +52,11 @@ import { PutAwaySuggestionResponse } from '../../types/PutAwaySuggestionTypes.ts
 import { PutAway, CreatePutAway, UpdatePutAway } from '../../types/PutAwayTypes.tsx'
 import { OutboundMemo, OutboundMemoCreate, OutboundMemoUpdateItem } from '../../types/MemoTypes.tsx'
 import { OutboundDelivery, OutboundDeliveryCreateUpdate } from '../../types/DeliverOrderTypes.tsx'
+
+import { PickingSuggestion, CreatePickingSuggestion, UpdatePickingSuggestion } from '../../types/PickingSuggestionTypes.tsx'
+import { TransactionPicking, CreateTransactionPicking, UpdateTransactionPicking } from '../../types/TransactionPickingTypes.tsx'
+import { PickingList, CreatePickingList, UpdatePickingList } from '../../types/PickingList.tsx'
+
 
 // Daftar semua store di sini
 export const useStoreUom = createCrudStore<Uom, CreateUom, UpdateUom>({
@@ -174,4 +182,19 @@ export const useStoreOutboundMemo = createCrudStore<OutboundMemo, OutboundMemoCr
 export const useStoreOutboundDelivery = createCrudStore<OutboundDelivery, OutboundDeliveryCreateUpdate, OutboundDeliveryCreateUpdate>({
     name: "OutboundDelivery",
     service: OutboundDeliveryService,
+});
+
+export const useStorePickingSuggestion = createCrudStore<PickingSuggestion, CreatePickingSuggestion, UpdatePickingSuggestion>({
+    name: "PickingSuggestion",
+    service: PickingSuggestionService,
+});
+
+export const useStoreTransactionPicking = createCrudStore<TransactionPicking, CreateTransactionPicking, UpdateTransactionPicking>({
+    name: "TransactionPicking",
+    service: TransactionPickingService,
+});
+
+export const useStorePickingList = createCrudStore<PickingList, CreatePickingList, UpdatePickingList>({
+    name: "PickingList",
+    service: PickingListService,
 });

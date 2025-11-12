@@ -83,10 +83,10 @@ const AdjustTable = ({
   };
 
   const handleAdjust = (id: string) => {
-    // console.log("Adjust Memo ID:", id);
-    // navigate("/outbound_do/detail", {
-    //   state: { data: id, mode: "adjust", title: "Adjust Memo" },
-    // });
+    console.log("DO Id:", id);
+    navigate("/outbound_do/picking_suggestion", {
+      state: { data: id, mode: "suggestion", title: "Picking Suggestion" },
+    });
   };
 
   const roleName = localStorage.getItem("role_name");
