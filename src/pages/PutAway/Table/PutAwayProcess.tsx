@@ -320,8 +320,6 @@ const PutAwayDetail: React.FC = () => {
 
   const handleDriverSelect = (val: string) => {
     const driver = forkliftDrivers.find((d: any) => d.id === val);
-    
-
     if (driver) {
       setValue("forkliftDriverId", driver.id || "");
       setValue("driverName", driver.name || "");
