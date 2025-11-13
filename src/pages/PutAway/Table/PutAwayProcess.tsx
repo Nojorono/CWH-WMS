@@ -8,7 +8,7 @@ import TableComponent from "../../../components/tables/MasterDataTable/TableComp
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import {
   useStorePutAwaySuggestion,
-  useStoreUser,
+  useStoreUserManagement,
   useStoreBulkPutAway,
   useStorePutAway,
 } from "../../../DynamicAPI/stores/Store/MasterStore";
@@ -59,9 +59,11 @@ const PutAwayDetail: React.FC = () => {
   const { list: putAwaySuggestions, fetchAll: fetchPutAwaySuggestions } =
     useStorePutAwaySuggestion();
 
-  const { list: userList, fetchAll: fetchUserList } = useStoreUser();
+  const { list: userList, fetchAll: fetchUserList } = useStoreUserManagement();
   const { createBulkData } = useStoreBulkPutAway();
   const { updateData } = useStorePutAway();
+
+  console.log("User List:", userList);
 
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [mappedData, setMappedData] = useState<PutAwayRow[]>([]);
@@ -199,7 +201,6 @@ const PutAwayDetail: React.FC = () => {
   }, [isEdit, mappedData]);
 
   // Table columns
-  // Table columns
   const columns = useMemo<ExtendedColumnDef<PutAwayRow>[]>(() => {
     const cols: ExtendedColumnDef<PutAwayRow>[] = [];
 
@@ -314,17 +315,16 @@ const PutAwayDetail: React.FC = () => {
   // Filter user forklift driver
   const forkliftDrivers =
     Array.isArray(userList) && userList.length > 0
-      ? userList.filter(
-          (u: any) => u.role?.name?.toUpperCase() === "DRIVER FORKLIFT"
-        )
+      ? userList.filter((u: any) => u.roleName?.toUpperCase() === "DRIVER")
       : [];
 
   const handleDriverSelect = (val: string) => {
     const driver = forkliftDrivers.find((d: any) => d.id === val);
+    
 
     if (driver) {
-      setValue("forkliftDriverId", driver.id);
-      setValue("driverName", driver.username || "");
+      setValue("forkliftDriverId", driver.id || "");
+      setValue("driverName", driver.name || "");
       setValue("driverPhone", driver.phone || "");
     }
   };
@@ -334,7 +334,6 @@ const PutAwayDetail: React.FC = () => {
   // 🔹 HANDLE SUBMIT
   // ==============================
   const onSubmit = async (data: DriverFormValues) => {
-
     if (!data.forkliftDriverId || !data.driverName || !data.driverPhone) {
       showErrorToast("Please fill in all driver fields");
       return;
@@ -451,7 +450,7 @@ const PutAwayDetail: React.FC = () => {
                     placeholder="Select Forklift Driver"
                     options={forkliftDrivers.map((d: any) => ({
                       value: d.id,
-                      label: d.username || d.name,
+                      label: d.name,
                     }))}
                     onChange={(val: string) => {
                       handleDriverSelect(val);

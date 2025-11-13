@@ -248,8 +248,6 @@ const SuggestionTable: React.FC<SuggestionTableProps> = ({
       })
       .filter((p): p is NonNullable<typeof p> => p !== null); // Hapus item null dan quantity 0
 
-    console.log("Picking List to Submit (Payload):", pickingListPayload);
-
     const finalPayload = {
       data: pickingListPayload,
     };

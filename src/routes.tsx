@@ -18,6 +18,7 @@ import {
   MasterMenu,
   MasterPallet,
   MasterUser,
+  MasterUserManagement,
   MasterRole,
   CreateRole,
   UpdateRole,
@@ -126,6 +127,7 @@ export function AppRoutes() {
   const getElementByPath = (path: string): JSX.Element => {
     const map: Record<string, JSX.Element> = {
       "/master_user": <MasterUser />,
+      "/master_user_management": <MasterUserManagement />,
       "/master_menu": <MasterMenu />,
       "/master_role": <MasterRole />,
       "/master_pallet": <MasterPallet />,

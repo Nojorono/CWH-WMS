@@ -27,6 +27,9 @@ import { PickingSuggestion, CreatePickingSuggestion, UpdatePickingSuggestion } f
 import { TransactionPicking, CreateTransactionPicking, UpdateTransactionPicking } from '../../types/TransactionPickingTypes.tsx'
 import { PickingList, CreatePickingList, UpdatePickingList } from '../../types/PickingList.tsx'
 
+import { UserManagement, CreateUserManagement, UpdateUserManagement } from "../../types/UserManagement.tsx";
+
+
 
 // Daftar semua entitas service di sini
 export const uomService = createCrudService<Uom, CreateUom, UpdateUom>("/master-uom");
@@ -58,3 +61,5 @@ export const OutboundDeliveryService = createCrudService<OutboundDelivery, Outbo
 export const PickingSuggestionService = createCrudService<PickingSuggestion, CreatePickingSuggestion, UpdatePickingSuggestion>("/picking-suggestion/memo");
 export const TransactionPickingService = createCrudService<TransactionPicking, CreateTransactionPicking, UpdateTransactionPicking>("/transaction-picking/bulk");
 export const PickingListService = createCrudService<PickingList, CreatePickingList, UpdatePickingList>("/transaction-picking/memo");
+
+export const UserManagementService = createCrudService<UserManagement, CreateUserManagement, UpdateUserManagement>("/user-manage");

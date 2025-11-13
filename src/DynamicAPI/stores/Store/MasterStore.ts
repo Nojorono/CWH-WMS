@@ -27,7 +27,8 @@ import {
     OutboundDeliveryService,
     PickingSuggestionService,
     TransactionPickingService,
-    PickingListService
+    PickingListService,
+    UserManagementService
 } from "../../services/Service/MasterService";
 
 import { Uom, CreateUom, UpdateUom } from "../../types/UomTypes";
@@ -56,6 +57,7 @@ import { OutboundDelivery, OutboundDeliveryCreateUpdate } from '../../types/Deli
 import { PickingSuggestion, CreatePickingSuggestion, UpdatePickingSuggestion } from '../../types/PickingSuggestionTypes.tsx'
 import { TransactionPicking, CreateTransactionPicking, UpdateTransactionPicking } from '../../types/TransactionPickingTypes.tsx'
 import { PickingList, CreatePickingList, UpdatePickingList } from '../../types/PickingList.tsx'
+import { UserManagement, CreateUserManagement, UpdateUserManagement } from "../../types/UserManagement.tsx";
 
 
 // Daftar semua store di sini
@@ -197,4 +199,9 @@ export const useStoreTransactionPicking = createCrudStore<TransactionPicking, Cr
 export const useStorePickingList = createCrudStore<PickingList, CreatePickingList, UpdatePickingList>({
     name: "PickingList",
     service: PickingListService,
+});
+
+export const useStoreUserManagement = createCrudStore<UserManagement, CreateUserManagement, UpdateUserManagement>({
+    name: "UserManagement",
+    service: UserManagementService,
 });

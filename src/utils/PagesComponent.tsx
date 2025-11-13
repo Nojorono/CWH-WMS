@@ -1,6 +1,7 @@
 // PAGE MASTER
 import MasterUser from "../pages/Master/MasterUser";
 import MasterMenu from "../pages/Master/MasterMenu";
+import MasterUserManagement from "../pages/Master/MasterUserManagement";
 
 // MASTER ROLES PAGE
 import MasterRole from "../pages/Master/MasterRole";
@@ -49,11 +50,10 @@ import DetailDO from "../pages/OutboundFullTrial/DO/Main/DetailDO";
 import PickingSuggestion from "../pages/OutboundFullTrial/Picking/PickingSuggestion";
 import PickingList from "../pages/OutboundFullTrial/Picking/Table/PickingList";
 
-
-
 export {
   // PAGE MASTER
   MasterUser,
+  MasterUserManagement,
   MasterMenu,
   MasterPallet,
   MainTabPallet,
