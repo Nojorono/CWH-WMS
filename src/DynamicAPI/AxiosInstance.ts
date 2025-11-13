@@ -1,5 +1,6 @@
 import axios from "axios";
 import { EndPoint } from "../utils/EndPoint"
+import { showErrorToast } from "../components/toast";
 
 
 const axiosInstance = axios.create({
@@ -22,11 +23,13 @@ axiosInstance.interceptors.request.use(
 );
 
 axiosInstance.interceptors.response.use(
+
   (response) => {
     return response;
   },
+
   (error) => {
-    if (error.response && error.response.status === 401) {
+    if (error.response && error.response.status === 401 || error.response.status === 500) {
       localStorage.clear();
       window.location.reload();
       setTimeout(() => {

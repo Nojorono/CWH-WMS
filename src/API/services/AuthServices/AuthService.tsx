@@ -16,8 +16,11 @@ export const loginService = async (payload: LoginPayload) => {
     return data;
   } catch (error: any) {
     showErrorToast(
-      `Error response: ${error.response?.data?.message || "Unknown error"}`
+      error.response?.data?.message === "Internal Server Error"
+        ? "Server sedang bermasalah, coba lagi nanti."
+        : error.response?.data?.message || "Gagal login, periksa koneksi Anda."
     );
+
     console.error("Error response:", error.response?.data);
     throw new Error(error.response?.data?.message || "Login failed");
   }

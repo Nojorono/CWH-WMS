@@ -75,7 +75,6 @@ export const useAuthStore = create<AuthState>((set) => ({
 
     try {
       const response = await loginService(data);
-
       const resData = response.data?.data || response.data || response;
 
       if (!resData || !resData.token || !resData.user) {

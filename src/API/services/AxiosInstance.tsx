@@ -1,5 +1,5 @@
 import axios from "axios";
-import { EndPoint } from "../../utils/EndPoint"
+import { EndPoint } from "../../utils/EndPoint";
 
 const axiosInstance = axios.create({
   baseURL: EndPoint,
@@ -20,20 +20,43 @@ axiosInstance.interceptors.request.use(
   }
 );
 
-axiosInstance.interceptors.response.use(
-  (response) => {
-    return response;
-  },
-  (error) => {
-    if (error.response && error.response.status === 401) {
-      localStorage.clear();
-      window.location.reload();
-      setTimeout(() => {
-        window.location.href = "/signin";
-      }, 100);
+// axiosInstance.interceptors.response.use(
+//   (response) => {
+//     return response;
+//   },
+//   (error) => {
+//     if (
+//       (error.response && error.response.status === 401) ||
+//       error.response.status === 500
+//     ) {
+//       localStorage.clear();
+//       window.location.reload();
+//       setTimeout(() => {
+//         window.location.href = "/signin";
+//       }, 100);
 
-      // console.log("Unauthorized access - redirecting to sign-in page");
+//       // console.log("Unauthorized access - redirecting to sign-in page");
+//     }
+//     return Promise.reject(error);
+//   }
+// );
+
+axiosInstance.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    const currentPath = window.location.pathname;
+
+    // Jangan redirect kalau sedang login
+    if (
+      currentPath !== "/signin" &&
+      error.response &&
+      [401, 403].includes(error.response.status)
+    ) {
+      localStorage.clear();
+      window.location.href = "/signin";
     }
+
+    // Untuk server error (500), jangan redirect, biar form yang handle
     return Promise.reject(error);
   }
 );

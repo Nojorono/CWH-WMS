@@ -93,10 +93,11 @@ export function AppRoutes() {
 
   // Jika tidak authenticated, langsung sign out
   useEffect(() => {
-    if (!isAuthenticated()) {
+    // Jangan auto-signout kalau user sedang di halaman login
+    if (!isAuthenticated() && location.pathname !== "/signin") {
       signOut(navigate);
     }
-  }, [navigate]);
+  }, [navigate, location.pathname]);
 
   // Manual routes untuk child routes yang tidak otomatis dari userMenus
   const manualChildRoutes: Record<

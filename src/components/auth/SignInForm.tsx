@@ -5,7 +5,7 @@ import { EyeCloseIcon, EyeIcon } from "../../icons";
 import Label from "../form/Label";
 import SignInInput from "../form/input/SignInInput";
 import Button from "../ui/button/Button";
-import CustomToast, { showSuccessToast } from "../../components/toast";
+import CustomToast, { showErrorToast, showSuccessToast } from "../../components/toast";
 import { useAuthStore } from "../../API/store/AuthStore/authStore";
 import { useStoreMenu } from "../../DynamicAPI/stores/Store/MasterStore";
 
@@ -78,12 +78,12 @@ export default function SignInForm() {
         (m: any) => m.parentId !== null && m.path
       );
       const navigatePath = firstChildMenu?.path || "/";
-
-      fetchMenus(); // Pastikan menu di-fetch ulang
+      fetchMenus();
 
       setTimeout(() => {
         navigate(navigatePath);
       }, 800);
+
     } catch (err: any) {
       console.error("Login failed:", err);
       setError(err.message || "Login failed!");
@@ -149,15 +149,15 @@ export default function SignInForm() {
               />
             </div>
             <div className="flex items-center justify-between">
-              <Link
+              {/* <Link
                 to="/reset-password"
                 className="text-sm text-brand-500 hover:text-brand-600 dark:text-brand-400"
               >
                 Forgot password?
-              </Link>
+              </Link> */}
             </div>
             {error && (
-              <p className="text-sm text-red-500 dark:text-red-400">{error}</p>
+              <p className="text-md text-red-500 dark:text-red-400">Gagal Login, {error}!</p>
             )}
             <Button
               className="w-full"
