@@ -216,7 +216,7 @@ const PutAwayDetail: React.FC = () => {
     // === EDIT / DETAIL MODE ===
     if (!isCreate) {
       // tampilkan hanya jika bukan detail
-      if (!isDetail) {
+      if (!isDetail && !isEdit) {
         cols.push({
           accessorKey: "stagingPalletId",
           header: "Staging Pallet ID",
@@ -411,9 +411,23 @@ const PutAwayDetail: React.FC = () => {
 
       // 🔸 MODE EDIT → single update
       if (isEdit && detailDataPutaway?.id) {
+        console.log("detailDataPutaway", detailDataPutaway);
+
+        const originalBinId = detailDataPutaway.destinationBinId;
+        const updatedBinId = mappedData?.[0]?.suggestBinId ?? null;
+
+        // cek apakah user benar-benar memilih bin baru
+        const binIsEdited =
+          updatedBinId &&
+          updatedBinId !== "-" &&
+          updatedBinId !== originalBinId;
+
+        // final value
+        const finalBinId = binIsEdited ? updatedBinId : originalBinId;
+
         const payload = {
           inventory_tracking_id: detailDataPutaway.inventory_tracking_id,
-          destination_bin_id: mappedData[0]?.suggestBinId || "",
+          destination_bin_id: finalBinId,
           forklift_driver_id: data.forkliftDriverId,
           driver_name: data.driverName,
           driver_phone: data.driverPhone,

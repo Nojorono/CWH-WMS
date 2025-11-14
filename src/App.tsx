@@ -1,5 +1,5 @@
 import { AppRoutes } from "./routes";
-import NotificationManager from "./utils/Socket/NotificationManager";
+// import NotificationManager from "./utils/Socket/NotificationManager";
 import { useAuthStore } from "./API/store/AuthStore/authStore"; // contoh ambil userId
 
 export default function App() {
