@@ -8,7 +8,7 @@ export default function App() {
   return (
     <>
       <AppRoutes />
-      {user?.id && <NotificationManager userId={user.id} />}
+      {/* {user?.id && <NotificationManager userId={user.id} />} */}
     </>
   );
 }

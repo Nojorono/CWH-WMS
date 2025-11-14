@@ -69,7 +69,7 @@ const MainTable = () => {
               startIcon={<FaPlus className="size-5" />}
               onClick={() => handleCreate()}
             >
-              Add Inbound Planning
+              Add Putaway
             </Button>
           </div>
         </div>

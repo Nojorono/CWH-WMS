@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { use, useEffect, useMemo, useState } from "react";
 import { ColumnDef } from "@tanstack/react-table";
 import { FaEdit } from "react-icons/fa";
 import Button from "../../../components/ui/button/Button";
@@ -11,6 +11,7 @@ import {
   useStoreUserManagement,
   useStoreBulkPutAway,
   useStorePutAway,
+  useStoreUser,
 } from "../../../DynamicAPI/stores/Store/MasterStore";
 import { PutAwaySuggestion } from "../../../DynamicAPI/types/PutAwaySuggestionTypes";
 import ModalSuggestion from "../Modal/ModalSuggestion";
@@ -59,11 +60,11 @@ const PutAwayDetail: React.FC = () => {
   const { list: putAwaySuggestions, fetchAll: fetchPutAwaySuggestions } =
     useStorePutAwaySuggestion();
 
+  const { list: userDevice, fetchAll: fetchUserDevice } = useStoreUser();
   const { list: userList, fetchAll: fetchUserList } = useStoreUserManagement();
+
   const { createBulkData } = useStoreBulkPutAway();
   const { updateData } = useStorePutAway();
-
-  console.log("User List:", userList);
 
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [mappedData, setMappedData] = useState<PutAwayRow[]>([]);
@@ -75,8 +76,16 @@ const PutAwayDetail: React.FC = () => {
     if (isCreate || isEdit || isDetail) {
       fetchPutAwaySuggestions();
       fetchUserList();
+      fetchUserDevice();
     }
-  }, [isCreate, isEdit, isDetail, fetchPutAwaySuggestions, fetchUserList]);
+  }, [
+    isCreate,
+    isEdit,
+    isDetail,
+    fetchPutAwaySuggestions,
+    fetchUserList,
+    fetchUserDevice,
+  ]);
 
   // react-hook-form setup
   const {
@@ -313,15 +322,29 @@ const PutAwayDetail: React.FC = () => {
   };
 
   // Filter user forklift driver
-  const forkliftDrivers =
+  const forkliftDriverName =
     Array.isArray(userList) && userList.length > 0
       ? userList.filter((u: any) => u.roleName?.toUpperCase() === "DRIVER")
       : [];
 
-  const handleDriverSelect = (val: string) => {
-    const driver = forkliftDrivers.find((d: any) => d.id === val);
+  const driverDevice =
+    Array.isArray(userDevice) && userDevice.length > 0
+      ? userDevice.filter(
+          (u: any) => u.role?.name?.toUpperCase() === "DRIVER_FORKLIFT"
+        )
+      : [];
+
+  const handleDriverDeviceSelect = (val: string) => {
+    const driver = forkliftDriverName.find((d: any) => d.id === val);
     if (driver) {
       setValue("forkliftDriverId", driver.id || "");
+    }
+  };
+
+  const handleDriverNameSelect = (val: string) => {
+    const driver = userList.find((d: any) => d.id === val);
+
+    if (driver) {
       setValue("driverName", driver.name || "");
       setValue("driverPhone", driver.phone || "");
     }
@@ -435,7 +458,7 @@ const PutAwayDetail: React.FC = () => {
           {/* Forklift Username */}
           <div>
             <label className="block text-sm font-medium mb-1">
-              Forklift Username <span className="text-red-500">*</span>
+              Driver Device <span className="text-red-500">*</span>
             </label>
             <Controller
               name="forkliftDriverId"
@@ -446,12 +469,12 @@ const PutAwayDetail: React.FC = () => {
                   <Select
                     {...field}
                     placeholder="Select Forklift Driver"
-                    options={forkliftDrivers.map((d: any) => ({
+                    options={driverDevice.map((d: any) => ({
                       value: d.id,
-                      label: d.name,
+                      label: d.username,
                     }))}
                     onChange={(val: string) => {
-                      handleDriverSelect(val);
+                      handleDriverDeviceSelect(val);
                       field.onChange(val);
                     }}
                     disabled={isDetail}
@@ -478,12 +501,19 @@ const PutAwayDetail: React.FC = () => {
               rules={{ required: "Driver name is required" }}
               render={({ field }) => (
                 <>
-                  <input
+                  <Select
                     {...field}
+                    placeholder="Select Driver"
+                    options={forkliftDriverName.map((u: any) => ({
+                      value: u.id,
+                      label: u.name,
+                    }))}
+                    onChange={(val: string) => {
+                      handleDriverNameSelect(val);
+                      field.onChange(val);
+                    }}
                     disabled={isDetail}
-                    className={`border p-2 rounded w-full ${
-                      errors.driverName ? "border-red-500" : ""
-                    }`}
+                    width="100%"
                   />
                   {errors.driverName && (
                     <p className="text-red-500 text-sm mt-1">
@@ -495,7 +525,7 @@ const PutAwayDetail: React.FC = () => {
             />
           </div>
 
-          {/* Driver Phone */}
+          {/* Driver Phone - auto filled */}
           <div>
             <label className="block text-sm font-medium mb-1">
               Driver Phone <span className="text-red-500">*</span>
