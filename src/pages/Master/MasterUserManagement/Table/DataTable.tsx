@@ -63,11 +63,6 @@ const DataTable = () => {
     if (rest.name !== undefined) payload.name = String(rest.name);
     if (rest.phone !== undefined) payload.phone = String(rest.phone);
     if (rest.roleName !== undefined) payload.roleName = String(rest.roleName);
-    if (rest.createdAt !== undefined)
-      payload.createdAt = String(rest.createdAt);
-    if (rest.updatedAt !== undefined)
-      payload.updatedAt = String(rest.updatedAt);
-    if (rest.deletedAt !== undefined) payload.deletedAt = rest.deletedAt;
 
     return updateData(id, payload);
   };
@@ -77,8 +72,6 @@ const DataTable = () => {
       { accessorKey: "name", header: "Name" },
       { accessorKey: "phone", header: "Phone" },
       { accessorKey: "roleName", header: "Role" },
-      // { accessorKey: "createdAt", header: "Created At" },
-      // { accessorKey: "updatedAt", header: "Updated At" },
     ],
     []
   );
@@ -99,8 +92,11 @@ const DataTable = () => {
     {
       name: "roleName",
       label: "Role",
-      type: "text",
-      validation: { required: "Required" },
+      type: "select",
+      options: [
+        { label: "DRIVER", value: "DRIVER" },
+        { label: "HELPER", value: "HELPER" },
+      ],
     },
   ];
 

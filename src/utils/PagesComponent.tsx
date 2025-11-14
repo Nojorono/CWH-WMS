@@ -47,8 +47,8 @@ import MemoProcess from "../pages/OutboundFullTrial/Memo/TableAndForm/MemoCreate
 import OutboundDO from "../pages/OutboundFullTrial/DO";
 import CreateDO from "../pages/OutboundFullTrial/DO/Main/CreateDO";
 import DetailDO from "../pages/OutboundFullTrial/DO/Main/DetailDO";
-import PickingSuggestion from "../pages/OutboundFullTrial/Picking/PickingSuggestion";
-import PickingList from "../pages/OutboundFullTrial/Picking/Table/PickingList";
+import PickingSuggestion from "../pages/OutboundFullTrial/Picking/Main/PickingSuggestion";
+import PickingList from "../pages/OutboundFullTrial/Picking/Table/SuggestionPicking/PickingList";
 
 export {
   // PAGE MASTER

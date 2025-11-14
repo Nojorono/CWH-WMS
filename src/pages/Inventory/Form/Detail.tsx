@@ -118,10 +118,6 @@ export default function DetailInventory() {
 
   const palletId = (detail as any)?.pallet_id ?? "";
   const palletCode = (detail as any)?.pallet?.pallet_code ?? "";
-
-  console.log("Extracted palletId:", palletId);
-  console.log("Extracted palletCode:", palletCode);
-
   const [activeTab, setActiveTab] = useState(0);
 
   return (
