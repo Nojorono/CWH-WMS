@@ -66,7 +66,10 @@ const CreateDO: React.FC = () => {
       name: "type_outbound",
       label: "Type Outbound",
       type: "select",
-      options: [{ label: "AMO", value: "AMO" }],
+      options: [
+        { label: "AMO", value: "AMO" },
+        { label: "SUBDIST", value: "SUBDIST" },
+      ],
     },
     { name: "origin", label: "Origin", type: "text" },
     { name: "delivery_date", label: "Delivery Date", type: "date" },
@@ -122,7 +125,6 @@ const CreateDO: React.FC = () => {
     }
 
     const formData = methods.getValues();
-
     console.log("formData", formData);
     console.log("selectedMemos", selectedMemos);
 
@@ -144,10 +146,27 @@ const CreateDO: React.FC = () => {
     setIsConfirmOpen(true);
   };
 
+  function generateOutboundDONumber() {
+    const now = new Date();
+    const pad = (n: number) => String(n).padStart(2, "0");
+
+    const datePart = `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(
+      now.getDate()
+    )}`;
+    const timePart = `${pad(now.getHours())}${pad(now.getMinutes())}${pad(
+      now.getSeconds()
+    )}`;
+
+    const rand = Math.floor(100 + Math.random() * 900); // 3 digit random
+
+    return `DO-${datePart}-${timePart}-${rand}`;
+  }
+
   const handleConfirmSubmit = async (reorderedList: any[]) => {
+    const DOnumber = generateOutboundDONumber();
     try {
       const PAYLOAD = {
-        outbound_do_number: "", // akan di-generate oleh backend
+        outbound_do_number: DOnumber, // akan di-generate oleh backend
         origin: formDataPreview?.origin,
         // expedition: formDataPreview?.expedition,
         // license_plate: formDataPreview?.license_plate,

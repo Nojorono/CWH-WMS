@@ -93,7 +93,7 @@ const AdjustTable = ({
 
   const columns: ColumnDef<MemoData>[] = useMemo(
     () => [
-      { accessorKey: "outbound_do_number", header: "DO Number" },
+      { accessorKey: "outboundDoNumber", header: "DO Number" },
       { accessorKey: "origin", header: "Origin" },
       {
         accessorKey: "status",
@@ -194,6 +194,10 @@ const AdjustTable = ({
     updatedAt: item.updatedAt || null,
     deletedAt: item.deletedAt || null,
   }));
+
+
+  console.log("mappedList", mappedList);
+  
 
   return (
     <div className="flex flex-col gap-4">
