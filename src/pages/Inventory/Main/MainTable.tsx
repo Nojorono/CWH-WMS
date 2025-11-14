@@ -18,67 +18,67 @@
 //     fetchAll();
 //   }, []);
 
-  // // 🎨 Warna badge status
-  // const getStatusColor = (status: string) => {
-  //   switch (status) {
-  //     case "INVENTORY":
-  //     case "NOT_STARTED":
-  //     case "INSPECTION_COMPLETED":
-  //       return "bg-yellow-100 text-yellow-700";
-  //     case "IN_PROGRESS":
-  //       return "bg-blue-100 text-blue-700";
-  //     case "COMPLETED":
-  //       return "bg-green-100 text-green-700";
-  //     default:
-  //       return "bg-gray-100 text-gray-700";
-  //   }
-  // };
+// // 🎨 Warna badge status
+// const getStatusColor = (status: string) => {
+//   switch (status) {
+//     case "INVENTORY":
+//     case "NOT_STARTED":
+//     case "INSPECTION_COMPLETED":
+//       return "bg-yellow-100 text-yellow-700";
+//     case "IN_PROGRESS":
+//       return "bg-blue-100 text-blue-700";
+//     case "COMPLETED":
+//       return "bg-green-100 text-green-700";
+//     default:
+//       return "bg-gray-100 text-gray-700";
+//   }
+// };
 
 //   const columns = useMemo(
-    // () => [
-    //   {
-    //     accessorKey: "pallet.pallet_code",
-    //     header: "Pallet ID",
-    //     cell: ({ row }: any) => row.original.pallet?.pallet_code ?? "-",
-    //   },
-    //   {
-    //     accessorKey: "warehouse.name",
-    //     header: "Warehouse",
-    //     cell: ({ row }: any) => row.original.warehouse?.name ?? "-",
-    //   },
-    //   {
-    //     accessorKey: "warehouseSub.code",
-    //     header: "Zone",
-    //     cell: ({ row }: any) => row.original.warehouseSub?.code ?? "-",
-    //   },
-    //   {
-    //     accessorKey: "warehouseBin.name",
-    //     header: "Bin",
-    //     cell: ({ row }: any) => row.original.warehouseBin?.name ?? "Preload",
-    //   },
-    //   {
-    //     accessorKey: "progression_status",
-    //     header: "Progression Status",
-    //     cell: ({ row }: any) => {
-    //       const status = row.original.progression_status || "-";
-    //       return (
-    //         <span
-    //           className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(
-    //             status
-    //           )}`}
-    //         >
-    //           {status.replaceAll("_", " ")}
-    //         </span>
-    //       );
-    //     },
-    //   },
-    //   {
-    //     accessorKey: "inventory_status",
-    //     header: "Inventory Status",
-    //     cell: ({ row }: any) => row.original.inventory_status ?? "",
-    //   },
-    // ],
-    // []
+// () => [
+//   {
+//     accessorKey: "pallet.pallet_code",
+//     header: "Pallet ID",
+//     cell: ({ row }: any) => row.original.pallet?.pallet_code ?? "-",
+//   },
+//   {
+//     accessorKey: "warehouse.name",
+//     header: "Warehouse",
+//     cell: ({ row }: any) => row.original.warehouse?.name ?? "-",
+//   },
+//   {
+//     accessorKey: "warehouseSub.code",
+//     header: "Zone",
+//     cell: ({ row }: any) => row.original.warehouseSub?.code ?? "-",
+//   },
+//   {
+//     accessorKey: "warehouseBin.name",
+//     header: "Bin",
+//     cell: ({ row }: any) => row.original.warehouseBin?.name ?? "Preload",
+//   },
+//   {
+//     accessorKey: "progression_status",
+//     header: "Progression Status",
+//     cell: ({ row }: any) => {
+//       const status = row.original.progression_status || "-";
+//       return (
+//         <span
+//           className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(
+//             status
+//           )}`}
+//         >
+//           {status.replaceAll("_", " ")}
+//         </span>
+//       );
+//     },
+//   },
+//   {
+//     accessorKey: "inventory_status",
+//     header: "Inventory Status",
+//     cell: ({ row }: any) => row.original.inventory_status ?? "",
+//   },
+// ],
+// []
 //   );
 
 //   // Define formFields for DynamicTable
@@ -187,9 +187,8 @@ const MainTable = () => {
 
   const options = [
     { value: "", label: "All Status" },
-    { value: "PENDING", label: "PENDING" },
-    { value: "APPROVED", label: "APPROVED" },
-    { value: "REJECTED", label: "REJECTED" },
+    { value: "INSPECTION_COMPLETED", label: "INSPECTION_COMPLETED" },
+    { value: "IN_INVENTORY", label: "IN_INVENTORY" },
   ];
 
   return (

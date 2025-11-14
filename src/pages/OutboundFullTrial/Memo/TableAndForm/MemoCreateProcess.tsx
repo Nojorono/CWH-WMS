@@ -485,7 +485,7 @@ const CreateMemo: React.FC = () => {
     const rejectMemo = async (memoId: string) => {
       const token = localStorage.getItem("token");
       try {
-        const res = await fetch(`${EndPoint}outbound-memo/${memoId}/rejected`, {
+        const res = await fetch(`${EndPoint}outbound-memo/${memoId}/cancelled`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",

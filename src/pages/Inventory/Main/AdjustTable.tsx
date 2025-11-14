@@ -59,40 +59,40 @@
 //     if (noActions) return columns;
 //     return [
 //       ...columns,
-//       {
-//         id: "actions",
-//         header: "Action",
-//         cell: ({ row }) => (
-//           <div className="flex gap-2">
-//             {isEdited && (
-//               <button
-//                 className="text-green-600"
-//                 onClick={() => setSelectedItem(row.original)}
-//               >
-//                 <FaEdit />
-//               </button>
-//             )}
+// {
+//   id: "actions",
+//   header: "Action",
+//   cell: ({ row }) => (
+//     <div className="flex gap-2">
+//       {isEdited && (
+//         <button
+//           className="text-green-600"
+//           onClick={() => setSelectedItem(row.original)}
+//         >
+//           <FaEdit />
+//         </button>
+//       )}
 
-//             {isDeleted && (
-//               <button
-//                 onClick={() => handleDelete(getRowId(row.original))}
-//                 className="text-red-500"
-//               >
-//                 <FaTrash />
-//               </button>
-//             )}
+//       {isDeleted && (
+//         <button
+//           onClick={() => handleDelete(getRowId(row.original))}
+//           className="text-red-500"
+//         >
+//           <FaTrash />
+//         </button>
+//       )}
 
-//             {isView && (
-//               <button
-//                 onClick={() => handleViewDetail(getRowId(row.original))}
-//                 className="text-blue-500"
-//               >
-//                 <FaEye />
-//               </button>
-//             )}
-//           </div>
-//         ),
-//       },
+//       {isView && (
+//         <button
+//           onClick={() => handleViewDetail(getRowId(row.original))}
+//           className="text-blue-500"
+//         >
+//           <FaEye />
+//         </button>
+//       )}
+//     </div>
+//   ),
+// },
 //     ];
 //   }, [columns, getRowId, handleDelete]);
 
@@ -175,6 +175,7 @@ const AdjustTable = ({
   setGlobalFilter,
   filteredStatus,
 }: MenuTableProps) => {
+  const navigate = useNavigate();
   const {
     fetchUsingPagination,
     list: list,
@@ -192,7 +193,9 @@ const AdjustTable = ({
       page: pageIndex + 1, // jika backend 1-based
       limit: pageSize,
       search: globalFilter || "",
-      status: filteredStatus || "",
+      inventory_status: filteredStatus || "",
+      sortOrder: "DESC",
+      sortBy: "progression_status",
     });
   }, [fetchUsingPagination, pageIndex, pageSize, globalFilter, filteredStatus]);
 
@@ -240,9 +243,54 @@ const AdjustTable = ({
           />
         ),
       },
+      {
+        id: "actions",
+        header: "Action",
+        cell: ({ row }) => (
+          <div className="flex gap-2">
+            {/* {isEdited && (
+              <button
+                className="text-green-600"
+                onClick={() => setSelectedItem(row.original)}
+              >
+                <FaEdit />
+              </button>
+            )}
+
+            {isDeleted && (
+              <button
+                onClick={() => handleDelete(getRowId(row.original))}
+                className="text-red-500"
+              >
+                <FaTrash />
+              </button>
+            )}
+
+            {isView && (
+              <button
+                onClick={() => handleViewDetail(getRowId(row.original))}
+                className="text-blue-500"
+              >
+                <FaEye />
+              </button>
+            )} */}
+
+            <button
+              onClick={() => handleViewDetail(row.original.id)}
+              className="text-blue-500"
+            >
+              <FaEye />
+            </button>
+          </div>
+        ),
+      },
     ],
     []
   );
+
+  const handleViewDetail = (id: any) => {
+    navigate(`/inventory/detail`, { state: { invListId: id } });
+  };
 
   // Mapping API data to table data
   const mappedList = (list || []).map((item: any, index: number) => ({
