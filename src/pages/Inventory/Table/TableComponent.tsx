@@ -1,122 +1,239 @@
-import { useState, useMemo, useCallback, use } from "react";
-import { ColumnDef } from "@tanstack/react-table";
-import TableComponent from "../../../components/tables/MasterDataTable/TableComponent";
-import { FaEdit, FaEye, FaTrash } from "react-icons/fa";
-import { useNavigate } from "react-router";
+import { useState, useMemo, useEffect } from "react";
+import {
+  useReactTable,
+  getCoreRowModel,
+  getFilteredRowModel,
+  getSortedRowModel,
+  flexRender,
+  ColumnDef,
+} from "@tanstack/react-table";
 
-interface Props {
-  data: any[];
+interface TableComponentProps<T> {
+  data: T[];
+  columns: (ColumnDef<T> & { selectedRow?: boolean })[];
   globalFilter?: string;
-  isCreateModalOpen: boolean;
-  onCloseCreateModal: () => void;
-  columns: ColumnDef<any>[];
-  formFields: any[];
-  onSubmit?: (data: any) => Promise<any>;
-  onUpdate?: (data: any) => Promise<any>;
-  onDelete?: (id: any) => Promise<void>;
-  onRefresh: () => void;
-  getRowId?: (row: any) => any;
-  title?: string;
-  noActions?: boolean;
-  isDeleted?: boolean;
-  isEdited?: boolean;
-  isView?: boolean;
-  onSelectedChange?: (ids: any[]) => void; // ✅ callback ke parent
+  setGlobalFilter?: (value: string) => void;
+  onSelectionChange?: (selectedIds: any[]) => void;
+  pageSize?: number;
+  onDetail?: (id: any) => void;
+  onPageChange?: (page: number, pageSize: number) => void;
+  pageIndex?: number; // controlled by parent
+  totalPages?: number; // from parent (for API pagination)
 }
 
-const DynamicTable = ({
+const TableComponent = <T extends { [key: string]: any }>({
   data,
-  globalFilter,
   columns,
-  onDelete,
-  onRefresh,
-  getRowId = (row) => row.id,
-  noActions,
-  isDeleted = true,
-  isEdited = true,
-  isView = false,
-  onSelectedChange,
-}: Props) => {
-  const navigate = useNavigate();
-  const [selectedItem, setSelectedItem] = useState<any | null>(null);
-  const [selectedIds, setSelectedIds] = useState<any[]>([]);
+  globalFilter,
+  setGlobalFilter,
+  onSelectionChange,
+  pageSize = 10,
+  onPageChange,
+  pageIndex = 0,
+  totalPages = 1,
+}: TableComponentProps<T>) => {
+  // 🧭 Local pagination state (but controlled by parent)
+  const [pagination, setPagination] = useState({
+    pageIndex,
+    pageSize,
+  });
 
-  const handleDelete = useCallback(
-    async (id: any) => {
-      if (onDelete) {
-        await onDelete(id);
-      }
-      await onRefresh();
-    },
-    [onDelete, onRefresh]
-  );
+  // 🧩 Sinkronisasi pageIndex & pageSize dari parent ke local
+  useEffect(() => {
+    setPagination((prev) => ({
+      ...prev,
+      pageIndex,
+    }));
+  }, [pageIndex]);
 
-  const handleViewDetail = (id: any) => {
-    navigate(`/inventory/detail`, { state: { invListId: id } });
-  };
+  useEffect(() => {
+    setPagination((prev) => ({
+      ...prev,
+      pageSize,
+    }));
+  }, [pageSize]);
 
-  const enhancedColumns = useMemo(() => {
-    if (noActions) return columns;
+  // 🔥 cari kolom dengan flag selectedRow
+  const selectionColumn = columns.find((col: any) => col.selectedRow);
+
+  const enhancedColumns = useMemo<ColumnDef<T>[]>(() => {
+    if (!selectionColumn) return columns;
+    // Removed unused accessorKey declaration
     return [
-      ...columns,
       {
-        id: "actions",
-        header: "Action",
+        id: "select",
+        header: ({ table }) => (
+          <input
+            type="checkbox"
+            checked={table.getIsAllPageRowsSelected()}
+            onChange={table.getToggleAllPageRowsSelectedHandler()}
+          />
+        ),
         cell: ({ row }) => (
-          <div className="flex gap-2">
-            {isEdited && (
-              <button
-                className="text-green-600"
-                onClick={() => setSelectedItem(row.original)}
-              >
-                <FaEdit />
-              </button>
-            )}
-
-            {isDeleted && (
-              <button
-                onClick={() => handleDelete(getRowId(row.original))}
-                className="text-red-500"
-              >
-                <FaTrash />
-              </button>
-            )}
-
-            {isView && (
-              <button
-                onClick={() => handleViewDetail(getRowId(row.original))}
-                className="text-blue-500"
-              >
-                <FaEye />
-              </button>
-            )}
-          </div>
+          <input
+            type="checkbox"
+            checked={row.getIsSelected()}
+            disabled={!row.getCanSelect()}
+            onChange={row.getToggleSelectedHandler()}
+          />
         ),
       },
+      ...columns.filter((col: any) => !col.selectedRow),
     ];
-  }, [columns, getRowId, handleDelete]);
+  }, [columns, selectionColumn]);
 
-  // ✅ hanya update saat ada event, bukan di render
-  const handleSelectionChange = useCallback(
-    (ids: any[]) => {
-      setSelectedIds(ids);
-      if (onSelectedChange) {
-        onSelectedChange(ids); // kirim ke parent
-      }
-    },
-    [onSelectedChange]
-  );
+  const table = useReactTable<T>({
+    data,
+    columns: enhancedColumns,
+    state: { globalFilter },
+    onGlobalFilterChange: setGlobalFilter,
+    getCoreRowModel: getCoreRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    enableRowSelection: !!selectionColumn,
+  });
+
+  // 🔄 Kirim ID terpilih ke parent
+  useEffect(() => {
+    if (onSelectionChange && selectionColumn) {
+      const accessorKey = (selectionColumn as any).accessorKey;
+      const selectedIds = table
+        .getSelectedRowModel()
+        .rows.map((row) => row.original[accessorKey]);
+      onSelectionChange(selectedIds);
+    }
+  }, [table.getSelectedRowModel().rows, selectionColumn, onSelectionChange]);
+
+  // 🌐 Custom pagination handler
+  const handleGotoPage = (page: number) => {
+    if (page >= 0 && page < totalPages) {
+      setPagination((prev) => ({ ...prev, pageIndex: page }));
+      onPageChange?.(page, pagination.pageSize);
+    }
+  };
+
+  const handleNextPage = () => handleGotoPage(pagination.pageIndex + 1);
+  const handlePrevPage = () => handleGotoPage(pagination.pageIndex - 1);
+
+  const handlePageSizeChange = (size: number) => {
+    setPagination({ ...pagination, pageSize: size, pageIndex: 0 });
+    onPageChange?.(0, size);
+  };
 
   return (
     <>
-      <TableComponent
-        data={data}
-        columns={enhancedColumns}
-        globalFilter={globalFilter}
-        onSelectionChange={handleSelectionChange} // ✅ trigger saat user checklist
-      />
+      {/* 🧱 Table */}
+      <div className="overflow-x-auto">
+        <div className="max-h-[600px] overflow-y-auto">
+          <div className="mb-2">
+            <select
+              value={pagination.pageSize}
+              onChange={(e) => handlePageSizeChange(Number(e.target.value))}
+              className="border rounded px-2 py-1"
+            >
+              {[5, 10, 20, 50].map((size) => (
+                <option key={size} value={size}>
+                  {size} / page
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <table className="min-w-full table-auto border border-gray-200">
+            <thead className="sticky top-0 bg-gray-100">
+              {table.getHeaderGroups().map((headerGroup) => (
+                <tr key={headerGroup.id}>
+                  {headerGroup.headers.map((header) => (
+                    <th
+                      key={header.id}
+                      className="px-4 py-2 border-b cursor-pointer text-left" // Changed to text-left
+                      onClick={header.column.getToggleSortingHandler()}
+                    >
+                      {header.isPlaceholder
+                        ? null
+                        : flexRender(
+                            header.column.columnDef.header,
+                            header.getContext()
+                          )}
+                      {header.column.getIsSorted() === "asc" && " 🔼"}
+                      {header.column.getIsSorted() === "desc" && " 🔽"}
+                    </th>
+                  ))}
+                </tr>
+              ))}
+            </thead>
+            <tbody>
+              {table.getRowModel().rows.length === 0 ? (
+                <tr>
+                  <td
+                    colSpan={enhancedColumns.length}
+                    className="text-center py-4"
+                  >
+                    No data available
+                  </td>
+                </tr>
+              ) : (
+                table.getRowModel().rows.map((row) => (
+                  <tr key={row.id} className="hover:bg-gray-50">
+                    {row.getVisibleCells().map((cell) => (
+                      <td key={cell.id} className="px-4 py-2 border-b">
+                        {cell.column.columnDef.cell
+                          ? flexRender(
+                              cell.column.columnDef.cell,
+                              cell.getContext()
+                            )
+                          : flexRender(
+                              cell.getValue() as any,
+                              cell.getContext()
+                            )}
+                      </td>
+                    ))}
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* 🧭 Custom Pagination Controls */}
+      <div className="flex justify-between items-center mt-4">
+        <div className="text-sm">
+          Page {pagination.pageIndex + 1} of {totalPages}
+        </div>
+
+        <div className="flex items-center space-x-2">
+          <button
+            onClick={handlePrevPage}
+            disabled={pagination.pageIndex === 0}
+            className="px-3 py-1 border rounded disabled:opacity-50"
+          >
+            Prev
+          </button>
+
+          {Array.from({ length: totalPages }).map((_, idx) => (
+            <button
+              key={idx}
+              onClick={() => handleGotoPage(idx)}
+              className={`px-2 py-1 border rounded ${
+                pagination.pageIndex === idx ? "bg-blue-500 text-white" : ""
+              }`}
+            >
+              {idx + 1}
+            </button>
+          ))}
+
+          <button
+            onClick={handleNextPage}
+            disabled={pagination.pageIndex >= totalPages - 1}
+            className="px-3 py-1 border rounded disabled:opacity-50"
+          >
+            Next
+          </button>
+        </div>
+      </div>
     </>
   );
 };
 
-export default DynamicTable;
+export default TableComponent;

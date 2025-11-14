@@ -161,7 +161,6 @@ const AdjustTable = ({
     qty: item.qty || 0,
     uom: item.uom || "",
     warehouse_id: item.warehouse_id || "",
-    // Add any other required fields from AdjustData here
   }));
 
   return (

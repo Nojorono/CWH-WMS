@@ -1,11 +1,11 @@
 import PageBreadcrumb from "../../components/common/PageBreadCrumb";
-import DataTable from "./Table/DataTable";
+import MainTable from "./Main/MainTable";
 
 export default function Inventory() {
   return (
     <div>
       <PageBreadcrumb breadcrumbs={[{ title: "Inventory" }]} />
-      <DataTable />
+      <MainTable />
     </div>
   );
 }

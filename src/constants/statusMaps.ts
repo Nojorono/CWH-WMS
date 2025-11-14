@@ -46,10 +46,16 @@ export const STATUS_MAP_OUTBOUND: StatusMap = {
 
 // 📦 Inventory Module
 export const STATUS_MAP_INVENTORY: StatusMap = {
-  AVAILABLE: "success",
-  RESERVED: "warning",
-  DAMAGED: "error",
+  IN_INVENTORY: "success",
+  INSPECTION_COMPLETED: "warning",
+}
+
+export const STATUS_PROGRESSION_INVENTORY: StatusMap = {
+  NOT_STARTED: "grey",
+  IN_PROGRESS: "info",
+  COMPLETED: "success"
 };
+
 
 export const STATUS_MAP_PUTAWAY: StatusMap = {
   PENDING: "grey",
@@ -64,5 +70,6 @@ export const STATUS_MAPS = {
   memo: STATUS_MAP_MEMO,
   outbound: STATUS_MAP_OUTBOUND,
   inventory: STATUS_MAP_INVENTORY,
+  inventory_progress: STATUS_PROGRESSION_INVENTORY,
   putaway: STATUS_MAP_PUTAWAY,
 } as const;
