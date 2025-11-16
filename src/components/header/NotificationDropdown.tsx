@@ -45,7 +45,7 @@ export default function NotificationDropdown() {
       setHasUnread(list.some((n) => !n.read_at));
     } catch (err) {
       console.error("Error loading notifications:", err);
-      showErrorToast("Gagal memuat notifikasi");
+      showErrorToast(`real-time notification error, ${err}`);
     } finally {
       setLoading(false);
     }

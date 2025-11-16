@@ -199,8 +199,6 @@ const AdjustTable = ({
     });
   }, [fetchUsingPagination, pageIndex, pageSize, globalFilter, filteredStatus]);
 
-  console.log("list", list);
-
   const columns: ColumnDef<InventoryData>[] = useMemo(
     () => [
       {

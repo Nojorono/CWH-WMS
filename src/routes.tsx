@@ -46,7 +46,6 @@ import {
   CreateDO,
   DetailDO,
   PickingSuggestion,
-  PickingList,
 } from "./utils/PagesComponent";
 
 const DefaultPage = () => <> </>;
@@ -119,7 +118,6 @@ export function AppRoutes() {
       { path: "process", element: <CreateDO /> },
       { path: "detail", element: <DetailDO /> },
       { path: "picking_suggestion", element: <PickingSuggestion /> },
-      { path: "picking_list", element: <PickingList /> },
     ],
   };
 

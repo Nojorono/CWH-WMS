@@ -34,6 +34,32 @@ export interface SuggestedItem {
     notes: string;
 }
 
+export interface CompactPickingRow {
+    memo_id: string;
+    item_id: string;
+    item_name: string;
+    item_code: string;
+    classification: string;
+    qty_plan: string;
+    required_quantity: number;
+    available_quantity: number;
+    uom: string;
+    production_code: string;
+    zone: string;
+    bin: string;
+    qty_ready_to_pick: number;
+    location_data?: SuggestedLocation;
+    note: string;
+    source_warehouse_sub_id?: string; // Added for handling source warehouse sub ID
+    source_bin_id?: string | null; // Added for handling source bin ID
+    destination_warehouse_sub_id?: string; // Added for handling destination warehouse sub ID
+    destination_bin_id?: string; // Added for handling destination bin ID
+    quantity?: number; // Added for handling quantity
+    week_number?: number; // Added for handling week number
+    status?: string; // Added for handling status
+}
+
+
 export type MemoFormValues = {
     requestor: string;
     origin: string;
