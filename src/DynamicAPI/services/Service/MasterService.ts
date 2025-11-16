@@ -26,8 +26,10 @@ import { OutboundDelivery, OutboundDeliveryCreateUpdate } from '../../types/Deli
 import { PickingSuggestion, CreatePickingSuggestion, UpdatePickingSuggestion } from '../../types/PickingSuggestionTypes.tsx'
 import { TransactionPicking, CreateTransactionPicking, UpdateTransactionPicking } from '../../types/TransactionPickingTypes.tsx'
 import { PickingList, CreatePickingList, UpdatePickingList } from '../../types/PickingList.tsx'
+import { PickingAssignHelper, CreatePickingAssignHelper, UpdatePickingAssignHelper } from "../../types/PickingAssignHelper.tsx";
 
 import { UserManagement, CreateUserManagement, UpdateUserManagement } from "../../types/UserManagement.tsx";
+
 
 
 
@@ -61,5 +63,9 @@ export const OutboundDeliveryService = createCrudService<OutboundDelivery, Outbo
 export const PickingSuggestionService = createCrudService<PickingSuggestion, CreatePickingSuggestion, UpdatePickingSuggestion>("/picking-suggestion/memo");
 export const TransactionPickingService = createCrudService<TransactionPicking, CreateTransactionPicking, UpdateTransactionPicking>("/transaction-picking/bulk");
 export const PickingListService = createCrudService<PickingList, CreatePickingList, UpdatePickingList>("/transaction-picking/memo");
+export const PickingAssignHelperService = createCrudService<PickingAssignHelper, CreatePickingAssignHelper, UpdatePickingAssignHelper>("/assigned-picking/");
+// export const PickingAssignHelperService = createCrudService<PickingAssignHelper, CreatePickingAssignHelper, UpdatePickingAssignHelper>("/assigned-picking/memo/");
+
+
 
 export const UserManagementService = createCrudService<UserManagement, CreateUserManagement, UpdateUserManagement>("/user-manage");

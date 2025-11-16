@@ -12,22 +12,29 @@ import {
   useStoreOutboundMemo,
   useStoreOutboundDelivery,
   useStorePickingSuggestion,
+  useStorePickingAssignHelper,
 } from "../../../../DynamicAPI/stores/Store/MasterStore";
 import { useLocation } from "react-router";
 import { formatDateIndo } from "../../../../helper/FormatDate";
-import { FaTasks } from "react-icons/fa";
+import {
+  FaClipboardList,
+  FaEye,
+  FaTasks,
+  FaUsers,
+} from "react-icons/fa";
 import SuggestionTable from "../Table/SuggestionPicking/SuggestionTable";
 import ModalPickingList from "../Modal/ModalPickingList";
+import ModalAssignHelper from "../Modal/ModalAssignHelper";
+
 import TabsSection from "../../../../components/wms-components/inbound-component/tabs/TabsSection";
 import { SuggestedItem, MemoFormValues } from "../Types/types";
-import AssignHelper from "../Table/AssignHelper";
+import AssignHelperTable from "../Table/AssignHelper";
 
 const PickingSuggestion: React.FC = () => {
   const location = useLocation();
   const { data: deliveryOrderId, mode, title } = location.state || {};
   const isSuggestion = mode === "suggestion";
   const [activeTab, setActiveTab] = useState(0);
-
   const [assignHelperOpen, setAssignHelperOpen] = useState(false);
   const [assignHelperMemoId, setAssignHelperMemoId] = useState<string | null>(
     null
@@ -43,6 +50,7 @@ const PickingSuggestion: React.FC = () => {
 
   const { fetchAll: fetchAllMemos, list: memoList } = useStoreOutboundMemo();
   const { fetchById, detail } = useStoreOutboundDelivery();
+  const { createData } = useStorePickingAssignHelper();
   const {
     fetchById: fetchPickingSuggestionById,
     detail: pickingSuggestionDetail,
@@ -146,10 +154,10 @@ const PickingSuggestion: React.FC = () => {
             <Button
               type="button"
               variant="primary"
-              className="px-2 py-1 text-xs bg-orange-500 hover:bg-orange-600"
               onClick={() => handleAssignClick(row.original)}
               disabled={isSuggestionLoading}
-              size="sm"
+              size="xsm"
+              startIcon={<FaClipboardList className="size-5" />}
             >
               {isSuggestionLoading ? "Loading..." : "Picking Suggestion"}
             </Button>
@@ -162,22 +170,22 @@ const PickingSuggestion: React.FC = () => {
 
           <Button
             type="button"
-            variant="primary"
-            className="px-2 py-1 text-xs bg-orange-500 hover:bg-orange-600"
+            variant="secondary"
             onClick={() => handlePickingDetail(row.original.id)}
             disabled={isSuggestionLoading}
-            size="sm"
+            size="xsm"
+            startIcon={<FaEye className="size-5" />}
           >
             Picking Detail
           </Button>
 
           <Button
             type="button"
-            variant="primary"
-            className="px-2 py-1 text-xs bg-orange-500 hover:bg-orange-600"
+            variant="action"
             onClick={() => handleAssignHelper(row.original.id)}
             disabled={isSuggestionLoading}
-            size="sm"
+            size="xsm"
+            startIcon={<FaUsers className="size-5" />}
           >
             Assign Helper
           </Button>
@@ -206,11 +214,16 @@ const PickingSuggestion: React.FC = () => {
   };
 
   // callback when AssignHelper submits
-  const handleAssignHelperSubmit = (payload: any) => {
+  const handleAssignHelperSubmit = async (payload: any) => {
     console.log("AssignHelper payload:", payload);
     // TODO: call API / store action to persist assignment if needed
-    setAssignHelperOpen(false);
-    setAssignHelperMemoId(null);
+
+    const res = await createData(payload);
+    if (res?.success) {
+      setAssignHelperOpen(false);
+      setAssignHelperMemoId(null);
+      // navigate("/inbound_planning");
+    }
   };
 
   const handleSelectionChange = (selectedIds: string[]) => {
@@ -250,8 +263,6 @@ const PickingSuggestion: React.FC = () => {
         </div>
       );
     }
-
-    console.log("memoItems", memoItems);
 
     return (
       <SuggestionTable
@@ -320,21 +331,21 @@ const PickingSuggestion: React.FC = () => {
               </>
             ),
           },
-          // {
-          //   label: "Assign Helper",
-          //   content: (
-          //     <>
-          //       <section className="bg-white rounded-xl shadow-sm border border-gray-200">
-          //         <div className="bg-orange-500 text-white rounded-t-xl px-5 py-3 font-semibold">
-          //           Assign Helper
-          //         </div>
-          //         <div className="p-4">
-          //           <AssignHelper memoId={"123"} />
-          //         </div>
-          //       </section>
-          //     </>
-          //   ),
-          // },
+          {
+            label: "Helper List",
+            content: (
+              <>
+                <section className="bg-white rounded-xl shadow-sm border border-gray-200">
+                  <div className="bg-orange-500 text-white rounded-t-xl px-5 py-3 font-semibold">
+                    Helper List
+                  </div>
+                  <div className="p-4">
+                    <AssignHelperTable detailData={detail} />
+                  </div>
+                </section>
+              </>
+            ),
+          },
         ]}
         activeTab={activeTab}
         onTabChange={setActiveTab}
@@ -387,7 +398,7 @@ const PickingSuggestion: React.FC = () => {
               </button>
             </div>
 
-            <AssignHelper
+            <ModalAssignHelper
               memoId={assignHelperMemoId || undefined}
               onSubmit={handleAssignHelperSubmit}
               isDetail={false}
