@@ -29,6 +29,10 @@ const AssignHelperTable: React.FC<AssignHelperTableProps> = ({
     ? (list as any).data
     : [];
 
+
+    console.log("Raw list in AssignHelperTable:", rawList);
+    
+
   const columns = [
     {
       accessorKey: "memo_id",
