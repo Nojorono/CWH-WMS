@@ -116,11 +116,23 @@ const DataTable = () => {
       name: "capacity_pallet",
       label: "Kapasitas Pallet",
       type: "number",
-      validation: {
-        required: "Required",
-        min: { value: 0, message: "Harus >= 0" },
+      // sembunyikan ketika zone yang dipilih memiliki name "PRELOAD"
+      hiddenWhen: (values: Record<string, any>) => {
+        const selectedId = values?.warehouse_sub_id;
+        if (!selectedId) return false;
+        const sel = subWHList.find((s: any) => s.id === selectedId);
+        return !!sel && String(sel.name).toUpperCase() === "PRELOAD";
       },
     },
+    // {
+    //   name: "capacity_pallet",
+    //   label: "Kapasitas Pallet",
+    //   type: "number",
+    //   validation: {
+    //     required: "Required",
+    //     min: { value: 0, message: "Harus >= 0" },
+    //   },
+    // },
   ];
 
   // Fungsi untuk format payload create
@@ -133,14 +145,29 @@ const DataTable = () => {
       description,
       capacity_pallet,
     } = data;
-    return createData({
+
+    console.log("Creating with data:", data);
+
+    const payload: any = {
       organization_id: Number(organization_id),
       warehouse_sub_id,
       name,
       code,
       description,
-      capacity_pallet: Number(capacity_pallet),
-    });
+    };
+
+    // Hapus capacity_pallet dari payload jika kosong string
+    if (capacity_pallet != null) {
+      const cp =
+        typeof capacity_pallet === "string"
+          ? capacity_pallet.trim()
+          : capacity_pallet;
+      if (cp !== "") {
+        payload.capacity_pallet = Number(cp);
+      }
+    }
+
+    return createData(payload);
   };
 
   // Fungsi untuk format payload update
@@ -174,6 +201,11 @@ const DataTable = () => {
     );
     setSelectedBin(selected);
     setPrintModalOpen(true); // buka modal preview
+  };
+
+  const handleDelete = async (id: string) => {
+    console.log("Deleting id:", id);
+    await deleteData(id);
   };
 
   return (
@@ -219,9 +251,7 @@ const DataTable = () => {
         formFields={formFields}
         onSubmit={handleCreate}
         onUpdate={handleUpdate}
-        onDelete={async (id) => {
-          await deleteData(id);
-        }}
+        onDelete={handleDelete}
         onRefresh={fetchAll}
         getRowId={(row) => row.id}
         title="Form UOM"
