@@ -193,11 +193,7 @@ const AdjustTable = ({
     createdAt: item.createdAt || null,
     updatedAt: item.updatedAt || null,
     deletedAt: item.deletedAt || null,
-  }));
-
-
-  console.log("mappedList", mappedList);
-  
+  }));  
 
   return (
     <div className="flex flex-col gap-4">

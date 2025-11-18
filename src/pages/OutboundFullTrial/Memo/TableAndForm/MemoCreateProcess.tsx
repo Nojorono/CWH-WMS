@@ -9,7 +9,7 @@ import ModalAddItem from "../Modal/ModalAddItem";
 import DynamicForm, {
   FieldConfig,
 } from "../../../../components/wms-components/inbound-component/form/DynamicForm";
-import { showErrorToast } from "../../../../components/toast";
+import { showErrorToast, showSuccessToast } from "../../../../components/toast";
 import { useStoreOutboundMemo } from "../../../../DynamicAPI/stores/Store/MasterStore";
 import { useLocation, useNavigate } from "react-router";
 import { EndPoint } from "../../../../utils/EndPoint";
@@ -452,8 +452,6 @@ const CreateMemo: React.FC = () => {
 
   const handleApproveMemo = (memoId: string) => {
     // Implementasi logika untuk menyetujui memo
-    console.log("Approve memo with ID:", memoId);
-
     const approveMemo = async (memoId: string) => {
       const token = localStorage.getItem("token");
       try {
@@ -466,7 +464,7 @@ const CreateMemo: React.FC = () => {
         });
         const data = await res.json();
         if (res.ok) {
-          showErrorToast("Memo approved successfully");
+          showSuccessToast("Memo approved successfully");
           navigate("/memo");
         } else {
           showErrorToast(data?.message || "Failed to approve memo");
@@ -544,7 +542,7 @@ const CreateMemo: React.FC = () => {
           watch={methods.watch}
         />
 
-        {localStorage.getItem("role_name") === "TRANSPORT SUPERVISOR" &&
+        {localStorage.getItem("role_name") === "TRANSPORT_SUPERVISOR" &&
           detail?.status !== "APPROVED" && (
             <div className="flex justify-end mt-4 gap-3">
               <Button

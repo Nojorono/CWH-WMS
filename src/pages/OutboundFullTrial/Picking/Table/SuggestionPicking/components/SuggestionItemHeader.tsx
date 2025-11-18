@@ -22,7 +22,7 @@ interface MemoHeaderProps {
   availableBins: Array<{ id: string; code: string }>;
 }
 
-export const MemoHeader: React.FC<MemoHeaderProps> = ({
+export const SuggestionItemHeader: React.FC<MemoHeaderProps> = ({
   memoDetail,
   deliveryOrder,
   selectedDestination,
@@ -58,7 +58,7 @@ export const MemoHeader: React.FC<MemoHeaderProps> = ({
       {/* Destination BIN */}
       <div className="md:col-span-1">
         <label htmlFor="destination-bin" className="text-gray-500 block mb-1">
-          Destination BIN
+          Destination Bin/Line
         </label>
 
         <Select

@@ -4,7 +4,7 @@ import CustomToast from "../components/toast";
 import { Link } from "react-router";
 import { useSidebar } from "../context/SidebarContext";
 import UserDropdown from "../components/header/UserDropdown";
-import NotificationDropdown from "../components/header/NotificationDropdown";
+// import NotificationDropdown from "../components/header/NotificationDropdown";
 import { ThemeToggleButton } from "../components/common/ThemeToggleButton";
 
 const AppHeader: React.FC = () => {
@@ -126,7 +126,7 @@ const AppHeader: React.FC = () => {
           >
             <div className="flex items-center gap-2 2xsm:gap-3"></div>
             {/* <!-- Notification Menu Area --> */}
-            <NotificationDropdown />
+            {/* <NotificationDropdown /> */}
             {/* <!-- User Area --> */}
             <UserDropdown />
           </div>

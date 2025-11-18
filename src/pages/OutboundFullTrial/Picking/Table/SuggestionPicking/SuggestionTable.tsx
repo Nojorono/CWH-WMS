@@ -3,14 +3,15 @@ import { useCompactRows } from "./hooks/useCompactRows";
 import { usePickingQuantities } from "./hooks/usePickingQuantities";
 import { buildPayload } from "./hooks/usePickingPayload";
 import { PickingRowsTable } from "./components/PickingRowsTable";
-import { MemoHeader } from "./components/MemoHeader";
+import { SuggestionItemHeader } from "./components/SuggestionItemHeader";
 import {
   useStoreTransactionPicking,
-  useStoreBin,
+  useStoreBinByZone,
 } from "../../../../../DynamicAPI/stores/Store/MasterStore";
 import { useNavigate } from "react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { showErrorToast } from "../../../../../components/toast";
+import { FaArrowLeft } from "react-icons/fa";
 
 interface SuggestionTableProps {
   memoDetail: any;
@@ -19,28 +20,37 @@ interface SuggestionTableProps {
   onBack: () => void;
 }
 
+type Bin = {
+  id?: any;
+  code?: string;
+  [key: string]: any;
+};
+
 const SuggestionTable: React.FC<SuggestionTableProps> = ({
   memoDetail,
   suggestionItems,
   deliveryOrder,
   onBack,
 }) => {
-  const { list: binData, fetchAll } = useStoreBin();
+  const { detail: binDataRaw, fetchById: fetchBINbyZoneId } =
+    useStoreBinByZone();
   const { createBulkData } = useStoreTransactionPicking();
   const navigate = useNavigate();
 
-  // === Destination BIN dipilih di MemoHeader ===
+  const bins: Bin[] = Array.isArray(binDataRaw) ? (binDataRaw as Bin[]) : [];
+
+  // === Destination BIN dipilih di SuggestionItemHeader ===
   const [selectedDestination, setSelectedDestination] = useState("");
 
   useEffect(() => {
-    fetchAll();
-  }, [fetchAll]);
+    fetchBINbyZoneId("73b1e685-d258-440b-b3cf-d66f34dd8187");
+  }, [fetchBINbyZoneId]);
 
   const compactRows = useCompactRows(suggestionItems);
   const { quantities, updateQty } = usePickingQuantities(compactRows);
 
   // Ambil object bin yang dipilih
-  const selectedBin = binData.find((b) => b.id === selectedDestination);
+  const selectedBin = bins.find((b) => b.id === selectedDestination);
 
   const handleSubmit = async () => {
     // === VALIDASI DESTINATION BIN ===
@@ -81,20 +91,38 @@ const SuggestionTable: React.FC<SuggestionTableProps> = ({
     }
   };
 
+  const availableBins = useMemo(
+    () =>
+      bins
+        .filter((bin: Bin) => bin.id !== undefined && typeof bin.code === "string")
+        .map((bin: Bin) => ({ id: bin.id!, code: bin.code as string })),
+    [bins]
+  );
+
   return (
     <div className="p-6 space-y-6">
-      <Button onClick={onBack}>Back</Button>
+      <Button
+        onClick={onBack}
+        variant="danger"
+        size="sm"
+        startIcon={<FaArrowLeft />}
+      >
+        Back to Memo List
+      </Button>
 
       <div className="bg-white rounded-xl shadow">
         {/* === Memo Header + Destination BIN === */}
-        <MemoHeader
+
+        <h3 className="font-semibold text-gray-700 text-lg mb-3 p-4 border-b">
+          Suggestion Items
+        </h3>
+
+        <SuggestionItemHeader
           memoDetail={memoDetail}
           deliveryOrder={deliveryOrder}
           selectedDestination={selectedDestination}
           setSelectedDestination={setSelectedDestination}
-          availableBins={binData
-            .filter((bin) => bin.id !== undefined)
-            .map((bin) => ({ id: bin.id!, code: bin.code }))}
+          availableBins={availableBins}
         />
 
         {/* === List Item Picking === */}
@@ -110,7 +138,7 @@ const SuggestionTable: React.FC<SuggestionTableProps> = ({
             onClick={handleSubmit}
             disabled={!selectedDestination || !selectedBin}
           >
-            Submit
+            Submit Suggestion
           </Button>
         </div>
       </div>

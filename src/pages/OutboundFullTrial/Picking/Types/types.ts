@@ -43,6 +43,7 @@ export interface CompactPickingRow {
     qty_plan: string;
     required_quantity: number;
     available_quantity: number;
+    remaining_quantity_needed: number;
     uom: string;
     production_code: string;
     zone: string;

@@ -1,9 +1,9 @@
 import React, { useEffect } from "react";
-import { useForm, Controller } from "react-hook-form";
 import {
-  useStoreUserManagement,
-  useStoreUser,
+    useStoreUserManagement,
+    useStoreUser,
 } from "../../../../DynamicAPI/stores/Store/MasterStore";
+import { useForm, Controller } from "react-hook-form";
 import Button from "../../../../components/ui/button/Button";
 import Select from "../../../../components/form/Select";
 
@@ -20,7 +20,7 @@ type Props = {
   memoId?: string;
 };
 
-export default function ModalAssignHelper({
+export default function ModalInventoryItem({
   isDetail = false,
   isEdit = false,
   onSubmit,

@@ -159,7 +159,7 @@ const PickingSuggestion: React.FC = () => {
               size="xsm"
               startIcon={<FaClipboardList className="size-5" />}
             >
-              {isSuggestionLoading ? "Loading..." : "Picking Suggestion"}
+              {isSuggestionLoading ? "Loading..." : "Picking Suggestion Item"}
             </Button>
           ) : (
             <FaTasks
