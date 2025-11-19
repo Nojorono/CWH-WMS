@@ -1,192 +1,250 @@
-import React, { useEffect } from "react";
-import {
-    useStoreUserManagement,
-    useStoreUser,
-} from "../../../../DynamicAPI/stores/Store/MasterStore";
+import React, { useEffect, useMemo } from "react";
+import { useStorePickingSuggestionItem } from "../../../../DynamicAPI/stores/Store/MasterStore";
 import { useForm, Controller } from "react-hook-form";
 import Button from "../../../../components/ui/button/Button";
 import Select from "../../../../components/form/Select";
 
-type FormValues = {
-  helperDriverDeviceId?: string;
-  helperDriverName?: string;
-  helperDriverPhone?: string;
-};
-
-type Props = {
-  isDetail?: boolean;
-  isEdit?: boolean;
-  onSubmit?: (data: any) => void;
-  memoId?: string;
-};
+type Props = { onSubmit?: (d: any) => void; onBack?: () => void; itemID?: any };
 
 export default function ModalInventoryItem({
-  isDetail = false,
-  isEdit = false,
   onSubmit,
-  memoId,
+  onBack,
+  itemID,
 }: Props) {
-  const { list: userDevice = [], fetchAll: fetchUserDevice } = useStoreUser();
-  const { list: userList = [], fetchAll: fetchUserList } =
-    useStoreUserManagement();
+  const {
+    fetchById,
+    detail: itemList,
+    isLoading,
+  } = useStorePickingSuggestionItem();
 
-  const { control, handleSubmit, setValue, formState } = useForm<FormValues>({
+  /** load detail */
+  useEffect(() => {
+    if (itemID && typeof fetchById === "function") fetchById(itemID);
+  }, [itemID, fetchById]);
+
+  /** react hook form - always call hooks in same order */
+  const {
+    control,
+    watch,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm({
     defaultValues: {
-      helperDriverDeviceId: "",
-      helperDriverName: "",
-      helperDriverPhone: "",
+      week_number: "",
+      location_id: "",
+      qty_pick: 0,
     },
   });
 
+  /** keep locations safe even when itemList is null to avoid conditional hooks */
+  const locations = (itemList && itemList.suggested_locations) || [];
+
+  const defaultLocation = locations?.[0] || null;
+
+  /** reset when data loaded */
   useEffect(() => {
-    fetchUserDevice?.();
-    fetchUserList?.();
-  }, [fetchUserDevice, fetchUserList]);
+    if (itemList) {
+      reset({
+        week_number: "",
+        location_id: "",
+        qty_pick: 0,
+      });
+    }
+  }, [itemList, reset]);
 
-  const driverDeviceOptions = (userDevice as any[])
-    .filter(
-      (d: any) =>
-        d?.role?.name === "DRIVER_FORKLIFT" || d?.role?.name === "HELPER"
-    )
-    .map((d: any) => ({ value: d.id, label: d.username ?? d.id }));
+  /* STEP 1 — Week options */
+  const weekOptions = useMemo(() => {
+    const uniq = Array.from(
+      new Map((locations || []).map((l: any) => [l.week_number, l])).values()
+    );
+    return uniq
+      .sort((a: any, b: any) => Number(a.week_number) - Number(b.week_number))
+      .map((loc: any) => ({
+        label: `Week ${loc.week_number}`,
+        value: String(loc.week_number),
+      }));
+  }, [locations]);
 
-  const driverNameOptions = (userList as any[]).map((u: any) => ({
-    value: u.id,
-    label: u.name ?? u.id,
-  }));
+  const selectedWeek = watch("week_number");
 
-  const handleDriverNameSelect = (userId?: string) => {
-    const u = userList.find((x: any) => x.id === userId);
-    setValue("helperDriverPhone", u?.phone ?? "");
+  /* STEP 2 — Location list based on week */
+  const locationOptions = useMemo(() => {
+    if (!selectedWeek) return [];
+    const filtered = (locations || []).filter(
+      (l: any) => String(l.week_number) === selectedWeek
+    );
+    return filtered.map((loc: any) => ({
+      label: `${loc.warehouse_sub_code} - BIN ${loc.bin_code} (Qty: ${loc.quantity_ready_to_pick})`,
+      value: String(loc.bin_id),
+    }));
+  }, [locations, selectedWeek]);
+
+  const selectedLocationId = watch("location_id");
+
+  const selectedLocation = useMemo(() => {
+    return (locations || []).find(
+      (l: any) =>
+        String(l.week_number) === selectedWeek &&
+        String(l.bin_id) === selectedLocationId
+    );
+  }, [locations, selectedWeek, selectedLocationId]);
+
+  /* SUBMIT */
+  const onSave = (data: any) => {
+    onSubmit?.({
+      ...data,
+      location_data: selectedLocation,
+      item_id: itemList?.item_id,
+      uom: itemList?.uom,
+    });
+    console.log("Submitting data:", {
+      ...data,
+      location_data: selectedLocation,
+      item_id: itemList?.item_id,
+      uom: itemList?.uom,
+    });
+    
   };
 
-  const onFormSubmit = (data: FormValues) => {
-    const selectedDevice = (userDevice as any[]).find(
-      (d) => d.id === data.helperDriverDeviceId
-    );
-    const selectedUser = (userList as any[]).find(
-      (u) => u.id === data.helperDriverName
-    );
-
-    const payload = {
-      memo_id: memoId,
-      picking_user_id: data.helperDriverDeviceId ?? selectedDevice?.id ?? "",
-      picking_name: selectedUser?.name ?? data.helperDriverName ?? "",
-      picking_phone: data.helperDriverPhone ?? "",
-    };
-
-    onSubmit?.(payload);
-  };
+  // Render: still render form skeleton even if loading so hooks order doesn't change
+  if (isLoading && !itemList) {
+    return <div className="p-6">Loading...</div>;
+  }
 
   return (
-    <div>
-      <form
-        onSubmit={handleSubmit(onFormSubmit)}
-        className="border rounded-lg p-4 shadow-md space-y-4"
-      >
-        <div className="grid grid-cols-2 gap-4">
+    <div className="p-6 space-y-6">
+      <h2 className="text-2xl font-bold text-blue-900">Suggest Location</h2>
+
+      <div className="grid grid-cols-2 gap-6">
+        {/* LEFT INFO */}
+        <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium mb-1">
-              Device <span className="text-red-500">*</span>
-            </label>
-            <Controller
-              name="helperDriverDeviceId"
-              control={control}
-              rules={{ required: "Please select a forklift driver" }}
-              render={({ field }) => (
-                <>
-                  <Select
-                    options={driverDeviceOptions}
-                    value={field.value}
-                    onChange={(val: string) => {
-                      field.onChange(val);
-                    }}
-                    placeholder="-- Select Device --"
-                    disabled={isDetail}
-                    width="100%"
-                  />
-                  {formState.errors.helperDriverDeviceId && (
-                    <p className="text-red-500 text-sm mt-1">
-                      {formState.errors.helperDriverDeviceId.message as string}
-                    </p>
-                  )}
-                </>
-              )}
+            <label className="font-semibold">Item Name</label>
+            <input
+              className="w-full border p-2 bg-gray-200"
+              value={itemList?.item_name ?? ""}
+              disabled
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-1">
-              Name <span className="text-red-500">*</span>
-            </label>
-            <Controller
-              name="helperDriverName"
-              control={control}
-              rules={{ required: "Driver name is required" }}
-              render={({ field }) => (
-                <>
-                  <Select
-                    options={driverNameOptions}
-                    value={field.value}
-                    onChange={(val: string) => {
-                      field.onChange(val);
-                      handleDriverNameSelect(val);
-                    }}
-                    placeholder="-- Select User --"
-                    disabled={isDetail}
-                    width="100%"
-                  />
-                  {formState.errors.helperDriverName && (
-                    <p className="text-red-500 text-sm mt-1">
-                      {formState.errors.helperDriverName.message as string}
-                    </p>
-                  )}
-                </>
-              )}
+            <label className="font-semibold">Quantity Request</label>
+            <input
+              className="w-full border p-2 bg-gray-200"
+              value={itemList?.required_quantity ?? ""}
+              disabled
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-1">
-              Phone Number <span className="text-red-500">*</span>
-            </label>
+            <label className="font-semibold">UOM</label>
+            <input
+              className="w-full border p-2 bg-gray-200"
+              value={itemList?.uom ?? ""}
+              disabled
+            />
+          </div>
+        </div>
+
+        {/* RIGHT STEPS */}
+        <div className="space-y-4">
+          {/* STEP 1 — Week */}
+          <div>
+            <label className="font-semibold">Week</label>
             <Controller
-              name="helperDriverPhone"
               control={control}
+              name="week_number"
+              rules={{ required: "Required" }}
+              render={({ field }) => (
+                <Select {...field} options={weekOptions} />
+              )}
+            />
+          </div>
+
+          {/* STEP 2 — Location */}
+          <div>
+            <label className="font-semibold">Location</label>
+            <Controller
+              control={control}
+              name="location_id"
+              rules={{ required: "Required" }}
+              render={({ field }) => (
+                <Select {...field} options={locationOptions} />
+              )}
+            />
+          </div>
+
+          {/* Preview */}
+          {selectedLocation && (
+            <div className="p-4 bg-gray-100 rounded border space-y-1">
+              <p>
+                <b>Zone:</b> {selectedLocation.warehouse_sub_code}
+              </p>
+              <p>
+                <b>BIN:</b> {selectedLocation.bin_code}
+              </p>
+              <p>
+                <b>Qty Ready:</b> {selectedLocation.quantity_ready_to_pick}
+              </p>
+              <p>
+                <b>Production Date:</b>{" "}
+                {selectedLocation.production_date?.slice(0, 10) ?? ""}
+              </p>
+              <p>
+                <b>Location Priority:</b> {selectedLocation.location_priority}
+              </p>
+            </div>
+          )}
+
+          {/* STEP 3 — Qty Picking */}
+          <div>
+            <label className="font-semibold">Qty Picking</label>
+            <Controller
+              control={control}
+              name="qty_pick"
               rules={{
-                required: "Driver phone number is required",
-                pattern: {
-                  value: /^[0-9+]+$/,
-                  message: "Phone must contain only numbers or +",
+                required: "Required",
+                validate: (v: any) => {
+                  const max =
+                    selectedLocation?.quantity_ready_to_pick ??
+                    defaultLocation?.quantity_ready_to_pick ??
+                    0;
+                  if (Number(v) > max) return `Max ${max}`;
+                  return true;
                 },
               }}
               render={({ field }) => (
-                <>
-                  <input
-                    {...field}
-                    disabled={isDetail}
-                    type="text"
-                    className={`border p-2 rounded w-full ${
-                      formState.errors.helperDriverPhone ? "border-red-500" : ""
-                    }`}
-                  />
-                  {formState.errors.helperDriverPhone && (
-                    <p className="text-red-500 text-sm mt-1">
-                      {formState.errors.helperDriverPhone.message as string}
-                    </p>
-                  )}
-                </>
+                <input
+                  type="number"
+                  {...field}
+                  className="border p-2 w-full"
+                  min={0}
+                  max={
+                    selectedLocation?.quantity_ready_to_pick ??
+                    defaultLocation?.quantity_ready_to_pick ??
+                    undefined
+                  }
+                />
               )}
             />
+            {errors.qty_pick && (
+              <p className="text-red-500 text-sm">
+                {(errors.qty_pick as any)?.message}
+              </p>
+            )}
           </div>
         </div>
+      </div>
 
-        <div className="flex justify-end">
-          <Button type="submit" variant="primary">
-            Assign
-          </Button>
-        </div>
-      </form>
+      <div className="flex justify-end gap-3">
+        <Button variant="secondary" onClick={onBack}>
+          Back
+        </Button>
+        <Button variant="primary" onClick={handleSubmit(onSave)}>
+          Submit
+        </Button>
+      </div>
     </div>
   );
 }

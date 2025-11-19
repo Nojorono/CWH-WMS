@@ -29,7 +29,8 @@ import {
     TransactionPickingService,
     PickingListService,
     UserManagementService,
-    PickingAssignHelperService
+    PickingAssignHelperService,
+    PickingSuggestionItemService,
 } from "../../services/Service/MasterService";
 
 import { Uom, CreateUom, UpdateUom } from "../../types/UomTypes";
@@ -59,6 +60,8 @@ import { PickingSuggestion, CreatePickingSuggestion, UpdatePickingSuggestion } f
 import { TransactionPicking, CreateTransactionPicking, UpdateTransactionPicking } from '../../types/TransactionPickingTypes.tsx'
 import { PickingList, CreatePickingList, UpdatePickingList } from '../../types/PickingList.tsx'
 import { PickingAssignHelper, CreatePickingAssignHelper, UpdatePickingAssignHelper } from '../../types/PickingAssignHelper.tsx'
+import { PickingSuggestionItem, UpdatePickingSuggestionItem, CreatePickingSuggestionItem } from "../../types/PickingSuggestionItem.tsx";
+
 
 import { UserManagement, CreateUserManagement, UpdateUserManagement } from "../../types/UserManagement.tsx";
 
@@ -212,4 +215,9 @@ export const useStorePickingAssignHelper = createCrudStore<PickingAssignHelper, 
 export const useStoreUserManagement = createCrudStore<UserManagement, CreateUserManagement, UpdateUserManagement>({
     name: "UserManagement",
     service: UserManagementService,
+});
+
+export const useStorePickingSuggestionItem = createCrudStore<PickingSuggestionItem, CreatePickingSuggestionItem, UpdatePickingSuggestionItem>({
+    name: "PickingSuggestionItem",
+    service: PickingSuggestionItemService,
 });

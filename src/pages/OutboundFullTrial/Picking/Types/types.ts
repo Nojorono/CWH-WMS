@@ -20,6 +20,7 @@ export interface SuggestedLocation {
 }
 
 export interface SuggestedItem {
+    week_number: number;
     memo_id: string;
     item_id: string;
     item_name: string;
@@ -45,7 +46,7 @@ export interface CompactPickingRow {
     available_quantity: number;
     remaining_quantity_needed: number;
     uom: string;
-    production_code: string;
+    production_date: string;
     zone: string;
     bin: string;
     qty_ready_to_pick: number;

@@ -27,6 +27,8 @@ import { PickingSuggestion, CreatePickingSuggestion, UpdatePickingSuggestion } f
 import { TransactionPicking, CreateTransactionPicking, UpdateTransactionPicking } from '../../types/TransactionPickingTypes.tsx'
 import { PickingList, CreatePickingList, UpdatePickingList } from '../../types/PickingList.tsx'
 import { PickingAssignHelper, CreatePickingAssignHelper, UpdatePickingAssignHelper } from "../../types/PickingAssignHelper.tsx";
+import { PickingSuggestionItem, UpdatePickingSuggestionItem, CreatePickingSuggestionItem } from "../../types/PickingSuggestionItem.tsx";
+
 
 import { UserManagement, CreateUserManagement, UpdateUserManagement } from "../../types/UserManagement.tsx";
 
@@ -65,6 +67,7 @@ export const TransactionPickingService = createCrudService<TransactionPicking, C
 export const PickingListService = createCrudService<PickingList, CreatePickingList, UpdatePickingList>("/transaction-picking/memo");
 export const PickingAssignHelperService = createCrudService<PickingAssignHelper, CreatePickingAssignHelper, UpdatePickingAssignHelper>("/assigned-picking/");
 // export const PickingAssignHelperService = createCrudService<PickingAssignHelper, CreatePickingAssignHelper, UpdatePickingAssignHelper>("/assigned-picking/memo/");
+export const PickingSuggestionItemService = createCrudService<PickingSuggestionItem, CreatePickingSuggestionItem, UpdatePickingSuggestionItem>("/picking-suggestion/item"); 
 
 
 

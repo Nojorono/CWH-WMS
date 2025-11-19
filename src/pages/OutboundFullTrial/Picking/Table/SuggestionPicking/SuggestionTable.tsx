@@ -127,7 +127,10 @@ const SuggestionTable: React.FC<SuggestionTableProps> = ({
 
         {/* === List Item Picking === */}
         <PickingRowsTable
-          compactRows={compactRows}
+          compactRows={compactRows.map(row => ({
+            ...row,
+            week_number: row.week_number ?? 0 
+          }))}
           quantities={quantities}
           updateQty={updateQty}
         />

@@ -32,18 +32,6 @@ export const PickingRowsTable: React.FC<PickingRowsTableProps> = ({
   const [openModalItem, modalSelectItem] = useState(false);
   const [paramItemId, setItemId] = useState<string | null>(null);
 
-  // local overrides applied when user edits from modal
-  type RowOverride = {
-    week_number?: number | string;
-    production_date?: string;
-    zone?: string;
-    bin?: string;
-    remaining_quantity_needed?: number;
-    qty_plan?: number;
-    available_quantity?: number;
-  };
-  const [overrides, setOverrides] = useState<Record<string, RowOverride>>({});
-
   function getMaxAllowed(required?: number | null, available?: number | null) {
     const req = required == null ? Infinity : Number(required);
     const avail = available == null ? null : Number(available);
@@ -73,59 +61,17 @@ export const PickingRowsTable: React.FC<PickingRowsTableProps> = ({
   };
 
   const onSubmitItemChange = (data: {
-    week_number: number | undefined;
     item_id: any;
     qty_pick: any;
-    location_data: {
-      total_quantity: number;
-      reserved_quantity: number;
-      available_quantity: number;
-      quantity_ready_to_pick: number;
-      uom?: string;
-      warehouse_name?: string;
-      warehouse_sub_name?: string;
-      warehouse_sub_code?: string;
-      warehouse_sub_id?: string;
-      bin_id?: string;
-      bin_name?: string;
-      bin_code?: string;
-      place?: string;
-      week_number?: number;
-      production_date?: string;
-    };
+    location_data: { available_quantity: number };
   }) => {
-    console.log("Selected item data from modal:", data);
-
-    // 1) update quantities in parent store
     updateQty(
       `${data.item_id}`,
       Number(data.qty_pick),
       data.location_data.available_quantity
     );
 
-    // 2) apply local overrides so the table shows updated week/production/zone/bin
-    const itemIdKey = String(data.item_id);
-    const newOverride: RowOverride = {
-      week_number:
-        data.location_data.week_number ?? data.week_number ?? undefined,
-      production_date: data.location_data.production_date ?? undefined,
-      zone:
-        data.location_data.warehouse_sub_name ??
-        data.location_data.place ??
-        undefined,
-      bin:
-        data.location_data.bin_name ?? data.location_data.bin_code ?? undefined,
-      // override remaining and plan to reflect qty_pick from modal
-      remaining_quantity_needed: Number(data.qty_pick),
-      qty_plan: Number(data.qty_pick),
-      // keep available from location_data so max clamp uses updated availability
-      available_quantity: data.location_data.available_quantity,
-    };
-    setOverrides((prev) => ({
-      ...prev,
-      [itemIdKey]: { ...(prev[itemIdKey] || {}), ...newOverride },
-    }));
-
+    console.log("Selected item data from modal:", data);
     modalSelectItem(false);
   };
 
@@ -152,35 +98,30 @@ export const PickingRowsTable: React.FC<PickingRowsTableProps> = ({
         <tbody className="text-left bg-white">
           {compactRows.map((row, i) => {
             const key = `${row.item_id}-${i}`;
-            const override = overrides[String(row.item_id)] || {};
-            // use overrides if present
-            const currentRemaining = override.remaining_quantity_needed ?? row.remaining_quantity_needed;
-            const currentPlan = override.qty_plan ?? row.qty_plan;
-            const currentAvailable = override.available_quantity ?? row.available_quantity;
-            const maxAllowedForRow = getMaxAllowed(currentRemaining, currentAvailable);
+            const maxAllowedForRow = getMaxAllowed(
+              // row.required_quantity,
+              row.remaining_quantity_needed,
+              row.available_quantity
+            );
             return (
               <tr key={key} className="hover:bg-orange-50 border-b">
                 <td className="px-4 py-2">{row.note}</td>
                 <td className="px-4 py-2 font-medium">{row.item_name}</td>
                 <td className="px-4 py-2">{row.uom}</td>
-                <td className="px-4 py-2">
-                  {override.week_number ?? row.week_number}
-                </td>
-                <td className="px-4 py-2">
-                  {override.production_date ?? row.production_date}
-                </td>
-                <td className="px-4 py-2">{override.zone ?? row.zone}</td>
-                <td className="px-4 py-2">{override.bin ?? row.bin}</td>
+                <td className="px-4 py-2">{row.week_number}</td>
+                <td className="px-4 py-2">{row.production_date}</td>
+                <td className="px-4 py-2">{row.zone}</td>
+                <td className="px-4 py-2">{row.bin}</td>
                 <td className="px-4 py-2">
                   <span className="font-semibold text-orange-700">
-                    {currentRemaining}
+                    {row.remaining_quantity_needed}
                   </span>
                   <span className="mx-1 text-gray-500">/</span>
-                  <span>{currentPlan}</span>
+                  <span>{row.qty_plan}</span>
                 </td>
                 <td className="px-4 py-2">
                   <span className="font-semibold text-green-700">
-                    {currentAvailable}
+                    {row.available_quantity}
                   </span>
                 </td>
                 <td className="px-4 py-2">
@@ -195,7 +136,7 @@ export const PickingRowsTable: React.FC<PickingRowsTableProps> = ({
                         const { clamped } = clampPickQuantity(
                           requested,
                           row.required_quantity,
-                          currentAvailable
+                          row.available_quantity
                         );
                         updateQty(key, clamped, row.required_quantity);
                       }}
