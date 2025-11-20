@@ -31,6 +31,8 @@ import {
     UserManagementService,
     PickingAssignHelperService,
     PickingSuggestionItemService,
+    MasterAMOService,
+    MasterSubdistService
 } from "../../services/Service/MasterService";
 
 import { Uom, CreateUom, UpdateUom } from "../../types/UomTypes";
@@ -55,15 +57,16 @@ import { PutAwaySuggestionResponse } from '../../types/PutAwaySuggestionTypes.ts
 import { PutAway, CreatePutAway, UpdatePutAway } from '../../types/PutAwayTypes.tsx'
 import { OutboundMemo, OutboundMemoCreate, OutboundMemoUpdateItem } from '../../types/MemoTypes.tsx'
 import { OutboundDelivery, OutboundDeliveryCreateUpdate } from '../../types/DeliverOrderTypes.tsx'
-
 import { PickingSuggestion, CreatePickingSuggestion, UpdatePickingSuggestion } from '../../types/PickingSuggestionTypes.tsx'
 import { TransactionPicking, CreateTransactionPicking, UpdateTransactionPicking } from '../../types/TransactionPickingTypes.tsx'
 import { PickingList, CreatePickingList, UpdatePickingList } from '../../types/PickingList.tsx'
 import { PickingAssignHelper, CreatePickingAssignHelper, UpdatePickingAssignHelper } from '../../types/PickingAssignHelper.tsx'
 import { PickingSuggestionItem, UpdatePickingSuggestionItem, CreatePickingSuggestionItem } from "../../types/PickingSuggestionItem.tsx";
-
-
 import { UserManagement, CreateUserManagement, UpdateUserManagement } from "../../types/UserManagement.tsx";
+
+import { CreateMasterAMO, UpdateMasterAMO, MasterAMO } from "../../types/MasterAMOtypes.ts";
+import { MasterSubdist, CreateMasterSubdist, UpdateMasterSubdist } from "../../types/MasterSubdistTypes.ts";
+
 
 
 // Daftar semua store di sini
@@ -220,4 +223,14 @@ export const useStoreUserManagement = createCrudStore<UserManagement, CreateUser
 export const useStorePickingSuggestionItem = createCrudStore<PickingSuggestionItem, CreatePickingSuggestionItem, UpdatePickingSuggestionItem>({
     name: "PickingSuggestionItem",
     service: PickingSuggestionItemService,
+});
+
+export const useStoreMasterAMO = createCrudStore<MasterAMO, CreateMasterAMO, UpdateMasterAMO>({
+    name: "MasterAMO",
+    service: MasterAMOService,
+});
+
+export const useStoreMasterSubdist = createCrudStore<MasterSubdist, CreateMasterSubdist, UpdateMasterSubdist>({
+    name: "MasterSubdist",
+    service: MasterSubdistService,
 });

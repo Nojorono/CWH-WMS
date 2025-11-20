@@ -47,7 +47,6 @@ const DataTable = () => {
       isActive: true,
       isFull: false,
       uom: String(data.uom),
-      qr_image_url: "",
       currentQuantity: 0,
     };
 

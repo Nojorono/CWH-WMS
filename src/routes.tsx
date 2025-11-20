@@ -46,6 +46,8 @@ import {
   CreateDO,
   DetailDO,
   PickingSuggestion,
+  MasterAMO,
+  MasterSubdist
 } from "./utils/PagesComponent";
 
 const DefaultPage = () => <> </>;
@@ -144,6 +146,8 @@ export function AppRoutes() {
       "/inventory": <Inventory />,
       "/memo": <Memo />,
       "/outbound_do": <OutboundDO />,
+      "/master_amo": <MasterAMO />,
+      "/master_subdist": <MasterSubdist />,
     };
     return map[path] || <DefaultPage />;
   };

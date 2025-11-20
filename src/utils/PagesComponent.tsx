@@ -49,6 +49,9 @@ import CreateDO from "../pages/OutboundFullTrial/DO/Main/CreateDO";
 import DetailDO from "../pages/OutboundFullTrial/DO/Main/DetailDO";
 import PickingSuggestion from "../pages/OutboundFullTrial/Picking/Main/PickingSuggestion";
 
+import MasterAMO from "../pages/Master/MasterAMO";
+import MasterSubdist from '../pages/Master/MasterSubdist'
+
 export {
   // PAGE MASTER
   MasterUser,
@@ -62,6 +65,8 @@ export {
   MasterItem,
   MasterClassification,
   MasterVehicle,
+  MasterAMO,
+  MasterSubdist,
 
   // PAGE MASTER ZONE
   MasterZone,

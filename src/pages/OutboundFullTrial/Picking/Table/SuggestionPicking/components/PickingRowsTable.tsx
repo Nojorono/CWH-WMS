@@ -1,4 +1,4 @@
-import { FaEdit, FaRegEdit } from "react-icons/fa";
+import { FaEdit, FaSync } from "react-icons/fa";
 import ModalInventoryItem from "../../../Modal/ModalInventoryItem";
 import { useState } from "react";
 
@@ -41,8 +41,13 @@ export const PickingRowsTable: React.FC<PickingRowsTableProps> = ({
     remaining_quantity_needed?: number;
     qty_plan?: number;
     available_quantity?: number;
+    picked_qty?: number; // new: picked qty coming from modal override
   };
   const [overrides, setOverrides] = useState<Record<string, RowOverride>>({});
+  // store original quantities snapshot per item_id (before edit) => { [itemId]: { [key]: value } }
+  const [originalQuantities, setOriginalQuantities] = useState<
+    Record<string, Record<string, number>>
+  >({});
 
   function getMaxAllowed(required?: number | null, available?: number | null) {
     const req = required == null ? Infinity : Number(required);
@@ -66,10 +71,48 @@ export const PickingRowsTable: React.FC<PickingRowsTableProps> = ({
     return { clamped, maxAllowed };
   }
 
-  const handleEdit = (itemId: string) => {
+  const handleOpenModal = (itemId: string) => {
     console.log("Edit item with ID:", itemId);
     setItemId(itemId);
+
+    // take snapshot of current quantities for all rows with this item_id
+    const itemIdKey = String(itemId);
+    const snap: Record<string, number> = {};
+    compactRows.forEach((r, idx) => {
+      if (String(r.item_id) === itemIdKey) {
+        const key = `${r.item_id}-${idx}`;
+        snap[key] = quantities[key] ?? 0;
+      }
+    });
+    setOriginalQuantities((prev) => ({ ...prev, [itemIdKey]: snap }));
+
     modalSelectItem(true);
+  };
+
+  const handleResetEdit = (itemId: string) => {
+    const itemIdKey = String(itemId);
+    const snap = originalQuantities[itemIdKey];
+    // restore all matching rows
+    compactRows.forEach((r, idx) => {
+      if (String(r.item_id) === itemIdKey) {
+        const key = `${r.item_id}-${idx}`;
+        const origVal = snap && key in snap ? snap[key] : 0;
+        // call parent to restore quantity
+        updateQty(key, Number(origVal), r.required_quantity);
+      }
+    });
+
+    // remove local overrides for this item and snapshot
+    setOverrides((prev) => {
+      const copy = { ...prev };
+      delete copy[itemIdKey];
+      return copy;
+    });
+    setOriginalQuantities((prev) => {
+      const copy = { ...prev };
+      delete copy[itemIdKey];
+      return copy;
+    });
   };
 
   const onSubmitItemChange = (data: {
@@ -96,12 +139,13 @@ export const PickingRowsTable: React.FC<PickingRowsTableProps> = ({
   }) => {
     console.log("Selected item data from modal:", data);
 
-    // 1) update quantities in parent store
-    updateQty(
-      `${data.item_id}`,
-      Number(data.qty_pick),
-      data.location_data.available_quantity
-    );
+    // 1) update quantities in parent store for all matching rows (key = `${item_id}-${index}`)
+    compactRows.forEach((r, idx) => {
+      if (String(r.item_id) === String(data.item_id)) {
+        const key = `${r.item_id}-${idx}`;
+        updateQty(key, Number(data.qty_pick), r.required_quantity);
+      }
+    });
 
     // 2) apply local overrides so the table shows updated week/production/zone/bin
     const itemIdKey = String(data.item_id);
@@ -120,6 +164,8 @@ export const PickingRowsTable: React.FC<PickingRowsTableProps> = ({
       qty_plan: Number(data.qty_pick),
       // keep available from location_data so max clamp uses updated availability
       available_quantity: data.location_data.available_quantity,
+      // store picked qty so input shows modal value immediately
+      picked_qty: Number(data.qty_pick),
     };
     setOverrides((prev) => ({
       ...prev,
@@ -154,10 +200,16 @@ export const PickingRowsTable: React.FC<PickingRowsTableProps> = ({
             const key = `${row.item_id}-${i}`;
             const override = overrides[String(row.item_id)] || {};
             // use overrides if present
-            const currentRemaining = override.remaining_quantity_needed ?? row.remaining_quantity_needed;
+            const currentRemaining =
+              override.remaining_quantity_needed ??
+              row.remaining_quantity_needed;
             const currentPlan = override.qty_plan ?? row.qty_plan;
-            const currentAvailable = override.available_quantity ?? row.available_quantity;
-            const maxAllowedForRow = getMaxAllowed(currentRemaining, currentAvailable);
+            const currentAvailable =
+              override.available_quantity ?? row.available_quantity;
+            const maxAllowedForRow = getMaxAllowed(
+              currentRemaining,
+              currentAvailable
+            );
             return (
               <tr key={key} className="hover:bg-orange-50 border-b">
                 <td className="px-4 py-2">{row.note}</td>
@@ -189,7 +241,7 @@ export const PickingRowsTable: React.FC<PickingRowsTableProps> = ({
                   ) : (
                     <input
                       type="number"
-                      value={quantities[key] ?? 0}
+                      value={override.picked_qty ?? quantities[key] ?? 0}
                       onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                         const requested = Number(e.target.value);
                         const { clamped } = clampPickQuantity(
@@ -197,7 +249,16 @@ export const PickingRowsTable: React.FC<PickingRowsTableProps> = ({
                           row.required_quantity,
                           currentAvailable
                         );
+                        // update parent state
                         updateQty(key, clamped, row.required_quantity);
+                        // reflect immediate change locally (keeps UI stable until parent updates)
+                        setOverrides((prev) => ({
+                          ...prev,
+                          [String(row.item_id)]: {
+                            ...(prev[String(row.item_id)] || {}),
+                            picked_qty: clamped,
+                          },
+                        }));
                       }}
                       min={0}
                       max={
@@ -210,14 +271,29 @@ export const PickingRowsTable: React.FC<PickingRowsTableProps> = ({
                     />
                   )}
                 </td>
+
                 <td className="px-4 py-2">
-                  <button
-                    onClick={() => handleEdit(row.item_id)}
-                    className="flex items-center gap-2 px-3 py-1 bg-orange-500 hover:bg-orange-600 text-white rounded transition"
-                  >
-                    <FaEdit />
-                    <span className="text-sm">Edit</span>
-                  </button>
+                  <div className="flex items-center space-x-2">
+                    <button
+                      type="button"
+                      onClick={() => handleOpenModal(row.item_id)}
+                      title="Edit item details"
+                      aria-label="Edit item"
+                      className="p-1 rounded hover:bg-green-50 focus:outline-none focus:ring-2 focus:ring-green-200"
+                    >
+                      <FaEdit className="text-green-500 hover:text-green-700" />
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => handleResetEdit(row.item_id)}
+                      title="Reset edits for this item"
+                      aria-label="Reset edits"
+                      className="p-1 rounded hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-200"
+                    >
+                      <FaSync className="text-red-500 hover:text-red-700" />
+                    </button>
+                  </div>
                 </td>
               </tr>
             );

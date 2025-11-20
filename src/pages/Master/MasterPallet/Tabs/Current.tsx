@@ -9,6 +9,7 @@ import {
 import axios from "axios";
 import DataTable from "./TableTab";
 import { EndPoint } from "../../../../utils/EndPoint";
+import { formatDateIndo } from "../../../../helper/FormatDate";
 
 type ItemData = {
   item_id: string;
@@ -68,7 +69,7 @@ export default function CurrentQuantityTable({ palletCode }: HistoryProps) {
       accessorKey: "production_date",
       header: "Production Date",
       cell: (info) =>
-        new Date(info.getValue() as string).toISOString().split("T")[0],
+        formatDateIndo(info.getValue() as string) || "-",
     },
     {
       accessorKey: "week_number",

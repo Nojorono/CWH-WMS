@@ -22,16 +22,15 @@ import { PutAwaySuggestionResponse } from '../../types/PutAwaySuggestionTypes.ts
 import { PutAway, CreatePutAway, UpdatePutAway } from '../../types/PutAwayTypes.tsx'
 import { OutboundMemo, OutboundMemoCreate, OutboundMemoUpdateItem } from '../../types/MemoTypes.tsx'
 import { OutboundDelivery, OutboundDeliveryCreateUpdate } from '../../types/DeliverOrderTypes.tsx'
-
 import { PickingSuggestion, CreatePickingSuggestion, UpdatePickingSuggestion } from '../../types/PickingSuggestionTypes.tsx'
 import { TransactionPicking, CreateTransactionPicking, UpdateTransactionPicking } from '../../types/TransactionPickingTypes.tsx'
 import { PickingList, CreatePickingList, UpdatePickingList } from '../../types/PickingList.tsx'
 import { PickingAssignHelper, CreatePickingAssignHelper, UpdatePickingAssignHelper } from "../../types/PickingAssignHelper.tsx";
 import { PickingSuggestionItem, UpdatePickingSuggestionItem, CreatePickingSuggestionItem } from "../../types/PickingSuggestionItem.tsx";
-
-
 import { UserManagement, CreateUserManagement, UpdateUserManagement } from "../../types/UserManagement.tsx";
 
+import { CreateMasterAMO, UpdateMasterAMO, MasterAMO } from "../../types/MasterAMOtypes.ts";
+import { MasterSubdist, CreateMasterSubdist, UpdateMasterSubdist } from "../../types/MasterSubdistTypes.ts";
 
 
 
@@ -61,14 +60,13 @@ export const PutAwayService = createCrudService<PutAway, CreatePutAway, UpdatePu
 export const PutAwayBulkService = createCrudService<PutAway, CreatePutAway, UpdatePutAway>("/put-away/create-many");
 export const OutboundMemoService = createCrudService<OutboundMemo, OutboundMemoCreate, OutboundMemoUpdateItem>("/outbound-memo");
 export const OutboundDeliveryService = createCrudService<OutboundDelivery, OutboundDeliveryCreateUpdate, OutboundDeliveryCreateUpdate>("/outbound-do");
-
 export const PickingSuggestionService = createCrudService<PickingSuggestion, CreatePickingSuggestion, UpdatePickingSuggestion>("/picking-suggestion/memo");
 export const TransactionPickingService = createCrudService<TransactionPicking, CreateTransactionPicking, UpdateTransactionPicking>("/transaction-picking/bulk");
 export const PickingListService = createCrudService<PickingList, CreatePickingList, UpdatePickingList>("/transaction-picking/memo");
 export const PickingAssignHelperService = createCrudService<PickingAssignHelper, CreatePickingAssignHelper, UpdatePickingAssignHelper>("/assigned-picking/");
 // export const PickingAssignHelperService = createCrudService<PickingAssignHelper, CreatePickingAssignHelper, UpdatePickingAssignHelper>("/assigned-picking/memo/");
 export const PickingSuggestionItemService = createCrudService<PickingSuggestionItem, CreatePickingSuggestionItem, UpdatePickingSuggestionItem>("/picking-suggestion/item"); 
-
-
-
 export const UserManagementService = createCrudService<UserManagement, CreateUserManagement, UpdateUserManagement>("/user-manage");
+
+export const MasterAMOService = createCrudService<MasterAMO, CreateMasterAMO, UpdateMasterAMO>("/customer/main");
+export const MasterSubdistService = createCrudService<MasterSubdist, CreateMasterSubdist, UpdateMasterSubdist>("/customer/subdist");
