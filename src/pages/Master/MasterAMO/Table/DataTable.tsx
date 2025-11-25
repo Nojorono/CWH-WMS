@@ -31,7 +31,6 @@ const DataTable = () => {
       { accessorKey: "businessGroupId", header: "Business Group ID" },
       { accessorKey: "name", header: "Name" },
       { accessorKey: "locationDescription", header: "Location Description" },
-      { accessorKey: "usableFlag", header: "Usable Flag" },
     ],
     []
   );

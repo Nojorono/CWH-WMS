@@ -4,18 +4,22 @@ import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import Button from "../../../../components/ui/button/Button";
 import PageBreadcrumb from "../../../../components/common/PageBreadCrumb";
-import TableComponent from "../../../../components/tables/MasterDataTable/TableComponent";
+import TableComponent from "../TableAndForm/TableComponent";
 import ModalAddItem from "../Modal/ModalAddItem";
 import DynamicForm, {
   FieldConfig,
 } from "../../../../components/wms-components/inbound-component/form/DynamicForm";
 import { showErrorToast, showSuccessToast } from "../../../../components/toast";
-import { useStoreOutboundMemo } from "../../../../DynamicAPI/stores/Store/MasterStore";
+import {
+  useStoreOutboundMemo,
+  useStoreUom,
+} from "../../../../DynamicAPI/stores/Store/MasterStore";
 import { useLocation, useNavigate } from "react-router";
 import { EndPoint } from "../../../../utils/EndPoint";
 import { useCustomerByOutboundType } from "./FetchCustomer";
+import Select from "../../../../components/form/Select";
 
-// ✅ Tambahkan selected_customer
+// ✅ Tambahkan selected_destination
 type MemoFormValues = {
   requestor: string;
   origin: string;
@@ -30,7 +34,7 @@ type MemoFormValues = {
     value: string;
   } | null;
 
-  selected_customer?: {
+  selected_destination?: {
     label: string;
     value: string;
   } | null;
@@ -71,6 +75,20 @@ const CreateMemo: React.FC = () => {
   const userID = localStorage.getItem("user_id");
   const [isLoading, setIsLoading] = useState(false);
 
+  // store
+  const { fetchAll: fetchAllUom, list: uomList } = useStoreUom();
+  const {
+    createData,
+    fetchById,
+    detail: detailDataMemo,
+    resetDetail,
+    updateData,
+  } = useStoreOutboundMemo();
+
+  useEffect(() => {
+    fetchAllUom();
+  }, [fetchAllUom]);
+
   const methods = useForm<MemoFormValues>({
     defaultValues: {
       requestor: "",
@@ -79,7 +97,7 @@ const CreateMemo: React.FC = () => {
       destination: "",
       delivery_date: "",
       notes: "",
-      selected_customer: null,
+      selected_destination: null,
     },
   });
 
@@ -96,8 +114,8 @@ const CreateMemo: React.FC = () => {
     loading: loadingCustomer,
   } = useCustomerByOutboundType(typeOutbound, methods);
 
-  // ✅ Watch selected_customer
-  const selectedCustomer = methods.watch("selected_customer");
+  // ✅ Watch selected_destination
+  const selectedCustomer = methods.watch("selected_destination");
 
   // ✅ Auto set ship_to setelah pilih customer
   useEffect(() => {
@@ -105,8 +123,8 @@ const CreateMemo: React.FC = () => {
 
     const found = customerRaw.find(
       (x: any) =>
-        x.locationCode === selectedCustomer.value ||
-        x.customerNumber === selectedCustomer.value
+        x.shipToLocation === selectedCustomer.label ||
+        x.locationDescription === selectedCustomer.label
     );
 
     if (!found) return;
@@ -120,72 +138,7 @@ const CreateMemo: React.FC = () => {
     }
   }, [selectedCustomer, typeOutbound, customerRaw]);
 
-  // ✅ Field Config
-  // const fieldsConfig: FieldConfig[] = [
-  //   {
-  //     name: "delivery_date",
-  //     label: "Delivery Date",
-  //     type: "date",
-  //     validation: { required: "Delivery Date is required" },
-  //   },
-  //   {
-  //     name: "origin",
-  //     label: "Origin",
-  //     type: "text",
-  //     validation: { required: "Origin is required" },
-  //   },
-  //   {
-  //     name: "destination",
-  //     label: "Destination",
-  //     type: "text",
-  //     validation: { required: "Destination is required" },
-  //   },
-  //   {
-  //     name: "requestor",
-  //     label: "Requestor",
-  //     type: "text",
-  //     validation: { required: "Requestor is required" },
-  //   },
-  //   {
-  //     name: "type_outbound",
-  //     label: "Type Outbound",
-  //     type: "select",
-  //     options: [
-  //       { label: "AMO", value: "AMO" },
-  //       { label: "Subdist", value: "Subdist" },
-  //     ],
-  //   },
-  //   {
-  //     name: "selected_customer",
-  //     label: loadingCustomer ? "Loading..." : "Select Customer",
-  //     type: "select",
-  //     options: customerList,
-  //   },
-  //   {
-  //     name: "ship_to",
-  //     label: "Ship To",
-  //     type: "text",
-  //     disabled: true,
-  //     validation: { required: "Ship To is required" },
-  //   },
-  //   // ✅ FIELD ADDRESS — hanya tampil jika Subdist
-  //   ...(typeOutbound?.value === "Subdist"
-  //     ? [
-  //         {
-  //           name: "address",
-  //           label: "Address",
-  //           type: "textarea",
-  //           disabled: true,
-  //         } as FieldConfig,
-  //       ]
-  //     : []),
-  //   {
-  //     name: "notes",
-  //     label: "Notes",
-  //     type: "textarea",
-  //     validation: { required: "Notes is required" },
-  //   },
-  // ];
+  // konfigurasi fields dynamic form
   const fieldsConfig: FieldConfig[] = [
     {
       name: "delivery_date",
@@ -198,12 +151,6 @@ const CreateMemo: React.FC = () => {
       label: "Origin",
       type: "text",
       validation: { required: "Origin is required" },
-    },
-    {
-      name: "destination",
-      label: "Destination",
-      type: "text",
-      validation: { required: "Destination is required" },
     },
     {
       name: "requestor",
@@ -221,7 +168,7 @@ const CreateMemo: React.FC = () => {
             type: "select",
             options: [
               { label: "AMO", value: "AMO" },
-              { label: "Subdist", value: "Subdist" },
+              { label: "SUBDIST", value: "SUBDIST" },
             ],
           } as FieldConfig,
         ]
@@ -231,8 +178,8 @@ const CreateMemo: React.FC = () => {
     ...(!isDetail
       ? [
           {
-            name: "selected_customer",
-            label: loadingCustomer ? "Loading..." : "Select Customer",
+            name: "selected_destination",
+            label: loadingCustomer ? "Loading..." : "Select Destination",
             type: "select",
             options: customerList,
           } as FieldConfig,
@@ -247,8 +194,8 @@ const CreateMemo: React.FC = () => {
       validation: { required: "Ship To is required" },
     },
 
-    // ✅ FIELD ADDRESS muncul hanya jika Subdist DAN bukan mode detail
-    ...(typeOutbound?.value === "Subdist" && !isDetail
+    // ✅ FIELD ADDRESS muncul hanya jika SUBDIST DAN bukan mode detail
+    ...(typeOutbound?.value === "SUBDIST" && !isDetail
       ? [
           {
             name: "address",
@@ -266,10 +213,6 @@ const CreateMemo: React.FC = () => {
       validation: { required: "Notes is required" },
     },
   ];
-
-  // store
-  const { createData, fetchById, detail, resetDetail, updateData } =
-    useStoreOutboundMemo();
 
   // 1️⃣ Reset saat mode create
   useEffect(() => {
@@ -295,43 +238,49 @@ const CreateMemo: React.FC = () => {
   // 2️⃣ Fetch detail jika mode edit/detail
   useEffect(() => {
     if ((isDetail || isEdit) && memoId) {
-      fetchById(memoId).catch((err) => console.error("Error fetchById:", err));
+      fetchById(memoId);
     }
   }, [isDetail, isEdit, memoId, fetchById]);
 
   // 3️⃣ Populate form hanya kalau detail ada & mode bukan create
   useEffect(() => {
     // jika tidak ada detail atau sedang create, stop
-    if (!detail || (!isDetail && !isEdit)) return;
+    if (!detailDataMemo || (!isDetail && !isEdit)) return;
 
-    const dateOnly = formatDate(detail.delivery_date);
-
+    const dateOnly = formatDate(detailDataMemo.delivery_date);
     methods.reset({
-      requestor: detail.requestor || "",
-      origin: detail.origin || "",
-      ship_to: detail.ship_to || "",
-      destination: detail.destination || "",
+      requestor: detailDataMemo.requestor || "",
+      origin: detailDataMemo.origin || "",
+      ship_to: detailDataMemo.ship_to || "",
+      destination: detailDataMemo.destination || "",
       delivery_date: dateOnly,
-      notes: detail.notes || "",
+      notes: detailDataMemo.notes || "",
+      type_outbound: detailDataMemo.type
+        ? { label: detailDataMemo.type, value: detailDataMemo.type }
+        : { label: "", value: "" },
+      selected_destination: detailDataMemo.ship_to
+        ? {
+            label: detailDataMemo.ship_to,
+            value: detailDataMemo.ship_to,
+          }
+        : { label: "", value: "" },
     });
 
-    const mappedItems: ItemRow[] = (detail.outbound_memo_items || []).map(
-      (it: any) => ({
-        item_id: it.item_id || it.item?.id || "",
-        item_name: it.item?.description || it.item?.sku || "",
-        quantity_plan: Number(it.quantity_plan ?? 0),
-        uom: typeof it.uom === "string" ? it.uom : it.uom_name ?? "",
-        uom_name: it.uom_name ?? (typeof it.uom === "string" ? it.uom : ""),
-        classification_name:
-          it.classification_name ??
-          it.classification?.classification_name ??
-          "",
-        notes: it.notes ?? "",
-      })
-    );
+    const mappedItems: ItemRow[] = (
+      detailDataMemo.outbound_memo_items || []
+    ).map((it: any) => ({
+      item_id: it.item_id || it.item?.id || "",
+      item_name: it.item?.description || it.item?.sku || "",
+      quantity_plan: Number(it.quantity_plan ?? 0),
+      uom: typeof it.uom === "string" ? it.uom : it.uom_name ?? "",
+      uom_name: it.uom_name ?? (typeof it.uom === "string" ? it.uom : ""),
+      classification_name:
+        it.classification_name ?? it.classification?.classification_name ?? "",
+      notes: it.notes ?? "",
+    }));
 
     setItems(mappedItems);
-  }, [detail, isDetail, isEdit, methods]);
+  }, [detailDataMemo, isDetail, isEdit, methods]);
 
   // add / delete item handlers
   const handleAddItem = (item: ItemRow) => {
@@ -341,6 +290,30 @@ const CreateMemo: React.FC = () => {
 
   const handleDeleteItem = (index: number) => {
     setItems((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleUpdateItemField = (
+    index: number,
+    field: keyof ItemRow,
+    value: any
+  ) => {
+    setItems((prev) => {
+      const copy = [...prev];
+      // jika update uom, simpan kode ke `uom` dan label ke `uom_name`
+      if (field === "uom") {
+        copy[index] = {
+          ...copy[index],
+          uom: value ?? "",
+          uom_name: value ?? "",
+        };
+      } else {
+        copy[index] = {
+          ...copy[index],
+          [field]: field === "quantity_plan" ? Number(value) : value,
+        };
+      }
+      return copy;
+    });
   };
 
   // submit handler (create or update)
@@ -355,16 +328,19 @@ const CreateMemo: React.FC = () => {
       requestor: data.requestor,
       origin: data.origin,
       ship_to: data.ship_to,
-      destination: data.destination,
+      destination: data.ship_to,
       delivery_date: formatDate(data.delivery_date),
       notes: data.notes,
       status: "PENDING",
+      type: data.type_outbound?.value || "",
       outbound_memo_items: items.map((i) => ({
         item_id: i.item_id,
         quantity_plan: Number(i.quantity_plan ?? 0),
         uom: i.uom ?? i.uom_name ?? "",
       })),
     };
+
+    console.log("Submitting payload:", payload);
 
     try {
       let res: any = null;
@@ -390,50 +366,88 @@ const CreateMemo: React.FC = () => {
 
   const columnsTableItem = [
     { accessorKey: "item_name", header: "Item Name" },
-    { accessorKey: "quantity_plan", header: "Qty Plan" },
-    { accessorKey: "uom_name", header: "UoM" },
     {
-      accessorKey: "action",
-      header: "Action",
+      accessorKey: "quantity_plan",
+      header: "Qty Plan",
       cell: ({ row }: any) =>
-        !isDetail && (
-          <button
-            className="text-red-600 hover:text-red-800 font-semibold"
-            onClick={() => handleDeleteItem(row.index)}
-          >
-            Delete
-          </button>
+        !isDetail ? (
+          <input
+            type="number"
+            className="w-28 px-2 py-1 border rounded"
+            value={items[row.index]?.quantity_plan ?? 0}
+            onChange={(e) =>
+              handleUpdateItemField(row.index, "quantity_plan", e.target.value)
+            }
+          />
+        ) : (
+          <span>{items[row.index]?.quantity_plan}</span>
         ),
     },
+    {
+      accessorKey: "uom_name",
+      header: "UOM",
+      cell: ({ row }: { row: any }) =>
+        !isDetail ? (
+          <Select
+            options={uomList.map((u) => ({
+              value: u.code,
+              label: u.code,
+            }))}
+            value={items[row.index]?.uom_name ?? ""}
+            onChange={(val) => handleUpdateItemField(row.index, "uom", val)}
+            placeholder="-- Select UOM --"
+            className="w-40"
+          />
+        ) : (
+          <span>{items[row.index]?.uom ?? ""}</span>
+        ),
+    },
+    ...(!isDetail
+      ? [
+          {
+            accessorKey: "action",
+            header: "Action",
+            cell: ({ row }: any) =>
+              !isDetail && (
+                <button
+                  className="text-red-600 hover:text-red-800 font-semibold"
+                  onClick={() => handleDeleteItem(row.index)}
+                >
+                  Delete
+                </button>
+              ),
+          },
+        ]
+      : []),
   ];
 
   const handleReset = () => {
-    if (isEdit && detail) {
-      const dateOnly = formatDate(detail.delivery_date);
+    if (isEdit && detailDataMemo) {
+      const dateOnly = formatDate(detailDataMemo.delivery_date);
 
       methods.reset({
-        requestor: detail.requestor || "",
-        origin: detail.origin || "",
-        ship_to: detail.ship_to || "",
-        destination: detail.destination || "",
+        requestor: detailDataMemo.requestor || "",
+        origin: detailDataMemo.origin || "",
+        ship_to: detailDataMemo.ship_to || "",
+        destination: detailDataMemo.destination || "",
         delivery_date: dateOnly,
-        notes: detail.notes || "",
+        notes: detailDataMemo.notes || "",
       });
 
-      const mappedItems: ItemRow[] = (detail.outbound_memo_items || []).map(
-        (it: any) => ({
-          item_id: it.item_id || it.item?.id || "",
-          item_name: it.item?.description || it.item?.sku || "",
-          quantity_plan: Number(it.quantity_plan ?? 0),
-          uom: typeof it.uom === "string" ? it.uom : it.uom_name ?? "",
-          uom_name: it.uom_name ?? (typeof it.uom === "string" ? it.uom : ""),
-          classification_name:
-            it.classification_name ??
-            it.classification?.classification_name ??
-            "",
-          notes: it.notes ?? "",
-        })
-      );
+      const mappedItems: ItemRow[] = (
+        detailDataMemo.outbound_memo_items || []
+      ).map((it: any) => ({
+        item_id: it.item_id || it.item?.id || "",
+        item_name: it.item?.description || it.item?.sku || "",
+        quantity_plan: Number(it.quantity_plan ?? 0),
+        uom: typeof it.uom === "string" ? it.uom : it.uom_name ?? "",
+        uom_name: it.uom_name ?? (typeof it.uom === "string" ? it.uom : ""),
+        classification_name:
+          it.classification_name ??
+          it.classification?.classification_name ??
+          "",
+        notes: it.notes ?? "",
+      }));
 
       setItems(mappedItems);
     } else {
@@ -483,13 +497,16 @@ const CreateMemo: React.FC = () => {
     const rejectMemo = async (memoId: string) => {
       const token = localStorage.getItem("token");
       try {
-        const res = await fetch(`${EndPoint}outbound-memo/${memoId}/cancelled`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        });
+        const res = await fetch(
+          `${EndPoint}outbound-memo/${memoId}/cancelled`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
         const data = await res.json();
         if (res.ok) {
           showErrorToast("Memo rejected successfully");
@@ -543,7 +560,7 @@ const CreateMemo: React.FC = () => {
         />
 
         {localStorage.getItem("role_name") === "TRANSPORT_SUPERVISOR" &&
-          detail?.status !== "APPROVED" && (
+          detailDataMemo?.status !== "APPROVED" && (
             <div className="flex justify-end mt-4 gap-3">
               <Button
                 type="button"

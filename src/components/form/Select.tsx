@@ -41,6 +41,13 @@ const Select: React.FC<SelectProps> = ({
       value={selectedOption || null}
       onChange={handleChange}
       classNamePrefix="react-select"
+      // biar dropdown dapat menempel ke atas kalau ruang bawah tidak cukup
+      menuPlacement="auto"
+      // portal ke body agar tidak ter-clip oleh parent overflow
+      menuPosition="fixed"
+      menuPortalTarget={
+        typeof document !== "undefined" ? document.body : undefined
+      }
       styles={{
         control: (base) => ({
           ...base,
@@ -55,6 +62,11 @@ const Select: React.FC<SelectProps> = ({
         menu: (base) => ({
           ...base,
           width,
+        }),
+        // style untuk portal agar z-index tinggi dan lebar sesuai control
+        menuPortal: (base) => ({
+          ...base,
+          zIndex: 999999999999,
         }),
         placeholder: (base) => ({
           ...base,

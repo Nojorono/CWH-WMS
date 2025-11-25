@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 import StatusBadge from "../../../../common/statusBadge";
 import { STATUS_MAP_MEMO } from "../../../../constants/statusMaps";
 import { useStoreOutboundMemo } from "../../../../DynamicAPI/stores/Store/MasterStore";
+import { formatDate } from "../TableAndForm/MemoCreateProcess";
 
 type MemoData = {
   no: number;
@@ -29,6 +30,7 @@ type MemoData = {
   qty: number;
   uom: string;
   warehouse_id: string;
+  type?: string;
 };
 
 type MenuTableProps = {
@@ -84,6 +86,7 @@ const AdjustTable = ({
       { accessorKey: "destination", header: "Destination" },
       { accessorKey: "shipTo", header: "Ship To" },
       { accessorKey: "requestor", header: "Requestor" },
+      { accessorKey: "type", header: "Type Outbound" },
       {
         accessorKey: "status",
         header: "Status",
@@ -142,14 +145,14 @@ const AdjustTable = ({
     no: index + 1,
     id: item.id,
     memoId: `M${(index + 1).toString().padStart(3, "0")}`,
-    deliveryDate: new Date(item.delivery_date).toLocaleDateString("en-GB"),
+    type: item.type || "-",
+    deliveryDate: formatDate(item.delivery_date),
     origin: item.origin || "-",
     destination: item.destination || "-",
     shipTo: item.ship_to || "-",
     requestor: item.requestor || "-",
     status: item.status || "PENDING",
-    createdDate: new Date(item.createdAt).toLocaleDateString("en-GB"),
-    // Add required AdjustData properties below, fallback to null/empty if not present
+    createdDate: formatDate(item.createdAt),
     createdAt: item.createdAt || null,
     updatedAt: item.updatedAt || null,
     deletedAt: item.deletedAt || null,

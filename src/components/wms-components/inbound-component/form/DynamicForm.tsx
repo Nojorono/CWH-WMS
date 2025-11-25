@@ -30,6 +30,7 @@ export type FieldConfig = {
   element?: React.ReactNode;
   disabled?: boolean;
   validation?: RegisterOptions;
+  readonly?: boolean;
 };
 
 interface DynamicFormProps {
@@ -92,6 +93,8 @@ const DynamicForm: React.FC<DynamicFormProps> = ({
 
         const isDisabled = !isEditMode || field.disabled;
         const fieldError = effectiveErrors?.[field.name];
+        const isReadOnly =
+          field.readonly || (isDisabled && field.readonly !== false);
 
         return (
           <div key={field.name} className="flex flex-col">
@@ -110,8 +113,8 @@ const DynamicForm: React.FC<DynamicFormProps> = ({
                 className={`${fieldError ? errorClasses : commonClasses} ${
                   isDisabled ? disabledClasses : ""
                 }`}
-                disabled={isDisabled}
-                readOnly={isDisabled}
+                disabled={isDisabled && !isReadOnly}
+                readOnly={isReadOnly}
               />
             )}
 
@@ -126,8 +129,8 @@ const DynamicForm: React.FC<DynamicFormProps> = ({
                 className={`${fieldError ? errorClasses : commonClasses} ${
                   isDisabled ? disabledClasses : ""
                 }`}
-                disabled={isDisabled}
-                readOnly={isDisabled}
+                disabled={isDisabled && !isReadOnly}
+                readOnly={isReadOnly}
               />
             )}
 
@@ -142,8 +145,8 @@ const DynamicForm: React.FC<DynamicFormProps> = ({
                 className={`${fieldError ? errorClasses : commonClasses} ${
                   isDisabled ? disabledClasses : ""
                 }`}
-                disabled={isDisabled}
-                readOnly={isDisabled}
+                disabled={isDisabled && !isReadOnly}
+                readOnly={isReadOnly}
               />
             )}
 
@@ -215,8 +218,8 @@ const DynamicForm: React.FC<DynamicFormProps> = ({
                 className={`${fieldError ? errorClasses : commonClasses} ${
                   isDisabled ? disabledClasses : ""
                 }`}
-                disabled={isDisabled}
-                readOnly={isDisabled}
+                disabled={isDisabled && !isReadOnly}
+                readOnly={isReadOnly}
               />
             )}
 
@@ -247,8 +250,8 @@ const DynamicForm: React.FC<DynamicFormProps> = ({
                       ? "bg-gray-100 text-gray-500 cursor-not-allowed"
                       : ""
                   }`}
-                  disabled={isDisabled}
-                  readOnly={isDisabled}
+                  disabled={isDisabled && !isReadOnly}
+                  readOnly={isReadOnly}
                 />
               </div>
             )}

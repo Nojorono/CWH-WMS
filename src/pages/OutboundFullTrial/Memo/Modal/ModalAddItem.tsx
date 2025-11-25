@@ -39,7 +39,7 @@ const ModalAddItem: React.FC<Props> = ({ open, onClose, onSubmit }) => {
   useEffect(() => {
     if (uomList.length > 0 && !selectedUom) {
       const dus = uomList.find((u: any) => u.code === "DUS");
-      if (dus) setSelectedUom(String(dus.id)); // gunakan dus.id, bukan dus.code
+      if (dus) setSelectedUom(String(dus.id));
     }
   }, [uomList, selectedUom]);
 
@@ -144,7 +144,7 @@ const ModalAddItem: React.FC<Props> = ({ open, onClose, onSubmit }) => {
 
           {/* UOM Dropdown */}
           <div>
-            <label className="block text-sm font-medium">UoM</label>
+            <label className="block text-sm font-medium">UOM</label>
             <Select
               options={uomList.map((u: any) => ({
                 value: u.id,
@@ -178,26 +178,6 @@ const ModalAddItem: React.FC<Props> = ({ open, onClose, onSubmit }) => {
             )}
           </div>
 
-          {/* Classification Dropdown */}
-          {/* <div>
-            <label className="block text-sm font-medium">Classification</label>
-            <Select
-              options={classificationList.map((c: any) => ({
-                value: c.id,
-                label: c.classification_name,
-              }))}
-              value={selectedClassification}
-              onChange={(val) => setSelectedClassification(val)}
-              placeholder="-- Select Classification --"
-              className="w-full"
-              width={"100%"}
-            />
-            {errors.classification && (
-              <p className="text-xs text-red-500 mt-1">
-                {errors.classification}
-              </p>
-            )}
-          </div> */}
         </div>
 
         {/* ACTION BUTTONS */}
