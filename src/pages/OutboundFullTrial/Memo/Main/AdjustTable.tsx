@@ -11,7 +11,7 @@ import { formatDate } from "../TableAndForm/MemoCreateProcess";
 type MemoData = {
   no: number;
   id: string;
-  memoId: string;
+  outbound_memo_number: string;
   deliveryDate: string;
   origin: string;
   destination: string;
@@ -80,7 +80,7 @@ const AdjustTable = ({
   const columns: ColumnDef<MemoData>[] = useMemo(
     () => [
       { accessorKey: "no", header: "No" },
-      { accessorKey: "memoId", header: "Memo ID" },
+      { accessorKey: "outbound_memo_number", header: "Memo No" },
       { accessorKey: "deliveryDate", header: "Delivery Date" },
       { accessorKey: "origin", header: "Origin" },
       { accessorKey: "destination", header: "Destination" },
@@ -144,7 +144,7 @@ const AdjustTable = ({
   const mappedList = (list || []).map((item: any, index: number) => ({
     no: index + 1,
     id: item.id,
-    memoId: `M${(index + 1).toString().padStart(3, "0")}`,
+    outbound_memo_number: item.outbound_memo_number || "-",
     type: item.type || "-",
     deliveryDate: formatDate(item.delivery_date),
     origin: item.origin || "-",

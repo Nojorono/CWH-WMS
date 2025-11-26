@@ -16,12 +16,7 @@ import {
 } from "../../../../DynamicAPI/stores/Store/MasterStore";
 import { useLocation } from "react-router";
 import { formatDateIndo } from "../../../../helper/FormatDate";
-import {
-  FaClipboardList,
-  FaEye,
-  FaTasks,
-  FaUsers,
-} from "react-icons/fa";
+import { FaClipboardList, FaEye, FaTasks, FaUsers } from "react-icons/fa";
 import SuggestionTable from "../Table/SuggestionPicking/SuggestionTable";
 import ModalPickingList from "../Modal/ModalPickingList";
 import ModalAssignHelper from "../Modal/ModalAssignHelper";
@@ -117,15 +112,16 @@ const PickingSuggestion: React.FC = () => {
 
   // === Table Columns ===
   const columnSuggestionPick = [
+    // {
+    //   accessorKey: "memo_id",
+    //   header: "MEMO ID",
+    //   cell: ({ row }: any) => row.original.memo_id || row.original.id,
+    // },
+
     {
-      accessorKey: "memo_id",
-      header: "MEMO ID",
-      cell: ({ row }: any) => row.original.memo_id || row.original.id,
-    },
-    {
-      accessorKey: "delivery_date",
-      header: "Delivery Date",
-      cell: ({ row }: any) => formatDateIndo(row.original.delivery_date),
+      accessorKey: "outbound_memo_number",
+      header: "Memo ID",
+      cell: ({ row }: any) => row.original.outbound_memo_number,
     },
     { accessorKey: "origin", header: "Origin" },
     { accessorKey: "destination", header: "Destination" },

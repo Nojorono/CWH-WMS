@@ -19,12 +19,17 @@ import Select from "../../../components/form/Select";
 import { showErrorToast } from "../../../components/toast";
 import { useForm, Controller } from "react-hook-form";
 import { useLocation, useNavigate } from "react-router";
+import { formatDateIndo } from "../../../helper/FormatDate";
 
 type PutAwayRow = {
   stagingPalletId: string;
   palletId: string;
   palletCode: string;
   totalQty: number;
+  uom: string;
+  week_number: number;
+  production_date: string;
+  inbound_id: string;
   warehouseName: string;
   stagingArea: string;
   suggestZoneId: string;
@@ -120,35 +125,39 @@ const PutAwayDetail: React.FC = () => {
   useEffect(() => {
     if ((isDetail || isEdit) && detailDataPutaway) {
       const palletItems = detailDataPutaway.palletItems || [];
-
       const formatted: PutAwayRow[] = [
         {
-          stagingPalletId: detailDataPutaway.inventory_tracking_id || "-",
-          palletId: detailDataPutaway.palletId || "-",
-          palletCode: detailDataPutaway.palletCode || "-",
-          totalQty: detailDataPutaway.totalQty || 0,
-          warehouseName: detailDataPutaway.warehouseSubName || "-",
-          stagingArea: detailDataPutaway.warehouseSubName || "-",
-          suggestZoneId: detailDataPutaway.destination_bin_id || "-",
-          suggestZone: detailDataPutaway.suggestZone || "-",
-          suggestBinId: detailDataPutaway.destination_bin_id || "-",
-          suggestBin: detailDataPutaway.suggestBin || "-",
-          driver: detailDataPutaway.driverName || "-",
-          SKUname: palletItems?.[0]?.itemName || "-",
-          palletItemUom:
-            palletItems?.[0]?.uom || palletItems?.[0]?.item_uom || "-",
+          stagingPalletId: detailDataPutaway.inventory_tracking_id,
+          palletId: detailDataPutaway.palletId,
+          palletCode: detailDataPutaway.palletCode,
+          totalQty: detailDataPutaway.totalQty,
+          uom: detailDataPutaway.uom, // Added uom
+          week_number: detailDataPutaway.week_number, // Added week_number
+          production_date: detailDataPutaway.production_date, // Added production_date
+          inbound_id: detailDataPutaway.inbound_id, // Added inbound_id
+          warehouseName: detailDataPutaway.warehouseSubName,
+          stagingArea: detailDataPutaway.warehouseSubName,
+          suggestZoneId: detailDataPutaway.destination_bin_id,
+          suggestZone: detailDataPutaway.suggestZone,
+          suggestBinId: detailDataPutaway.destination_bin_id,
+          suggestBin: detailDataPutaway.suggestBin,
+          driver: detailDataPutaway.driverName,
+          SKUname: palletItems?.[0]?.itemName,
+          palletItemUom: palletItems?.[0]?.uom || palletItems?.[0]?.item_uom,
           destinationWarehouseSubCode:
-            detailDataPutaway.destinationWarehouseSubCode || "-",
-          destinationBinCode: detailDataPutaway.destinationBinCode || "-",
+            detailDataPutaway.destinationWarehouseSubCode,
+          destinationBinCode: detailDataPutaway.destinationBinCode,
+          destinationWarehouseSubName:
+            detailDataPutaway.destinationWarehouseSubName, // Added destinationWarehouseSubName
         },
       ];
 
       setMappedData(formatted);
 
       // Isi form driver
-      setValue("forkliftDriverId", detailDataPutaway.forkliftDriverId || "");
-      setValue("driverName", detailDataPutaway.driverName || "");
-      setValue("driverPhone", detailDataPutaway.driverPhone || "");
+      setValue("forkliftDriverId", detailDataPutaway.forkliftDriverId);
+      setValue("driverName", detailDataPutaway.driverName);
+      setValue("driverPhone", detailDataPutaway.driverPhone);
     } else if (isCreate && putAwaySuggestions) {
       const suggestions =
         (putAwaySuggestions as any).palletSuggestions ||
@@ -172,21 +181,23 @@ const PutAwayDetail: React.FC = () => {
           const SKUname = palletItems.map((item) => item.item_name).join(", ");
 
           return {
-            stagingPalletId: staging?.id || "-",
-            palletId: pallet?.id || "-",
-            palletCode: pallet?.pallet_code || "-",
-            totalQty: pallet?.currentQuantity || "-",
-            warehouseName: warehouse?.name || "-",
-            stagingArea: stagingArea?.name || "-",
-            suggestZoneId: zone?.id || "",
-            suggestZone: zone?.name || "-",
-            suggestBinId: bin?.id || "",
-            suggestBin: bin?.name || "-",
+            stagingPalletId: staging?.id,
+            palletId: pallet?.id,
+            palletCode: pallet?.pallet_code,
+            totalQty: pallet?.currentQuantity,
+            uom: palletItems?.[0]?.uom,
+            week_number: palletItems?.[0]?.week_number,
+            production_date: palletItems?.[0]?.production_date,
+            inbound_id: palletItems?.[0]?.inbound_id,
+            warehouseName: warehouse?.name,
+            stagingArea: stagingArea?.name,
+            suggestZoneId: zone?.id,
+            suggestZone: zone?.name,
+            suggestBinId: bin?.id,
+            suggestBin: bin?.name,
             driver: "",
             SKUname: SKUname,
-            // Ambil UoM dari palletItems (API contoh menggunakan "uom")
-            palletItemUom:
-              palletItems?.[0]?.uom || palletItems?.[0]?.item_uom || "-",
+            palletItemUom: palletItems?.[0]?.uom,
           };
         }
       );
@@ -396,6 +407,11 @@ const PutAwayDetail: React.FC = () => {
               driver_phone: driver.phone,
               status: "PENDING",
               notes: "",
+              uom: r.palletItemUom, // Added UoM
+              quantity: r.totalQty, // Added Quantity
+              week_number: r.week_number, // Assuming a function to get the current week number
+              production_date: formatDateIndo(r.production_date), // Added Production Date
+              inbound_id: r.inbound_id || "", // Added Inbound ID
             })),
         };
 
@@ -411,8 +427,6 @@ const PutAwayDetail: React.FC = () => {
 
       // 🔸 MODE EDIT → single update
       if (isEdit && detailDataPutaway?.id) {
-        console.log("detailDataPutaway", detailDataPutaway);
-
         const originalBinId = detailDataPutaway.destinationBinId;
         const updatedBinId = mappedData?.[0]?.suggestBinId ?? null;
 

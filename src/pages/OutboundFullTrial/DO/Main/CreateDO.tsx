@@ -18,6 +18,7 @@ import { formatDateIndo } from "../../../../helper/FormatDate";
 import ConfirmationModal from "../Modal/Sequence";
 import Label from "../../../../components/form/Label";
 import Select from "../../../../components/form/Select";
+import ActIndicator from "../../../../components/ui/activityIndicator";
 
 type MemoFormValues = {
   requestor: string;
@@ -53,6 +54,7 @@ const CreateDO: React.FC = () => {
     fetchUsingPagination,
     list: approvedMemos,
     pagination,
+    isLoading,
   } = useStoreOutboundMemo();
 
   // 🔹 local state pagination
@@ -79,6 +81,7 @@ const CreateDO: React.FC = () => {
 
   const columnsTableItem = [
     { accessorKey: "id", header: "Select", selectedRow: true },
+    { accessorKey: "outbound_memo_number", header: "Memo No" },
     {
       accessorKey: "type",
       header: "Type Outbound",
@@ -102,9 +105,9 @@ const CreateDO: React.FC = () => {
       ),
     },
     {
-      accessorKey: "created_date",
+      accessorKey: "createdAt",
       header: "Created Date",
-      cell: ({ row }: any) => formatDateIndo(row.original.created_date),
+      cell: ({ row }: any) => formatDateIndo(row.original.createdAt),
     },
   ];
 
@@ -163,15 +166,13 @@ const CreateDO: React.FC = () => {
   const handleConfirmSubmit = async (reorderedList: any[]) => {
     const DOnumber = generateOutboundDONumber();
 
-    console.log("approvedMemos to submit:", approvedMemos);
-
     try {
       const PAYLOAD = {
         outbound_do_number: DOnumber, // akan di-generate oleh backend
         origin: approvedMemos[0]?.origin || "",
         outbound_type: selectedTypeOutbound,
         delivery_date: formatDateIndo(formDataPreview?.delivery_date),
-        expedition: "", 
+        expedition: "",
         license_plate: "",
         driver_name: "",
         driver_phone: "",
@@ -211,7 +212,7 @@ const CreateDO: React.FC = () => {
       page: pageIndex + 1,
       limit: pageSize,
       status: "APPROVED",
-      type: value, // <-- gunakan value saja!
+      type: value,
     });
   };
 
@@ -225,31 +226,39 @@ const CreateDO: React.FC = () => {
       />
 
       {/* === Delivery Order Details === */}
-      <section className="bg-white p-5 rounded-xl shadow-sm border border-gray-200">
-        <h3 className="font-semibold text-gray-700 text-lg mb-3">
-          Delivery Order Details
-        </h3>
-
+      <section className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
         <div className="flex space-x-4">
-          <Label htmlFor="type-outbound">Type Outbound</Label>
-          <Select
-            options={options}
-            placeholder="Pilih Type"
-            onChange={onChangeType}
-            value={selectedTypeOutbound}
-          />
+          {/* Add space between items */}
+          <div className="flex-1">
+            {/* Allow Select to take available space */}
+            <Label
+              htmlFor="type-outbound"
+              className="mb-1 text-sm font-medium text-gray-600"
+            >
+              Type Outbound
+            </Label>
+            <Select
+              options={options}
+              placeholder="Pilih Type"
+              onChange={onChangeType}
+              value={selectedTypeOutbound}
+              className="w-full"
+            />
+          </div>
+          <div className="flex-6">
+            {/* Allow DynamicForm to take available space */}
+            <DynamicForm
+              fields={fieldsConfig}
+              onSubmit={methods.handleSubmit(onFinalSubmit)}
+              control={methods.control}
+              register={methods.register}
+              setValue={methods.setValue}
+              handleSubmit={methods.handleSubmit}
+              isEditMode={!isDetail}
+              watch={methods.watch}
+            />
+          </div>
         </div>
-
-        <DynamicForm
-          fields={fieldsConfig}
-          onSubmit={methods.handleSubmit(onFinalSubmit)}
-          control={methods.control}
-          register={methods.register}
-          setValue={methods.setValue}
-          handleSubmit={methods.handleSubmit}
-          isEditMode={!isDetail}
-          watch={methods.watch}
-        />
       </section>
 
       {/* === MEMO List === */}
@@ -258,31 +267,39 @@ const CreateDO: React.FC = () => {
           Memo List
         </div>
         <div className="p-4">
-          <TableComponent
-            data={approvedMemos}
-            columns={columnsTableItem}
-            pageSize={pageSize}
-            pageIndex={pageIndex}
-            totalPages={pagination.totalPages}
-            onPageChange={(page, size) => {
-              setPageIndex(page);
-              setPageSize(size);
-            }}
-            onSelectionChange={handleSelectionChange}
-          />
+          {isLoading ? (
+            <>
+              <ActIndicator />
+            </>
+          ) : (
+            <>
+              <TableComponent
+                data={selectedTypeOutbound ? approvedMemos : []}
+                columns={columnsTableItem}
+                pageSize={pageSize}
+                pageIndex={pageIndex}
+                totalPages={pagination.totalPages}
+                onPageChange={(page, size) => {
+                  setPageIndex(page);
+                  setPageSize(size);
+                }}
+                onSelectionChange={handleSelectionChange}
+              />
+            </>
+          )}
         </div>
       </section>
 
       {/* === Buttons === */}
       <div className="flex justify-end gap-3 mt-4">
-        <Button
+        {/* <Button
           type="button"
           variant="secondary"
           className="bg-gray-200 text-gray-700 hover:bg-gray-300"
           onClick={handleReset}
         >
           Reset
-        </Button>
+        </Button> */}
 
         <Button
           type="button"

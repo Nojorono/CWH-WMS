@@ -1,5 +1,6 @@
 import React from "react";
 import Select from "react-select"; // atau Select custom kamu
+import { formatDateIndo } from "../../../../../../helper/FormatDate";
 
 interface MemoDetail {
   id: any;
@@ -52,7 +53,7 @@ export const SuggestionItemHeader: React.FC<MemoHeaderProps> = ({
       {/* Delivery Date */}
       <div>
         <span className="text-gray-500 block">Delivery Date</span>
-        <span className="font-medium">{memoDetail.delivery_date}</span>
+        <span className="font-medium">{formatDateIndo(memoDetail.delivery_date)}</span>
       </div>
 
       {/* Destination BIN */}
