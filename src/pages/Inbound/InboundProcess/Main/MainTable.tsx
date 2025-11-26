@@ -49,6 +49,7 @@ const MainTable = () => {
           </div>
 
           <div className="space-x-4">
+            <Label htmlFor="status">Status</Label>
             <Select
               options={options}
               placeholder="Pilih"

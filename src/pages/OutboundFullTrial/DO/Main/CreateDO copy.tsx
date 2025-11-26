@@ -164,18 +164,13 @@ const CreateDO: React.FC = () => {
     const DOnumber = generateOutboundDONumber();
 
     console.log("approvedMemos to submit:", approvedMemos);
-
+    
     try {
       const PAYLOAD = {
         outbound_do_number: DOnumber, // akan di-generate oleh backend
         origin: approvedMemos[0]?.origin || "",
         outbound_type: selectedTypeOutbound,
-        delivery_date: formatDateIndo(formDataPreview?.delivery_date),
-        expedition: "", 
-        license_plate: "",
-        driver_name: "",
-        driver_phone: "",
-        status: "PENDING",
+        delivery_date: formDataPreview?.delivery_date,
         outbound_memo_ids: reorderedList.map((m, index) => ({
           memo_id: m.id || m.memo_id, // sesuaikan key ID
           sequence: index + 1,
@@ -184,12 +179,12 @@ const CreateDO: React.FC = () => {
 
       console.log("Final PAYLOAD Create DO to submit:", PAYLOAD);
 
-      const res = await createData(PAYLOAD as any);
-      if (res?.success) {
-        handleReset();
-        setIsConfirmOpen(false);
-        navigate("/outbound_do");
-      }
+      // const res = await createData(PAYLOAD as any);
+      // if (res?.success) {
+      //   handleReset();
+      //   setIsConfirmOpen(false);
+      //   navigate("/outbound_do");
+      // }
     } catch (error) {
       showErrorToast("Gagal membuat Delivery Order!");
       console.error(error);
@@ -230,7 +225,7 @@ const CreateDO: React.FC = () => {
           Delivery Order Details
         </h3>
 
-        <div className="flex space-x-4">
+        <div className="space-x-4">
           <Label htmlFor="type-outbound">Type Outbound</Label>
           <Select
             options={options}
@@ -239,17 +234,6 @@ const CreateDO: React.FC = () => {
             value={selectedTypeOutbound}
           />
         </div>
-
-        <DynamicForm
-          fields={fieldsConfig}
-          onSubmit={methods.handleSubmit(onFinalSubmit)}
-          control={methods.control}
-          register={methods.register}
-          setValue={methods.setValue}
-          handleSubmit={methods.handleSubmit}
-          isEditMode={!isDetail}
-          watch={methods.watch}
-        />
       </section>
 
       {/* === MEMO List === */}
