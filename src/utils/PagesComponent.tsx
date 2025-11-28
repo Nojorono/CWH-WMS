@@ -30,6 +30,8 @@ import MasterWarehouse from "../pages/Master/MasterWarehouse";
 import MasterItem from "../pages/Master/MasterItem";
 import MasterClassification from "../pages/Master/MasterClassification";
 import MasterVehicle from "../pages/Master/MasterVehicle";
+import MasterAMO from "../pages/Master/MasterAMO";
+import MasterSubdist from "../pages/Master/MasterSubdist";
 
 // MASTER ZONE
 import MasterZone from "../pages/Master/MasterSubWarehouse";
@@ -42,15 +44,15 @@ import MasterSupplier from "../pages/Master/MasterSupplier";
 //OUTBOUND
 import Memo from "../pages/OutboundFullTrial/Memo";
 import MemoProcess from "../pages/OutboundFullTrial/Memo/TableAndForm/MemoCreateProcess";
-// import MemoProcess from "../pages/OutboundFullTrial/Memo/TableAndForm/MemoCreate";
-
 import OutboundDO from "../pages/OutboundFullTrial/DO";
 import CreateDO from "../pages/OutboundFullTrial/DO/Main/CreateDO";
 import DetailDO from "../pages/OutboundFullTrial/DO/Main/DetailDO";
 import PickingSuggestion from "../pages/OutboundFullTrial/Picking/Main/PickingSuggestion";
 
-import MasterAMO from "../pages/Master/MasterAMO";
-import MasterSubdist from '../pages/Master/MasterSubdist'
+// Approval Set Up
+import ApprovalSetup from '../pages/ApprovalSetup/Main/MainTable'
+import CreateApproval from '../pages/ApprovalSetup/Table/ApprovalSetupProcess'
+
 
 export {
   // PAGE MASTER
@@ -99,4 +101,9 @@ export {
   CreateDO,
   DetailDO,
   PickingSuggestion,
+
+
+  // Approval Set Up
+  ApprovalSetup,
+  CreateApproval,
 };

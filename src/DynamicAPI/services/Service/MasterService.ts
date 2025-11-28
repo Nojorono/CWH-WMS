@@ -28,9 +28,11 @@ import { PickingList, CreatePickingList, UpdatePickingList } from '../../types/P
 import { PickingAssignHelper, CreatePickingAssignHelper, UpdatePickingAssignHelper } from "../../types/PickingAssignHelper.tsx";
 import { PickingSuggestionItem, UpdatePickingSuggestionItem, CreatePickingSuggestionItem } from "../../types/PickingSuggestionItem.tsx";
 import { UserManagement, CreateUserManagement, UpdateUserManagement } from "../../types/UserManagement.tsx";
-
 import { CreateMasterAMO, UpdateMasterAMO, MasterAMO } from "../../types/MasterAMOtypes.ts";
 import { MasterSubdist, CreateMasterSubdist, UpdateMasterSubdist } from "../../types/MasterSubdistTypes.ts";
+
+import { ApprovalSetUp, CreateApprovalSetUp, UpdateApprovalSetUp} from "../../types/ApprovalSetUpTypes";
+
 
 
 
@@ -67,6 +69,7 @@ export const PickingAssignHelperService = createCrudService<PickingAssignHelper,
 // export const PickingAssignHelperService = createCrudService<PickingAssignHelper, CreatePickingAssignHelper, UpdatePickingAssignHelper>("/assigned-picking/memo/");
 export const PickingSuggestionItemService = createCrudService<PickingSuggestionItem, CreatePickingSuggestionItem, UpdatePickingSuggestionItem>("/picking-suggestion/item"); 
 export const UserManagementService = createCrudService<UserManagement, CreateUserManagement, UpdateUserManagement>("/user-manage");
-
 export const MasterAMOService = createCrudService<MasterAMO, CreateMasterAMO, UpdateMasterAMO>("/customer/main");
 export const MasterSubdistService = createCrudService<MasterSubdist, CreateMasterSubdist, UpdateMasterSubdist>("/customer/subdist");
+
+export const ApprovalSetUpService = createCrudService<ApprovalSetUp, CreateApprovalSetUp, UpdateApprovalSetUp>("/approval-setup");

@@ -131,7 +131,7 @@ const DynamicTable = ({
         data={data}
         columns={enhancedColumns}
         globalFilter={globalFilter}
-        onSelectionChange={handleSelectionChange} // ✅ trigger saat user checklist
+        onSelectionChange={handleSelectionChange}
       />
     </>
   );

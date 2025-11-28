@@ -1,10 +1,10 @@
 import PageBreadcrumb from "../../components/common/PageBreadCrumb";
 // import ViewTable from "./Main/MainTable";
 
-export default function PutAway() {
+export default function ApprovalSetup() {
   return (
     <div>
-      <PageBreadcrumb breadcrumbs={[{ title: "Set Up Approval" }]} />
+      <PageBreadcrumb breadcrumbs={[{ title: "Approval Setup" }]} />
       {/* <ViewTable /> */}
     </div>
   );

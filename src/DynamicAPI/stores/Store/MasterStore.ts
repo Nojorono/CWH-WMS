@@ -32,7 +32,8 @@ import {
     PickingAssignHelperService,
     PickingSuggestionItemService,
     MasterAMOService,
-    MasterSubdistService
+    MasterSubdistService,
+    ApprovalSetUpService
 } from "../../services/Service/MasterService";
 
 import { Uom, CreateUom, UpdateUom } from "../../types/UomTypes";
@@ -63,9 +64,11 @@ import { PickingList, CreatePickingList, UpdatePickingList } from '../../types/P
 import { PickingAssignHelper, CreatePickingAssignHelper, UpdatePickingAssignHelper } from '../../types/PickingAssignHelper.tsx'
 import { PickingSuggestionItem, UpdatePickingSuggestionItem, CreatePickingSuggestionItem } from "../../types/PickingSuggestionItem.tsx";
 import { UserManagement, CreateUserManagement, UpdateUserManagement } from "../../types/UserManagement.tsx";
-
 import { CreateMasterAMO, UpdateMasterAMO, MasterAMO } from "../../types/MasterAMOtypes.ts";
 import { MasterSubdist, CreateMasterSubdist, UpdateMasterSubdist } from "../../types/MasterSubdistTypes.ts";
+
+import { ApprovalSetUp, CreateApprovalSetUp, UpdateApprovalSetUp } from "../../types/ApprovalSetUpTypes";
+
 
 
 
@@ -233,4 +236,9 @@ export const useStoreMasterAMO = createCrudStore<MasterAMO, CreateMasterAMO, Upd
 export const useStoreMasterSubdist = createCrudStore<MasterSubdist, CreateMasterSubdist, UpdateMasterSubdist>({
     name: "MasterSubdist",
     service: MasterSubdistService,
+});
+
+export const useStoreApprovalSetUp = createCrudStore<ApprovalSetUp, CreateApprovalSetUp, UpdateApprovalSetUp>({
+    name: "ApprovalSetUp",
+    service: ApprovalSetUpService,
 });
