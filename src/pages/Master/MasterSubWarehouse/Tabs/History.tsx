@@ -5,6 +5,7 @@ import axios from "axios";
 import DataTable from "./TableTab";
 import { ColumnDef } from "@tanstack/react-table";
 import { EndPoint } from "../../../../utils/EndPoint";
+import { formatDateIndo } from "../../../../helper/FormatDate";
 
 type QuantityHistory = {
   id: string;
@@ -68,9 +69,8 @@ export default function QuantityHistoryTable({ palletCode }: HistoryProps) {
     { accessorKey: "new_quantity", header: "Qty" },
     {
       accessorKey: "production_date",
-      header: "Batch Code",
-      cell: (info) =>
-        new Date(info.getValue() as string).toISOString().split("T")[0],
+      header: "Production Date",
+      cell: (info) => formatDateIndo(info.getValue() as string),
     },
     { accessorKey: "week_number", header: "Week Number" },
     { accessorKey: "user_id", header: "Staff" },

@@ -50,8 +50,9 @@ import DetailDO from "../pages/OutboundFullTrial/DO/Main/DetailDO";
 import PickingSuggestion from "../pages/OutboundFullTrial/Picking/Main/PickingSuggestion";
 
 // Approval Set Up
-import ApprovalSetup from '../pages/ApprovalSetup/Main/MainTable'
-import CreateApproval from '../pages/ApprovalSetup/Table/ApprovalSetupProcess'
+import ApprovalSetup from '../pages/ApprovalSetup/index'
+import CreateApproval from '../pages/ApprovalSetup/Table/CreateApprovalSetup'
+import ApprovalProcess from '../pages/ApprovalSetup/Table/ApprovalProcess'
 
 
 export {
@@ -106,4 +107,5 @@ export {
   // Approval Set Up
   ApprovalSetup,
   CreateApproval,
+  ApprovalProcess
 };

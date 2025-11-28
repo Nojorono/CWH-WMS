@@ -5,7 +5,7 @@ import { FaEye, FaEdit, FaTrash } from "react-icons/fa";
 import { ColumnDef } from "@tanstack/react-table";
 import TableComponent from "../Table/TableComponent";
 import { useNavigate } from "react-router-dom";
-import { useStorePutAway } from "../../../DynamicAPI/stores/Store/MasterStore";
+import { useStoreApprovalSetUp } from "../../../DynamicAPI/stores/Store/MasterStore";
 import { MappedData } from "../constant/MappedData";
 import StatusBadge from "../../../common/statusBadge";
 import { STATUS_MAP_PUTAWAY } from "../../../constants/statusMaps";
@@ -25,8 +25,7 @@ const AdjustTable = ({
 }: AdjustTableProps) => {
   const navigate = useNavigate();
 
-  const { fetchUsingPagination, deleteData, list, pagination } =
-    useStorePutAway();
+  const { fetchUsingPagination, list, pagination } = useStoreApprovalSetUp();
 
   // 🔹 local state pagination
   const [pageIndex, setPageIndex] = useState(0);
@@ -56,46 +55,43 @@ const AdjustTable = ({
   };
 
   const handleDelete = async (id: any) => {
-    await deleteData(id);
+    // await deleteData(id);
   };
 
   // ✅ Updated columns to reflect full mapped structure
-  const columns: ColumnDef<MappedData>[] = useMemo(() => {
-    if (!list || list.length === 0) return []; // fallback
-
-    const baseColumns: ColumnDef<MappedData>[] = [
-      { accessorKey: "palletCode", header: "Pallet Code" },
-
+  const columns: ColumnDef<any>[] = useMemo(() => {
+    const baseColumns: ColumnDef<any>[] = [
+      { accessorKey: "name", header: "Approval Name" },
+      { accessorKey: "description", header: "Description" },
+      { accessorKey: "entity_type", header: "Entity Type" },
       {
-        accessorKey: "sourceWarehouseSubName",
-        header: "Source Zone",
-        cell: ({ row }) =>
-          row.original.status === "COMPLETED"
-            ? "-"
-            : row.original.sourceWarehouseSubName || "-",
+        accessorKey: "is_active",
+        header: "Active",
+        cell: ({ row }) => (row.original.is_active ? "Yes" : "No"),
       },
       {
-        accessorKey: "destinationWarehouseSubName",
-        header: "Destination Zone",
-      },
-      { accessorKey: "destinationBinCode", header: "Destination Bin" },
-      { accessorKey: "totalSku", header: "Total SKU" },
-      { accessorKey: "totalQty", header: "Total Qty" },
-      { accessorKey: "quantity", header: "Quantity" },
-
-      { accessorKey: "palletItemUom", header: "UOM" },
-      { accessorKey: "driverName", header: "Forklift Driver" },
-      { accessorKey: "driverPhone", header: "Driver Phone" },
-      {
-        accessorKey: "status",
-        header: "Status",
+        accessorKey: "approval_levels",
+        header: "Approval Levels",
         cell: ({ row }) => (
-          <StatusBadge
-            status={row.original.status}
-            colorMap={STATUS_MAP_PUTAWAY}
-            variant="solid"
-            size="sm"
-          />
+          <div>
+            {row.original.approval_levels.map((level: any) => (
+              <div key={level.id}>
+                {level.level_name}
+              </div>
+            ))}
+          </div>
+        ),
+      },
+
+      {
+        accessorKey: "role",
+        header: "Role",
+        cell: ({ row }) => (
+          <div>
+            {row.original.approval_levels.map((level: any) => (
+              <div key={level.id}>{level.role.name}</div>
+            ))}
+          </div>
         ),
       },
       {
@@ -103,122 +99,56 @@ const AdjustTable = ({
         header: "Action",
         cell: ({ row }) => (
           <div className="flex items-center gap-3">
-            <FaEye
+            {/* <FaEye
               className="size-5 cursor-pointer text-green-600"
               onClick={() => handleDetail(row.original)}
               title="Detail"
             />
-            {row.original.status !== "COMPLETED" && (
-              <>
-                <FaEdit
-                  className="size-5 cursor-pointer text-blue-600"
-                  onClick={() => handleUpdate(row.original)}
-                  title="Edit"
-                />
-                <FaTrash
-                  className="size-5 cursor-pointer text-red-600"
-                  onClick={() => handleDelete(row.original.id)}
-                  title="Delete"
-                />
-              </>
-            )}
+            <FaEdit
+              className="size-5 cursor-pointer text-blue-600"
+              onClick={() => handleUpdate(row.original)}
+              title="Edit"
+            />
+            <FaTrash
+              className="size-5 cursor-pointer text-red-600"
+              onClick={() => handleDelete(row.original.id)}
+              title="Delete"
+            /> */}
           </div>
         ),
       },
     ];
 
     return baseColumns;
-  }, [list]);
+  }, []);
 
   // Mapping API data to table-friendly shape
-  const mappedList = (list || []).map((item: any) => {
-    const inventory = item.inventoryTracking || {};
-    const pallet = inventory.pallet || {};
-    const sourceSub = inventory.warehouseSub || {};
-    const destinationBin = item.destinationBin || {};
-    const destinationSub = destinationBin.warehouseSub || {};
-
-    // Map palletItems for detail display
-    const palletItems = (item.palletItems || []).map((pi: any) => ({
-      itemId: pi.item_id || pi.id || "-",
-      itemName: pi.item_name || pi.name || "-",
-      currentQuantity: Number(pi.current_quantity) || 0,
-      uom: pi.uom || "-",
-      lastUpdated: pi.last_updated || null,
-      productionDate: pi.production_date || null,
-      weekNumber: pi.week_number ?? null,
-    }));
-
-    const totalSku = palletItems.length;
-    const totalQty = palletItems.reduce(
-      (sum: number, pi: any) => sum + (Number(pi.currentQuantity) || 0),
-      0
-    );
-
-    return {
-      // --- Metadata ---
-      id: item.id,
-      createdAt: item.createdAt,
-      updatedAt: item.updatedAt,
-      deletedAt: item.deletedAt,
-      quantity: item.quantity,
-
-      // --- Source (Inventory Tracking) ---
-      inventoryTrackingId: inventory.id || item.inventory_tracking_id || "-",
-      inventoryDate: inventory.inventory_date || null,
-      inventoryStatus: inventory.inventory_status || "-",
-      progressionStatus: inventory.progression_status || "-",
-      inventoryNote: inventory.inventory_note || "-",
-
-      // --- Source Warehouse Info ---
-      sourceWarehouseId: inventory.warehouse_id || "-",
-      sourceWarehouseSubId: inventory.warehouse_sub_id || "-",
-      sourceWarehouseSubName: sourceSub.name || "-",
-      sourceWarehouseSubCode: sourceSub.code || "-",
-      sourceWarehouseSubDesc: sourceSub.description || "-",
-      sourceWarehouseSubIsStaging: sourceSub.is_staging || "-",
-      sourceBinCode: inventory.bin_code || "-",
-
-      // --- Source Pallet Info ---
-      palletId: pallet.id || inventory.pallet_id || "-",
-      palletCode: pallet.pallet_code || "-",
-      palletCapacity: pallet.capacity ?? 0,
-      palletCurrentQuantity: Number(pallet.currentQuantity) || 0,
-      palletUom: pallet.uom || "-",
-      palletIsFull: pallet.isFull ?? false,
-      palletQrUrl: pallet.qr_image_url || null,
-
-      // --- Destination Info ---
-      destinationBinId: item.destination_bin_id || "-",
-      destinationBinCode: destinationBin.code || "-",
-      destinationBinName: destinationBin.name || "-",
-      destinationBinDesc: destinationBin.description || "-",
-      destinationBinCapacity: destinationBin.capacity_pallet ?? 0,
-      destinationBinQrUrl: destinationBin.barcode_image_url || null,
-
-      destinationWarehouseSubId: destinationSub.id || "-",
-      destinationWarehouseSubName: destinationSub.name || "-",
-      destinationWarehouseSubCode: destinationSub.code || "-",
-      destinationWarehouseSubDesc: destinationSub.description || "-",
-
-      // --- Driver / Forklift ---
-      forkliftDriverId: item.forklift_driver_id || "-",
-      driverName: item.driver_name || "-",
-      driverPhone: item.driver_phone || "-",
-
-      // --- Status / Notes ---
-      status: item.status || "-",
-      notes: item.notes || "-",
-
-      // --- Summary Info ---
-      totalSku,
-      totalQty,
-      palletItemUom: palletItems.length > 0 ? palletItems[0].uom : "-",
-
-      // --- Detail Items ---
-      palletItems,
-    };
-  });
+  const mappedList = list.map((item: any) => ({
+    id: item.id,
+    createdAt: item.createdAt,
+    updatedAt: item.updatedAt,
+    deletedAt: item.deletedAt,
+    name: item.name,
+    description: item.description,
+    entity_type: item.entity_type,
+    is_active: item.is_active,
+    require_all_levels: item.require_all_levels,
+    total_levels: item.total_levels,
+    approval_levels: item.approval_levels.map((level: any) => ({
+      id: level.id,
+      level: level.level,
+      level_name: level.level_name,
+      description: level.description,
+      role_id: level.role_id,
+      role: level.role,
+      is_required: level.is_required,
+      can_skip: level.can_skip,
+      min_approvers: level.min_approvers,
+      max_approvers: level.max_approvers,
+      required_approvers: level.required_approvers,
+      order: level.order,
+    })),
+  }));
 
   return (
     <TableComponent

@@ -34,7 +34,7 @@ type FormValues = {
   approval_levels: ApprovalLevel[];
 };
 
-const ApprovalSetupProcess: React.FC = () => {
+const CreateAprrovalSetup: React.FC = () => {
   const navigate = useNavigate();
   const { createData: createApproval } = useStoreApprovalSetUp();
   const { fetchRoles, roles: listRoles } = useRoleStore();
@@ -108,7 +108,7 @@ const ApprovalSetupProcess: React.FC = () => {
 
     try {
       await createApproval(payload);
-      navigate("/approval_setup");
+      navigate("/approval");
     } catch (error) {
       console.error("Error creating approval:", error);
     }
@@ -401,4 +401,4 @@ const ApprovalSetupProcess: React.FC = () => {
   );
 };
 
-export default ApprovalSetupProcess;
+export default CreateAprrovalSetup;

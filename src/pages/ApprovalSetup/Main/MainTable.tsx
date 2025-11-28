@@ -25,7 +25,7 @@ const MainTable = () => {
   };
 
   const handleCreate = () => {
-    navigate("/approval_setup/create", {
+    navigate("/approval/create", {
       state: { data: [], mode: "create", title: "Create Approval" },
     });
   };

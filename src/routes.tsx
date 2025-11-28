@@ -49,7 +49,8 @@ import {
   MasterAMO,
   MasterSubdist,
   ApprovalSetup,
-  CreateApproval
+  CreateApproval,
+  ApprovalProcess,
 } from "./utils/PagesComponent";
 
 const DefaultPage = () => <> </>;
@@ -123,9 +124,10 @@ export function AppRoutes() {
       { path: "detail", element: <DetailDO /> },
       { path: "picking_suggestion", element: <PickingSuggestion /> },
     ],
-    "/approval_setup": [
+    "/approval": [
       { path: "create", element: <CreateApproval /> },
-    ] 
+      { path: "process", element: <ApprovalProcess /> },
+    ],
   };
 
   // Map path ke komponen

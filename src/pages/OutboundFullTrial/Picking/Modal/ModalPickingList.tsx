@@ -11,61 +11,10 @@ import {
 import { useStorePickingList } from "../../../../DynamicAPI/stores/Store/MasterStore";
 import { formatDateIndo } from "../../../../helper/FormatDate";
 import ActIndicator from "../../../../components/ui/activityIndicator";
-
-interface PickingListItem {
-  id: string;
-  destination_warehouse_sub_id: string;
-
-  do: {
-    id: string;
-    outbound_do_number: string;
-    outbound_type: string;
-    delivery_date: string;
-  };
-
-  memo: {
-    id: string;
-    requestor: string;
-    destination: string;
-  };
-
-  item: {
-    id: string;
-    sku: string;
-    description: string;
-    item_number: string;
-  };
-
-  sourceWarehouseSub: {
-    id: string;
-    name: string;
-  };
-
-  sourceBin: {
-    id: string;
-    name: string;
-  } | null;
-
-  destinationWarehouseSub: {
-    id: string;
-    name: string;
-  };
-
-  destinationBin: {
-    id: string;
-    name: string;
-  } | null;
-
-  quantity: number;
-  uom: string;
-  status: string;
-}
-
-interface PickingListResponse {
-  success: boolean;
-  message: string;
-  data: PickingListItem[];
-}
+import {
+  PickingListItem,
+  PickingListResponse,
+} from "../Helper/detailPickingList";
 
 type Props = {
   open: boolean;
@@ -85,12 +34,13 @@ function ModalPickingList({ open, onClose, memoId }: Props) {
 
   const apiResponse = detail as unknown as PickingListResponse | undefined;
 
+  console.log("detail picking list modal", apiResponse);
+
   // 🧠 Transform data API → table
   const data = useMemo(() => {
-    // console.log("data picking list", apiResponse);
-
-    if (!apiResponse?.data) return [];
-    return apiResponse.data.map((d) => ({
+    console.log("Data to be rendered in table:", apiResponse); // Tambahkan log ini
+    if (!apiResponse) return [];
+    return apiResponse.map((d) => ({
       id: d.id,
       doId: d.do?.id || "-",
       doType: d.do?.outbound_type || "-",
@@ -106,9 +56,8 @@ function ModalPickingList({ open, onClose, memoId }: Props) {
       sourceSub: d.sourceWarehouseSub?.name || "-",
       sourceBin: d.sourceBin?.name || "-",
       status: d.status,
-      destination_warehouse_sub_id: d.destination_warehouse_sub_id,
-      destinationZone: d.destinationWarehouseSub?.name,
-      destinationBinName: d.destinationBin?.name,
+      destinationZone: d.destinationWarehouseSub?.name || "-",
+      destinationBinName: d.destinationBin?.name || "-",
     }));
   }, [apiResponse]);
 
