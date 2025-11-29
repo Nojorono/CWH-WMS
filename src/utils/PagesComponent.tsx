@@ -48,6 +48,7 @@ import OutboundDO from "../pages/OutboundFullTrial/DO";
 import CreateDO from "../pages/OutboundFullTrial/DO/Main/CreateDO";
 import DetailDO from "../pages/OutboundFullTrial/DO/Main/DetailDO";
 import PickingSuggestion from "../pages/OutboundFullTrial/Picking/Main/PickingSuggestion";
+import PickingTransaction from "../pages/OutboundFullTrial/PickingTransaction";
 
 // Approval Set Up
 import ApprovalSetup from '../pages/ApprovalSetup/index'
@@ -102,6 +103,8 @@ export {
   CreateDO,
   DetailDO,
   PickingSuggestion,
+  PickingTransaction,
+  
 
 
   // Approval Set Up
