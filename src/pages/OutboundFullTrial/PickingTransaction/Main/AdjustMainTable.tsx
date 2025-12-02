@@ -4,7 +4,11 @@ import { ColumnDef } from "@tanstack/react-table";
 import TableComponent from "../Table/TableComponent";
 import { useNavigate } from "react-router-dom";
 import StatusBadge from "../../../../common/statusBadge";
-import { STATUS_MAP_MEMO } from "../../../../constants/statusMaps";
+import {
+  STATUS_MAP_DO,
+  STATUS_MAP_MEMO,
+  STATUS_MAP_OUTBOUND,
+} from "../../../../constants/statusMaps";
 import { OutboundDo } from "../Helper/doTypes";
 import { useStoreOutboundDelivery } from "../../../../DynamicAPI/stores/Store/MasterStore";
 import { mapPickingTransactions } from "../Helper/mappedList";
@@ -66,7 +70,7 @@ const AdjustTable = ({
         cell: ({ row }) => (
           <StatusBadge
             status={row.original.status}
-            colorMap={STATUS_MAP_MEMO}
+            colorMap={STATUS_MAP_DO}
             variant="solid"
             size="sm"
           />
@@ -78,10 +82,23 @@ const AdjustTable = ({
         cell: ({ row }) => (
           <div className="flex gap-3">
             <FaTasks
+              className={`size-5 cursor-pointer text-blue-600 ${
+                row.original.status !== "IN_PROGRESS"
+                  ? "opacity-50 cursor-not-allowed"
+                  : ""
+              }`}
+              onClick={() =>
+                row.original.status === "IN_PROGRESS" &&
+                handleAdjust(row.original)
+              }
+              title="Adjust Picking Transaction"
+            />
+
+            {/* <FaTasks
               className="size-5 cursor-pointer text-blue-600"
               onClick={() => handleAdjust(row.original)}
               title="Adjust Picking Transaction"
-            />
+            /> */}
           </div>
         ),
       },

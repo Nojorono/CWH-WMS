@@ -6,24 +6,26 @@ import { useNavigate } from "react-router-dom";
 type AttachMemoModalProps = {
   isOpen: boolean;
   onRequestClose: () => void;
-  onAttach: (memoData: any) => Promise<void>; // Ganti dengan tipe data yang sesuai
   detailDO: any; // Ganti dengan tipe data yang sesuai
 };
 
 const AttachMemoModal: React.FC<AttachMemoModalProps> = ({
   isOpen,
   onRequestClose,
-  onAttach,
   detailDO,
 }) => {
   const navigate = useNavigate();
   const [memoData, setMemoData] = React.useState<any>({}); // Ganti dengan tipe data yang sesuai
-
   const { fetchUsingParam, list } = useStoreOutboundMemo();
 
   useEffect(() => {
     fetchUsingParam({ has_do: false });
   }, [fetchUsingParam]);
+
+  const handleClose = () => {
+    setMemoData({}); // Reset state memoData
+    onRequestClose(); // Panggil fungsi onRequestClose
+  };
 
   const handleSubmit = async () => {
     const attachedMemoData = {
@@ -47,7 +49,7 @@ const AttachMemoModal: React.FC<AttachMemoModalProps> = ({
       if (!response.ok) {
         throw new Error("Network response was not ok");
       }
-      onRequestClose();
+      handleClose();
       navigate("/picking_transaction");
     } catch (error) {
       console.error("Error Attaching Memo:", error);

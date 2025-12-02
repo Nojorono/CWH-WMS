@@ -64,6 +64,12 @@ export const STATUS_MAP_PUTAWAY: StatusMap = {
   FAILED: "error",
 }
 
+export const STATUS_MAP_DO: StatusMap = {
+  PENDING: "grey",
+  IN_PROGRESS: "info",
+  COMPLETED: "success"
+};
+
 // Lookup opsional
 export const STATUS_MAPS = {
   inbound: STATUS_MAP_INBOUND,

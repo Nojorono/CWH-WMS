@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import Button from "../../../../components/ui/button/Button";
 import { formatDateIndo } from "../../../../helper/FormatDate";
 
@@ -15,6 +15,10 @@ const DetachTransaction: React.FC<DetachTransactionProps> = ({
   transactionData,
   onDetach,
 }) => {
+  const [expandedPickingId, setExpandedPickingId] = useState<string | null>(
+    null
+  );
+
   const handleDetach = async () => {
     if (transactionData) {
       await onDetach(transactionData.id);
@@ -68,6 +72,15 @@ const DetachTransaction: React.FC<DetachTransactionProps> = ({
 
   const mappedData = mappedList(transactionData); // Memanggil fungsi mappedList
 
+  const toggleExpandPicking = (pickingId: string) => {
+    setExpandedPickingId((prev) => (prev === pickingId ? null : pickingId));
+  };
+
+  console.log("Mapped Data:", mappedData);
+  console.log("Transaction Data:", transactionData);
+  
+  
+
   return (
     <div className="fixed inset-0 z-[1050] flex items-center justify-center bg-black/70">
       <div className="bg-white w-[90vw] max-w-[800px] max-h-[90vh] overflow-y-auto rounded-lg shadow-xl p-6">
@@ -84,48 +97,61 @@ const DetachTransaction: React.FC<DetachTransactionProps> = ({
           <p className="text-lg">
             <strong>Status:</strong> {mappedData.status}
           </p>
-          <p className="text-lg">
-            <strong>Sequence:</strong> {mappedData.sequence}
-          </p>
         </div>
 
         {/* Kartu untuk menampilkan transaction pickings */}
         <div className="bg-gray-100 p-4 rounded-lg shadow-md mb-4">
-          <h3 className="text-lg font-semibold mb-2">Transaction Pickings</h3>
+          <section>
+            <h3 className="text-lg font-semibold mb-5">Transaction Pickings</h3>
+          </section>
           {mappedData.pickings.map((picking: any) => (
             <div key={picking.pickingId} className="mb-4 border-b pb-2">
-              <p className="text-lg">
-                <strong>Picking Transaction ID:</strong> {picking.pickingId}
-              </p>
-              <p className="text-lg">
-                <strong>Processed From DO ID:</strong> {picking.doId}
-              </p>
-              <p className="text-lg">
-                <strong>Status:</strong> {picking.status}
-              </p>
-              {/* Menampilkan detail scan picking */}
-              {picking.transactionScanPicking.map((scan: any) => (
-                <div key={scan.scanId} className="ml-4">
+              <div
+                className="flex justify-between items-center cursor-pointer"
+                onClick={() => toggleExpandPicking(picking.pickingId)}
+              >
+                <p className="text-lg">
+                  <strong>Picking Transaction ID:</strong> {picking.pickingId}
+                  <strong>Transaction Picking </strong> {picking.sku}
+
+                </p>
+                <span className="text-blue-500">
+                  {expandedPickingId === picking.pickingId ? "−" : "+"}
+                </span>
+              </div>
+              {expandedPickingId === picking.pickingId && (
+                <div className="ml-4 mt-2 p-2 border rounded bg-gray-200">
                   <p className="text-lg">
-                    <strong>Scan ID:</strong> {scan.scanId}
+                    <strong>Processed From DO ID:</strong> {picking.doId}
                   </p>
                   <p className="text-lg">
-                    <strong>Quantity Picked:</strong> {scan.quantityPicked}
+                    <strong>Status:</strong> {picking.status}
                   </p>
-                  <p className="text-lg">
-                    <strong>UOM:</strong> {scan.UOM}
-                  </p>
-                  <p className="text-lg">
-                    <strong>Week Number:</strong> {scan.weekNumber}
-                  </p>
-                  <p className="text-lg">
-                    <strong>User Name:</strong> {scan.userName}
-                  </p>
-                  <p className="text-lg">
-                    <strong>Inspection By:</strong> {scan.inspectionBy}
-                  </p>
+                  {/* Menampilkan detail scan picking */}
+                  {picking.transactionScanPicking.map((scan: any) => (
+                    <div key={scan.scanId} className="ml-4">
+                      <p className="text-lg">
+                        <strong>Scan ID:</strong> {scan.scanId}
+                      </p>
+                      <p className="text-lg">
+                        <strong>Quantity Picked:</strong> {scan.quantityPicked}
+                      </p>
+                      <p className="text-lg">
+                        <strong>UOM:</strong> {scan.UOM}
+                      </p>
+                      <p className="text-lg">
+                        <strong>Week Number:</strong> {scan.weekNumber}
+                      </p>
+                      <p className="text-lg">
+                        <strong>User Name:</strong> {scan.userName}
+                      </p>
+                      <p className="text-lg">
+                        <strong>Inspection By:</strong> {scan.inspectionBy}
+                      </p>
+                    </div>
+                  ))}
                 </div>
-              ))}
+              )}
             </div>
           ))}
         </div>

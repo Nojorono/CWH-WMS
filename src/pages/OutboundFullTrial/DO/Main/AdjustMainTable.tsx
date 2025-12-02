@@ -4,7 +4,7 @@ import { ColumnDef } from "@tanstack/react-table";
 import TableComponent from "../Table/TableComponent";
 import { useNavigate } from "react-router-dom";
 import StatusBadge from "../../../../common/statusBadge";
-import { STATUS_MAP_MEMO } from "../../../../constants/statusMaps";
+import { STATUS_MAP_DO, STATUS_MAP_MEMO } from "../../../../constants/statusMaps";
 import { useStoreOutboundDelivery } from "../../../../DynamicAPI/stores/Store/MasterStore";
 
 type OutboundMemo = {
@@ -103,7 +103,7 @@ const AdjustTable = ({
         cell: ({ row }) => (
           <StatusBadge
             status={row.original.status}
-            colorMap={STATUS_MAP_MEMO}
+            colorMap={STATUS_MAP_DO}
             variant="solid"
             size="sm"
           />

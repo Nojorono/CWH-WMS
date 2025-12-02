@@ -13,6 +13,7 @@ import { FaPlus, FaRegWindowClose, FaTasks } from "react-icons/fa";
 import { EndPoint } from "../../../../utils/EndPoint";
 import DetachTransactionModal from "../Modal/DetachTransactionModal"; // Import modal
 import AttachMemoModal from "../Modal/AttachMemoModal"; //
+import AttachTransactionPickingModal from "../Modal/AttachTransactionModal"; // Import modal
 import { showErrorToast } from "../../../../components/toast";
 import Swal from "sweetalert2";
 
@@ -64,9 +65,11 @@ const DetachAttach: React.FC = () => {
   const [modalDetachOpen, setModalDetachOpen] = useState(false); // State untuk modal
   const [selectedTransaction, setSelectedTransaction] = useState<any>(null); // State untuk menyimpan transaksi yang dipilih
   const [isAttachModalOpen, setIsAttachModalOpen] = useState(false);
+  const [isAttachTransactionModalOpen, setIsAttachTransactionModalOpen] =
+    useState(false); // Tambahkan state untuk modal attach
 
   // Mapping outbound_memos dari params
-  const outboundMemos = params?.outbound_memos || [];
+  const outboundMemos = params?.outbound_memos || [];  
 
   const columnsTableItem = [
     { accessorKey: "id", header: "memo Id" },
@@ -101,17 +104,29 @@ const DetachAttach: React.FC = () => {
             onClick={() => handleDetachMemo(row.original.id)}
             startIcon={<FaRegWindowClose className="size-5" />}
           >
-            Detach Memo
+            Detach Memo from this DO
           </Button>
+          
           <Button
             size="xsm"
             type="button"
             variant="danger"
             onClick={() => handleDetachTransactionPicking(row.original)}
-            disabled={row.original.transaction_pickings.length === 0}
+            disabled={row.original.transaction_pickings.length === 0} // Disable jika tidak ada transaction_pickings
             startIcon={<FaTasks className="size-5" />}
           >
-            Detach Transaction Picking
+            Detach Transaction Picking from this Memo
+          </Button>
+
+          <Button
+            size="xsm"
+            type="button"
+            variant="secondary"
+            startIcon={<FaTasks className="size-5" />}
+            onClick={() => handleAttachTransactionPicking(row.original)} 
+
+          >
+            Attach Transaction Picking to this Memo
           </Button>
         </div>
       ),
@@ -198,10 +213,11 @@ const DetachAttach: React.FC = () => {
     }
   };
 
-  const handleAttachMemo = async (memoData: any) => {
-    // Logika untuk melakukan attach memo
-    console.log("Attaching memo:", memoData);
-    // Tambahkan logika untuk mengirim data memo ke API jika diperlukan
+  const handleAttachTransactionPicking = async (transaction: any[]) => {
+    console.log("Attaching transaction picking to memo:", transaction);
+    
+    setSelectedTransaction(transaction);
+    setIsAttachTransactionModalOpen(true);
   };
 
   return (
@@ -280,7 +296,6 @@ const DetachAttach: React.FC = () => {
       <AttachMemoModal
         isOpen={isAttachModalOpen}
         onRequestClose={() => setIsAttachModalOpen(false)}
-        onAttach={handleAttachMemo}
         detailDO={params}
       />
 
@@ -292,6 +307,13 @@ const DetachAttach: React.FC = () => {
         onDetach={async (transactionId: string) => {
           await detachTransactionPicking(transactionId); // Panggil fungsi detach
         }}
+      />
+
+      {/* === Modal Attach Transaction Picking === */}
+      <AttachTransactionPickingModal
+        isOpen={isAttachTransactionModalOpen}
+        onRequestClose={() => setIsAttachTransactionModalOpen(false)}
+        transactionData={selectedTransaction}
       />
     </div>
   );
