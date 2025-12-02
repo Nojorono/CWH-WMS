@@ -98,13 +98,20 @@ export const createCrudService = <TData, TCreate, TUpdate>(baseUrl: string) => (
 
     update: async (id: number, payload: TUpdate): Promise<TData> => {
         try {
-            return await handleAxios<TData>(axiosInstance.patch(`${baseUrl}/${id}`, payload));
+            const res = await axiosInstance.patch(`${baseUrl}/${id}`, payload);
+            return handleResponse<TData>(res);
         } catch (err: any) {
-            console.log(err);
-            if (err?.message?.includes("Cannot PATCH")) {
-                return await handleAxios<TData>(axiosInstance.put(`${baseUrl}/${id}`, payload));
+            // Jika server mengembalikan 404 atau pesan khusus bahwa PATCH tidak didukung, coba PUT sebagai fallback
+            const status = err?.response?.status;
+            const apiMessage = err?.response?.data?.message || err?.response?.data?.error;
+
+            if (status === 404 || (apiMessage && typeof apiMessage === "string" && apiMessage.includes("Cannot PATCH"))) {
+                return handleAxios<TData>(axiosInstance.put(`${baseUrl}/${id}`, payload));
             }
-            throw err;
+
+            // Normalisasi dan lempar error seperti handleAxios jika bukan kondisi fallback
+            const message = apiMessage || err?.message || "Unknown API Error";
+            throw new Error(message);
         }
     },
 

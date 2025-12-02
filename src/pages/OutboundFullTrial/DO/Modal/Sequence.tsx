@@ -68,28 +68,6 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
                 : "-"
             }
           />
-          {/* <DetailItem
-              label="Destination"
-              value={formData?.destination || "-"}
-            /> */}
-          {/* <DetailItem
-            label="License Plate"
-            value={formData?.license_plate || "-"}
-          />
-          <DetailItem label="Expedition" value={formData?.expedition || "-"} />
-          <DetailItem label="Driver" value={formData?.driver || "-"} />
-          <DetailItem
-            label="Driver Phone"
-            value={formData?.driver_phone || "-"}
-          />
-          <DetailItem
-            label="PO Expedition"
-            value={formData?.po_expedition || "-"}
-          />
-          <DetailItem
-            label="Type Outbound"
-            value={formData?.type_outbound || "-"}
-          /> */}
         </div>
 
         <div className="border-t my-5"></div>

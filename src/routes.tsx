@@ -52,6 +52,7 @@ import {
   CreateApproval,
   ApprovalProcess,
   PickingTransaction,
+  DetachAttachProcess,
 } from "./utils/PagesComponent";
 
 const DefaultPage = () => <> </>;
@@ -124,7 +125,7 @@ export function AppRoutes() {
       { path: "process", element: <CreateDO /> },
       { path: "detail", element: <DetailDO /> },
       { path: "picking_suggestion", element: <PickingSuggestion /> },
-      { path: "picking_transaction", element: <PickingTransaction /> },
+      { path: "detach_attach", element: <DetachAttachProcess /> },
     ],
     "/approval": [
       { path: "create", element: <CreateApproval /> },
@@ -158,6 +159,7 @@ export function AppRoutes() {
       "/master_amo": <MasterAMO />,
       "/master_subdist": <MasterSubdist />,
       "/approval_setup": <ApprovalSetup />,
+      "/picking_transaction": <PickingTransaction />,
     };
     return map[path] || <DefaultPage />;
   };

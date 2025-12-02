@@ -117,7 +117,6 @@ const PickingSuggestion: React.FC = () => {
     //   header: "MEMO ID",
     //   cell: ({ row }: any) => row.original.memo_id || row.original.id,
     // },
-
     {
       accessorKey: "outbound_memo_number",
       header: "Memo ID",
@@ -126,7 +125,6 @@ const PickingSuggestion: React.FC = () => {
     { accessorKey: "origin", header: "Origin" },
     { accessorKey: "destination", header: "Destination" },
     { accessorKey: "ship_to", header: "Ship To" },
-    { accessorKey: "requestor", header: "Requestor" },
     {
       accessorKey: "status",
       header: "Status",
@@ -135,11 +133,6 @@ const PickingSuggestion: React.FC = () => {
           {row.original.status}
         </span>
       ),
-    },
-    {
-      accessorKey: "created_date",
-      header: "Created Date",
-      cell: ({ row }: any) => formatDateIndo(row.original.createdAt),
     },
     {
       id: "actions",

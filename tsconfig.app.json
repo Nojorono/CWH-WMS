@@ -27,5 +27,5 @@
 
     "typeRoots": ["./node_modules/@types", "./src/types"]
   },
-  "include": ["src/types", "src/**/*"]
+  "include": ["src/types", "src/**/*", "src/pages/OutboundFullTrial/PickingTransaction/Modal/.tsx"]
 }

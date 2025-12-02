@@ -33,7 +33,8 @@ import {
     PickingSuggestionItemService,
     MasterAMOService,
     MasterSubdistService,
-    ApprovalSetUpService
+    ApprovalSetUpService,
+    PickingTransactionListService
 } from "../../services/Service/MasterService";
 
 import { Uom, CreateUom, UpdateUom } from "../../types/UomTypes";
@@ -61,14 +62,13 @@ import { OutboundDelivery, OutboundDeliveryCreateUpdate } from '../../types/Deli
 import { PickingSuggestion, CreatePickingSuggestion, UpdatePickingSuggestion } from '../../types/PickingSuggestionTypes.tsx'
 import { TransactionPicking, CreateTransactionPicking, UpdateTransactionPicking } from '../../types/TransactionPickingTypes.tsx'
 import { PickingList, CreatePickingList, UpdatePickingList } from '../../types/PickingList.tsx'
+
 import { PickingAssignHelper, CreatePickingAssignHelper, UpdatePickingAssignHelper } from '../../types/PickingAssignHelper.tsx'
 import { PickingSuggestionItem, UpdatePickingSuggestionItem, CreatePickingSuggestionItem } from "../../types/PickingSuggestionItem.tsx";
 import { UserManagement, CreateUserManagement, UpdateUserManagement } from "../../types/UserManagement.tsx";
 import { CreateMasterAMO, UpdateMasterAMO, MasterAMO } from "../../types/MasterAMOtypes.ts";
 import { MasterSubdist, CreateMasterSubdist, UpdateMasterSubdist } from "../../types/MasterSubdistTypes.ts";
-
 import { ApprovalSetUp, CreateApprovalSetUp, UpdateApprovalSetUp } from "../../types/ApprovalSetUpTypes";
-
 
 
 
@@ -213,6 +213,11 @@ export const useStorePickingList = createCrudStore<PickingList, CreatePickingLis
     service: PickingListService,
 });
 
+export const useStorePickingTransactionList = createCrudStore<PickingList, CreatePickingList, UpdatePickingList>({
+    name: "PickingTransactionList",
+    service: PickingTransactionListService,
+});
+
 export const useStorePickingAssignHelper = createCrudStore<PickingAssignHelper, CreatePickingAssignHelper, UpdatePickingAssignHelper>({
     name: "PickingAssignHelper",
     service: PickingAssignHelperService,
@@ -242,3 +247,4 @@ export const useStoreApprovalSetUp = createCrudStore<ApprovalSetUp, CreateApprov
     name: "ApprovalSetUp",
     service: ApprovalSetUpService,
 });
+
