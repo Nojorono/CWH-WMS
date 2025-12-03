@@ -19,8 +19,10 @@ const AttachMemoModal: React.FC<AttachMemoModalProps> = ({
   const { fetchUsingParam, list } = useStoreOutboundMemo();
 
   useEffect(() => {
-    fetchUsingParam({ has_do: false });
-  }, [fetchUsingParam]);
+    if (isOpen) {
+      fetchUsingParam({ has_do: false });
+    }
+  }, [isOpen, fetchUsingParam]);
 
   const handleClose = () => {
     setMemoData({}); // Reset state memoData
