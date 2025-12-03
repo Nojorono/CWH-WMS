@@ -83,10 +83,10 @@ const ModalSelectMemo: React.FC<ModalSelectMemoProps> = ({
     <div className="fixed inset-0 z-[1050] flex items-center justify-center bg-black/50 p-4">
       <div className="bg-white w-[95vw] max-w-[900px] rounded-2xl shadow-2xl p-8">
         <h2 className="text-2xl font-bold text-gray-800 mb-6 text-center">
-          Pilih Memo
+          Pilih Memo yang akan di Attach
         </h2>
         <label className="text-lg font-medium text-gray-700 mb-2 block">
-          List Memo
+          List Memo sesuai dengan Item pada Transaction Picking yang dipilih
         </label>
         <Select
           options={mappedMemos}

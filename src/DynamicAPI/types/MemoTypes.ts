@@ -68,6 +68,7 @@ export interface OutboundMemoUpdate {
 
 // For GET Response
 export interface OutboundMemo {
+    has_do: any;
     transaction_pickings: any;
     outbound_memo_number: string;
     type: string;

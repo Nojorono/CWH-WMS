@@ -34,16 +34,16 @@ const MainTable = () => {
               value={selectedStatus}
             />
           </div>
-          <div className="space-x-4">
-            {/* <Label htmlFor="search">Search</Label>
+          {/* <div className="space-x-4">
+            <Label htmlFor="search">Search</Label>
             <Input
               onChange={(e) => setGlobalFilter(e.target.value)}
               type="text"
               id="search"
               placeholder="🔍 Masukan data.."
               value={globalFilter}
-            /> */}
-          </div>
+            />
+          </div> */}
 
           <div className="space-x-4"></div>
         </div>
