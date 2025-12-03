@@ -112,11 +112,6 @@ const PickingSuggestion: React.FC = () => {
 
   // === Table Columns ===
   const columnSuggestionPick = [
-    // {
-    //   accessorKey: "memo_id",
-    //   header: "MEMO ID",
-    //   cell: ({ row }: any) => row.original.memo_id || row.original.id,
-    // },
     {
       accessorKey: "outbound_memo_number",
       header: "Memo ID",

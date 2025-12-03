@@ -19,6 +19,7 @@ interface TableComponentProps<T> {
   onPageChange?: (page: number, pageSize: number) => void;
   pageIndex?: number; // controlled by parent
   totalPages?: number; // from parent (for API pagination)
+  selectColumn?: boolean;
 }
 
 const TableComponent = <T extends { [key: string]: any }>({
@@ -31,6 +32,7 @@ const TableComponent = <T extends { [key: string]: any }>({
   onPageChange,
   pageIndex = 0,
   totalPages = 1,
+  selectColumn = true,
 }: TableComponentProps<T>) => {
   // 🧭 Local pagination state (but controlled by parent)
   const [pagination, setPagination] = useState({
@@ -126,17 +128,19 @@ const TableComponent = <T extends { [key: string]: any }>({
       <div className="overflow-x-auto">
         <div className="max-h-[600px] overflow-y-auto">
           <div className="mb-2">
-            <select
-              value={pagination.pageSize}
-              onChange={(e) => handlePageSizeChange(Number(e.target.value))}
-              className="border rounded px-2 py-1"
-            >
-              {[5, 10, 20, 50].map((size) => (
-                <option key={size} value={size}>
-                  {size} / page
-                </option>
-              ))}
-            </select>
+            {selectColumn && (
+              <select
+                value={pagination.pageSize}
+                onChange={(e) => handlePageSizeChange(Number(e.target.value))}
+                className="border rounded px-2 py-1"
+              >
+                {[5, 10, 20, 50].map((size) => (
+                  <option key={size} value={size}>
+                    {size} / page
+                  </option>
+                ))}
+              </select>
+            )}
           </div>
 
           <table className="min-w-full table-auto border border-gray-200">

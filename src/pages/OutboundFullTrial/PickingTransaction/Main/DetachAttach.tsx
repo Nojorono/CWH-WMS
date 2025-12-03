@@ -13,7 +13,6 @@ import { FaPlus, FaRegWindowClose, FaTasks } from "react-icons/fa";
 import { EndPoint } from "../../../../utils/EndPoint";
 import DetachTransactionModal from "../Modal/DetachTransactionModal"; // Import modal
 import AttachMemoModal from "../Modal/AttachMemoModal"; //
-import AttachTransactionPickingModal from "../Modal/AttachTransactionModal"; // Import modal
 import { showErrorToast } from "../../../../components/toast";
 import Swal from "sweetalert2";
 
@@ -36,28 +35,15 @@ const DetachAttach: React.FC = () => {
   const navigate = useNavigate();
   const { mode, params } = location.state || {};
 
-  const methods = useForm<MemoFormValues>({
-    defaultValues: {
-      requestor: "",
-      origin: "",
-      ship_to: "",
-      destination: "",
-      delivery_date: "",
-    },
-  });
-
-  const {
-    fetchUsingParam,
-    list: availableMemos,
-    isLoading,
-  } = useStoreOutboundMemo();
-
-  useEffect(() => {
-    fetchUsingParam({
-      has_do: true,
-      has_transaction_picking: true,
-    });
-  }, [fetchUsingParam]);
+  // const methods = useForm<MemoFormValues>({
+  //   defaultValues: {
+  //     requestor: "",
+  //     origin: "",
+  //     ship_to: "",
+  //     destination: "",
+  //     delivery_date: "",
+  //   },
+  // });
 
   // 🔹 local state pagination
   const [pageIndex, setPageIndex] = useState(0);
@@ -69,7 +55,7 @@ const DetachAttach: React.FC = () => {
     useState(false); // Tambahkan state untuk modal attach
 
   // Mapping outbound_memos dari params
-  const outboundMemos = params?.outbound_memos || [];  
+  const outboundMemos = params?.outbound_memos || [];
 
   const columnsTableItem = [
     { accessorKey: "id", header: "memo Id" },
@@ -77,6 +63,11 @@ const DetachAttach: React.FC = () => {
     {
       accessorKey: "type",
       header: "Type Outbound",
+    },
+    {
+      accessorKey: "has_do",
+      header: "Has DO Number",
+      cell: ({ row }: any) => <span>{row.original.has_do ? "Yes" : "No"}</span>,
     },
     {
       accessorKey: "delivery_date",
@@ -106,7 +97,7 @@ const DetachAttach: React.FC = () => {
           >
             Detach Memo from this DO
           </Button>
-          
+
           <Button
             size="xsm"
             type="button"
@@ -116,17 +107,6 @@ const DetachAttach: React.FC = () => {
             startIcon={<FaTasks className="size-5" />}
           >
             Detach Transaction Picking from this Memo
-          </Button>
-
-          <Button
-            size="xsm"
-            type="button"
-            variant="secondary"
-            startIcon={<FaTasks className="size-5" />}
-            onClick={() => handleAttachTransactionPicking(row.original)} 
-
-          >
-            Attach Transaction Picking to this Memo
           </Button>
         </div>
       ),
@@ -199,13 +179,6 @@ const DetachAttach: React.FC = () => {
       if (!response.ok) {
         throw new Error("Network response was not ok");
       }
-
-      // TODO: Refresh the list after successful detach
-      fetchUsingParam({
-        has_do: true,
-        has_transaction_picking: true,
-      });
-
       setModalDetachOpen(false); // Tutup modal setelah detach
       navigate("/picking_transaction");
     } catch (error) {
@@ -215,7 +188,7 @@ const DetachAttach: React.FC = () => {
 
   const handleAttachTransactionPicking = async (transaction: any[]) => {
     console.log("Attaching transaction picking to memo:", transaction);
-    
+
     setSelectedTransaction(transaction);
     setIsAttachTransactionModalOpen(true);
   };
@@ -261,34 +234,30 @@ const DetachAttach: React.FC = () => {
           Memo List
         </div>
         <div className="p-4">
-          {isLoading ? (
-            <ActIndicator />
-          ) : (
-            <>
-              <div className="flex justify-end mb-4">
-                <Button
-                  size="sm"
-                  type="button"
-                  variant="secondary"
-                  startIcon={<FaPlus className="size-5" />}
-                  onClick={() => setIsAttachModalOpen(true)}
-                >
-                  Attach Memo
-                </Button>
-              </div>
+          <>
+            <div className="flex justify-end mb-4">
+              <Button
+                size="sm"
+                type="button"
+                variant="secondary"
+                startIcon={<FaPlus className="size-5" />}
+                onClick={() => setIsAttachModalOpen(true)}
+              >
+                Attach Memo
+              </Button>
+            </div>
 
-              <TableComponent
-                data={outboundMemos}
-                columns={columnsTableItem}
-                pageSize={pageSize}
-                pageIndex={pageIndex}
-                onPageChange={(page, size) => {
-                  setPageIndex(page);
-                  setPageSize(size);
-                }}
-              />
-            </>
-          )}
+            <TableComponent
+              data={outboundMemos}
+              columns={columnsTableItem}
+              pageSize={pageSize}
+              pageIndex={pageIndex}
+              onPageChange={(page, size) => {
+                setPageIndex(page);
+                setPageSize(size);
+              }}
+            />
+          </>
         </div>
       </section>
 
@@ -307,13 +276,6 @@ const DetachAttach: React.FC = () => {
         onDetach={async (transactionId: string) => {
           await detachTransactionPicking(transactionId); // Panggil fungsi detach
         }}
-      />
-
-      {/* === Modal Attach Transaction Picking === */}
-      <AttachTransactionPickingModal
-        isOpen={isAttachTransactionModalOpen}
-        onRequestClose={() => setIsAttachTransactionModalOpen(false)}
-        transactionData={selectedTransaction}
       />
     </div>
   );

@@ -1,7 +1,8 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import Button from "../../../../components/ui/button/Button";
 import { useStoreOutboundMemo } from "../../../../DynamicAPI/stores/Store/MasterStore";
 import { useNavigate } from "react-router-dom";
+import { EndPoint } from "../../../../utils/EndPoint";
 
 type AttachMemoModalProps = {
   isOpen: boolean;
@@ -16,13 +17,25 @@ const AttachMemoModal: React.FC<AttachMemoModalProps> = ({
 }) => {
   const navigate = useNavigate();
   const [memoData, setMemoData] = React.useState<any>({}); // Ganti dengan tipe data yang sesuai
-  const { fetchUsingParam, list } = useStoreOutboundMemo();
+  const { fetchUsingPagination, list, pagination } = useStoreOutboundMemo();
+
+  const [pageIndex, setPageIndex] = useState(0);
+  const [pageSize, setPageSize] = useState(100);
 
   useEffect(() => {
-    if (isOpen) {
-      fetchUsingParam({ has_do: false });
+    if (!isOpen) return; // hanya fetch saat modal terbuka
+    setPageIndex(0); // reset pagination saat open
+    setPageSize(100);
+
+    // pastikan fungsi tersedia sebelum call
+    if (typeof fetchUsingPagination === "function") {
+      fetchUsingPagination({
+        page: 1,
+        limit: 100,
+        has_do: false,
+      });
     }
-  }, [isOpen, fetchUsingParam]);
+  }, [isOpen]); // depend hanya pada isOpen
 
   const handleClose = () => {
     setMemoData({}); // Reset state memoData
@@ -39,7 +52,7 @@ const AttachMemoModal: React.FC<AttachMemoModalProps> = ({
     try {
       const token = localStorage.getItem("token");
       const response = await fetch(
-        `http://10.0.29.47:9005/outbound-do/${detailDO.id}/attach-memo?memoId=${memoData.id}&sequence=${attachedMemoData.sequence}`,
+        `${EndPoint}outbound-do/${detailDO.id}/attach-memo?memoId=${memoData.id}&sequence=${attachedMemoData.sequence}`,
         {
           method: "PATCH",
           headers: {
@@ -58,6 +71,9 @@ const AttachMemoModal: React.FC<AttachMemoModalProps> = ({
     }
   };
 
+  // Mendapatkan detail memo yang dipilih
+  const selectedMemo = list.find((memo: any) => memo.id === memoData.id);
+
   if (!isOpen) return null; // Jika modal tidak terbuka, tidak render apa-apa
 
   return (
@@ -75,25 +91,90 @@ const AttachMemoModal: React.FC<AttachMemoModalProps> = ({
             <option value="">Select Memo</option>
             {list.map((memo: any) => (
               <option key={memo.id} value={memo.id}>
-                {memo.outbound_memo_number} - {memo.id}
+                {memo.outbound_memo_number} - {memo.type}
               </option>
             ))}
           </select>
         </div>
+
+        {/* Card untuk menampilkan detail memo */}
+        {selectedMemo && (
+          <div className="mt-4 p-4 rounded-xl border bg-gray-50 shadow">
+            <h3 className="text-lg font-semibold mb-2 text-blue-700">
+              Detail Memo
+            </h3>
+            <div className="grid grid-cols-2 gap-2 text-gray-700 text-sm">
+              <div>
+                <strong>Memo Number:</strong>{" "}
+                {selectedMemo.outbound_memo_number}
+              </div>
+              <div>
+                <strong>Type:</strong> {selectedMemo.type}
+              </div>
+              <div>
+                <strong>Status:</strong> {selectedMemo.status}
+              </div>
+              <div>
+                <strong>Requestor:</strong> {selectedMemo.requestor}
+              </div>
+              <div>
+                <strong>Notes:</strong> {selectedMemo.notes}
+              </div>
+              <div>
+                <strong>Has DO Number:</strong> {selectedMemo.has_do ? "Yes" : "No"}
+              </div>
+            </div>
+
+            {/* Menampilkan detail item dari outbound_memo_items */}
+            <h4 className="mt-4 font-semibold">Detail Items:</h4>
+            <ul className="ml-4 list-disc">
+              {selectedMemo.outbound_memo_items.map((item: any) => (
+                <li key={item.id} className="mb-2">
+                  <div>
+                    <strong>Item Description:</strong> {item.item.description}
+                  </div>
+                  <div>
+                    <strong>SKU:</strong> {item.item.sku}
+                  </div>
+                  <div>
+                    <strong>Quantity Plan:</strong> {item.quantity_plan}{" "}
+                    {item.uom}
+                  </div>
+                </li>
+              ))}
+            </ul>
+
+            {/* Menampilkan detail transaction_pickings jika ada */}
+            {selectedMemo.transaction_pickings.length > 0 && (
+              <>
+                <h4 className="mt-4 font-semibold">Transaction Pickings:</h4>
+                <ul className="ml-4 list-disc">
+                  {selectedMemo.transaction_pickings.map((trx: any) => (
+                    <li key={trx.id} className="mb-2">
+                      <div>
+                        <strong>Transaction ID:</strong> {trx.id}
+                      </div>
+                      {/* Tambahkan detail lain dari transaction jika diperlukan */}
+                    </li>
+                  ))}
+                </ul>
+              </>
+            )}
+          </div>
+        )}
+
         <div className="flex justify-end mt-4">
-          <Button
-            type="button"
-            className="bg-blue-500 text-white hover:bg-blue-600"
-            onClick={handleSubmit}
-          >
-            Attach
-          </Button>
-          <Button
-            type="button"
-            className="bg-gray-300 text-black hover:bg-gray-400 ml-2"
-            onClick={onRequestClose}
-          >
+          <Button type="button" variant="danger" onClick={handleClose}>
             Cancel
+          </Button>
+          <div className="mx-2" />
+          <Button
+            type="button"
+            variant="action"
+            onClick={handleSubmit}
+            disabled={!memoData.id}
+          >
+            Attach to this DO
           </Button>
         </div>
       </div>
