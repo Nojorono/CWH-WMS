@@ -15,6 +15,7 @@ import DetachTransactionModal from "../Modal/DetachTransactionModal"; // Import 
 import AttachMemoModal from "../Modal/AttachMemoModal"; //
 import { showErrorToast } from "../../../../components/toast";
 import Swal from "sweetalert2";
+import TransactionPickingsModal from "../Modal/DetailMemoModal"; // Import komponen modal
 
 type MemoFormValues = {
   requestor: string;
@@ -33,17 +34,9 @@ type MemoFormValues = {
 const DetachAttach: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { mode, params } = location.state || {};
+  const { params } = location.state || {};
 
-  // const methods = useForm<MemoFormValues>({
-  //   defaultValues: {
-  //     requestor: "",
-  //     origin: "",
-  //     ship_to: "",
-  //     destination: "",
-  //     delivery_date: "",
-  //   },
-  // });
+  console.log("Location State:", params);
 
   // 🔹 local state pagination
   const [pageIndex, setPageIndex] = useState(0);
@@ -53,22 +46,18 @@ const DetachAttach: React.FC = () => {
   const [isAttachModalOpen, setIsAttachModalOpen] = useState(false);
   const [isAttachTransactionModalOpen, setIsAttachTransactionModalOpen] =
     useState(false); // Tambahkan state untuk modal attach
+  const [isModalOpen, setIsModalOpen] = useState(false); // State untuk modal
+  const [selectedItems, setSelectedItems] = useState<any[]>([]); // State untuk menyimpan item yang dipilih
 
   // Mapping outbound_memos dari params
   const outboundMemos = params?.outbound_memos || [];
 
   const columnsTableItem = [
-    { accessorKey: "id", header: "memo Id" },
     { accessorKey: "outbound_memo_number", header: "Memo No" },
-    {
-      accessorKey: "type",
-      header: "Type Outbound",
-    },
-    {
-      accessorKey: "has_do",
-      header: "Has DO Number",
-      cell: ({ row }: any) => <span>{row.original.has_do ? "Yes" : "No"}</span>,
-    },
+    { accessorKey: "requestor", header: "Requestor" },
+    { accessorKey: "origin", header: "Origin" },
+    { accessorKey: "ship_to", header: "Ship To" },
+    { accessorKey: "destination", header: "Destination" },
     {
       accessorKey: "delivery_date",
       header: "Delivery Date",
@@ -84,6 +73,55 @@ const DetachAttach: React.FC = () => {
       ),
     },
     {
+      accessorKey: "type",
+      header: "Type Outbound",
+    },
+    {
+      accessorKey: "has_do",
+      header: "Has DO Number",
+      cell: ({ row }: any) => <span>{row.original.has_do ? "Yes" : "No"}</span>,
+    },
+    {
+      accessorKey: "notes", // New column for notes
+      header: "Notes",
+      cell: ({ row }: any) => <span>{row.original.notes}</span>,
+    },
+    {
+      id: "assigned_pickings", // New column for assigned picking
+      header: "Assigned Picking",
+      cell: ({ row }: any) => {
+        const assigned = row.original.assigned_pickings[0];
+        return assigned ? (
+          <span>{`${assigned.picking_name} (${assigned.picking_phone})`}</span>
+        ) : (
+          <span>-</span>
+        );
+      },
+    },
+    {
+      id: "transaction_pickings",
+      header: "Transaction Pickings",
+      cell: ({ row }: any) => {
+        const memoId = row.original.id;
+        const items = row.original.transaction_pickings;
+
+        return (
+          <div className="space-y-2">
+            <Button
+              size="xsm"
+              variant="secondary"
+              onClick={() => {
+                setSelectedItems(items); // Set items yang dipilih
+                setIsModalOpen(true); // Buka modal
+              }}
+            >
+              Show Items
+            </Button>
+          </div>
+        );
+      },
+    },
+    {
       id: "actions",
       header: "Action",
       cell: ({ row }: { row: any }) => (
@@ -95,7 +133,7 @@ const DetachAttach: React.FC = () => {
             onClick={() => handleDetachMemo(row.original.id)}
             startIcon={<FaRegWindowClose className="size-5" />}
           >
-            Detach Memo from this DO
+            Detach Memo
           </Button>
 
           <Button
@@ -106,7 +144,7 @@ const DetachAttach: React.FC = () => {
             disabled={row.original.transaction_pickings.length === 0} // Disable jika tidak ada transaction_pickings
             startIcon={<FaTasks className="size-5" />}
           >
-            Detach Transaction Picking from this Memo
+            Detach Transaction
           </Button>
         </div>
       ),
@@ -276,6 +314,13 @@ const DetachAttach: React.FC = () => {
         onDetach={async (transactionId: string) => {
           await detachTransactionPicking(transactionId); // Panggil fungsi detach
         }}
+      />
+
+      {/* Modal untuk menampilkan item */}
+      <TransactionPickingsModal
+        isOpen={isModalOpen}
+        onRequestClose={() => setIsModalOpen(false)}
+        items={selectedItems}
       />
     </div>
   );

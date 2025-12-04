@@ -121,7 +121,8 @@ const AttachMemoModal: React.FC<AttachMemoModalProps> = ({
                 <strong>Notes:</strong> {selectedMemo.notes}
               </div>
               <div>
-                <strong>Has DO Number:</strong> {selectedMemo.has_do ? "Yes" : "No"}
+                <strong>Has DO Number:</strong>{" "}
+                {selectedMemo.has_do ? "Yes" : "No"}
               </div>
             </div>
 
@@ -153,6 +154,15 @@ const AttachMemoModal: React.FC<AttachMemoModalProps> = ({
                     <li key={trx.id} className="mb-2">
                       <div>
                         <strong>Transaction ID:</strong> {trx.id}
+                      </div>
+                      <div>
+                        <strong>Quantity:</strong> {trx.quantity} {trx.uom}
+                      </div>
+                      <div>
+                        <strong>Week Number:</strong> {trx.week_number}
+                      </div>
+                      <div>
+                        <strong>Status:</strong> {trx.status}
                       </div>
                       {/* Tambahkan detail lain dari transaction jika diperlukan */}
                     </li>

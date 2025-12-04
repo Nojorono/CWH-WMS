@@ -19,6 +19,7 @@ export interface OutboundDelivery {
 }
 
 export interface OutboundMemo {
+  outbound_memo_number: any;
   id: string;
   createdAt: string;
   updatedAt: string;

@@ -52,13 +52,13 @@ const MainTable = () => {
       <TabsSection
         tabs={[
           {
-            label: "Memo List",
+            label: "DO Transaction",
             content: (
               <>
-                {/* === MEMO LIST === */}
+                {/* === DO TRANSACTION === */}
                 <section className="bg-white rounded-xl shadow-sm border border-gray-200">
                   <div className="bg-orange-500 text-white rounded-t-xl px-5 py-3 font-semibold">
-                    Memo List
+                    DO Transaction
                   </div>
                   <div className="p-4">
                     <AdjustTable
@@ -72,12 +72,12 @@ const MainTable = () => {
             ),
           },
           {
-            label: "Transaction Attachment",
+            label: "Task List",
             content: (
               <>
                 <section className="bg-white rounded-xl shadow-sm border border-gray-200">
                   <div className="bg-orange-500 text-white rounded-t-xl px-5 py-3 font-semibold">
-                    Transaction Attachment
+                    Task List
                   </div>
                   <div className="p-4">
                     <AttachTransactionTable />

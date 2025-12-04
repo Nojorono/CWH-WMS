@@ -6,8 +6,6 @@ import { useNavigate } from "react-router-dom";
 import StatusBadge from "../../../../common/statusBadge";
 import {
   STATUS_MAP_DO,
-  STATUS_MAP_MEMO,
-  STATUS_MAP_OUTBOUND,
 } from "../../../../constants/statusMaps";
 import { OutboundDo } from "../Helper/doTypes";
 import { useStoreOutboundDelivery } from "../../../../DynamicAPI/stores/Store/MasterStore";
@@ -41,11 +39,6 @@ const AdjustTable = ({
   }, [fetchUsingPagination, pageIndex, pageSize, globalFilter, filteredStatus]);
 
   const mappedList: OutboundDo[] = useMemo(() => {
-    // const filtered = (list || []).filter(
-    //   (item) => item.status === "IN_PROGRESS"
-    // );
-    // return mapPickingTransactions(filtered);
-
     return mapPickingTransactions(list || []);
   }, [list]);
 
@@ -93,12 +86,6 @@ const AdjustTable = ({
               }
               title="Adjust Picking Transaction"
             />
-
-            {/* <FaTasks
-              className="size-5 cursor-pointer text-blue-600"
-              onClick={() => handleAdjust(row.original)}
-              title="Adjust Picking Transaction"
-            /> */}
           </div>
         ),
       },
@@ -107,7 +94,8 @@ const AdjustTable = ({
   );
 
   const handleAdjust = (data: OutboundDo) => {
-    console.log("DO Id:", data.id);
+    console.log("Navigating to Detach/Attach with data:", data);
+
     navigate("/outbound_do/detach_attach", {
       state: {
         params: data,

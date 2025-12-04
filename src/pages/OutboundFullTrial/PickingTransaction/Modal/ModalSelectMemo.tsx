@@ -126,50 +126,53 @@ const ModalSelectMemo: React.FC<ModalSelectMemoProps> = ({
                 <strong>Notes:</strong> {selectedMemoObj.notes}
               </div>
               <div className="col-span-2">
-                <strong>Items:</strong>
+                <strong>Plan Items:</strong>
                 <ul className="ml-4 list-disc">
                   {selectedMemoObj.outbound_memo_items?.map((item: any) => (
                     <li key={item.id}>
-                      {item.item?.description} — {item.quantity_plan} {item.uom}
+                      {item.item?.description} — Qty Plan {item.quantity_plan}{" "}
+                      {item.uom}
                     </li>
                   ))}
                 </ul>
               </div>
-              <div className="col-span-2 mt-2">
-                <strong>Existing Transaction Scan Picking:</strong>
+              <div className="col-span-2 mt-4">
+                <strong className="text-lg">Existing Suggestion:</strong>
                 <ul className="ml-4 list-disc">
                   {selectedMemoObj.transaction_pickings?.length ? (
                     selectedMemoObj.transaction_pickings.map((trx: any) => (
-                      <li key={trx.id}>
-                        <div>
+                      <li key={trx.id} className="mb-4">
+                        <strong className="font-semibold">Suggestion :</strong>
+                        <div className="bg-gray-100 p-2 rounded-md mt-1">
                           <span className="font-medium">Item:</span>{" "}
-                          {trx.item_id}
+                          {trx.item_id} <br />
+                          <span className="font-medium">Qty:</span>{" "}
+                          {trx.quantity} <br />
+                          <span className="font-medium">Status:</span>{" "}
+                          {trx.status} <br />
+                          <span className="font-medium">UOM:</span> {trx.uom}{" "}
+                          <br />
+                          <span className="font-medium">Week:</span>{" "}
+                          {trx.week_number}
                         </div>
                         {trx.transactionScanPicking?.length ? (
-                          <ul className="ml-4 list-decimal">
+                          <ul className="ml-4 list-decimal mt-2">
                             {trx.transactionScanPicking.map((scan: any) => (
-                              <li key={scan.id} className="mb-2">
+                              <li
+                                key={scan.id}
+                                className="mb-2 bg-gray-50 p-2 rounded-md"
+                              >
+                                <strong>Scanned Picking:</strong>
                                 <div>
-                                  <strong>Scan ID:</strong> {scan.id}
-                                </div>
-                                <div>
+                                  <strong>Scan ID:</strong> {scan.id} <br />
                                   <strong>Qty Picked:</strong>{" "}
-                                  {scan.quantity_picked} {scan.uom}
-                                </div>
-                                <div>
-                                  <strong>Status:</strong> {scan.status}
-                                </div>
-                                <div>
+                                  {scan.quantity_picked} {scan.uom} <br />
+                                  <strong>Status:</strong> {scan.status} <br />
                                   <strong>Switch Pallet:</strong>{" "}
-                                  {scan.pallet_switch_id ?? "-"}
-                                </div>
-                                <div>
-                                  <strong>Week:</strong> {scan.week_number}
-                                </div>
-                                <div>
-                                  <strong>User:</strong> {scan.user_name}
-                                </div>
-                                <div>
+                                  {scan.pallet_switch_id ?? "-"} <br />
+                                  <strong>Week:</strong> {scan.week_number}{" "}
+                                  <br />
+                                  <strong>User:</strong> {scan.user_name} <br />
                                   <strong>Inspection By:</strong>{" "}
                                   {scan.inspection_by}
                                 </div>
@@ -177,12 +180,14 @@ const ModalSelectMemo: React.FC<ModalSelectMemoProps> = ({
                             ))}
                           </ul>
                         ) : (
-                          <span className="text-red-500">Belum ter-scan</span>
+                          <span className="text-red-500">
+                            Belum ada Suggestion
+                          </span>
                         )}
                       </li>
                     ))
                   ) : (
-                    <li className="text-red-500">Belum ter-scan</li>
+                    <li className="text-red-500">Belum ada Suggestion</li>
                   )}
                 </ul>
               </div>
