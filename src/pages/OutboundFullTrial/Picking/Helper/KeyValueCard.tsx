@@ -1,5 +1,5 @@
 type Props = {
-  title: string;
+  title: React.ReactNode;
   data: Record<string, any>;
   labelMap?: Record<string, string>; // optional: custom label
 };

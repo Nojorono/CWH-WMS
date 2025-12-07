@@ -71,21 +71,21 @@ const MainTable = () => {
               </>
             ),
           },
-          {
-            label: "Task List",
-            content: (
-              <>
-                <section className="bg-white rounded-xl shadow-sm border border-gray-200">
-                  <div className="bg-orange-500 text-white rounded-t-xl px-5 py-3 font-semibold">
-                    Task List
-                  </div>
-                  <div className="p-4">
-                    <AttachTransactionTable />
-                  </div>
-                </section>
-              </>
-            ),
-          },
+          // {
+          //   label: "Task List",
+          //   content: (
+          //     <>
+          //       <section className="bg-white rounded-xl shadow-sm border border-gray-200">
+          //         <div className="bg-orange-500 text-white rounded-t-xl px-5 py-3 font-semibold">
+          //           Task List
+          //         </div>
+          //         <div className="p-4">
+          //           <AttachTransactionTable />
+          //         </div>
+          //       </section>
+          //     </>
+          //   ),
+          // },
         ]}
         activeTab={activeTab}
         onTabChange={setActiveTab}

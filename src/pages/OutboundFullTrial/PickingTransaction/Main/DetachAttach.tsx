@@ -11,11 +11,11 @@ import { formatDateIndo } from "../../../../helper/FormatDate";
 import ActIndicator from "../../../../components/ui/activityIndicator";
 import { FaPlus, FaRegWindowClose, FaTasks } from "react-icons/fa";
 import { EndPoint } from "../../../../utils/EndPoint";
-import DetachTransactionModal from "../Modal/DetachTransactionModal"; // Import modal
+import CancelTransactionPickModal from "../Modal/CancelTransactionPickModal";
 import AttachMemoModal from "../Modal/AttachMemoModal"; //
 import { showErrorToast } from "../../../../components/toast";
 import Swal from "sweetalert2";
-import TransactionPickingsModal from "../Modal/DetailMemoModal"; // Import komponen modal
+import TransactionPickingsModal from "../Modal/DetailMemoModal";
 
 type MemoFormValues = {
   requestor: string;
@@ -36,8 +36,6 @@ const DetachAttach: React.FC = () => {
   const navigate = useNavigate();
   const { params } = location.state || {};
 
-  console.log("Location State:", params);
-
   // 🔹 local state pagination
   const [pageIndex, setPageIndex] = useState(0);
   const [pageSize, setPageSize] = useState(10);
@@ -54,7 +52,6 @@ const DetachAttach: React.FC = () => {
 
   const columnsTableItem = [
     { accessorKey: "outbound_memo_number", header: "Memo No" },
-    { accessorKey: "requestor", header: "Requestor" },
     { accessorKey: "origin", header: "Origin" },
     { accessorKey: "ship_to", header: "Ship To" },
     { accessorKey: "destination", header: "Destination" },
@@ -63,15 +60,16 @@ const DetachAttach: React.FC = () => {
       header: "Delivery Date",
       cell: ({ row }: any) => formatDateIndo(row.original.delivery_date),
     },
-    {
-      accessorKey: "status",
-      header: "Status",
-      cell: ({ row }: any) => (
-        <span className="bg-green-100 text-green-700 px-2 py-1 rounded-md text-sm font-medium">
-          {row.original.status}
-        </span>
-      ),
-    },
+    // { accessorKey: "requestor", header: "Requestor" },
+    // {
+    //   accessorKey: "status",
+    //   header: "Status",
+    //   cell: ({ row }: any) => (
+    //     <span className="bg-green-100 text-green-700 px-2 py-1 rounded-md text-sm font-medium">
+    //       {row.original.status}
+    //     </span>
+    //   ),
+    // },
     {
       accessorKey: "type",
       header: "Type Outbound",
@@ -88,7 +86,7 @@ const DetachAttach: React.FC = () => {
     },
     {
       id: "assigned_pickings", // New column for assigned picking
-      header: "Assigned Picking",
+      header: "Picker",
       cell: ({ row }: any) => {
         const assigned = row.original.assigned_pickings[0];
         return assigned ? (
@@ -130,10 +128,10 @@ const DetachAttach: React.FC = () => {
             size="xsm"
             type="button"
             variant="primary"
-            onClick={() => handleDetachMemo(row.original.id)}
+            onClick={() => handleDetachMemo(row.original)}
             startIcon={<FaRegWindowClose className="size-5" />}
           >
-            Detach Memo
+            Lepas Memo
           </Button>
 
           <Button
@@ -144,20 +142,24 @@ const DetachAttach: React.FC = () => {
             disabled={row.original.transaction_pickings.length === 0} // Disable jika tidak ada transaction_pickings
             startIcon={<FaTasks className="size-5" />}
           >
-            Detach Transaction
+            Cancel Task
           </Button>
         </div>
       ),
     },
   ];
 
-  const handleDetachMemo = async (memoId: string) => {
+  const handleDetachMemo = async (memoData: any) => {
+    const memoId = memoData.id;
+    const memoNumber = memoData.outbound_memo_number;
+    const doNumber = params?.outbound_do_number;
+
     const result = await Swal.fire({
       title: "Apakah Anda yakin?",
-      text: `Anda akan detach memo_id ${memoId} dari DO ${params?.id}`,
+      text: `Anda akan lepas Memo ${memoNumber} dari DO ${doNumber}`,
       icon: "warning",
       showCancelButton: true,
-      confirmButtonText: "Ya, detach Memo ini!",
+      confirmButtonText: "Ya, lepas Memo ini!",
       cancelButtonText: "Batal",
     });
 
@@ -200,43 +202,44 @@ const DetachAttach: React.FC = () => {
     setModalDetachOpen(true); // Buka modal
   };
 
-  const detachTransactionPicking = async (transactionId: string) => {
-    const memoId = selectedTransaction?.id; // Ambil memoId dari selectedTransaction
-    try {
-      const token = localStorage.getItem("token");
-      const response = await fetch(
-        `${EndPoint}transaction-picking/memo/${memoId}/detach`, // Ganti dengan endpoint yang sesuai
-        {
-          method: "PATCH",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+  // const detachTransactionPicking = async (transactionId: string) => {
+  //   console.log("Detaching transaction picking with ID: " + transactionId);
+  //   // const memoId = selectedTransaction?.id; // Ambil memoId dari selectedTransaction
+  //   // try {
+  //   //   const token = localStorage.getItem("token");
+  //   //   const response = await fetch(
+  //   //     `${EndPoint}transaction-picking/memo/${memoId}/detach`, // Ganti dengan endpoint yang sesuai
+  //   //     {
+  //   //       method: "PATCH",
+  //   //       headers: {
+  //   //         Authorization: `Bearer ${token}`,
+  //   //       },
+  //   //     }
+  //   //   );
 
-      if (!response.ok) {
-        throw new Error("Network response was not ok");
-      }
-      setModalDetachOpen(false); // Tutup modal setelah detach
-      navigate("/picking_transaction");
-    } catch (error) {
-      console.error("Error detaching transaction:", error);
-    }
-  };
+  //   //   if (!response.ok) {
+  //   //     throw new Error("Network response was not ok");
+  //   //   }
+  //   //   setModalDetachOpen(false); // Tutup modal setelah detach
+  //   //   navigate("/picking_transaction");
+  //   // } catch (error) {
+  //   //   console.error("Error detaching transaction:", error);
+  //   // }
+  // };
 
-  const handleAttachTransactionPicking = async (transaction: any[]) => {
-    console.log("Attaching transaction picking to memo:", transaction);
+  // const handleAttachTransactionPicking = async (transaction: any[]) => {
+  //   console.log("Attaching transaction picking to memo:", transaction);
 
-    setSelectedTransaction(transaction);
-    setIsAttachTransactionModalOpen(true);
-  };
+  //   setSelectedTransaction(transaction);
+  //   setIsAttachTransactionModalOpen(true);
+  // };
 
   return (
     <div className="p-6 space-y-6">
       <PageBreadcrumb
         breadcrumbs={[
           { title: "Picking Transaction", path: "/picking_transaction" },
-          { title: "Detach and Attach Process", path: "#" },
+          { title: "Lepas Memo & Cancel Task Transaction", path: "#" },
         ]}
       />
 
@@ -255,7 +258,7 @@ const DetachAttach: React.FC = () => {
           </div>
           <div className="flex flex-col space-y-4">
             <div className="flex flex-col">
-              <label className="font-semibold">DO ID:</label>
+              <label className="font-semibold">DO Id:</label>
               <span>{params?.id}</span>
             </div>
             <div className="flex flex-col">
@@ -307,13 +310,10 @@ const DetachAttach: React.FC = () => {
       />
 
       {/* === Modal Detach Transaction === */}
-      <DetachTransactionModal
+      <CancelTransactionPickModal
         isOpen={modalDetachOpen}
         onRequestClose={() => setModalDetachOpen(false)}
         transactionData={selectedTransaction}
-        onDetach={async (transactionId: string) => {
-          await detachTransactionPicking(transactionId); // Panggil fungsi detach
-        }}
       />
 
       {/* Modal untuk menampilkan item */}
