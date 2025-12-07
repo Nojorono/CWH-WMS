@@ -219,10 +219,10 @@ const DetailDO: React.FC = () => {
         />
       </section>
 
-      {/* === MEMO LIST === */}
+      {/* === AVAILABLE MEMO === */}
       <section className="bg-white rounded-xl shadow-sm border border-gray-200">
         <div className="bg-orange-500 text-white rounded-t-xl px-5 py-3 font-semibold">
-          Memo List
+          Available Memo
         </div>
         <div className="p-4">
           <TableComponent

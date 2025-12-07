@@ -29,7 +29,7 @@ const AdjustTable = ({
 
   // 🔹 local state pagination
   const [pageIndex, setPageIndex] = useState(0);
-  const [pageSize, setPageSize] = useState(10);
+  const [pageSize, setPageSize] = useState(5);
 
   // 🔹 Fetch data setiap kali pagination / search berubah
   useEffect(() => {

@@ -58,7 +58,7 @@ const MainTable = () => {
                 {/* === DO TRANSACTION === */}
                 <section className="bg-white rounded-xl shadow-sm border border-gray-200">
                   <div className="bg-orange-500 text-white rounded-t-xl px-5 py-3 font-semibold">
-                    DO Transaction
+                    List Transaction by DO
                   </div>
                   <div className="p-4">
                     <AdjustTable

@@ -31,26 +31,26 @@ const CancelTransactionPickModal: React.FC<CancelTransactionPickModalProps> = ({
     if (!confirm) return;
 
     const transactionId = pickingId;
-    try {
-      const token = localStorage.getItem("token");
-      const response = await fetch(
-        `${EndPoint}transaction-picking/${transactionId}/cancel`,
-        {
-          method: "PATCH",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+    // try {
+    //   const token = localStorage.getItem("token");
+    //   const response = await fetch(
+    //     `${EndPoint}transaction-picking/${transactionId}/cancel`,
+    //     {
+    //       method: "PATCH",
+    //       headers: {
+    //         Authorization: `Bearer ${token}`,
+    //       },
+    //     }
+    //   );
 
-      if (!response.ok) {
-        throw new Error("Network response was not ok");
-      }
-      onRequestClose();
-      navigate("/picking_transaction");
-    } catch (error) {
-      console.error("Error detaching transaction:", error);
-    }
+    //   if (!response.ok) {
+    //     throw new Error("Network response was not ok");
+    //   }
+    //   onRequestClose();
+    //   navigate("/picking_transaction");
+    // } catch (error) {
+    //   console.error("Error detaching transaction:", error);
+    // }
   };
 
   if (!isOpen || !transactionData) return null;

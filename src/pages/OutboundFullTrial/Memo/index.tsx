@@ -4,7 +4,7 @@ import ViewTable from "./Main/MainTable";
 export default function Memo() {
   return (
     <div>
-      <PageBreadcrumb breadcrumbs={[{ title: "Memo List" }]} />
+      <PageBreadcrumb breadcrumbs={[{ title: "Created Memo List" }]} />
       <ViewTable />
     </div>
   );

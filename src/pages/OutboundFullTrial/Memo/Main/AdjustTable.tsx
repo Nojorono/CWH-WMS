@@ -31,6 +31,7 @@ type MemoData = {
   uom: string;
   warehouse_id: string;
   type?: string;
+  has_do?: boolean;
 };
 
 type MenuTableProps = {
@@ -52,7 +53,7 @@ const AdjustTable = ({
 
   // 🔹 local state pagination
   const [pageIndex, setPageIndex] = useState(0);
-  const [pageSize, setPageSize] = useState(10);
+  const [pageSize, setPageSize] = useState(5);
 
   // 🔹 Fetch data setiap kali pagination / search berubah
   useEffect(() => {
@@ -62,6 +63,7 @@ const AdjustTable = ({
       limit: pageSize,
       search: globalFilter || "",
       status: filteredStatus || "",
+      sortOrder: "DESC",
     });
   }, [fetchUsingPagination, pageIndex, pageSize, globalFilter, filteredStatus]);
 
@@ -79,8 +81,12 @@ const AdjustTable = ({
 
   const columns: ColumnDef<MemoData>[] = useMemo(
     () => [
-      { accessorKey: "no", header: "No" },
       { accessorKey: "outbound_memo_number", header: "Memo No" },
+      {
+        accessorKey: "has_do",
+        header: "Has DO",
+        cell: ({ row }) => (row.original.has_do ? "Yes" : "No"),
+      },
       { accessorKey: "deliveryDate", header: "Delivery Date" },
       { accessorKey: "origin", header: "Origin" },
       { accessorKey: "destination", header: "Destination" },
@@ -164,6 +170,7 @@ const AdjustTable = ({
     qty: item.qty || 0,
     uom: item.uom || "",
     warehouse_id: item.warehouse_id || "",
+    has_do: item.has_do || false,
   }));
 
   return (

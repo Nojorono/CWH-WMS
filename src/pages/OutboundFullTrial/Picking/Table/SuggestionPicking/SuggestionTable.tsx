@@ -163,7 +163,7 @@ const SuggestionTable: React.FC<SuggestionTableProps> = ({
         size="sm"
         startIcon={<FaArrowLeft />}
       >
-        Back to Memo List
+        Back
       </Button>
 
       <div className="bg-white rounded-xl shadow">

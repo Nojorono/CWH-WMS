@@ -26,7 +26,7 @@ const AdjustTable = ({
   const { fetchUsingPagination, list, pagination } = useStoreOutboundDelivery();
 
   const [pageIndex, setPageIndex] = useState(0);
-  const [pageSize, setPageSize] = useState(10);
+  const [pageSize, setPageSize] = useState(5);
 
   useEffect(() => {
     if (!fetchUsingPagination) return;

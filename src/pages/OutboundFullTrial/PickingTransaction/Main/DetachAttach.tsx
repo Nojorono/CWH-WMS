@@ -38,7 +38,7 @@ const DetachAttach: React.FC = () => {
 
   // 🔹 local state pagination
   const [pageIndex, setPageIndex] = useState(0);
-  const [pageSize, setPageSize] = useState(10);
+  const [pageSize, setPageSize] = useState(5);
   const [modalDetachOpen, setModalDetachOpen] = useState(false); // State untuk modal
   const [selectedTransaction, setSelectedTransaction] = useState<any>(null); // State untuk menyimpan transaksi yang dipilih
   const [isAttachModalOpen, setIsAttachModalOpen] = useState(false);
@@ -272,7 +272,7 @@ const DetachAttach: React.FC = () => {
       {/* === MEMO List === */}
       <section className="bg-white rounded-xl shadow-sm border border-gray-200">
         <div className="bg-orange-500 text-white rounded-t-xl px-5 py-3 font-semibold">
-          Memo List
+          Memo List Transaction
         </div>
         <div className="p-4">
           <>

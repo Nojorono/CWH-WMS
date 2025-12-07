@@ -572,7 +572,7 @@ const PutAwayDetail: React.FC = () => {
                 <>
                   <input
                     {...field}
-                    disabled={isDetail}
+                    disabled={true}
                     type="text"
                     className={`border p-2 rounded w-full ${
                       errors.driverPhone ? "border-red-500" : ""

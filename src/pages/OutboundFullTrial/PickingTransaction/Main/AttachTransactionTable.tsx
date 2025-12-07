@@ -35,7 +35,7 @@
 //   );
 //   const [expandedRowId, setExpandedRowId] = useState<string | null>(null);
 //   const [pageIndex, setPageIndex] = useState(0);
-//   const [pageSize, setPageSize] = useState(10);
+//   const [pageSize, setPageSize] = useState(5);
 //   const [isModalOpen, setIsModalOpen] = useState(false);
 //   const [selectedItemId, setSelectedItemId] = useState<string>("all");
 
@@ -352,7 +352,7 @@ const AttachTransactionTable: React.FC<AttachTransactionTableProps> = ({
     []
   );
   const [pageIndex, setPageIndex] = useState(0);
-  const [pageSize, setPageSize] = useState(10);
+  const [pageSize, setPageSize] = useState(5);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedItemId, setSelectedItemId] = useState<string>("all");
 

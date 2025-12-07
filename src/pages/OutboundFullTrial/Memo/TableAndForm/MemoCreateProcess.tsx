@@ -374,7 +374,7 @@ const CreateMemo: React.FC = () => {
           <input
             type="number"
             className="w-28 px-2 py-1 border rounded"
-            value={items[row.index]?.quantity_plan ?? 0}
+            value={items[row.index]?.quantity_plan ?? ""}
             onChange={(e) =>
               handleUpdateItemField(row.index, "quantity_plan", e.target.value)
             }
@@ -527,7 +527,7 @@ const CreateMemo: React.FC = () => {
       <div className="p-6">
         <PageBreadcrumb
           breadcrumbs={[
-            { title: "Memo List", path: "/memo" },
+            { title: "All Memo", path: "/memo" },
             { title: title || "Loading...", path: "#" },
           ]}
         />
@@ -540,7 +540,7 @@ const CreateMemo: React.FC = () => {
     <div className="p-6 space-y-6">
       <PageBreadcrumb
         breadcrumbs={[
-          { title: "Memo List", path: "/memo" },
+          { title: "All Memo", path: "/memo" },
           { title: title || "Process Memo", path: "/memo/process" },
         ]}
       />
