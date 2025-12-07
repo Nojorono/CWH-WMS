@@ -20,7 +20,7 @@ export const useCompactRows = (suggestionItems: SuggestedItem[]) => {
             remaining_quantity_needed: item.remaining_quantity_needed,
             uom: "-",
             production_date: "-",
-            week_number: 0, // Default value if no week number is available
+            week_number: 0,
             zone: "-",
             bin: "-",
             qty_ready_to_pick: 0,

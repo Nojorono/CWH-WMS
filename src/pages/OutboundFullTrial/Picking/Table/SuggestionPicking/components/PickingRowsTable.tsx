@@ -223,118 +223,133 @@ export const PickingRowsTable: React.FC<PickingRowsTableProps> = ({
   return (
     <div className="overflow-x-auto bg-white rounded-lg shadow-md p-4">
       {/* ---- TABLE HEADER ---- */}
-      <table className="min-w-full divide-y divide-gray-200 text-md">
-        <thead className="bg-orange-500 text-white text-left">
-          <tr>
-            {columns.map((col) => (
-              <th key={col.key} className="px-4 py-2 font-semibold">
-                {col.label}
-              </th>
-            ))}
-            <th className="px-4 py-2 font-semibold">Actions</th>
-          </tr>
-        </thead>
+      {compactRows.length === 0 ? (
+        <div className="flex justify-center items-center py-4">
+          <span>Loading...</span>
+        </div>
+      ) : (
+        <table className="min-w-full divide-y divide-gray-200 text-md">
+          <thead className="bg-orange-500 text-white text-left">
+            <tr>
+              {columns.map((col) => (
+                <th key={col.key} className="px-4 py-2 font-semibold">
+                  {col.label}
+                </th>
+              ))}
+              <th className="px-4 py-2 font-semibold">Actions</th>
+            </tr>
+          </thead>
 
-        {/* ---- TABLE BODY ---- */}
-        <tbody className="text-left bg-white">
-          {compactRows.map((row, i) => {
-            const key = `${row.item_id}-${i}`;
-            const override = overrides[String(row.item_id)] || {};
+          {/* ---- TABLE BODY ---- */}
+          <tbody className="text-left bg-white">
+            {compactRows.map((row, i) => {
+              const key = `${row.item_id}-${i}`;
+              const override = overrides[String(row.item_id)] || {};
 
-            const currentAvailable =
-              override.available_quantity ?? row.available_quantity;
+              const currentAvailable =
+                override.available_quantity ?? row.available_quantity;
 
-            return (
-              <tr key={key} className="hover:bg-orange-50 border-b">
-                {columns.map((col) => {
-                  const value = override[col.key] ?? (row as any)[col.key];
+              return (
+                <tr key={key} className="hover:bg-orange-50 border-b">
+                  {columns.map((col) => {
+                    const value = override[col.key] ?? (row as any)[col.key];
 
-                  // Custom render (RemainingQty / Plan)
-                  if (col.customRender) {
-                    // Ensure required properties for customRender
-                    const overrideForCustomRender = {
-                      remaining_quantity_needed:
-                        override.remaining_quantity_needed ??
-                        row.remaining_quantity_needed,
-                      qty_plan: override.qty_plan ?? row.qty_plan,
-                    };
+                    // Custom render (RemainingQty / Plan)
+                    if (col.customRender) {
+                      // Ensure required properties for customRender
+                      const overrideForCustomRender = {
+                        remaining_quantity_needed:
+                          override.remaining_quantity_needed ??
+                          row.remaining_quantity_needed,
+                        qty_plan: override.qty_plan ?? row.qty_plan,
+                      };
+                      return (
+                        <td key={col.key} className="px-4 py-2">
+                          {col.customRender(row, overrideForCustomRender)}
+                        </td>
+                      );
+                    }
+
+                    // Input Editable (Picked Qty)
+                    if (col.type === "input") {
+                      return (
+                        <td key={col.key} className="px-4 py-2">
+                          {row.zone === "-" ? (
+                            <span className="text-red-500 text-xs">
+                              Tidak Tersedia
+                            </span>
+                          ) : (
+                            <input
+                              type="number"
+                              value={
+                                override.picked_qty ?? quantities[key] ?? ""
+                              }
+                              onChange={(e) => {
+                                const requested = Number(e.target.value);
+                                const { clamped } = clampPickQuantity(
+                                  requested,
+                                  row.required_quantity,
+                                  currentAvailable
+                                );
+
+                                updateQty(key, clamped, row.required_quantity);
+
+                                setOverrides((prev) => ({
+                                  ...prev,
+                                  [String(row.item_id)]: {
+                                    ...(prev[String(row.item_id)] || {}),
+                                    picked_qty: clamped,
+                                  },
+                                }));
+                              }}
+                              className="w-20 p-2 border border-gray-300 rounded text-center"
+                            />
+                          )}
+                        </td>
+                      );
+                    }
+
+                    // Default render
                     return (
                       <td key={col.key} className="px-4 py-2">
-                        {col.customRender(row, overrideForCustomRender)}
+                        {value}
                       </td>
                     );
-                  }
+                  })}
 
-                  // Input Editable (Picked Qty)
-                  if (col.type === "input") {
-                    return (
-                      <td key={col.key} className="px-4 py-2">
-                        {row.zone === "-" ? (
-                          <span className="text-red-500 text-xs">
-                            Tidak Tersedia
-                          </span>
-                        ) : (
-                          <input
-                            type="number"
-                            value={override.picked_qty ?? quantities[key] ?? ""}
-                            onChange={(e) => {
-                              const requested = Number(e.target.value);
-                              const { clamped } = clampPickQuantity(
-                                requested,
-                                row.required_quantity,
-                                currentAvailable
-                              );
-
-                              updateQty(key, clamped, row.required_quantity);
-
-                              setOverrides((prev) => ({
-                                ...prev,
-                                [String(row.item_id)]: {
-                                  ...(prev[String(row.item_id)] || {}),
-                                  picked_qty: clamped,
-                                },
-                              }));
-                            }}
-                            className="w-20 p-2 border border-gray-300 rounded text-center"
-                          />
-                        )}
-                      </td>
-                    );
-                  }
-
-                  // Default render
-                  return (
-                    <td key={col.key} className="px-4 py-2">
-                      {value}
-                    </td>
-                  );
-                })}
-
-                {/* ---- ACTIONS ---- */}
-                <td className="px-4 py-2">
-                  <div className="flex items-center space-x-2">
-                    <button
-                      type="button"
-                      onClick={() => handleOpenModal(row.item_id)}
-                      className="p-1"
-                    >
-                      <FaEdit className="text-green-500" />
-                    </button>
-
-                    {/* <button
-                      type="button"
-                      onClick={() => handleResetEdit(row.item_id)}
-                      className="p-1"
-                    >
-                      <FaSync className="text-red-500" />
-                    </button> */}
-                  </div>
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
+                  {/* ---- ACTIONS ---- */}
+                  <td className="px-4 py-2">
+                    <div className="flex items-center space-x-2">
+                      {!(
+                        row.uom === "-" &&
+                        row.zone === "-" &&
+                        row.bin === "-" &&
+                        row.production_date === "-" &&
+                        row.location_priority === "-"
+                      ) && (
+                        <button
+                          type="button"
+                          onClick={() => handleOpenModal(row.item_id)}
+                          className="p-1"
+                        >
+                          <FaEdit className="text-green-500" />
+                        </button>
+                      )}
+                      {/* <button
+            type="button"
+            onClick={() => handleResetEdit(row.item_id)}
+            className="p-1"
+              >
+            <FaSync className="text-red-500" />
+              </button> */}
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      )}
 
       {/* ---- MODAL ---- */}
       {openModalItem && (

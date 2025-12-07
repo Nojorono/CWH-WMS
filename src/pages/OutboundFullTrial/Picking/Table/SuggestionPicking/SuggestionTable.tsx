@@ -72,33 +72,7 @@ const SuggestionTable: React.FC<SuggestionTableProps> = ({
       }
 
       const data = await response.json();
-      const sortedSuggestions = data.data.sort(
-        (
-          a: {
-            suggested_locations: {
-              week_number: any;
-              production_date: string | number | Date;
-            }[];
-          },
-          b: {
-            suggested_locations: {
-              week_number: any;
-              production_date: string | number | Date;
-            }[];
-          }
-        ) => {
-          const weekDiff =
-            a.suggested_locations[0].week_number -
-            b.suggested_locations[0].week_number;
-          if (weekDiff !== 0) return weekDiff;
-
-          return (
-            new Date(a.suggested_locations[0].production_date).getTime() -
-            new Date(b.suggested_locations[0].production_date).getTime()
-          );
-        }
-      );
-      setSuggestions(sortedSuggestions);
+      setSuggestions(data.data);
     } catch (error) {
       console.error("Error fetching picking suggestion:", error);
     }
@@ -113,6 +87,10 @@ const SuggestionTable: React.FC<SuggestionTableProps> = ({
       return showErrorToast("Pilih destination BIN terlebih dahulu!");
     }
 
+    if (compactRows.length === 0) {
+      return showErrorToast("Tidak ada Item Suggestion!");
+    }
+
     const payload = buildPayload({
       compactRows,
       quantities,
@@ -123,9 +101,6 @@ const SuggestionTable: React.FC<SuggestionTableProps> = ({
     const finalPayload = {
       data: payload,
     };
-
-    console.log("Payload to submit:", payload);
-    console.log("Final Payload to submit:", finalPayload);
 
     if (!Array.isArray(finalPayload.data) || finalPayload.data.length === 0) {
       showErrorToast("Picking List masih ada data yang kosong!");
@@ -153,6 +128,14 @@ const SuggestionTable: React.FC<SuggestionTableProps> = ({
         )
         .map((bin: Bin) => ({ id: bin.id!, code: bin.code as string })),
     [bins]
+  );
+
+  const allRowsEmpty = compactRows.every(
+    (row) =>
+      row.uom === "-" &&
+      row.zone === "-" &&
+      row.bin === "-" &&
+      row.production_date === "-"
   );
 
   return (
@@ -183,7 +166,7 @@ const SuggestionTable: React.FC<SuggestionTableProps> = ({
         />
 
         {/* === List Item Picking === */}
-        <PickingRowsTable
+        {/* <PickingRowsTable
           compactRows={suggestions.flatMap((suggestion) =>
             suggestion.suggested_locations.map(
               (location: {
@@ -218,13 +201,62 @@ const SuggestionTable: React.FC<SuggestionTableProps> = ({
           )}
           quantities={quantities}
           updateQty={updateQty}
+        /> */}
+
+        <PickingRowsTable
+          compactRows={suggestions.flatMap((suggestion) => {
+            // kalau ada lokasi → mapping normal
+            if (suggestion.suggested_locations.length > 0) {
+              return suggestion.suggested_locations.map((location: any) => ({
+                note: suggestion.notes,
+                item_id: suggestion.item_id,
+                item_name: suggestion.item_name,
+                item_code: suggestion.item_code,
+                uom: location.uom ?? "-",
+                zone: location.warehouse_sub_name ?? "-",
+                bin: location.bin_name ?? "-",
+                qty_plan: location.quantity_ready_to_pick ?? 0,
+                required_quantity:
+                  location.required_quantity ?? suggestion.required_quantity,
+                available_quantity: location.available_quantity ?? 0,
+                remaining_quantity_needed: suggestion.remaining_quantity_needed,
+                reserved_quantity: location.reserved_quantity ?? 0,
+                week_number: location.week_number ?? 0,
+                production_date: formatDate(location.production_date),
+                location_priority: location.location_priority ?? "-",
+              }));
+            }
+
+            // ✅ fallback kalau lokasi kosong
+            return [
+              {
+                note: suggestion.notes,
+                item_id: suggestion.item_id,
+                item_name: suggestion.item_name,
+                item_code: suggestion.item_code,
+                uom: "-",
+                zone: "-",
+                bin: "-",
+                qty_plan: suggestion.required_quantity,
+                required_quantity: suggestion.required_quantity,
+                available_quantity: 0,
+                remaining_quantity_needed: suggestion.remaining_quantity_needed,
+                reserved_quantity: 0,
+                week_number: 0,
+                production_date: "-",
+                location_priority: "-",
+              },
+            ];
+          })}
+          quantities={quantities}
+          updateQty={updateQty}
         />
 
         {/* === Submit Button === */}
         <div className="flex justify-end p-4 border-t">
           <Button
             onClick={handleSubmit}
-            disabled={!selectedDestination || !selectedBin}
+            disabled={!selectedDestination || !selectedBin || allRowsEmpty}
           >
             Submit Suggestion
           </Button>

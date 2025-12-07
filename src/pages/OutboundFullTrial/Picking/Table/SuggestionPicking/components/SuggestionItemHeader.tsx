@@ -46,28 +46,6 @@ export const SuggestionItemHeader: React.FC<MemoHeaderProps> = ({
   return (
     <div className="p-5">
       {/* ✅ BAR ATAS: Sort Method + Fetch Suggestions */}
-      <div className="flex items-end gap-4 mb-6">
-        <div className="w-48">
-          <label className="text-gray-500 block mb-1">Sort Method</label>
-          <Select
-            value={sortOptions.find((option) => option.value === sortMethod)}
-            onChange={(selectedOption) =>
-              setSortMethod(selectedOption?.value || "")
-            }
-            options={sortOptions}
-          />
-        </div>
-
-        <Button
-          variant="secondary"
-          size="xsm"
-          onClick={handleFetchSuggestions}
-          startIcon={<FaSearch />}
-          disabled={!sortMethod} // Disable button if sortMethod is not selected
-        >
-          Fetch Suggestions
-        </Button>
-      </div>
 
       {/* ✅ GRID DETAIL */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-sm">
@@ -102,6 +80,29 @@ export const SuggestionItemHeader: React.FC<MemoHeaderProps> = ({
           </span>
         </div>
 
+        {/* SELECT METHOD FETCH  SUGGESTION*/}
+        <div className="flex items-end gap-4 mb-2">
+          <div className="w-48">
+            <label className="text-gray-500 block mb-1">Sort Method</label>
+            <Select
+              value={sortOptions.find((option) => option.value === sortMethod)}
+              onChange={(selectedOption) =>
+                setSortMethod(selectedOption?.value || "")
+              }
+              options={sortOptions}
+            />
+          </div>
+
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={handleFetchSuggestions}
+            disabled={!sortMethod}
+          >
+            <FaSearch />
+          </Button>
+        </div>
+
         {/* Destination Bin */}
         <div className="md:col-span-1">
           <label className="text-gray-500 block mb-1">
@@ -122,14 +123,14 @@ export const SuggestionItemHeader: React.FC<MemoHeaderProps> = ({
             }
             onChange={(val: any) => setSelectedDestination(val?.value || "")}
             options={[
-              { value: "", label: "select bin destination..." },
+              { value: "", label: "select bin/line destination..." },
               ...availableBins.map((bin) => ({
                 value: bin.id,
                 label: `${bin.code}`,
               })),
             ]}
-            placeholder="select bin destination..."
-            isDisabled={availableBins.length === 0}
+            placeholder="select bin/line destination..."
+            isDisabled={availableBins.length === 0 || !sortMethod}
           />
 
           {availableBins.length === 0 && selectedDestination === "" && (

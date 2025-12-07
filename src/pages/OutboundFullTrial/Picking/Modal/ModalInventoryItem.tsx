@@ -108,6 +108,12 @@ export default function ModalInventoryItem({
     return <div className="p-6">Loading...</div>;
   }
 
+  const isSameSource =
+    existingItemData &&
+    selectedLocation &&
+    existingItemData.week_number === selectedLocation.week_number &&
+    existingItemData.zone === selectedLocation.warehouse_sub_code &&
+    existingItemData.bin === selectedLocation.bin_code;
 
   return (
     <div className="p-6 space-y-8">
@@ -156,12 +162,22 @@ export default function ModalInventoryItem({
         </div>
       </div>
 
+      {/* NOTE FOR SAME SOURCE */}
+      {isSameSource && (
+        <div className="text-blue-500">
+          <span className="italic">
+            Suggestion Location yang dipilih berasal dari Zone, BIN, dan Week yang sama
+            dengan data yang ada.
+          </span>
+        </div>
+      )}
+
       {/* COMPARISON AREA */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* EXISTING ITEM CARD */}
         {existingItemData && (
           <KeyValueCard
-            title="Existing Suggestion Item"
+            title="Existing Suggestion Location"
             data={{
               zone: existingItemData.zone,
               bin: existingItemData.bin,
@@ -184,7 +200,7 @@ export default function ModalInventoryItem({
         {/* NEW SUGGESTION ITEM CARD */}
         {selectedLocation && (
           <KeyValueCard
-            title="New Suggestion Item"
+            title="New Suggestion Location"
             data={{
               zone: selectedLocation.warehouse_sub_code,
               bin: selectedLocation.bin_code,
