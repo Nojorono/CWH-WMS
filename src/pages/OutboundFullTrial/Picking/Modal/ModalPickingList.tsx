@@ -34,11 +34,8 @@ function ModalPickingList({ open, onClose, memoId }: Props) {
 
   const apiResponse = detail as unknown as PickingListResponse | undefined;
 
-  console.log("detail picking list modal", apiResponse);
-
   // 🧠 Transform data API → table
   const data = useMemo(() => {
-    console.log("Data to be rendered in table:", apiResponse); // Tambahkan log ini
     if (!apiResponse) return [];
     return apiResponse.map((d) => ({
       id: d.id,

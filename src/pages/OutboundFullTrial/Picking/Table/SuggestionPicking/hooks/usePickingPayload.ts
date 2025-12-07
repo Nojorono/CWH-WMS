@@ -6,7 +6,7 @@ export const buildPayload = ({
     deliveryOrder,
     destinationBin,
 }: any) => {
-    const doId = deliveryOrder.id || deliveryOrder.delivery_order_id;
+    const doId = deliveryOrder.id || deliveryOrder.delivery_order_id;    
 
     return compactRows
         .map((row: CompactPickingRow, index: number) => {
@@ -14,9 +14,6 @@ export const buildPayload = ({
             const qty = quantities[key] || 0;
 
             if (row.zone === "-" || qty <= 0) return null;
-
-            console.log("Building payload for row:", row);
-            
 
             return {
                 do_id: doId,

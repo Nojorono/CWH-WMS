@@ -14,8 +14,10 @@ interface PickingRowsTableProps {
     available_quantity: number;
     remaining_quantity_needed: number;
     required_quantity: number;
+    reserved_quantity: number;
     week_number: number;
     production_date: string;
+    location_priority?: string;
   }>;
   quantities: Record<string, number>;
   updateQty: (key: string, value: number, requiredQuantity: number) => void;
@@ -26,13 +28,9 @@ export const PickingRowsTable: React.FC<PickingRowsTableProps> = ({
   quantities,
   updateQty,
 }) => {
-  console.log("PickingRowsTable compactRows:", compactRows);
-  console.log("PickingRowsTable quantities:", quantities);
-
   const [openModalItem, modalSelectItem] = useState(false);
   const [paramItemId, setItemId] = useState<string | null>(null);
 
-  // local overrides applied when user edits from modal
   type RowOverride = {
     week_number?: number | string;
     production_date?: string;
@@ -41,10 +39,11 @@ export const PickingRowsTable: React.FC<PickingRowsTableProps> = ({
     remaining_quantity_needed?: number;
     qty_plan?: number;
     available_quantity?: number;
-    picked_qty?: number; // new: picked qty coming from modal override
+    picked_qty?: number;
+    [key: string]: any; // <-- Add this index signature
   };
+
   const [overrides, setOverrides] = useState<Record<string, RowOverride>>({});
-  // store original quantities snapshot per item_id (before edit) => { [itemId]: { [key]: value } }
   const [originalQuantities, setOriginalQuantities] = useState<
     Record<string, Record<string, number>>
   >({});
@@ -55,9 +54,6 @@ export const PickingRowsTable: React.FC<PickingRowsTableProps> = ({
     return avail == null ? req : Math.min(req, avail);
   }
 
-  /**
-   * Clamp requested value ke range [0, maxAllowed], dan floor ke integer.
-   */
   function clampPickQuantity(
     requested: number,
     required?: number | null,
@@ -72,42 +68,40 @@ export const PickingRowsTable: React.FC<PickingRowsTableProps> = ({
   }
 
   const handleOpenModal = (itemId: string) => {
-    console.log("Edit item with ID:", itemId);
     setItemId(itemId);
 
-    // take snapshot of current quantities for all rows with this item_id
     const itemIdKey = String(itemId);
     const snap: Record<string, number> = {};
+
     compactRows.forEach((r, idx) => {
       if (String(r.item_id) === itemIdKey) {
         const key = `${r.item_id}-${idx}`;
         snap[key] = quantities[key] ?? 0;
       }
     });
-    setOriginalQuantities((prev) => ({ ...prev, [itemIdKey]: snap }));
 
+    setOriginalQuantities((prev) => ({ ...prev, [itemIdKey]: snap }));
     modalSelectItem(true);
   };
 
   const handleResetEdit = (itemId: string) => {
     const itemIdKey = String(itemId);
     const snap = originalQuantities[itemIdKey];
-    // restore all matching rows
+
     compactRows.forEach((r, idx) => {
       if (String(r.item_id) === itemIdKey) {
         const key = `${r.item_id}-${idx}`;
         const origVal = snap && key in snap ? snap[key] : 0;
-        // call parent to restore quantity
         updateQty(key, Number(origVal), r.required_quantity);
       }
     });
 
-    // remove local overrides for this item and snapshot
     setOverrides((prev) => {
       const copy = { ...prev };
       delete copy[itemIdKey];
       return copy;
     });
+
     setOriginalQuantities((prev) => {
       const copy = { ...prev };
       delete copy[itemIdKey];
@@ -116,10 +110,11 @@ export const PickingRowsTable: React.FC<PickingRowsTableProps> = ({
   };
 
   const onSubmitItemChange = (data: {
-    week_number: number | undefined;
+    week_number: number;
     item_id: any;
     qty_pick: any;
     location_data: {
+      location_priority: string;
       total_quantity: number;
       reserved_quantity: number;
       available_quantity: number;
@@ -137,9 +132,6 @@ export const PickingRowsTable: React.FC<PickingRowsTableProps> = ({
       production_date?: string;
     };
   }) => {
-    console.log("Selected item data from modal:", data);
-
-    // 1) update quantities in parent store for all matching rows (key = `${item_id}-${index}`)
     compactRows.forEach((r, idx) => {
       if (String(r.item_id) === String(data.item_id)) {
         const key = `${r.item_id}-${idx}`;
@@ -147,7 +139,6 @@ export const PickingRowsTable: React.FC<PickingRowsTableProps> = ({
       }
     });
 
-    // 2) apply local overrides so the table shows updated week/production/zone/bin
     const itemIdKey = String(data.item_id);
     const newOverride: RowOverride = {
       week_number:
@@ -155,18 +146,21 @@ export const PickingRowsTable: React.FC<PickingRowsTableProps> = ({
       production_date: data.location_data.production_date ?? undefined,
       zone:
         data.location_data.warehouse_sub_name ??
-        data.location_data.place ??
-        undefined,
+        data.location_data.warehouse_sub_code,
       bin:
         data.location_data.bin_name ?? data.location_data.bin_code ?? undefined,
-      // override remaining and plan to reflect qty_pick from modal
+
       remaining_quantity_needed: Number(data.qty_pick),
       qty_plan: Number(data.qty_pick),
-      // keep available from location_data so max clamp uses updated availability
+
       available_quantity: data.location_data.available_quantity,
-      // store picked qty so input shows modal value immediately
       picked_qty: Number(data.qty_pick),
+
+      reserved_quantity: Number(data.location_data.reserved_quantity),
+
+      location_priority: data.location_data.location_priority ?? undefined,
     };
+
     setOverrides((prev) => ({
       ...prev,
       [itemIdKey]: { ...(prev[itemIdKey] || {}), ...newOverride },
@@ -175,124 +169,165 @@ export const PickingRowsTable: React.FC<PickingRowsTableProps> = ({
     modalSelectItem(false);
   };
 
+  // DYNAMIC COLUMNS CONFIG — tinggal tambah field baru di sini ⬇⬇⬇
+  const columns = [
+    { key: "note", label: "Notes" },
+    { key: "item_name", label: "Item Name" },
+    { key: "uom", label: "UOM" },
+    { key: "week_number", label: "Week Number", override: true },
+    { key: "production_date", label: "Production Date", override: true },
+    { key: "location_priority", label: "Location Priority", override: true },
+    { key: "zone", label: "Zone", override: true },
+    {
+      key: "bin",
+      label: "Bin",
+      override: true,
+      customRender: (row: { bin: string }, override: { bin?: string }) => {
+        const binValue = override.bin ?? row.bin;
+        return binValue === "N/A" ? "" : binValue;
+      },
+    },
+    {
+      key: "remaining_quantity_needed",
+      label: "Remaining Qty / Planned Qty",
+      customRender: (
+        row: { remaining_quantity_needed: any; qty_plan: any },
+        override: { remaining_quantity_needed: any; qty_plan: any }
+      ) => (
+        <>
+          <span className="font-semibold text-orange-700">
+            {override.remaining_quantity_needed ??
+              row.remaining_quantity_needed}
+          </span>
+          <span className="mx-1 text-gray-500">/</span>
+          <span>{override.qty_plan ?? row.qty_plan}</span>
+        </>
+      ),
+    },
+    { key: "available_quantity", label: "Available Qty", override: true },
+    {
+      key: "reserved_quantity",
+      label: "Reserved Qty",
+      override: true,
+      customRender: (row: { reserved_quantity: number }) => {
+        return row.reserved_quantity === 0 ? "" : row.reserved_quantity;
+      },
+    },
+    {
+      key: "picked_qty",
+      label: "Picked Qty",
+      type: "input",
+    },
+  ];
+
   return (
     <div className="overflow-x-auto bg-white rounded-lg shadow-md p-4">
+      {/* ---- TABLE HEADER ---- */}
       <table className="min-w-full divide-y divide-gray-200 text-md">
         <thead className="bg-orange-500 text-white text-left">
           <tr>
-            <th className="px-4 py-2 font-semibold">Notes</th>
-            <th className="px-4 py-2 font-semibold">Item Name</th>
-            <th className="px-4 py-2 font-semibold">UOM</th>
-            <th className="px-4 py-2 font-semibold">Week Number</th>
-            <th className="px-4 py-2 font-semibold">Production Date</th>
-            <th className="px-4 py-2 font-semibold">Zone</th>
-            <th className="px-4 py-2 font-semibold">Bin</th>
-            <th className="px-4 py-2 font-semibold">
-              Remaining Qty / Planned Qty
-            </th>
-            <th className="px-4 py-2 font-semibold">Available Qty</th>
-            <th className="px-4 py-2 font-semibold">Picked Qty</th>
+            {columns.map((col) => (
+              <th key={col.key} className="px-4 py-2 font-semibold">
+                {col.label}
+              </th>
+            ))}
             <th className="px-4 py-2 font-semibold">Actions</th>
           </tr>
         </thead>
+
+        {/* ---- TABLE BODY ---- */}
         <tbody className="text-left bg-white">
           {compactRows.map((row, i) => {
             const key = `${row.item_id}-${i}`;
             const override = overrides[String(row.item_id)] || {};
-            // use overrides if present
-            const currentRemaining =
-              override.remaining_quantity_needed ??
-              row.remaining_quantity_needed;
-            const currentPlan = override.qty_plan ?? row.qty_plan;
+
             const currentAvailable =
               override.available_quantity ?? row.available_quantity;
-            const maxAllowedForRow = getMaxAllowed(
-              currentRemaining,
-              currentAvailable
-            );
+
             return (
               <tr key={key} className="hover:bg-orange-50 border-b">
-                <td className="px-4 py-2">{row.note}</td>
-                <td className="px-4 py-2 font-medium">{row.item_name}</td>
-                <td className="px-4 py-2">{row.uom}</td>
-                <td className="px-4 py-2">
-                  {override.week_number ?? row.week_number}
-                </td>
-                <td className="px-4 py-2">
-                  {override.production_date ?? row.production_date}
-                </td>
-                <td className="px-4 py-2">{override.zone ?? row.zone}</td>
-                <td className="px-4 py-2">{override.bin ?? row.bin}</td>
-                <td className="px-4 py-2">
-                  <span className="font-semibold text-orange-700">
-                    {currentRemaining}
-                  </span>
-                  <span className="mx-1 text-gray-500">/</span>
-                  <span>{currentPlan}</span>
-                </td>
-                <td className="px-4 py-2">
-                  <span className="font-semibold text-green-700">
-                    {currentAvailable}
-                  </span>
-                </td>
-                <td className="px-4 py-2">
-                  {row.zone === "-" ? (
-                    <span className="text-red-500 text-xs">Tidak Tersedia</span>
-                  ) : (
-                    <input
-                      type="number"
-                      value={override.picked_qty ?? quantities[key] ?? 0}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                        const requested = Number(e.target.value);
-                        const { clamped } = clampPickQuantity(
-                          requested,
-                          row.required_quantity,
-                          currentAvailable
-                        );
-                        // update parent state
-                        updateQty(key, clamped, row.required_quantity);
-                        // reflect immediate change locally (keeps UI stable until parent updates)
-                        setOverrides((prev) => ({
-                          ...prev,
-                          [String(row.item_id)]: {
-                            ...(prev[String(row.item_id)] || {}),
-                            picked_qty: clamped,
-                          },
-                        }));
-                      }}
-                      min={0}
-                      max={
-                        Number.isFinite(maxAllowedForRow)
-                          ? maxAllowedForRow
-                          : undefined
-                      }
-                      className="w-20 p-2 border border-gray-300 rounded focus:outline-none focus:ring focus:ring-orange-300 text-center"
-                      style={{ fontSize: "1rem" }}
-                    />
-                  )}
-                </td>
+                {columns.map((col) => {
+                  const value = override[col.key] ?? (row as any)[col.key];
 
+                  // Custom render (RemainingQty / Plan)
+                  if (col.customRender) {
+                    // Ensure required properties for customRender
+                    const overrideForCustomRender = {
+                      remaining_quantity_needed:
+                        override.remaining_quantity_needed ??
+                        row.remaining_quantity_needed,
+                      qty_plan: override.qty_plan ?? row.qty_plan,
+                    };
+                    return (
+                      <td key={col.key} className="px-4 py-2">
+                        {col.customRender(row, overrideForCustomRender)}
+                      </td>
+                    );
+                  }
+
+                  // Input Editable (Picked Qty)
+                  if (col.type === "input") {
+                    return (
+                      <td key={col.key} className="px-4 py-2">
+                        {row.zone === "-" ? (
+                          <span className="text-red-500 text-xs">
+                            Tidak Tersedia
+                          </span>
+                        ) : (
+                          <input
+                            type="number"
+                            value={override.picked_qty ?? quantities[key] ?? ""}
+                            onChange={(e) => {
+                              const requested = Number(e.target.value);
+                              const { clamped } = clampPickQuantity(
+                                requested,
+                                row.required_quantity,
+                                currentAvailable
+                              );
+
+                              updateQty(key, clamped, row.required_quantity);
+
+                              setOverrides((prev) => ({
+                                ...prev,
+                                [String(row.item_id)]: {
+                                  ...(prev[String(row.item_id)] || {}),
+                                  picked_qty: clamped,
+                                },
+                              }));
+                            }}
+                            className="w-20 p-2 border border-gray-300 rounded text-center"
+                          />
+                        )}
+                      </td>
+                    );
+                  }
+
+                  // Default render
+                  return (
+                    <td key={col.key} className="px-4 py-2">
+                      {value}
+                    </td>
+                  );
+                })}
+
+                {/* ---- ACTIONS ---- */}
                 <td className="px-4 py-2">
                   <div className="flex items-center space-x-2">
                     <button
                       type="button"
                       onClick={() => handleOpenModal(row.item_id)}
-                      title="Edit item details"
-                      aria-label="Edit item"
-                      className="p-1 rounded hover:bg-green-50 focus:outline-none focus:ring-2 focus:ring-green-200"
+                      className="p-1"
                     >
-                      <FaEdit className="text-green-500 hover:text-green-700" />
+                      <FaEdit className="text-green-500" />
                     </button>
 
-                    <button
+                    {/* <button
                       type="button"
                       onClick={() => handleResetEdit(row.item_id)}
-                      title="Reset edits for this item"
-                      aria-label="Reset edits"
-                      className="p-1 rounded hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-200"
+                      className="p-1"
                     >
-                      <FaSync className="text-red-500 hover:text-red-700" />
-                    </button>
+                      <FaSync className="text-red-500" />
+                    </button> */}
                   </div>
                 </td>
               </tr>
@@ -301,6 +336,7 @@ export const PickingRowsTable: React.FC<PickingRowsTableProps> = ({
         </tbody>
       </table>
 
+      {/* ---- MODAL ---- */}
       {openModalItem && (
         <div
           className="fixed inset-0 flex items-center justify-center"
@@ -310,9 +346,9 @@ export const PickingRowsTable: React.FC<PickingRowsTableProps> = ({
             className="fixed inset-0 bg-black/40"
             onClick={() => modalSelectItem(false)}
           />
-          <div className="relative bg-white rounded-lg shadow-lg w-[640px] max-w-full p-4 z-10">
+          <div className="relative bg-white rounded-lg shadow-lg w-[1200px] max-w-full p-4 z-10 overflow-y-auto max-h-[80vh]">
             <div className="flex justify-between items-center mb-3">
-              <h3 className="font-semibold">Assign Helper</h3>
+              <h3 className="font-semibold">{""}</h3>
               <button
                 className="text-gray-500"
                 onClick={() => modalSelectItem(false)}
@@ -324,6 +360,10 @@ export const PickingRowsTable: React.FC<PickingRowsTableProps> = ({
             <ModalInventoryItem
               itemID={paramItemId}
               onSubmit={onSubmitItemChange}
+              onBack={() => modalSelectItem(false)}
+              existingItemData={compactRows.find(
+                (item) => item.item_id === paramItemId
+              )}
             />
           </div>
         </div>

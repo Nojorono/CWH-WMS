@@ -1,14 +1,20 @@
-// import { useState } from "react";
+// import { useEffect, useState } from "react";
 // import { CompactPickingRow } from "../../../Types/types";
 
 // export const usePickingQuantities = (compactRows: CompactPickingRow[]) => {
-//     const [quantities, setQuantities] = useState<Record<string, number>>(() => {
+//     const [quantities, setQuantities] = useState<Record<string, number>>({});
+
+//     // Sync ulang tiap compactRows berubah
+//     useEffect(() => {
+//         if (!compactRows) return;
+
 //         const initial: Record<string, number> = {};
 //         compactRows.forEach((row, index) => {
 //             initial[`${row.item_id}-${index}`] = row.qty_ready_to_pick;
 //         });
-//         return initial;
-//     });
+
+//         setQuantities(initial);
+//     }, [compactRows]);  // <-- ini penting banget!
 
 //     const updateQty = (key: string, value: number, max: number) => {
 //         const safe = Math.max(0, Math.min(value, max));
@@ -27,15 +33,15 @@ export const usePickingQuantities = (compactRows: CompactPickingRow[]) => {
 
     // Sync ulang tiap compactRows berubah
     useEffect(() => {
-        if (!compactRows) return;
+        if (!compactRows || compactRows.length === 0) return;
 
         const initial: Record<string, number> = {};
         compactRows.forEach((row, index) => {
-            initial[`${row.item_id}-${index}`] = row.qty_ready_to_pick;
+            initial[`${row.item_id}-${index}`] = row.qty_ready_to_pick || 0; // Pastikan ada nilai default
         });
 
         setQuantities(initial);
-    }, [compactRows]);  // <-- ini penting banget!
+    }, [compactRows]);  // Pastikan compactRows stabil
 
     const updateQty = (key: string, value: number, max: number) => {
         const safe = Math.max(0, Math.min(value, max));

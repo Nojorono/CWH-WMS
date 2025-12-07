@@ -11,18 +11,15 @@ import DynamicForm, {
 import {
   useStoreOutboundMemo,
   useStoreOutboundDelivery,
-  useStorePickingSuggestion,
   useStorePickingAssignHelper,
 } from "../../../../DynamicAPI/stores/Store/MasterStore";
 import { useLocation } from "react-router";
-import { formatDateIndo } from "../../../../helper/FormatDate";
 import { FaClipboardList, FaEye, FaTasks, FaUsers } from "react-icons/fa";
 import SuggestionTable from "../Table/SuggestionPicking/SuggestionTable";
 import ModalPickingList from "../Modal/ModalPickingList";
 import ModalAssignHelper from "../Modal/ModalAssignHelper";
-
 import TabsSection from "../../../../components/wms-components/inbound-component/tabs/TabsSection";
-import { SuggestedItem, MemoFormValues } from "../Types/types";
+import { MemoFormValues } from "../Types/types";
 import AssignHelperTable from "../Table/AssignHelper";
 
 const PickingSuggestion: React.FC = () => {
@@ -46,11 +43,6 @@ const PickingSuggestion: React.FC = () => {
   const { fetchAll: fetchAllMemos, list: memoList } = useStoreOutboundMemo();
   const { fetchById, detail } = useStoreOutboundDelivery();
   const { createData } = useStorePickingAssignHelper();
-  const {
-    fetchById: fetchPickingSuggestionById,
-    detail: pickingSuggestionDetail,
-    isLoading: isSuggestionLoading,
-  } = useStorePickingSuggestion();
 
   const [selectedMemoForSuggestion, setSelectedMemoForSuggestion] = useState<
     any | null
@@ -93,8 +85,6 @@ const PickingSuggestion: React.FC = () => {
 
     if (detail.outbound_memos?.length > 0) {
       const memoIds = detail.outbound_memos.map((m: any) => m.id);
-      // setSelectedMemoIds(memoIds);
-      // setSelectedMemos(detail.outbound_memos);
     }
   }, [detail, methods]);
 
@@ -138,12 +128,11 @@ const PickingSuggestion: React.FC = () => {
             <Button
               type="button"
               variant="primary"
-              onClick={() => handleAssignClick(row.original)}
-              disabled={isSuggestionLoading}
+              onClick={() => handleAssignSuggestion(row.original)}
               size="xsm"
               startIcon={<FaClipboardList className="size-5" />}
             >
-              {isSuggestionLoading ? "Loading..." : "Picking Suggestion Item"}
+              Picking Suggestion Items
             </Button>
           ) : (
             <FaTasks
@@ -156,7 +145,7 @@ const PickingSuggestion: React.FC = () => {
             type="button"
             variant="secondary"
             onClick={() => handlePickingDetail(row.original.id)}
-            disabled={isSuggestionLoading}
+            // disabled={isSuggestionLoading}
             size="xsm"
             startIcon={<FaEye className="size-5" />}
           >
@@ -167,7 +156,7 @@ const PickingSuggestion: React.FC = () => {
             type="button"
             variant="action"
             onClick={() => handleAssignHelper(row.original.id)}
-            disabled={isSuggestionLoading}
+            // disabled={isSuggestionLoading}
             size="xsm"
             startIcon={<FaUsers className="size-5" />}
           >
@@ -184,29 +173,24 @@ const PickingSuggestion: React.FC = () => {
     setOpenModal(true);
   };
 
-  const handleAssignClick = (memo: any) => {
+  const handleAssignSuggestion = (memo: any) => {
     const memoIdToFetch = memo.id || memo.memo_id;
-    fetchPickingSuggestionById(memoIdToFetch);
+    // fetchPickingSuggestionById(memoIdToFetch);
     setSelectedMemoForSuggestion(memo);
   };
 
   // update: open AssignHelper modal and pass memoId
   const handleAssignHelper = (memoId: string) => {
-    console.log("Assign Helper clicked for memoId:", memoId);
     setAssignHelperMemoId(memoId);
     setAssignHelperOpen(true);
   };
 
   // callback when AssignHelper submits
   const handleAssignHelperSubmit = async (payload: any) => {
-    console.log("AssignHelper payload:", payload);
-    // TODO: call API / store action to persist assignment if needed
-
     const res = await createData(payload);
     if (res?.success) {
       setAssignHelperOpen(false);
       setAssignHelperMemoId(null);
-      // navigate("/inbound_planning");
     }
   };
 
@@ -227,31 +211,9 @@ const PickingSuggestion: React.FC = () => {
 
   // === Display Suggestion Table ===
   if (selectedMemoForSuggestion) {
-    const memoId =
-      selectedMemoForSuggestion.id || selectedMemoForSuggestion.memo_id;
-
-    // FILTER: ambil item yang memo_id cocok
-    // + tambahkan filter supaya remaining_quantity_needed !== 0
-    const memoItems = Array.isArray(pickingSuggestionDetail)
-      ? pickingSuggestionDetail
-          .filter((item: SuggestedItem) => item.memo_id === memoId)
-          .filter((item: SuggestedItem) => item.remaining_quantity_needed !== 0)
-      : [];
-
-    if (isSuggestionLoading && memoItems.length === 0) {
-      return (
-        <div className="flex justify-center items-center h-96">
-          <p className="text-xl font-medium text-orange-500">
-            Loading Suggestions...
-          </p>
-        </div>
-      );
-    }
-
     return (
       <SuggestionTable
         memoDetail={selectedMemoForSuggestion}
-        suggestionItems={memoItems as SuggestedItem[]}
         onBack={() => setSelectedMemoForSuggestion(null)}
         deliveryOrder={detail}
       />
