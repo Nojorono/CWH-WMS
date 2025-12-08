@@ -9,7 +9,7 @@ import { useStoreOutboundMemo } from "../../../../DynamicAPI/stores/Store/Master
 import { useLocation, useNavigate } from "react-router";
 import { formatDateIndo } from "../../../../helper/FormatDate";
 import ActIndicator from "../../../../components/ui/activityIndicator";
-import { FaPlus, FaRegWindowClose, FaTasks } from "react-icons/fa";
+import { FaEye, FaPlus, FaRegWindowClose, FaTasks } from "react-icons/fa";
 import { EndPoint } from "../../../../utils/EndPoint";
 import CancelTransactionPickModal from "../Modal/CancelTransactionPickModal";
 import AttachMemoModal from "../Modal/AttachMemoModal"; //
@@ -48,10 +48,9 @@ const DetachAttach: React.FC = () => {
   const [selectedItems, setSelectedItems] = useState<any[]>([]); // State untuk menyimpan item yang dipilih
 
   // Mapping outbound_memos dari params
-  const outboundMemos = params?.outbound_memos || [];  
+  const outboundMemos = params?.outbound_memos || [];
 
   console.log("Outbound Memos:", outboundMemos);
-  
 
   const columnsTableItem = [
     { accessorKey: "outbound_memo_number", header: "Memo No" },
@@ -90,54 +89,53 @@ const DetachAttach: React.FC = () => {
       },
     },
     {
-      id: "transaction_pickings",
-      header: "Transaction Pickings",
-      cell: ({ row }: any) => {
-        const memoId = row.original.id;
+      id: "actions",
+      header: "Action",
+      cell: ({ row }: { row: any }) => {
         const items = row.original.transaction_pickings;
 
         return (
-          <div className="space-y-2">
+          <div className="flex items-center gap-1.5">
+            {/* Show Detail */}
             <Button
-              size="xsm"
-              variant="secondary"
+              size="sm"
+              variant="action"
+              title="Show Detail Items"
+              className="px-2 py-1 min-w-[32px]"
+              startIcon={<FaEye size={12} />}
               onClick={() => {
-                setSelectedItems(items); // Set items yang dipilih
-                setIsModalOpen(true); // Buka modal
+                setSelectedItems(items);
+                setIsModalOpen(true);
               }}
-            >
-              Show Items
-            </Button>
+              children={undefined}
+            />
+
+            {/* Lepas Memo */}
+            <Button
+              size="sm"
+              type="button"
+              variant="primary"
+              title="Lepas Memo"
+              onClick={() => handleDetachMemo(row.original)}
+              startIcon={<FaTasks size={12} />}
+              className="px-2 py-1 min-w-[32px]"
+              children={undefined}
+            />
+
+            {/* Cancel Suggestion Task */}
+            <Button
+              size="sm"
+              type="button"
+              variant="danger"
+              title="Cancel Suggestion Task"
+              onClick={() => handleDetachTransactionPicking(row.original)}
+              startIcon={<FaRegWindowClose size={12} />}
+              className="px-2 py-1 min-w-[32px]"
+              children={undefined}
+            />
           </div>
         );
       },
-    },
-    {
-      id: "actions",
-      header: "Action",
-      cell: ({ row }: { row: any }) => (
-        <div className="flex gap-2">
-          <Button
-            size="xsm"
-            type="button"
-            variant="primary"
-            onClick={() => handleDetachMemo(row.original)}
-            startIcon={<FaRegWindowClose className="size-5" />}
-          >
-            Lepas Memo
-          </Button>
-
-          <Button
-            size="xsm"
-            type="button"
-            variant="danger"
-            onClick={() => handleDetachTransactionPicking(row.original)}
-            startIcon={<FaTasks className="size-5" />}
-          >
-            Cancel Suggestion Task
-          </Button>
-        </div>
-      ),
     },
   ];
 
@@ -182,7 +180,6 @@ const DetachAttach: React.FC = () => {
   const handleDetachTransactionPicking = async (transaction: {
     transaction_pickings: any[];
   }) => {
-    
     // // Cek apakah transaction_pickings kosong
     // if (transaction.transaction_pickings.length === 0) {
     //   showErrorToast(
@@ -194,7 +191,6 @@ const DetachAttach: React.FC = () => {
     setSelectedTransaction(transaction); // Set transaksi yang dipilih
     setModalDetachOpen(true); // Buka modal
   };
-  
 
   return (
     <div className="p-6 space-y-6">

@@ -20,7 +20,7 @@ const CancelTransactionPickModal: React.FC<CancelTransactionPickModalProps> = ({
 }) => {
   const navigate = useNavigate();
   const [expandedItemId, setExpandedItemId] = useState<string | null>(null);
-  
+
   const handleCancelPicking = async (pickingId: string) => {
     if (!pickingId) return;
 
@@ -65,7 +65,7 @@ const CancelTransactionPickModal: React.FC<CancelTransactionPickModalProps> = ({
     <div className="fixed inset-0 z-[1050] flex items-center justify-center bg-black/70">
       <div className="bg-white w-[90vw] max-w-[1200px] max-h-[90vh] overflow-y-auto rounded-xl shadow-xl p-6 space-y-6">
         <h2 className="text-2xl font-bold text-center">
-          List Task & Scan Picking
+          Cancel List Task & Scan Picking
         </h2>
 
         {/* ===== TRANSACTION HEADER ===== */}
