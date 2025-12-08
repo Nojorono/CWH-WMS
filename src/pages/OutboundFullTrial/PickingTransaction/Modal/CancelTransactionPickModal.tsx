@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { memo, useState } from "react";
 import Button from "../../../../components/ui/button/Button";
 import { formatDateIndo } from "../../../../helper/FormatDate";
 import KeyValueCard from "../../Picking/Helper/KeyValueCard";
@@ -20,7 +20,7 @@ const CancelTransactionPickModal: React.FC<CancelTransactionPickModalProps> = ({
 }) => {
   const navigate = useNavigate();
   const [expandedItemId, setExpandedItemId] = useState<string | null>(null);
-
+  
   const handleCancelPicking = async (pickingId: string) => {
     if (!pickingId) return;
 
@@ -31,26 +31,26 @@ const CancelTransactionPickModal: React.FC<CancelTransactionPickModalProps> = ({
     if (!confirm) return;
 
     const transactionId = pickingId;
-    // try {
-    //   const token = localStorage.getItem("token");
-    //   const response = await fetch(
-    //     `${EndPoint}transaction-picking/${transactionId}/cancel`,
-    //     {
-    //       method: "PATCH",
-    //       headers: {
-    //         Authorization: `Bearer ${token}`,
-    //       },
-    //     }
-    //   );
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch(
+        `${EndPoint}transaction-picking/${transactionId}/cancel`,
+        {
+          method: "PATCH",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
-    //   if (!response.ok) {
-    //     throw new Error("Network response was not ok");
-    //   }
-    //   onRequestClose();
-    //   navigate("/picking_transaction");
-    // } catch (error) {
-    //   console.error("Error detaching transaction:", error);
-    // }
+      if (!response.ok) {
+        throw new Error("Network response was not ok");
+      }
+      onRequestClose();
+      navigate("/picking_transaction");
+    } catch (error) {
+      console.error("Error detaching transaction:", error);
+    }
   };
 
   if (!isOpen || !transactionData) return null;
@@ -72,6 +72,7 @@ const CancelTransactionPickModal: React.FC<CancelTransactionPickModalProps> = ({
         <KeyValueCard
           title="Transaction Details"
           data={{
+            memo_id: uiData.memo.id,
             memo_number: uiData.memo.number,
             status: uiData.memo.status,
             type: uiData.memo.type,
@@ -81,9 +82,9 @@ const CancelTransactionPickModal: React.FC<CancelTransactionPickModalProps> = ({
             requestor: uiData.memo.requestor,
             delivery_date: formatDateIndo(uiData.memo.deliveryDate),
             notes: uiData.memo.notes,
-            // sequence: uiData.memo.sequence,
           }}
           labelMap={{
+            memo_id: "Memo ID",
             memo_number: "Memo Number",
             status: "Status Memo",
             type: "Type",
@@ -93,7 +94,6 @@ const CancelTransactionPickModal: React.FC<CancelTransactionPickModalProps> = ({
             requestor: "Requestor",
             delivery_date: "Delivery Date",
             notes: "Notes",
-            // sequence: "Sequence",
           }}
         />
 
@@ -122,7 +122,7 @@ const CancelTransactionPickModal: React.FC<CancelTransactionPickModalProps> = ({
                       {item.sku} - {item.description}
                     </p>
                     <p className="text-sm text-gray-600">
-                      Planned: {item.plannedQty} {item.uom}
+                      Memo Plan: {item.plannedQty} {item.uom}
                     </p>
                   </div>
 
@@ -190,8 +190,9 @@ const CancelTransactionPickModal: React.FC<CancelTransactionPickModalProps> = ({
                         />
                       ))
                     ) : (
-                      <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg text-sm text-yellow-800">
-                        This item does not have picking data yet.
+                      <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-sm text-red-800">
+                        This item does not have Suggestion Location Picking data
+                        yet!
                       </div>
                     )}
 
@@ -255,7 +256,7 @@ const CancelTransactionPickModal: React.FC<CancelTransactionPickModalProps> = ({
                         ))
                     ) : (
                       <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-sm text-red-800">
-                        This item has not been scanned yet.
+                        This item has not been scanned yet!
                       </div>
                     )}
                   </div>

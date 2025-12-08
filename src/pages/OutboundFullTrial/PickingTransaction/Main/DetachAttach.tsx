@@ -48,7 +48,10 @@ const DetachAttach: React.FC = () => {
   const [selectedItems, setSelectedItems] = useState<any[]>([]); // State untuk menyimpan item yang dipilih
 
   // Mapping outbound_memos dari params
-  const outboundMemos = params?.outbound_memos || [];
+  const outboundMemos = params?.outbound_memos || [];  
+
+  console.log("Outbound Memos:", outboundMemos);
+  
 
   const columnsTableItem = [
     { accessorKey: "outbound_memo_number", header: "Memo No" },
@@ -60,16 +63,6 @@ const DetachAttach: React.FC = () => {
       header: "Delivery Date",
       cell: ({ row }: any) => formatDateIndo(row.original.delivery_date),
     },
-    // { accessorKey: "requestor", header: "Requestor" },
-    // {
-    //   accessorKey: "status",
-    //   header: "Status",
-    //   cell: ({ row }: any) => (
-    //     <span className="bg-green-100 text-green-700 px-2 py-1 rounded-md text-sm font-medium">
-    //       {row.original.status}
-    //     </span>
-    //   ),
-    // },
     {
       accessorKey: "type",
       header: "Type Outbound",
@@ -139,10 +132,9 @@ const DetachAttach: React.FC = () => {
             type="button"
             variant="danger"
             onClick={() => handleDetachTransactionPicking(row.original)}
-            disabled={row.original.transaction_pickings.length === 0} // Disable jika tidak ada transaction_pickings
             startIcon={<FaTasks className="size-5" />}
           >
-            Cancel Task
+            Cancel Suggestion Task
           </Button>
         </div>
       ),
@@ -190,49 +182,19 @@ const DetachAttach: React.FC = () => {
   const handleDetachTransactionPicking = async (transaction: {
     transaction_pickings: any[];
   }) => {
-    // Cek apakah transaction_pickings kosong
-    if (transaction.transaction_pickings.length === 0) {
-      showErrorToast(
-        "Tidak ada transaksi picking yang dapat di-detach dalam Memo ini."
-      );
-      return; // Tidak membuka modal
-    }
+    
+    // // Cek apakah transaction_pickings kosong
+    // if (transaction.transaction_pickings.length === 0) {
+    //   showErrorToast(
+    //     "Tidak ada transaksi picking yang dapat di-detach dalam Memo ini."
+    //   );
+    //   return; // Tidak membuka modal
+    // }
 
     setSelectedTransaction(transaction); // Set transaksi yang dipilih
     setModalDetachOpen(true); // Buka modal
   };
-
-  // const detachTransactionPicking = async (transactionId: string) => {
-  //   console.log("Detaching transaction picking with ID: " + transactionId);
-  //   // const memoId = selectedTransaction?.id; // Ambil memoId dari selectedTransaction
-  //   // try {
-  //   //   const token = localStorage.getItem("token");
-  //   //   const response = await fetch(
-  //   //     `${EndPoint}transaction-picking/memo/${memoId}/detach`, // Ganti dengan endpoint yang sesuai
-  //   //     {
-  //   //       method: "PATCH",
-  //   //       headers: {
-  //   //         Authorization: `Bearer ${token}`,
-  //   //       },
-  //   //     }
-  //   //   );
-
-  //   //   if (!response.ok) {
-  //   //     throw new Error("Network response was not ok");
-  //   //   }
-  //   //   setModalDetachOpen(false); // Tutup modal setelah detach
-  //   //   navigate("/picking_transaction");
-  //   // } catch (error) {
-  //   //   console.error("Error detaching transaction:", error);
-  //   // }
-  // };
-
-  // const handleAttachTransactionPicking = async (transaction: any[]) => {
-  //   console.log("Attaching transaction picking to memo:", transaction);
-
-  //   setSelectedTransaction(transaction);
-  //   setIsAttachTransactionModalOpen(true);
-  // };
+  
 
   return (
     <div className="p-6 space-y-6">
@@ -272,7 +234,7 @@ const DetachAttach: React.FC = () => {
       {/* === MEMO List === */}
       <section className="bg-white rounded-xl shadow-sm border border-gray-200">
         <div className="bg-orange-500 text-white rounded-t-xl px-5 py-3 font-semibold">
-          Memo List Transaction
+          Memo Transaction List
         </div>
         <div className="p-4">
           <>

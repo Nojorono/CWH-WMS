@@ -93,7 +93,7 @@ const AdjustTable = ({
     []
   );
 
-  const handleAdjust = (data: OutboundDo) => {
+  const handleAdjust = (data: OutboundDo) => {    
     navigate("/outbound_do/detach_attach", {
       state: {
         params: data,

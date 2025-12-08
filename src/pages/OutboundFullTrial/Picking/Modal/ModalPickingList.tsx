@@ -129,7 +129,7 @@ function ModalPickingList({ open, onClose, memoId }: Props) {
       <div className="bg-white w-[98vw] max-w-[1300px] max-h-[96vh] overflow-y-auto rounded-xl shadow-lg relative">
         {/* 🔘 Header */}
         <div className="sticky top-0 bg-orange-500 text-white px-6 py-3 rounded-t-xl flex justify-between items-center">
-          <h2 className="text-lg font-semibold">📦 Picking List</h2>
+          <h2 className="text-lg font-semibold">📦 Submitted Picking List</h2>
           <button
             onClick={onClose}
             className="bg-white/20 hover:bg-white/40 text-white rounded-full p-1 px-3 font-bold"

@@ -1,181 +1,12 @@
-// import React from "react";
-// import Button from "../../../../components/ui/button/Button";
-
-// interface TransactionPickingsModalProps {
-//   isOpen: boolean;
-//   onRequestClose: () => void;
-//   items: any[];
-// }
-
-// const TransactionPickingsModal: React.FC<TransactionPickingsModalProps> = ({
-//   isOpen,
-//   onRequestClose,
-//   items,
-// }) => {
-//   console.log("Transaction Items:", items);
-
-//   if (!isOpen) return null;
-
-//   return (
-//     <div className="fixed inset-0 z-[1050] flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
-//       <div className="bg-white w-[95vw] max-w-[950px] rounded-2xl shadow-2xl p-8 overflow-y-auto max-h-[85vh]">
-//         <h2 className="text-xl font-bold text-gray-800 mb-4">
-//           Transaction Picking Details
-//         </h2>
-
-//         {items.length === 0 ? (
-//           <p className="text-gray-500 text-sm">
-//             No transaction items available
-//           </p>
-//         ) : (
-//           <div className="space-y-5">
-//             {items.map((trx: any) => (
-//               <div
-//                 key={trx.id}
-//                 className="rounded-xl border border-gray-200 bg-gray-50 p-5 shadow-sm"
-//               >
-//                 {/* ITEM HEADER */}
-//                 <div className="flex justify-between items-start mb-4">
-//                   <div>
-//                     <p className="text-sm text-gray-500">Item</p>
-//                     <p className="font-semibold text-gray-800">
-//                       {trx.item?.description} ({trx.item?.sku})
-//                     </p>
-//                     <p className="text-xs text-gray-600">
-//                       Item Number: {trx.item?.item_number}
-//                     </p>
-//                   </div>
-//                   <span
-//                     className={`px-3 py-1 rounded-full text-xs font-semibold ${
-//                       trx.status === "PENDING"
-//                         ? "bg-yellow-100 text-yellow-700"
-//                         : "bg-blue-100 text-blue-700"
-//                     }`}
-//                   >
-//                     {trx.status}
-//                   </span>
-//                 </div>
-
-//                 {/* GRID INFO */}
-//                 <div className="grid grid-cols-2 gap-y-3 gap-x-6 text-sm">
-//                   <div>
-//                     <strong>Quantity:</strong> {trx.quantity} {trx.uom}
-//                   </div>
-
-//                   <div>
-//                     <strong>Week Number:</strong> {trx.week_number}
-//                   </div>
-
-//                   <div>
-//                     <strong>Source Warehouse Sub:</strong>{" "}
-//                     {trx.sourceWarehouseSub?.name}
-//                   </div>
-
-//                   <div>
-//                     <strong>Source Bin:</strong> {trx.sourceBin?.name}
-//                   </div>
-
-//                   <div>
-//                     <strong>Destination Warehouse Sub:</strong>{" "}
-//                     {trx.destinationWarehouseSub?.name}
-//                   </div>
-
-//                   <div>
-//                     <strong>Destination Bin:</strong> {trx.destinationBin?.name}
-//                   </div>
-//                 </div>
-
-//                 {/* LINE BREAK */}
-//                 <hr className="my-4" />
-
-//                 {/* SCAN TRANSACTION */}
-//                 <div>
-//                   <p className="font-semibold text-gray-700 mb-2">
-//                     Transaction Scan Picking:
-//                   </p>
-
-//                   {trx.transactionScanPicking.length === 0 ? (
-//                     <p className="text-red-500 text-sm">
-//                       Belum ada data scan picking
-//                     </p>
-//                   ) : (
-//                     <div className="space-y-3">
-//                       {trx.transactionScanPicking.map((scan: any) => (
-//                         <div
-//                           key={scan.id}
-//                           className="p-4 bg-white border border-gray-200 rounded-xl shadow-sm"
-//                         >
-//                           <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm">
-//                             <div>
-//                               <strong>Pallet Source:</strong>{" "}
-//                               {scan.palletSource?.pallet_code}
-//                             </div>
-
-//                             <div>
-//                               <strong>Pallet Use:</strong>{" "}
-//                               {scan.palletUse?.pallet_code}
-//                             </div>
-
-//                             <div>
-//                               <strong>Qty Picked:</strong>{" "}
-//                               {scan.quantity_picked}
-//                             </div>
-
-//                             <div>
-//                               <strong>UOM:</strong> {scan.uom}
-//                             </div>
-
-//                             <div>
-//                               <strong>User:</strong> {scan.user_name}
-//                             </div>
-
-//                             <div>
-//                               <strong>Inspection By:</strong>{" "}
-//                               {scan.inspection_by}
-//                             </div>
-
-//                             <div>
-//                               <strong>Status:</strong>{" "}
-//                               <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded-md text-xs">
-//                                 {scan.status}
-//                               </span>
-//                             </div>
-
-//                             <div>
-//                               <strong>Week:</strong> {scan.week_number}
-//                             </div>
-//                           </div>
-//                         </div>
-//                       ))}
-//                     </div>
-//                   )}
-//                 </div>
-//               </div>
-//             ))}
-//           </div>
-//         )}
-
-//         <div className="p-4 text-right rounded-b-2xl sticky bottom-0">
-//           <Button onClick={onRequestClose} variant="danger">
-//             Close
-//           </Button>
-//         </div>
-//       </div>
-//     </div>
-//   );
-// };
-
-// export default TransactionPickingsModal;
-
-
-
-import React from "react";
+import React, { useState } from "react";
 import Button from "../../../../components/ui/button/Button";
+import KeyValueCard from "../../Picking/Helper/KeyValueCard";
+import { FaChevronDown, FaChevronUp } from "react-icons/fa";
 
 interface TransactionPickingsModalProps {
   isOpen: boolean;
   onRequestClose: () => void;
-  items: any[] | any; // bisa single object atau array
+  items: any[] | any;
 }
 
 const TransactionPickingsModal: React.FC<TransactionPickingsModalProps> = ({
@@ -185,161 +16,178 @@ const TransactionPickingsModal: React.FC<TransactionPickingsModalProps> = ({
 }) => {
   if (!isOpen) return null;
 
-  // --- NORMALISASI DATA (SELALU JADI ARRAY) ---
-  const normalizedItems = Array.isArray(items)
-    ? items
-    : items
-    ? [items]
-    : [];
+  // Normalisasi data
+  const normalizedItems = Array.isArray(items) ? items : items ? [items] : [];
+
+  // State untuk expand per item (by index)
+  const [expandedMap, setExpandedMap] = useState<Record<number, boolean>>({});
+
+  const toggleExpand = (index: number) => {
+    setExpandedMap((prev) => ({
+      ...prev,
+      [index]: !prev[index],
+    }));
+  };
 
   return (
     <div className="fixed inset-0 z-[1050] flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
       <div className="bg-white w-[95vw] max-w-[950px] rounded-2xl shadow-2xl p-8 overflow-hidden max-h-[85vh] flex flex-col">
-
         {/* HEADER */}
-        <h2 className="text-xl font-bold text-gray-800 mb-4">
-          Transaction Picking Details
-        </h2>
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-xl font-bold text-gray-800">
+           Suggestions Data & Transaction Scan Picking Details
+          </h2>
+        </div>
 
         {/* BODY */}
-        <div className="overflow-y-auto pr-2 space-y-5 flex-1">
-
+        <div className="overflow-y-auto pr-2 space-y-4 flex-1">
           {normalizedItems.length === 0 ? (
-            <p className="text-gray-500 text-sm">
-              No transaction items available
+            <p className="text-red-500 text-sm">
+              No Suggestion & Transaction scan items yet!
             </p>
           ) : (
-            normalizedItems.map((trx: any, idx: number) => (
-              <div
-                key={trx.id || idx}
-                className="rounded-xl border border-gray-200 bg-gray-50 p-5 shadow-sm"
-              >
-                {/* ITEM HEADER */}
-                <div className="flex justify-between items-start mb-4">
-                  <div>
-                    <p className="text-sm text-gray-500">Item</p>
-                    <p className="font-semibold text-gray-800">
-                      {trx?.item?.description ?? "-"} ({trx?.item?.sku ?? "-"})
-                    </p>
-                    <p className="text-xs text-gray-600">
-                      Item Number: {trx?.item?.item_number ?? "-"}
-                    </p>
-                  </div>
+            normalizedItems.map((trx: any, idx: number) => {
+              const isOpenItem = expandedMap[idx] ?? false;
 
-                  <span
-                    className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                      trx?.status === "PENDING"
+              return (
+                <div
+                  key={trx.id || idx}
+                  className="border border-gray-200 rounded-2xl bg-white shadow-sm"
+                >
+                  {/* CLICKABLE HEADER */}
+                    <button
+                    type="button"
+                    onClick={() => toggleExpand(idx)}
+                    className="w-full flex justify-between items-center p-5 hover:bg-gray-50 transition bg-blue-100"
+                    >
+                    <div className="text-left">
+                      <p className="font-semibold text-gray-800">
+                      {trx?.item?.description ?? "-"}
+                      <span className="text-sm text-gray-500 ml-2">
+                        ({trx?.item?.sku ?? "-"})
+                      </span>
+                      </p>
+                      <p className="text-xs text-gray-500">
+                      Qty: {trx?.quantity ?? "-"} {trx?.uom}
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                      <span
+                      className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                        trx?.status === "PENDING"
                         ? "bg-yellow-100 text-yellow-700"
-                        : "bg-blue-100 text-blue-700"
-                    }`}
-                  >
-                    {trx?.status ?? "-"}
-                  </span>
-                </div>
+                        : trx?.status === "INSPECTION"
+                        ? "bg-blue-100 text-blue-700"
+                        : "bg-red-200 text-red-700"
+                      }`}
+                      >
+                      {trx?.status ?? "-"}
+                      </span>
 
-                {/* GRID INFO */}
-                <div className="grid grid-cols-2 gap-y-3 gap-x-6 text-sm">
-                  <div>
-                    <strong>Quantity:</strong> {trx?.quantity ?? "-"} {trx?.uom}
-                  </div>
+                      {isOpenItem ? (
+                      <FaChevronUp className="text-gray-500" />
+                      ) : (
+                      <FaChevronDown className="text-gray-500" />
+                      )}
+                    </div>
+                    </button>
 
-                  <div>
-                    <strong>Week Number:</strong> {trx?.week_number ?? "-"}
-                  </div>
+                  {/* EXPANDABLE CONTENT */}
+                  {isOpenItem && (
+                    <div className="px-5 pb-6 space-y-5 border-t border-gray-100">
+                      {/* ITEM INFO */}
+                      <div className="pt-4">
+                        <KeyValueCard
+                          title="Transaction Info"
+                          data={{
+                            quantity: `${trx?.quantity ?? "-"} ${
+                              trx?.uom ?? ""
+                            }`,
+                            week_number: trx?.week_number ?? "-",
+                            status: trx?.status ?? "-",
+                          }}
+                          labelMap={{
+                            quantity: "Quantity Plan",
+                            week_number: "Week Number",
+                            status: "Status",
+                          }}
+                        />
+                      </div>
 
-                  <div>
-                    <strong>Source Warehouse Sub:</strong>{" "}
-                    {trx?.sourceWarehouseSub?.name ?? "-"}
-                  </div>
+                      {/* LOCATION INFO */}
+                      <KeyValueCard
+                        title="Location Info"
+                        data={{
+                          source_warehouse:
+                            trx?.sourceWarehouseSub?.name ?? "-",
+                          source_bin:
+                            trx?.sourceBin?.name ?? trx?.sourceBin?.code ?? "-",
+                          destination_warehouse:
+                            trx?.destinationWarehouseSub?.name ?? "-",
+                          destination_bin:
+                            trx?.destinationBin?.name ??
+                            trx?.destinationBin?.code ??
+                            "-",
+                        }}
+                        labelMap={{
+                          source_warehouse: "Source Location",
+                          source_bin: "Source Bin",
+                          destination_warehouse: "Destination Location",
+                          destination_bin: "Destination Bin",
+                        }}
+                      />
 
-                  <div>
-                    <strong>Source Bin:</strong>{" "}
-                    {trx?.sourceBin?.name ?? trx?.sourceBin?.code ?? "-"}
-                  </div>
+                      {/* SCANS */}
+                      <div className="space-y-3">
+                        <h4 className="font-semibold text-gray-800">
+                          Transaction Scan Picking
+                        </h4>
 
-                  <div>
-                    <strong>Destination Warehouse Sub:</strong>{" "}
-                    {trx?.destinationWarehouseSub?.name ?? "-"}
-                  </div>
-
-                  <div>
-                    <strong>Destination Bin:</strong>{" "}
-                    {trx?.destinationBin?.name ?? trx?.destination_bin_id ?? "-"}
-                  </div>
-                </div>
-
-                <hr className="my-4" />
-
-                {/* SCAN TRANSACTION */}
-                <div>
-                  <p className="font-semibold text-gray-700 mb-2">
-                    Transaction Scan Picking:
-                  </p>
-
-                  {(!trx?.transactionScanPicking ||
-                    trx.transactionScanPicking.length === 0) ? (
-                    <p className="text-red-500 text-sm">
-                      Belum ada data scan picking
-                    </p>
-                  ) : (
-                    <div className="space-y-3">
-                      {trx.transactionScanPicking.map((scan: any) => (
-                        <div
-                          key={scan.id}
-                          className="p-4 bg-white border border-gray-200 rounded-xl shadow-sm"
-                        >
-                          <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm">
-                            <div>
-                              <strong>Pallet Source:</strong>{" "}
-                              {scan?.palletSource?.pallet_code ?? "-"}
-                            </div>
-
-                            <div>
-                              <strong>Pallet Use:</strong>{" "}
-                              {scan?.palletUse?.pallet_code ?? "-"}
-                            </div>
-
-                            <div>
-                              <strong>Qty Picked:</strong>{" "}
-                              {scan?.quantity_picked ?? "-"}
-                            </div>
-
-                            <div>
-                              <strong>UOM:</strong> {scan?.uom ?? "-"}
-                            </div>
-
-                            <div>
-                              <strong>User:</strong> {scan?.user_name ?? "-"}
-                            </div>
-
-                            <div>
-                              <strong>Inspection By:</strong>{" "}
-                              {scan?.inspection_by ?? "-"}
-                            </div>
-
-                            <div>
-                              <strong>Status:</strong>{" "}
-                              <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded-md text-xs">
-                                {scan?.status ?? "-"}
-                              </span>
-                            </div>
-
-                            <div>
-                              <strong>Week:</strong> {scan?.week_number ?? "-"}
-                            </div>
-                          </div>
-                        </div>
-                      ))}
+                        {!trx?.transactionScanPicking ||
+                        trx.transactionScanPicking.length === 0 ? (
+                          <p className="text-red-500 text-sm italic">
+                            Belum ada data scan picking
+                          </p>
+                        ) : (
+                          trx.transactionScanPicking.map((scan: any) => (
+                            <KeyValueCard
+                              key={scan.id}
+                              title={`Scan ${
+                                scan?.palletUse?.pallet_code ?? "-"
+                              }`}
+                              data={{
+                                pallet_source:
+                                  scan?.palletSource?.pallet_code ?? "-",
+                                pallet_use: scan?.palletUse?.pallet_code ?? "-",
+                                quantity_picked: scan?.quantity_picked ?? "-",
+                                uom: scan?.uom ?? "-",
+                                week_number: scan?.week_number ?? "-",
+                                user: scan?.user_name ?? "-",
+                                inspection_by: scan?.inspection_by ?? "-",
+                                status: scan?.status ?? "-",
+                              }}
+                              labelMap={{
+                                pallet_source: "Pallet Source",
+                                pallet_use: "Pallet Use",
+                                quantity_picked: "Qty Picked",
+                                week_number: "Week",
+                                inspection_by: "Inspection By",
+                              }}
+                            />
+                          ))
+                        )}
+                      </div>
                     </div>
                   )}
                 </div>
-              </div>
-            ))
+              );
+            })
           )}
         </div>
 
-        {/* FOOTER STICKY */}
-        <div className="pt-4 text-right bg-white sticky bottom-0 border-t">
+        {/* FOOTER */}
+        <div className="pt-4 text-right bg-white sticky bottom-0 border-t mt-4">
           <Button onClick={onRequestClose} variant="danger">
             Close
           </Button>

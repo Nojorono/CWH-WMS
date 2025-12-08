@@ -1,132 +1,155 @@
-import { OutboundMemo } from "../../../../DynamicAPI/types/DeliverOrderTypes";
-
-export interface OutboundDo {
+// ===== Pallet
+export interface Pallet {
     id: string;
-    createdAt: string;
-    updatedAt: string;
-    deletedAt: string | null;
-    outbound_do_number: string;
-    expedition: string;
-    origin: string;
-    license_plate: string;
-    driver_name: string;
-    driver_phone: string;
-    status: string;
-    outbound_type: string;
-    delivery_date: string;
-    memo_id: string[];
-    memo_sequence: string[];
-    outbound_memos: OutboundMemo[];
-    transaction_pickings: TransactionPicking[]; // Update this line
+    pallet_code: string;
+    capacity?: number;
+    isActive?: boolean;
+    isFull?: boolean;
+    uom?: string;
+    currentQuantity?: number;
+    currentWeekNumber?: number;
 }
 
-export interface TransactionPicking {
-    id: string;
-    createdAt: string;
-    updatedAt: string;
-    deletedAt: string | null;
-    do_id: string;
-    memo_id: string;
-    item_id: string;
-    item: Item; // Add this line
-    source_warehouse_sub_id: string;
-    sourceWarehouseSub: WarehouseSub; // Add this line
-    source_bin_id: string;
-    sourceBin: Bin; // Add this line
-    destination_warehouse_sub_id: string;
-    destinationWarehouseSub: WarehouseSub; // Add this line
-    destination_bin_id: string;
-    destinationBin: Bin; // Add this line
-    quantity: number;
-    uom: string;
-    week_number: number;
-    status: string;
-    transactionScanPicking: TransactionScanPicking[]; // Add this line
-}
-
-export interface Item {
-    id: string;
-    createdAt: string;
-    updatedAt: string;
-    deletedAt: string | null;
-    sku: string;
-    item_number: string;
-    description: string;
-    inventory_item_id: string;
-    dus_per_stack: number | null;
-    bal_per_dus: number | null;
-    press_per_bal: number | null;
-    bks_per_press: number | null;
-    btg_per_bks: number | null;
-    organization_id: string | null;
-}
-
+// ===== Warehouse Sub
 export interface WarehouseSub {
     id: string;
-    createdAt: string;
-    updatedAt: string;
-    deletedAt: string | null;
-    organization_id: number;
-    warehouse_id: string;
     name: string;
     code: string;
-    description: string;
-    capacity_bin: number | null;
-    barcode_image_url: string | null;
-    is_staging: boolean | null;
-    is_good_stock: boolean;
+    description?: string;
+    barcode_image_url?: string;
 }
 
-export interface Bin {
+// ===== Bin
+export interface WarehouseBin {
     id: string;
-    createdAt: string;
-    updatedAt: string;
-    deletedAt: string | null;
-    organization_id: number;
-    warehouse_sub_id: string;
     name: string;
     code: string;
-    description: string;
-    capacity_pallet: number | null;
-    barcode_image_url: string | null;
-    current_pallet: number | null;
+    description?: string;
+    barcode_image_url?: string;
 }
 
+// ===== Scan Picking
 export interface TransactionScanPicking {
     id: string;
-    createdAt: string;
-    updatedAt: string;
-    deletedAt: string | null;
-    transaction_picking_id: string;
-    pallet_source_id: string;
-    palletSource: Pallet; // Add this line
-    pallet_use_id: string;
-    palletUse: Pallet; // Add this line
-    pallet_switch_id: string | null;
-    palletSwitch: Pallet | null; // Add this line
-    item_id: string;
-    item: Item; // Add this line
+    palletSource?: Pallet | null;
+    palletUse?: Pallet | null;
+    palletSwitch?: Pallet | null;
     quantity_picked: number;
-    quantity_switch: number | null;
+    quantity_switch?: number | null;
     uom: string;
     week_number: number;
     status: string;
     user_id: string;
     user_name: string;
-    inspection_by: string;
+    inspection_by?: string;
 }
 
-export interface Pallet {
+// ===== Transaction Picking
+export interface TransactionPicking {
     id: string;
-    createdAt: string;
-    updatedAt: string;
-    deletedAt: string | null;
-    organization_id: number;
-    pallet_code: string;
-    capacity: number;
-    isActive: boolean;
-    isFull: boolean;
+    do_id: string;
+    memo_id: string;
+    item_id: string;
+    quantity: number;
     uom: string;
-    currentQuantity: number;
-    currentWeekNumber: number;
+    week_number: number;
+    status: string;
+
+    item?: {
+        id: string;
+        sku: string;
+        item_number: string;
+        description: string;
+    };
+
+    sourceWarehouseSub?: WarehouseSub;
+    sourceBin?: WarehouseBin;
+    destinationWarehouseSub?: WarehouseSub;
+    destinationBin?: WarehouseBin;
+
+    transactionScanPicking: TransactionScanPicking[];
+}
+
+// ===== Outbound Memo Item
+export interface OutboundMemoItem {
+    id: string;
+    outbound_memo_id: string;
+    item_id: string;
+    quantity_plan: number;
+    uom: string;
+
+    item?: {
+        id: string;
+        sku: string;
+        item_number: string;
+        description: string;
+    };
+
+    // UI Fields
+    hasTask?: boolean;       // apakah sudah ada picking
+    pickedQty?: number;      // total scan qty
+    remainingQty?: number;   // plan - picked
+}
+
+// ===== Picker
+export interface AssignedPicking {
+    id: string;
+    memo_id: string;
+    picking_user_id: string;
+    picking_name: string;
+    picking_phone: string;
+}
+
+// ===== Memo
+export interface OutboundMemo {
+    id: string;
+    outbound_memo_number: string;
+    requestor: string;
+    origin: string;
+    ship_to: string;
+    destination: string;
+    delivery_date: string;
+    status: string;
+    type: string;
+    notes: string;
+    has_do: boolean;
+    sequence: string;
+
+    outbound_memo_items: OutboundMemoItem[];
+    transaction_pickings: TransactionPicking[];
+    assigned_pickings: AssignedPicking[];
+}
+
+// ===== UI Friendly Item Group
+export interface UIItemRow {
+    item_id: string;
+    sku: string;
+    item_number: string;
+    description: string;
+    uom: string;
+
+    plannedQty: number;
+    pickedQty: number;
+    remainingQty: number;
+
+    hasTask: boolean;
+    pickings: TransactionPicking[];
+}
+
+// ===== DO
+export interface OutboundDo {
+    id: string;
+    outbound_do_number: string;
+    origin: string;
+    status: string;
+    outbound_type: string;
+    delivery_date: string;
+
+    memo_id: string[];
+    memo_sequence: string[];
+
+    outbound_memos: OutboundMemo[];
+
+    // UI agregat
+    uiItems?: UIItemRow[];
 }

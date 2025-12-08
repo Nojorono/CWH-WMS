@@ -209,9 +209,6 @@ export const PickingRowsTable: React.FC<PickingRowsTableProps> = ({
       key: "reserved_quantity",
       label: "Reserved Qty",
       override: true,
-      customRender: (row: { reserved_quantity: number }) => {
-        return row.reserved_quantity === 0 ? "" : row.reserved_quantity;
-      },
     },
     {
       key: "picked_qty",
@@ -225,7 +222,7 @@ export const PickingRowsTable: React.FC<PickingRowsTableProps> = ({
       {/* ---- TABLE HEADER ---- */}
       {compactRows.length === 0 ? (
         <div className="flex justify-center items-center py-4">
-          <span>Loading...</span>
+          <span>Belum ada Suggestion Location Items.</span>
         </div>
       ) : (
         <table className="min-w-full divide-y divide-gray-200 text-md">

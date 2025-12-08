@@ -165,44 +165,6 @@ const SuggestionTable: React.FC<SuggestionTableProps> = ({
           handleFetchSuggestions={handleFetchSuggestions}
         />
 
-        {/* === List Item Picking === */}
-        {/* <PickingRowsTable
-          compactRows={suggestions.flatMap((suggestion) =>
-            suggestion.suggested_locations.map(
-              (location: {
-                location_priority: string;
-                warehouse_sub_name: any;
-                uom: any;
-                bin_name: any;
-                quantity_ready_to_pick: any;
-                available_quantity: any;
-                required_quantity: any;
-                week_number: any;
-                production_date: any;
-                reserved_quantity: any;
-              }) => ({
-                note: suggestion.notes,
-                item_id: suggestion.item_id,
-                item_name: suggestion.item_name,
-                item_code: suggestion.item_code,
-                uom: location.uom,
-                zone: location.warehouse_sub_name,
-                bin: location.bin_name,
-                qty_plan: location.quantity_ready_to_pick,
-                required_quantity: location.required_quantity,
-                available_quantity: location.available_quantity,
-                remaining_quantity_needed: suggestion.remaining_quantity_needed,
-                reserved_quantity: location.reserved_quantity,
-                week_number: location.week_number,
-                production_date: formatDate(location.production_date),
-                location_priority: location.location_priority,
-              })
-            )
-          )}
-          quantities={quantities}
-          updateQty={updateQty}
-        /> */}
-
         <PickingRowsTable
           compactRows={suggestions.flatMap((suggestion) => {
             // kalau ada lokasi → mapping normal
