@@ -70,8 +70,23 @@ const DataTable = () => {
       { accessorKey: "name", header: "Zone Name" },
       { accessorKey: "code", header: "Code" },
       { accessorKey: "description", header: "Description" },
-      { accessorKey: "capacity_bin", header: "Bin Capacity" },
+      {
+        accessorKey: "capacity_bin",
+        header: "Bin Capacity",
+        cell: ({ row }: { row: { original: any } }) => {
+          return row.original.capacity_bin === 0
+            ? ""
+            : row.original.capacity_bin;
+        },
+      },
       { accessorKey: "is_staging", header: "Staging Area" },
+      {
+        accessorKey: "is_gate",
+        header: "Gate Area",
+        cell: ({ row }: { row: { original: any } }) => {
+          return row.original.is_gate ? "Yes" : "";
+        },
+      },
     ],
     [ioList, Warehouse]
   );
@@ -121,6 +136,11 @@ const DataTable = () => {
       validation: { required: "Required" },
     },
     {
+      name: "is_gate",
+      label: "Is Gate?",
+      type: "checkbox",
+    },
+    {
       name: "description",
       label: "Description",
       type: "text",
@@ -134,7 +154,9 @@ const DataTable = () => {
         min: { value: 0, message: "Harus >= 0" },
       },
       hiddenWhen: (values: any) =>
-        values.is_staging === "INBOUND" || values.is_staging === "OUTBOUND",
+        values.is_staging === "INBOUND" ||
+        values.is_staging === "OUTBOUND" ||
+        values.is_gate === true,
     },
   ];
 
@@ -149,6 +171,7 @@ const DataTable = () => {
       capacity_bin,
       barcode_image_url,
       is_staging,
+      is_gate,
     } = data;
 
     const payload: any = {
@@ -158,6 +181,7 @@ const DataTable = () => {
       code,
       description,
       barcode_image_url,
+      is_gate,
     };
 
     if (is_staging === "NO") {
@@ -183,6 +207,7 @@ const DataTable = () => {
       capacity_bin,
       barcode_image_url,
       is_staging,
+      is_gate,
     } = data;
 
     const payload: any = {

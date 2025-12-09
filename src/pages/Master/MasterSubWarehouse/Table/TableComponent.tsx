@@ -44,6 +44,8 @@ const DynamicTable = ({
 
   const handleDelete = useCallback(
     async (id: any) => {
+      console.log("Deleting id:", id);
+      
       await onDelete(id);
       await onRefresh();
     },
@@ -75,6 +77,13 @@ const DynamicTable = ({
               className="text-blue-500"
             >
               <FaEye />
+            </button>
+
+             <button
+              onClick={() => handleDelete(getRowId(row.original))}
+              className="text-red-500"
+            >
+              <FaTrash />
             </button>
           </div>
         ),
