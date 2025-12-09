@@ -4,12 +4,11 @@ import { ColumnDef } from "@tanstack/react-table";
 import TableComponent from "../Table/TableComponent";
 import { useNavigate } from "react-router-dom";
 import StatusBadge from "../../../../common/statusBadge";
-import {
-  STATUS_MAP_DO,
-} from "../../../../constants/statusMaps";
+import { STATUS_MAP_DO } from "../../../../constants/statusMaps";
 import { OutboundDo } from "../Helper/doTypes";
 import { useStoreOutboundDelivery } from "../../../../DynamicAPI/stores/Store/MasterStore";
 import { mapPickingTransactions } from "../Helper/mappedList";
+import { formatDateIndo } from "../../../../helper/FormatDate";
 
 type Props = {
   globalFilter?: string;
@@ -44,9 +43,9 @@ const AdjustTable = ({
 
   const columns: ColumnDef<OutboundDo>[] = useMemo(
     () => [
-      { accessorKey: "id", header: "DO Id" },
+      // { accessorKey: "id", header: "DO Id" },
+      // { accessorKey: "memo_id", header: "Memo Id" },
       { accessorKey: "outbound_do_number", header: "DO Number" },
-      { accessorKey: "memo_id", header: "Memo Id" },
       {
         accessorKey: "outbound_memos",
         header: "Memo Number",
@@ -57,6 +56,11 @@ const AdjustTable = ({
       },
       { accessorKey: "outbound_type", header: "Type" },
       { accessorKey: "origin", header: "Origin" },
+      {
+        accessorKey: "delivery_date",
+        header: "Delivery Date",
+        cell: ({ row }) => formatDateIndo(row.original.delivery_date),
+      },
       {
         accessorKey: "status",
         header: "Status",
@@ -93,7 +97,7 @@ const AdjustTable = ({
     []
   );
 
-  const handleAdjust = (data: OutboundDo) => {    
+  const handleAdjust = (data: OutboundDo) => {
     navigate("/outbound_do/detach_attach", {
       state: {
         params: data,

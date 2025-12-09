@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import Input from "../../../../components/form/input/InputField";
 import AdjustTable from "./AdjustMainTable";
 import Label from "../../../../components/form/Label";
 import { useDebounce } from "../../../../helper/useDebounce";
 import Select from "../../../../components/form/Select";
-import AttachTransactionTable from "../Main/AttachTransactionTable";
 import TabsSection from "../../../../components/wms-components/inbound-component/tabs/TabsSection";
+import AttachTransactionTable from "../Main/AttachTransactionTable";
+import Input from "../../../../components/form/input/InputField";
 
 const MainTable = () => {
   const navigate = useNavigate();
@@ -58,7 +58,7 @@ const MainTable = () => {
                 {/* === DO TRANSACTION === */}
                 <section className="bg-white rounded-xl shadow-sm border border-gray-200">
                   <div className="bg-orange-500 text-white rounded-t-xl px-5 py-3 font-semibold">
-                    List Transaction by DO
+                    List Transaction DO Picking
                   </div>
                   <div className="p-4">
                     <AdjustTable
@@ -70,22 +70,7 @@ const MainTable = () => {
                 </section>
               </>
             ),
-          },
-          // {
-          //   label: "Task List",
-          //   content: (
-          //     <>
-          //       <section className="bg-white rounded-xl shadow-sm border border-gray-200">
-          //         <div className="bg-orange-500 text-white rounded-t-xl px-5 py-3 font-semibold">
-          //           Task List
-          //         </div>
-          //         <div className="p-4">
-          //           <AttachTransactionTable />
-          //         </div>
-          //       </section>
-          //     </>
-          //   ),
-          // },
+          }
         ]}
         activeTab={activeTab}
         onTabChange={setActiveTab}

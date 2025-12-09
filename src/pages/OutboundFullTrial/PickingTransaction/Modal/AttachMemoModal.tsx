@@ -3,11 +3,14 @@ import Button from "../../../../components/ui/button/Button";
 import { useStoreOutboundMemo } from "../../../../DynamicAPI/stores/Store/MasterStore";
 import { useNavigate } from "react-router-dom";
 import { EndPoint } from "../../../../utils/EndPoint";
+import KeyValueCard from "../../Picking/Helper/KeyValueCard";
+import { formatDateIndo } from "../../../../helper/FormatDate";
+import { FaChevronRight } from "react-icons/fa";
 
 type AttachMemoModalProps = {
   isOpen: boolean;
   onRequestClose: () => void;
-  detailDO: any; // Ganti dengan tipe data yang sesuai
+  detailDO: any;
 };
 
 const AttachMemoModal: React.FC<AttachMemoModalProps> = ({
@@ -16,18 +19,12 @@ const AttachMemoModal: React.FC<AttachMemoModalProps> = ({
   detailDO,
 }) => {
   const navigate = useNavigate();
-  const [memoData, setMemoData] = React.useState<any>({}); // Ganti dengan tipe data yang sesuai
-  const { fetchUsingPagination, list, pagination } = useStoreOutboundMemo();
-
-  const [pageIndex, setPageIndex] = useState(0);
-  const [pageSize, setPageSize] = useState(100);
+  const [memoData, setMemoData] = React.useState<any>({});
+  const { fetchUsingPagination, list } = useStoreOutboundMemo();
 
   useEffect(() => {
-    if (!isOpen) return; // hanya fetch saat modal terbuka
-    setPageIndex(0); // reset pagination saat open
-    setPageSize(100);
+    if (!isOpen) return;
 
-    // pastikan fungsi tersedia sebelum call
     if (typeof fetchUsingPagination === "function") {
       fetchUsingPagination({
         page: 1,
@@ -35,18 +32,18 @@ const AttachMemoModal: React.FC<AttachMemoModalProps> = ({
         has_do: false,
       });
     }
-  }, [isOpen]); // depend hanya pada isOpen
+  }, [isOpen]);
 
   const handleClose = () => {
-    setMemoData({}); // Reset state memoData
-    onRequestClose(); // Panggil fungsi onRequestClose
+    setMemoData({});
+    onRequestClose();
   };
 
   const handleSubmit = async () => {
     const attachedMemoData = {
       memoId: memoData.id,
       do_id: detailDO.outbound_do_number,
-      sequence: "", // Menyertakan sequence jika ada
+      sequence: "",
     };
 
     try {
@@ -61,9 +58,8 @@ const AttachMemoModal: React.FC<AttachMemoModalProps> = ({
         }
       );
 
-      if (!response.ok) {
-        throw new Error("Network response was not ok");
-      }
+      if (!response.ok) throw new Error("Network response was not ok");
+
       handleClose();
       navigate("/picking_transaction");
     } catch (error) {
@@ -71,114 +67,226 @@ const AttachMemoModal: React.FC<AttachMemoModalProps> = ({
     }
   };
 
-  // Mendapatkan detail memo yang dipilih
+  // =================== DATA MERGING ===================
   const selectedMemo = list.find((memo: any) => memo.id === memoData.id);
 
-  if (!isOpen) return null; // Jika modal tidak terbuka, tidak render apa-apa
+  const selectedMemoFromDO = detailDO?.outbound_memos?.find(
+    (memo: any) => memo.id === memoData.id
+  );
+
+  const mergedSelectedMemo = selectedMemo
+    ? {
+        ...selectedMemo,
+        transaction_pickings: selectedMemoFromDO?.transaction_pickings || [],
+      }
+    : null;
+
+  if (!isOpen) return null;
+
+  console.log("Detail DO:", detailDO);
+  console.log("Selected Memo:", mergedSelectedMemo);
+  
 
   return (
-    <div className="fixed inset-0 z-[1050] flex items-center justify-center bg-black/70">
-      <div className="bg-white w-[90vw] max-w-[800px] max-h-[90vh] overflow-y-auto rounded-lg shadow-xl p-6">
-        <h2 className="text-lg font-semibold">
-          Attach Memo to {detailDO.outbound_do_number} - {detailDO.id}
-        </h2>
-        <div className="mt-4">
-          {/* Dropdown select untuk memo data */}
-          <select
-            className="border rounded p-2 w-full mb-4"
-            onChange={(e) => setMemoData({ ...memoData, id: e.target.value })}
-          >
-            <option value="">Select Memo</option>
-            {list.map((memo: any) => (
-              <option key={memo.id} value={memo.id}>
-                {memo.outbound_memo_number} - {memo.type}
-              </option>
-            ))}
-          </select>
+    <div className="fixed inset-0 z-[1050] flex items-center justify-center bg-black/70 backdrop-blur-sm">
+      <div className="bg-white w-[95vw] max-w-[950px] max-h-[90vh] overflow-y-auto rounded-2xl shadow-2xl p-6 space-y-5">
+        {/* TITLE */}
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-bold text-gray-800">
+            Attach Memo to{" "}
+            <span className="text-orange-600">
+              {detailDO.outbound_do_number}
+            </span>
+          </h2>
         </div>
 
-        {/* Card untuk menampilkan detail memo */}
-        {selectedMemo && (
-          <div className="mt-4 p-4 rounded-xl border bg-gray-50 shadow">
-            <h3 className="text-lg font-semibold mb-2 text-blue-700">
-              Detail Memo
-            </h3>
-            <div className="grid grid-cols-2 gap-2 text-gray-700 text-sm">
-              <div>
-                <strong>Memo Number:</strong>{" "}
-                {selectedMemo.outbound_memo_number}
-              </div>
-              <div>
-                <strong>Type:</strong> {selectedMemo.type}
-              </div>
-              <div>
-                <strong>Status:</strong> {selectedMemo.status}
-              </div>
-              <div>
-                <strong>Requestor:</strong> {selectedMemo.requestor}
-              </div>
-              <div>
-                <strong>Notes:</strong> {selectedMemo.notes}
-              </div>
-              <div>
-                <strong>Has DO Number:</strong>{" "}
-                {selectedMemo.has_do ? "Yes" : "No"}
-              </div>
+        {/* SELECT MEMO */}
+        <select
+          className="border rounded-xl p-2.5 w-full focus:outline-none focus:ring-2 focus:ring-orange-400 transition"
+          onChange={(e) => setMemoData({ ...memoData, id: e.target.value })}
+        >
+          <option value="">Select Memo</option>
+          {list.map((memo: any) => (
+            <option key={memo.id} value={memo.id}>
+              {memo.outbound_memo_number} - {memo.type}
+            </option>
+          ))}
+        </select>
+
+        {/* DETAIL MEMO */}
+        {mergedSelectedMemo && (
+          <div className="bg-gray-50 p-4 rounded-2xl border space-y-6 shadow-inner">
+            {/* MEMO HEADER */}
+            <KeyValueCard
+              title="Memo Details"
+              data={{
+                outbound_memo_number: mergedSelectedMemo.outbound_memo_number,
+                requestor: mergedSelectedMemo.requestor,
+                origin: mergedSelectedMemo.origin,
+                ship_to: mergedSelectedMemo.ship_to,
+                destination: mergedSelectedMemo.destination,
+                type: mergedSelectedMemo.type,
+                status: mergedSelectedMemo.status,
+                delivery_date: formatDateIndo(mergedSelectedMemo.delivery_date),
+                has_do: mergedSelectedMemo.has_do ? "Yes" : "No",
+                notes: mergedSelectedMemo.notes,
+              }}
+              labelMap={{
+                outbound_memo_number: "Memo Number",
+                requestor: "Requestor",
+                origin: "Origin",
+                ship_to: "Ship To",
+                destination: "Destination",
+                type: "Type",
+                status: "Status",
+                delivery_date: "Delivery Date",
+                has_do: "Has DO",
+                notes: "Notes",
+              }}
+            />
+
+            {/* ITEMS */}
+            <div className="space-y-4">
+              {mergedSelectedMemo.outbound_memo_items?.map((item: any) => {
+                const relatedTransactions =
+                  mergedSelectedMemo.transaction_pickings?.filter(
+                    (trx: any) => trx.item_id === item.item_id
+                  ) || [];
+
+                return (
+                  <details
+                    key={item.id}
+                    className="group rounded-2xl bg-white border border-gray-200 shadow-sm overflow-hidden transition-all duration-300"
+                  >
+                    {/* HEADER */}
+                    <summary className="cursor-pointer list-none p-4 flex justify-between items-center bg-gradient-to-r from-blue-50 to-blue-100 hover:from-blue-100 hover:to-blue-200 transition">
+                      <div>
+                        <p className="font-semibold text-gray-800">
+                          {item.item?.description}
+                          <span className="ml-2 text-xs text-gray-500">
+                            ({item.item?.sku})
+                          </span>
+                        </p>
+                        <p className="text-xs text-gray-500 mt-0.5">
+                          Planned: {item.quantity_plan} {item.uom}
+                        </p>
+                      </div>
+
+                      <FaChevronRight className="transition-transform duration-300 group-open:rotate-90 text-blue-600" />
+                    </summary>
+
+                    {/* BODY */}
+                    <div className="p-4 border-t space-y-5 bg-white">
+                      {/* ITEM INFO */}
+                      <KeyValueCard
+                        title="Item Information"
+                        data={{
+                          sku: item.item?.sku,
+                          item_number: item.item?.item_number,
+                          quantity_plan: `${item.quantity_plan} ${item.uom}`,
+                        }}
+                        labelMap={{
+                          sku: "SKU",
+                          item_number: "Item Number",
+                          quantity_plan: "Planned Quantity",
+                        }}
+                      />
+
+                      {/* TRANSACTION INFO */}
+                      <div className="space-y-3">
+                        {relatedTransactions.length === 0 ? (
+                          <p className="text-sm text-gray-400 italic">
+                            No transactions
+                          </p>
+                        ) : (
+                          relatedTransactions.map((trx: any) => (
+                            <KeyValueCard
+                              key={trx.id}
+                              title={`Transaction ${trx.id.slice(0, 8)}...`}
+                              data={{
+                                quantity: `${trx.quantity} ${trx.uom}`,
+                                week_number: trx.week_number,
+                                status: trx.status,
+                                source_sub: trx.sourceWarehouseSub?.name,
+                                source_bin: trx.sourceBin?.name,
+                                destination_sub:
+                                  trx.destinationWarehouseSub?.name,
+                                destination_bin: trx.destinationBin?.name,
+                              }}
+                              labelMap={{
+                                quantity: "Quantity",
+                                week_number: "Week",
+                                status: "Status",
+                                source_sub: "Source Sub Warehouse",
+                                source_bin: "Source Bin",
+                                destination_sub: "Destination Sub Warehouse",
+                                destination_bin: "Destination Bin",
+                              }}
+                            />
+                          ))
+                        )}
+                      </div>
+
+                      {/* SCAN INFO */}
+                      <div>
+                        <h4 className="font-semibold text-gray-700 mb-2">
+                          Scan Picking Details
+                        </h4>
+
+                        {relatedTransactions.flatMap(
+                          (trx: any) => trx.transactionScanPicking || []
+                        ).length === 0 ? (
+                          <p className="text-sm text-gray-400 italic">
+                            No scan data
+                          </p>
+                        ) : (
+                          <div className="space-y-3">
+                            {relatedTransactions.flatMap((trx: any) =>
+                              trx.transactionScanPicking?.map((scan: any) => (
+                                <KeyValueCard
+                                  key={scan.id}
+                                  title={`Scan ${scan.id.slice(0, 8)}...`}
+                                  data={{
+                                    quantity_picked: `${scan.quantity_picked} ${scan.uom}`,
+                                    week_number: scan.week_number,
+                                    status: scan.status,
+                                    user_name: scan.user_name,
+                                    inspection_by: scan.inspection_by,
+                                  }}
+                                  labelMap={{
+                                    quantity_picked: "Qty Picked",
+                                    week_number: "Week",
+                                    status: "Status",
+                                    user_name: "Picked By",
+                                    inspection_by: "Inspection By",
+                                  }}
+                                />
+                              ))
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </details>
+                );
+              })}
             </div>
-
-            {/* Menampilkan detail item dari outbound_memo_items */}
-            <h4 className="mt-4 font-semibold">Detail Items:</h4>
-            <ul className="ml-4 list-disc">
-              {selectedMemo.outbound_memo_items.map((item: any) => (
-                <li key={item.id} className="mb-2">
-                  <div>
-                    <strong>Item Description:</strong> {item.item.description}
-                  </div>
-                  <div>
-                    <strong>SKU:</strong> {item.item.sku}
-                  </div>
-                  <div>
-                    <strong>Quantity Plan:</strong> {item.quantity_plan}{" "}
-                    {item.uom}
-                  </div>
-                </li>
-              ))}
-            </ul>
-
-            {/* Menampilkan detail transaction_pickings jika ada */}
-            {selectedMemo.transaction_pickings.length > 0 && (
-              <>
-                <h4 className="mt-4 font-semibold">Transaction Pickings:</h4>
-                <ul className="ml-4 list-disc">
-                  {selectedMemo.transaction_pickings.map((trx: any) => (
-                    <li key={trx.id} className="mb-2">
-                      <div>
-                        <strong>Transaction ID:</strong> {trx.id}
-                      </div>
-                      <div>
-                        <strong>Quantity:</strong> {trx.quantity} {trx.uom}
-                      </div>
-                      <div>
-                        <strong>Week Number:</strong> {trx.week_number}
-                      </div>
-                      <div>
-                        <strong>Status:</strong> {trx.status}
-                      </div>
-                      {/* Tambahkan detail lain dari transaction jika diperlukan */}
-                    </li>
-                  ))}
-                </ul>
-              </>
-            )}
           </div>
         )}
 
-        <div className="flex justify-end mt-4">
-          <Button type="button" variant="danger" onClick={handleClose}>
+        {/* FOOTER */}
+        <div className="flex justify-end gap-2 pt-5 border-t">
+          <Button
+            size="sm"
+            type="button"
+            variant="danger"
+            onClick={handleClose}
+          >
             Cancel
           </Button>
-          <div className="mx-2" />
+
           <Button
+            size="sm"
             type="button"
             variant="action"
             onClick={handleSubmit}
@@ -193,3 +301,255 @@ const AttachMemoModal: React.FC<AttachMemoModalProps> = ({
 };
 
 export default AttachMemoModal;
+
+// import React, { useEffect, useState } from "react";
+// import Button from "../../../../components/ui/button/Button";
+// import { useStoreOutboundMemo } from "../../../../DynamicAPI/stores/Store/MasterStore";
+// import { useNavigate } from "react-router-dom";
+// import { EndPoint } from "../../../../utils/EndPoint";
+// import KeyValueCard from "../../Picking/Helper/KeyValueCard";
+// import { formatDateIndo } from "../../../../helper/FormatDate";
+
+// type AttachMemoModalProps = {
+//   isOpen: boolean;
+//   onRequestClose: () => void;
+//   detailDO: any; // Ganti dengan tipe data yang sesuai
+// };
+
+// const AttachMemoModal: React.FC<AttachMemoModalProps> = ({
+//   isOpen,
+//   onRequestClose,
+//   detailDO,
+// }) => {
+//   const navigate = useNavigate();
+//   const [memoData, setMemoData] = React.useState<any>({}); // Ganti dengan tipe data yang sesuai
+//   const { fetchUsingPagination, list, pagination } = useStoreOutboundMemo();
+
+//   const [pageIndex, setPageIndex] = useState(0);
+//   const [pageSize, setPageSize] = useState(100);
+
+//   useEffect(() => {
+//     if (!isOpen) return; // hanya fetch saat modal terbuka
+//     setPageIndex(0); // reset pagination saat open
+//     setPageSize(100);
+
+//     // pastikan fungsi tersedia sebelum call
+//     if (typeof fetchUsingPagination === "function") {
+//       fetchUsingPagination({
+//         page: 1,
+//         limit: 100,
+//         has_do: false,
+//       });
+//     }
+//   }, [isOpen]); // depend hanya pada isOpen
+
+//   const handleClose = () => {
+//     setMemoData({}); // Reset state memoData
+//     onRequestClose(); // Panggil fungsi onRequestClose
+//   };
+
+//   const handleSubmit = async () => {
+//     const attachedMemoData = {
+//       memoId: memoData.id,
+//       do_id: detailDO.outbound_do_number,
+//       sequence: "", // Menyertakan sequence jika ada
+//     };
+
+//     try {
+//       const token = localStorage.getItem("token");
+//       const response = await fetch(
+//         `${EndPoint}outbound-do/${detailDO.id}/attach-memo?memoId=${memoData.id}&sequence=${attachedMemoData.sequence}`,
+//         {
+//           method: "PATCH",
+//           headers: {
+//             Authorization: `Bearer ${token}`,
+//           },
+//         }
+//       );
+
+//       if (!response.ok) {
+//         throw new Error("Network response was not ok");
+//       }
+//       handleClose();
+//       navigate("/picking_transaction");
+//     } catch (error) {
+//       console.error("Error Attaching Memo:", error);
+//     }
+//   };
+
+//   // Mendapatkan detail memo yang dipilih
+//   const selectedMemo = list.find((memo: any) => memo.id === memoData.id);
+
+//   if (!isOpen) return null; // Jika modal tidak terbuka, tidak render apa-apa
+
+//   console.log("Selected Memo:", selectedMemo);
+
+//   return (
+//     <div className="fixed inset-0 z-[1050] flex items-center justify-center bg-black/70">
+//       <div className="bg-white w-[90vw] max-w-[800px] max-h-[90vh] overflow-y-auto rounded-lg shadow-xl p-6">
+//         <h2 className="text-lg font-semibold">
+//           Attach Memo to {detailDO.outbound_do_number} - {detailDO.id}
+//         </h2>
+//         <div className="mt-4">
+//           {/* Dropdown select untuk memo data */}
+//           <select
+//             className="border rounded p-2 w-full mb-4"
+//             onChange={(e) => setMemoData({ ...memoData, id: e.target.value })}
+//           >
+//             <option value="">Select Memo</option>
+//             {list.map((memo: any) => (
+//               <option key={memo.id} value={memo.id}>
+//                 {memo.outbound_memo_number} - {memo.type}
+//               </option>
+//             ))}
+//           </select>
+//         </div>
+
+//         {/* Card untuk menampilkan detail memo */}
+//         {selectedMemo && (
+//           <div className="mt-4 p-4 rounded-xl border bg-gray-50 shadow space-y-6">
+//             {/* === MAIN MEMO INFO === */}
+//             <KeyValueCard
+//               title="Memo Details"
+//               data={{
+//                 outbound_memo_number: selectedMemo.outbound_memo_number,
+//                 requestor: selectedMemo.requestor,
+//                 origin: selectedMemo.origin,
+//                 ship_to: selectedMemo.ship_to,
+//                 destination: selectedMemo.destination,
+//                 type: selectedMemo.type,
+//                 status: selectedMemo.status,
+//                 delivery_date: formatDateIndo(selectedMemo.delivery_date),
+//                 has_do: selectedMemo.has_do ? "Yes" : "No",
+//                 notes: selectedMemo.notes,
+//               }}
+//               labelMap={{
+//                 outbound_memo_number: "Memo Number",
+//                 requestor: "Requestor",
+//                 origin: "Origin",
+//                 ship_to: "Ship To",
+//                 destination: "Destination",
+//                 type: "Type",
+//                 status: "Status",
+//                 delivery_date: "Delivery Date",
+//                 has_do: "Has DO",
+//                 notes: "Notes",
+//               }}
+//             />
+
+//             {/* === MEMO ITEMS === */}
+//             <div>
+//               <h4 className="font-semibold text-gray-800 mb-3">Memo Items</h4>
+
+//               <div className="space-y-3">
+//                 {selectedMemo.outbound_memo_items?.map((item: any) => (
+//                   <KeyValueCard
+//                     key={item.id}
+//                     title={item.item?.description || "Item"}
+//                     data={{
+//                       sku: item.item?.sku,
+//                       item_number: item.item?.item_number,
+//                       quantity_plan: `${item.quantity_plan} ${item.uom}`,
+//                     }}
+//                     labelMap={{
+//                       sku: "SKU",
+//                       item_number: "Item Number",
+//                       quantity_plan: "Planned Quantity",
+//                     }}
+//                   />
+//                 ))}
+//               </div>
+//             </div>
+
+//             {/* === TRANSACTION PICKINGS === */}
+//             <div>
+//               <h4 className="font-semibold text-gray-800 mb-3">
+//                 Transaction Pickings
+//               </h4>
+
+//               {selectedMemo.transaction_pickings?.length === 0 ? (
+//                 <p className="text-gray-500 italic text-sm">
+//                   No transaction pickings found
+//                 </p>
+//               ) : (
+//                 <div className="space-y-3">
+//                   {selectedMemo.transaction_pickings?.map((trx: any) => (
+//                     <KeyValueCard
+//                       key={trx.id}
+//                       title={`Transaction ${trx.id.slice(0, 8)}...`}
+//                       data={{
+//                         item_id: trx.item_id,
+//                         quantity: `${trx.quantity} ${trx.uom}`,
+//                         week_number: trx.week_number,
+//                         status: trx.status,
+//                         source_bin: trx.source_bin_id,
+//                         destination_bin: trx.destination_bin_id,
+//                       }}
+//                       labelMap={{
+//                         item_id: "Item ID",
+//                         quantity: "Quantity",
+//                         week_number: "Week Number",
+//                         status: "Status",
+//                         source_bin: "Source Bin",
+//                         destination_bin: "Destination Bin",
+//                       }}
+//                     />
+//                   ))}
+//                 </div>
+//               )}
+//             </div>
+
+//             {/* === SCAN PICKING (nested) === */}
+//             <div>
+//               <h4 className="font-semibold text-gray-800 mb-3">
+//                 Scan Picking Details
+//               </h4>
+
+//               {selectedMemo.transaction_pickings?.flatMap((trx: any) =>
+//                 trx.transactionScanPicking?.map((scan: any) => (
+//                   <KeyValueCard
+//                     key={scan.id}
+//                     title={`Scan ${scan.id.slice(0, 8)}...`}
+//                     data={{
+//                       item_id: scan.item_id,
+//                       quantity_picked: `${scan.quantity_picked} ${scan.uom}`,
+//                       week_number: scan.week_number,
+//                       status: scan.status,
+//                       user_name: scan.user_name,
+//                       inspection_by: scan.inspection_by,
+//                     }}
+//                     labelMap={{
+//                       item_id: "Item ID",
+//                       quantity_picked: "Qty Picked",
+//                       week_number: "Week Number",
+//                       status: "Status",
+//                       user_name: "Picked By",
+//                       inspection_by: "Inspected By",
+//                     }}
+//                   />
+//                 ))
+//               )}
+//             </div>
+//           </div>
+//         )}
+
+//         <div className="flex justify-end mt-4">
+//           <Button type="button" variant="danger" onClick={handleClose}>
+//             Cancel
+//           </Button>
+//           <div className="mx-2" />
+//           <Button
+//             type="button"
+//             variant="action"
+//             onClick={handleSubmit}
+//             disabled={!memoData.id}
+//           >
+//             Attach to this DO
+//           </Button>
+//         </div>
+//       </div>
+//     </div>
+//   );
+// };
+
+// export default AttachMemoModal;

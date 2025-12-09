@@ -19,6 +19,20 @@ const TransactionPickingsModal: React.FC<TransactionPickingsModalProps> = ({
   // Normalisasi data
   const normalizedItems = Array.isArray(items) ? items : items ? [items] : [];
 
+  // Sort items berdasarkan status
+  const sortedItems = normalizedItems.sort((a, b) => {
+    const statusOrder = {
+      PENDING: 1,
+      INSPECTION: 2,
+      CANCELLED: 3, // CANCELLED ditempatkan paling bawah
+    };
+
+    return (
+      (statusOrder[a.status as keyof typeof statusOrder] || 4) -
+      (statusOrder[b.status as keyof typeof statusOrder] || 4)
+    );
+  });
+
   // State untuk expand per item (by index)
   const [expandedMap, setExpandedMap] = useState<Record<number, boolean>>({});
 
@@ -35,18 +49,18 @@ const TransactionPickingsModal: React.FC<TransactionPickingsModalProps> = ({
         {/* HEADER */}
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-bold text-gray-800">
-           Suggestions Data & Transaction Scan Picking Details
+            Suggestions Data & Transaction Scan Picking Details
           </h2>
         </div>
 
         {/* BODY */}
         <div className="overflow-y-auto pr-2 space-y-4 flex-1">
-          {normalizedItems.length === 0 ? (
+          {sortedItems.length === 0 ? (
             <p className="text-red-500 text-sm">
               No Suggestion & Transaction scan items yet!
             </p>
           ) : (
-            normalizedItems.map((trx: any, idx: number) => {
+            sortedItems.map((trx: any, idx: number) => {
               const isOpenItem = expandedMap[idx] ?? false;
 
               return (
@@ -55,43 +69,43 @@ const TransactionPickingsModal: React.FC<TransactionPickingsModalProps> = ({
                   className="border border-gray-200 rounded-2xl bg-white shadow-sm"
                 >
                   {/* CLICKABLE HEADER */}
-                    <button
+                  <button
                     type="button"
                     onClick={() => toggleExpand(idx)}
                     className="w-full flex justify-between items-center p-5 hover:bg-gray-50 transition bg-blue-100"
-                    >
+                  >
                     <div className="text-left">
                       <p className="font-semibold text-gray-800">
-                      {trx?.item?.description ?? "-"}
-                      <span className="text-sm text-gray-500 ml-2">
-                        ({trx?.item?.sku ?? "-"})
-                      </span>
+                        {trx?.item?.description ?? "-"}
+                        <span className="text-sm text-gray-500 ml-2">
+                          ({trx?.item?.sku ?? "-"})
+                        </span>
                       </p>
                       <p className="text-xs text-gray-500">
-                      Qty: {trx?.quantity ?? "-"} {trx?.uom}
+                        Qty: {trx?.quantity ?? "-"} {trx?.uom}
                       </p>
                     </div>
 
                     <div className="flex items-center gap-3">
                       <span
-                      className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                        trx?.status === "PENDING"
-                        ? "bg-yellow-100 text-yellow-700"
-                        : trx?.status === "INSPECTION"
-                        ? "bg-blue-100 text-blue-700"
-                        : "bg-red-200 text-red-700"
-                      }`}
+                        className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                          trx?.status === "PENDING"
+                            ? "bg-yellow-100 text-yellow-700"
+                            : trx?.status === "INSPECTION"
+                            ? "bg-blue-100 text-blue-700"
+                            : "bg-red-200 text-red-700"
+                        }`}
                       >
-                      {trx?.status ?? "-"}
+                        {trx?.status ?? "-"}
                       </span>
 
                       {isOpenItem ? (
-                      <FaChevronUp className="text-gray-500" />
+                        <FaChevronUp className="text-gray-500" />
                       ) : (
-                      <FaChevronDown className="text-gray-500" />
+                        <FaChevronDown className="text-gray-500" />
                       )}
                     </div>
-                    </button>
+                  </button>
 
                   {/* EXPANDABLE CONTENT */}
                   {isOpenItem && (

@@ -16,6 +16,7 @@ import AttachMemoModal from "../Modal/AttachMemoModal"; //
 import { showErrorToast } from "../../../../components/toast";
 import Swal from "sweetalert2";
 import TransactionPickingsModal from "../Modal/DetailMemoModal";
+import KeyValueCard from "../../Picking/Helper/KeyValueCard";
 
 type MemoFormValues = {
   requestor: string;
@@ -192,39 +193,63 @@ const DetachAttach: React.FC = () => {
     setModalDetachOpen(true); // Buka modal
   };
 
+  console.log("Params DO:", params);
+
   return (
     <div className="p-6 space-y-6">
       <PageBreadcrumb
         breadcrumbs={[
           { title: "Picking Transaction", path: "/picking_transaction" },
-          { title: "Lepas Memo & Cancel Task Transaction", path: "#" },
+          { title: "Lepas Memo & Cancel Task", path: "#" },
         ]}
       />
 
-      {/* === Delivery Order Details === */}
       <section className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
-        <div className="flex space-x-8">
-          <div className="flex flex-col space-y-4">
-            <div className="flex flex-col">
-              <label className="font-semibold">Origin:</label>
-              <span>{params?.origin}</span>
-            </div>
-            <div className="flex flex-col">
-              <label className="font-semibold">Outbound Type:</label>
-              <span>{params?.outbound_type}</span>
-            </div>
-          </div>
-          <div className="flex flex-col space-y-4">
-            <div className="flex flex-col">
-              <label className="font-semibold">DO Id:</label>
-              <span>{params?.id}</span>
-            </div>
-            <div className="flex flex-col">
-              <label className="font-semibold">Outbound DO Number:</label>
-              <span>{params?.outbound_do_number}</span>
-            </div>
+        {/* HEADER + ACTIONS */}
+        <div className="flex items-center justify-between mb-5">
+          <h3 className="font-semibold text-gray-800 text-lg">
+            Delivery Order Details
+          </h3>
+
+          <div className="flex gap-2">
+            <Button
+              size="sm"
+              variant="secondary"
+              // onClick={() => handleApproveDO()}
+            >
+              Approve
+            </Button>
+
+            <Button
+              size="sm"
+              variant="danger"
+              // onClick={() => handleCancelDO()}
+            >
+              Cancel
+            </Button>
           </div>
         </div>
+
+        {/* KEY VALUE CONTENT */}
+        <KeyValueCard
+          title="" // <- kosongkan title bawaan
+          data={{
+            origin: params?.origin,
+            outbound_type: params?.outbound_type,
+            do_id: params?.id,
+            outbound_do_number: params?.outbound_do_number,
+            status: params?.status,
+            delivery_date: formatDateIndo(params?.delivery_date),
+          }}
+          labelMap={{
+            origin: "Origin",
+            outbound_type: "Outbound Type",
+            do_id: "DO ID",
+            outbound_do_number: "Outbound DO Number",
+            status: "Status",
+            delivery_date: "Delivery Date",
+          }}
+        />
       </section>
 
       {/* === MEMO List === */}
@@ -238,7 +263,7 @@ const DetachAttach: React.FC = () => {
               <Button
                 size="sm"
                 type="button"
-                variant="secondary"
+                variant="action"
                 startIcon={<FaPlus className="size-5" />}
                 onClick={() => setIsAttachModalOpen(true)}
               >

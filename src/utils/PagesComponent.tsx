@@ -37,6 +37,7 @@ import MasterSubdist from "../pages/Master/MasterSubdist";
 import MasterZone from "../pages/Master/MasterSubWarehouse";
 import MainTabZone from "../pages/Master/MasterSubWarehouse/Tabs/Main";
 
+// MASTER BIN
 import MasterBin from "../pages/Master/MasterBin";
 import MasterSource from "../pages/Master/MasterSource";
 import MasterSupplier from "../pages/Master/MasterSupplier";
