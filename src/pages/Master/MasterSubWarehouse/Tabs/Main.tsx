@@ -6,6 +6,7 @@ import PageBreadcrumb from "../../../../components/common/PageBreadCrumb";
 import History from "./History";
 import { useStoreSubWarehouse } from "../../../../DynamicAPI/stores/Store/MasterStore";
 import CurrentQuantityTable from "./Current";
+import BINDataTable from "../../MasterBin/Table/DataTable";
 
 export default function MainScreen() {
   const location = useLocation();
@@ -39,14 +40,27 @@ export default function MainScreen() {
           },
         ]}
       />
+
       <DetailCard title="Zone Details" items={zoneDetails} />
 
       <div className="mt-6">
         <TabsSection
           tabs={[
             {
-              label: "Current Pallet",
-              content: <CurrentQuantityTable palletCode={zoneDetail?.code} />,
+              label: "BIN List",
+              content: (
+                <>
+                  {zoneDetail?.id && (
+                    <BINDataTable
+                      params={{
+                        orgId: zoneDetail?.organization_id,
+                        zoneId: zoneDetail?.id,
+                        zoneCode: zoneDetail?.code,
+                      }}
+                    />
+                  )}
+                </>
+              ),
             },
           ]}
           activeTab={activeTab}

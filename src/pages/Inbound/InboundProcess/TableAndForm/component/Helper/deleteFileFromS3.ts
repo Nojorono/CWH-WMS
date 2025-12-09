@@ -10,7 +10,7 @@ export async function deleteFileFromS3(fileUrl: string) {
         const parts = pathname.split("/");
 
         const bucket = parts[2]; // "wms-cwh"
-        const path = parts.slice(3).join("/"); // "uploads/file.pdf"
+        const path = parts.slice(3).join("/"); 
 
         await axios.delete(`${S3EndPoint}/${bucket}/${path}`, {
             headers: { Authorization: `Bearer ${token}` },

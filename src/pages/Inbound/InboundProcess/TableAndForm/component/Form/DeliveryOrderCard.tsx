@@ -100,25 +100,6 @@ export default function DeliveryOrderCard({
     }
   };
 
-  // const handleUploadFile = async (file: File) => {
-  //   setUploading(true);
-  //   try {
-  //     const fileUrl = await uploadFileToS3(file);
-  //     if (fileUrl) {
-  //       setValue(`deliveryOrders.${doIndex}.attachment`, fileUrl, {
-  //         shouldValidate: true,
-  //       });
-  //       showSuccessToast(`Upload berhasil: ${file.name}`);
-  //     } else {
-  //       showErrorToast(`Upload gagal untuk ${file.name}`);
-  //     }
-  //   } catch {
-  //     showErrorToast(`Upload error untuk ${file.name}`);
-  //   } finally {
-  //     setUploading(false);
-  //   }
-  // };
-
   const handleUploadFile = async (file: File) => {
     setUploading(true);
     try {

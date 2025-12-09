@@ -14,7 +14,17 @@ import {
 import PrintBarcodeModal from "../Modal/PrintBarcodeModal";
 import { showErrorToast } from "../../../../components/toast";
 
-const DataTable = () => {
+interface DataTableProps {
+  params?: {
+    orgId?: any;
+    zoneId?: any;
+    zoneCode?: any;
+  };
+}
+
+const DataTable: React.FC<DataTableProps> = ({ params }) => {
+  console.log("DataTable params:", params);
+
   const { list: Warehouse, fetchAll } = useStoreWarehouse();
   const { fetchAll: fetchAllIo, list: ioList } = useStoreIo();
   const { fetchAll: fetchSubWH, list: subWHList } = useStoreSubWarehouse();
@@ -74,26 +84,26 @@ const DataTable = () => {
   );
 
   const formFields = [
-    {
-      name: "organization_id",
-      label: "Organization",
-      type: "select",
-      options: ioList.map((item: any) => ({
-        label: item.organization_name,
-        value: item.organization_id,
-      })),
-      validation: { required: "Required" },
-    },
-    {
-      name: "warehouse_sub_id",
-      label: "Zone",
-      type: "select",
-      options: subWHList.map((item: any) => ({
-        label: item.name,
-        value: item.id,
-      })),
-      validation: { required: "Required" },
-    },
+    // {
+    //   name: "organization_id",
+    //   label: "Organization",
+    //   type: "select",
+    //   options: ioList.map((item: any) => ({
+    //     label: item.organization_name,
+    //     value: item.organization_id,
+    //   })),
+    //   validation: { required: "Required" },
+    // },
+    // {
+    //   name: "warehouse_sub_id",
+    //   label: "Zone",
+    //   type: "select",
+    //   options: subWHList.map((item: any) => ({
+    //     label: item.name,
+    //     value: item.id,
+    //   })),
+    //   validation: { required: "Required" },
+    // },
     {
       name: "name",
       label: "Nama Bin",
@@ -116,41 +126,25 @@ const DataTable = () => {
       name: "capacity_pallet",
       label: "Kapasitas Pallet",
       type: "number",
-      // sembunyikan ketika zone yang dipilih memiliki name "PRELOAD"
-      hiddenWhen: (values: Record<string, any>) => {
-        const selectedId = values?.warehouse_sub_id;
-        if (!selectedId) return false;
-        const sel = subWHList.find((s: any) => s.id === selectedId);
-        return !!sel && String(sel.name).toUpperCase() === "PRELOAD";
-      },
+      // sembunyikan ketika params.zoneCode memiliki nilai "PRELOAD"
+      hiddenWhen: () => params?.zoneCode === "PRELOAD",
     },
-    // {
-    //   name: "capacity_pallet",
-    //   label: "Kapasitas Pallet",
-    //   type: "number",
-    //   validation: {
-    //     required: "Required",
-    //     min: { value: 0, message: "Harus >= 0" },
-    //   },
-    // },
   ];
 
   // Fungsi untuk format payload create
   const handleCreate = (data: any) => {
     const {
-      organization_id,
-      warehouse_sub_id,
+      // organization_id,
+      // warehouse_sub_id,
       name,
       code,
       description,
       capacity_pallet,
     } = data;
 
-    console.log("Creating with data:", data);
-
     const payload: any = {
-      organization_id: Number(organization_id),
-      warehouse_sub_id,
+      organization_id: params?.orgId,
+      warehouse_sub_id: params?.zoneId,
       name,
       code,
       description,
@@ -172,18 +166,10 @@ const DataTable = () => {
 
   // Fungsi untuk format payload update
   const handleUpdate = (data: any) => {
-    const {
-      id,
-      organization_id,
-      warehouse_sub_id,
-      name,
-      code,
-      description,
-      capacity_pallet,
-    } = data;
+    const { id, name, code, description, capacity_pallet } = data;
     return updateData(id, {
-      organization_id: Number(organization_id),
-      warehouse_sub_id,
+      organization_id: params?.orgId,
+      warehouse_sub_id: params?.zoneId,
       name,
       code,
       description,
@@ -208,6 +194,13 @@ const DataTable = () => {
     await deleteData(id);
   };
 
+  const filteredBinList = useMemo(() => {
+    if (params?.zoneId) {
+      return binList.filter((bin) => bin.warehouse_sub_id === params.zoneId);
+    }
+    return binList;
+  }, [binList, params?.zoneId]);
+
   return (
     <>
       <div className="p-4 bg-white shadow rounded-md mb-5">
@@ -227,7 +220,7 @@ const DataTable = () => {
               size="sm"
               onClick={() => setCreateModalOpen(true)}
             >
-              <FaPlus className="mr-2" /> Tambah Data
+              <FaPlus className="mr-2" /> Tambah BIN
             </Button>
 
             <Button
@@ -236,14 +229,14 @@ const DataTable = () => {
               onClick={handlePrintBarcode}
               disabled={selectedIds.length === 0} // UX: disabled kalau belum pilih
             >
-              <FaQrcode className="mr-2" /> Print Barcode
+              <FaQrcode className="mr-2" /> Print Barcode BIN
             </Button>
           </div>
         </div>
       </div>
 
       <DynamicTable
-        data={binList}
+        data={filteredBinList}
         globalFilter={debouncedSearch}
         isCreateModalOpen={isCreateModalOpen}
         onCloseCreateModal={() => setCreateModalOpen(false)}
