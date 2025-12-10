@@ -5,7 +5,7 @@ import TableComponent from "../Table/TableComponent";
 import { useNavigate } from "react-router-dom";
 import StatusBadge from "../../../../common/statusBadge";
 import { STATUS_MAP_DO, STATUS_MAP_MEMO } from "../../../../constants/statusMaps";
-import { useStoreOutboundDelivery } from "../../../../DynamicAPI/stores/Store/MasterStore";
+import { useStoreOutboundDeliveryOrder } from "../../../../DynamicAPI/stores/Store/MasterStore";
 
 type OutboundMemo = {
   id: string;
@@ -52,7 +52,7 @@ const AdjustTable = ({
 }: MenuTableProps) => {
   const navigate = useNavigate();
 
-  const { fetchUsingPagination, list, pagination } = useStoreOutboundDelivery();
+  const { fetchUsingPagination, list, pagination } = useStoreOutboundDeliveryOrder();
 
   // 🔹 local state pagination
   const [pageIndex, setPageIndex] = useState(0);

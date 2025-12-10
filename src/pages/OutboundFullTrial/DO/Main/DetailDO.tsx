@@ -11,7 +11,7 @@ import DynamicForm, {
 import { showErrorToast } from "../../../../components/toast";
 import {
   useStoreOutboundMemo,
-  useStoreOutboundDelivery,
+  useStoreOutboundDeliveryOrder,
 } from "../../../../DynamicAPI/stores/Store/MasterStore";
 import { useLocation, useNavigate } from "react-router";
 import { formatDateIndo } from "../../../../helper/FormatDate";
@@ -41,7 +41,7 @@ const DetailDO: React.FC = () => {
   });
 
   const { fetchAll, list } = useStoreOutboundMemo();
-  const { createData, fetchById, detail } = useStoreOutboundDelivery();
+  const { createData, fetchById, detail } = useStoreOutboundDeliveryOrder();
 
   const [selectedMemoIds, setSelectedMemoIds] = useState<string[]>([]);
   const [selectedMemos, setSelectedMemos] = useState<any[]>([]);

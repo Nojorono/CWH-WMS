@@ -10,7 +10,7 @@ import DynamicForm, {
 } from "../../../../components/wms-components/inbound-component/form/DynamicForm";
 import {
   useStoreOutboundMemo,
-  useStoreOutboundDelivery,
+  useStoreOutboundDeliveryOrder,
   useStorePickingAssignHelper,
 } from "../../../../DynamicAPI/stores/Store/MasterStore";
 import { useLocation } from "react-router";
@@ -41,7 +41,7 @@ const PickingSuggestion: React.FC = () => {
   });
 
   const { fetchAll: fetchAllMemos, list: memoList } = useStoreOutboundMemo();
-  const { fetchById, detail } = useStoreOutboundDelivery();
+  const { fetchById, detail } = useStoreOutboundDeliveryOrder();
   const { createData } = useStorePickingAssignHelper();
 
   const [selectedMemoForSuggestion, setSelectedMemoForSuggestion] = useState<

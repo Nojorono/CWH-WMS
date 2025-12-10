@@ -6,7 +6,7 @@ import { useNavigate } from "react-router-dom";
 import StatusBadge from "../../../../common/statusBadge";
 import { STATUS_MAP_DO } from "../../../../constants/statusMaps";
 import { OutboundDo } from "../Helper/doTypes";
-import { useStoreOutboundDelivery } from "../../../../DynamicAPI/stores/Store/MasterStore";
+import { useStoreOutboundDeliveryOrder } from "../../../../DynamicAPI/stores/Store/MasterStore";
 import { mapPickingTransactions } from "../Helper/mappedList";
 import { formatDateIndo } from "../../../../helper/FormatDate";
 
@@ -22,7 +22,8 @@ const AdjustTable = ({
   filteredStatus,
 }: Props) => {
   const navigate = useNavigate();
-  const { fetchUsingPagination, list, pagination } = useStoreOutboundDelivery();
+  const { fetchUsingPagination, list, pagination } =
+    useStoreOutboundDeliveryOrder();
 
   const [pageIndex, setPageIndex] = useState(0);
   const [pageSize, setPageSize] = useState(5);
@@ -43,8 +44,6 @@ const AdjustTable = ({
 
   const columns: ColumnDef<OutboundDo>[] = useMemo(
     () => [
-      // { accessorKey: "id", header: "DO Id" },
-      // { accessorKey: "memo_id", header: "Memo Id" },
       { accessorKey: "outbound_do_number", header: "DO Number" },
       {
         accessorKey: "outbound_memos",
@@ -80,13 +79,12 @@ const AdjustTable = ({
           <div className="flex gap-3">
             <FaTasks
               className={`size-5 cursor-pointer text-blue-600 ${
-                row.original.status !== "IN_PROGRESS"
-                  ? "opacity-50 cursor-not-allowed"
+                row.original.status === "PENDING"
+                  ? "opacity-20 cursor-not-allowed"
                   : ""
               }`}
               onClick={() =>
-                row.original.status === "IN_PROGRESS" &&
-                handleAdjust(row.original)
+                row.original.status !== "PENDING" && handleAdjust(row.original)
               }
               title="Adjust Picking Transaction"
             />

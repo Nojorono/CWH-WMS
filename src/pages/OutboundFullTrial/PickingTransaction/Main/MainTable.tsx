@@ -19,6 +19,7 @@ const MainTable = () => {
     { value: "", label: "All Status" },
     { value: "PENDING", label: "PENDING" },
     { value: "IN_PROGRESS", label: "IN_PROGRESS" },
+    { value: "APPROVED", label: "APPROVED" },
   ];
 
   return (
@@ -34,17 +35,6 @@ const MainTable = () => {
               value={selectedStatus}
             />
           </div>
-          {/* <div className="space-x-4">
-            <Label htmlFor="search">Search</Label>
-            <Input
-              onChange={(e) => setGlobalFilter(e.target.value)}
-              type="text"
-              id="search"
-              placeholder="🔍 Masukan data.."
-              value={globalFilter}
-            />
-          </div> */}
-
           <div className="space-x-4"></div>
         </div>
       </div>

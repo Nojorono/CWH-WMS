@@ -11,7 +11,7 @@ import DynamicForm, {
 import { showErrorToast } from "../../../../components/toast";
 import {
   useStoreOutboundMemo,
-  useStoreOutboundDelivery,
+  useStoreOutboundDeliveryOrder,
 } from "../../../../DynamicAPI/stores/Store/MasterStore";
 import { useLocation, useNavigate } from "react-router";
 import { formatDateIndo } from "../../../../helper/FormatDate";
@@ -61,7 +61,7 @@ const CreateDO: React.FC = () => {
   const [pageIndex, setPageIndex] = useState(0);
   const [pageSize, setPageSize] = useState(5);
 
-  const { createData } = useStoreOutboundDelivery();
+  const { createData } = useStoreOutboundDeliveryOrder();
   const [selectedMemoIds, setSelectedMemoIds] = useState<string[]>([]);
   const [selectedMemos, setSelectedMemos] = useState<any[]>([]);
 

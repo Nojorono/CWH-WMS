@@ -193,7 +193,7 @@ export const useStoreOutboundMemo = createCrudStore<OutboundMemo, OutboundMemoCr
     service: OutboundMemoService,
 });
 
-export const useStoreOutboundDelivery = createCrudStore<OutboundDelivery, OutboundDeliveryCreateUpdate, OutboundDeliveryCreateUpdate>({
+export const useStoreOutboundDeliveryOrder = createCrudStore<OutboundDelivery, OutboundDeliveryCreateUpdate, OutboundDeliveryCreateUpdate>({
     name: "OutboundDelivery",
     service: OutboundDeliveryService,
 });
