@@ -178,13 +178,24 @@ const DetachAttach: React.FC = () => {
   };
 
   const handleApproveDO = async () => {
-    const id = params.id;
-    const res = await updateData(id, {
-      status: "APPROVED",
+    const result = await Swal.fire({
+      title: "Apakah Anda yakin?",
+      text: `Approve ${params?.outbound_do_number} dengan kondisi memo, picking item dan hasil scan picking yang terlampir.`,
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "Ya, setujui!",
+      cancelButtonText: "Batal",
     });
 
-    if (res?.success) {
-      navigate("/picking_transaction");
+    if (result.isConfirmed) {
+      const id = params.id;
+      const res = await updateData(id, {
+        status: "APPROVED",
+      });
+
+      if (res?.success) {
+        navigate("/picking_transaction");
+      }
     }
   };
 

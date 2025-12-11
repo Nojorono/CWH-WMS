@@ -38,7 +38,7 @@ export const SuggestionItemHeader: React.FC<MemoHeaderProps> = ({
   handleFetchSuggestions,
 }) => {
   const sortOptions = [
-    { value: "", label: "---select method---" },
+    { value: "", label: "select method.." },
     { value: "FIFO", label: "FEFO" },
     { value: "LIFO", label: "LEFO" },
   ];
@@ -83,7 +83,7 @@ export const SuggestionItemHeader: React.FC<MemoHeaderProps> = ({
         {/* SELECT METHOD FETCH  SUGGESTION*/}
         <div className="flex items-end gap-4 mb-2">
           <div className="w-48">
-            <label className="text-gray-500 block mb-1">Sort Method</label>
+            <label className="text-gray-500 block mb-1">Metode Suggestion</label>
             <Select
               value={sortOptions.find((option) => option.value === sortMethod)}
               onChange={(selectedOption) =>

@@ -49,7 +49,7 @@ const TransactionPickingsModal: React.FC<TransactionPickingsModalProps> = ({
         {/* HEADER */}
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-bold text-gray-800">
-            Suggestions Data & Transaction Scan Picking Details
+            Suggestion & Transaction Picking Details
           </h2>
         </div>
 

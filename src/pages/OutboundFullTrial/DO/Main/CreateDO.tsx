@@ -19,6 +19,7 @@ import ConfirmationModal from "../Modal/Sequence";
 import Label from "../../../../components/form/Label";
 import Select from "../../../../components/form/Select";
 import ActIndicator from "../../../../components/ui/activityIndicator";
+import { FaCheck } from "react-icons/fa";
 
 type MemoFormValues = {
   requestor: string;
@@ -128,6 +129,7 @@ const CreateDO: React.FC = () => {
       showErrorToast("Pilih minimal satu memo sebelum membuat DO!");
       return;
     }
+
     const formData = methods.getValues();
     const payload = {
       ...formData,
@@ -303,10 +305,12 @@ const CreateDO: React.FC = () => {
 
         <Button
           type="button"
-          className="bg-orange-500 text-white hover:bg-orange-600"
           onClick={methods.handleSubmit(onFinalSubmit)}
+          variant="primary"
+          startIcon={<FaCheck />}
+          disabled={selectedMemos.length === 0}
         >
-          Confirm DO
+          Submit DO
         </Button>
       </div>
 

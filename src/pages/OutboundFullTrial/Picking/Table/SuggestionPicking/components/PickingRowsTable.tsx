@@ -333,12 +333,12 @@ export const PickingRowsTable: React.FC<PickingRowsTableProps> = ({
                         </button>
                       )}
                       {/* <button
-            type="button"
-            onClick={() => handleResetEdit(row.item_id)}
-            className="p-1"
-              >
-            <FaSync className="text-red-500" />
-              </button> */}
+                        type="button"
+                        onClick={() => handleResetEdit(row.item_id)}
+                        className="p-1"
+                      >
+                        <FaSync className="text-red-500" />
+                      </button> */}
                     </div>
                   </td>
                 </tr>

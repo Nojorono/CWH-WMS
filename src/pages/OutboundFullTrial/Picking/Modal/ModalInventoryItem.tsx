@@ -119,7 +119,7 @@ export default function ModalInventoryItem({
     <div className="p-6 space-y-8">
       {/* HEADER */}
       <h2 className="text-2xl font-semibold text-blue-900 tracking-wide">
-        Suggest Location
+        Edit Suggest Location
       </h2>
 
       {/* ITEM NAME */}
@@ -259,7 +259,7 @@ export default function ModalInventoryItem({
 
       {/* ACTION BUTTONS */}
       <div className="flex justify-end gap-3 pt-4">
-        <Button variant="secondary" onClick={onBack}>
+        <Button variant="danger" onClick={onBack}>
           Back
         </Button>
 

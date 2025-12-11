@@ -11,9 +11,10 @@ import {
 } from "../../../../../DynamicAPI/stores/Store/MasterStore";
 import { useNavigate } from "react-router";
 import { showErrorToast } from "../../../../../components/toast";
-import { FaArrowLeft } from "react-icons/fa";
+import { FaArrowLeft, FaCheck, FaUndo } from "react-icons/fa";
 import { EndPoint } from "../../../../../utils/EndPoint";
 import { formatDate } from "../../../Memo/TableAndForm/MemoCreateProcess";
+import ActIndicator from "../../../../../components/ui/activityIndicator";
 
 interface SuggestionTableProps {
   memoDetail: any;
@@ -41,6 +42,7 @@ const SuggestionTable: React.FC<SuggestionTableProps> = ({
   const [selectedDestination, setSelectedDestination] = useState("");
   const [sortMethod, setSortMethod] = useState("");
   const [suggestions, setSuggestions] = useState<any[]>([]);
+  const [isLoadingFetch, setLoadingFetch] = useState<boolean>(false);
 
   useEffect(() => {
     fetchBINbyZoneId("73b1e685-d258-440b-b3cf-d66f34dd8187");
@@ -57,6 +59,8 @@ const SuggestionTable: React.FC<SuggestionTableProps> = ({
 
     const token = localStorage.getItem("token");
     const API = `${EndPoint}picking-suggestion/memo/${memoId}?sortMethod=${sortMethod}`;
+
+    setLoadingFetch(true);
 
     try {
       const response = await fetch(API, {
@@ -75,11 +79,19 @@ const SuggestionTable: React.FC<SuggestionTableProps> = ({
       setSuggestions(data.data);
     } catch (error) {
       console.error("Error fetching picking suggestion:", error);
+    } finally {
+      setLoadingFetch(false);
     }
   };
 
   const handleFetchSuggestions = () => {
     fetchPickingSuggestionById();
+  };
+
+  const handleReset = () => {
+    setSortMethod("");
+    setSelectedDestination("");
+    setSuggestions([]);
   };
 
   const handleSubmit = async () => {
@@ -109,11 +121,9 @@ const SuggestionTable: React.FC<SuggestionTableProps> = ({
 
     if (typeof createBulkData === "function") {
       const res = await createBulkData(finalPayload as any);
-      console.log("Response from createBulkData:", res);
 
       if (res?.success) {
         navigate("/outbound_do");
-        console.log("Picking List created successfully.");
       }
     } else {
       showErrorToast("Put Away creation function is not available.");
@@ -165,60 +175,78 @@ const SuggestionTable: React.FC<SuggestionTableProps> = ({
           handleFetchSuggestions={handleFetchSuggestions}
         />
 
-        <PickingRowsTable
-          compactRows={suggestions.flatMap((suggestion) => {
-            // kalau ada lokasi → mapping normal
-            if (suggestion.suggested_locations.length > 0) {
-              return suggestion.suggested_locations.map((location: any) => ({
-                note: suggestion.notes,
-                item_id: suggestion.item_id,
-                item_name: suggestion.item_name,
-                item_code: suggestion.item_code,
-                uom: location.uom ?? "-",
-                zone: location.warehouse_sub_name ?? "-",
-                bin: location.bin_name ?? "-",
-                qty_plan: location.quantity_ready_to_pick ?? 0,
-                required_quantity:
-                  location.required_quantity ?? suggestion.required_quantity,
-                available_quantity: location.available_quantity ?? 0,
-                remaining_quantity_needed: suggestion.remaining_quantity_needed,
-                reserved_quantity: location.reserved_quantity ?? 0,
-                week_number: location.week_number ?? 0,
-                production_date: formatDate(location.production_date),
-                location_priority: location.location_priority ?? "-",
-              }));
-            }
+        {isLoadingFetch ? (
+          <div className="flex justify-center py-4">
+            <ActIndicator />
+          </div>
+        ) : (
+          <PickingRowsTable
+            compactRows={suggestions.flatMap((suggestion) => {
+              if (suggestion.suggested_locations.length > 0) {
+                return suggestion.suggested_locations.map((location: any) => ({
+                  note: suggestion.notes,
+                  item_id: suggestion.item_id,
+                  item_name: suggestion.item_name,
+                  item_code: suggestion.item_code,
+                  uom: location.uom ?? "-",
+                  zone: location.warehouse_sub_name ?? "-",
+                  bin: location.bin_name ?? "-",
+                  qty_plan: location.quantity_ready_to_pick ?? 0,
+                  required_quantity:
+                    location.required_quantity ?? suggestion.required_quantity,
+                  available_quantity: location.available_quantity ?? 0,
+                  remaining_quantity_needed:
+                    suggestion.remaining_quantity_needed,
+                  reserved_quantity: location.reserved_quantity ?? 0,
+                  week_number: location.week_number ?? 0,
+                  production_date: formatDate(location.production_date),
+                  location_priority: location.location_priority ?? "-",
+                }));
+              }
 
-            // ✅ fallback kalau lokasi kosong
-            return [
-              {
-                note: suggestion.notes,
-                item_id: suggestion.item_id,
-                item_name: suggestion.item_name,
-                item_code: suggestion.item_code,
-                uom: "-",
-                zone: "-",
-                bin: "-",
-                qty_plan: suggestion.required_quantity,
-                required_quantity: suggestion.required_quantity,
-                available_quantity: 0,
-                remaining_quantity_needed: suggestion.remaining_quantity_needed,
-                reserved_quantity: 0,
-                week_number: 0,
-                production_date: "-",
-                location_priority: "-",
-              },
-            ];
-          })}
-          quantities={quantities}
-          updateQty={updateQty}
-        />
+              // fallback kalau tidak ada lokasi
+              return [
+                {
+                  note: suggestion.notes,
+                  item_id: suggestion.item_id,
+                  item_name: suggestion.item_name,
+                  item_code: suggestion.item_code,
+                  uom: "-",
+                  zone: "-",
+                  bin: "-",
+                  qty_plan: suggestion.required_quantity,
+                  required_quantity: suggestion.required_quantity,
+                  available_quantity: 0,
+                  remaining_quantity_needed:
+                    suggestion.remaining_quantity_needed,
+                  reserved_quantity: 0,
+                  week_number: 0,
+                  production_date: "-",
+                  location_priority: "-",
+                },
+              ];
+            })}
+            quantities={quantities}
+            updateQty={updateQty}
+          />
+        )}
 
         {/* === Submit Button === */}
         <div className="flex justify-end p-4 border-t">
           <Button
+            onClick={handleReset}
+            variant="danger"
+            size="sm"
+            className="mr-3"
+            startIcon={<FaUndo />}
+          >
+            Reset
+          </Button>
+
+          <Button
             onClick={handleSubmit}
             disabled={!selectedDestination || !selectedBin || allRowsEmpty}
+            startIcon={<FaCheck />}
           >
             Submit Suggestion
           </Button>

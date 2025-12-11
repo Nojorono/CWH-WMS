@@ -191,8 +191,7 @@ const CancelTransactionPickModal: React.FC<CancelTransactionPickModalProps> = ({
                       ))
                     ) : (
                       <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-sm text-red-800">
-                        This item does not have Suggestion Location Picking data
-                        yet!
+                        Item ini belum memiliki Suggest Location Picking!
                       </div>
                     )}
 
@@ -256,7 +255,7 @@ const CancelTransactionPickModal: React.FC<CancelTransactionPickModalProps> = ({
                         ))
                     ) : (
                       <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-sm text-red-800">
-                        This item has not been scanned yet!
+                        Item ini belum ada proses Scan Picking!
                       </div>
                     )}
                   </div>

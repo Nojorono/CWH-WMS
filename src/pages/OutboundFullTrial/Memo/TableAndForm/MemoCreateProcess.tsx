@@ -18,6 +18,8 @@ import { useLocation, useNavigate } from "react-router";
 import { EndPoint } from "../../../../utils/EndPoint";
 import { useCustomerByOutboundType } from "./FetchCustomer";
 import Select from "../../../../components/form/Select";
+import { FaCheck, FaUndo } from "react-icons/fa";
+import Swal from "sweetalert2";
 
 // ✅ Tambahkan selected_destination
 type MemoFormValues = {
@@ -319,7 +321,21 @@ const CreateMemo: React.FC = () => {
   // submit handler (create or update)
   const onFinalSubmit = async (data: MemoFormValues) => {
     if (items.length === 0) {
-      showErrorToast("Please add at least one item!");
+      showErrorToast("Item tak boleh kosong! Pilih minimal 1 item.");
+      return;
+    }
+
+    // ✅ Check for empty required fields
+    const requiredFields = [
+      data.requestor,
+      data.origin,
+      data.ship_to,
+      data.delivery_date,
+      data.type_outbound?.value,
+    ];
+
+    if (requiredFields.some((field) => !field)) {
+      showErrorToast("Please fill in all required fields!");
       return;
     }
 
@@ -422,46 +438,59 @@ const CreateMemo: React.FC = () => {
   ];
 
   const handleReset = () => {
-    if (isEdit && detailDataMemo) {
-      const dateOnly = formatDate(detailDataMemo.delivery_date);
+    // SweetAlert confirmation before resetting the form
+    Swal.fire({
+      title: "Apakah Anda Yakin?",
+      text: "Jika Anda mereset, semua data yang telah Anda masukkan akan hilang!",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Ya, reset!",
+    }).then((result) => {
+      if (result.isConfirmed) {
+        if (isEdit && detailDataMemo) {
+          const dateOnly = formatDate(detailDataMemo.delivery_date);
 
-      methods.reset({
-        requestor: detailDataMemo.requestor || "",
-        origin: detailDataMemo.origin || "",
-        ship_to: detailDataMemo.ship_to || "",
-        destination: detailDataMemo.destination || "",
-        delivery_date: dateOnly,
-        notes: detailDataMemo.notes || "",
-      });
+          methods.reset({
+            requestor: detailDataMemo.requestor || "",
+            origin: detailDataMemo.origin || "",
+            ship_to: detailDataMemo.ship_to || "",
+            destination: detailDataMemo.destination || "",
+            delivery_date: dateOnly,
+            notes: detailDataMemo.notes || "",
+          });
 
-      const mappedItems: ItemRow[] = (
-        detailDataMemo.outbound_memo_items || []
-      ).map((it: any) => ({
-        item_id: it.item_id || it.item?.id || "",
-        item_name: it.item?.description || it.item?.sku || "",
-        quantity_plan: Number(it.quantity_plan ?? 0),
-        uom: typeof it.uom === "string" ? it.uom : it.uom_name ?? "",
-        uom_name: it.uom_name ?? (typeof it.uom === "string" ? it.uom : ""),
-        classification_name:
-          it.classification_name ??
-          it.classification?.classification_name ??
-          "",
-        notes: it.notes ?? "",
-      }));
+          const mappedItems: ItemRow[] = (
+            detailDataMemo.outbound_memo_items || []
+          ).map((it: any) => ({
+            item_id: it.item_id || it.item?.id || "",
+            item_name: it.item?.description || it.item?.sku || "",
+            quantity_plan: Number(it.quantity_plan ?? 0),
+            uom: typeof it.uom === "string" ? it.uom : it.uom_name ?? "",
+            uom_name: it.uom_name ?? (typeof it.uom === "string" ? it.uom : ""),
+            classification_name:
+              it.classification_name ??
+              it.classification?.classification_name ??
+              "",
+            notes: it.notes ?? "",
+          }));
 
-      setItems(mappedItems);
-    } else {
-      // Mode create → reset semua jadi kosong
-      methods.reset({
-        requestor: "",
-        origin: "",
-        ship_to: "",
-        destination: "",
-        delivery_date: "",
-        notes: "",
-      });
-      setItems([]);
-    }
+          setItems(mappedItems);
+        } else {
+          // Mode create → reset semua jadi kosong
+          methods.reset({
+            requestor: "",
+            origin: "",
+            ship_to: "",
+            destination: "",
+            delivery_date: "",
+            notes: "",
+          });
+          setItems([]);
+        }
+      }
+    });
   };
 
   const handleApproveMemo = (memoId: string) => {
@@ -604,15 +633,19 @@ const CreateMemo: React.FC = () => {
         <div className="flex justify-end gap-3 mt-6">
           <Button
             type="button"
-            variant="secondary"
+            variant="danger"
             onClick={() => handleReset()}
+            startIcon={<FaUndo />}
           >
-            Reset
+            Reset Form
           </Button>
+
           <Button
             type="button"
-            variant="primary"
+            variant="secondary"
+            startIcon={<FaCheck />}
             onClick={methods.handleSubmit(onFinalSubmit)}
+            disabled={items.length === 0}
           >
             {isEdit ? "Update Memo" : "Confirm Memo"}
           </Button>
