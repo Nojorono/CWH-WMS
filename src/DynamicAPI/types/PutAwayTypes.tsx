@@ -1,4 +1,4 @@
-// /d:/New-WMS/src/DynamicAPI/types/PutAwayTypes.tsx
+// PutAwayTypes.tsx
 
 // ===========================
 // Base Interface
