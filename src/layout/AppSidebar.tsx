@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "react-router";
-import { ChevronDownIcon, HorizontaLDots } from "../icons";
+import { FaChevronDown } from "react-icons/fa";
+import { HiDotsHorizontal } from "react-icons/hi";
 import { useSidebar } from "../context/SidebarContext";
 import { useDynamicSidebarItems } from "./useDynamicSidebarItems";
 
@@ -81,7 +82,7 @@ const AppSidebar: React.FC = () => {
         {isExpanded || isHovered || isMobileOpen ? (
           title
         ) : (
-          <HorizontaLDots className="size-6" />
+          <HiDotsHorizontal className="size-6" />
         )}
       </h2>
       <ul className="flex flex-col gap-4">
@@ -117,7 +118,7 @@ const AppSidebar: React.FC = () => {
                     <span className="menu-item-text">{nav.name}</span>
                   )}
                   {(isExpanded || isHovered || isMobileOpen) && (
-                    <ChevronDownIcon
+                    <FaChevronDown
                       className={`ml-auto w-5 h-5 transition-transform duration-200 ${
                         isOpen ? "rotate-180 text-brand-500" : ""
                       }`}

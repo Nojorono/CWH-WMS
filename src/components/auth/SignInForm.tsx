@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { Link, useNavigate } from "react-router-dom";
-import { EyeCloseIcon, EyeIcon } from "../../icons";
+import { FaEye, FaEyeSlash } from "react-icons/fa";
 import Label from "../form/Label";
 import SignInInput from "../form/input/SignInInput";
 import Button from "../ui/button/Button";
@@ -140,9 +140,9 @@ export default function SignInForm() {
                 rightIcon={
                   <button type="button" onClick={toggleShowPassword}>
                     {showPassword ? (
-                      <EyeIcon className="fill-gray-500 dark:fill-gray-400 size-5" />
+                      <FaEye className="fill-gray-500 dark:fill-gray-400 size-5" />
                     ) : (
-                      <EyeCloseIcon className="fill-gray-500 dark:fill-gray-400 size-5" />
+                      <FaEyeSlash className="fill-gray-500 dark:fill-gray-400 size-5" />
                     )}
                   </button>
                 }
