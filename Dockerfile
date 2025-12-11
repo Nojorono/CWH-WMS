@@ -31,6 +31,10 @@ ARG VITE_S3_ENDPOINT
 ENV VITE_API_ENDPOINT=${VITE_API_ENDPOINT}
 ENV VITE_S3_ENDPOINT=${VITE_S3_ENDPOINT}
 
+# Enable sourcemap temporarily for debugging (can be disabled later)
+ENV NODE_ENV=production
+
+# Build with verbose output to debug
 RUN npm run build
 
 # Stage 2: Production stage with Nginx
@@ -54,7 +58,7 @@ EXPOSE 80
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD wget --quiet --tries=1 --spider http://localhost/ || exit 1
+  CMD wget --quiet --tries=1 --spider http://localhost/health || exit 1
 
 # Start nginx
 CMD ["nginx", "-g", "daemon off;"]

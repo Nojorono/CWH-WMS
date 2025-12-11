@@ -8,7 +8,7 @@ set -e
 
 ENVIRONMENT=${1:-production}
 DOMAIN="dev-wms.nna-id.com"
-API_ENDPOINT=${VITE_API_ENDPOINT:-"https://api-dev-wms.nna-id.com/api"}
+API_ENDPOINT=${VITE_API_ENDPOINT:-"https://api.kcsi.id/service-wms"}
 S3_ENDPOINT=${VITE_S3_ENDPOINT:-"https://nna-app-s3.s3.ap-southeast-3.amazonaws.com"}
 
 echo "🚀 Starting deployment for $ENVIRONMENT environment..."
@@ -51,7 +51,7 @@ else
 fi
 
 echo "✅ Deployment completed successfully!"
-echo "🌐 Frontend is available at: http://localhost:3000"
+echo "🌐 Frontend is available at: http://localhost:3002"
 echo ""
 echo "📝 Next steps:"
 echo "1. Configure Nginx reverse proxy (see nginx-host.conf)"
