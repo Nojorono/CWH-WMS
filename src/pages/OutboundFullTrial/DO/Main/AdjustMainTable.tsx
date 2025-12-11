@@ -120,7 +120,7 @@ const AdjustTable = ({
               title="Detail"
             />
 
-            {roleName !== "SUPERVISOR" && (
+            {/* {roleName !== "SUPERVISOR" && (
               <FaEdit
                 className={`size-5 cursor-pointer ${
                   row.original.status === "PENDING"
@@ -142,7 +142,7 @@ const AdjustTable = ({
                     row.original.status === "PENDING" ? "auto" : "none",
                 }}
               />
-            )}
+            )} */}
 
             <FaTasks
               className="size-5 cursor-pointer text-yellow-600 hover:scale-110 transition"
