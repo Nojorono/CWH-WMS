@@ -9,7 +9,7 @@ export type ItemForm = {
     uom?: string;
     classification?: string;
     expired_date?: string | null;
-    quantity_inspection?: number;
+    quantity_inspection?: any;
 };
 
 export type POSForm = {

@@ -6,7 +6,7 @@ export type ItemForm = {
     item_number?: string;
     description?: string;
     qty?: number | "";
-    quantity_inspection?: number | string;
+    quantity_inspection?: any;
     uom?: string;
     classification?: string;
     expired_date?: string | null;
