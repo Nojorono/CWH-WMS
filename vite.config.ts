@@ -20,7 +20,7 @@ export default defineConfig(({ mode }) => {
     ],
 
     server: {
-      host: '0.0.0.0',  // Allow access from all hosts
+      host: '127.0.0.1',  // Allow access from all hosts
       port: 5173,
       strictPort: false,
       open: "/signin",
