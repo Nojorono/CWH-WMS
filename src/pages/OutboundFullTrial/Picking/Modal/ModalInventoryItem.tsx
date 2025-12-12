@@ -11,6 +11,7 @@ type Props = {
   onBack?: () => void;
   itemID?: any;
   existingItemData?: any;
+  mode?: "add" | "edit";
 };
 
 export default function ModalInventoryItem({
@@ -18,6 +19,7 @@ export default function ModalInventoryItem({
   onBack,
   itemID,
   existingItemData,
+  mode,
 }: Props) {
   const {
     fetchById,
@@ -45,6 +47,7 @@ export default function ModalInventoryItem({
 
   const locations = itemList?.suggested_locations || [];
   const defaultLocation = locations?.[0] || null;
+  const isEditMode = mode === "edit";
 
   useEffect(() => {
     if (itemList) {
@@ -96,12 +99,25 @@ export default function ModalInventoryItem({
 
   /** SUBMIT */
   const onSave = (data: any) => {
-    onSubmit?.({
+    const newSuggestion = {
       ...data,
       location_data: selectedLocation,
       item_id: itemList?.item_id,
       uom: itemList?.uom,
-    });
+    };
+
+    // Jika mode adalah "add", kirim data baru
+    if (mode === "add") {
+      console.log("Submitting new suggestion:", newSuggestion);
+      
+      onSubmit?.(newSuggestion); // Kirim data baru ke parent
+    } else {
+      // Jika mode adalah "edit", kirim data yang sudah ada
+      onSubmit?.({
+        ...newSuggestion,
+        existingItemData: existingItemData, // Pastikan untuk menyertakan data yang ada
+      });
+    }
   };
 
   if (isLoading && !itemList) {
@@ -119,7 +135,7 @@ export default function ModalInventoryItem({
     <div className="p-6 space-y-8">
       {/* HEADER */}
       <h2 className="text-2xl font-semibold text-blue-900 tracking-wide">
-        Edit Suggest Location
+        {isEditMode ? "Edit Suggest Location" : "Add Suggest Location"}
       </h2>
 
       {/* ITEM NAME */}
@@ -163,11 +179,11 @@ export default function ModalInventoryItem({
       </div>
 
       {/* NOTE FOR SAME SOURCE */}
-      {isSameSource && (
+      {isEditMode && isSameSource && (
         <div className="text-blue-500">
           <span className="italic">
-            Suggestion Location yang dipilih berasal dari Zone, BIN, dan Week yang sama
-            dengan data yang ada.
+            Suggestion Location yang dipilih berasal dari Zone, BIN, dan Week
+            yang sama dengan data yang ada.
           </span>
         </div>
       )}
@@ -175,7 +191,7 @@ export default function ModalInventoryItem({
       {/* COMPARISON AREA */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* EXISTING ITEM CARD */}
-        {existingItemData && (
+        {isEditMode && existingItemData && (
           <KeyValueCard
             title="Existing Suggestion Location"
             data={{
@@ -226,8 +242,9 @@ export default function ModalInventoryItem({
       {/* QTY PICK */}
       <div>
         <label className="font-semibold text-gray-700 text-sm">
-          Set new Qty Plan
+          {isEditMode ? "Set new Qty Plan" : "Qty Plan to Add"}
         </label>
+
         <Controller
           control={control}
           name="qty_pick"

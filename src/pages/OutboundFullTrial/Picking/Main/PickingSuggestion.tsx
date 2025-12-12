@@ -21,6 +21,8 @@ import ModalAssignHelper from "../Modal/ModalAssignHelper";
 import TabsSection from "../../../../components/wms-components/inbound-component/tabs/TabsSection";
 import { MemoFormValues } from "../Types/types";
 import AssignHelperTable from "../Table/AssignHelper";
+import { SuggestionItemLocation } from "./SuggestionItemLocation";
+
 
 const PickingSuggestion: React.FC = () => {
   const location = useLocation();
@@ -212,10 +214,16 @@ const PickingSuggestion: React.FC = () => {
   // === Display Suggestion Table ===
   if (selectedMemoForSuggestion) {
     return (
-      <SuggestionTable
+      // <SuggestionTable
+      //   memoDetail={selectedMemoForSuggestion}
+      //   onBack={() => setSelectedMemoForSuggestion(null)}
+      //   deliveryOrder={detail}
+      // />
+
+      <SuggestionItemLocation
         memoDetail={selectedMemoForSuggestion}
-        onBack={() => setSelectedMemoForSuggestion(null)}
-        deliveryOrder={detail}
+        DOid={deliveryOrderId}
+         onBack={() => setSelectedMemoForSuggestion(null)}
       />
     );
   }
@@ -298,17 +306,12 @@ const PickingSuggestion: React.FC = () => {
 
       {!isSuggestion && (
         <div className="flex justify-end gap-3 mt-4">
-          <Button
-            type="button"
-            variant="secondary"
-            className="bg-gray-200 text-gray-700 hover:bg-gray-300"
-            onClick={handleReset}
-          >
+          <Button type="button" variant="danger" onClick={handleReset}>
             Reset
           </Button>
           <Button
+            variant="primary"
             type="button"
-            className="bg-orange-500 text-white hover:bg-orange-600"
             onClick={methods.handleSubmit(() => {})}
           >
             Confirm DO

@@ -205,11 +205,11 @@ export const PickingRowsTable: React.FC<PickingRowsTableProps> = ({
       ),
     },
     { key: "available_quantity", label: "Available Qty", override: true },
-    // {
-    //   key: "reserved_quantity",
-    //   label: "Reserved Qty",
-    //   override: true,
-    // },
+    {
+      key: "reserved_quantity",
+      label: "Reserved Qty",
+      override: true,
+    },
     {
       key: "picked_qty",
       label: "Picked Qty",
@@ -222,7 +222,7 @@ export const PickingRowsTable: React.FC<PickingRowsTableProps> = ({
       {/* ---- TABLE HEADER ---- */}
       {compactRows.length === 0 ? (
         <div className="flex justify-center items-center py-4">
-          <span>Belum ada Suggestion Location Items.</span>
+          <span>Belum ada Suggestion Location Items. Mohon fe</span>
         </div>
       ) : (
         <table className="min-w-full divide-y divide-gray-200 text-md">
@@ -333,12 +333,12 @@ export const PickingRowsTable: React.FC<PickingRowsTableProps> = ({
                         </button>
                       )}
                       {/* <button
-            type="button"
-            onClick={() => handleResetEdit(row.item_id)}
-            className="p-1"
-              >
-            <FaSync className="text-red-500" />
-              </button> */}
+                        type="button"
+                        onClick={() => handleResetEdit(row.item_id)}
+                        className="p-1"
+                      >
+                        <FaSync className="text-red-500" />
+                      </button> */}
                     </div>
                   </td>
                 </tr>

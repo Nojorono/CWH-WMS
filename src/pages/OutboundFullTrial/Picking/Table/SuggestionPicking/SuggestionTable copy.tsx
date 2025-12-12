@@ -37,7 +37,6 @@ const SuggestionTable: React.FC<SuggestionTableProps> = ({
   const { detail: binDataRaw, fetchById: fetchBINbyZoneId } =
     useStoreBinByZone();
   const { createBulkData } = useStoreTransactionPicking();
-  const bins: Bin[] = Array.isArray(binDataRaw) ? (binDataRaw as Bin[]) : [];
 
   const [selectedDestination, setSelectedDestination] = useState("");
   const [sortMethod, setSortMethod] = useState("");
@@ -51,6 +50,7 @@ const SuggestionTable: React.FC<SuggestionTableProps> = ({
   const compactRows = useCompactRows(suggestions);
   const { quantities, updateQty } = usePickingQuantities(compactRows);
 
+  const bins: Bin[] = Array.isArray(binDataRaw) ? (binDataRaw as Bin[]) : [];
   const selectedBin = bins.find((b) => b.id === selectedDestination);
 
   const fetchPickingSuggestionById = async () => {
