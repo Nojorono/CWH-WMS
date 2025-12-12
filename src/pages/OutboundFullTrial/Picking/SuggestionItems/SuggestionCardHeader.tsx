@@ -118,23 +118,21 @@ export const SuggestionCardHeader: React.FC<HeaderProps> = ({
         </div>
 
         {/* Metode Suggestion */}
-        <div>
-          <p className="text-gray-500 mb-1">Metode Suggestion</p>
-          <Select
-            options={[
-              { value: "FIFO", label: "FEFO" },
-              { value: "LIFO", label: "LEFO" },
-            ]}
-            value={{ value: metodeSuggestion, label: metodeSuggestion }}
-            onChange={onChangeMetode}
-          />
-        </div>
+        <div className="flex items-end">
+          <div className="mr-4">
+            <p className="text-gray-500 mb-1">Metode Suggestion</p>
+            <Select
+              options={[
+                { value: "FIFO", label: "FEFO" },
+                { value: "LIFO", label: "LEFO" },
+              ]}
+              value={{ value: metodeSuggestion, label: metodeSuggestion }}
+              onChange={onChangeMetode}
+            />
+          </div>
 
-        {/* Search Button */}
-        <div className="flex">
-          <Button className="ml-auto" onClick={onSearch}>
-            Cari Suggestion
-          </Button>
+          {/* Search Button */}
+          <Button size="sm" onClick={onSearch}>Cari Suggestion</Button>
         </div>
       </div>
     </div>
