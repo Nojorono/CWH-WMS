@@ -20,11 +20,12 @@ export default defineConfig(({ mode }) => {
           namedExport: "ReactComponent",
         },
       }),
-      // splitVendorChunkPlugin is deprecated in Vite 6+
-      // Vite now handles vendor chunking automatically, and we have manual chunks defined below
     ],
 
     server: {
+      host: '0.0.0.0',  // Allow access from all hosts
+      port: 5173,
+      strictPort: false,
       open: "/signin",
       proxy: {
         "/api": {
@@ -37,33 +38,25 @@ export default defineConfig(({ mode }) => {
 
     build: {
       cssMinify: "lightningcss",
-      chunkSizeWarningLimit: 2500, // naikkan sedikit biar warning gak muncul
-      sourcemap: false, // bisa true kalau mau debug bundle
+      chunkSizeWarningLimit: 2500,
+      sourcemap: false,
       rollupOptions: {
         output: {
           manualChunks(id) {
-            // Fix: More careful chunking to avoid circular dependency issues
             if (id.includes("node_modules")) {
-              // React and React DOM must be together
               if (id.includes("react-dom")) return "react-vendor";
               if (id.includes("react/") || id.includes("react\\")) return "react-vendor";
               
-              // Zustand
               if (id.includes("zustand")) return "zustand";
               
-              // Axios
               if (id.includes("axios")) return "axios";
               
-              // Router (keep together)
               if (id.includes("react-router")) return "router";
               
-              // Charts
               if (id.includes("apexcharts")) return "charts";
               
-              // Data tables
               if (id.includes("react-data-table-component") || id.includes("datatables.net")) return "datatable";
               
-              // Everything else goes to vendor
               return "vendor";
             }
           },
