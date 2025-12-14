@@ -145,26 +145,6 @@ const DataTable = () => {
       type: "number",
       validation: { required: "Required" },
     },
-    // {
-    //   name: "isActive",
-    //   label: "Is Active",
-    //   type: "select",
-    //   options: [
-    //     { label: "--Select--", value: "" },
-    //     { label: "Active", value: true },
-    //     { label: "Inactive", value: false },
-    //   ],
-    // },
-    // {
-    //   name: "isFull",
-    //   label: "Is Full",
-    //   type: "select",
-    //   options: [
-    //     { label: "--Select--", value: "" },
-    //     { label: "Full", value: true },
-    //     { label: "Not Full", value: false },
-    //   ],
-    // },
     {
       name: "uom",
       label: "UOM",

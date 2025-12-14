@@ -1,126 +1,3 @@
-// import { useState, useMemo, useCallback, use } from "react";
-// import { ColumnDef } from "@tanstack/react-table";
-// import TableComponent from "../../../components/tables/MasterDataTable/TableComponent";
-// import { FaEdit, FaEye, FaTrash } from "react-icons/fa";
-// import { useNavigate } from "react-router";
-
-// interface Props {
-//   data: any[];
-//   globalFilter?: string;
-//   isCreateModalOpen: boolean;
-//   onCloseCreateModal: () => void;
-//   columns: ColumnDef<any>[];
-//   formFields: any[];
-//   onSubmit?: (data: any) => Promise<any>;
-//   onUpdate?: (data: any) => Promise<any>;
-//   onDelete?: (id: any) => Promise<void>;
-//   onRefresh: () => void;
-//   getRowId?: (row: any) => any;
-//   title?: string;
-//   noActions?: boolean;
-//   isDeleted?: boolean;
-//   isEdited?: boolean;
-//   isView?: boolean;
-//   onSelectedChange?: (ids: any[]) => void; // ✅ callback ke parent
-// }
-
-// const AdjustTable = ({
-//   data,
-//   globalFilter,
-//   columns,
-//   onDelete,
-//   onRefresh,
-//   getRowId = (row) => row.id,
-//   noActions,
-//   isDeleted = true,
-//   isEdited = true,
-//   isView = false,
-//   onSelectedChange,
-// }: Props) => {
-//   const navigate = useNavigate();
-//   const [selectedItem, setSelectedItem] = useState<any | null>(null);
-//   const [selectedIds, setSelectedIds] = useState<any[]>([]);
-
-//   const handleDelete = useCallback(
-//     async (id: any) => {
-//       if (onDelete) {
-//         await onDelete(id);
-//       }
-//       await onRefresh();
-//     },
-//     [onDelete, onRefresh]
-//   );
-
-//   const handleViewDetail = (id: any) => {
-//     navigate(`/inventory/detail`, { state: { invListId: id } });
-//   };
-
-//   const enhancedColumns = useMemo(() => {
-//     if (noActions) return columns;
-//     return [
-//       ...columns,
-// {
-//   id: "actions",
-//   header: "Action",
-//   cell: ({ row }) => (
-//     <div className="flex gap-2">
-//       {isEdited && (
-//         <button
-//           className="text-green-600"
-//           onClick={() => setSelectedItem(row.original)}
-//         >
-//           <FaEdit />
-//         </button>
-//       )}
-
-//       {isDeleted && (
-//         <button
-//           onClick={() => handleDelete(getRowId(row.original))}
-//           className="text-red-500"
-//         >
-//           <FaTrash />
-//         </button>
-//       )}
-
-//       {isView && (
-//         <button
-//           onClick={() => handleViewDetail(getRowId(row.original))}
-//           className="text-blue-500"
-//         >
-//           <FaEye />
-//         </button>
-//       )}
-//     </div>
-//   ),
-// },
-//     ];
-//   }, [columns, getRowId, handleDelete]);
-
-//   // ✅ hanya update saat ada event, bukan di render
-//   const handleSelectionChange = useCallback(
-//     (ids: any[]) => {
-//       setSelectedIds(ids);
-//       if (onSelectedChange) {
-//         onSelectedChange(ids); // kirim ke parent
-//       }
-//     },
-//     [onSelectedChange]
-//   );
-
-//   return (
-//     <>
-//       <TableComponent
-//         data={data}
-//         columns={enhancedColumns}
-//         globalFilter={globalFilter}
-//         onSelectionChange={handleSelectionChange}
-//       />
-//     </>
-//   );
-// };
-
-// export default AdjustTable;
-
 import { useEffect, useMemo, useState } from "react";
 import { FaEye, FaEdit } from "react-icons/fa";
 import { ColumnDef } from "@tanstack/react-table";
@@ -160,6 +37,15 @@ type InventoryData = {
   inventory_status: string;
   progression_status: string;
   inventory_note: string;
+
+  current_items?: {
+    item_id: string;
+    item_name: string;
+    current_quantity: number;
+    uom: string;
+    production_date: string;
+    week_number: number;
+  }[];
 };
 
 type MenuTableProps = {
@@ -168,12 +54,16 @@ type MenuTableProps = {
   onDetail?: (id: string) => void;
   onRefresh?: () => void;
   filteredStatus?: any;
+  filteredZone?: any;
+  filteredBin?: any;
 };
 
 const AdjustTable = ({
   globalFilter,
   setGlobalFilter,
   filteredStatus,
+  filteredZone,
+  filteredBin,
 }: MenuTableProps) => {
   const navigate = useNavigate();
   const {
@@ -190,21 +80,64 @@ const AdjustTable = ({
   useEffect(() => {
     if (!fetchUsingPagination) return;
     fetchUsingPagination({
-      page: pageIndex + 1, // jika backend 1-based
+      page: pageIndex + 1,
       limit: pageSize,
       search: globalFilter || "",
       inventory_status: filteredStatus || "",
+      warehouse_sub_id: filteredZone || "",
+      warehouse_bin_id: filteredBin || "",
       sortOrder: "DESC",
       sortBy: "progression_status",
     });
-  }, [fetchUsingPagination, pageIndex, pageSize, globalFilter, filteredStatus]);
+  }, [
+    fetchUsingPagination,
+    pageIndex,
+    pageSize,
+    globalFilter,
+    filteredStatus,
+    filteredZone,
+    filteredBin,
+  ]);
 
   const columns: ColumnDef<InventoryData>[] = useMemo(
     () => [
       {
+        accessorKey: "id",
+        header: "ID",
+        selectedRow: true,
+      },
+      {
         accessorKey: "pallet_code",
         header: "Pallet ID",
       },
+      {
+        accessorKey: "item_name",
+        header: "Items",
+        cell: ({ row }) => {
+          const items = row.original.current_items || [];
+
+          if (items.length === 0) return "-";
+
+          return (
+            <ul className="space-y-1">
+              {items.map((item, index) => (
+                <li
+                  key={index}
+                  className="flex items-center gap-2 text-sm text-gray-700"
+                >
+                  <span className="w-2 h-2 bg-gray-400 rounded-full"></span>
+                  <span className="font-medium">{item.item_name}</span>
+                  <span>
+                    - {item.current_quantity} {item.uom}
+                  </span>
+                  <span className="font-medium">week {item.week_number}</span>
+                </li>
+              ))}
+            </ul>
+          );
+        },
+      },
+
       {
         accessorKey: "warehouse_name",
         header: "Warehouse",
@@ -246,33 +179,6 @@ const AdjustTable = ({
         header: "Action",
         cell: ({ row }) => (
           <div className="flex gap-2">
-            {/* {isEdited && (
-              <button
-                className="text-green-600"
-                onClick={() => setSelectedItem(row.original)}
-              >
-                <FaEdit />
-              </button>
-            )}
-
-            {isDeleted && (
-              <button
-                onClick={() => handleDelete(getRowId(row.original))}
-                className="text-red-500"
-              >
-                <FaTrash />
-              </button>
-            )}
-
-            {isView && (
-              <button
-                onClick={() => handleViewDetail(getRowId(row.original))}
-                className="text-blue-500"
-              >
-                <FaEye />
-              </button>
-            )} */}
-
             <button
               onClick={() => handleViewDetail(row.original.id)}
               className="text-blue-500"
@@ -321,7 +227,19 @@ const AdjustTable = ({
     inventory_status: item.inventory_status || "",
     progression_status: item.progression_status || "",
     inventory_note: item.inventory_note || "",
+    current_items: item.pallet?.currentItems || [],
   }));
+
+  const handleSelectionChange = (selectedIds: string[]) => {
+    // console.log("Selected IDs:", selectedIds);
+    // if (JSON.stringify(selectedIds) !== JSON.stringify(selectedMemoIds)) {
+    //   const filtered = approvedMemos.filter(
+    //     (m) => typeof m.id === "string" && selectedIds.includes(m.id)
+    //   );
+    //   setSelectedMemoIds(selectedIds);
+    //   setSelectedMemos(filtered);
+    // }
+  };
 
   return (
     <div className="flex flex-col gap-4">
@@ -337,6 +255,7 @@ const AdjustTable = ({
           setPageIndex(page);
           setPageSize(size);
         }}
+        onSelectionChange={handleSelectionChange}
       />
     </div>
   );

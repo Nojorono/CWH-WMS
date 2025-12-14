@@ -43,6 +43,7 @@ interface Item {
   notes: string;
   qty_pick?: number; // Added qty_pick property
   week_number?: number; // Added week_number property
+  uom?: string;
 }
 
 interface TableProps {
@@ -52,6 +53,7 @@ interface TableProps {
   destinationZoneId: string;
   destinationBinId: string;
   DOid: string | null;
+  metodeSuggestion: string;
 }
 
 export const SuggestionItemsTable: React.FC<TableProps> = ({
@@ -61,6 +63,7 @@ export const SuggestionItemsTable: React.FC<TableProps> = ({
   destinationZoneId,
   destinationBinId,
   DOid,
+  metodeSuggestion,
 }) => {
   const navigate = useNavigate();
   const [localItems, setLocalItems] = useState<Item[]>(items);
@@ -68,7 +71,6 @@ export const SuggestionItemsTable: React.FC<TableProps> = ({
   const [openAdd, setOpenAdd] = useState(false);
   const [selectedItem, setSelectedItem] = useState<Item | null>(null);
   const [selectedRowIndex, setSelectedRowIndex] = useState<number | null>(null);
-
   const { createBulkData } = useStoreTransactionPicking();
 
   useEffect(() => {
@@ -82,11 +84,11 @@ export const SuggestionItemsTable: React.FC<TableProps> = ({
   };
 
   const handleAddClick = (itemId: string) => {
-    console.log("Handle add click for item ID:", itemId);
-
     setSelectedItem({ item_id: itemId } as Item);
     setOpenAdd(true);
   };
+
+  console.log("localItems state:", localItems);
 
   const handleAddItem = (data: any) => {
     const newItem: Item = {
@@ -153,14 +155,17 @@ export const SuggestionItemsTable: React.FC<TableProps> = ({
     { accessorKey: "item_name", header: "Item Name" },
     { accessorKey: "item_code", header: "Item Code" },
     {
+      accessorKey: "uom",
+      header: "UOM",
+      cell: ({ row }) => (
+        <span>{row.original.suggested_locations[0]?.uom}</span>
+      ),
+    },
+    {
       accessorKey: "week_number",
       header: "Week Number",
       cell: ({ row }) => (
-        <ul>
-          {row.original.suggested_locations.map((location, index) => (
-            <li key={index}>{location.week_number}</li>
-          ))}
-        </ul>
+        <span>{row.original.suggested_locations[0]?.week_number}</span>
       ),
     },
     { accessorKey: "required_quantity", header: "Required Quantity" },
@@ -173,32 +178,28 @@ export const SuggestionItemsTable: React.FC<TableProps> = ({
       accessorKey: "available_quantity",
       header: "Available Quantity",
       cell: ({ row }) => (
-        <ul>
-          {row.original.suggested_locations.map((location, index) => (
-            <li key={index}>{location.available_quantity}</li>
-          ))}
-        </ul>
+        <span>{row.original.suggested_locations[0]?.available_quantity}</span>
       ),
     },
     {
       id: "warehouse_sub_name",
       header: "Zone",
       cell: ({ row }) => (
-        <ul>
-          {row.original.suggested_locations.map((location, index) => (
-            <li key={index}>{location.warehouse_sub_name}</li>
-          ))}
-        </ul>
+        <span>{row.original.suggested_locations[0]?.warehouse_sub_name}</span>
       ),
     },
     {
-      id: "suggested_locations",
+      id: "bin_location",
       header: "Bin Locations",
       cell: ({ row }) => (
         <ul>
-          {row.original.suggested_locations.map((location, index) => (
-            <li key={index}>{location.bin_name}</li>
-          ))}
+          {row.original.suggested_locations.length > 0 && (
+            <li>
+              {row.original.suggested_locations[0].bin_name === "N/A"
+                ? ""
+                : row.original.suggested_locations[0].bin_name}
+            </li>
+          )}
         </ul>
       ),
     },
@@ -233,7 +234,30 @@ export const SuggestionItemsTable: React.FC<TableProps> = ({
 
         const handleQtyChange = (e: { target: { value: any } }) => {
           const value = Number(e.target.value);
+          const alreadyPicked = item.already_picked_quantity; // Ambil nilai already picked
+          const requiredQuantity = item.required_quantity; // Ambil nilai required quantity
+          const remainingQtyNeeded = item.remaining_quantity_needed; // Ambil nilai remaining quantity needed
 
+          // Hitung sisa yang diperbolehkan
+          const allowedQty = requiredQuantity - alreadyPicked;
+
+          // Validasi: Qty Picked tidak boleh lebih dari Remaining Qty Needed
+          if (value > remainingQtyNeeded) {
+            showErrorToast(
+              `Qty Picked cannot exceed the Remaining Qty Needed of ${remainingQtyNeeded}.`
+            );
+            return; // Keluar dari fungsi jika melebihi
+          }
+
+          // Validasi: Qty Picked tidak boleh lebih dari sisa yang diperbolehkan
+          if (value > allowedQty) {
+            showErrorToast(
+              `Qty Picked cannot exceed the remaining allowed quantity of ${allowedQty}.`
+            );
+            return; // Keluar dari fungsi jika melebihi
+          }
+
+          // Jika semua validasi lolos, update localItems
           if (value <= available) {
             setLocalItems((prev) => {
               const copy = [...prev];
@@ -260,19 +284,23 @@ export const SuggestionItemsTable: React.FC<TableProps> = ({
       header: "Actions",
       cell: ({ row }) => (
         <div className="flex gap-3">
-          <button
-            onClick={() => handleEditClick(row.original, row.index)}
-            className="text-green-600"
-          >
-            <FaEdit />
-          </button>
+          {row.original.remaining_quantity_needed > 0 && (
+            <>
+              <button
+                onClick={() => handleEditClick(row.original, row.index)}
+                className="text-green-600"
+              >
+                <FaEdit />
+              </button>
 
-          <button
-            onClick={() => handleAddClick(row.original.item_id)}
-            className="text-blue-600"
-          >
-            <FaPlus />
-          </button>
+              <button
+                onClick={() => handleAddClick(row.original.item_id)}
+                className="text-blue-600"
+              >
+                <FaPlus />
+              </button>
+            </>
+          )}
         </div>
       ),
     },
@@ -370,6 +398,7 @@ export const SuggestionItemsTable: React.FC<TableProps> = ({
           mode="edit"
           itemID={selectedItem?.item_id ?? ""}
           existingItemData={selectedItem}
+          metodeSuggestion={metodeSuggestion}
           onSubmit={(data) => {
             handleEditItem(data);
           }}

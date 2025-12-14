@@ -1,6 +1,7 @@
 // ✅ FILE: FetchCustomer.ts
 import { useEffect, useState } from "react";
 import { UseFormReturn } from "react-hook-form";
+import { EndPoint } from "../../../../utils/EndPoint";
 
 export type OutboundSelectValue = {
   label: string;
@@ -24,8 +25,8 @@ export const useCustomerByOutboundType = (
 
         const url =
           typeOutbound.value === "AMO"
-            ? "http://10.0.29.47:9005/customer/main"
-            : "http://10.0.29.47:9005/customer/subdist";
+            ? `${EndPoint}customer/main`
+            : `${EndPoint}customer/subdist`;
 
         const token = localStorage.getItem("token");
 

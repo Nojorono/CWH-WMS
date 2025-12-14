@@ -24,11 +24,11 @@ const CancelTransactionPickModal: React.FC<CancelTransactionPickModalProps> = ({
   const handleCancelPicking = async (pickingId: string) => {
     if (!pickingId) return;
 
-    const confirm = window.confirm(
-      "Are you sure you want to cancel this Picking Transaction?"
-    );
+    // const confirm = window.confirm(
+    //   "Are you sure you want to cancel this Picking Transaction?"
+    // );
 
-    if (!confirm) return;
+    // if (!confirm) return;
 
     const transactionId = pickingId;
     try {

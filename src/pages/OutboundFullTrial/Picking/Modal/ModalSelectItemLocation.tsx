@@ -5,6 +5,7 @@ import Button from "../../../../components/ui/button/Button";
 import Select from "../../../../components/form/Select";
 import KeyValueCard from "../Helper/KeyValueCard";
 import { formatDate } from "../../Memo/TableAndForm/MemoCreateProcess";
+import { EndPoint } from "../../../../utils/EndPoint";
 
 type Props = {
   open: boolean;
@@ -13,6 +14,7 @@ type Props = {
   itemID?: any;
   existingItemData?: any;
   mode?: "add" | "edit";
+  metodeSuggestion?: string;
 };
 
 export default function ModalInventoryItemModal({
@@ -22,16 +24,62 @@ export default function ModalInventoryItemModal({
   itemID,
   existingItemData,
   mode,
+  metodeSuggestion,
 }: Props) {
   if (!open) return null; // modal hidden
 
-  const { fetchById, detail: itemList } = useStorePickingSuggestionItem();
+  // const {
+  //   // fetchById,
+  //   detail: itemList,
+  //   fetchUsingParam,
+  // } = useStorePickingSuggestionItem();
+
+  // useEffect(() => {
+  //   if (open && itemID) {
+  //     fetchById?.(itemID);
+  //   }
+  // }, [open, itemID, fetchById]);
+
+  // useEffect(() => {
+  //   if (itemID) {
+  //     fetchUsingParam({
+  //       itemId: itemID,
+  //       sortMethod: metodeSuggestion,
+  //     });
+  //   }
+  // }, [fetchUsingParam, itemID, metodeSuggestion, open]);
+
+  const [itemList, setItemList] = React.useState<any>(null);
 
   useEffect(() => {
+    const itemUOM = existingItemData.suggested_locations[0]?.uom;
+
+    const fetchItem = async () => {
+      try {
+        const token = localStorage.getItem("token"); // Get the bearer token from localStorage
+        const response = await fetch(
+          `${EndPoint}picking-suggestion/item/${itemID}?uom=${itemUOM}&sortMethod=${metodeSuggestion}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`, // Set the Authorization header
+            },
+          }
+        );
+        const data = await response.json();
+        console.log("Fetched item data:", data.data);
+
+        // Handle the fetched data as needed
+        console.log(data);
+        setItemList(data.data);
+      } catch (error) {
+        console.error("Error fetching item:", error);
+      }
+    };
+
     if (open && itemID) {
-      fetchById?.(itemID);
+      fetchItem();
     }
-  }, [open, itemID, fetchById]);
+  }, [open, itemID, metodeSuggestion]);
 
   const {
     control,
@@ -50,6 +98,8 @@ export default function ModalInventoryItemModal({
   const locations = itemList?.suggested_locations || [];
   const defaultLocation = locations?.[0] || null;
   const isEditMode = mode === "edit";
+
+  useEffect(() => {}, []);
 
   useEffect(() => {
     if (isEditMode && existingItemData) {
@@ -76,7 +126,7 @@ export default function ModalInventoryItemModal({
     );
 
     return uniq
-      .sort((a, b) => Number(a.week_number) - Number(b.week_number))
+      .sort((a: any, b: any) => Number(a.week_number) - Number(b.week_number))
       .map((loc: any) => ({
         label: `Week ${loc.week_number}`,
         value: String(loc.week_number),
@@ -146,15 +196,33 @@ export default function ModalInventoryItemModal({
       <div className="relative bg-white rounded-xl shadow-xl w-full max-w-4xl max-h-[92vh] overflow-y-auto p-6 space-y-8 animate-fadeIn">
         {/* HEADER */}
         <h2 className="text-2xl font-semibold text-blue-900 tracking-wide">
-          {isEditMode ? "Edit Suggest Location" : "Add Suggest Location"}
+          {isEditMode
+            ? "Edit Suggest Location Item"
+            : "Add Suggest Location Item"}
         </h2>
 
         {/* ITEM NAME */}
-        <input
-          className="w-full border p-3 bg-gray-100 rounded-xl text-gray-700"
-          value={itemList?.item_name ?? ""}
-          disabled
-        />
+        <div>
+          <label className="font-semibold text-gray-700 text-sm">
+            Required Item
+          </label>
+          <input
+            className="w-full border p-3 bg-gray-100 rounded-xl text-gray-700"
+            value={`${existingItemData.item_name}`}
+            disabled
+          />
+        </div>
+
+        <div>
+          <label className="font-semibold text-gray-700 text-sm">
+            Required Qty
+          </label>
+          <input
+            className="w-full border p-3 bg-gray-100 rounded-xl text-gray-700"
+            value={`${existingItemData.required_quantity} ${existingItemData.suggested_locations[0]?.uom}`}
+            disabled
+          />
+        </div>
 
         {/* MAIN GRID */}
         <div className="grid grid-cols-1 gap-6">
@@ -197,44 +265,47 @@ export default function ModalInventoryItemModal({
 
         {/* COMPARISON */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {isEditMode &&
-            existingItemData &&
-            existingItemData.suggested_locations.length > 0 && (
-              <KeyValueCard
-                title="Existing Suggestion Location"
-                data={{
-                  zone: existingItemData.suggested_locations[0]
-                    ?.warehouse_sub_code,
-                  bin: existingItemData.suggested_locations[0]?.bin_code,
-                  planned_qty: existingItemData.required_quantity,
-                  production_date: formatDate(
-                    existingItemData.suggested_locations[0]?.production_date
-                  ),
-                  week: existingItemData.suggested_locations[0]?.week_number,
-                  uom: existingItemData.suggested_locations[0]?.uom,
-                }}
-                labelMap={{
-                  zone: "Zone",
-                  bin: "BIN",
-                  planned_qty: "Set Qty Pick",
-                  production_date: "Production Date",
-                  week: "Week",
-                  uom: "UOM",
-                }}
-              />
-            )}
+          {isEditMode && existingItemData?.suggested_locations.length > 0 && (
+            <KeyValueCard
+              title="Existing Suggestion Location"
+              data={{
+                zone: existingItemData.suggested_locations[0]
+                  ?.warehouse_sub_code,
+                bin:
+                  existingItemData.suggested_locations[0]?.bin_code !== "N/A"
+                    ? existingItemData.suggested_locations[0]?.bin_code
+                    : null,
+                planned_qty: existingItemData.required_quantity,
+                production_date: formatDate(
+                  existingItemData.suggested_locations[0]?.production_date
+                ),
+                week: existingItemData.suggested_locations[0]?.week_number,
+                uom: existingItemData.suggested_locations[0]?.uom,
+              }}
+              labelMap={{
+                zone: "Zone",
+                bin: "BIN",
+                planned_qty: "Set Qty Pick",
+                production_date: "Production Date",
+                week: "Week",
+                uom: "UOM",
+              }}
+            />
+          )}
 
           {selectedLocation && (
             <KeyValueCard
               title="New Suggestion Location"
               data={{
                 zone: selectedLocation.warehouse_sub_code,
-                bin: selectedLocation.bin_code,
+                bin:
+                  selectedLocation.bin_code !== "N/A"
+                    ? selectedLocation.bin_code
+                    : null,
                 available_quantity: selectedLocation.available_quantity,
                 production_date: formatDate(selectedLocation.production_date),
                 week: selectedLocation.week_number,
                 uom: selectedLocation.uom,
-                priority: selectedLocation.location_priority,
               }}
               labelMap={{
                 uom: "UOM",
@@ -243,7 +314,6 @@ export default function ModalInventoryItemModal({
                 available_quantity: "Available Qty",
                 production_date: "Production Date",
                 week: "Week",
-                priority: "Location Priority",
               }}
             />
           )}

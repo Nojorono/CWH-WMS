@@ -10,11 +10,19 @@ export interface Pallet {
   organization_id: number;
   pallet_code: string;
   capacity: number;
-  qr_image_url: string;
   isActive: boolean;
   isFull: boolean;
   uom: string;
   currentQuantity: number;
+  currentWeekNumber: number;
+  currentItems: Array<{
+    item_id: string;
+    item_name: string;
+    current_quantity: number;
+    uom: string;
+    production_date: string;
+    week_number: number;
+  }>;
 }
 
 export interface Warehouse {
@@ -39,13 +47,24 @@ export interface WarehouseSub {
   description: string;
   capacity_bin: number | null;
   barcode_image_url: string;
-  is_staging: string;
+  is_staging: string | null;
+  is_good_stock: boolean;
+  is_gate: boolean;
 }
 
 export interface WarehouseBin {
   id?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  deletedAt?: string | null;
+  organization_id?: number;
+  warehouse_sub_id?: string;
   name?: string;
   code?: string;
+  description?: string;
+  capacity_pallet?: number;
+  barcode_image_url?: string;
+  current_pallet?: any;
   [key: string]: any;
 }
 
@@ -54,12 +73,12 @@ export interface WarehouseBin {
 // =============================
 
 export interface Inventory {
-  id?: any;
+  id: string;
   createdAt: string;
   updatedAt: string;
   deletedAt: string | null;
 
-  pallet_id?: any;
+  pallet_id: string;
   pallet: Pallet;
 
   warehouse_id: string;
@@ -73,6 +92,7 @@ export interface Inventory {
 
   inventory_date: string;
   inventory_status: string;
+  progression_status: string;
   inventory_note: string;
 }
 
@@ -85,6 +105,14 @@ export interface InventoryListResponse {
   success: boolean;
   message: string;
   data: Inventory[];
+  meta: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+    hasNextPage: boolean;
+    hasPreviousPage: boolean;
+  };
   timestamp: string;
   path: string;
 }

@@ -40,6 +40,7 @@ function ModalPickingList({ open, onClose, memoId }: Props) {
     return apiResponse.map((d) => ({
       id: d.id,
       doId: d.do?.id || "-",
+      doNumber: d.do?.outbound_do_number || "-",
       doType: d.do?.outbound_type || "-",
       deliveryDate: formatDateIndo(d.do?.delivery_date) || "-",
       memoId: d.memo?.id || "-",
@@ -55,6 +56,7 @@ function ModalPickingList({ open, onClose, memoId }: Props) {
       status: d.status,
       destinationZone: d.destinationWarehouseSub?.name || "-",
       destinationBinName: d.destinationBin?.name || "-",
+      memoNumber: d.memo?.outbound_memo_number || "-",
     }));
   }, [apiResponse]);
 
@@ -152,6 +154,18 @@ function ModalPickingList({ open, onClose, memoId }: Props) {
                   <p className="text-sm text-gray-500">DO ID</p>
                   <p className="font-medium text-gray-800">
                     {headerInfo.doId || "-"}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500">DO Number</p>
+                  <p className="font-medium text-gray-800">
+                    {headerInfo.doNumber || "-"}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500">Memo Number</p>
+                  <p className="font-medium text-gray-800">
+                    {headerInfo.memoNumber || "-"}
                   </p>
                 </div>
                 <div>
