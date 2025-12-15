@@ -166,8 +166,6 @@ export default function ModalInventoryItemModal({
     existingItemData.zone === selectedLocation.warehouse_sub_code &&
     existingItemData.bin === selectedLocation.bin_code;
 
-  console.log("Existing Item Data:", existingItemData);
-
   return (
     <div className="fixed inset-0 z-10000 flex items-center justify-center">
       {/* OVERLAY */}
