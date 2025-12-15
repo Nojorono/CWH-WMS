@@ -83,12 +83,12 @@ export const SuggestionItemsTable: React.FC<TableProps> = ({
     setSelectedRowIndex(rowIndex);
   };
 
-  const handleAddClick = (itemId: string) => {
-    setSelectedItem({ item_id: itemId } as Item);
+  const handleAddClick = (item: Item, rowIndex: number) => {
+    setSelectedItem(item);
     setOpenAdd(true);
-  };
+    setSelectedRowIndex(rowIndex);
 
-  console.log("localItems state:", localItems);
+  };
 
   const handleAddItem = (data: any) => {
     const newItem: Item = {
@@ -294,7 +294,7 @@ export const SuggestionItemsTable: React.FC<TableProps> = ({
               </button>
 
               <button
-                onClick={() => handleAddClick(row.original.item_id)}
+                onClick={() => handleAddClick(row.original, row.index)}
                 className="text-blue-600"
               >
                 <FaPlus />
@@ -356,6 +356,9 @@ export const SuggestionItemsTable: React.FC<TableProps> = ({
     }
   };
 
+  console.log("selectedItem:", selectedItem);
+  
+
   return (
     <>
       <TableComponent
@@ -379,7 +382,8 @@ export const SuggestionItemsTable: React.FC<TableProps> = ({
       </div>
 
       {/* ADD MODAL */}
-      {openAdd && (
+      {openAdd && selectedItem?.suggested_locations[0]?.uom && (
+        
         <ModalInventoryItemModal
           open={openAdd}
           onClose={() => setOpenAdd(false)}
@@ -387,6 +391,8 @@ export const SuggestionItemsTable: React.FC<TableProps> = ({
           itemID={selectedItem?.item_id}
           existingItemData={selectedItem}
           onSubmit={handleAddItem}
+          uomID={selectedItem?.suggested_locations[0]?.uom}
+          metodeSuggestion={metodeSuggestion}
         />
       )}
 
@@ -402,6 +408,7 @@ export const SuggestionItemsTable: React.FC<TableProps> = ({
           onSubmit={(data) => {
             handleEditItem(data);
           }}
+          uomID={selectedItem?.suggested_locations[0]?.uom}
         />
       )}
     </>

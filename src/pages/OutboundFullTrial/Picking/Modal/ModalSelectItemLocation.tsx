@@ -15,6 +15,7 @@ type Props = {
   existingItemData?: any;
   mode?: "add" | "edit";
   metodeSuggestion?: string;
+  uomID?: string;
 };
 
 export default function ModalInventoryItemModal({
@@ -25,40 +26,18 @@ export default function ModalInventoryItemModal({
   existingItemData,
   mode,
   metodeSuggestion,
+  uomID,
 }: Props) {
   if (!open) return null; // modal hidden
-
-  // const {
-  //   // fetchById,
-  //   detail: itemList,
-  //   fetchUsingParam,
-  // } = useStorePickingSuggestionItem();
-
-  // useEffect(() => {
-  //   if (open && itemID) {
-  //     fetchById?.(itemID);
-  //   }
-  // }, [open, itemID, fetchById]);
-
-  // useEffect(() => {
-  //   if (itemID) {
-  //     fetchUsingParam({
-  //       itemId: itemID,
-  //       sortMethod: metodeSuggestion,
-  //     });
-  //   }
-  // }, [fetchUsingParam, itemID, metodeSuggestion, open]);
 
   const [itemList, setItemList] = React.useState<any>(null);
 
   useEffect(() => {
-    const itemUOM = existingItemData.suggested_locations[0]?.uom;
-
     const fetchItem = async () => {
       try {
         const token = localStorage.getItem("token"); // Get the bearer token from localStorage
         const response = await fetch(
-          `${EndPoint}picking-suggestion/item/${itemID}?uom=${itemUOM}&sortMethod=${metodeSuggestion}`,
+          `${EndPoint}picking-suggestion/item/${itemID}?uom=${uomID}&sortMethod=${metodeSuggestion}`,
           {
             headers: {
               Authorization: `Bearer ${token}`, // Set the Authorization header
@@ -186,6 +165,8 @@ export default function ModalInventoryItemModal({
     existingItemData.week_number === selectedLocation.week_number &&
     existingItemData.zone === selectedLocation.warehouse_sub_code &&
     existingItemData.bin === selectedLocation.bin_code;
+
+  console.log("Existing Item Data:", existingItemData);
 
   return (
     <div className="fixed inset-0 z-10000 flex items-center justify-center">
@@ -346,6 +327,8 @@ export default function ModalInventoryItemModal({
                 type="number"
                 {...field}
                 className="border p-3 w-full rounded-xl"
+                min={0}
+                step={1}
               />
             )}
           />
