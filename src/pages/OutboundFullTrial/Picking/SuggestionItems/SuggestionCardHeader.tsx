@@ -47,11 +47,16 @@ export const SuggestionCardHeader: React.FC<HeaderProps> = ({
   // Convert API data -> Select options
   const binOptions = useMemo(() => {
     if (!Array.isArray(binDataRaw)) return [];
-    return binDataRaw.map((bin: any) => ({
+    const options = binDataRaw.map((bin: any) => ({
       value: bin.id, // Gunakan id sebagai value
       label: bin.name, // Gunakan name sebagai label
       warehouse_sub_id: bin.warehouse_sub_id, // Simpan warehouse_sub_id
     }));
+    options.unshift({
+      value: "", label: "All Line",
+      warehouse_sub_id: undefined
+    }); // Tambahkan All Line sebagai opsi default
+    return options;
   }, [binDataRaw]);
 
   // Find selected item so Select shows correct label
@@ -61,6 +66,10 @@ export const SuggestionCardHeader: React.FC<HeaderProps> = ({
 
   return (
     <div className="bg-white shadow rounded-lg p-4 mb-6">
+      <h1 className="text-lg font-semibold col-span-3 mb-4">
+        Picking Suggestion List
+      </h1>
+
       {/* TOP INFO */}
       <div className="grid grid-cols-1 md:grid-cols-5 gap-4 text-sm mb-4">
         <div>
@@ -123,6 +132,7 @@ export const SuggestionCardHeader: React.FC<HeaderProps> = ({
             <p className="text-gray-500 mb-1">Metode Suggestion</p>
             <Select
               options={[
+                { value: "", label: "Pilih Metode" },
                 { value: "FIFO", label: "FEFO" },
                 { value: "LIFO", label: "LEFO" },
               ]}
@@ -132,7 +142,9 @@ export const SuggestionCardHeader: React.FC<HeaderProps> = ({
           </div>
 
           {/* Search Button */}
-          <Button size="sm" onClick={onSearch}>Cari Suggestion</Button>
+          <Button size="sm" onClick={onSearch} disabled={!metodeSuggestion}>
+            Cari Suggestion
+          </Button>
         </div>
       </div>
     </div>

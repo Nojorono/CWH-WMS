@@ -10,6 +10,7 @@ export interface PickingListItem {
     };
 
     memo: {
+        [x: string]: string;
         id: string;
         requestor: string;
         destination: string;
