@@ -53,8 +53,9 @@ export const SuggestionCardHeader: React.FC<HeaderProps> = ({
       warehouse_sub_id: bin.warehouse_sub_id, // Simpan warehouse_sub_id
     }));
     options.unshift({
-      value: "", label: "All Line",
-      warehouse_sub_id: undefined
+      value: "",
+      label: "All Line",
+      warehouse_sub_id: undefined,
     }); // Tambahkan All Line sebagai opsi default
     return options;
   }, [binDataRaw]);
@@ -133,8 +134,8 @@ export const SuggestionCardHeader: React.FC<HeaderProps> = ({
             <Select
               options={[
                 { value: "", label: "Pilih Metode" },
-                { value: "FIFO", label: "FEFO" },
-                { value: "LIFO", label: "LEFO" },
+                { value: "FIFO", label: "FIFO" },
+                { value: "LIFO", label: "LIFO" },
               ]}
               value={{ value: metodeSuggestion, label: metodeSuggestion }}
               onChange={onChangeMetode}

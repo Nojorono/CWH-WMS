@@ -54,6 +54,7 @@ interface TableProps {
   destinationBinId: string;
   DOid: string | null;
   metodeSuggestion: string;
+  onBack?: () => void;
 }
 
 export const SuggestionItemsTable: React.FC<TableProps> = ({
@@ -64,6 +65,7 @@ export const SuggestionItemsTable: React.FC<TableProps> = ({
   destinationBinId,
   DOid,
   metodeSuggestion,
+  onBack,
 }) => {
   const navigate = useNavigate();
   const [localItems, setLocalItems] = useState<Item[]>(items);
@@ -83,12 +85,11 @@ export const SuggestionItemsTable: React.FC<TableProps> = ({
     setSelectedRowIndex(rowIndex);
   };
 
-  const handleAddClick = (itemId: string) => {
-    setSelectedItem({ item_id: itemId } as Item);
+  const handleAddClick = (item: Item, rowIndex: number) => {
+    setSelectedItem(item);
     setOpenAdd(true);
+    setSelectedRowIndex(rowIndex);
   };
-
-  console.log("localItems state:", localItems);
 
   const handleAddItem = (data: any) => {
     const newItem: Item = {
@@ -112,8 +113,6 @@ export const SuggestionItemsTable: React.FC<TableProps> = ({
 
   // Update onEdit to include qty_pick
   const handleEditItem = (data: any) => {
-    console.log("Handle edit item with data:", data);
-
     const updatedItem: Item = {
       ...selectedItem!,
       qty_pick: parseInt(data.qty_pick), // Update qty_pick
@@ -294,7 +293,7 @@ export const SuggestionItemsTable: React.FC<TableProps> = ({
               </button>
 
               <button
-                onClick={() => handleAddClick(row.original.item_id)}
+                onClick={() => handleAddClick(row.original, row.index)}
                 className="text-blue-600"
               >
                 <FaPlus />
@@ -322,13 +321,12 @@ export const SuggestionItemsTable: React.FC<TableProps> = ({
             );
             return null; // Mengembalikan null jika melebihi
           }
-
           return {
             do_id: DOid,
             memo_id: item.memo_id,
             item_id: item.item_id,
             source_warehouse_sub_id: loc?.warehouse_sub_id,
-            source_bin_id: loc?.bin_id,
+            ...(loc?.bin_id !== "N/A" && { source_bin_id: loc?.bin_id }),
             destination_warehouse_sub_id: destinationZoneId,
             destination_bin_id: destinationBinId,
             quantity: quantity,
@@ -349,7 +347,10 @@ export const SuggestionItemsTable: React.FC<TableProps> = ({
       const res = await createBulkData(finalPayload as any);
 
       if (res?.success) {
-        navigate("/outbound_do");
+        // navigate("/outbound_do");
+        if (onBack) {
+          onBack();
+        }
       }
     } else {
       showErrorToast("Put Away creation function is not available.");
@@ -379,7 +380,7 @@ export const SuggestionItemsTable: React.FC<TableProps> = ({
       </div>
 
       {/* ADD MODAL */}
-      {openAdd && (
+      {openAdd && selectedItem?.suggested_locations[0]?.uom && (
         <ModalInventoryItemModal
           open={openAdd}
           onClose={() => setOpenAdd(false)}
@@ -387,6 +388,8 @@ export const SuggestionItemsTable: React.FC<TableProps> = ({
           itemID={selectedItem?.item_id}
           existingItemData={selectedItem}
           onSubmit={handleAddItem}
+          uomID={selectedItem?.suggested_locations[0]?.uom}
+          metodeSuggestion={metodeSuggestion}
         />
       )}
 
@@ -402,6 +405,7 @@ export const SuggestionItemsTable: React.FC<TableProps> = ({
           onSubmit={(data) => {
             handleEditItem(data);
           }}
+          uomID={selectedItem?.suggested_locations[0]?.uom}
         />
       )}
     </>

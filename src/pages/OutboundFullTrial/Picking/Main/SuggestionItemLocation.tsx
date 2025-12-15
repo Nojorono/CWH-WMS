@@ -106,6 +106,7 @@ export const SuggestionItemLocation: React.FC<SuggestionTableProps> = ({
         destinationBinId={destinationBinId}
         DOid={DOid}
         metodeSuggestion={metodeSuggestion}
+        onBack={onBack}
       />
     </div>
   );
