@@ -16,6 +16,9 @@ const TransactionPickingsModal: React.FC<TransactionPickingsModalProps> = ({
 }) => {
   if (!isOpen) return null;
 
+  console.log("items modal picking detail", items);
+  
+
   // Normalisasi data
   const normalizedItems = Array.isArray(items) ? items : items ? [items] : [];
 
@@ -82,11 +85,18 @@ const TransactionPickingsModal: React.FC<TransactionPickingsModalProps> = ({
                         </span>
                       </p>
                       <p className="text-xs text-gray-500">
-                        Qty: {trx?.quantity ?? "-"} {trx?.uom}
+                        Qty Plan {trx?.quantity ?? "-"} {trx?.uom}
                       </p>
                     </div>
 
                     <div className="flex items-center gap-3">
+                      <span className="text-sm text-gray-500">
+                        {trx.transactionScanPicking.length === 0 ? (
+                          <span className="text-sm text-red-500">Belum dilakukan proses scan picking</span>
+                        ) : (
+                          <span className="text-sm text-green-500">Sudah di-scan picking</span>
+                        )}
+                      </span>
                       <span
                         className={`px-3 py-1 rounded-full text-xs font-semibold ${
                           trx?.status === "PENDING"
@@ -113,7 +123,7 @@ const TransactionPickingsModal: React.FC<TransactionPickingsModalProps> = ({
                       {/* ITEM INFO */}
                       <div className="pt-4">
                         <KeyValueCard
-                          title="Transaction Info"
+                          title="Picking Suggestion Info"
                           data={{
                             quantity: `${trx?.quantity ?? "-"} ${
                               trx?.uom ?? ""
@@ -131,7 +141,7 @@ const TransactionPickingsModal: React.FC<TransactionPickingsModalProps> = ({
 
                       {/* LOCATION INFO */}
                       <KeyValueCard
-                        title="Location Info"
+                        title="Picking Location Info"
                         data={{
                           source_warehouse:
                             trx?.sourceWarehouseSub?.name ?? "-",
@@ -148,7 +158,7 @@ const TransactionPickingsModal: React.FC<TransactionPickingsModalProps> = ({
                           source_warehouse: "Source Location",
                           source_bin: "Source Bin",
                           destination_warehouse: "Destination Location",
-                          destination_bin: "Destination Bin",
+                          destination_bin: "Destination Bin/Line",
                         }}
                       />
 
@@ -175,9 +185,9 @@ const TransactionPickingsModal: React.FC<TransactionPickingsModalProps> = ({
                                   scan?.palletSource?.pallet_code ?? "-",
                                 pallet_use: scan?.palletUse?.pallet_code ?? "-",
                                 quantity_picked: scan?.quantity_picked ?? "-",
-                                uom: scan?.uom ?? "-",
+                                UOM: scan?.uom ?? "-",
                                 week_number: scan?.week_number ?? "-",
-                                user: scan?.user_name ?? "-",
+                                User: scan?.user_name ?? "-",
                                 inspection_by: scan?.inspection_by ?? "-",
                                 status: scan?.status ?? "-",
                               }}
@@ -185,7 +195,7 @@ const TransactionPickingsModal: React.FC<TransactionPickingsModalProps> = ({
                                 pallet_source: "Pallet Source",
                                 pallet_use: "Pallet Use",
                                 quantity_picked: "Qty Picked",
-                                week_number: "Week",
+                                week_number: "Week Number",
                                 inspection_by: "Inspection By",
                               }}
                             />

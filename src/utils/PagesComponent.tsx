@@ -51,6 +51,7 @@ import DetailDO from "../pages/OutboundFullTrial/DO/Main/DetailDO";
 import PickingSuggestion from "../pages/OutboundFullTrial/Picking/Main/PickingSuggestion";
 import PickingTransaction from "../pages/OutboundFullTrial/PickingTransaction";
 import DetachAttachProcess from '../pages/OutboundFullTrial/PickingTransaction/Main/DetachAttach';
+import GateLoading from '../pages/OutboundFullTrial/GateLoading'
 
 // Approval Set Up
 import ApprovalSetup from '../pages/ApprovalSetup/index'
@@ -107,6 +108,7 @@ export {
   PickingSuggestion,
   PickingTransaction,
   DetachAttachProcess,
+  GateLoading,
 
 
   // Approval Set Up

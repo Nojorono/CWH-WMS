@@ -19,7 +19,7 @@ import { EndPoint } from "../../../../utils/EndPoint";
 import CancelTransactionPickModal from "../Modal/CancelTransactionPickModal";
 import AttachMemoModal from "../Modal/AttachMemoModal"; //
 import Swal from "sweetalert2";
-import TransactionPickingsModal from "../Modal/DetailMemoModal";
+import DetailMemoModal from "../Modal/DetailMemoModal";
 import KeyValueCard from "../../Picking/Helper/KeyValueCard";
 
 const DetachAttach: React.FC = () => {
@@ -41,6 +41,9 @@ const DetachAttach: React.FC = () => {
 
   // Mapping outbound_memos dari params
   const outboundMemos = params?.outbound_memos || [];
+
+  console.log("outbound memos detech attach", outboundMemos);
+  
 
   const columnsTableItem = [
     { accessorKey: "outbound_memo_number", header: "Memo No" },
@@ -223,7 +226,7 @@ const DetachAttach: React.FC = () => {
                 onClick={() => handleApproveDO()}
                 startIcon={<FaCheck className="size-5" />}
               >
-                Approve DO
+                Confirmation DO
               </Button>
             )}
 
@@ -309,7 +312,7 @@ const DetachAttach: React.FC = () => {
       />
 
       {/* Modal untuk menampilkan item */}
-      <TransactionPickingsModal
+      <DetailMemoModal
         isOpen={isModalOpen}
         onRequestClose={() => setIsModalOpen(false)}
         items={selectedItems}

@@ -50,6 +50,11 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
   // 🚫 Jangan letakkan return null sebelum hook
   if (!isOpen) return null;
 
+
+
+  console.log("formData in ConfirmationModal:", formData);
+  
+
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-[999]">
       <div className="bg-white rounded-2xl w-[1000px] max-h-[85vh] overflow-y-auto shadow-xl p-6 animate-fadeIn">

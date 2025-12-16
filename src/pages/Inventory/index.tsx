@@ -4,7 +4,7 @@ import MainTable from "./Main/MainTable";
 export default function Inventory() {
   return (
     <div>
-      <PageBreadcrumb breadcrumbs={[{ title: "Inventory" }]} />
+      <PageBreadcrumb breadcrumbs={[{ title: "CWH Inventory" }]} />
       <MainTable />
     </div>
   );

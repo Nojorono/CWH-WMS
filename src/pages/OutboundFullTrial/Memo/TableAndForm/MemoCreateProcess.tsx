@@ -62,7 +62,6 @@ const LoadingIndicator = () => (
 export const formatDate = (date: Date | string | null): string => {
   if (!date) return "";
   const d = typeof date === "string" ? new Date(date) : date;
-  // Hapus pengaruh timezone, biar tetap lokal (WIB)
   const tzOffset = d.getTimezoneOffset() * 60000;
   const localISO = new Date(d.getTime() - tzOffset).toISOString().slice(0, 10);
   return localISO; // Hasil: "2025-10-14"
@@ -133,10 +132,10 @@ const CreateMemo: React.FC = () => {
 
     if (typeOutbound.value === "AMO") {
       methods.setValue("ship_to", found.locationDescription || "");
-      methods.setValue("address", ""); // ✅ kosongkan
+      methods.setValue("address", "");
     } else {
       methods.setValue("ship_to", found.shipToLocation || "");
-      methods.setValue("address", found.address1 || ""); // ✅ isi address
+      methods.setValue("address", found.address1 || "");
     }
   }, [selectedCustomer, typeOutbound, customerRaw]);
 
@@ -148,18 +147,22 @@ const CreateMemo: React.FC = () => {
       type: "date",
       validation: { required: "Delivery Date is required" },
     },
-    {
-      name: "origin",
-      label: "Origin",
-      type: "text",
-      validation: { required: "Origin is required" },
-    },
-    {
-      name: "requestor",
-      label: "Requestor",
-      type: "text",
-      validation: { required: "Requestor is required" },
-    },
+
+    ...(isDetail
+      ? [
+          {
+            name: "origin",
+            label: "Origin",
+            type: "text" as const,
+            disabled: true,
+          },
+          {
+            name: "requestor",
+            label: "Requestor",
+            type: "text" as const,
+          },
+        ]
+      : []),
 
     // ✅ HIDE type_outbound jika isDetail = true
     ...(!isDetail
@@ -212,7 +215,6 @@ const CreateMemo: React.FC = () => {
       name: "notes",
       label: "Notes",
       type: "textarea",
-      validation: { required: "Notes is required" },
     },
   ];
 
@@ -327,8 +329,6 @@ const CreateMemo: React.FC = () => {
 
     // ✅ Check for empty required fields
     const requiredFields = [
-      data.requestor,
-      data.origin,
       data.ship_to,
       data.delivery_date,
       data.type_outbound?.value,
@@ -339,10 +339,12 @@ const CreateMemo: React.FC = () => {
       return;
     }
 
+    const username = localStorage.getItem("username");
+
     // ✅ Build only required schema
     const payload = {
-      requestor: data.requestor,
-      origin: data.origin,
+      requestor: username,
+      origin: "CWH",
       ship_to: data.ship_to,
       destination: data.ship_to,
       delivery_date: formatDate(data.delivery_date),
@@ -355,8 +357,6 @@ const CreateMemo: React.FC = () => {
         uom: i.uom ?? i.uom_name ?? "",
       })),
     };
-
-    console.log("Submitting payload:", payload);
 
     try {
       let res: any = null;

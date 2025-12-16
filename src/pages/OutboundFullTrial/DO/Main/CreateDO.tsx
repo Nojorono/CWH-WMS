@@ -40,6 +40,7 @@ const CreateDO: React.FC = () => {
   const navigate = useNavigate();
   const { mode } = location.state || {};
   const isDetail = mode === "detail";
+  const username = localStorage.getItem("username");
 
   const methods = useForm<MemoFormValues>({
     defaultValues: {
@@ -76,8 +77,7 @@ const CreateDO: React.FC = () => {
   ];
 
   const fieldsConfig: FieldConfig[] = [
-    { name: "origin", label: "Origin", type: "text" },
-    { name: "delivery_date", label: "Delivery Date", type: "date" },
+    { name: "delivery_date", label: "DO Delivery Date", type: "date" },
   ];
 
   const columnsTableItem = [
@@ -87,11 +87,11 @@ const CreateDO: React.FC = () => {
       accessorKey: "type",
       header: "Type Outbound",
     },
-    {
-      accessorKey: "delivery_date",
-      header: "Delivery Date",
-      cell: ({ row }: any) => formatDateIndo(row.original.delivery_date),
-    },
+    // {
+    //   accessorKey: "delivery_date",
+    //   header: "Delivery Date",
+    //   cell: ({ row }: any) => formatDateIndo(row.original.delivery_date),
+    // },
     { accessorKey: "origin", header: "Origin" },
     { accessorKey: "destination", header: "Destination" },
     { accessorKey: "ship_to", header: "Ship To" },
@@ -124,7 +124,7 @@ const CreateDO: React.FC = () => {
   };
 
   // ✅ Submit Handler
-  const onFinalSubmit = (data: any) => {
+  const onFinalSubmit = () => {
     if (selectedMemos.length === 0) {
       showErrorToast("Pilih minimal satu memo sebelum membuat DO!");
       return;
@@ -134,6 +134,8 @@ const CreateDO: React.FC = () => {
     const payload = {
       ...formData,
       type_outbound: formData.type_outbound?.value || "",
+      origin: "CWH",
+      created_by: username,
       memo_list: selectedMemos.map((m) => ({
         id: m.id,
         memo_id: m.memo_id,
@@ -149,43 +151,23 @@ const CreateDO: React.FC = () => {
     setIsConfirmOpen(true);
   };
 
-  function generateOutboundDONumber() {
-    const now = new Date();
-    const pad = (n: number) => String(n).padStart(2, "0");
-
-    const datePart = `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(
-      now.getDate()
-    )}`;
-    const timePart = `${pad(now.getHours())}${pad(now.getMinutes())}${pad(
-      now.getSeconds()
-    )}`;
-
-    const rand = Math.floor(100 + Math.random() * 900); // 3 digit random
-
-    return `DO-${datePart}-${timePart}-${rand}`;
-  }
-
   const handleConfirmSubmit = async (reorderedList: any[]) => {
-    const DOnumber = generateOutboundDONumber();
-
     try {
       const PAYLOAD = {
-        outbound_do_number: DOnumber, // akan di-generate oleh backend
-        origin: approvedMemos[0]?.origin || "",
-        outbound_type: selectedTypeOutbound,
-        delivery_date: formatDateIndo(formDataPreview?.delivery_date),
+        outbound_do_number: "",
         expedition: "",
         license_plate: "",
         driver_name: "",
         driver_phone: "",
+        origin: "CWH",
+        outbound_type: selectedTypeOutbound,
+        delivery_date: formatDateIndo(formDataPreview?.delivery_date),
         status: "PENDING",
         outbound_memo_ids: reorderedList.map((m, index) => ({
-          memo_id: m.id || m.memo_id, // sesuaikan key ID
+          memo_id: m.id || m.memo_id,
           sequence: index + 1,
         })),
       };
-
-      console.log("Final PAYLOAD Create DO to submit:", PAYLOAD);
 
       const res = await createData(PAYLOAD as any);
       if (res?.success) {
@@ -294,15 +276,6 @@ const CreateDO: React.FC = () => {
 
       {/* === Buttons === */}
       <div className="flex justify-end gap-3 mt-4">
-        {/* <Button
-          type="button"
-          variant="secondary"
-          className="bg-gray-200 text-gray-700 hover:bg-gray-300"
-          onClick={handleReset}
-        >
-          Reset
-        </Button> */}
-
         <Button
           type="button"
           onClick={methods.handleSubmit(onFinalSubmit)}
