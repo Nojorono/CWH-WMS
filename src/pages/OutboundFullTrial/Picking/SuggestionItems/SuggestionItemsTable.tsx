@@ -167,12 +167,33 @@ export const SuggestionItemsTable: React.FC<TableProps> = ({
         <span>{row.original.suggested_locations[0]?.week_number}</span>
       ),
     },
-    { accessorKey: "required_quantity", header: "Required Quantity" },
+    {
+      accessorKey: "required_quantity",
+      header: "Required Quantity",
+      cell: ({ row }) => (
+        <span style={{ color: "green", fontWeight: "bold" }}>
+          {row.original.required_quantity}
+        </span>
+      ),
+    },
     {
       accessorKey: "remaining_quantity_needed",
       header: "Remaining Qty Needed",
+      cell: ({ row }) => (
+        <span style={{ color: "red", fontWeight: "bold" }}>
+          {row.original.remaining_quantity_needed}
+        </span>
+      ),
     },
-    { accessorKey: "already_picked_quantity", header: "Already Picked" },
+    {
+      accessorKey: "already_picked_quantity",
+      header: "Already Picked",
+      cell: ({ row }) => (
+        <span style={{ color: "blue", fontWeight: "bold" }}>
+          {row.original.already_picked_quantity}
+        </span>
+      ),
+    },
     {
       accessorKey: "available_quantity",
       header: "Available Quantity",
@@ -207,7 +228,7 @@ export const SuggestionItemsTable: React.FC<TableProps> = ({
       header: "Qty Picked",
       cell: ({ row }) => {
         const item = row.original;
-        const rowIndex = row.index; // <--- INI KUNCI
+        const rowIndex = row.index;
 
         const loc = item.suggested_locations?.[0];
         const available = loc?.available_quantity ?? 0;
@@ -233,9 +254,9 @@ export const SuggestionItemsTable: React.FC<TableProps> = ({
 
         const handleQtyChange = (e: { target: { value: any } }) => {
           const value = Number(e.target.value);
-          const alreadyPicked = item.already_picked_quantity; // Ambil nilai already picked
-          const requiredQuantity = item.required_quantity; // Ambil nilai required quantity
-          const remainingQtyNeeded = item.remaining_quantity_needed; // Ambil nilai remaining quantity needed
+          const alreadyPicked = item.already_picked_quantity;
+          const requiredQuantity = item.required_quantity;
+          const remainingQtyNeeded = item.remaining_quantity_needed;
 
           // Hitung sisa yang diperbolehkan
           const allowedQty = requiredQuantity - alreadyPicked;
@@ -283,7 +304,7 @@ export const SuggestionItemsTable: React.FC<TableProps> = ({
       header: "Actions",
       cell: ({ row }) => (
         <div className="flex gap-3">
-          {row.original.remaining_quantity_needed > 0 && (
+          {row.original.suggested_locations[0]?.available_quantity > 0 && (
             <>
               <button
                 onClick={() => handleEditClick(row.original, row.index)}
@@ -305,13 +326,17 @@ export const SuggestionItemsTable: React.FC<TableProps> = ({
     },
   ];
 
+  //SUBMIT SUGGESTION FUNCTION
   const submitFinalSuggestions = async () => {
     const finalPayload = {
       data: localItems
         .map((item) => {
-          const loc = item.suggested_locations?.[0]; // Ambil lokasi aktif
+          // Tambahkan kondisi untuk memeriksa apakah ada suggestion
+          if (item.suggested_locations.length === 0) {
+            return null;
+          }
 
-          // Cek apakah qty_pick tidak melebihi required_quantity
+          const loc = item.suggested_locations?.[0];
           const quantity = item.qty_pick ?? 0;
           const requiredQuantity = item.required_quantity;
 
@@ -319,8 +344,16 @@ export const SuggestionItemsTable: React.FC<TableProps> = ({
             showErrorToast(
               `Quantity for item ${item.item_name} exceeds the required quantity of ${requiredQuantity}.`
             );
-            return null; // Mengembalikan null jika melebihi
+            return null;
           }
+
+          if (quantity === 0) {
+            showErrorToast(
+              `Quantity for item ${item.item_name} must be greater than zero.`
+            );
+            return null;
+          }
+
           return {
             do_id: DOid,
             memo_id: item.memo_id,
@@ -330,17 +363,17 @@ export const SuggestionItemsTable: React.FC<TableProps> = ({
             destination_warehouse_sub_id: destinationZoneId,
             destination_bin_id: destinationBinId,
             quantity: quantity,
-            uom: loc?.uom ?? "",
-            week_number: loc?.week_number ?? "",
+            uom: loc?.uom,
+            week_number: loc?.week_number,
             status: "PENDING",
           };
         })
-        .filter((item) => item !== null), // Filter out null items
+        .filter((item) => item !== null),
     };
 
     if (finalPayload.data.length === 0) {
-      showErrorToast("No valid items to submit.");
-      return; // Keluar dari fungsi jika tidak ada data
+      showErrorToast("Suggestion tidak valid, tolong input dengan benar sesuai Plan.");
+      return;
     }
 
     if (typeof createBulkData === "function") {

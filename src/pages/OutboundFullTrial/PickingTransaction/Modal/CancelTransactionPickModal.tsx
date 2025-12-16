@@ -150,7 +150,7 @@ const CancelTransactionPickModal: React.FC<CancelTransactionPickModalProps> = ({
                               {/* LEFT TITLE */}
                               <div className="flex flex-col">
                                 <span className="font-semibold text-gray-900">
-                                  Transaction Picking
+                                  Suggestion Picking
                                 </span>
                                 <span className="text-xs text-gray-500 font-mono">
                                   ({p.pickingId})

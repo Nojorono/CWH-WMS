@@ -53,6 +53,7 @@ import {
   ApprovalProcess,
   PickingTransaction,
   DetachAttachProcess,
+  GateLoading,
 } from "./utils/PagesComponent";
 
 const DefaultPage = () => <> </>;
@@ -160,6 +161,7 @@ export function AppRoutes() {
       "/master_subdist": <MasterSubdist />,
       "/approval_setup": <ApprovalSetup />,
       "/picking_transaction": <PickingTransaction />,
+      "/gate_loading": <GateLoading />,
     };
     return map[path] || <DefaultPage />;
   };

@@ -42,6 +42,7 @@ function ModalPickingList({ open, onClose, memoId }: Props) {
       doId: d.do?.id || "-",
       doNumber: d.do?.outbound_do_number || "-",
       doType: d.do?.outbound_type || "-",
+      weekNumber: d.week_number || "-",
       deliveryDate: formatDateIndo(d.do?.delivery_date) || "-",
       memoId: d.memo?.id || "-",
       memoDestination: d.memo?.destination || "-",
@@ -81,6 +82,10 @@ function ModalPickingList({ open, onClose, memoId }: Props) {
         accessorKey: "uom",
       },
       {
+        header: "Week Number",
+        accessorKey: "weekNumber",
+      },
+      {
         header: "Source Zone",
         accessorKey: "sourceSub",
       },
@@ -89,11 +94,11 @@ function ModalPickingList({ open, onClose, memoId }: Props) {
         accessorKey: "sourceBin",
       },
       {
-        header: "Outbound Zone",
+        header: "Destination Zone",
         accessorKey: "destinationZone",
       },
       {
-        header: "Outbound Line",
+        header: "Destination Line",
         accessorKey: "destinationBinName",
       },
       {

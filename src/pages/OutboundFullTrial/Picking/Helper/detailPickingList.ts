@@ -1,4 +1,5 @@
 export interface PickingListItem {
+    week_number: string;
     id: string;
     destination_warehouse_sub_id: string;
 
