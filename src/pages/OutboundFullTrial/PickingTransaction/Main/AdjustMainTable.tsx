@@ -42,17 +42,68 @@ const AdjustTable = ({
     return mapPickingTransactions(list || []);
   }, [list]);
 
+  const MemoCell = ({ memos }: { memos: any[] }) => {
+    const [openMemoId, setOpenMemoId] = useState<string | null>(null);
+
+    return (
+      <ul className="space-y-2">
+        {memos.map((memo) => {
+          const isOpen = openMemoId === memo.id;
+
+          return (
+            <li key={memo.id} className="border border-gray-200 rounded-md p-2">
+              {/* HEADER */}
+              <div className="flex items-center justify-between">
+                <div className="text-sm font-semibold">
+                  {memo.outbound_memo_number}
+                  <span className="ml-2 text-xs text-gray-500">
+                    ({memo.status})
+                  </span>
+                </div>
+
+                {/* TOGGLE */}
+                <button
+                  type="button"
+                  onClick={() => setOpenMemoId(isOpen ? null : memo.id)}
+                  className="text-xs text-blue-600 hover:underline"
+                >
+                  {isOpen
+                    ? "Hide Items"
+                    : `Show Items (${memo.transaction_pickings?.length ?? 0})`}
+                </button>
+              </div>
+
+              {/* EXPANDED CONTENT */}
+              {isOpen && (
+                <ul className="mt-2 ml-4 list-disc space-y-1 text-sm">
+                  {memo.transaction_pickings?.map((tp: any) => (
+                    <li key={tp.id}>
+                      <span className="font-medium">{tp.item?.sku}</span>
+                      <span className="ml-2 text-xs text-gray-500">
+                        {tp.uom} • {tp.status}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </li>
+          );
+        })}
+      </ul>
+    );
+  };
+
   const columns: ColumnDef<OutboundDo>[] = useMemo(
     () => [
       { accessorKey: "outbound_do_number", header: "DO Number" },
       {
         accessorKey: "outbound_memos",
         header: "Memo Number",
-        cell: ({ row }) =>
-          row.original.outbound_memos
-            .map((memo) => memo.outbound_memo_number)
-            .join(", "),
+        cell: ({ row }) => (
+          <MemoCell memos={row.original.outbound_memos || []} />
+        ),
       },
+
       { accessorKey: "outbound_type", header: "Type" },
       { accessorKey: "origin", header: "Origin" },
       {

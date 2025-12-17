@@ -141,12 +141,13 @@ export default function DeliveryOrderCard({
 
   // ✅ VALIDASI DO DAN AUTO-GENERATE PO
   const handleCheckDO = async () => {
-    if (inbType === "SO") {
-      showErrorToast(
-        "Validasi DO hanya untuk PO saja, untuk SO belum tersedia"
-      );
-      return;
-    }
+    
+    // if (inbType === "SO") {
+    //   showErrorToast(
+    //     "Validasi DO hanya untuk PO saja, untuk SO belum tersedia"
+    //   );
+    //   return;
+    // }
 
     const doNo = watch(`deliveryOrders.${doIndex}.do_no`);
     if (!doNo) {

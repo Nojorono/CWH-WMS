@@ -15,6 +15,7 @@ export interface MasterAMO {
   setOfBooksId: string;
   shortCode: string;
   usableFlag: boolean;
+  address?: string
 }
 
 export type CreateMasterAMO = Omit<MasterAMO, "id">;
