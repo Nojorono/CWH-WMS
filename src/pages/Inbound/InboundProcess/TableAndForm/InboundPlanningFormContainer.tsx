@@ -131,22 +131,22 @@ export default function InboundPlanningFormContainer() {
     const payload = mapToPayload(data);
     console.log("Final submit payload:", payload);
     
-    // const id = dataInbound?.id;
-    // if (isCreateMode) {
-    //   const res = await createData(payload);
-    //   if (res?.success) {
-    //     reset(emptyFormValues);
-    //     setIsConfirmOpen(false);
-    //     navigate("/inbound_planning");
-    //   }
-    // } else if (isEditMode && id) {
-    //   const res = await updateData(id, payload);
-    //   if (res?.success) {
-    //     reset(emptyFormValues);
-    //     setIsConfirmOpen(false);
-    //     navigate("/inbound_planning");
-    //   }
-    // }
+    const id = dataInbound?.id;
+    if (isCreateMode) {
+      const res = await createData(payload);
+      if (res?.success) {
+        reset(emptyFormValues);
+        setIsConfirmOpen(false);
+        navigate("/inbound_planning");
+      }
+    } else if (isEditMode && id) {
+      const res = await updateData(id, payload);
+      if (res?.success) {
+        reset(emptyFormValues);
+        setIsConfirmOpen(false);
+        navigate("/inbound_planning");
+      }
+    }
   };
 
   return (
