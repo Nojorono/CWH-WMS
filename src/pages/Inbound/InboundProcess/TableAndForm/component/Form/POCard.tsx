@@ -442,7 +442,8 @@ export default function POCard({
       {/* ======= Item Table ======= */}
       <div className="mt-3 overflow-x-auto">
         <ItemTable
-          data={mappedItems}
+          // data={mappedItems}
+          itemsPath={`deliveryOrders.${doIndex}.pos.${posIndex}.items`}
           doIndex={doIndex}
           posIndex={posIndex}
           removeItem={removeItem}
