@@ -118,6 +118,9 @@ export default function InboundPlanningFormContainer() {
       }
     }
 
+    console.log("Preview data:", values);
+    
+
     // --- Kalau semua valid ---
     setPreviewData(values);
     setIsConfirmOpen(true);

@@ -1,14 +1,46 @@
-import React from "react";
-import GateLoadingProcess from "./GateLoadingProcess/GateLoadingProcess";
+// GateLoadingPage.tsx
+import React, { useEffect, useState } from "react";
+import { mapOutboundGateToUILoading } from "./helper/mapOutboundGateToUILoading";
+import GateLoadingDOList from "./components/GateLoadingDOList";
+import outboundGateDummy from "./types/dummyData";
+import { fetchAssignedGate } from "./service/fetchData";
 
-const GateLoading = () => {
+const GateLoadingPage = () => {
+  const [loading, setLoading] = useState(true);
+  const [assignedGateList, setAssignedGateList] = useState<any[]>([]);
+
+  useEffect(() => {
+    const loadData = async () => {
+      setLoading(true);
+
+      const res = await fetchAssignedGate();
+
+      if (res.success) {
+        const uiData = mapOutboundGateToUILoading(res.data);
+        console.log("uiDATA GATE", uiData);
+        
+        setAssignedGateList(uiData);
+      }
+
+      setLoading(false);
+    };
+
+    loadData();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="text-sm text-gray-500">Loading assigned gate...</div>
+    );
+  }
+
   return (
-    <div className="p-6">
-      <h1 className="text-xl font-semibold mb-4">Gate Loading Visibility</h1>
+    <div className="min-h-screen w-full px-6 py-6 bg-gray-100">
+      <h1 className="text-2xl font-bold mb-6">Gate Loading – DO List</h1>
 
-      <GateLoadingProcess />
+      <GateLoadingDOList data={assignedGateList} />
     </div>
   );
 };
 
-export default GateLoading;
+export default GateLoadingPage;

@@ -56,6 +56,7 @@ type MenuTableProps = {
   filteredStatus?: any;
   filteredZone?: any;
   filteredBin?: any;
+  filteredItem?: any;
 };
 
 const AdjustTable = ({
@@ -64,6 +65,7 @@ const AdjustTable = ({
   filteredStatus,
   filteredZone,
   filteredBin,
+  filteredItem,
 }: MenuTableProps) => {
   const navigate = useNavigate();
   const {
@@ -86,6 +88,7 @@ const AdjustTable = ({
       inventory_status: filteredStatus || "",
       warehouse_sub_id: filteredZone || "",
       warehouse_bin_id: filteredBin || "",
+      item_id: filteredItem || "",
       sortOrder: "DESC",
       sortBy: "progression_status",
     });
@@ -97,6 +100,7 @@ const AdjustTable = ({
     filteredStatus,
     filteredZone,
     filteredBin,
+    filteredItem,
   ]);
 
   const columns: ColumnDef<InventoryData>[] = useMemo(

@@ -118,21 +118,25 @@ const CreateMemo: React.FC = () => {
   // ✅ Watch selected_destination
   const selectedCustomer = methods.watch("selected_destination");
 
+  console.log("customerList", customerList);
+
   // ✅ Auto set ship_to setelah pilih customer
   useEffect(() => {
     if (!selectedCustomer || !typeOutbound || customerRaw.length === 0) return;
 
-    const found = customerRaw.find(
-      (x: any) =>
-        x.shipToLocation === selectedCustomer.label ||
-        x.locationDescription === selectedCustomer.label
-    );
+    const found = customerRaw.find((x: any) => {
+      if (typeOutbound.value === "AMO") {
+        return x.orgCode === selectedCustomer.value;
+      }
+      return x.shipToLocation === selectedCustomer.label;
+    });
 
     if (!found) return;
 
     if (typeOutbound.value === "AMO") {
-      methods.setValue("ship_to", found.locationDescription || "");
-      methods.setValue("address", "");
+      // 🔥 SHIP TO dari address
+      methods.setValue("ship_to", found.orgCode || "");
+      methods.setValue("address", found.address || "");
     } else {
       methods.setValue("ship_to", found.shipToLocation || "");
       methods.setValue("address", found.address1 || "");
@@ -184,7 +188,7 @@ const CreateMemo: React.FC = () => {
       ? [
           {
             name: "selected_destination",
-            label: loadingCustomer ? "Loading..." : "Select Destination",
+            label: loadingCustomer ? "Loading..." : "Select AMO/Subdist",
             type: "select",
             options: customerList,
           } as FieldConfig,
@@ -198,18 +202,24 @@ const CreateMemo: React.FC = () => {
       disabled: true,
       validation: { required: "Ship To is required" },
     },
+    {
+      name: "address",
+      label: "Ship Address",
+      type: "textarea",
+      disabled: true,
+    },
 
     // ✅ FIELD ADDRESS muncul hanya jika SUBDIST DAN bukan mode detail
-    ...(typeOutbound?.value === "SUBDIST" && !isDetail
-      ? [
-          {
-            name: "address",
-            label: "Address",
-            type: "textarea",
-            disabled: true,
-          } as FieldConfig,
-        ]
-      : []),
+    // ...(typeOutbound?.value === "SUBDIST" && !isDetail
+    //   ? [
+    //       {
+    //         name: "address",
+    //         label: "Ship Address",
+    //         type: "textarea",
+    //         disabled: true,
+    //       } as FieldConfig,
+    //     ]
+    //   : []),
 
     {
       name: "notes",
@@ -345,8 +355,8 @@ const CreateMemo: React.FC = () => {
     const payload = {
       requestor: username,
       origin: "CWH",
-      ship_to: data.ship_to,
       destination: data.ship_to,
+      ship_to: data.address,
       delivery_date: formatDate(data.delivery_date),
       notes: data.notes,
       status: "PENDING",

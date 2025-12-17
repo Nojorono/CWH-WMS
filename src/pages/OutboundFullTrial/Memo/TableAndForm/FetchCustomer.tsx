@@ -47,8 +47,8 @@ export const useCustomerByOutboundType = (
           typeOutbound.value === "AMO"
             ? rows.map((x: any) => ({
                 id: x.id,
-                label: x.locationDescription,
-                value: x.locationCode,
+                label: x.orgCode,
+                value: x.orgCode,
               }))
             : rows.map((x: any) => ({
                 id: x.id,

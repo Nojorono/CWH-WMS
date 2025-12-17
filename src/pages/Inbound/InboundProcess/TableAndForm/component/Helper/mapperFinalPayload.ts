@@ -9,7 +9,10 @@ import { showErrorToast } from "../../../../../../components/toast";
  * - Membersihkan dan menormalisasi field
  * - Melempar error jika hasil qty bukan bilangan bulat
  */
-export function mapToPayload(data: FormValues): CreateInboundPlanning {    
+export function mapToPayload(data: FormValues): CreateInboundPlanning {
+
+    console.log("Mapping to payload with data:", data);
+
     const inboundType =
         typeof data.inbound_type === "string"
             ? data.inbound_type
@@ -75,10 +78,12 @@ export function mapToPayload(data: FormValues): CreateInboundPlanning {
                         ? formatDateIndo(new Date(doItem.date))
                         : "",
                     attachment: doItem.attachment ?? "",
-                    inbound_po_number: po.po_no ?? "",
+                    inbound_po_number: po.po_no ?? po.so_no ?? "",
                     inbound_po_date: po.po_date
-                        ? formatDateIndo(new Date(po.po_date))
-                        : "",
+                        ? formatDateIndo(po.po_date)
+                        : po.so_date
+                            ? formatDateIndo(po.so_date)
+                            : "",
                     flag_validated: doItem.flag_validated ?? false,
                     validation_surat_jalan:
                         doItem.validation_surat_jalan ?? false,

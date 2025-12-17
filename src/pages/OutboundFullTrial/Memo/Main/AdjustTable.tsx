@@ -87,6 +87,8 @@ const AdjustTable = ({
         header: "Has DO",
         cell: ({ row }) => (row.original.has_do ? "Yes" : "No"),
       },
+      { accessorKey: "do_number", header: "DO Number"},
+
       { accessorKey: "deliveryDate", header: "Delivery Date" },
       { accessorKey: "origin", header: "Origin" },
       { accessorKey: "destination", header: "Destination" },
