@@ -34,7 +34,7 @@ interface Props {
   onRefresh?: () => void;
 }
 
-const GateLoadingDOCard: React.FC<Props> = ({ doData }) => {
+const GateLoadingDOCard: React.FC<Props> = ({ doData, onRefresh }) => {
   const [open, setOpen] = useState(false);
 
   const { assignedPalletIds } = useMemo(
@@ -142,6 +142,7 @@ const GateLoadingDOCard: React.FC<Props> = ({ doData }) => {
                   doId={doData.do_id}
                   assignedGateId={doData.assigned_gate_id}
                   assignedGateLoads={doData.assigned_gate_loads}
+                  onRefresh={onRefresh}
                 />
               ))}
             </div>
@@ -244,12 +245,14 @@ const MemoRow = ({
   doId,
   assignedGateId,
   assignedGateLoads,
+  onRefresh,
 }: {
   memo: any;
   assignedPalletIds: Set<string>;
   doId: string;
   assignedGateId: string;
   assignedGateLoads: UIGateAssignedGateLoad[];
+  onRefresh?: () => void | Promise<void>;
 }) => (
   <div className="rounded-xl border bg-white shadow-sm">
     <div className="p-4 border-b">
@@ -270,6 +273,7 @@ const MemoRow = ({
           assignedGateId={assignedGateId}
           assignedGateLoads={assignedGateLoads}
           canEditSku={assignedPalletIds.has(pallet.pallet_id)}
+          onRefresh={onRefresh}
         />
       ))}
     </div>
@@ -287,6 +291,7 @@ const PalletCard = ({
   assignedGateId,
   canEditSku,
   assignedGateLoads,
+  onRefresh,
 }: {
   pallet: any;
   memoId?: string;
@@ -294,6 +299,7 @@ const PalletCard = ({
   assignedGateId?: string;
   canEditSku: boolean;
   assignedGateLoads: UIGateAssignedGateLoad[];
+  onRefresh?: () => void | Promise<void>;
 }) => {
   const [open, setOpen] = useState(false);
 
@@ -346,6 +352,7 @@ const PalletCard = ({
                 assignedGateLoads={assignedGateLoads}
                 QTYpicking={qtyPicking}
                 disabled={!canEditSku}
+                onRefresh={onRefresh}
               />
             );
           })}
@@ -378,7 +385,7 @@ const SKUCard = ({
   doId?: string;
   assignedGateId?: string;
   assignedGateLoads: UIGateAssignedGateLoad[];
-  onRefresh?: () => Promise<void>;
+  onRefresh?: () => void | Promise<void>;
 }) => {
   const isAlreadySubmitted = useMemo(() => {
     return assignedGateLoads.some(
@@ -405,6 +412,7 @@ const SKUCard = ({
       return;
     }
 
+    setSubmitted(true);
     try {
       const payload = {
         assigned_gate_id: assignedGateId,
@@ -420,7 +428,6 @@ const SKUCard = ({
       };
 
       await submitGateLoadingSKU(payload);
-      setSubmitted(true);
 
       if (typeof onRefresh === "function") {
         await onRefresh();
@@ -455,19 +462,52 @@ const SKUCard = ({
             <p className="text-xs text-slate-500">Qty Picking</p>
             <p className="text-2xl font-bold">{QTYpicking}</p>
           </div>
+          {(() => {
+            const finalQty =
+              assignedGateLoads.find(
+                (l) =>
+                  l.item_id === sku.item_id &&
+                  l.pallet_id === palletId &&
+                  l.outbound_memo_id === memoId
+              )?.quantity_loaded ?? 0;
 
-          <div className="bg-indigo-50 rounded-lg p-4">
-            <p className="text-xs text-slate-500 mb-1">Qty Loaded</p>
-            <input
-              type="number"
-              value={qty}
-              min={0}
-              max={QTYpicking}
-              disabled={isLocked}
-              onChange={(e) => setQty(Number(e.target.value))}
-              className="w-full h-12 text-xl font-bold text-center rounded-lg border border-indigo-300 focus:ring-2 focus:ring-indigo-500"
-            />
-          </div>
+            // hide the input when there's already a real loaded quantity
+            if (finalQty > 0) return null;
+
+            return (
+              <div className="bg-indigo-50 rounded-lg p-4">
+                <p className="text-xs text-slate-500 mb-1">Qty Loaded</p>
+                <input
+                  type="number"
+                  value={qty}
+                  min={0}
+                  max={QTYpicking}
+                  disabled={isLocked}
+                  onChange={(e) => setQty(Number(e.target.value))}
+                  className="w-full h-12 text-xl font-bold text-center rounded-lg border border-indigo-300 focus:ring-2 focus:ring-indigo-500"
+                />
+              </div>
+            );
+          })()}
+
+          {(() => {
+            const finalQty =
+              assignedGateLoads.find(
+                (l) =>
+                  l.item_id === sku.item_id &&
+                  l.pallet_id === palletId &&
+                  l.outbound_memo_id === memoId
+              )?.quantity_loaded ?? 0;
+
+            if (finalQty <= 0) return null;
+
+            return (
+              <div className="bg-slate-50 rounded-lg p-4 text-center">
+                <p className="text-xs text-slate-500">Final Qty Load</p>
+                <p className="text-2xl font-bold">{finalQty}</p>
+              </div>
+            );
+          })()}
         </div>
 
         {!disabled && qty < QTYpicking && !invalid && (
