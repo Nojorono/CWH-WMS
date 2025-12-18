@@ -78,12 +78,22 @@ export function mapToPayload(data: FormValues): CreateInboundPlanning {
                         ? formatDateIndo(new Date(doItem.date))
                         : "",
                     attachment: doItem.attachment ?? "",
-                    inbound_po_number: po.po_no ?? po.so_no ?? "",
-                    inbound_po_date: po.po_date
-                        ? formatDateIndo(po.po_date)
-                        : po.so_date
-                            ? formatDateIndo(po.so_date)
-                            : "",
+                    inbound_po_number:
+                        inboundType === "PO"
+                            ? po.po_no ?? ""
+                            : inboundType === "SO"
+                                ? po.so_no ?? ""
+                                : po.po_no ?? po.so_no ?? "",
+                    inbound_po_date:
+                        inboundType === "PO"
+                            ? (po.po_date ? formatDateIndo(po.po_date) : "")
+                            : inboundType === "SO"
+                                ? (po.so_date ? formatDateIndo(po.so_date) : "")
+                                : po.po_date
+                                    ? formatDateIndo(po.po_date)
+                                    : po.so_date
+                                        ? formatDateIndo(po.so_date)
+                                        : "",
                     flag_validated: doItem.flag_validated ?? false,
                     validation_surat_jalan:
                         doItem.validation_surat_jalan ?? false,

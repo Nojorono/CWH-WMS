@@ -176,10 +176,11 @@ export default function POCard({
               item_number: master.item_number ?? "",
               description: master.description ?? "",
               qty: Number(it.PO_LINE_QUANTITY),
-              uom: "DUS",
+              uom: it.ORDER_QUANTITY_UOM ?? it.UOM ?? "DUS",
               expired_date: "",
               classification: "",
               qty_plan: () => 0,
+              id: String(master.id ?? ""),
             });
           }
         });
@@ -257,10 +258,11 @@ export default function POCard({
             item_number: master.item_number ?? it.ITEM_NUMBER ?? "",
             description: master.description ?? it.ITEM_DESC ?? "",
             qty: Number(it.ORDERED_QUANTITY),
-            uom: "DUS",
+            uom: it.ORDER_QUANTITY_UOM ?? "DUS",
             expired_date: "",
             classification: "",
             qty_plan: () => 0,
+            id: String(master.id ?? ""),
           });
         }
       });
@@ -370,7 +372,7 @@ export default function POCard({
         </div>
 
         {/* === Tanggal PO / SO === */}
-        {(InbType === "PO" || InbType === "SO") && (
+        {/* {(InbType === "PO" || InbType === "SO") && (
           <div className="w-full">
             <label className="block text-xs text-slate-600 mb-1">
               {InbType === "PO" ? "Tanggal PO" : "Tanggal SO"}
@@ -385,7 +387,6 @@ export default function POCard({
               rules={{ required: "Tanggal wajib diisi" }}
               render={({ field, fieldState }) => (
                 <>
-                  {/* ✅ tampilkan error jika ada */}
                   {fieldState.error && (
                     <p className="text-xs text-red-500 m-1">
                       {fieldState.error.message}
@@ -408,7 +409,9 @@ export default function POCard({
               )}
             />
           </div>
-        )}
+        )} */}
+
+         <div className="w-full"></div>
 
         {/* === Tombol Tambah / Hapus PO === */}
         {!isDetailMode && (
@@ -443,11 +446,13 @@ export default function POCard({
       <div className="mt-3 overflow-x-auto">
         <ItemTable
           // data={mappedItems}
+          items={itemFields}
           itemsPath={`deliveryOrders.${doIndex}.pos.${posIndex}.items`}
           doIndex={doIndex}
           posIndex={posIndex}
           removeItem={removeItem}
           isEditMode={canAddItem}
+          uomList={uomList}
         />
       </div>
 

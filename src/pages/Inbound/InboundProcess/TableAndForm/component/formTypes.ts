@@ -1,4 +1,5 @@
 export type ItemForm = {
+    id: any;
     qty_plan(qty_plan: any): number;
     item_id?: any;
     item_name: string;

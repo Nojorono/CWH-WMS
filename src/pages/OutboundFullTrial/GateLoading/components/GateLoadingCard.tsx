@@ -434,7 +434,7 @@ const SKUCard = ({
       }
     } catch (err) {
       console.error(err);
-      alert("Gagal submit SKU");
+      showErrorToast("Gagal submit SKU");
     }
   };
 

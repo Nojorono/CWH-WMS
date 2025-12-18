@@ -48,6 +48,10 @@ const AdjustTable = ({
         accessorKey: "inbound_number",
         header: "Inbound No",
       },
+          {
+        accessorKey: "inbound_type",
+        header: "Inbound Type",
+      },
       {
         accessorKey: "createdAt",
         header: "Created At",

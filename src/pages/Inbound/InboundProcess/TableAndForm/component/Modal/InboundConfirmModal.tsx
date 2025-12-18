@@ -260,18 +260,18 @@ export default function InboundConfirmModal({
                 </div>
                 <div className="p-3 bg-white rounded-lg shadow-sm">
                   <p className="text-2xl font-bold text-gray-900">
-                    {Object.entries(skuSummaryWithDifferentUOM)
-                      .map(([, items]) => {
-                        const uomSummary = items.reduce((acc, item) => {
+                    {(() => {
+                      const globalUomTotals = Object.values(skuSummaryWithDifferentUOM)
+                        .flat()
+                        .reduce((acc, item) => {
                           acc[item.uom] = (acc[item.uom] || 0) + item.qty;
                           return acc;
                         }, {} as Record<string, number>);
 
-                        return Object.entries(uomSummary)
-                          .map(([uom, qty]) => `${qty} ${uom}`)
-                          .join(", ");
-                      })
-                      .join(", ")}
+                      return Object.entries(globalUomTotals)
+                        .map(([uom, qty]) => `${qty} ${uom}`)
+                        .join(", ") || "0";
+                    })()}
                   </p>
                   <p className="text-xs text-gray-500">Total Quantity</p>
                 </div>

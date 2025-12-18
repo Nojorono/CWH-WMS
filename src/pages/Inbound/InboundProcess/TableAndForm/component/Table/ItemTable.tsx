@@ -7,31 +7,28 @@ import {
   CellContext,
 } from "@tanstack/react-table";
 import { useFormContext, useWatch, Path } from "react-hook-form";
+import { useFieldArray } from "react-hook-form";
 import { FormValues, ItemForm } from "../formTypes";
 import { useMemo } from "react";
 
 export default function ItemTable({
+  items,
   itemsPath,
   doIndex,
   posIndex,
   removeItem,
   isEditMode,
+  uomList,
 }: {
+  items: ItemForm[];
   itemsPath: string;
   doIndex: number;
   posIndex: number;
   removeItem: (rowIndex: number) => void;
   isEditMode?: boolean;
+  uomList: { id: any; code: string; name: string }[];
 }) {
-  const { register, control } = useFormContext<FormValues>();
-
-  // ✅ FIX TS 2769
-  const items = useWatch({
-    control,
-    name: itemsPath as Path<FormValues>,
-  }) as ItemForm[];
-
-  const data = useMemo(() => items ?? [], [items]);
+  const { register } = useFormContext<FormValues>();
 
   const columns = useMemo<ColumnDef<ItemForm>[]>(
     () => [
@@ -46,22 +43,15 @@ export default function ItemTable({
       {
         accessorKey: "qty",
         header: "Qty Plan",
-        cell: ({ row }) => {
+        cell: ({ row }: CellContext<ItemForm, unknown>) => {
           const rowIndex = row.index;
-
           return isEditMode ? (
             <input
-              type="text"
-              inputMode="numeric"
+              type="number"
               className="border px-2 py-1 w-20 text-right rounded"
               {...register(
                 `deliveryOrders.${doIndex}.pos.${posIndex}.items.${rowIndex}.qty`,
-                {
-                  setValueAs: (v) => {
-                    if (v === "" || v === null || v === undefined) return 0;
-                    return Number(v);
-                  },
-                }
+                { valueAsNumber: true }
               )}
             />
           ) : (
@@ -69,11 +59,33 @@ export default function ItemTable({
           );
         },
       },
-
       {
         accessorKey: "uom",
-        header: "UoM",
+        header: "UOM",
+        cell: ({ row, getValue }: CellContext<ItemForm, unknown>) => {
+          const rowIndex = row.index;
+
+          return isEditMode ? (
+            <select
+              className="border px-2 py-1 rounded w-full"
+              {...register(
+                `deliveryOrders.${doIndex}.pos.${posIndex}.items.${rowIndex}.uom` as const,
+                { required: "UoM wajib dipilih" }
+              )}
+            >
+              <option value="">-- Select UoM --</option>
+              {uomList.map((u) => (
+                <option key={u.id} value={u.code}>
+                  {u.name}
+                </option>
+              ))}
+            </select>
+          ) : (
+            <div>{getValue() as string}</div>
+          );
+        },
       },
+
       ...(isEditMode
         ? [
             {
@@ -96,42 +108,37 @@ export default function ItemTable({
   );
 
   const table = useReactTable({
-    data,
+    data: items,
     columns,
-    getRowId: (row) => row.item_id, // 🔥 WAJIB
+    getRowId: (_row, index) => `${doIndex}-${posIndex}-${items[index]?.id}`, // 🔥 STABIL
     getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    initialState: {
-      pagination: { pageSize: 10 },
-    },
   });
 
   return (
-    <div className="mt-3">
-      <table className="min-w-full text-sm bg-white border rounded">
-        <thead>
-          {table.getHeaderGroups().map((hg) => (
-            <tr key={hg.id} className="bg-slate-100">
-              {hg.headers.map((h) => (
-                <th key={h.id} className="px-3 py-2 text-left">
-                  {flexRender(h.column.columnDef.header, h.getContext())}
-                </th>
-              ))}
-            </tr>
-          ))}
-        </thead>
-        <tbody>
-          {table.getRowModel().rows.map((row) => (
-            <tr key={row.id}>
-              {row.getVisibleCells().map((cell) => (
-                <td key={cell.id} className="px-3 py-2">
-                  {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                </td>
-              ))}
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+    <table className="min-w-full text-sm bg-white border rounded">
+      <thead className="bg-slate-100">
+        {table.getHeaderGroups().map((hg) => (
+          <tr key={hg.id}>
+            {hg.headers.map((h) => (
+              <th key={h.id} className="px-3 py-2 text-left">
+                {flexRender(h.column.columnDef.header, h.getContext())}
+              </th>
+            ))}
+          </tr>
+        ))}
+      </thead>
+
+      <tbody>
+        {table.getRowModel().rows.map((row) => (
+          <tr key={row.id}>
+            {row.getVisibleCells().map((cell) => (
+              <td key={cell.id} className="px-3 py-2">
+                {flexRender(cell.column.columnDef.cell, cell.getContext())}
+              </td>
+            ))}
+          </tr>
+        ))}
+      </tbody>
+    </table>
   );
 }
