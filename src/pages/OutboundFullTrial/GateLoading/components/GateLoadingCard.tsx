@@ -31,6 +31,7 @@ const getDeviceAuthority = (doData: UIGateLoadingDO) => {
 interface Props {
   doData: UIGateLoadingDO;
   assignedGateLoads: UIGateAssignedGateLoad[];
+  onRefresh?: () => void;
 }
 
 const GateLoadingDOCard: React.FC<Props> = ({ doData }) => {
@@ -367,6 +368,7 @@ const SKUCard = ({
   doId,
   assignedGateId,
   assignedGateLoads,
+  onRefresh,
 }: {
   sku: any;
   QTYpicking: number;
@@ -376,6 +378,7 @@ const SKUCard = ({
   doId?: string;
   assignedGateId?: string;
   assignedGateLoads: UIGateAssignedGateLoad[];
+  onRefresh?: () => Promise<void>;
 }) => {
   const isAlreadySubmitted = useMemo(() => {
     return assignedGateLoads.some(
@@ -418,6 +421,10 @@ const SKUCard = ({
 
       await submitGateLoadingSKU(payload);
       setSubmitted(true);
+
+      if (typeof onRefresh === "function") {
+        await onRefresh();
+      }
     } catch (err) {
       console.error(err);
       alert("Gagal submit SKU");
