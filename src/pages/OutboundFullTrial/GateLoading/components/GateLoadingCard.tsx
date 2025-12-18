@@ -1,16 +1,27 @@
 import React, { useMemo, useState } from "react";
 import { FaChevronDown } from "react-icons/fa";
-import { UIGateLoadingDO } from "../helper/mapOutboundGateToUILoading";
-import { showSuccessToast } from "../../../../components/toast";
+import {
+  UIGateLoadingDO,
+  UIGateUser,
+  UIGateAssignedGateLoad,
+} from "../helper/mapOutboundGateToUILoading";
+import { showErrorToast } from "../../../../components/toast";
+import { submitGateLoadingSKU } from "../helper/submitAPI";
 
 /* ========================= */
-/* VALIDATION / AUTHORITY    */
+/* AUTHORITY HELPERS         */
 /* ========================= */
 
-const getGateLoadingAuthority = (doData: UIGateLoadingDO) => {
-  return {
-    assignedPalletIds: new Set(doData.assigned_pallets.map((p) => p.pallet_id)),
-  };
+const getGateLoadingAuthority = (doData: UIGateLoadingDO) => ({
+  assignedPalletIds: new Set(doData.assigned_pallets.map((p) => p.pallet_id)),
+});
+
+const getDeviceAuthority = (doData: UIGateLoadingDO) => {
+  const deviceId = localStorage.getItem("device_id");
+  const isAuthorizedDevice = doData.assigned_helpers.some(
+    (h) => h.username === deviceId
+  );
+  return { deviceId, isAuthorizedDevice };
 };
 
 /* ========================= */
@@ -19,6 +30,7 @@ const getGateLoadingAuthority = (doData: UIGateLoadingDO) => {
 
 interface Props {
   doData: UIGateLoadingDO;
+  assignedGateLoads: UIGateAssignedGateLoad[];
 }
 
 const GateLoadingDOCard: React.FC<Props> = ({ doData }) => {
@@ -29,55 +41,96 @@ const GateLoadingDOCard: React.FC<Props> = ({ doData }) => {
     [doData]
   );
 
+  const { deviceId } = useMemo(() => getDeviceAuthority(doData), [doData]);
+
+  // ambil assigned_gate_helpers (jika ada) — menggunakan any supaya tidak error bila tipenya belum ada
+  const gateHelpers: UIGateUser[] = useMemo(
+    () => ((doData as any).assigned_gate_helpers ?? []) as UIGateUser[],
+    [doData]
+  );
+
   return (
-    <div className="border rounded-xl shadow-sm bg-white overflow-hidden">
+    <div className="rounded-2xl border bg-white shadow-sm overflow-hidden">
       {/* ================= HEADER ================= */}
       <div
         onClick={() => setOpen(!open)}
-        className="flex justify-between items-center p-4 cursor-pointer hover:bg-gray-50"
+        className="px-6 py-5 cursor-pointer hover:bg-slate-50 transition"
       >
-        <div className="space-y-1">
-          <h3 className="text-xl font-bold">{doData.do_number}</h3>
+        <div className="flex items-center justify-between gap-6">
+          {/* LEFT CONTENT */}
+          <div className="flex flex-wrap items-start gap-10 flex-1">
+            {/* GATE & DO */}
+            <div className="min-w-[180px]">
+              <p className="text-xs uppercase tracking-wide text-slate-500">
+                Gate Loading
+              </p>
+              <h4 className="text-lg font-semibold text-indigo-600">
+                {doData.gate.gate_name}
+              </h4>
+              <h3 className="text-xl font-bold text-slate-800">
+                {doData.do_number}
+              </h3>
+            </div>
 
-          <div className="flex flex-wrap items-center gap-6 text-lg mt-5 mb-6">
-            <Info label="Status" value={doData.status} color="text-green-600" />
-            <Info
-              label="Gate"
-              value={doData.gate.gate_name}
-              color="text-green-600"
-            />
-            <Info
-              label="Driver"
-              value={doData.driver.name}
-              color="text-green-600"
-            />
-            <Info
-              label="Plate"
-              value={doData.driver.license_plate}
-              color="text-green-600"
-            />
+            {/* VEHICLE */}
+            <div className="min-w-[220px]">
+              <p className="text-xs font-semibold uppercase text-slate-500 mb-1">
+                Vehicle
+              </p>
+              <div className="flex items-center gap-6">
+                <Info
+                  label="Plat"
+                  value={doData.driver.license_plate}
+                  color="text-emerald-600"
+                />
+                <Info
+                  label="Driver"
+                  value={doData.driver.name}
+                  color="text-emerald-600"
+                />
+              </div>
+            </div>
+
+            {/* FORKLIFT & HELPER */}
+            <div className="flex-1 min-w-[260px]">
+              <p className="text-xs font-semibold uppercase text-slate-500 mb-1">
+                Forklift & Helper
+              </p>
+
+              <div className="space-y-3">
+                {/* assigned_helpers (original) */}
+                <AssignedHelpersInline
+                  helpers={doData.assigned_helpers}
+                  currentDeviceId={deviceId}
+                />
+
+                {/* assigned_gate_helpers (mapping tambahan) */}
+                {gateHelpers && gateHelpers.length > 0 && (
+                  <div>
+                    <p className="text-xs font-semibold uppercase text-slate-400 mb-2">
+                      Gate Assigned
+                    </p>
+                    <AssignedHelpersInline
+                      helpers={gateHelpers}
+                      currentDeviceId={deviceId}
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
-        </div>
 
-        <FaChevronDown
-          className={`w-5 h-5 transition-transform ${open ? "rotate-180" : ""}`}
-        />
+          {/* CHEVRON */}
+          <FaChevronDown
+            className={`w-5 h-5 text-slate-500 transition-transform
+              ${open ? "rotate-180" : ""}`}
+          />
+        </div>
       </div>
 
       {/* ================= BODY ================= */}
       {open && (
-        <div className="border-t px-4 py-5 space-y-6 bg-gray-50">
-          {/* DO INFO */}
-          {/* <Section title="Delivery Order Information">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 bg-white p-4 rounded-lg border">
-              <KeyValue label="Gate" value={doData.gate.gate_name} />
-              <KeyValue label="Driver" value={doData.driver.name} />
-              <KeyValue label="Plate" value={doData.driver.license_plate} />
-              <KeyValue label="Phone" value={doData.driver.phone} />
-            </div>
-          </Section> */}
-
-          {/* MEMO & PALLET */}
+        <div className="border-t bg-slate-50 p-6 space-y-6">
           <Section title="Memo, Pallet & SKU Loading">
             <div className="space-y-6">
               {doData.memos.map((memo) => (
@@ -85,6 +138,9 @@ const GateLoadingDOCard: React.FC<Props> = ({ doData }) => {
                   key={memo.memo_id}
                   memo={memo}
                   assignedPalletIds={assignedPalletIds}
+                  doId={doData.do_id}
+                  assignedGateId={doData.assigned_gate_id}
+                  assignedGateLoads={doData.assigned_gate_loads}
                 />
               ))}
             </div>
@@ -108,16 +164,11 @@ const Section = ({
   title: string;
   children: React.ReactNode;
 }) => (
-  <div>
-    <h4 className="text-sm font-semibold text-gray-700 mb-2">{title}</h4>
+  <div className="space-y-2">
+    <h4 className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+      {title}
+    </h4>
     {children}
-  </div>
-);
-
-const KeyValue = ({ label, value }: { label: string; value: string }) => (
-  <div className="text-xl">
-    <p className="text-gray-500">{label}</p>
-    <p className="font-medium">{value}</p>
   </div>
 );
 
@@ -131,10 +182,56 @@ const Info = ({
   color: string;
 }) => (
   <div className="flex items-center gap-2">
-    <span className="text-gray-500">{label}</span>
+    <span className="text-xs text-slate-500">{label}</span>
     <span className={`font-semibold ${color}`}>{value}</span>
   </div>
 );
+
+/* ========================= */
+/* ASSIGNED HELPERS INLINE   */
+/* ========================= */
+
+const AssignedHelpersInline = ({
+  helpers,
+  currentDeviceId,
+}: {
+  helpers: UIGateUser[];
+  currentDeviceId: string | null;
+}) => {
+  if (!helpers.length) {
+    return <p className="text-xs italic text-slate-500">No helper assigned</p>;
+  }
+
+  return (
+    <div className="flex flex-wrap gap-2">
+      {helpers.map((h) => {
+        const isCurrentDevice = h.username === currentDeviceId;
+
+        return (
+          <div
+            key={h.user_id}
+            className={`flex items-center gap-2 px-3 py-1.5 rounded-full border text-xs font-semibold
+              ${
+                isCurrentDevice
+                  ? "bg-emerald-50 border-emerald-400 text-emerald-700"
+                  : "bg-slate-100 border-slate-200 text-slate-700"
+              }
+            `}
+          >
+            <span>{h.name}</span>
+            <span className="font-mono opacity-70">{h.username}</span>
+
+            {isCurrentDevice && (
+              <span className="ml-1 px-2 py-0.5 rounded-full bg-emerald-600 text-white text-[10px] font-bold">
+                THIS
+              </span>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+};
 
 /* ========================= */
 /* MEMO                      */
@@ -143,15 +240,21 @@ const Info = ({
 const MemoRow = ({
   memo,
   assignedPalletIds,
+  doId,
+  assignedGateId,
+  assignedGateLoads,
 }: {
   memo: any;
   assignedPalletIds: Set<string>;
+  doId: string;
+  assignedGateId: string;
+  assignedGateLoads: UIGateAssignedGateLoad[];
 }) => (
-  <div className="border rounded-xl bg-white shadow-sm">
+  <div className="rounded-xl border bg-white shadow-sm">
     <div className="p-4 border-b">
-      <p className="text-sm text-gray-500">MEMO NO</p>
-      <p className="font-semibold">{memo.memo_number}</p>
-      <p className="text-gray-500 mt-2">
+      <p className="text-xs text-slate-500">MEMO NO</p>
+      <p className="font-semibold text-slate-800">{memo.memo_number}</p>
+      <p className="text-sm text-slate-500 mt-1">
         {memo.origin} → {memo.destination}
       </p>
     </div>
@@ -161,6 +264,10 @@ const MemoRow = ({
         <PalletCard
           key={pallet.pallet_id}
           pallet={pallet}
+          memoId={memo.memo_id}
+          doId={doId}
+          assignedGateId={assignedGateId}
+          assignedGateLoads={assignedGateLoads}
           canEditSku={assignedPalletIds.has(pallet.pallet_id)}
         />
       ))}
@@ -169,15 +276,23 @@ const MemoRow = ({
 );
 
 /* ========================= */
-/* PALLET (EXPANDABLE)       */
+/* PALLET CARD               */
 /* ========================= */
 
 const PalletCard = ({
   pallet,
+  memoId,
+  doId,
+  assignedGateId,
   canEditSku,
+  assignedGateLoads,
 }: {
   pallet: any;
+  memoId?: string;
+  doId?: string;
+  assignedGateId?: string;
   canEditSku: boolean;
+  assignedGateLoads: UIGateAssignedGateLoad[];
 }) => {
   const [open, setOpen] = useState(false);
 
@@ -185,47 +300,54 @@ const PalletCard = ({
     <div className="rounded-xl border bg-white">
       <div
         onClick={() => setOpen(!open)}
-        className="flex justify-between items-center px-4 py-4 bg-gray-100 cursor-pointer rounded-t-xl"
+        className="flex justify-between items-center px-5 py-4 bg-slate-100 cursor-pointer rounded-t-xl"
       >
         <div className="flex items-center gap-3">
-          <span className="font-bold text-sm">PALLET</span>
-          <span className="font-semibold text-lg">{pallet.pallet_code}</span>
+          <span className="text-xs font-bold text-slate-500">PALLET</span>
+          <span className="text-lg font-semibold text-slate-800">
+            {pallet.pallet_code}
+          </span>
+
           {!canEditSku && (
-            <span className="text-xs font-semibold px-2 py-0.5 rounded bg-yellow-100 text-yellow-700">
-              WAITING GATE ASSIGNMENT
+            <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-700">
+              WAITING ASSIGNMENT
             </span>
           )}
         </div>
 
         <FaChevronDown
-          className={`w-4 h-4 transition-transform ${open ? "rotate-180" : ""}`}
+          className={`w-4 h-4 text-slate-500 transition-transform
+            ${open ? "rotate-180" : ""}`}
         />
       </div>
 
       {open && (
-        <div className="p-4 max-h-[65vh] overflow-y-auto">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {pallet.skus.map((sku: any) => {
-              const qtyPicking = sku.pickings.reduce(
-                (sum: number, p: any) =>
-                  sum +
-                  p.scans.reduce(
-                    (s: number, sc: any) => s + (sc.quantity_picked ?? 0),
-                    0
-                  ),
-                0
-              );
+        <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+          {pallet.skus.map((sku: any) => {
+            const qtyPicking = sku.pickings.reduce(
+              (sum: number, p: any) =>
+                sum +
+                p.scans.reduce(
+                  (s: number, sc: any) => s + (sc.quantity_picked ?? 0),
+                  0
+                ),
+              0
+            );
 
-              return (
-                <SKUCard
-                  key={sku.item_id}
-                  sku={sku}
-                  QTYpicking={qtyPicking}
-                  disabled={!canEditSku}
-                />
-              );
-            })}
-          </div>
+            return (
+              <SKUCard
+                key={sku.item_id}
+                sku={sku}
+                palletId={pallet.pallet_id}
+                memoId={memoId}
+                doId={doId}
+                assignedGateId={assignedGateId}
+                assignedGateLoads={assignedGateLoads}
+                QTYpicking={qtyPicking}
+                disabled={!canEditSku}
+              />
+            );
+          })}
         </div>
       )}
     </div>
@@ -240,72 +362,116 @@ const SKUCard = ({
   sku,
   QTYpicking,
   disabled,
+  palletId,
+  memoId,
+  doId,
+  assignedGateId,
+  assignedGateLoads,
 }: {
   sku: any;
   QTYpicking: number;
   disabled?: boolean;
+  palletId?: string;
+  memoId?: string;
+  doId?: string;
+  assignedGateId?: string;
+  assignedGateLoads: UIGateAssignedGateLoad[];
 }) => {
+  const isAlreadySubmitted = useMemo(() => {
+    return assignedGateLoads.some(
+      (l) =>
+        l.item_id === sku.item_id &&
+        l.pallet_id === palletId &&
+        l.outbound_memo_id === memoId
+    );
+  }, [assignedGateLoads, sku.item_id, palletId, memoId]);
+
   const [qty, setQty] = useState(QTYpicking);
   const [submitted, setSubmitted] = useState(false);
+  const isLocked = disabled || submitted || isAlreadySubmitted;
 
   const invalid = qty < 0 || qty > QTYpicking;
 
   const handleSubmit = async () => {
     if (invalid || disabled) return;
 
-    // await submitGateSku({
-    //   item_id: sku.item_id,
-    //   qty_loaded: qty,
-    // });
+    if (!assignedGateId || !doId || !memoId || !palletId) {
+      showErrorToast(
+        "Cannot submit SKU: missing required identifiers (gate, DO, memo, or pallet)."
+      );
+      return;
+    }
 
-    showSuccessToast("SUBMITTED !")
+    try {
+      const payload = {
+        assigned_gate_id: assignedGateId,
+        outbound_do_id: doId,
+        outbound_memo_id: memoId,
+        pallet_id: palletId,
+        item_id: sku.item_id,
+        uom: sku.uom,
+        quantity_picked: QTYpicking,
+        quantity_loaded: qty,
+        quantity_unloaded: QTYpicking - qty,
+        status: "PENDING" as const,
+      };
 
-    // setSubmitted(true);
+      await submitGateLoadingSKU(payload);
+      setSubmitted(true);
+    } catch (err) {
+      console.error(err);
+      alert("Gagal submit SKU");
+    }
   };
 
   return (
     <div
       className={`rounded-xl border shadow-sm transition
-        ${disabled ? "bg-gray-100 opacity-60" : "bg-white"}
-        ${submitted ? "border-green-500 bg-green-50" : "border-gray-200"}
+        ${isLocked ? "bg-slate-100 opacity-60" : "bg-white"}
+        ${
+          isAlreadySubmitted
+            ? "border-emerald-500 bg-emerald-50"
+            : "border-slate-200"
+        }
       `}
     >
       <div className="p-5 space-y-4">
         <div>
-          <h5 className="text-lg font-bold">{sku.item_name}</h5>
-          <p className="text-sm text-gray-500">
+          <h5 className="text-lg font-bold text-slate-800">{sku.item_name}</h5>
+          <p className="text-xs text-slate-500">
             UOM <b>{sku.uom}</b> • Week <b>{sku.week_number ?? "-"}</b>
           </p>
         </div>
 
         <div className="grid grid-cols-2 gap-4">
-          <div className="bg-gray-50 rounded-lg p-4">
-            <p className="text-sm text-gray-500">QTY Picking</p>
+          <div className="bg-slate-50 rounded-lg p-4 text-center">
+            <p className="text-xs text-slate-500">Qty Picking</p>
             <p className="text-2xl font-bold">{QTYpicking}</p>
           </div>
 
-          <div className="bg-blue-50 rounded-lg p-4">
-            <p className="text-sm text-gray-500 mb-1">QTY Loaded</p>
+          <div className="bg-indigo-50 rounded-lg p-4">
+            <p className="text-xs text-slate-500 mb-1">Qty Loaded</p>
             <input
               type="number"
               value={qty}
               min={0}
               max={QTYpicking}
-              disabled={disabled || submitted}
+              disabled={isLocked}
               onChange={(e) => setQty(Number(e.target.value))}
-              className="w-full h-12 text-xl font-bold text-center rounded-lg border
-                         focus:ring-2 focus:ring-blue-500"
+              className="w-full h-12 text-xl font-bold text-center rounded-lg border border-indigo-300 focus:ring-2 focus:ring-indigo-500"
             />
           </div>
         </div>
 
         {!disabled && qty < QTYpicking && !invalid && (
-          <p className="text-sm text-orange-600 font-medium">Qty Loading tak sesuai dengan Qty Picking!</p>
+          <p className="text-sm text-orange-600 font-medium">
+            Qty loading lebih kecil dari qty picking
+          </p>
         )}
 
         {invalid && (
           <p className="text-sm text-red-600 font-semibold">
-            Qty tidak boleh lebih dari {QTYpicking}
+            Qty tidak boleh melebihi {QTYpicking}
           </p>
         )}
 
@@ -315,20 +481,26 @@ const SKUCard = ({
           </p>
         )}
 
+        {isAlreadySubmitted && (
+          <p className="text-xs text-emerald-700 font-semibold">
+            ✔ SKU sudah disubmit ke Gate
+          </p>
+        )}
+
         <button
           onClick={handleSubmit}
-          disabled={disabled || invalid || submitted}
+          disabled={isLocked || invalid}
           className={`w-full h-11 rounded-lg font-bold transition
-            ${
-              disabled
-                ? "bg-gray-300 text-gray-600"
-                : submitted
-                ? "bg-green-600 text-white"
-                : "bg-blue-600 text-white hover:bg-blue-700"
-            }
-          `}
+    ${
+      isAlreadySubmitted
+        ? "bg-emerald-600 text-white"
+        : disabled
+        ? "bg-slate-300 text-slate-600"
+        : "bg-indigo-600 text-white hover:bg-indigo-700"
+    }
+  `}
         >
-          {submitted ? "SKU SUBMITTED" : "SUBMIT SKU"}
+          {isAlreadySubmitted ? "SKU SUBMITTED" : "SUBMIT SKU"}
         </button>
       </div>
     </div>

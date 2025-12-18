@@ -6,7 +6,7 @@ import DynamicForm, {
 import TabsSection from "../../../../components/wms-components/inbound-component/tabs/TabsSection";
 import DeliveryOrderCard from "./component/Form/DeliveryOrderCard";
 import HelperAssign from "./component/Tabs/HelperAssign";
-import ConfirmationModal from "./component/Modal/ConfirmationModal";
+import ConfirmationModal from "./component/Modal/InboundConfirmModal";
 import { FaPlus, FaRedoAlt } from "react-icons/fa";
 import { UseFormReturn } from "react-hook-form";
 import { FormValues } from "./component/formTypes";
@@ -68,12 +68,6 @@ const buildFieldsConfig = (isDetailMode: boolean): FieldConfig[] => {
       label: "No Polisi",
       type: "text" as const,
       validation: { required: "No polisi wajib diisi" },
-    },
-    {
-      name: "origin",
-      label: "Origin",
-      type: "text" as const,
-      validation: { required: "Origin wajib diisi" },
     },
     {
       name: "driver_phone",
@@ -245,7 +239,6 @@ const SubmitSection = ({
     "expedition",
     "driver",
     "no_pol",
-    "origin",
     "driver_phone",
   ];
 

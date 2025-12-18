@@ -20,7 +20,7 @@ export function mapToPayload(data: FormValues): CreateInboundPlanning {
 
     return {
         expedition: data.expedition ?? "",
-        origin: data.origin?.toUpperCase() ?? "",
+        origin: "CWH",
         license_plate:
             data.no_pol?.toUpperCase().replace(/\s+/g, "").trim() ?? "",
         driver_name: data.driver?.toUpperCase() ?? "",

@@ -2,7 +2,6 @@
 import React, { useEffect, useState } from "react";
 import { mapOutboundGateToUILoading } from "./helper/mapOutboundGateToUILoading";
 import GateLoadingDOList from "./components/GateLoadingDOList";
-import outboundGateDummy from "./types/dummyData";
 import { fetchAssignedGate } from "./service/fetchData";
 
 const GateLoadingPage = () => {

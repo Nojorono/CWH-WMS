@@ -15,7 +15,7 @@ const emptyFormValues: FormValues = {
   driver: "",
   driver_phone: "",
   no_pol: "",
-  origin: "",
+  origin: "CWH",
   inbound_type: "",
   arrival_date: "",
   flag_validated: undefined,
@@ -116,10 +116,7 @@ export default function InboundPlanningFormContainer() {
           return;
         }
       }
-    }
-
-    console.log("Preview data:", values);
-    
+    }    
 
     // --- Kalau semua valid ---
     setPreviewData(values);
@@ -129,7 +126,6 @@ export default function InboundPlanningFormContainer() {
   // SUBMIT CREATE OR UPDATE
   const onFinalSubmit = async (data: FormValues) => {
     const payload = mapToPayload(data);
-    console.log("Final submit payload:", payload);
     
     const id = dataInbound?.id;
     if (isCreateMode) {

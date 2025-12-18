@@ -126,7 +126,7 @@ const MainTable = () => {
             />
           </div>
 
-          <div className="space-x-3 mt-4">
+          {/* <div className="space-x-3 mt-4">
             <Button
               variant="primary"
               size="sm"
@@ -135,7 +135,7 @@ const MainTable = () => {
             >
               <FaPlus className="mr-2" /> Movement Inventory
             </Button>
-          </div>
+          </div> */}
         </div>
       </div>
 

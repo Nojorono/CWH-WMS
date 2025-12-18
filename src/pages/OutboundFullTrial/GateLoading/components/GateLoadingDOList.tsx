@@ -19,7 +19,11 @@ const GateLoadingDOList: React.FC<Props> = ({ data }) => {
   return (
     <div className="space-y-4">
       {data.map((doItem) => (
-        <GateLoadingDOCard key={doItem.do_id} doData={doItem} />
+        <GateLoadingDOCard
+          key={doItem.do_id}
+          doData={doItem}
+          assignedGateLoads={[]}
+        />
       ))}
     </div>
   );
