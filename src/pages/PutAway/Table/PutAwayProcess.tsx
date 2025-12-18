@@ -49,6 +49,7 @@ type ExtendedColumnDef<T> = ColumnDef<T> & { selectedRow?: boolean };
 
 type DriverFormValues = {
   forkliftDriverId: string;
+  driverId: string;
   driverName: string;
   driverPhone: string;
 };
@@ -64,6 +65,8 @@ const PutAwayDetail: React.FC = () => {
 
   const { list: putAwaySuggestions, fetchAll: fetchPutAwaySuggestions } =
     useStorePutAwaySuggestion();
+
+  console.log("putAwaySuggestions", putAwaySuggestions);
 
   const { list: userDevice, fetchAll: fetchUserDevice } = useStoreUser();
   const { list: userList, fetchAll: fetchUserList } = useStoreUserManagement();
@@ -103,6 +106,7 @@ const PutAwayDetail: React.FC = () => {
   } = useForm<DriverFormValues>({
     defaultValues: {
       forkliftDriverId: detailDataPutaway?.forkliftDriverId || "",
+      driverId: "",
       driverName: detailDataPutaway?.driverName || "",
       driverPhone: detailDataPutaway?.driverPhone || "",
     },
@@ -390,6 +394,8 @@ const PutAwayDetail: React.FC = () => {
           return;
         }
 
+        console.log("data PUTAWAY", data);
+
         const driver = {
           id: data.forkliftDriverId,
           name: data.driverName,
@@ -523,7 +529,7 @@ const PutAwayDetail: React.FC = () => {
             <label className="block text-sm font-medium mb-1">
               Driver Name <span className="text-red-500">*</span>
             </label>
-            <Controller
+            {/* <Controller
               name="driverName"
               control={control}
               rules={{ required: "Driver name is required" }}
@@ -549,6 +555,43 @@ const PutAwayDetail: React.FC = () => {
                     </p>
                   )}
                 </>
+              )}
+            /> */}
+
+            <Controller
+              name="driverId" // ⬅️ BUKAN driverName
+              control={control}
+              rules={{ required: "Driver name is required" }}
+              render={({ field }) => (
+                <Select
+                  placeholder="Select Driver"
+                  options={forkliftDriverName.map((u: any) => ({
+                    value: u.id, // ✅ ID untuk logic
+                    label: u.name, // ✅ NAME untuk UI
+                  }))}
+                  value={field.value}
+                  onChange={(driverId: string) => {
+                    const driver = forkliftDriverName.find(
+                      (u: any) => u.id === driverId
+                    );
+
+                    if (!driver) return;
+
+                    // 👉 SIMPAN NAME (BUKAN ID)
+                    setValue("driverName", driver.name, {
+                      shouldDirty: true,
+                    });
+
+                    // 👉 AUTO FILL PHONE
+                    setValue("driverPhone", driver.phone || "", {
+                      shouldDirty: true,
+                    });
+
+                    field.onChange(driverId);
+                  }}
+                  disabled={isDetail}
+                  width="100%"
+                />
               )}
             />
           </div>
