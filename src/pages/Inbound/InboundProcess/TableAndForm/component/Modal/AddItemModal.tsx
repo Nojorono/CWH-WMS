@@ -59,6 +59,7 @@ export default function AddItemModal({
     }
 
     onSave({
+      id: "",
       item_id: selectedMaster?.id ?? "",
       sku: tempSku,
       item_number: selectedMaster?.item_number ?? tempSku,

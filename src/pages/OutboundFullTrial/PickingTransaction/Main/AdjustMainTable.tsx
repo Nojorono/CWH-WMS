@@ -56,9 +56,6 @@ const AdjustTable = ({
               <div className="flex items-center justify-between">
                 <div className="text-sm font-semibold">
                   {memo.outbound_memo_number}
-                  <span className="ml-2 text-xs text-gray-500">
-                    ({memo.status})
-                  </span>
                 </div>
 
                 {/* TOGGLE */}
@@ -80,7 +77,7 @@ const AdjustTable = ({
                     <li key={tp.id}>
                       <span className="font-medium">{tp.item?.sku}</span>
                       <span className="ml-2 text-xs text-gray-500">
-                        {tp.uom} • {tp.status}
+                        {tp.uom}
                       </span>
                     </li>
                   ))}

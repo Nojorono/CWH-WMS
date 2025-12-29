@@ -5,9 +5,10 @@ import GateLoadingDOCard from "./GateLoadingCard";
 
 interface Props {
   data: UIGateLoadingDO[];
+  onRefresh?: () => void;
 }
 
-const GateLoadingDOList: React.FC<Props> = ({ data }) => {
+const GateLoadingDOList: React.FC<Props> = ({ data, onRefresh }) => {
   if (!data.length) {
     return (
       <div className="text-center text-gray-500 py-10">
@@ -19,7 +20,12 @@ const GateLoadingDOList: React.FC<Props> = ({ data }) => {
   return (
     <div className="space-y-4">
       {data.map((doItem) => (
-        <GateLoadingDOCard key={doItem.do_id} doData={doItem} />
+        <GateLoadingDOCard
+          key={doItem.do_id}
+          doData={doItem}
+          assignedGateLoads={[]}
+          onRefresh={onRefresh}
+        />
       ))}
     </div>
   );

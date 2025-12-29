@@ -2,8 +2,6 @@ import { Dialog, DialogPanel, DialogTitle } from "@headlessui/react";
 import { useState } from "react";
 import Button from "../../../../../../components/ui/button/Button";
 import { FormValues } from "../formTypes";
-import React from "react";
-import { FaChevronDown, FaChevronRight } from "react-icons/fa";
 import { formatDateIndo } from "../../../../../../helper/FormatDate";
 
 interface ConfirmationModalProps {
@@ -13,7 +11,7 @@ interface ConfirmationModalProps {
   formData: FormValues;
 }
 
-export default function ConfirmationModal({
+export default function InboundConfirmModal({
   isOpen,
   onClose,
   onSubmit,
@@ -156,7 +154,7 @@ export default function ConfirmationModal({
           {/* Header */}
           <div className="sticky top-0 bg-white border-b px-6 py-4 z-10">
             <DialogTitle className="text-2xl font-semibold text-gray-800">
-              Confirmation Plan
+              Confirmation Inbound Plan
             </DialogTitle>
           </div>
 
@@ -216,18 +214,6 @@ export default function ConfirmationModal({
 
                 <div>
                   <label className="block text-sm font-medium text-gray-600 mb-1">
-                    Asal
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.origin}
-                    disabled
-                    className="w-full rounded-md border-gray-300 bg-gray-100 text-gray-700 text-sm px-3 py-2 focus:outline-none"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-600 mb-1">
                     No. Telp Driver
                   </label>
                   <input
@@ -274,18 +260,18 @@ export default function ConfirmationModal({
                 </div>
                 <div className="p-3 bg-white rounded-lg shadow-sm">
                   <p className="text-2xl font-bold text-gray-900">
-                    {Object.entries(skuSummaryWithDifferentUOM)
-                      .map(([, items]) => {
-                        const uomSummary = items.reduce((acc, item) => {
+                    {(() => {
+                      const globalUomTotals = Object.values(skuSummaryWithDifferentUOM)
+                        .flat()
+                        .reduce((acc, item) => {
                           acc[item.uom] = (acc[item.uom] || 0) + item.qty;
                           return acc;
                         }, {} as Record<string, number>);
 
-                        return Object.entries(uomSummary)
-                          .map(([uom, qty]) => `${qty} ${uom}`)
-                          .join(", ");
-                      })
-                      .join(", ")}
+                      return Object.entries(globalUomTotals)
+                        .map(([uom, qty]) => `${qty} ${uom}`)
+                        .join(", ") || "0";
+                    })()}
                   </p>
                   <p className="text-xs text-gray-500">Total Quantity</p>
                 </div>

@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { FaEye, FaEdit, FaTrash } from "react-icons/fa";
 import { ColumnDef } from "@tanstack/react-table";
-import { InboundPlanning } from "../../../../DynamicAPI/types/InboundGoodStock";
 import { useNavigate } from "react-router-dom";
 import { formatDateIndo } from "../../../../helper/FormatDate";
 import StatusBadge from "../../../../common/statusBadge";
@@ -48,6 +47,10 @@ const AdjustTable = ({
       {
         accessorKey: "inbound_number",
         header: "Inbound No",
+      },
+          {
+        accessorKey: "inbound_type",
+        header: "Inbound Type",
       },
       {
         accessorKey: "createdAt",

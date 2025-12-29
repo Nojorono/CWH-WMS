@@ -16,7 +16,7 @@ const MainTable = () => {
 
   const handleCreate = () => {
     navigate("/memo/process", {
-      state: { data: [], mode: "create", title: "Create Memo" },
+      state: { data: [], mode: "create", title: "Create Memo Form" },
     });
   };
 
