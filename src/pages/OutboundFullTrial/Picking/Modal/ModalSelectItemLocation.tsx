@@ -45,8 +45,6 @@ export default function ModalInventoryItemModal({
           }
         );
         const data = await response.json();
-        console.log("Fetched item data:", data.data);
-
         // Handle the fetched data as needed
         console.log(data);
         setItemList(data.data);

@@ -8,8 +8,15 @@ import { showErrorToast } from "../../../../components/toast";
 import Swal from "sweetalert2";
 import Button from "../../../../components/ui/button/Button";
 import { useNavigate } from "react-router-dom";
-import { Item, ReviewSuggestionRow } from "../Types/suggestTableTypes";
+import {
+  Item,
+  PickingPayload,
+  RawSuggestion,
+  RawSuggestionReview,
+  ReviewGroup,
+} from "../Types/suggestTableTypes";
 import ModalReviewFinalSuggestion from "../Modal/ModalReviewFinalSuggestion";
+import { prepareReviewGroups } from "../Helper/prepareReviewGroups";
 
 interface TableProps {
   items: Item[];
@@ -25,6 +32,91 @@ interface TableProps {
 const genLocalId = () =>
   `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 
+const buildRawSuggestions = (localItems: Item[]): RawSuggestion[] => {
+  return localItems
+    .map((item) => {
+      const loc = item.suggested_locations?.[0];
+      const qty = Number(item.qty_pick ?? 0);
+
+      if (!loc || qty <= 0) return null;
+
+      return {
+        item_id: item.item_id,
+        item_code: item.item_code,
+        item_name: item.item_name,
+
+        memo_id: item.memo_id,
+
+        uom: loc.uom,
+        week_number: loc.week_number,
+        picked_qty: qty,
+
+        source_warehouse_sub_id: loc.warehouse_sub_id,
+        source_bin_id:
+          loc.bin_id && loc.bin_id !== "N/A" ? loc.bin_id : undefined,
+
+        required_qty: item.required_quantity ?? 0,
+        already_picked_qty: item.already_picked_quantity ?? 0,
+      };
+    })
+    .filter(Boolean) as RawSuggestion[];
+};
+
+const buildReviewSuggestions = (localItems: Item[]): RawSuggestionReview[] => {
+  return localItems
+    .map((item) => {
+      const loc = item.suggested_locations?.[0];
+      const qty = Number(item.qty_pick ?? 0);
+
+      if (!loc || qty <= 0) return null;
+
+      return {
+        item_id: item.item_id,
+        item_code: item.item_code,
+        item_name: item.item_name,
+
+        uom: loc.uom,
+        week_number: loc.week_number,
+        picked_qty: qty,
+
+        required_qty: item.required_quantity ?? 0,
+        already_picked_qty: item.already_picked_quantity ?? 0,
+
+        // DISPLAY ONLY
+        source_zone: loc.warehouse_sub_code ?? loc.warehouse_sub_name ?? "-",
+        source_bin: loc.bin_name && loc.bin_name !== "N/A" ? loc.bin_name : "-",
+      };
+    })
+    .filter(Boolean) as RawSuggestionReview[];
+};
+
+const buildFinalPayload = (
+  raws: RawSuggestion[],
+  doId: string | null,
+  destinationWarehouseSubId: string,
+  destinationBinId: string
+): PickingPayload => {
+  return {
+    data: raws.map((r) => ({
+      do_id: doId,
+      memo_id: r.memo_id,
+      item_id: r.item_id,
+
+      source_warehouse_sub_id: r.source_warehouse_sub_id,
+      source_bin_id: r.source_bin_id,
+
+      destination_warehouse_sub_id: destinationWarehouseSubId,
+      destination_bin_id: destinationBinId,
+
+      quantity: r.picked_qty,
+      uom: r.uom,
+      week_number: r.week_number,
+
+      status: "PENDING",
+    })),
+  };
+};
+
 export const SuggestionItemsTable: React.FC<TableProps> = ({
   items,
   onAdd,
@@ -36,9 +128,13 @@ export const SuggestionItemsTable: React.FC<TableProps> = ({
   onBack,
 }) => {
   const navigate = useNavigate();
-  const [reviewData, setReviewData] = useState<ReviewSuggestionRow[]>([]);
-  const [finalPayload, setFinalPayload] = useState<any>(null);
+  const [reviewGroups, setReviewGroups] = useState<ReviewGroup[]>([]);
   const [openReview, setOpenReview] = useState(false);
+  const [finalRawSuggestions, setFinalRawSuggestions] = useState<
+    RawSuggestion[]
+  >([]);
+
+  console.log("Initial Items Suggetion:", items);
 
   const [localItems, setLocalItems] = useState<Item[]>(
     items.map((it) => ({
@@ -46,6 +142,14 @@ export const SuggestionItemsTable: React.FC<TableProps> = ({
       _localId: (it as any)._localId ?? genLocalId(),
     }))
   );
+
+  const findLastIndexByItemId = (arr: Item[], itemId: string) => {
+    let lastIndex = -1;
+    arr.forEach((it, idx) => {
+      if (it.item_id === itemId) lastIndex = idx;
+    });
+    return lastIndex;
+  };
 
   // Helper: total qty_pick across all rows for an item (optionally overriding one index)
   const getTotalPickedForItem = (
@@ -121,8 +225,13 @@ export const SuggestionItemsTable: React.FC<TableProps> = ({
     const computedQty =
       requiredQty > 0 ? Math.min(requiredQty, available || requiredQty) : 0;
 
+    const parentMemoId =
+      selectedItem?.memo_id ??
+      localItems.find((it) => it.item_id === data.item_id)?.memo_id ??
+      "";
+
     const newItem: Item = {
-      memo_id: data.memo_id ?? "",
+      memo_id: parentMemoId,
       item_id: data.item_id,
       item_name: data.item_name,
       item_code: data.item_code,
@@ -138,7 +247,23 @@ export const SuggestionItemsTable: React.FC<TableProps> = ({
       _isManual: true,
     };
 
-    setLocalItems((prevItems) => [...prevItems, newItem]);
+    setLocalItems((prevItems) => {
+      const copy = [...prevItems];
+
+      // cari posisi terakhir parent SKU
+      const insertIndex = findLastIndexByItemId(copy, newItem.item_id);
+
+      if (insertIndex === -1) {
+        // fallback (harusnya tidak terjadi)
+        return [...copy, newItem];
+      }
+
+      // sisipkan tepat setelah group parent
+      copy.splice(insertIndex + 1, 0, newItem);
+
+      return copy;
+    });
+
     setOpenAdd(false);
     onAdd(newItem);
   };
@@ -180,26 +305,68 @@ export const SuggestionItemsTable: React.FC<TableProps> = ({
     setOpenEdit(false); // Tutup modal
   };
 
+  const getSummaryRowIndex = (items: Item[], itemId: string) => {
+    // 1️⃣ prefer: row yg punya suggested location & bukan manual
+    const withLocation = items.findIndex(
+      (i) =>
+        i.item_id === itemId &&
+        i.suggested_locations?.length > 0 &&
+        !i._isManual
+    );
+
+    if (withLocation !== -1) return withLocation;
+
+    // 2️⃣ fallback: manual-added row
+    const manual = items.findIndex((i) => i.item_id === itemId && i._isManual);
+
+    if (manual !== -1) return manual;
+
+    // 3️⃣ last fallback: first appearance
+    return items.findIndex((i) => i.item_id === itemId);
+  };
+
+  const isSummaryRow = (items: Item[], itemId: string, rowIndex: number) =>
+    getSummaryRowIndex(items, itemId) === rowIndex;
+
   // Update the columns definition to include qty_pick
   const columns: ColumnDef<Item>[] = [
     { accessorKey: "notes", header: "Notes", enableSorting: false },
-    { accessorKey: "item_name", header: "Item Name", enableSorting: false },
+    {
+      accessorKey: "item_name",
+      header: "Item Name",
+      enableSorting: false,
+      cell: ({ row }) => {
+        const item = row.original;
+        return (
+          <div className="flex items-center gap-2">
+            {item._isManual && <span className="text-xs text-gray-400">↳</span>}
+            <span>{item.item_name}</span>
+          </div>
+        );
+      },
+    },
     { accessorKey: "item_code", header: "Item Code" },
     {
       accessorKey: "uom",
       header: "UOM",
       enableSorting: false,
-      cell: ({ row }) => (
-        <span>{row.original.suggested_locations[0]?.uom}</span>
-      ),
+      cell: ({ row }) => {
+        const item = row.original;
+        const rowIndex = row.index;
+        // if (!isSummaryRow(localItems, item.item_id, rowIndex)) return <span />;
+        return <span>{item.suggested_locations?.[0]?.uom ?? ""}</span>;
+      },
     },
     {
       accessorKey: "week_number",
       header: "Week Number",
       enableSorting: false,
-      cell: ({ row }) => (
-        <span>{row.original.suggested_locations[0]?.week_number}</span>
-      ),
+      cell: ({ row }) => {
+        const item = row.original;
+        const rowIndex = row.index;
+        // if (!isSummaryRow(localItems, item.item_id, rowIndex)) return <span />;
+        return <span>{item.suggested_locations?.[0]?.week_number ?? ""}</span>;
+      },
     },
     {
       accessorKey: "required_quantity",
@@ -209,12 +376,11 @@ export const SuggestionItemsTable: React.FC<TableProps> = ({
       cell: ({ row }) => {
         const item = row.original;
         const rowIndex = row.index;
-        const firstIndex = localItems.findIndex(
-          (i) => i.item_id === item.item_id
-        );
-        if (rowIndex !== firstIndex) return <span />; // hide for duplicate SKUs
+
+        if (!isSummaryRow(localItems, item.item_id, rowIndex)) return <span />;
+
         return (
-          <span style={{ color: "green", fontWeight: "bold" }}>
+          <span className="text-green-600 font-bold">
             {item.required_quantity}
           </span>
         );
@@ -228,12 +394,11 @@ export const SuggestionItemsTable: React.FC<TableProps> = ({
       cell: ({ row }) => {
         const item = row.original;
         const rowIndex = row.index;
-        const firstIndex = localItems.findIndex(
-          (i) => i.item_id === item.item_id
-        );
-        if (rowIndex !== firstIndex) return <span />;
+
+        if (!isSummaryRow(localItems, item.item_id, rowIndex)) return <span />;
+
         return (
-          <span style={{ color: "red", fontWeight: "bold" }}>
+          <span className="text-red-600 font-bold">
             {item.remaining_quantity_needed}
           </span>
         );
@@ -247,12 +412,11 @@ export const SuggestionItemsTable: React.FC<TableProps> = ({
       cell: ({ row }) => {
         const item = row.original;
         const rowIndex = row.index;
-        const firstIndex = localItems.findIndex(
-          (i) => i.item_id === item.item_id
-        );
-        if (rowIndex !== firstIndex) return <span />;
+
+        if (!isSummaryRow(localItems, item.item_id, rowIndex)) return <span />;
+
         return (
-          <span style={{ color: "blue", fontWeight: "bold" }}>
+          <span className="text-blue-600 font-bold">
             {item.already_picked_quantity}
           </span>
         );
@@ -266,40 +430,48 @@ export const SuggestionItemsTable: React.FC<TableProps> = ({
       cell: ({ row }) => {
         const item = row.original;
         const rowIndex = row.index;
-        const firstIndex = localItems.findIndex(
-          (i) => i.item_id === item.item_id
+
+        if (!isSummaryRow(localItems, item.item_id, rowIndex)) return <span />;
+
+        return (
+          <span>
+            {item.suggested_locations?.[0]?.available_quantity ?? "-"}
+          </span>
         );
-        if (rowIndex !== firstIndex) return <span />;
-        return <span>{item.suggested_locations[0]?.available_quantity}</span>;
       },
     },
     {
       id: "warehouse_sub_name",
       header: "Zone",
       enableSorting: false,
+      cell: ({ row }) => {
+        const item = row.original;
+        const rowIndex = row.index;
 
-      cell: ({ row }) => (
-        <span>{row.original.suggested_locations[0]?.warehouse_sub_name}</span>
-      ),
+        if (!isSummaryRow(localItems, item.item_id, rowIndex)) return <span />;
+
+        return (
+          <span>
+            {item.suggested_locations?.[0]?.warehouse_sub_name ?? "-"}
+          </span>
+        );
+      },
     },
     {
       id: "bin_location",
       header: "Bin Locations",
       enableSorting: false,
+      cell: ({ row }) => {
+        const item = row.original;
+        const rowIndex = row.index;
 
-      cell: ({ row }) => (
-        <ul>
-          {row.original.suggested_locations.length > 0 && (
-            <li>
-              {row.original.suggested_locations[0].bin_name === "N/A"
-                ? ""
-                : row.original.suggested_locations[0].bin_name}
-            </li>
-          )}
-        </ul>
-      ),
+        if (!isSummaryRow(localItems, item.item_id, rowIndex)) return <span />;
+
+        const bin = item.suggested_locations?.[0]?.bin_name;
+
+        return <span>{bin && bin !== "N/A" ? bin : "-"}</span>;
+      },
     },
-
     {
       accessorKey: "qty_pick",
       header: "Qty Picked",
@@ -384,12 +556,13 @@ export const SuggestionItemsTable: React.FC<TableProps> = ({
       cell: ({ row }) => {
         const item = row.original;
         const rowIndex = row.index;
+
         const available =
           item.suggested_locations?.[0]?.available_quantity ?? 0;
-        const isFirstOfItem =
-          localItems.findIndex((i) => i.item_id === item.item_id) === rowIndex;
 
-        // Manual-added rows: only Edit + Remove
+        const isSummary = isSummaryRow(localItems, item.item_id, rowIndex);
+
+        // 🔹 Manual-added rows
         if (item._isManual) {
           return (
             <div className="flex gap-3">
@@ -414,7 +587,7 @@ export const SuggestionItemsTable: React.FC<TableProps> = ({
           );
         }
 
-        // Original rows (non-manual): Edit always; Add only for the first original row and when available > 0
+        // 🔹 Original rows
         return (
           <div className="flex gap-3">
             <button
@@ -424,7 +597,8 @@ export const SuggestionItemsTable: React.FC<TableProps> = ({
               <FaEdit />
             </button>
 
-            {isFirstOfItem && available > 0 && (
+            {/* ✅ ADD hanya di SUMMARY ROW + ada stock */}
+            {isSummary && available > 0 && (
               <button
                 onClick={() => handleAddClick(item, rowIndex)}
                 className="text-blue-600"
@@ -439,200 +613,86 @@ export const SuggestionItemsTable: React.FC<TableProps> = ({
   ];
 
   const prepareReview = () => {
-    const reviewRows: ReviewSuggestionRow[] = [];
-    const apiRows: any[] = [];
+    const apiRaw = buildRawSuggestions(localItems);
+    const reviewRaw = buildReviewSuggestions(localItems);
 
-    for (const item of localItems) {
-      const loc = item.suggested_locations?.[0];
-      const qty = Number(item.qty_pick ?? 0);
+    console.log("API RAW", apiRaw);
+    console.log("REVIEW RAW", reviewRaw);
 
-      if (!loc || qty <= 0) continue;
+    const groups = prepareReviewGroups(reviewRaw);
+    console.log("REVIEW GROUPS", groups);
 
-      /** ============================
-       * USER FRIENDLY (MODAL)
-       * ============================ */
-      reviewRows.push({
-        item_code: item.item_code,
-        item_name: item.item_name,
-        qty,
-        uom: loc.uom,
-        week_number: loc.week_number,
-        source_zone: loc.warehouse_sub_code ?? loc.warehouse_sub_name,
-        source_bin: loc.bin_name && loc.bin_name !== "N/A" ? loc.bin_name : "-",
-      });
-
-      /** ============================
-       * API PAYLOAD (HIDDEN)
-       * ============================ */
-      apiRows.push({
-        do_id: DOid,
-        memo_id: item.memo_id,
-        item_id: item.item_id,
-        source_warehouse_sub_id: loc.warehouse_sub_id,
-        ...(loc.bin_id !== "N/A" && { source_bin_id: loc.bin_id }),
-        destination_warehouse_sub_id: destinationZoneId,
-        destination_bin_id: destinationBinId,
-        quantity: qty,
-        uom: loc.uom,
-        week_number: loc.week_number,
-        status: "PENDING",
-      });
-    }
-
-    if (reviewRows.length === 0) {
-      showErrorToast("Tidak ada data valid untuk direview.");
-      return;
-    }
-
-    setReviewData(reviewRows);
-    setFinalPayload({ data: apiRows });
+    setReviewGroups(groups);
+    setFinalRawSuggestions(apiRaw);
     setOpenReview(true);
   };
 
-  //SUBMIT SUGGESTION FUNCTION
-  // const submitFinalSuggestions = async () => {
-  //   // validate aggregated picks across rows before building payload
-  //   const aggregated: Record<string, { total: number; allowed: number }> = {};
-  //   const itemMap: Record<
-  //     string,
-  //     {
-  //       totalPicked: number;
-  //       allowed: number;
-  //       itemName: string;
-  //     }
-  //   > = {};
+  const validateBeforeSubmit = (groups: ReviewGroup[]) => {
+    const hasOver = groups.some((g) => g.status === "OVER");
+    const hasUomMismatch = groups.some((g) => g.status === "UOM_MISMATCH");
+    const hasLess = groups.some((g) => g.status === "LESS");
 
-  //   for (const item of localItems) {
-  //     if (!itemMap[item.item_id]) {
-  //       // ambil parent row (row pertama item ini)
-  //       const parent = localItems.find((x) => x.item_id === item.item_id);
-
-  //       const allowed =
-  //         (parent?.required_quantity ?? 0) -
-  //         (parent?.already_picked_quantity ?? 0);
-
-  //       itemMap[item.item_id] = {
-  //         totalPicked: 0,
-  //         allowed,
-  //         itemName: parent?.item_name ?? "",
-  //       };
-  //     }
-
-  //     itemMap[item.item_id].totalPicked += Number(item.qty_pick ?? 0);
-  //   }
-
-  //   for (const id in itemMap) {
-  //     const { totalPicked, allowed, itemName } = itemMap[id];
-
-  //     if (totalPicked > allowed) {
-  //       Swal.fire({
-  //         icon: "warning",
-  //         title: "Invalid Quantity",
-  //         text: `Total Qty Picked untuk item ${itemName} (${totalPicked}) melebihi Required Quantity (${allowed}).`,
-  //       });
-  //       return;
-  //     }
-  //   }
-
-  //   // Normalize items: copy memo_id (and fallback suggested_locations[0]) from the first occurrence of same item_id
-  //   const normalizedItems = localItems.map((it) => {
-  //     if (it.memo_id && it.memo_id !== "") return it;
-  //     const first = localItems.find(
-  //       (x) => x.item_id === it.item_id && x.memo_id
-  //     );
-  //     // also copy suggested_locations[0] if missing, so Add-mode rows have necessary source info
-  //     const sourceLoc =
-  //       it.suggested_locations?.[0] ?? first?.suggested_locations?.[0];
-  //     return {
-  //       ...it,
-  //       memo_id: first?.memo_id ?? it.memo_id ?? "",
-  //       suggested_locations: it.suggested_locations.length
-  //         ? it.suggested_locations
-  //         : first?.suggested_locations ?? [],
-  //     };
-  //   });
-
-  //   const finalPayload = {
-  //     data: normalizedItems
-  //       .map((item) => {
-  //         // Tambahkan kondisi untuk memeriksa apakah ada suggestion
-  //         if (
-  //           !item.suggested_locations ||
-  //           item.suggested_locations.length === 0
-  //         ) {
-  //           return null;
-  //         }
-
-  //         const loc = item.suggested_locations?.[0];
-  //         const quantity = item.qty_pick ?? 0;
-  //         const requiredQuantity = item.required_quantity;
-
-  //         if (quantity > requiredQuantity) {
-  //           showErrorToast(
-  //             `Quantity for item ${item.item_name} exceeds the required quantity of ${requiredQuantity}.`
-  //           );
-  //           return null;
-  //         }
-
-  //         if (quantity === 0) {
-  //           showErrorToast(
-  //             `Quantity for item ${item.item_name} must be greater than zero.`
-  //           );
-  //           return null;
-  //         }
-
-  //         return {
-  //           do_id: DOid,
-  //           memo_id: item.memo_id, // now guaranteed if available on first occurrence
-  //           item_id: item.item_id,
-  //           source_warehouse_sub_id: loc?.warehouse_sub_id,
-  //           ...(loc?.bin_id !== "N/A" && { source_bin_id: loc?.bin_id }),
-  //           destination_warehouse_sub_id: destinationZoneId,
-  //           destination_bin_id: destinationBinId,
-  //           quantity: quantity,
-  //           uom: loc?.uom,
-  //           week_number: loc?.week_number,
-  //           status: "PENDING",
-  //         };
-  //       })
-  //       .filter((item) => item !== null),
-  //   };
-
-  //   console.log("Final payload to submit:", finalPayload);
-
-  //   if (finalPayload.data.length === 0) {
-  //     showErrorToast(
-  //       "Suggestion tidak valid, tolong input dengan benar sesuai Plan."
-  //     );
-  //     return;
-  //   }
-
-  //   if (typeof createBulkData === "function") {
-  //     const res = await createBulkData(finalPayload as any);
-
-  //     if (res?.success) {
-  //       if (onBack) {
-  //         onBack();
-  //       }
-  //     }
-  //   } else {
-  //     showErrorToast("Put Away creation function is not available.");
-  //   }
-  // };
+    return {
+      hasOver,
+      hasUomMismatch,
+      hasLess,
+    };
+  };
 
   const submitToAPI = async () => {
-    if (!finalPayload) return;
+    if (!finalRawSuggestions.length) return;
 
-    console.log("Submitting final payload:", finalPayload);
+    const { hasOver, hasUomMismatch, hasLess } =
+      validateBeforeSubmit(reviewGroups);
 
-    // if (typeof createBulkData === "function") {
-    //   const res = await createBulkData(finalPayload);
+    // ❌ BLOCK
+    if (hasOver || hasUomMismatch) {
+      Swal.fire({
+        icon: "error",
+        title: "Data Tidak Valid",
+        text: "Terdapat Qty Over atau UOM tidak sama.",
+      });
+      return;
+    }
 
-    //   if (res?.success) {
-    //     setOpenReview(false);
-    //     if (onBack) onBack();
-    //   }
-    // }
+    // ⚠️ WARNING
+    if (hasLess) {
+      const res = await Swal.fire({
+        icon: "warning",
+        title: "Qty Kurang",
+        text:
+          "Beberapa item memiliki Qty Pick lebih kecil dari Remaining Qty. " +
+          "Apakah Anda yakin ingin melanjutkan?",
+        showCancelButton: true,
+        confirmButtonText: "Ya, Lanjutkan",
+        cancelButtonText: "Kembali",
+      });
+
+      if (!res.isConfirmed) return;
+    }
+
+    // ✅ FINAL PAYLOAD
+    const finalPayload = buildFinalPayload(
+      finalRawSuggestions,
+      DOid,
+      destinationZoneId,
+      destinationBinId
+    );
+
+    console.log("FINAL API PAYLOAD", finalPayload);
+
+    // ===== API CALL =====
+    if (typeof createBulkData === "function") {
+      const res = await createBulkData(finalPayload as any);
+
+      if (res?.success) {
+        if (onBack) {
+          onBack();
+        }
+      }
+    } else {
+      showErrorToast("Put Away creation function is not available.");
+    }
   };
 
   return (
@@ -687,10 +747,19 @@ export const SuggestionItemsTable: React.FC<TableProps> = ({
         />
       )}
 
-      {openReview && finalPayload && (
+      {/* {openReview && finalPayload && (
         <ModalReviewFinalSuggestion
           open={openReview}
-          data={reviewData}
+          data={reviewGroups}
+          onClose={() => setOpenReview(false)}
+          onConfirm={submitToAPI}
+        />
+      )} */}
+
+      {openReview && (
+        <ModalReviewFinalSuggestion
+          open={openReview}
+          data={reviewGroups}
           onClose={() => setOpenReview(false)}
           onConfirm={submitToAPI}
         />

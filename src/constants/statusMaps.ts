@@ -67,7 +67,8 @@ export const STATUS_MAP_PUTAWAY: StatusMap = {
 export const STATUS_MAP_DO: StatusMap = {
   PENDING: "grey",
   IN_PROGRESS: "info",
-  APPROVED: "success"
+  APPROVED: "success",
+  CANCELLED: "error",
 };
 
 // Lookup opsional
