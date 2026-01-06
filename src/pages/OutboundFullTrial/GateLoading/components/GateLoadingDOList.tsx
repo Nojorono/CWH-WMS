@@ -31,4 +31,4 @@ const GateLoadingDOList: React.FC<Props> = ({ data, onRefresh }) => {
   );
 };
 
-export default GateLoadingDOList;
+export default GateLoadingDOList; 

@@ -6,7 +6,11 @@ import {
   UIGateAssignedGateLoad,
 } from "../helper/mapOutboundGateToUILoading";
 import { showErrorToast } from "../../../../components/toast";
-import { submitGateLoadingSKU } from "../helper/submitAPI";
+import { submitGateLoadingSKU } from "../helper/submitGateLoadingSKU";
+import { isGateLoadComplete } from "../helper/isGateLoadComplete";
+import { isMemoGateLoadComplete } from "../helper/isMemoLoadComplete";
+
+import { EndPoint } from "../../../../utils/EndPoint";
 
 /* ========================= */
 /* AUTHORITY HELPERS         */
@@ -50,26 +54,66 @@ const GateLoadingDOCard: React.FC<Props> = ({ doData, onRefresh }) => {
     [doData]
   );
 
+  const isCompleteLoadGate = useMemo(
+    () => isGateLoadComplete(doData),
+    [doData]
+  );
+
+  async function handleCompleteLoadGate(id: string) {
+    try {
+      const token = localStorage.getItem("token");
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+      };
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+      }
+
+      const res = await fetch(`${EndPoint}assigned-gate/${id}/status`, {
+        method: "PATCH",
+        headers,
+        body: JSON.stringify({ status: "DONE" }),
+      });
+
+      if (!res.ok) {
+        const text = await res.text();
+        showErrorToast(`Failed to approve: ${res.status} ${text}`);
+        return;
+      }
+
+      if (typeof onRefresh === "function") {
+        await onRefresh();
+      }
+    } catch (err) {
+      console.error(err);
+      showErrorToast("Gagal melakukan approve gate loading");
+    }
+  }
+
   return (
     <div className="rounded-2xl border bg-white shadow-sm overflow-hidden">
       {/* ================= HEADER ================= */}
-      <div
-        onClick={() => setOpen(!open)}
-        className="px-6 py-5 cursor-pointer hover:bg-slate-50 transition"
-      >
+      <div className="px-6 py-5 cursor-pointer hover:bg-slate-50 transition">
         <div className="flex items-center justify-between gap-6">
           {/* LEFT CONTENT */}
-          <div className="flex flex-wrap items-start gap-10 flex-1">
+          <div
+            className="flex flex-wrap items-start gap-10 flex-1"
+            onClick={() => setOpen(!open)}
+          >
             {/* GATE & DO */}
             <div className="min-w-[180px]">
               <p className="text-xs uppercase tracking-wide text-slate-500">
                 Gate Loading
               </p>
+
               <h4 className="text-lg font-semibold text-indigo-600">
                 {doData.gate.gate_name}
               </h4>
               <h3 className="text-xl font-bold text-slate-800">
                 {doData.do_number}
+              </h3>
+              <h3 className="text-sm font-bold text-slate-800">
+                {doData.assigned_gate_id}
               </h3>
             </div>
 
@@ -120,6 +164,15 @@ const GateLoadingDOCard: React.FC<Props> = ({ doData, onRefresh }) => {
               </div>
             </div>
           </div>
+
+          {isCompleteLoadGate && (
+            <button
+              onClick={() => handleCompleteLoadGate(doData.assigned_gate_id)}
+              className="px-6 py-2 rounded-lg font-bold transition bg-emerald-600 text-white hover:bg-emerald-700"
+            >
+              LOAD GATE, DONE !
+            </button>
+          )}
 
           {/* CHEVRON */}
           <FaChevronDown
@@ -253,32 +306,48 @@ const MemoRow = ({
   assignedGateId: string;
   assignedGateLoads: UIGateAssignedGateLoad[];
   onRefresh?: () => void | Promise<void>;
-}) => (
-  <div className="rounded-xl border bg-white shadow-sm">
-    <div className="p-4 border-b">
-      <p className="text-xs text-slate-500">MEMO NO</p>
-      <p className="font-semibold text-slate-800">{memo.memo_number}</p>
-      <p className="text-sm text-slate-500 mt-1">
-        {memo.origin} → {memo.destination}
-      </p>
-    </div>
+}) => {
+  const isMemoComplete = useMemo(
+    () => isMemoGateLoadComplete(memo, assignedGateLoads),
+    [memo, assignedGateLoads]
+  );
 
-    <div className="p-4 space-y-4">
-      {memo.pallets.map((pallet: any) => (
-        <PalletCard
-          key={pallet.pallet_id}
-          pallet={pallet}
-          memoId={memo.memo_id}
-          doId={doId}
-          assignedGateId={assignedGateId}
-          assignedGateLoads={assignedGateLoads}
-          canEditSku={assignedPalletIds.has(pallet.pallet_id)}
-          onRefresh={onRefresh}
-        />
-      ))}
+  return (
+    <div className="rounded-xl border bg-white shadow-sm">
+      <div className="p-4 border-b flex items-center justify-between">
+        <div>
+          <p className="text-xs text-slate-500">MEMO NO</p>
+          <p className="font-semibold text-slate-800">{memo.memo_number}</p>
+          <p className="text-sm text-slate-500 mt-1">
+            {memo.origin} → {memo.destination}
+          </p>
+        </div>
+
+        {/* BADGE STATUS MEMO */}
+        {isMemoComplete && (
+          <span className="px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-700">
+            ✔ {memo.memo_number}, COMPLETE LOADING
+          </span>
+        )}
+      </div>
+
+      <div className="p-4 space-y-4">
+        {memo.pallets.map((pallet: any) => (
+          <PalletCard
+            key={pallet.pallet_id}
+            pallet={pallet}
+            memoId={memo.memo_id}
+            doId={doId}
+            assignedGateId={assignedGateId}
+            assignedGateLoads={assignedGateLoads}
+            canEditSku={assignedPalletIds.has(pallet.pallet_id)}
+            onRefresh={onRefresh}
+          />
+        ))}
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 /* ========================= */
 /* PALLET CARD               */

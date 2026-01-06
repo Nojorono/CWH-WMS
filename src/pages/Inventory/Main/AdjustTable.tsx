@@ -118,7 +118,9 @@ const AdjustTable = ({
         accessorKey: "item_name",
         header: "Items",
         cell: ({ row }) => {
-          const items = row.original.current_items || [];
+          const items = (row.original.current_items || []).filter(
+            (it) => it.current_quantity !== 0
+          );
 
           if (items.length === 0) return "-";
 

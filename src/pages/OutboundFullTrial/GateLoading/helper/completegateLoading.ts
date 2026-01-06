@@ -1,6 +1,5 @@
 import axios from "axios";
 import { EndPoint } from "../../../../utils/EndPoint";
-import { fetchAssignedGate } from "../service/fetchData";
 
 export interface SubmitGateSkuPayload {
   assigned_gate_id: string;
