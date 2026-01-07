@@ -1,11 +1,14 @@
 import { useEffect, useMemo, useState } from "react";
-import { FaEye, FaEdit, FaAdjust, FaTasks } from "react-icons/fa";
+import { FaEye, FaEdit, FaAdjust, FaTasks, FaTrash } from "react-icons/fa";
 import { ColumnDef } from "@tanstack/react-table";
 import TableComponent from "../Table/TableComponent";
 import { useNavigate } from "react-router-dom";
 import StatusBadge from "../../../../common/statusBadge";
-import { STATUS_MAP_DO, STATUS_MAP_MEMO } from "../../../../constants/statusMaps";
+import { STATUS_MAP_DO } from "../../../../constants/statusMaps";
 import { useStoreOutboundDeliveryOrder } from "../../../../DynamicAPI/stores/Store/MasterStore";
+import Swal from "sweetalert2";
+import { showErrorToast } from "../../../../components/toast";
+import { EndPoint } from "../../../../utils/EndPoint";
 
 type OutboundMemo = {
   id: string;
@@ -52,7 +55,8 @@ const AdjustTable = ({
 }: MenuTableProps) => {
   const navigate = useNavigate();
 
-  const { fetchUsingPagination, list, pagination } = useStoreOutboundDeliveryOrder();
+  const { fetchUsingPagination, list, pagination } =
+    useStoreOutboundDeliveryOrder();
 
   // 🔹 local state pagination
   const [pageIndex, setPageIndex] = useState(0);
@@ -76,17 +80,56 @@ const AdjustTable = ({
     });
   };
 
-  const handleUpdate = (id: string) => {
-    // navigate("/memo/process", {
-    //   state: { data: id, mode: "edit", title: "Update Memo" },
-    // });
-  };
-
   const handleAdjust = (id: string) => {
     console.log("DO Id:", id);
     navigate("/outbound_do/picking_suggestion", {
       state: { data: id, mode: "suggestion", title: "Picking Suggestion" },
     });
+  };
+
+  const handleDeleteDO = async (id: string) => {
+    const confirm = await Swal.fire({
+      icon: "warning",
+      title: "Cancel DO",
+      text: `Yakin cancel DO ini ?`,
+      showCancelButton: true,
+      confirmButtonText: "Ya, batalkan",
+      cancelButtonText: "Batal",
+    });
+
+    if (!confirm.isConfirmed) return;
+
+    try {
+      const token = localStorage.getItem("token");
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+      };
+      if (token) headers["Authorization"] = `Bearer ${token}`;
+
+      const res = await fetch(`${EndPoint}outbound-do/${id}/cancel`, {
+        method: "PATCH",
+        headers,
+      });
+
+      if (!res.ok) {
+        const txt = await res.text();
+        showErrorToast(`Gagal cancel DO: ${res.status} ${txt}`);
+        return;
+      }
+
+      // refresh list
+      if (fetchUsingPagination) {
+        fetchUsingPagination({
+          page: pageIndex + 1,
+          limit: pageSize,
+          search: globalFilter || "",
+          status: filteredStatus || "",
+        });
+      }
+    } catch (err) {
+      console.error(err);
+      showErrorToast("Terjadi kesalahan saat membatalkan DO");
+    }
   };
 
   const roleName = localStorage.getItem("role_name");
@@ -112,45 +155,48 @@ const AdjustTable = ({
       {
         id: "actions",
         header: "Action",
-        cell: ({ row }) => (
-          <div className="flex gap-3">
-            <FaEye
-              className="size-5 cursor-pointer text-green-600 hover:scale-110 transition"
-              onClick={() => handleDetail(row.original.id)}
-              title="Detail"
-            />
+        cell: ({ row }) => {
+          const deletable =
+            !Array.isArray(row.original.memoId) ||
+            row.original.memoId.length === 0;
 
-            {/* {roleName !== "SUPERVISOR" && (
-              <FaEdit
-                className={`size-5 cursor-pointer ${
-                  row.original.status === "PENDING"
-                    ? "text-blue-600 hover:scale-110"
-                    : "text-gray-400 cursor-not-allowed"
-                } transition`}
-                onClick={() => {
-                  if (row.original.status === "PENDING") {
-                    handleUpdate(row.original.id);
-                  }
-                }}
-                title={
-                  row.original.status === "PENDING"
-                    ? "Edit"
-                    : "Edit hanya bisa jika status PENDING"
-                }
-                style={{
-                  pointerEvents:
-                    row.original.status === "PENDING" ? "auto" : "none",
-                }}
+          const isCancelled = row.original.status === "CANCELLED";
+          return (
+            <div className="flex gap-3">
+              <FaEye
+                className="size-5 cursor-pointer text-green-600 hover:scale-110 transition"
+                onClick={() => handleDetail(row.original.id)}
+                title="Detail"
               />
-            )} */}
 
-            <FaTasks
-              className="size-5 cursor-pointer text-yellow-600 hover:scale-110 transition"
-              onClick={() => handleAdjust(row.original.id)}
-              title="Adjust Memo"
-            />
-          </div>
-        ),
+              <FaTasks
+                className="size-5 cursor-pointer text-yellow-600 hover:scale-110 transition"
+                onClick={() => handleAdjust(row.original.id)}
+                title="Adjust Memo"
+              />
+
+              <FaTrash
+                className={`size-5 transition ${
+                  deletable && !isCancelled
+                    ? "cursor-pointer text-red-600 hover:scale-110"
+                    : "opacity-50 cursor-not-allowed pointer-events-none text-gray-400"
+                }`}
+                onClick={
+                  deletable && !isCancelled
+                    ? () => handleDeleteDO(row.original.id)
+                    : undefined
+                }
+                title={
+                  !deletable
+                    ? "Cannot delete - DO has memos"
+                    : isCancelled
+                    ? "Cannot delete - DO is cancelled"
+                    : "Delete"
+                }
+              />
+            </div>
+          );
+        },
       },
     ],
     [roleName]

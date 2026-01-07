@@ -87,8 +87,6 @@ const CreateMemo: React.FC = () => {
     updateData,
   } = useStoreOutboundMemo();
 
-  console.log("detailDataMemo", detailDataMemo);
-
   useEffect(() => {
     fetchAllUom();
   }, [fetchAllUom]);

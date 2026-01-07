@@ -9,6 +9,7 @@ import { useStoreOutboundMemo } from "../../../../DynamicAPI/stores/Store/Master
 // import { formatDate } from "../TableAndForm/MemoCreateProcess";
 import { ActionIcon } from "../Helper/ActionIcon ";
 import { formatDateIndo } from "../../../../helper/FormatDate";
+import { EndPoint } from "../../../../utils/EndPoint";
 
 type MemoData = {
   outbound_do: any;
@@ -72,7 +73,7 @@ const AdjustTable = ({
 
   const handleDetail = (id: string) => {
     navigate("/memo/process", {
-      state: { data: id, mode: "detail", title: "Detail Memo" },
+      state: { data: id, mode: "detail", title: "Detail Memo Created" },
     });
   };
 
@@ -186,72 +187,46 @@ const AdjustTable = ({
           );
         },
       },
-
-      // {
-      //   id: "actions",
-      //   header: "Action",
-      //   cell: ({ row }) => (
-      //     <div className="flex gap-3">
-      //       <FaEye
-      //         className="size-5 cursor-pointer text-green-600 hover:scale-110 transition"
-      //         onClick={() => handleDetail(row.original.id)}
-      //         title="Detail"
-      //       />
-
-      //       {roleName !== "SUPERVISOR" && (
-      //         <FaEdit
-      //           className={`size-5 cursor-pointer ${
-      //             row.original.status === "PENDING" && !row.original.has_do
-      //               ? "text-blue-600 hover:scale-110"
-      //               : "text-gray-400 cursor-not-allowed"
-      //           } transition`}
-      //           onClick={() => {
-      //             if (
-      //               row.original.status === "PENDING" &&
-      //               !row.original.has_do
-      //             ) {
-      //               handleUpdate(row.original.id);
-      //             }
-      //           }}
-      //           title={
-      //             !row.original.has_do
-      //               ? row.original.status === "PENDING"
-      //                 ? "Edit"
-      //                 : "Edit hanya bisa jika status PENDING"
-      //               : "Edit tidak tersedia karena sudah punya DO"
-      //           }
-      //           style={{
-      //             pointerEvents:
-      //               row.original.status === "PENDING" && !row.original.has_do
-      //                 ? "auto"
-      //                 : "none",
-      //           }}
-      //         />
-      //       )}
-
-      //       <FaTrash
-      //         className={`size-5 cursor-pointer ${
-      //           !row.original.has_do
-      //             ? "text-red-600 hover:scale-110"
-      //             : "text-gray-400 cursor-not-allowed"
-      //         } transition`}
-      //         onClick={() => {
-      //           if (!row.original.has_do) handleDelete(row.original.id);
-      //         }}
-      //         style={{
-      //           pointerEvents: !row.original.has_do ? "auto" : "none",
-      //         }}
-      //       />
-      //     </div>
-      //   ),
-      // },
     ],
     [roleName]
   );
 
-  const handleDelete = (id: string) => {
-    // Implement delete functionality here
-    console.log("Delete memo with id:", id);
+  const handleDelete = async (id: string) => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        console.error("No token found in localStorage");
+        return;
+      }
+
+      const url = `${EndPoint}outbound-memo/${id}/cancelled`;
+      const res = await fetch(url, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!res.ok) {
+        const text = await res.text();
+        console.error("Failed to cancel memo:", res.status, text);
+        return;
+      }
+
+      // refresh list after successful cancel
+      if (fetchUsingPagination) {
+        fetchUsingPagination({
+          page: pageIndex + 1,
+          limit: pageSize,
+          search: globalFilter || "",
+          status: filteredStatus || "",
+          sortOrder: "DESC",
+        });
+      }
+    } catch (error) {
+      console.error("Error cancelling memo:", error);
+    }
   };
 
   // Mapping API data to table data
@@ -281,8 +256,6 @@ const AdjustTable = ({
     has_do: item.has_do || false,
     outbound_do: item.outbound_do || {},
   }));
-
-  console.log("mappedList", mappedList);
 
   return (
     <div className="flex flex-col gap-4">
