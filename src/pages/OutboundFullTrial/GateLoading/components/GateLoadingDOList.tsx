@@ -6,9 +6,20 @@ import GateLoadingDOCard from "./GateLoadingCard";
 interface Props {
   data: UIGateLoadingDO[];
   onRefresh?: () => void;
+  openedDOId?: string | null;
+  loadingDOId?: string | null;
+  setLoadingDOId?: (id: string | null) => void;
+  setOpenedDOId?: (id: string | null) => void;
 }
 
-const GateLoadingDOList: React.FC<Props> = ({ data, onRefresh }) => {
+const GateLoadingDOList: React.FC<Props> = ({
+  data,
+  onRefresh,
+  openedDOId,
+  loadingDOId,
+  setLoadingDOId,
+  setOpenedDOId,
+}) => {
   if (!data.length) {
     return (
       <div className="text-center text-gray-500 py-10">
@@ -25,10 +36,14 @@ const GateLoadingDOList: React.FC<Props> = ({ data, onRefresh }) => {
           doData={doItem}
           assignedGateLoads={[]}
           onRefresh={onRefresh}
+          openedDOId={openedDOId}
+          loadingDOId={loadingDOId}
+          setLoadingDOId={setLoadingDOId}
+          setOpenedDOId={setOpenedDOId}
         />
       ))}
     </div>
   );
 };
 
-export default GateLoadingDOList; 
+export default GateLoadingDOList;

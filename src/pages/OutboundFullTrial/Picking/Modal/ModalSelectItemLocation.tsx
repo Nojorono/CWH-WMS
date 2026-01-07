@@ -1,11 +1,12 @@
 import React, { useEffect, useMemo } from "react";
-import { useStorePickingSuggestionItem } from "../../../../DynamicAPI/stores/Store/MasterStore";
 import { useForm, Controller } from "react-hook-form";
 import Button from "../../../../components/ui/button/Button";
 import Select from "../../../../components/form/Select";
 import KeyValueCard from "../Helper/KeyValueCard";
-import { formatDate } from "../../Memo/TableAndForm/MemoCreateProcess";
+// import { useStorePickingSuggestionItem } from "../../../../DynamicAPI/stores/Store/MasterStore";
+// import { formatDate } from "../../Memo/TableAndForm/MemoCreateProcess";
 import { EndPoint } from "../../../../utils/EndPoint";
+import { formatDateIndo } from "../../../../helper/FormatDate";
 
 type Props = {
   open: boolean;
@@ -253,7 +254,7 @@ export default function ModalInventoryItemModal({
                     ? existingItemData.suggested_locations[0]?.bin_code
                     : null,
                 planned_qty: existingItemData.required_quantity,
-                production_date: formatDate(
+                production_date: formatDateIndo(
                   existingItemData.suggested_locations[0]?.production_date
                 ),
                 week: existingItemData.suggested_locations[0]?.week_number,
@@ -280,7 +281,7 @@ export default function ModalInventoryItemModal({
                     ? selectedLocation.bin_code
                     : null,
                 available_quantity: selectedLocation.available_quantity,
-                production_date: formatDate(selectedLocation.production_date),
+                production_date: formatDateIndo(selectedLocation.production_date),
                 week: selectedLocation.week_number,
                 uom: selectedLocation.uom,
               }}

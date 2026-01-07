@@ -97,7 +97,7 @@ const TransactionPickingsModal: React.FC<TransactionPickingsModalProps> = ({
                           <span className="text-sm text-green-500">Sudah di-scan picking</span>
                         )}
                       </span>
-                      <span
+                      {/* <span
                         className={`px-3 py-1 rounded-full text-xs font-semibold ${
                           trx?.status === "PENDING"
                             ? "bg-yellow-100 text-yellow-700"
@@ -107,7 +107,7 @@ const TransactionPickingsModal: React.FC<TransactionPickingsModalProps> = ({
                         }`}
                       >
                         {trx?.status ?? "-"}
-                      </span>
+                      </span> */}
 
                       {isOpenItem ? (
                         <FaChevronUp className="text-gray-500" />

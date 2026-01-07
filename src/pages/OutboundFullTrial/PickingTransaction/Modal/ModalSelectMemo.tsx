@@ -88,6 +88,7 @@ const ModalSelectMemo: React.FC<ModalSelectMemoProps> = ({
         <label className="text-lg font-medium text-gray-700 mb-2 block">
           List Memo sesuai dengan Item pada Transaction Picking yang dipilih
         </label>
+        
         <Select
           options={mappedMemos}
           value={selectedMemo}

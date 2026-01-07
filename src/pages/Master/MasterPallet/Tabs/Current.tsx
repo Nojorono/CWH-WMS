@@ -39,7 +39,7 @@ export default function CurrentQuantityTable({ palletCode }: HistoryProps) {
         },
       })
       .then((res) => {
-        console.log("Fetched items:", res.data.data);
+        console.log("Fetched items Current Data:", res.data.data);
 
         setData(res.data.data);
       })

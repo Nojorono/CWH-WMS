@@ -11,6 +11,7 @@ type QuantityHistory = {
   id: string;
   pallet_id: string;
   item_id: string;
+  item_name: string;
   previous_quantity: number;
   quantity_change: number;
   new_quantity: number;
@@ -65,7 +66,7 @@ export default function QuantityHistoryTable({ palletCode }: HistoryProps) {
         return value;
       },
     },
-    { accessorKey: "item_id", header: "SKU Name" },
+    { accessorKey: "item_name", header: "SKU Name" },
     { accessorKey: "new_quantity", header: "Qty" },
     {
       accessorKey: "production_date",
@@ -73,8 +74,8 @@ export default function QuantityHistoryTable({ palletCode }: HistoryProps) {
       cell: (info) => formatDateIndo(info.getValue() as string),
     },
     { accessorKey: "week_number", header: "Week Number" },
-    { accessorKey: "user_id", header: "Staff" },
-    { accessorKey: "notes", header: "Reason" },
+    // { accessorKey: "user_id", header: "Staff" },
+    { accessorKey: "notes", header: "Notes" },
   ];
 
   return (

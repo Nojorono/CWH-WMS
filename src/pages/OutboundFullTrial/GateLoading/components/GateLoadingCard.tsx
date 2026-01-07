@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { FaChevronDown } from "react-icons/fa";
+import { FaCheck, FaChevronDown } from "react-icons/fa";
 import {
   UIGateLoadingDO,
   UIGateUser,
@@ -11,6 +11,8 @@ import { isGateLoadComplete } from "../helper/isGateLoadComplete";
 import { isMemoGateLoadComplete } from "../helper/isMemoLoadComplete";
 
 import { EndPoint } from "../../../../utils/EndPoint";
+import Button from "../../../../components/ui/button/Button";
+import { formatDateIndo } from "../../../../helper/FormatDate";
 
 /* ========================= */
 /* AUTHORITY HELPERS         */
@@ -36,10 +38,22 @@ interface Props {
   doData: UIGateLoadingDO;
   assignedGateLoads: UIGateAssignedGateLoad[];
   onRefresh?: () => void;
+  openedDOId?: string | null;
+  loadingDOId?: string | null;
+  setLoadingDOId?: (id: string | null) => void;
+  setOpenedDOId?: (id: string | null) => void;
 }
 
-const GateLoadingDOCard: React.FC<Props> = ({ doData, onRefresh }) => {
-  const [open, setOpen] = useState(false);
+const GateLoadingDOCard: React.FC<Props> = ({
+  doData,
+  onRefresh,
+  openedDOId,
+  loadingDOId,
+  setLoadingDOId,
+  setOpenedDOId,
+}) => {
+  // const [open, setOpen] = useState(false);
+  const open = openedDOId === doData.do_id;
 
   const { assignedPalletIds } = useMemo(
     () => getGateLoadingAuthority(doData),
@@ -98,7 +112,7 @@ const GateLoadingDOCard: React.FC<Props> = ({ doData, onRefresh }) => {
           {/* LEFT CONTENT */}
           <div
             className="flex flex-wrap items-start gap-10 flex-1"
-            onClick={() => setOpen(!open)}
+            onClick={() => setOpenedDOId?.(open ? null : doData.do_id)}
           >
             {/* GATE & DO */}
             <div className="min-w-[180px]">
@@ -166,12 +180,13 @@ const GateLoadingDOCard: React.FC<Props> = ({ doData, onRefresh }) => {
           </div>
 
           {isCompleteLoadGate && (
-            <button
+            <Button
               onClick={() => handleCompleteLoadGate(doData.assigned_gate_id)}
-              className="px-6 py-2 rounded-lg font-bold transition bg-emerald-600 text-white hover:bg-emerald-700"
+              variant="action"
+              startIcon={<FaCheck />}
             >
               LOADING GATE, COMPLETE !
-            </button>
+            </Button>
           )}
 
           {/* CHEVRON */}
@@ -320,8 +335,10 @@ const MemoRow = ({
     >
       <div className="p-4 border-b flex items-center justify-between">
         <div>
-          <p className="text-xs text-slate-500">MEMO NO</p>
-          <p className="font-semibold text-slate-800">{memo.memo_number}</p>
+          <p className="text-xs text-slate-500">NOMOR MEMO</p>
+          <p className="font-semibold text-slate-900 text-lg">
+            {memo.memo_number}
+          </p>
           <p className="text-sm text-slate-500 mt-1">
             {memo.origin} → {memo.destination}
           </p>
@@ -426,6 +443,9 @@ const PalletCard = ({
                 QTYpicking={qtyPicking}
                 disabled={!canEditSku}
                 onRefresh={onRefresh}
+                openedDOId={null}
+                loadingDOId={null}
+                setLoadingDOId={undefined}
               />
             );
           })}
@@ -449,6 +469,9 @@ const SKUCard = ({
   assignedGateId,
   assignedGateLoads,
   onRefresh,
+  openedDOId,
+  loadingDOId,
+  setLoadingDOId,
 }: {
   sku: any;
   QTYpicking: number;
@@ -459,6 +482,9 @@ const SKUCard = ({
   assignedGateId?: string;
   assignedGateLoads: UIGateAssignedGateLoad[];
   onRefresh?: () => void | Promise<void>;
+  openedDOId?: string | null;
+  loadingDOId?: string | null;
+  setLoadingDOId?: (id: string | null) => void;
 }) => {
   const isAlreadySubmitted = useMemo(() => {
     return assignedGateLoads.some(
@@ -475,18 +501,18 @@ const SKUCard = ({
 
   const invalid = qty < 0 || qty > QTYpicking;
 
-  const handleSubmit = async () => {
+  const handleSubmitLoadingSKU = async () => {
     if (invalid || disabled) return;
 
     if (!assignedGateId || !doId || !memoId || !palletId) {
-      showErrorToast(
-        "Cannot submit SKU: missing required identifiers (gate, DO, memo, or pallet)."
-      );
+      showErrorToast("Missing identifiers");
       return;
     }
 
-    setSubmitted(true);
     try {
+      setSubmitted(true);
+      setLoadingDOId?.(doId);
+
       const payload = {
         assigned_gate_id: assignedGateId,
         outbound_do_id: doId,
@@ -498,7 +524,11 @@ const SKUCard = ({
         quantity_loaded: qty,
         quantity_unloaded: QTYpicking - qty,
         status: "PENDING" as const,
+        production_date: sku.production_date,
+        week_number: sku.week_number,
       };
+
+      console.log("Submitting Gate Loading SKU with payload:", payload);
 
       await submitGateLoadingSKU(payload);
 
@@ -508,6 +538,9 @@ const SKUCard = ({
     } catch (err) {
       console.error(err);
       showErrorToast("Gagal submit SKU");
+      setSubmitted(false);
+    } finally {
+      setLoadingDOId?.(null);
     }
   };
 
@@ -525,8 +558,9 @@ const SKUCard = ({
       <div className="p-5 space-y-4">
         <div>
           <h5 className="text-lg font-bold text-slate-800">{sku.item_name}</h5>
-          <p className="text-xs text-slate-500">
-            UOM <b>{sku.uom}</b> • Week <b>{sku.week_number ?? "-"}</b>
+          <p className="text-sm text-slate-500">
+            UOM <b>{sku.uom}</b> • Week <b>{sku.week_number ?? "-"} </b>•
+            Production Date <b>{formatDateIndo(sku.production_date ?? "-")}</b>
           </p>
         </div>
 
@@ -608,7 +642,7 @@ const SKUCard = ({
         )}
 
         <button
-          onClick={handleSubmit}
+          onClick={handleSubmitLoadingSKU}
           disabled={isLocked || invalid}
           className={`w-full h-11 rounded-lg font-bold transition
     ${

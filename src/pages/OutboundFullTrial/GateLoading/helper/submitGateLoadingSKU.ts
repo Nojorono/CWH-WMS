@@ -12,6 +12,8 @@ export interface SubmitGateSkuPayload {
   quantity_loaded: number;
   quantity_unloaded: number;
   status: "PENDING";
+  production_date?: string;
+  week_number?: number;
 }
 
 export const submitGateLoadingSKU = async (payload: SubmitGateSkuPayload) => {
