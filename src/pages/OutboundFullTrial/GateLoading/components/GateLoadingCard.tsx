@@ -112,9 +112,9 @@ const GateLoadingDOCard: React.FC<Props> = ({ doData, onRefresh }) => {
               <h3 className="text-xl font-bold text-slate-800">
                 {doData.do_number}
               </h3>
-              <h3 className="text-sm font-bold text-slate-800">
+              {/* <h3 className="text-sm font-bold text-slate-800">
                 {doData.assigned_gate_id}
-              </h3>
+              </h3> */}
             </div>
 
             {/* VEHICLE */}
@@ -170,7 +170,7 @@ const GateLoadingDOCard: React.FC<Props> = ({ doData, onRefresh }) => {
               onClick={() => handleCompleteLoadGate(doData.assigned_gate_id)}
               className="px-6 py-2 rounded-lg font-bold transition bg-emerald-600 text-white hover:bg-emerald-700"
             >
-              LOAD GATE, DONE !
+              LOADING GATE, COMPLETE !
             </button>
           )}
 
@@ -313,7 +313,11 @@ const MemoRow = ({
   );
 
   return (
-    <div className="rounded-xl border bg-white shadow-sm">
+    <div
+      className={`rounded-xl border shadow-sm ${
+        isMemoComplete ? "bg-emerald-50 border-emerald-200" : "bg-white"
+      }`}
+    >
       <div className="p-4 border-b flex items-center justify-between">
         <div>
           <p className="text-xs text-slate-500">MEMO NO</p>
@@ -325,7 +329,7 @@ const MemoRow = ({
 
         {/* BADGE STATUS MEMO */}
         {isMemoComplete && (
-          <span className="px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-700">
+          <span className="px-3 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-700">
             ✔ {memo.memo_number}, COMPLETE LOADING
           </span>
         )}
