@@ -50,6 +50,12 @@ const AdjustTable = ({
         {memos.map((memo) => {
           const isOpen = openMemoId === memo.id;
 
+          const pickings = Array.isArray(memo.transaction_pickings)
+            ? memo.transaction_pickings
+            : memo.transaction_pickings
+            ? [memo.transaction_pickings]
+            : [];
+
           return (
             <li key={memo.id} className="border border-gray-200 rounded-md p-2">
               {/* HEADER */}
@@ -73,11 +79,17 @@ const AdjustTable = ({
               {/* EXPANDED CONTENT */}
               {isOpen && (
                 <ul className="mt-2 ml-4 list-disc space-y-1 text-sm">
-                  {memo.transaction_pickings?.map((tp: any) => (
+                  {pickings.map((tp: any) => (
                     <li key={tp.id}>
                       <span className="font-medium">{tp.item?.sku}</span>
                       <span className="ml-2 text-xs text-gray-500">
-                        {tp.uom}
+                        | Qty: {tp.quantity}
+                      </span>
+                      <span className="ml-2 text-xs text-gray-500">
+                        | UOM: {tp.uom}
+                      </span>
+                      <span className="ml-2 text-xs text-gray-500">
+                        | Week: {tp.week_number}
                       </span>
                     </li>
                   ))}
