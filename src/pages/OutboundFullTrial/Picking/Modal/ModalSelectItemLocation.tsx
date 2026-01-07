@@ -3,8 +3,6 @@ import { useForm, Controller } from "react-hook-form";
 import Button from "../../../../components/ui/button/Button";
 import Select from "../../../../components/form/Select";
 import KeyValueCard from "../Helper/KeyValueCard";
-// import { useStorePickingSuggestionItem } from "../../../../DynamicAPI/stores/Store/MasterStore";
-// import { formatDate } from "../../Memo/TableAndForm/MemoCreateProcess";
 import { EndPoint } from "../../../../utils/EndPoint";
 import { formatDateIndo } from "../../../../helper/FormatDate";
 
@@ -32,6 +30,8 @@ export default function ModalInventoryItemModal({
   if (!open) return null; // modal hidden
 
   const [itemList, setItemList] = React.useState<any>(null);
+
+  console.log("existingItemData:", existingItemData);
 
   useEffect(() => {
     const fetchItem = async () => {
@@ -165,6 +165,22 @@ export default function ModalInventoryItemModal({
     existingItemData.zone === selectedLocation.warehouse_sub_code &&
     existingItemData.bin === selectedLocation.bin_code;
 
+  // For ADD mode: disable submit if selected location equals any existing suggested location
+  const isDuplicateLocationInAdd =
+    mode === "add" &&
+    existingItemData &&
+    selectedLocation &&
+    Array.isArray(existingItemData.suggested_locations) &&
+    existingItemData.suggested_locations.some((loc: any) => {
+      // same week + same bin (location) => considered duplicate
+      return (
+        Number(loc.week_number) === Number(selectedLocation.week_number) &&
+        (loc.bin_id === selectedLocation.bin_id ||
+          (loc.warehouse_sub_code === selectedLocation.warehouse_sub_code &&
+            loc.bin_code === selectedLocation.bin_code))
+      );
+    });
+
   return (
     <div className="fixed inset-0 z-10000 flex items-center justify-center">
       {/* OVERLAY */}
@@ -281,7 +297,9 @@ export default function ModalInventoryItemModal({
                     ? selectedLocation.bin_code
                     : null,
                 available_quantity: selectedLocation.available_quantity,
-                production_date: formatDateIndo(selectedLocation.production_date),
+                production_date: formatDateIndo(
+                  selectedLocation.production_date
+                ),
                 week: selectedLocation.week_number,
                 uom: selectedLocation.uom,
               }}
@@ -296,6 +314,13 @@ export default function ModalInventoryItemModal({
             />
           )}
         </div>
+
+        {/* DUPLICATE LOCATION INFO */}
+        {isDuplicateLocationInAdd && (
+          <div className="mt-3 p-3 rounded-md bg-yellow-50 border border-yellow-200 text-sm text-yellow-800">
+            Selected location sudah ada untuk item ini pada week yang sama. Mohon pilih week dan lokasi lain!
+          </div>
+        )}
 
         {/* QTY PICK */}
         <div>
@@ -342,7 +367,16 @@ export default function ModalInventoryItemModal({
             Cancel
           </Button>
 
-          <Button variant="primary" onClick={handleSubmit(onSave)}>
+          <Button
+            variant="primary"
+            onClick={handleSubmit(onSave)}
+            disabled={isDuplicateLocationInAdd}
+            title={
+              isDuplicateLocationInAdd
+                ? "Selected location already exists for this item/week — choose different location"
+                : "Submit"
+            }
+          >
             Submit
           </Button>
         </div>

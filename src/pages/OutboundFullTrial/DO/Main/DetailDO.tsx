@@ -167,6 +167,8 @@ const DetailDO: React.FC = () => {
         license_plate: "",
         driver_name: "",
         driver_phone: "",
+        container_number: "",
+        seal_number: "",
         status: "PENDING",
         outbound_type: formDataPreview?.type_outbound,
         delivery_date: formDataPreview?.delivery_date,
@@ -175,6 +177,9 @@ const DetailDO: React.FC = () => {
           sequence: index + 1,
         })),
       };
+
+      console.log("Final PAYLOAD to submit:", PAYLOAD);
+      
 
       const res = await createData(PAYLOAD);
       if (res?.success) {
@@ -228,9 +233,12 @@ const DetailDO: React.FC = () => {
           <TableComponent
             data={
               (isDetail
-                ? (detail?.outbound_memos || []).filter((m: any) => typeof m.id === "string")
-                : approvedMemos.filter((m: any) => typeof m.id === "string")
-              ) as import("d:/New-WMS/src/DynamicAPI/types/DeliverOrderTypes").OutboundMemo[]
+                ? (detail?.outbound_memos || []).filter(
+                    (m: any) => typeof m.id === "string"
+                  )
+                : approvedMemos.filter(
+                    (m: any) => typeof m.id === "string"
+                  )) as import("d:/New-WMS/src/DynamicAPI/types/DeliverOrderTypes").OutboundMemo[]
             }
             columns={columnsTableItem}
             pageSize={10}

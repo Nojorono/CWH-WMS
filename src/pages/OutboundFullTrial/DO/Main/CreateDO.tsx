@@ -28,6 +28,8 @@ type MemoFormValues = {
   destination: string;
   delivery_date: string;
   license_plate?: string;
+  container_number?: string;
+  seal_number?: string;
   expedition?: string;
   driver?: string;
   type_outbound?: { label: string; value: string };
@@ -159,6 +161,8 @@ const CreateDO: React.FC = () => {
         license_plate: "",
         driver_name: "",
         driver_phone: "",
+        container_number: "",
+        seal_number: "",
         origin: "CWH",
         outbound_type: selectedTypeOutbound,
         delivery_date: formatDateIndo(formDataPreview?.delivery_date),
