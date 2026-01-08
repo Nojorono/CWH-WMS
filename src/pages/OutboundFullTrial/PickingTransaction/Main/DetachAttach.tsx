@@ -21,6 +21,7 @@ import AttachMemoModal from "../Modal/AttachMemoModal"; //
 import Swal from "sweetalert2";
 import DetailMemoModal from "../Modal/DetailMemoModal";
 import KeyValueCard from "../../Picking/Helper/KeyValueCard";
+import { showErrorToast } from "../../../../components/toast";
 
 const DetachAttach: React.FC = () => {
   const location = useLocation();
@@ -43,7 +44,14 @@ const DetachAttach: React.FC = () => {
   const outboundMemos = params?.outbound_memos || [];
 
   console.log("outbound memos detech attach", outboundMemos);
-  
+
+  const canApproveDO = React.useMemo(() => {
+    return outboundMemos.some((memo: any) =>
+      memo.transaction_pickings?.some(
+        (tp: any) => tp.transactionScanPicking?.length > 0
+      )
+    );
+  }, [outboundMemos]);
 
   const columnsTableItem = [
     { accessorKey: "outbound_memo_number", header: "Memo No" },
@@ -181,9 +189,16 @@ const DetachAttach: React.FC = () => {
   };
 
   const handleApproveDO = async () => {
+    if (!canApproveDO) {
+      showErrorToast(
+        "Minimal harus 1 SKU sudah di-scan picking untuk menyetujui DO ini."
+      );
+      return;
+    }
+
     const result = await Swal.fire({
       title: "Apakah Anda yakin?",
-      text: `Approve ${params?.outbound_do_number} dengan kondisi memo, picking item dan hasil scan picking yang terlampir.`,
+      text: `Approve ${params?.outbound_do_number} dengan kondisi memo, picking item dan hasil scan picking ini.`,
       icon: "warning",
       showCancelButton: true,
       confirmButtonText: "Ya, setujui!",
@@ -223,20 +238,13 @@ const DetachAttach: React.FC = () => {
               <Button
                 size="sm"
                 variant="secondary"
-                onClick={() => handleApproveDO()}
+                onClick={handleApproveDO}
                 startIcon={<FaCheck className="size-5" />}
+                disabled={!canApproveDO}
               >
                 Confirmation DO
               </Button>
             )}
-
-            {/* <Button
-              size="sm"
-              variant="danger"
-              onClick={() => handleCancelDO()}
-            >
-              Cancel
-            </Button> */}
           </div>
         </div>
 

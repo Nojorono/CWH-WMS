@@ -20,6 +20,7 @@ import { useCustomerByOutboundType } from "./FetchCustomer";
 import Select from "../../../../components/form/Select";
 import { FaCheck, FaUndo } from "react-icons/fa";
 import Swal from "sweetalert2";
+import { formatDateIndo } from "../../../../helper/FormatDate";
 
 // ✅ Tambahkan selected_destination
 type MemoFormValues = {
@@ -59,13 +60,13 @@ const LoadingIndicator = () => (
   </div>
 );
 
-export const formatDate = (date: Date | string | null): string => {
-  if (!date) return "";
-  const d = typeof date === "string" ? new Date(date) : date;
-  const tzOffset = d.getTimezoneOffset() * 60000;
-  const localISO = new Date(d.getTime() - tzOffset).toISOString().slice(0, 10);
-  return localISO; // Hasil: "2025-10-14"
-};
+// export const formatDate = (date: Date | string | null): string => {
+//   if (!date) return "";
+//   const d = typeof date === "string" ? new Date(date) : date;
+//   const tzOffset = d.getTimezoneOffset() * 60000;
+//   const localISO = new Date(d.getTime() - tzOffset).toISOString().slice(0, 10);
+//   return localISO; // Hasil: "2025-10-14"
+// };
 
 const CreateMemo: React.FC = () => {
   const location = useLocation();
@@ -117,8 +118,6 @@ const CreateMemo: React.FC = () => {
 
   // ✅ Watch selected_destination
   const selectedCustomer = methods.watch("selected_destination");
-
-  console.log("customerList", customerList);
 
   // ✅ Auto set ship_to setelah pilih customer
   useEffect(() => {
@@ -208,19 +207,6 @@ const CreateMemo: React.FC = () => {
       type: "textarea",
       disabled: true,
     },
-
-    // ✅ FIELD ADDRESS muncul hanya jika SUBDIST DAN bukan mode detail
-    // ...(typeOutbound?.value === "SUBDIST" && !isDetail
-    //   ? [
-    //       {
-    //         name: "address",
-    //         label: "Ship Address",
-    //         type: "textarea",
-    //         disabled: true,
-    //       } as FieldConfig,
-    //     ]
-    //   : []),
-
     {
       name: "notes",
       label: "Notes",
@@ -261,23 +247,48 @@ const CreateMemo: React.FC = () => {
     // jika tidak ada detail atau sedang create, stop
     if (!detailDataMemo || (!isDetail && !isEdit)) return;
 
-    const dateOnly = formatDate(detailDataMemo.delivery_date);
+    const dateOnly = formatDateIndo(detailDataMemo.delivery_date);
+
+    // methods.reset({
+    //   requestor: detailDataMemo.requestor || "",
+    //   origin: detailDataMemo.origin || "",
+    //   ship_to: detailDataMemo.ship_to || "",
+    //   destination: detailDataMemo.destination || "",
+    //   delivery_date: dateOnly,
+    //   notes: detailDataMemo.notes || "",
+    //   type_outbound: detailDataMemo.type
+    //     ? { label: detailDataMemo.type, value: detailDataMemo.type }
+    //     : { label: "", value: "" },
+    //   selected_destination: detailDataMemo.ship_to
+    //     ? {
+    //         label: detailDataMemo.ship_to,
+    //         value: detailDataMemo.ship_to,
+    //       }
+    //     : { label: "", value: "" },
+    // });
+
     methods.reset({
       requestor: detailDataMemo.requestor || "",
       origin: detailDataMemo.origin || "",
-      ship_to: detailDataMemo.ship_to || "",
-      destination: detailDataMemo.destination || "",
+
+      // 🔥 ship_to = DESTINATION
+      ship_to: detailDataMemo.destination || "",
+
+      // 🔥 address = SHIP_TO (alamat)
+      address: detailDataMemo.ship_to || "",
+
       delivery_date: dateOnly,
       notes: detailDataMemo.notes || "",
       type_outbound: detailDataMemo.type
         ? { label: detailDataMemo.type, value: detailDataMemo.type }
-        : { label: "", value: "" },
-      selected_destination: detailDataMemo.ship_to
+        : null,
+
+      selected_destination: detailDataMemo.destination
         ? {
-            label: detailDataMemo.ship_to,
-            value: detailDataMemo.ship_to,
+            label: detailDataMemo.destination,
+            value: detailDataMemo.destination,
           }
-        : { label: "", value: "" },
+        : null,
     });
 
     const mappedItems: ItemRow[] = (
@@ -357,7 +368,7 @@ const CreateMemo: React.FC = () => {
       origin: "CWH",
       destination: data.ship_to,
       ship_to: data.address,
-      delivery_date: formatDate(data.delivery_date),
+      delivery_date: formatDateIndo(data.delivery_date),
       notes: data.notes,
       status: "PENDING",
       type: data.type_outbound?.value || "",
@@ -460,7 +471,7 @@ const CreateMemo: React.FC = () => {
     }).then((result) => {
       if (result.isConfirmed) {
         if (isEdit && detailDataMemo) {
-          const dateOnly = formatDate(detailDataMemo.delivery_date);
+          const dateOnly = formatDateIndo(detailDataMemo.delivery_date);
 
           methods.reset({
             requestor: detailDataMemo.requestor || "",

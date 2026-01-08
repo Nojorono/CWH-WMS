@@ -1,6 +1,5 @@
 import axios from "axios";
 import { EndPoint } from "../../../../utils/EndPoint";
-import { fetchAssignedGate } from "../service/fetchData";
 
 export interface SubmitGateSkuPayload {
   assigned_gate_id: string;
@@ -13,6 +12,8 @@ export interface SubmitGateSkuPayload {
   quantity_loaded: number;
   quantity_unloaded: number;
   status: "PENDING";
+  production_date?: string;
+  week_number?: number;
 }
 
 export const submitGateLoadingSKU = async (payload: SubmitGateSkuPayload) => {

@@ -49,10 +49,6 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
 
   // 🚫 Jangan letakkan return null sebelum hook
   if (!isOpen) return null;
-
-
-
-  console.log("formData in ConfirmationModal:", formData);
   
 
   return (
