@@ -12,6 +12,7 @@ const MainTable = () => {
   const [globalFilter, setGlobalFilter] = useState<string>("");
   const debouncedFilter = useDebounce(globalFilter, 500);
   const [selectedStatus, setSelectedStatus] = useState<any>(null);
+  const [selectedTypeOutbound, setSelectedTypeOutbound] = useState<any>(null);
 
   const handleResetFilters = () => {
     setGlobalFilter("");
@@ -34,6 +35,12 @@ const MainTable = () => {
     { value: "IN_PROGRESS", label: "IN_PROGRESS" },
     { value: "COMPLETED", label: "COMPLETED" },
     { value: "CANCELLED", label: "CANCELLED" },
+  ];
+
+  const typeOutbound = [
+    { value: "", label: "All Type" },
+    { value: "AMO", label: "AMO" },
+    { value: "SUBDIST", label: "SUBDIST" },
   ];
 
   return (
@@ -62,6 +69,16 @@ const MainTable = () => {
           </div>
 
           <div className="space-x-4">
+            <Label htmlFor="memoType">Type Outbound</Label>
+            <Select
+              options={typeOutbound}
+              placeholder="Pilih Type"
+              onChange={(value) => setSelectedTypeOutbound(value)}
+              value={selectedTypeOutbound}
+            />
+          </div>
+
+          <div className="space-x-4">
             <Button
               size="sm"
               variant="primary"
@@ -79,6 +96,7 @@ const MainTable = () => {
         setGlobalFilter={setGlobalFilter}
         onRefresh={handleFetchParams}
         filteredStatus={selectedStatus}
+        filteredTypeOutbound={selectedTypeOutbound}
       />
     </>
   );

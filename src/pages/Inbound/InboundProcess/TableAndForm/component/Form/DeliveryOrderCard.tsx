@@ -209,7 +209,7 @@ export default function DeliveryOrderCard({
           setDoStatus("failed");
           replacePos([]);
           showErrorToast(
-            "Tidak ada PO ditemukan dalam Surat Jalan ini. Tambahkan PO manual."
+            "Tidak ada nomor PO/SO ditemukan dalam Surat Jalan ini. Tambahkan PO/SO secara manual !"
           );
           append({
             po_no: "",

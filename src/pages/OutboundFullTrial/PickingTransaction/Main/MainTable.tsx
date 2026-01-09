@@ -19,6 +19,7 @@ const MainTable = () => {
     { value: "", label: "All Status" },
     { value: "PENDING", label: "PENDING" },
     { value: "IN_PROGRESS", label: "IN_PROGRESS" },
+    { value: "COMPLETED", label: "COMPLETED" },
     { value: "APPROVED", label: "APPROVED" },
   ];
 
@@ -48,7 +49,7 @@ const MainTable = () => {
                 {/* === DO TRANSACTION === */}
                 <section className="bg-white rounded-xl shadow-sm border border-gray-200">
                   <div className="bg-orange-500 text-white rounded-t-xl px-5 py-3 font-semibold">
-                    List Transaction DO Picking
+                    List Transaction Picking
                   </div>
                   <div className="p-4">
                     <AdjustTable

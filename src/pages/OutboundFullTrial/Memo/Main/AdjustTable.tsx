@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { FaEye, FaEdit, FaTrash } from "react-icons/fa";
+import { FaEye, FaEdit, FaTrash, FaRegTimesCircle } from "react-icons/fa";
 import { ColumnDef } from "@tanstack/react-table";
 import TableComponent from "../TableAndForm/TableComponent";
 import { useNavigate } from "react-router-dom";
@@ -44,12 +44,16 @@ type MenuTableProps = {
   onDetail?: (id: string) => void;
   onRefresh?: () => void;
   filteredStatus?: any;
+  filteredTypeOutbound?: any;
+  filteredHasDO?: any;
 };
 
 const AdjustTable = ({
   globalFilter,
   setGlobalFilter,
   filteredStatus,
+  filteredTypeOutbound,
+  filteredHasDO,
 }: MenuTableProps) => {
   const navigate = useNavigate();
   const roleName = localStorage.getItem("role_name") || "";
@@ -57,7 +61,7 @@ const AdjustTable = ({
 
   // 🔹 local state pagination
   const [pageIndex, setPageIndex] = useState(0);
-  const [pageSize, setPageSize] = useState(5);
+  const [pageSize, setPageSize] = useState(10);
 
   // 🔹 Fetch data setiap kali pagination / search berubah
   useEffect(() => {
@@ -67,9 +71,19 @@ const AdjustTable = ({
       limit: pageSize,
       search: globalFilter || "",
       status: filteredStatus || "",
+      type: filteredTypeOutbound || "",
+      has_do: filteredHasDO || "",
       sortOrder: "DESC",
     });
-  }, [fetchUsingPagination, pageIndex, pageSize, globalFilter, filteredStatus]);
+  }, [
+    fetchUsingPagination,
+    pageIndex,
+    pageSize,
+    globalFilter,
+    filteredStatus,
+    filteredTypeOutbound,
+    filteredHasDO,
+  ]);
 
   const handleDetail = (id: string) => {
     navigate("/memo/process", {
@@ -171,7 +185,7 @@ const AdjustTable = ({
               )}
 
               <ActionIcon
-                icon={FaTrash}
+                icon={FaRegTimesCircle}
                 enabled={canDelete}
                 color="text-red-600"
                 title={
@@ -179,7 +193,7 @@ const AdjustTable = ({
                     ? "Tidak bisa delete memo CANCELLED"
                     : memo.has_do
                     ? "Tidak bisa delete karena sudah punya DO"
-                    : "Delete"
+                    : "Cancel Memo"
                 }
                 onClick={() => handleDelete(memo.id)}
               />

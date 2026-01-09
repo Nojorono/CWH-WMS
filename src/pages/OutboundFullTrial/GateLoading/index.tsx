@@ -3,6 +3,8 @@ import React, { useEffect, useState } from "react";
 import { mapOutboundGateToUILoading } from "./helper/mapOutboundGateToUILoading";
 import GateLoadingDOList from "./components/GateLoadingDOList";
 import { fetchAssignedGate } from "./service/fetchData";
+import Button from "../../../components/ui/button/Button";
+import { FaSyncAlt } from "react-icons/fa";
 
 const GateLoadingPage = () => {
   const [loading, setLoading] = useState(true);
@@ -40,7 +42,17 @@ const GateLoadingPage = () => {
 
   return (
     <div className="min-h-screen w-full px-6 py-6 bg-gray-100">
-      <h1 className="text-2xl font-bold mb-6">Gate Loading – DO List</h1>
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-bold">Gate Loading – DO List</h1>
+        <Button
+          variant="action"
+          onClick={refreshAssignedGate}
+          disabled={loading}
+          startIcon={<FaSyncAlt />}
+        >
+          Refresh Halaman
+        </Button>
+      </div>
 
       <GateLoadingDOList
         data={assignedGateList}

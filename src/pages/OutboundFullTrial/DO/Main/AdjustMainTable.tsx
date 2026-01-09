@@ -35,6 +35,7 @@ type MemoData = {
   deliveryDate: string;
   memoId: string[];
   outboundMemos: OutboundMemo[];
+  outboundMemosDetailed: any[];
   createdAt: string;
   updatedAt: string;
   deletedAt: string | null;
@@ -46,12 +47,14 @@ type MenuTableProps = {
   onDetail?: (id: string) => void;
   onRefresh?: () => void;
   filteredStatus?: any;
+  filteredTypeOutbound?: any;
 };
 
 const AdjustTable = ({
   globalFilter,
   setGlobalFilter,
   filteredStatus,
+  filteredTypeOutbound,
 }: MenuTableProps) => {
   const navigate = useNavigate();
 
@@ -70,8 +73,11 @@ const AdjustTable = ({
       limit: pageSize,
       search: globalFilter || "",
       status: filteredStatus || "",
+      outbound_type: filteredTypeOutbound || "",
     });
-  }, [fetchUsingPagination, pageIndex, pageSize, globalFilter, filteredStatus]);
+  }, [fetchUsingPagination, pageIndex, pageSize, globalFilter, filteredStatus, filteredTypeOutbound]);
+
+  console.log("Outbound DO List:", list);
 
   const handleDetail = (id: string) => {
     console.log("Detail Memo ID:", id);
@@ -134,11 +140,109 @@ const AdjustTable = ({
 
   const roleName = localStorage.getItem("role_name");
 
+  const MemoCell = ({ memos }: { memos: any[] }) => {
+    const [openMemoId, setOpenMemoId] = useState<string | null>(null);
+
+    if (!Array.isArray(memos) || memos.length === 0) {
+      return <div className="text-sm italic text-slate-500">No memos</div>;
+    }
+
+    return (
+      <ul className="space-y-2">
+        {memos.map((memo) => {
+          const isOpen = openMemoId === memo.id;
+
+          // prefer transaction_pickings (detailed pick records). fallback to outbound_memo_items
+          let items: any[] = [];
+          if (
+            Array.isArray(memo.transaction_pickings) &&
+            memo.transaction_pickings.length > 0
+          ) {
+            items = memo.transaction_pickings.map((tp: any) => ({
+              id: tp.id,
+              sku: tp.item?.sku ?? tp.item?.item_number ?? "-",
+              quantity: tp.quantity ?? 0,
+              uom: tp.uom ?? "-",
+              week: tp.week_number ?? "-",
+            }));
+          } else if (
+            Array.isArray(memo.outbound_memo_items) &&
+            memo.outbound_memo_items.length > 0
+          ) {
+            items = memo.outbound_memo_items.map((mi: any) => ({
+              id: mi.id,
+              sku: mi.item?.sku ?? mi.item?.item_number ?? "-",
+              quantity: mi.quantity_plan ?? 0,
+              uom: mi.uom ?? "-",
+              week: mi.week_number ?? "-",
+            }));
+          }
+
+          return (
+            <li key={memo.id} className="border border-gray-200 rounded-md p-2">
+              {/* HEADER */}
+              <div className="flex items-center justify-between">
+                <div className="text-xs font-semibold">
+                  {memo.outbound_memo_number ?? memo.memo_number ?? memo.id}
+                </div>
+
+                {/* TOGGLE */}
+                <button
+                  type="button"
+                  onClick={() => setOpenMemoId(isOpen ? null : memo.id)}
+                  className="text-xs text-blue-600 hover:underline"
+                >
+                  {isOpen ? "Hide Items" : `Show Items (${items.length})`}
+                </button>
+              </div>
+
+              {/* EXPANDED CONTENT */}
+              {isOpen && (
+                <ul className="mt-2 ml-4 list-disc space-y-1 text-xs">
+                  {items.length === 0 ? (
+                    <li className="text-xs text-slate-500">No items</li>
+                  ) : (
+                    
+                    items.map((it) => (
+                      <li
+                        key={it.id}
+                        className="flex flex-wrap gap-2 items-center"
+                      >
+                        <span className="font-medium">{it.sku}</span>
+                        <span className="ml-2 text-xs text-gray-500">
+                          | Qty {it.quantity}
+                        </span>
+                        <span className="ml-2 text-xs text-gray-500">
+                          | UOM {it.uom}
+                        </span>
+                        <span className="ml-2 text-xs text-gray-500">
+                          | Week {it.week}
+                        </span>
+                      </li>
+                    ))
+                  )}
+                </ul>
+              )}
+            </li>
+          );
+        })}
+      </ul>
+    );
+  };
+
   const columns: ColumnDef<MemoData>[] = useMemo(
     () => [
       { accessorKey: "outboundDoNumber", header: "DO Number" },
       { accessorKey: "outboundType", header: "Type Outbound" },
       { accessorKey: "origin", header: "Origin" },
+      {
+        accessorKey: "outboundMemos",
+        header: "Memo Number",
+        // pass detailed memo objects (with transaction_pickings / outbound_memo_items)
+        cell: ({ row }) => (
+          <MemoCell memos={row.original.outboundMemosDetailed || []} />
+        ),
+      },
       {
         accessorKey: "status",
         header: "Status",
@@ -216,27 +320,15 @@ const AdjustTable = ({
     outboundType: item.outbound_type || "",
     deliveryDate: new Date(item.delivery_date).toLocaleDateString("en-GB"),
     memoId: item.memo_id || [],
-    outboundMemos: (item.outbound_memos || []).map(
-      (memo: {
-        id: any;
-        requestor: any;
-        origin: any;
-        ship_to: any;
-        destination: any;
-        delivery_date: string | number | Date;
-        status: any;
-        notes: any;
-      }) => ({
-        id: memo.id,
-        requestor: memo.requestor || "-",
-        origin: memo.origin || "-",
-        shipTo: memo.ship_to || "-",
-        destination: memo.destination || "-",
-        deliveryDate: new Date(memo.delivery_date).toLocaleDateString("en-GB"),
-        status: memo.status || "PENDING",
-        notes: memo.notes || "",
-      })
-    ),
+    // keep a detailed copy of memos so MemoCell can render sku/week/qty from transaction_pickings or outbound_memo_items
+    outboundMemosDetailed: item.outbound_memos || [],
+    // lightweight summary list (if needed elsewhere)
+    outboundMemos: (item.outbound_memos || []).map((memo: any) => ({
+      id: memo.id,
+      outbound_memo_number: memo.outbound_memo_number,
+      has_do: memo.has_do ?? false,
+      status: memo.status ?? "UNKNOWN",
+    })),
     createdAt: item.createdAt || null,
     updatedAt: item.updatedAt || null,
     deletedAt: item.deletedAt || null,

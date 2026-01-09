@@ -57,6 +57,7 @@ import GateLoading from '../pages/OutboundFullTrial/GateLoading'
 import ApprovalSetup from '../pages/ApprovalSetup/index'
 import CreateApproval from '../pages/ApprovalSetup/Table/CreateApprovalSetup'
 import ApprovalProcess from '../pages/ApprovalSetup/Table/ApprovalProcess'
+import PrintSuratJalan from "../pages/OutboundFullTrial/PickingTransaction/Main/PrintSuratJalan";
 
 
 export {
@@ -109,6 +110,7 @@ export {
   PickingTransaction,
   DetachAttachProcess,
   GateLoading,
+  PrintSuratJalan,
 
 
   // Approval Set Up

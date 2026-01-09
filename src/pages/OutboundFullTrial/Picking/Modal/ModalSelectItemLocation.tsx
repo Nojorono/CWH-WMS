@@ -31,14 +31,18 @@ export default function ModalInventoryItemModal({
 
   const [itemList, setItemList] = React.useState<any>(null);
 
-  console.log("existingItemData:", existingItemData);
-
   useEffect(() => {
     const fetchItem = async () => {
       try {
         const token = localStorage.getItem("token"); // Get the bearer token from localStorage
+
+        // Default to empty string if any param is missing
+        const id = itemID ?? "";
+        const uom = uomID ?? "";
+        const sortMethod = metodeSuggestion ?? "";
+
         const response = await fetch(
-          `${EndPoint}picking-suggestion/item/${itemID}?uom=${uomID}&sortMethod=${metodeSuggestion}`,
+          `${EndPoint}picking-suggestion/item/${id}?uom=${uom}&sortMethod=${sortMethod}`,
           {
             headers: {
               Authorization: `Bearer ${token}`, // Set the Authorization header
@@ -46,6 +50,8 @@ export default function ModalInventoryItemModal({
           }
         );
         const data = await response.json();
+        console.log("Fetched item data:", data);
+        
         // Handle the fetched data as needed
         console.log(data);
         setItemList(data.data);
@@ -54,10 +60,10 @@ export default function ModalInventoryItemModal({
       }
     };
 
-    if (open && itemID) {
+    if (open) {
       fetchItem();
     }
-  }, [open, itemID, metodeSuggestion]);
+  }, [open, itemID, uomID, metodeSuggestion]);
 
   const {
     control,
@@ -318,7 +324,8 @@ export default function ModalInventoryItemModal({
         {/* DUPLICATE LOCATION INFO */}
         {isDuplicateLocationInAdd && (
           <div className="mt-3 p-3 rounded-md bg-yellow-50 border border-yellow-200 text-sm text-yellow-800">
-            Selected location sudah ada untuk item ini pada week yang sama. Mohon pilih week dan lokasi lain!
+            Selected location sudah ada untuk item ini pada week yang sama.
+            Mohon pilih week dan lokasi lain!
           </div>
         )}
 
