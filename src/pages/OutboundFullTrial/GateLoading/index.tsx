@@ -18,11 +18,7 @@ const GateLoadingPage = () => {
     try {
       const res = await fetchAssignedGate();
       if (res.success) {
-        console.log("Fetched Assigned Gate Data:", res.data);
-
         const uiData = mapOutboundGateToUILoading(res.data);
-        console.log("Mapped Gate Loading Data:", uiData);
-
         setAssignedGateList(uiData);
       }
     } finally {

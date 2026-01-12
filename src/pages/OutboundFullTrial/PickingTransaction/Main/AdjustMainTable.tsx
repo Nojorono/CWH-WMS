@@ -180,7 +180,7 @@ const AdjustTable = ({
   const handlePrintSJ = (data: OutboundDo) => {
     console.log("Navigating to Print Surat Jalan with data:", data);
     // gunakan leading slash supaya navigasi absolute ke route yg diharapkan
-    navigate("/outbound_do/print_surat_jalan", { state: { params: data } });
+    navigate("/outbound_do/print_surat_jalan", { state: { params: data.id } });
   };
 
   return (
