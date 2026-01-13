@@ -560,7 +560,7 @@ const SKUCard = ({
           <h5 className="text-lg font-bold text-slate-800">{sku.item_name}</h5>
           <p className="text-sm text-slate-500">
             UOM <b>{sku.uom}</b> • Week <b>{sku.week_number ?? "-"} </b>•
-            Production Date <b>{formatDateIndo(sku.production_date ?? "-")}</b>
+            {/* Production Date <b>{formatDateIndo(sku.production_date ?? "-")}</b> */}
           </p>
         </div>
 

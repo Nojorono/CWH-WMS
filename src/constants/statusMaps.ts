@@ -69,6 +69,7 @@ export const STATUS_MAP_DO: StatusMap = {
   PENDING: "grey",
   IN_PROGRESS: "info",
   APPROVED: "success",
+  COMPLETED: "secondary",
   CANCELLED: "error",
 };
 

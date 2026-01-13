@@ -54,6 +54,7 @@ import {
   PickingTransaction,
   DetachAttachProcess,
   GateLoading,
+  PrintSuratJalan,
 } from "./utils/PagesComponent";
 
 const DefaultPage = () => <> </>;
@@ -127,6 +128,7 @@ export function AppRoutes() {
       { path: "detail", element: <DetailDO /> },
       { path: "picking_suggestion", element: <PickingSuggestion /> },
       { path: "detach_attach", element: <DetachAttachProcess /> },
+      { path: "print_surat_jalan", element: <PrintSuratJalan /> },
     ],
     "/approval": [
       { path: "create", element: <CreateApproval /> },
@@ -152,7 +154,6 @@ export function AppRoutes() {
       "/master_classification": <MasterClassification />,
       "/master_vehicle": <MasterVehicle />,
       "/master_zone": <MasterZone />,
-      // "/master_bin": <MasterBin />,
       "/master_source": <MasterSource />,
       "/inventory": <Inventory />,
       "/memo": <Memo />,

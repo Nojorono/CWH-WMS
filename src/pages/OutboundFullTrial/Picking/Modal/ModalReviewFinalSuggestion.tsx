@@ -66,19 +66,20 @@ const ModalReviewFinalSuggestion: React.FC<Props> = ({
             <div className="mb-2 font-bold">
               {group.status === "OK" && (
                 <span className="text-green-600">
-                  Qty sudah sama dengan Qty yang dibutuhkan (diperbolehkan
-                  Submit).
+                  Qty Picked Suggestion sudah sama dengan Qty yang dibutuhkan
+                  (diperbolehkan Submit).
                 </span>
               )}
               {group.status === "LESS" && (
                 <span className="text-yellow-600">
-                  Qty kurang dari Qty yang dibutuhkan (diperbolehkan Submit).
+                  Qty Picked Suggestion kurang dari Qty yang dibutuhkan
+                  (diperbolehkan Submit).
                 </span>
               )}
               {group.status === "OVER" && (
                 <span className="text-red-600">
-                  Qty lebih dari Qty yang dibutuhkan! (Tidak diperbolehkan
-                  Submit).
+                  Qty Picked Suggestion lebih dari Qty yang dibutuhkan! (Tidak
+                  diperbolehkan Submit).
                 </span>
               )}
               {group.status === "UOM_MISMATCH" && (

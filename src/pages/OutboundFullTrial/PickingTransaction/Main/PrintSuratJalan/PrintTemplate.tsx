@@ -1,0 +1,155 @@
+import React from "react";
+import { OutboundMemo } from "../../../../../DynamicAPI/types/DeliverOrderTypes";
+
+type PrintTemplateProps = {
+  memo: OutboundMemo;
+  doNumber: string;
+  expedition: string;
+  licensePlate: string;
+  sealNumber: string;
+  containerNumber?: string;
+};
+
+const PrintTemplate = React.forwardRef<
+  HTMLDivElement,
+  React.PropsWithChildren<PrintTemplateProps>
+>((props, ref) => {
+  const { memo, doNumber, expedition, licensePlate, sealNumber, containerNumber } = props;
+
+  // Ambil semua item dari assigned_gate_load di semua outbound_memo_items
+  const items: { nama: string; qty: string }[] = [];
+  memo.outbound_memo_items.forEach((item) => {
+    item.assigned_gate_load?.forEach((agl) => {
+      items.push({
+        nama: agl.item.description,
+        qty: `${agl.quantity_picked} ${agl.uom}`,
+      });
+    });
+  });
+
+  // Minimal 15 baris
+  const MIN_ROWS = 10;
+  const paddedItems = [...items];
+  while (paddedItems.length < MIN_ROWS) {
+    paddedItems.push({ nama: "", qty: "" });
+  }
+
+  return (
+    <div
+      ref={ref}
+      className="p-8 bg-white text-black font-sans w-[210mm] min-h-[297mm] mx-auto print:m-0"
+    >
+      {/* Header Atas */}
+      <div className="flex justify-between text-[11px] leading-tight mb-6 gap-8">
+        {/* Kiri */}
+        <div className="flex-1 min-w-0 space-y-1">
+          <p className="font-bold text-[13px]">PT. Niaga Nusa Abadi</p>
+          <p className="truncate">{memo.origin}</p>
+          <div className="mt-4 space-y-0.5">
+            <p>
+              <span className="inline-block w-20">VENDOR</span>: {expedition}
+            </p>
+            <p>
+              <span className="inline-block w-20">No.Pol</span>: {licensePlate}
+            </p>
+            <p>
+              <span className="inline-block w-20">No. Segel</span>: {sealNumber}
+            </p>
+            <p>
+              <span className="inline-block w-20">No. Container</span>: {containerNumber}
+            </p>
+          </div>
+        </div>
+        {/* Kanan */}
+        <div className="flex-1 min-w-0 text-left space-y-1">
+          <p>
+            <span className="inline-block w-40">Nomor Surat Jalan</span>:{" "}
+            {doNumber}
+          </p>
+          <p>
+            <span className="inline-block w-40">Nomor Sales Order</span>:{" "}
+            {memo.outbound_memo_number}
+          </p>
+          <div className="flex items-start">
+            <span className="inline-block w-40 flex-shrink-0">Customer</span>
+            :
+            <span className="ml-1 break-words whitespace-pre-line max-w-xs">
+              {memo.destination}
+            </span>
+          </div>
+          <div className="flex items-start">
+            <span className="inline-block w-40 flex-shrink-0">
+              Alamat Pengiriman
+            </span>
+            :
+            <span className="ml-1 break-words whitespace-pre-line max-w-xs">
+              {memo.ship_to}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <h1 className="text-center font-bold text-xl uppercase tracking-widest mb-4">
+        SURAT JALAN
+      </h1>
+
+      {/* Tabel */}
+      <table className="w-full border-collapse border border-black text-[11px]">
+        <thead>
+          <tr className="border border-black">
+            <th className="border border-black px-1 py-1 w-[40px]">NO</th>
+            <th className="border border-black px-2 py-1 w-[250px]">QTY</th>
+            <th className="border border-black px-2 py-1 uppercase">
+              Nama Barang
+            </th>
+            <th className="border border-black px-2 py-1">KETERANGAN</th>
+          </tr>
+        </thead>
+        <tbody>
+          {paddedItems.map((item, index) => (
+            <tr key={index} className="h-7">
+              <td className="border border-black text-center">{index + 1}</td>
+              <td className="border border-black px-2 text-center">
+                {item.qty}
+              </td>
+              <td className="border border-black px-2 font-medium uppercase">
+                {item.nama}
+              </td>
+              <td className="border border-black px-2"></td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+
+      {/* Tanggal */}
+      <div className="w-full text-right mt-4 text-[12px]">
+        <p>
+          {memo.delivery_date
+            ? new Date(memo.delivery_date).toLocaleDateString("id-ID")
+            : ""}
+        </p>
+      </div>
+
+      {/* Footer Tanda Tangan */}
+      <div className="text-[11px] mt-2">
+        <p className="mb-1">Diterima Tgl :</p>
+        <div className="grid grid-cols-3 border border-black">
+          <div className="border-r border-black h-24 flex flex-col justify-between p-1">
+            <p className="text-center">Gudang Penerima,</p>
+            <div className="w-full border-t border-black/20 mt-auto"></div>
+          </div>
+          <div className="border-r border-black h-24 flex flex-col justify-between p-1">
+            <p className="text-center font-medium">Ekspedisi</p>
+            <div className="w-full border-t border-black/20 mt-auto"></div>
+          </div>
+          <div className="h-24 flex flex-col justify-between p-1">
+            <p className="text-center">Gudang Pengirim,</p>
+            <div className="w-full border-t border-black/20 mt-auto"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+});
+
+export default PrintTemplate;

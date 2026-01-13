@@ -27,6 +27,8 @@ export default function CurrentQuantityTable({ palletCode }: HistoryProps) {
   const [data, setData] = useState<ItemData[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
+  console.log("data pallet code Current Quantity:", data);
+
   useEffect(() => {
     if (!palletCode) return;
 
@@ -66,10 +68,13 @@ export default function CurrentQuantityTable({ palletCode }: HistoryProps) {
       header: "UOM",
     },
     {
+      accessorKey: "status_inventory",
+      header: "Status Inventory",
+    },
+    {
       accessorKey: "production_date",
       header: "Production Date",
-      cell: (info) =>
-        formatDateIndo(info.getValue() as string) || "-",
+      cell: (info) => formatDateIndo(info.getValue() as string) || "-",
     },
     {
       accessorKey: "week_number",

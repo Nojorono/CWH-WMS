@@ -134,36 +134,14 @@ export const SuggestionItemsTable: React.FC<TableProps> = ({
     RawSuggestion[]
   >([]);
 
-  const normalizeItems = (items: Item[]): Item[] => {
-    const result: Item[] = [];
+  console.log("Initial Items Suggetion:", items);
 
-    items.forEach((item) => {
-      item.suggested_locations?.forEach((loc, idx) => {
-        result.push({
-          ...item,
-          suggested_locations: [loc], // 🔥 PENTING
-          _localId: genLocalId(),
-          _isManual: false,
-          qty_pick: Math.min(
-            item.required_quantity ?? 0,
-            loc.available_quantity ?? 0
-          ),
-        });
-      });
-    });
-
-    return result;
-  };
-
-  // const [localItems, setLocalItems] = useState<Item[]>(normalizeItems(items));
-  // const [localItems, setLocalItems] = useState<Item[]>(
-  //   items.map((it) => ({
-  //     ...it,
-  //     _localId: (it as any)._localId ?? genLocalId(),
-  //   }))
-  // );
-
-  const [localItems, setLocalItems] = useState<Item[]>([]);
+  const [localItems, setLocalItems] = useState<Item[]>(
+    items.map((it) => ({
+      ...it,
+      _localId: (it as any)._localId ?? genLocalId(),
+    }))
+  );
 
   const findLastIndexByItemId = (arr: Item[], itemId: string) => {
     let lastIndex = -1;
@@ -195,10 +173,8 @@ export const SuggestionItemsTable: React.FC<TableProps> = ({
 
   useEffect(() => {
     // keep stable local ids and preserve manual flag / qty_pick if present
-    const normalized = normalizeItems(items);
-
     setLocalItems((prev) =>
-      normalized.map((it) => {
+      items.map((it) => {
         const existing = prev.find(
           (p) =>
             p.item_id === it.item_id &&
@@ -230,7 +206,7 @@ export const SuggestionItemsTable: React.FC<TableProps> = ({
     );
   }, [items]);
 
-  const handleEditClick = (item: Item, rowIndex: number) => {
+  const handleEditClick = (item: Item, rowIndex: number) => {    
     setSelectedItem(item);
     setOpenEdit(true);
     setSelectedRowIndex(rowIndex);
@@ -450,18 +426,16 @@ export const SuggestionItemsTable: React.FC<TableProps> = ({
       accessorKey: "available_quantity",
       header: "Available Quantity",
       enableSorting: false,
+
       cell: ({ row }) => {
         const item = row.original;
-        const loc = item.suggested_locations?.[0];
-        const available = loc?.available_quantity;
+        const rowIndex = row.index;
 
-        if (available === undefined || available === null) {
-          return <span>-</span>;
-        }
+        if (!isSummaryRow(localItems, item.item_id, rowIndex)) return <span />;
 
         return (
-          <span className={available > 0 ? "text-gray-900" : "text-gray-400"}>
-            {available}
+          <span>
+            {item.suggested_locations?.[0]?.available_quantity ?? "-"}
           </span>
         );
       },
@@ -500,7 +474,7 @@ export const SuggestionItemsTable: React.FC<TableProps> = ({
     },
     {
       accessorKey: "qty_pick",
-      header: "Qty ready to Picked",
+      header: "Qty Picked",
       enableSorting: false,
       cell: ({ row }) => {
         const item = row.original;

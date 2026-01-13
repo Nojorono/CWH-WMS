@@ -13,6 +13,9 @@ const MainTable = () => {
   const [globalFilter, setGlobalFilter] = useState<string>("");
   const debouncedFilter = useDebounce(globalFilter, 500);
   const [selectedStatus, setSelectedStatus] = useState<any>(null);
+  const [selectedTypeOutbound, setSelectedTypeOutbound] = useState<any>(null);
+  const [selectedHasDO, setSelectedHasDO] = useState<any>(null);
+
 
   const handleCreate = () => {
     navigate("/memo/process", {
@@ -24,25 +27,57 @@ const MainTable = () => {
     throw new Error("Function not implemented.");
   };
 
-  const options = [
+  const statusOpt = [
     { value: "", label: "All Status" },
     { value: "PENDING", label: "PENDING" },
     { value: "APPROVED", label: "APPROVED" },
     { value: "REJECTED", label: "REJECTED" },
+    { value: "CANCELLED", label: "CANCELLED" },
+  ];
+
+  const typeOutbound = [
+    { value: "", label: "All Type" },
+    { value: "AMO", label: "AMO" },
+    { value: "SUBDIST", label: "SUBDIST" },
+  ];
+
+    const hasDOflag = [
+    { value: "", label: "All Flag" },
+    { value: "true", label: "Yes" },
+    { value: "false", label: "No" },
   ];
 
   return (
     <>
       <div className="p-4 bg-white shadow rounded-md mb-5">
         <div className="flex justify-between items-center">
-  
           <div className="space-x-4">
             <Label htmlFor="status">Status</Label>
             <Select
-              options={options}
+              options={statusOpt}
               placeholder="Pilih Status"
               onChange={(value) => setSelectedStatus(value)}
               value={selectedStatus}
+            />
+          </div>
+
+          <div className="space-x-4">
+            <Label htmlFor="memoType">Type Outbound</Label>
+            <Select
+              options={typeOutbound}
+              placeholder="Pilih Type"
+              onChange={(value) => setSelectedTypeOutbound(value)}
+              value={selectedTypeOutbound}
+            />
+          </div>
+
+          <div className="space-x-4">
+            <Label htmlFor="memoType">Has DO</Label>
+            <Select
+              options={hasDOflag}
+              placeholder="Pilih Has DO"
+              onChange={(value) => setSelectedHasDO(value)}
+              value={selectedHasDO}
             />
           </div>
 
@@ -64,6 +99,8 @@ const MainTable = () => {
         setGlobalFilter={setGlobalFilter}
         onRefresh={handleFetchParams}
         filteredStatus={selectedStatus}
+        filteredTypeOutbound={selectedTypeOutbound}
+        filteredHasDO={selectedHasDO}
       />
     </>
   );
