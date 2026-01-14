@@ -22,13 +22,13 @@ const PrintTemplate = React.forwardRef<
     item.assigned_gate_load?.forEach((agl) => {
       items.push({
         nama: agl.item.description,
-        qty: `${agl.quantity_picked} ${agl.uom}`,
+        qty: `${agl.quantity_loaded} ${agl.uom}`,
       });
     });
   });
 
   // Minimal 15 baris
-  const MIN_ROWS = 10;
+const MIN_ROWS = items.length;
   const paddedItems = [...items];
   while (paddedItems.length < MIN_ROWS) {
     paddedItems.push({ nama: "", qty: "" });
@@ -53,7 +53,7 @@ const PrintTemplate = React.forwardRef<
               <span className="inline-block w-20">No.Pol</span>: {licensePlate}
             </p>
             <p>
-              <span className="inline-block w-20">No. Segel</span>: {sealNumber}
+              <span className="inline-block w-20">No. Seal</span>: {sealNumber}
             </p>
             <p>
               <span className="inline-block w-20">No. Container</span>: {containerNumber}

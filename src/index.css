@@ -776,3 +776,13 @@ span.flatpickr-weekday,
 .simplebar-scrollbar.simplebar-visible:before {
   @apply opacity-100;
 }
+
+/* Menghilangkan caret/kursor kedip-kedip di semua elemen kecuali input/textarea */
+*:not(input):not(textarea):not([contenteditable="true"]) {
+    caret-color: transparent !important;
+}
+
+/* Memastikan elemen tabel dan teks tidak bisa "difokuskan" secara visual */
+/* *:focus {
+    outline: none !important;
+} */
