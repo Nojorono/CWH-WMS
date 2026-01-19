@@ -97,6 +97,7 @@ export function AppRoutes() {
     if (isAuthenticated() && location.pathname === "/signin") {
       // Redirect ke halaman pertama menu yang bisa diakses
       navigate(getFirstAccessiblePath(userMenus), { replace: true });
+      console.log("First accessible path:", getFirstAccessiblePath(userMenus));
     }
   }, [location.pathname, isAuthenticated, navigate, userMenus]);
 

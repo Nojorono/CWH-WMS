@@ -157,6 +157,8 @@ export default function POCard({
             new Date(po.TANGGAL_PEMBUATAN_PO).toISOString()
           );
         }
+        
+        console.log("nama Vendor:", po.NAMA_VENDOR);
 
         const items: ItemForm[] = [];
         let notFound: string[] = [];
@@ -371,6 +373,9 @@ export default function POCard({
           )}
         </div>
 
+
+        {/* <div className="w-full"></div> */}
+
         {/* === Tanggal PO / SO === */}
         {/* {(InbType === "PO" || InbType === "SO") && (
           <div className="w-full">
@@ -411,7 +416,7 @@ export default function POCard({
           </div>
         )} */}
 
-         <div className="w-full"></div>
+        <div className="w-full"></div>
 
         {/* === Tombol Tambah / Hapus PO === */}
         {!isDetailMode && (

@@ -778,9 +778,9 @@ span.flatpickr-weekday,
 }
 
 /* Menghilangkan caret/kursor kedip-kedip di semua elemen kecuali input/textarea */
-*:not(input):not(textarea):not([contenteditable="true"]) {
+/* *:not(input):not(textarea):not([contenteditable="true"]) {
     caret-color: transparent !important;
-}
+} */
 
 /* Memastikan elemen tabel dan teks tidak bisa "difokuskan" secara visual */
 /* *:focus {

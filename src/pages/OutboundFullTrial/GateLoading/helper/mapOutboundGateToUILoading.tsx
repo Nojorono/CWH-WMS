@@ -152,7 +152,7 @@ export function mapOutboundGateToUILoading(
       assigned_gate_id: gateItem?.id ?? "",
       do_id: doData?.id ?? "",
       do_number: doData?.outbound_do_number ?? "-",
-      status: doData?.status ?? "UNKNOWN",
+      status: doData?.status ?? "",
       expedition: doData?.expedition ?? "-",
       origin: doData?.origin ?? "-",
       destination_date: doData?.delivery_date ?? null,
