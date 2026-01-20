@@ -75,10 +75,7 @@ const InventoryVisibility: React.FC = () => {
         cell: (info) => (
           <div className="flex items-baseline space-x-1">
             <span className="font-bold text-slate-800">
-              {info.getValue().toLocaleString()}
-            </span>
-            <span className="text-[10px] text-slate-400 uppercase font-semibold">
-              {info.row.original.uom}
+              {info.getValue().toLocaleString()} {info.row.original.uom}
             </span>
           </div>
         ),
@@ -92,13 +89,8 @@ const InventoryVisibility: React.FC = () => {
                 info.getValue() > 0 ? "text-orange-500" : "text-slate-300"
               }`}
             >
-              {info.getValue().toLocaleString()}
+              {info.getValue().toLocaleString()} {info.row.original.uom}
             </span>
-            {info.getValue() > 0 && (
-              <span className="text-[10px] bg-orange-50 text-orange-600 px-1 rounded-sm border border-orange-100">
-                {info.row.original.booking_count} DO
-              </span>
-            )}
           </div>
         ),
       }),
@@ -114,6 +106,20 @@ const InventoryVisibility: React.FC = () => {
           >
             {info.getValue().toLocaleString()}
           </span>
+        ),
+      }),
+      columnHelper.accessor("booking_count", {
+        header: "Booked By DO",
+        cell: (info) => (
+          <div className="flex items-center space-x-2">
+            <span
+              className={`font-bold ${
+                info.getValue() > 0 ? "text-orange-500" : "text-slate-300"
+              }`}
+            >
+              {info.row.original.booking_count} DO
+            </span>
+          </div>
         ),
       }),
       columnHelper.accessor("pallet_count", {
@@ -262,7 +268,6 @@ const InventoryVisibility: React.FC = () => {
                             <div className="flex items-center justify-between mb-4">
                               <h4 className="text-[11px] font-black text-blue-600 uppercase tracking-widest flex items-center">
                                 <span className="mr-2">🏪</span> Pallet Location
-                                Distribution
                               </h4>
                               <span className="text-[10px] font-bold text-slate-400 italic">
                                 Total {row.original.pallet_count} Pallets

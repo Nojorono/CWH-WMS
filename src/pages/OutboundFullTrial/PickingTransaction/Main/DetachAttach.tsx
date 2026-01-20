@@ -234,7 +234,7 @@ const DetachAttach: React.FC = () => {
           </h3>
 
           <div className="flex gap-2">
-            {statusDO === "APPROVED" ? null : (
+            {statusDO === "APPROVED" || statusDO === "APPROVED_LOAD" ? null : (
               <Button
                 size="sm"
                 variant="secondary"
