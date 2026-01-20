@@ -55,7 +55,7 @@ import {
   DetachAttachProcess,
   GateLoading,
   PrintSuratJalan,
-  InventoryVisibility
+  InventoryVisibility,
 } from "./utils/PagesComponent";
 
 const DefaultPage = () => <> </>;
@@ -157,7 +157,7 @@ export function AppRoutes() {
       "/master_vehicle": <MasterVehicle />,
       "/master_zone": <MasterZone />,
       "/master_source": <MasterSource />,
-      "/inventory": <Inventory />,
+      "/main_inventory": <Inventory />,
       "/memo": <Memo />,
       "/outbound_do": <OutboundDO />,
       "/master_amo": <MasterAMO />,
@@ -165,7 +165,7 @@ export function AppRoutes() {
       "/approval_setup": <ApprovalSetup />,
       "/picking_transaction": <PickingTransaction />,
       "/gate_loading": <GateLoading />,
-      "/inventory_visibility": <InventoryVisibility />
+      "/inventory_visibility": <InventoryVisibility />,
     };
     return map[path] || <DefaultPage />;
   };
