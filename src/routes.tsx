@@ -55,6 +55,7 @@ import {
   DetachAttachProcess,
   GateLoading,
   PrintSuratJalan,
+  InventoryVisibility
 } from "./utils/PagesComponent";
 
 const DefaultPage = () => <> </>;
@@ -164,6 +165,7 @@ export function AppRoutes() {
       "/approval_setup": <ApprovalSetup />,
       "/picking_transaction": <PickingTransaction />,
       "/gate_loading": <GateLoading />,
+      "/inventory_visibility": <InventoryVisibility />
     };
     return map[path] || <DefaultPage />;
   };

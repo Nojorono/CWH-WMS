@@ -1,0 +1,687 @@
+// import React, { useEffect, useMemo, useState } from "react";
+// import {
+//   useReactTable,
+//   getCoreRowModel,
+//   getExpandedRowModel,
+//   flexRender,
+//   createColumnHelper,
+//   ColumnDef,
+// } from "@tanstack/react-table";
+// import { useStoreInventoryVisibility } from "../../../DynamicAPI/stores/Store/MasterStore";
+// import {
+//   InventoryVisibilityResponse,
+//   InventoryVisibilityItem
+// } from "../../../DynamicAPI/types/InventoryVisibilty";
+
+// const InventoryVisibility: React.FC = () => {
+//   const store = useStoreInventoryVisibility() as any;
+//   const { fetchAll, list } = store;
+
+//   // State untuk menangani baris yang terbuka
+//   const [expanded, setExpanded] = useState({});
+
+//   useEffect(() => {
+//     fetchAll();
+//   }, []);
+
+//   const currentData = useMemo<InventoryVisibilityResponse | null>(() => {
+//     if (!list) return null;
+//     return Array.isArray(list) ? (list[0]?.data || list[0]) : list;
+//   }, [list]);
+
+//   const columnHelper = createColumnHelper<InventoryVisibilityItem>();
+
+//   const columns = useMemo<ColumnDef<InventoryVisibilityItem, any>[]>(() => [
+//     {
+//       id: "expander",
+//       header: () => <span className="pl-2">Info</span>,
+//       cell: ({ row }) => (
+//         <button
+//           onClick={row.getToggleExpandedHandler()}
+//           className={`transition-all duration-200 p-2 rounded-full hover:bg-slate-100 ${
+//             row.getIsExpanded() ? "rotate-90 text-blue-600" : "text-slate-400"
+//           }`}
+//         >
+//           <span className="block w-4 h-4 flex items-center justify-center font-bold">
+//             ▶
+//           </span>
+//         </button>
+//       ),
+//     },
+//     columnHelper.accessor("sku", {
+//       header: "SKU",
+//       cell: (info) => <span className="font-bold text-slate-800">{info.getValue()}</span>,
+//     }),
+//     columnHelper.accessor("item_name", {
+//       header: "Product Name",
+//       cell: (info) => (
+//         <div className="flex flex-col min-w-[200px]">
+//           <span className="font-medium text-slate-700">{info.getValue()}</span>
+//           <span className="text-[10px] text-slate-400 font-mono uppercase">{info.row.original.item_number}</span>
+//         </div>
+//       ),
+//     }),
+//     columnHelper.accessor("total_quantity", {
+//       header: "Total Stock",
+//       cell: (info) => (
+//         <div className="flex items-baseline space-x-1">
+//           <span className="font-bold text-slate-800">{info.getValue().toLocaleString()}</span>
+//           <span className="text-[10px] text-slate-400 uppercase font-semibold">{info.row.original.uom}</span>
+//         </div>
+//       ),
+//     }),
+//     columnHelper.accessor("booked_quantity", {
+//       header: "Booked",
+//       cell: (info) => (
+//         <div className="flex items-center space-x-2">
+//            <span className={`font-bold ${info.getValue() > 0 ? "text-orange-500" : "text-slate-300"}`}>
+//             {info.getValue().toLocaleString()}
+//           </span>
+//           {info.getValue() > 0 && <span className="text-[10px] bg-orange-50 text-orange-600 px-1 rounded-sm border border-orange-100">{info.row.original.booking_count} DO</span>}
+//         </div>
+//       ),
+//     }),
+//     columnHelper.accessor("available_quantity", {
+//       header: "Available",
+//       cell: (info) => (
+//         <span className={`text-sm font-black px-2 py-1 rounded ${
+//           info.getValue() > 0 ? "bg-emerald-50 text-emerald-600 border border-emerald-100" : "bg-slate-50 text-slate-400"
+//         }`}>
+//           {info.getValue().toLocaleString()}
+//         </span>
+//       ),
+//     }),
+//     columnHelper.accessor("pallet_count", {
+//       header: "Pallets",
+//       cell: (info) => (
+//         <div className="flex items-center text-slate-500 font-mono text-xs font-bold">
+//           <span className="mr-1">📦</span> {info.getValue()} PLT
+//         </div>
+//       ),
+//     }),
+//   ], []);
+
+//   const table = useReactTable({
+//     data: currentData?.items || [],
+//     columns,
+//     state: { expanded },
+//     onExpandedChange: setExpanded,
+//     getCoreRowModel: getCoreRowModel(),
+//     getExpandedRowModel: getExpandedRowModel(),
+//     getRowCanExpand: () => true, // Memastikan baris bisa di-expand
+//   });
+
+//   if (!currentData) return (
+//     <div className="p-20 flex flex-col items-center justify-center space-y-4">
+//       <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+//       <p className="text-slate-500 font-bold animate-pulse">Syncing Inventory...</p>
+//     </div>
+//   );
+
+//   return (
+//     <div className="p-6 bg-slate-50 min-h-screen">
+//       {/* SUMMARY DASHBOARD */}
+//       <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
+//         <StatItem label="Total Items" value={currentData.summary.total_items} color="blue" />
+//         <StatItem label="Total Quantity" value={currentData.summary.total_quantity} color="indigo" />
+//         <StatItem label="Total Booked" value={currentData.summary.total_booked_quantity} color="orange" />
+//         <StatItem label="Total Available" value={currentData.summary.total_available_quantity} color="emerald" />
+//         <StatItem label="Pending Items" value={currentData.summary.items_with_pending_bookings} color="rose" />
+//       </div>
+
+//       {/* MAIN TABLE */}
+//       <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+//         <div className="overflow-x-auto">
+//           <table className="w-full text-left border-collapse">
+//             <thead>
+//               {table.getHeaderGroups().map(hg => (
+//                 <tr key={hg.id} className="bg-slate-50/80 border-b border-slate-200">
+//                   {hg.headers.map(header => (
+//                     <th key={header.id} className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+//                       {flexRender(header.column.columnDef.header, header.getContext())}
+//                     </th>
+//                   ))}
+//                 </tr>
+//               ))}
+//             </thead>
+//             <tbody className="divide-y divide-slate-100">
+//               {table.getRowModel().rows.map(row => (
+//                 <React.Fragment key={row.id}>
+//                   {/* ROW UTAMA */}
+//                   <tr className={`group transition-all hover:bg-blue-50/40 ${row.getIsExpanded() ? "bg-blue-50/60" : ""}`}>
+//                     {row.getVisibleCells().map(cell => (
+//                       <td key={cell.id} className="px-6 py-4 text-sm align-middle">
+//                         {flexRender(cell.column.columnDef.cell, cell.getContext())}
+//                       </td>
+//                     ))}
+//                   </tr>
+
+//                   {/* ROW DETAIL (Saat Expand) */}
+//                   {row.getIsExpanded() && (
+//                     <tr className="bg-slate-50 shadow-inner">
+//                       <td colSpan={columns.length} className="px-12 py-8">
+//                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+
+//                           {/* DETAIL PALLET */}
+//                           <div>
+//                             <div className="flex items-center justify-between mb-4">
+//                               <h4 className="text-[11px] font-black text-blue-600 uppercase tracking-widest flex items-center">
+//                                 <span className="mr-2">🏪</span> Pallet Location Distribution
+//                               </h4>
+//                               <span className="text-[10px] font-bold text-slate-400 italic">Total {row.original.pallet_count} Pallets</span>
+//                             </div>
+//                             <div className="space-y-2 max-h-[300px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-slate-200">
+//                               {row.original.pallet_details.map((plt, idx) => (
+//                                 <div key={idx} className="bg-white p-3 rounded-lg border border-slate-200 flex justify-between items-center shadow-sm hover:border-blue-300 transition-colors">
+//                                   <div>
+//                                     <p className="font-bold text-slate-800 text-xs">{plt.pallet_code}</p>
+//                                     <p className="text-[10px] text-slate-500 font-medium uppercase tracking-tighter">
+//                                       {plt.warehouse_sub_name} <span className="text-slate-300 mx-1">|</span> {plt.warehouse_bin_code || "NO BIN"}
+//                                     </p>
+//                                   </div>
+//                                   <div className="text-right">
+//                                     <p className="text-sm font-black text-blue-600">{plt.quantity} <small className="text-[9px] text-slate-400">{row.original.uom}</small></p>
+//                                     <p className="text-[9px] bg-slate-100 text-slate-500 px-1 rounded font-mono">Week {plt.week_number}</p>
+//                                   </div>
+//                                 </div>
+//                               ))}
+//                             </div>
+//                           </div>
+
+//                           {/* DETAIL BOOKING */}
+//                           <div>
+//                             <div className="flex items-center justify-between mb-4">
+//                               <h4 className="text-[11px] font-black text-orange-600 uppercase tracking-widest flex items-center">
+//                                 <span className="mr-2">📋</span> Allocation & Reservations
+//                               </h4>
+//                               <span className="text-[10px] font-bold text-slate-400 italic">Total {row.original.booking_count} DO Bookings</span>
+//                             </div>
+//                             <div className="space-y-2 max-h-[300px] overflow-y-auto pr-2">
+//                               {row.original.booking_details.map((book, idx) => (
+//                                 <div key={idx} className="bg-orange-50/30 p-3 rounded-lg border border-orange-100 flex justify-between items-center shadow-sm hover:bg-orange-50 transition-colors">
+//                                   <div>
+//                                     <p className="font-bold text-orange-700 text-xs">{book.do_number}</p>
+//                                     <p className="text-[10px] text-orange-500 font-medium truncate w-40">Ref: {book.memo_number}</p>
+//                                   </div>
+//                                   <div className="text-right font-mono">
+//                                     <p className="text-sm font-black text-orange-600">-{book.quantity}</p>
+//                                     <p className="text-[9px] text-orange-400 uppercase">from {book.source_warehouse_sub_name}</p>
+//                                   </div>
+//                                 </div>
+//                               ))}
+//                               {row.original.booking_details.length === 0 && (
+//                                 <div className="p-10 border-2 border-dashed border-slate-200 rounded-xl text-center text-slate-400 italic text-xs">
+//                                   No active reservations for this SKU
+//                                 </div>
+//                               )}
+//                             </div>
+//                           </div>
+
+//                         </div>
+//                       </td>
+//                     </tr>
+//                   )}
+//                 </React.Fragment>
+//               ))}
+//             </tbody>
+//           </table>
+//         </div>
+//       </div>
+//     </div>
+//   );
+// };
+
+// // Sub-komponen Stat
+// const StatItem = ({ label, value, color }: { label: string; value: number; color: string }) => {
+//   const colorMap: any = {
+//     blue: "border-l-blue-500 text-blue-600",
+//     indigo: "border-l-indigo-500 text-indigo-600",
+//     orange: "border-l-orange-500 text-orange-600",
+//     emerald: "border-l-emerald-500 text-emerald-600",
+//     rose: "border-l-rose-500 text-rose-600",
+//   };
+//   return (
+//     <div className={`bg-white p-4 rounded-lg shadow-sm border border-slate-200 border-l-4 ${colorMap[color]}`}>
+//       <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{label}</p>
+//       <p className="text-2xl font-black text-slate-800 tracking-tight">{value.toLocaleString()}</p>
+//     </div>
+//   );
+// };
+
+// export default InventoryVisibility;
+
+import React, { useEffect, useMemo, useState } from "react";
+import {
+  useReactTable,
+  getCoreRowModel,
+  getExpandedRowModel,
+  getFilteredRowModel, // Tambahkan ini
+  getPaginationRowModel, // Tambahkan ini
+  flexRender,
+  createColumnHelper,
+  ColumnDef,
+} from "@tanstack/react-table";
+import { useStoreInventoryVisibility } from "../../../DynamicAPI/stores/Store/MasterStore";
+import {
+  InventoryVisibilityResponse,
+  InventoryVisibilityItem,
+} from "../../../DynamicAPI/types/InventoryVisibilty";
+
+const InventoryVisibility: React.FC = () => {
+  const store = useStoreInventoryVisibility() as any;
+  const { fetchAll, list } = store;
+
+  const [expanded, setExpanded] = useState({});
+  const [globalFilter, setGlobalFilter] = useState(""); // State untuk pencarian
+
+  useEffect(() => {
+    fetchAll();
+  }, []);
+
+  const currentData = useMemo<InventoryVisibilityResponse | null>(() => {
+    if (!list) return null;
+    return Array.isArray(list) ? list[0]?.data || list[0] : list;
+  }, [list]);
+
+  const columnHelper = createColumnHelper<InventoryVisibilityItem>();
+
+  const columns = useMemo<ColumnDef<InventoryVisibilityItem, any>[]>(
+    () => [
+      {
+        id: "expander",
+        header: () => <span className="pl-2">Info</span>,
+        cell: ({ row }) => (
+          <button
+            onClick={row.getToggleExpandedHandler()}
+            className={`transition-all duration-200 p-2 rounded-full hover:bg-slate-100 ${
+              row.getIsExpanded() ? "rotate-90 text-blue-600" : "text-slate-400"
+            }`}
+          >
+            <span className="block w-4 h-4 flex items-center justify-center font-bold">
+              ▶
+            </span>
+          </button>
+        ),
+      },
+      columnHelper.accessor("sku", {
+        header: "SKU",
+        cell: (info) => (
+          <span className="font-bold text-slate-800">{info.getValue()}</span>
+        ),
+      }),
+      columnHelper.accessor("item_name", {
+        header: "Product Name",
+        cell: (info) => (
+          <div className="flex flex-col min-w-[200px]">
+            <span className="font-medium text-slate-700">
+              {info.getValue()}
+            </span>
+            <span className="text-[10px] text-slate-400 font-mono uppercase">
+              {info.row.original.item_number}
+            </span>
+          </div>
+        ),
+      }),
+      columnHelper.accessor("total_quantity", {
+        header: "Total Stock",
+        cell: (info) => (
+          <div className="flex items-baseline space-x-1">
+            <span className="font-bold text-slate-800">
+              {info.getValue().toLocaleString()}
+            </span>
+            <span className="text-[10px] text-slate-400 uppercase font-semibold">
+              {info.row.original.uom}
+            </span>
+          </div>
+        ),
+      }),
+      columnHelper.accessor("booked_quantity", {
+        header: "Booked",
+        cell: (info) => (
+          <div className="flex items-center space-x-2">
+            <span
+              className={`font-bold ${
+                info.getValue() > 0 ? "text-orange-500" : "text-slate-300"
+              }`}
+            >
+              {info.getValue().toLocaleString()}
+            </span>
+            {info.getValue() > 0 && (
+              <span className="text-[10px] bg-orange-50 text-orange-600 px-1 rounded-sm border border-orange-100">
+                {info.row.original.booking_count} DO
+              </span>
+            )}
+          </div>
+        ),
+      }),
+      columnHelper.accessor("available_quantity", {
+        header: "Available",
+        cell: (info) => (
+          <span
+            className={`text-sm font-black px-2 py-1 rounded ${
+              info.getValue() > 0
+                ? "bg-emerald-50 text-emerald-600 border border-emerald-100"
+                : "bg-slate-50 text-slate-400"
+            }`}
+          >
+            {info.getValue().toLocaleString()}
+          </span>
+        ),
+      }),
+      columnHelper.accessor("pallet_count", {
+        header: "Pallets",
+        cell: (info) => (
+          <div className="flex items-center text-slate-500 font-mono text-xs font-bold">
+            <span className="mr-1">📦</span> {info.getValue()} PLT
+          </div>
+        ),
+      }),
+    ],
+    []
+  );
+
+  const table = useReactTable({
+    data: currentData?.items || [],
+    columns,
+    state: {
+      expanded,
+      globalFilter, // Masukkan state filter
+    },
+    onExpandedChange: setExpanded,
+    onGlobalFilterChange: setGlobalFilter, // Handler filter
+    getCoreRowModel: getCoreRowModel(),
+    getExpandedRowModel: getExpandedRowModel(),
+    getFilteredRowModel: getFilteredRowModel(), // Engine untuk filter
+    getPaginationRowModel: getPaginationRowModel(), // Engine untuk pagination
+    getRowCanExpand: () => true,
+    initialState: {
+      pagination: {
+        pageSize: 10, // Default jumlah data per halaman
+      },
+    },
+  });
+
+  if (!currentData)
+    return (
+      <div className="p-20 flex flex-col items-center justify-center space-y-4">
+        <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+        <p className="text-slate-500 font-bold animate-pulse">
+          Syncing Inventory...
+        </p>
+      </div>
+    );
+
+  return (
+    <div className="p-6 bg-slate-50 min-h-screen">
+      {/* SUMMARY DASHBOARD */}
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
+        <StatItem
+          label="Total Items"
+          value={currentData.summary.total_items}
+          color="blue"
+        />
+        <StatItem
+          label="Total Quantity"
+          value={currentData.summary.total_quantity}
+          color="indigo"
+        />
+        <StatItem
+          label="Total Booked"
+          value={currentData.summary.total_booked_quantity}
+          color="orange"
+        />
+        <StatItem
+          label="Total Available"
+          value={currentData.summary.total_available_quantity}
+          color="emerald"
+        />
+        <StatItem
+          label="Pending Items"
+          value={currentData.summary.items_with_pending_bookings}
+          color="rose"
+        />
+      </div>
+
+      {/* FILTER SEARCH */}
+      <div className="mb-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="relative w-full md:w-96">
+          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
+            🔍
+          </span>
+          <input
+            value={globalFilter ?? ""}
+            onChange={(e) => setGlobalFilter(e.target.value)}
+            placeholder="Search SKU or Product Name..."
+            className="w-full pl-10 pr-4 py-2 bg-white border border-slate-200 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm"
+          />
+        </div>
+        <div className="text-[10px] font-bold text-slate-400 uppercase">
+          Showing {table.getRowModel().rows.length} of{" "}
+          {currentData.items.length} Items
+        </div>
+      </div>
+
+      {/* MAIN TABLE */}
+      <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              {table.getHeaderGroups().map((hg) => (
+                <tr
+                  key={hg.id}
+                  className="bg-slate-50/80 border-b border-slate-200"
+                >
+                  {hg.headers.map((header) => (
+                    <th
+                      key={header.id}
+                      className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest"
+                    >
+                      {flexRender(
+                        header.column.columnDef.header,
+                        header.getContext()
+                      )}
+                    </th>
+                  ))}
+                </tr>
+              ))}
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {table.getRowModel().rows.map((row) => (
+                <React.Fragment key={row.id}>
+                  <tr
+                    className={`group transition-all hover:bg-blue-50/40 ${
+                      row.getIsExpanded() ? "bg-blue-50/60" : ""
+                    }`}
+                  >
+                    {row.getVisibleCells().map((cell) => (
+                      <td
+                        key={cell.id}
+                        className="px-6 py-4 text-sm align-middle"
+                      >
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext()
+                        )}
+                      </td>
+                    ))}
+                  </tr>
+                  {row.getIsExpanded() && (
+                    <tr className="bg-slate-50 shadow-inner">
+                      <td colSpan={columns.length} className="px-12 py-8">
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                          {/* DETAIL PALLET */}
+                          <div>
+                            <div className="flex items-center justify-between mb-4">
+                              <h4 className="text-[11px] font-black text-blue-600 uppercase tracking-widest flex items-center">
+                                <span className="mr-2">🏪</span> Pallet Location
+                                Distribution
+                              </h4>
+                              <span className="text-[10px] font-bold text-slate-400 italic">
+                                Total {row.original.pallet_count} Pallets
+                              </span>
+                            </div>
+                            <div className="space-y-2 max-h-[300px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-slate-200">
+                              {row.original.pallet_details.map((plt, idx) => (
+                                <div
+                                  key={idx}
+                                  className="bg-white p-3 rounded-lg border border-slate-200 flex justify-between items-center shadow-sm hover:border-blue-300 transition-colors"
+                                >
+                                  <div>
+                                    <p className="font-bold text-slate-800 text-xs">
+                                      {plt.pallet_code}
+                                    </p>
+                                    <p className="text-[10px] text-slate-500 font-medium uppercase tracking-tighter">
+                                      {plt.warehouse_sub_name}{" "}
+                                      <span className="text-slate-300 mx-1">
+                                        |
+                                      </span>{" "}
+                                      {plt.warehouse_bin_code || "NO BIN"}
+                                    </p>
+                                  </div>
+                                  <div className="text-right">
+                                    <p className="text-sm font-black text-blue-600">
+                                      {plt.quantity}{" "}
+                                      <small className="text-[9px] text-slate-400">
+                                        {row.original.uom}
+                                      </small>
+                                    </p>
+                                    <p className="text-[9px] bg-slate-100 text-slate-500 px-1 rounded font-mono">
+                                      Week {plt.week_number}
+                                    </p>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+
+                          {/* DETAIL BOOKING */}
+                          <div>
+                            <div className="flex items-center justify-between mb-4">
+                              <h4 className="text-[11px] font-black text-orange-600 uppercase tracking-widest flex items-center">
+                                <span className="mr-2">📋</span> Allocation &
+                                Reservations
+                              </h4>
+                              <span className="text-[10px] font-bold text-slate-400 italic">
+                                Total {row.original.booking_count} DO Bookings
+                              </span>
+                            </div>
+                            <div className="space-y-2 max-h-[300px] overflow-y-auto pr-2">
+                              {row.original.booking_details.map((book, idx) => (
+                                <div
+                                  key={idx}
+                                  className="bg-orange-50/30 p-3 rounded-lg border border-orange-100 flex justify-between items-center shadow-sm hover:bg-orange-50 transition-colors"
+                                >
+                                  <div>
+                                    <p className="font-bold text-orange-700 text-xs">
+                                      {book.do_number}
+                                    </p>
+                                    <p className="text-[10px] text-orange-500 font-medium truncate w-40">
+                                      Ref: {book.memo_number}
+                                    </p>
+                                  </div>
+                                  <div className="text-right font-mono">
+                                    <p className="text-sm font-black text-orange-600">
+                                      -{book.quantity}
+                                    </p>
+                                    <p className="text-[9px] text-orange-400 uppercase">
+                                      from {book.source_warehouse_sub_name}
+                                    </p>
+                                  </div>
+                                </div>
+                              ))}
+                              {row.original.booking_details.length === 0 && (
+                                <div className="p-10 border-2 border-dashed border-slate-200 rounded-xl text-center text-slate-400 italic text-xs">
+                                  No active reservations for this SKU
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                </React.Fragment>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {/* PAGINATION CONTROLS */}
+        <div className="px-6 py-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => table.previousPage()}
+              disabled={!table.getCanPreviousPage()}
+              className="p-2 rounded-md border bg-white disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50 text-xs font-bold transition-colors"
+            >
+              PREV
+            </button>
+            <button
+              onClick={() => table.nextPage()}
+              disabled={!table.getCanNextPage()}
+              className="p-2 rounded-md border bg-white disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50 text-xs font-bold transition-colors"
+            >
+              NEXT
+            </button>
+          </div>
+
+          <div className="flex items-center gap-4">
+            <span className="text-xs font-medium text-slate-500">
+              Page{" "}
+              <span className="text-slate-900 font-bold">
+                {table.getState().pagination.pageIndex + 1}
+              </span>{" "}
+              of{" "}
+              <span className="text-slate-900 font-bold">
+                {table.getPageCount()}
+              </span>
+            </span>
+            <select
+              value={table.getState().pagination.pageSize}
+              onChange={(e) => table.setPageSize(Number(e.target.value))}
+              className="text-xs border rounded p-1 bg-white font-bold text-slate-600 outline-none"
+            >
+              {[10, 25, 50, 100].map((size) => (
+                <option key={size} value={size}>
+                  SHOW {size}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const StatItem = ({
+  label,
+  value,
+  color,
+}: {
+  label: string;
+  value: number;
+  color: string;
+}) => {
+  const colorMap: any = {
+    blue: "border-l-blue-500 text-blue-600",
+    indigo: "border-l-indigo-500 text-indigo-600",
+    orange: "border-l-orange-500 text-orange-600",
+    emerald: "border-l-emerald-500 text-emerald-600",
+    rose: "border-l-rose-500 text-rose-600",
+  };
+  return (
+    <div
+      className={`bg-white p-4 rounded-lg shadow-sm border border-slate-200 border-l-4 ${colorMap[color]}`}
+    >
+      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">
+        {label}
+      </p>
+      <p className="text-2xl font-black text-slate-800 tracking-tight">
+        {value.toLocaleString()}
+      </p>
+    </div>
+  );
+};
+
+export default InventoryVisibility;

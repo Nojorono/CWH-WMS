@@ -1,5 +1,5 @@
 export interface User {
-  id: string;
+  id?: string;
   username: string;
   password: string;
   isActive: boolean;
@@ -8,6 +8,7 @@ export interface User {
   email?: string;
   phone?: string;
   organizationId?: string;
+  warehouseSubId?: string;
 }
 
 export type CreateUser = Omit<User, "id">;
