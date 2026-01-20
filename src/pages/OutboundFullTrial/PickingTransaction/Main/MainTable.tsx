@@ -5,8 +5,6 @@ import Label from "../../../../components/form/Label";
 import { useDebounce } from "../../../../helper/useDebounce";
 import Select from "../../../../components/form/Select";
 import TabsSection from "../../../../components/wms-components/inbound-component/tabs/TabsSection";
-// import AttachTransactionTable from "../Main/AttachTransactionTable";
-// import Input from "../../../../components/form/input/InputField";
 
 const MainTable = () => {
   const navigate = useNavigate();
@@ -21,6 +19,7 @@ const MainTable = () => {
     { value: "IN_PROGRESS", label: "IN_PROGRESS" },
     { value: "COMPLETED", label: "COMPLETED" },
     { value: "APPROVED", label: "APPROVED" },
+    { value: "APPROVED_LOAD", label: "APPROVED_LOAD" },
   ];
 
   return (

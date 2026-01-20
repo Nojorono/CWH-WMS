@@ -15,6 +15,8 @@ import InboundProcess from "../pages/Inbound/InboundProcess/TableAndForm/Inbound
 // PUTAWAY
 import PutAway from "../pages/PutAway";
 import PutAwayProcess from "../pages/PutAway/Table/PutAwayProcess";
+import InventoryVisibility from "../pages/InventoryVisibility";
+
 
 // INVENTORY
 import Inventory from "../pages/Inventory";
@@ -99,6 +101,7 @@ export {
   // Inventory
   Inventory,
   InventoryDetail,
+  InventoryVisibility,
 
   // OUTBOUND
   Memo,

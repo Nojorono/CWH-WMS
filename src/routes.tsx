@@ -55,6 +55,7 @@ import {
   DetachAttachProcess,
   GateLoading,
   PrintSuratJalan,
+  InventoryVisibility,
 } from "./utils/PagesComponent";
 
 const DefaultPage = () => <> </>;
@@ -97,6 +98,7 @@ export function AppRoutes() {
     if (isAuthenticated() && location.pathname === "/signin") {
       // Redirect ke halaman pertama menu yang bisa diakses
       navigate(getFirstAccessiblePath(userMenus), { replace: true });
+      console.log("First accessible path:", getFirstAccessiblePath(userMenus));
     }
   }, [location.pathname, isAuthenticated, navigate, userMenus]);
 
@@ -155,7 +157,7 @@ export function AppRoutes() {
       "/master_vehicle": <MasterVehicle />,
       "/master_zone": <MasterZone />,
       "/master_source": <MasterSource />,
-      "/inventory": <Inventory />,
+      "/main_inventory": <Inventory />,
       "/memo": <Memo />,
       "/outbound_do": <OutboundDO />,
       "/master_amo": <MasterAMO />,
@@ -163,6 +165,7 @@ export function AppRoutes() {
       "/approval_setup": <ApprovalSetup />,
       "/picking_transaction": <PickingTransaction />,
       "/gate_loading": <GateLoading />,
+      "/inventory_visibility": <InventoryVisibility />,
     };
     return map[path] || <DefaultPage />;
   };

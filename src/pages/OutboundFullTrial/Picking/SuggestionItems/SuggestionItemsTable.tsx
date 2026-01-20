@@ -134,34 +134,60 @@ export const SuggestionItemsTable: React.FC<TableProps> = ({
     RawSuggestion[]
   >([]);
 
+  console.log("Items in Table Suggestion:", items);
+
+  // const normalizeItems = (items: Item[]): Item[] => {
+  //   const result: Item[] = [];
+
+  //   items.forEach((item) => {
+  //     item.suggested_locations?.forEach((loc, idx) => {
+  //       result.push({
+  //         ...item,
+  //         suggested_locations: [loc], // 🔥 PENTING
+  //         _localId: genLocalId(),
+  //         _isManual: false,
+  //         qty_pick: Math.min(
+  //           item.required_quantity ?? 0,
+  //           loc.available_quantity ?? 0
+  //         ),
+  //       });
+  //     });
+  //   });
+
+  //   return result;
+  // };
+
   const normalizeItems = (items: Item[]): Item[] => {
     const result: Item[] = [];
 
     items.forEach((item) => {
-      item.suggested_locations?.forEach((loc, idx) => {
+      if (item.suggested_locations && item.suggested_locations.length > 0) {
+        item.suggested_locations.forEach((loc, idx) => {
+          result.push({
+            ...item,
+            suggested_locations: [loc],
+            _localId: genLocalId(),
+            _isManual: false,
+            qty_pick: Math.min(
+              item.required_quantity ?? 0,
+              loc.available_quantity ?? 0
+            ),
+          });
+        });
+      } else {
+        // Tetap push meskipun suggested_locations kosong
         result.push({
           ...item,
-          suggested_locations: [loc], // 🔥 PENTING
+          suggested_locations: [],
           _localId: genLocalId(),
           _isManual: false,
-          qty_pick: Math.min(
-            item.required_quantity ?? 0,
-            loc.available_quantity ?? 0
-          ),
+          qty_pick: undefined,
         });
-      });
+      }
     });
 
     return result;
   };
-
-  // const [localItems, setLocalItems] = useState<Item[]>(normalizeItems(items));
-  // const [localItems, setLocalItems] = useState<Item[]>(
-  //   items.map((it) => ({
-  //     ...it,
-  //     _localId: (it as any)._localId ?? genLocalId(),
-  //   }))
-  // );
 
   const [localItems, setLocalItems] = useState<Item[]>([]);
 
@@ -242,6 +268,56 @@ export const SuggestionItemsTable: React.FC<TableProps> = ({
     setSelectedRowIndex(rowIndex);
   };
 
+  // const handleAddItem = (data: any) => {
+  //   const requiredQty = Number(data.qty_pick ?? 0);
+  //   const loc = data.location_data ?? {};
+  //   const available = Number(loc.available_quantity ?? 0);
+  //   const computedQty =
+  //     requiredQty > 0 ? Math.min(requiredQty, available || requiredQty) : 0;
+
+  //   const parentMemoId =
+  //     selectedItem?.memo_id ??
+  //     localItems.find((it) => it.item_id === data.item_id)?.memo_id ??
+  //     "";
+
+  //   const newItem: Item = {
+  //     memo_id: parentMemoId,
+  //     item_id: data.item_id,
+  //     item_name: data.item_name,
+  //     item_code: data.item_code,
+  //     required_quantity: requiredQty,
+  //     already_picked_quantity: 0,
+  //     remaining_quantity_needed: requiredQty,
+  //     suggested_locations: [loc],
+  //     total_suggested_quantity: requiredQty,
+  //     priority: 1,
+  //     notes: "Suggestion item location ditambahkan secara manual oleh user.",
+  //     qty_pick: computedQty, // <-- pastikan tampil langsung
+  //     _localId: genLocalId(),
+  //     _isManual: true,
+  //   };
+
+  //   setLocalItems((prevItems) => {
+  //     const copy = [...prevItems];
+
+  //     // cari posisi terakhir parent SKU
+  //     const insertIndex = findLastIndexByItemId(copy, newItem.item_id);
+
+  //     if (insertIndex === -1) {
+  //       // fallback (harusnya tidak terjadi)
+  //       return [...copy, newItem];
+  //     }
+
+  //     // sisipkan tepat setelah group parent
+  //     copy.splice(insertIndex + 1, 0, newItem);
+
+  //     return copy;
+  //   });
+
+  //   setOpenAdd(false);
+  //   onAdd(newItem);
+  // };
+
   const handleAddItem = (data: any) => {
     const requiredQty = Number(data.qty_pick ?? 0);
     const loc = data.location_data ?? {};
@@ -253,6 +329,27 @@ export const SuggestionItemsTable: React.FC<TableProps> = ({
       selectedItem?.memo_id ??
       localItems.find((it) => it.item_id === data.item_id)?.memo_id ??
       "";
+
+    // 🔒 VALIDASI: Cek kombinasi week_number, warehouse_sub_code, bin_code
+    const isDuplicate = localItems.some(
+      (it) =>
+        it.item_id === data.item_id &&
+        it.suggested_locations?.[0]?.week_number === loc.week_number &&
+        it.suggested_locations?.[0]?.warehouse_sub_code ===
+          loc.warehouse_sub_code &&
+        it.suggested_locations?.[0]?.bin_code === loc.bin_code
+    );
+
+    if (isDuplicate) {
+      Swal.fire({
+        icon: "warning",
+        title: "Lokasi Sudah Ada",
+        text:
+          "Kombinasi Week Number, Zone, dan Bin sudah digunakan pada SKU ini. " +
+          "Silakan pilih Week Number atau lokasi lain.",
+      });
+      return; // Batalkan proses ADD
+    }
 
     const newItem: Item = {
       memo_id: parentMemoId,
@@ -266,25 +363,18 @@ export const SuggestionItemsTable: React.FC<TableProps> = ({
       total_suggested_quantity: requiredQty,
       priority: 1,
       notes: "Suggestion item location ditambahkan secara manual oleh user.",
-      qty_pick: computedQty, // <-- pastikan tampil langsung
+      qty_pick: computedQty,
       _localId: genLocalId(),
       _isManual: true,
     };
 
     setLocalItems((prevItems) => {
       const copy = [...prevItems];
-
-      // cari posisi terakhir parent SKU
       const insertIndex = findLastIndexByItemId(copy, newItem.item_id);
-
       if (insertIndex === -1) {
-        // fallback (harusnya tidak terjadi)
         return [...copy, newItem];
       }
-
-      // sisipkan tepat setelah group parent
       copy.splice(insertIndex + 1, 0, newItem);
-
       return copy;
     });
 
@@ -466,21 +556,52 @@ export const SuggestionItemsTable: React.FC<TableProps> = ({
         );
       },
     },
+    // {
+    //   id: "warehouse_sub_name",
+    //   header: "Zone",
+    //   enableSorting: false,
+    //   cell: ({ row }) => {
+    //     const item = row.original;
+    //     const rowIndex = row.index;
+
+    //     if (!isSummaryRow(localItems, item.item_id, rowIndex)) return <span />;
+
+    //     return (
+    //       <span>
+    //         {item.suggested_locations?.[0]?.warehouse_sub_name ?? "-"}
+    //       </span>
+    //     );
+    //   },
+    // },
+    // {
+    //   id: "bin_location",
+    //   header: "Bin Locations",
+    //   enableSorting: false,
+    //   cell: ({ row }) => {
+    //     const item = row.original;
+    //     const rowIndex = row.index;
+
+    //     if (!isSummaryRow(localItems, item.item_id, rowIndex)) return <span />;
+
+    //     const bin = item.suggested_locations?.[0]?.bin_name;
+
+    //     return <span>{bin && bin !== "N/A" ? bin : "-"}</span>;
+    //   },
+    // },
+
     {
       id: "warehouse_sub_name",
       header: "Zone",
       enableSorting: false,
       cell: ({ row }) => {
         const item = row.original;
-        const rowIndex = row.index;
-
-        if (!isSummaryRow(localItems, item.item_id, rowIndex)) return <span />;
-
-        return (
-          <span>
-            {item.suggested_locations?.[0]?.warehouse_sub_name ?? "-"}
-          </span>
-        );
+        // Gabungkan semua warehouse_sub_name unik dari suggested_locations
+        const zones = (item.suggested_locations ?? [])
+          .map((loc: any) => loc.warehouse_sub_name)
+          .filter(Boolean);
+        // Hilangkan duplikat
+        const uniqueZones = Array.from(new Set(zones));
+        return <span>{uniqueZones.length ? uniqueZones.join(", ") : "-"}</span>;
       },
     },
     {
@@ -489,13 +610,12 @@ export const SuggestionItemsTable: React.FC<TableProps> = ({
       enableSorting: false,
       cell: ({ row }) => {
         const item = row.original;
-        const rowIndex = row.index;
-
-        if (!isSummaryRow(localItems, item.item_id, rowIndex)) return <span />;
-
-        const bin = item.suggested_locations?.[0]?.bin_name;
-
-        return <span>{bin && bin !== "N/A" ? bin : "-"}</span>;
+        // Gabungkan semua bin_name unik dari suggested_locations
+        const bins = (item.suggested_locations ?? [])
+          .map((loc: any) => loc.bin_name)
+          .filter(Boolean);
+        const uniqueBins = Array.from(new Set(bins));
+        return <span>{uniqueBins.length ? uniqueBins.join(", ") : "-"}</span>;
       },
     },
     {
@@ -773,15 +893,6 @@ export const SuggestionItemsTable: React.FC<TableProps> = ({
           uomID={selectedItem?.suggested_locations[0]?.uom}
         />
       )}
-
-      {/* {openReview && finalPayload && (
-        <ModalReviewFinalSuggestion
-          open={openReview}
-          data={reviewGroups}
-          onClose={() => setOpenReview(false)}
-          onConfirm={submitToAPI}
-        />
-      )} */}
 
       {openReview && (
         <ModalReviewFinalSuggestion

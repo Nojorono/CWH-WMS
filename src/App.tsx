@@ -6,28 +6,9 @@ export default function App() {
   const user = useAuthStore((state) => state.user); // pastikan ada id user
 
   return (
-    <>
+    <div className="">
       <AppRoutes />
       {/* {user?.id && <NotificationManager userId={user.id} />} */}
-    </>
+    </div>
   );
 }
-
-// src/App.tsx
-// import { useEffect } from "react";
-// import { AppRoutes } from "./routes";
-// import { initNotificationService } from "./utils/Socket/Service/notificationService";
-
-// export default function App() {
-//   const userId = localStorage.getItem("user_id"); // atau ambil dari auth context
-//   console.log("Initializing Notification Service for user:", userId);
-
-//   useEffect(() => {
-//     const userId = localStorage.getItem("user_id"); // atau ambil dari auth context
-//     console.log("Initializing Notification Service for user:", userId);
-
-//     if (userId) initNotificationService(userId);
-//   }, []);
-
-//   return <AppRoutes />;
-// }

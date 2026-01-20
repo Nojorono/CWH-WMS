@@ -1,5 +1,5 @@
 
-import { UIGateAssignedGateLoad, UIGateLoadingDO } from "./mapOutboundGateToUILoading";
+import { UIGateAssignedGateLoad } from "./mapOutboundGateToUILoading";
 
 export const isMemoGateLoadComplete = (
     memo: any,

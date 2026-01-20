@@ -151,12 +151,12 @@ const AdjustTable = ({
 
             <FaPrint
               className={`size-5 cursor-pointer text-blue-600 ${
-                row.original.status != "APPROVED"
+                row.original.status != "APPROVED_LOAD"
                   ? "opacity-20 cursor-not-allowed"
                   : ""
               }`}
               onClick={() =>
-                row.original.status == "APPROVED" && handlePrintSJ(row.original)
+                row.original.status == "APPROVED_LOAD" && handlePrintSJ(row.original)
               }
             />
           </div>

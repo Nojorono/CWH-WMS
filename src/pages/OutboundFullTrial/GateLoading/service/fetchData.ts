@@ -20,7 +20,9 @@ export async function fetchAssignedGate(): Promise<AssignedGateResponse> {
         }
 
         const response = await axios.get(
-            `${API_BASE_URL}/assigned-gate?status=PENDING`,
+            // `${API_BASE_URL}/assigned-gate?status=PENDING`,
+            `${API_BASE_URL}/assigned-gate`,
+
             {
                 headers: {
                     Authorization: `Bearer ${token}`,
