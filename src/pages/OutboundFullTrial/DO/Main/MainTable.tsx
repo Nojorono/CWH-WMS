@@ -14,11 +14,6 @@ const MainTable = () => {
   const [selectedStatus, setSelectedStatus] = useState<any>(null);
   const [selectedTypeOutbound, setSelectedTypeOutbound] = useState<any>(null);
 
-  const handleResetFilters = () => {
-    setGlobalFilter("");
-    setSelectedStatus(null);
-  };
-
   const handleCreate = () => {
     navigate("/outbound_do/process", {
       state: { data: [], mode: "create", title: "Create DO" },

@@ -30,7 +30,7 @@ const AdjustTableTransactionPicking = ({
   // 🔹 Sinkronisasi State dengan URL
   const currentPage = parseInt(searchParams.get("page") || "1");
   const pageIndex = currentPage - 1;
-  const [pageSize, setPageSize] = useState(5);
+  const [pageSize, setPageSize] = useState(10);
 
   // 🔹 Ref untuk mencegah reset saat Back navigasi
   const isInitialMount = useRef(true);

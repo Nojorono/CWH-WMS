@@ -65,7 +65,7 @@ const AdjustTableDO = ({
   // 🔹 Inisialisasi dari URL (agar saat Back, nilai ini tetap ada)
   const currentPage = parseInt(searchParams.get("page") || "1");
   const pageIndex = currentPage - 1;
-  const [pageSize, setPageSize] = useState(5);
+  const [pageSize, setPageSize] = useState(10);
 
   // 🔹 Ref untuk deteksi Initial Mount dan Perubahan Filter
   const isInitialMount = useRef(true);
