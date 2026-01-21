@@ -8,6 +8,7 @@ import {
   flexRender,
   createColumnHelper,
   ColumnDef,
+  getSortedRowModel
 } from "@tanstack/react-table";
 import { useStoreInventoryVisibility } from "../../../DynamicAPI/stores/Store/MasterStore";
 import {
@@ -75,7 +76,7 @@ const InventoryVisibility: React.FC = () => {
         cell: (info) => (
           <div className="flex items-baseline space-x-1">
             <span className="font-bold text-slate-800">
-              {info.getValue().toLocaleString()} {info.row.original.uom}
+              {info.getValue().toLocaleString()}
             </span>
           </div>
         ),
@@ -86,10 +87,10 @@ const InventoryVisibility: React.FC = () => {
           <div className="flex items-center space-x-2">
             <span
               className={`font-bold ${
-                info.getValue() > 0 ? "text-orange-500" : "text-slate-300"
+                info.getValue() > 0 ? "text-red-500" : "text-slate-300"
               }`}
             >
-              {info.getValue().toLocaleString()} {info.row.original.uom}
+              {info.getValue().toLocaleString()}
             </span>
           </div>
         ),
@@ -108,19 +109,41 @@ const InventoryVisibility: React.FC = () => {
           </span>
         ),
       }),
-      columnHelper.accessor("booking_count", {
-        header: "Booked By DO",
+
+      columnHelper.accessor("uom", {
+        header: "UoM",
         cell: (info) => (
-          <div className="flex items-center space-x-2">
-            <span
-              className={`font-bold ${
-                info.getValue() > 0 ? "text-orange-500" : "text-slate-300"
-              }`}
-            >
-              {info.row.original.booking_count} DO
+          <div className="flex items-baseline space-x-1">
+            <span className="font-bold text-blue-500">
+              {info.row.original.uom}
             </span>
           </div>
         ),
+      }),
+      columnHelper.accessor("booking_count", {
+        header: "Booked By DO",
+        cell: (info) => {
+          // Ambil array booking_details dari baris data asli
+          const bookings = info.row.original.booking_details || [];
+
+          // Logika untuk menghitung Unique DO Number
+          // Menggunakan Set untuk menyimpan do_number yang unik, lalu ambil ukurannya (size)
+          const uniqueDOCount = new Set(bookings.map((book) => book.do_number))
+            .size;
+
+          return (
+            <div className="flex items-center space-x-2">
+              <span
+                className={`font-bold ${
+                  uniqueDOCount > 0 ? "text-orange-400" : "text-slate-300"
+                }`}
+              >
+                {uniqueDOCount}{" "}
+                <span className="text-slate-500 text-[10px]">DO</span>
+              </span>
+            </div>
+          );
+        },
       }),
       columnHelper.accessor("pallet_count", {
         header: "Pallets",
@@ -147,6 +170,7 @@ const InventoryVisibility: React.FC = () => {
     getExpandedRowModel: getExpandedRowModel(),
     getFilteredRowModel: getFilteredRowModel(), // Engine untuk filter
     getPaginationRowModel: getPaginationRowModel(), // Engine untuk pagination
+    getSortedRowModel: getSortedRowModel(), // Engine untuk sorting
     getRowCanExpand: () => true,
     initialState: {
       pagination: {
@@ -170,7 +194,7 @@ const InventoryVisibility: React.FC = () => {
       {/* SUMMARY DASHBOARD */}
       <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
         <StatItem
-          label="Total Items"
+          label="Total SKU"
           value={currentData.summary.total_items}
           color="blue"
         />
@@ -180,7 +204,7 @@ const InventoryVisibility: React.FC = () => {
           color="indigo"
         />
         <StatItem
-          label="Total Booked"
+          label="Total Booked Outbound"
           value={currentData.summary.total_booked_quantity}
           color="orange"
         />
@@ -229,6 +253,7 @@ const InventoryVisibility: React.FC = () => {
                     <th
                       key={header.id}
                       className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest"
+                      onClick={header.column.getToggleSortingHandler()}
                     >
                       {flexRender(
                         header.column.columnDef.header,
@@ -309,45 +334,97 @@ const InventoryVisibility: React.FC = () => {
 
                           {/* DETAIL BOOKING */}
                           <div>
-                            <div className="flex items-center justify-between mb-4">
-                              <h4 className="text-[11px] font-black text-orange-600 uppercase tracking-widest flex items-center">
-                                <span className="mr-2">📋</span> Allocation &
-                                Reservations
-                              </h4>
-                              <span className="text-[10px] font-bold text-slate-400 italic">
-                                Total {row.original.booking_count} DO Bookings
-                              </span>
-                            </div>
-                            <div className="space-y-2 max-h-[300px] overflow-y-auto pr-2">
-                              {row.original.booking_details.map((book, idx) => (
-                                <div
-                                  key={idx}
-                                  className="bg-orange-50/30 p-3 rounded-lg border border-orange-100 flex justify-between items-center shadow-sm hover:bg-orange-50 transition-colors"
-                                >
-                                  <div>
-                                    <p className="font-bold text-orange-700 text-xs">
-                                      {book.do_number}
-                                    </p>
-                                    <p className="text-[10px] text-orange-500 font-medium truncate w-40">
-                                      Ref: {book.memo_number}
-                                    </p>
+                            {/* LOGIKA GROUPING DO */}
+                            {(() => {
+                              const groupedBookings =
+                                row.original.booking_details.reduce(
+                                  (acc: any, curr) => {
+                                    if (!acc[curr.do_number]) {
+                                      acc[curr.do_number] = [];
+                                    }
+                                    acc[curr.do_number].push(curr);
+                                    return acc;
+                                  },
+                                  {}
+                                );
+
+                              const uniqueDOCount =
+                                Object.keys(groupedBookings).length;
+
+                              return (
+                                <>
+                                  <div className="flex items-center justify-between mb-4">
+                                    <h4 className="text-[11px] font-black text-orange-600 uppercase tracking-widest flex items-center">
+                                      <span className="mr-2">📋</span>{" "}
+                                      Allocation & Reservations
+                                    </h4>
+                                    <span className="text-[10px] font-bold text-slate-400 italic">
+                                      Total {uniqueDOCount} DO Bookings
+                                    </span>
                                   </div>
-                                  <div className="text-right font-mono">
-                                    <p className="text-sm font-black text-orange-600">
-                                      -{book.quantity}
-                                    </p>
-                                    <p className="text-[9px] text-orange-400 uppercase">
-                                      from {book.source_warehouse_sub_name}
-                                    </p>
+
+                                  <div className="space-y-3 max-h-[300px] overflow-y-auto pr-2">
+                                    {Object.entries(groupedBookings).map(
+                                      ([doNumber, items]: [string, any]) => (
+                                        <div
+                                          key={doNumber}
+                                          className="bg-orange-50/30 rounded-lg border border-orange-100 overflow-hidden shadow-sm"
+                                        >
+                                          {/* Header DO */}
+                                          <div className="bg-orange-100/50 px-3 py-1.5 border-b border-orange-100 flex justify-between items-center">
+                                            <span className="font-black text-orange-700 text-[11px]">
+                                              DO: {doNumber}
+                                            </span>
+                                            <span className="text-[10px] bg-white px-2 py-0.5 rounded-full text-orange-600 font-bold border border-orange-200">
+                                              {items.length} Memo Items
+                                            </span>
+                                          </div>
+
+                                          {/* List Memo didalam DO */}
+                                          <div className="divide-y divide-orange-100/50">
+                                            {items.map(
+                                              (book: any, idx: number) => (
+                                                <div
+                                                  key={idx}
+                                                  className="p-3 flex justify-between items-center hover:bg-orange-50 transition-colors"
+                                                >
+                                                  <div>
+                                                    <p className="text-[10px] text-orange-600 font-bold">
+                                                      Memo: {book.memo_number}
+                                                    </p>
+                                                    <p className="text-[9px] text-orange-400 uppercase">
+                                                      Loc:{" "}
+                                                      {
+                                                        book.source_warehouse_sub_name
+                                                      }
+                                                    </p>
+                                                  </div>
+                                                  <div className="text-right">
+                                                    <p className="text-sm font-black text-orange-600 font-mono">
+                                                      {book.quantity}
+                                                    </p>
+                                                    <p className="text-[9px] text-slate-400 uppercase">
+                                                      {row.original.uom}
+                                                    </p>
+                                                  </div>
+                                                </div>
+                                              )
+                                            )}
+                                          </div>
+                                        </div>
+                                      )
+                                    )}
+
+                                    {row.original.booking_details.length ===
+                                      0 && (
+                                      <div className="p-10 border-2 border-dashed border-slate-200 rounded-xl text-center text-slate-400 italic text-xs">
+                                        No active reservations for this SKU
+                                      </div>
+                                    )}
                                   </div>
-                                </div>
-                              ))}
-                              {row.original.booking_details.length === 0 && (
-                                <div className="p-10 border-2 border-dashed border-slate-200 rounded-xl text-center text-slate-400 italic text-xs">
-                                  No active reservations for this SKU
-                                </div>
-                              )}
-                            </div>
+                                </>
+                              );
+                            })()}
                           </div>
                         </div>
                       </td>

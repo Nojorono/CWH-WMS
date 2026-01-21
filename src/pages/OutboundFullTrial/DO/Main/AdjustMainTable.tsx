@@ -75,7 +75,14 @@ const AdjustTable = ({
       status: filteredStatus || "",
       outbound_type: filteredTypeOutbound || "",
     });
-  }, [fetchUsingPagination, pageIndex, pageSize, globalFilter, filteredStatus, filteredTypeOutbound]);
+  }, [
+    fetchUsingPagination,
+    pageIndex,
+    pageSize,
+    globalFilter,
+    filteredStatus,
+    filteredTypeOutbound,
+  ]);
 
   console.log("Outbound DO List:", list);
 
@@ -144,15 +151,16 @@ const AdjustTable = ({
     const [openMemoId, setOpenMemoId] = useState<string | null>(null);
 
     if (!Array.isArray(memos) || memos.length === 0) {
-      return <div className="text-sm italic text-slate-500">No memos</div>;
+      return (
+        <div className="text-sm italic text-slate-400">No memos attached</div>
+      );
     }
 
     return (
-      <ul className="space-y-2">
+      <div className="flex flex-col gap-2 min-w-[250px]">
         {memos.map((memo) => {
           const isOpen = openMemoId === memo.id;
 
-          // prefer transaction_pickings (detailed pick records). fallback to outbound_memo_items
           let items: any[] = [];
           if (
             Array.isArray(memo.transaction_pickings) &&
@@ -179,56 +187,208 @@ const AdjustTable = ({
           }
 
           return (
-            <li key={memo.id} className="border border-gray-200 rounded-md p-2">
-              {/* HEADER */}
-              <div className="flex items-center justify-between">
-                <div className="text-xs font-semibold">
-                  {memo.outbound_memo_number ?? memo.memo_number ?? memo.id}
+            <div
+              key={memo.id}
+              className={`border rounded-lg overflow-hidden transition-all duration-200 ${
+                isOpen
+                  ? "border-blue-300 ring-1 ring-blue-100 shadow-sm"
+                  : "border-slate-200"
+              }`}
+            >
+              {/* HEADER - Clickable for better UX */}
+              <div
+                onClick={() => setOpenMemoId(isOpen ? null : memo.id)}
+                className={`flex items-center justify-between p-2 cursor-pointer transition-colors ${
+                  isOpen ? "bg-blue-50" : "bg-white hover:bg-slate-50"
+                }`}
+              >
+                <div className="flex flex-col">
+                  <span className="text-[11px] uppercase tracking-wider text-slate-500 font-bold">
+                    Memo Number
+                  </span>
+                  <span className="text-xs font-semibold text-slate-800">
+                    {memo.outbound_memo_number ?? memo.memo_number ?? memo.id}
+                  </span>
                 </div>
 
-                {/* TOGGLE */}
-                <button
-                  type="button"
-                  onClick={() => setOpenMemoId(isOpen ? null : memo.id)}
-                  className="text-xs text-blue-600 hover:underline"
-                >
-                  {isOpen ? "Hide Items" : `Show Items (${items.length})`}
-                </button>
+                <div className="flex items-center gap-2">
+                  <span
+                    className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${
+                      items.length > 0
+                        ? "bg-blue-100 text-blue-700"
+                        : "bg-slate-100 text-slate-500"
+                    }`}
+                  >
+                    {items.length} Items
+                  </span>
+                  <div
+                    className={`transition-transform duration-200 ${
+                      isOpen ? "rotate-180" : ""
+                    }`}
+                  >
+                    <svg
+                      width="12"
+                      height="12"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="3"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="m6 9 6 6 6-6" />
+                    </svg>
+                  </div>
+                </div>
               </div>
 
               {/* EXPANDED CONTENT */}
               {isOpen && (
-                <ul className="mt-2 ml-4 list-disc space-y-1 text-xs">
+                <div className="bg-white border-t border-blue-100 max-h-[200px] overflow-y-auto">
                   {items.length === 0 ? (
-                    <li className="text-xs text-slate-500">No items</li>
+                    <div className="p-3 text-center text-xs text-slate-400 italic">
+                      No items found
+                    </div>
                   ) : (
-                    
-                    items.map((it) => (
-                      <li
-                        key={it.id}
-                        className="flex flex-wrap gap-2 items-center"
-                      >
-                        <span className="font-medium">{it.sku}</span>
-                        <span className="ml-2 text-xs text-gray-500">
-                          | Qty {it.quantity}
-                        </span>
-                        <span className="ml-2 text-xs text-gray-500">
-                          | UOM {it.uom}
-                        </span>
-                        <span className="ml-2 text-xs text-gray-500">
-                          | Week {it.week}
-                        </span>
-                      </li>
-                    ))
+                    <div className="divide-y divide-slate-100">
+                      {items.map((it) => (
+                        <div
+                          key={it.id}
+                          className="p-2 hover:bg-slate-50 transition-colors"
+                        >
+                          <div className="flex justify-between items-start mb-1">
+                            <span className="text-xs font-bold text-blue-600 break-all">
+                              {it.sku}
+                            </span>
+                          </div>
+                          <div className="flex flex-wrap gap-1">
+                            <div className="flex items-center bg-slate-100 rounded px-1.5 py-0.5">
+                              <span className="text-[10px] text-slate-500 mr-1">
+                                Qty:
+                              </span>
+                              <span className="text-[10px] font-bold text-slate-700">
+                                {it.quantity}
+                              </span>
+                            </div>
+                            <div className="flex items-center bg-slate-100 rounded px-1.5 py-0.5">
+                              <span className="text-[10px] text-slate-500 mr-1">
+                                UOM:
+                              </span>
+                              <span className="text-[10px] font-bold text-slate-700">
+                                {it.uom}
+                              </span>
+                            </div>
+                            <div className="flex items-center bg-slate-100 rounded px-1.5 py-0.5">
+                              <span className="text-[10px] text-slate-500 mr-1">
+                                W:
+                              </span>
+                              <span className="text-[10px] font-bold text-slate-700">
+                                {it.week}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   )}
-                </ul>
+                </div>
               )}
-            </li>
+            </div>
           );
         })}
-      </ul>
+      </div>
     );
   };
+
+  // const MemoCell = ({ memos }: { memos: any[] }) => {
+  //   const [openMemoId, setOpenMemoId] = useState<string | null>(null);
+
+  //   if (!Array.isArray(memos) || memos.length === 0) {
+  //     return <div className="text-sm italic text-slate-500">No memos</div>;
+  //   }
+
+  //   return (
+  //     <ul className="space-y-2">
+  //       {memos.map((memo) => {
+  //         const isOpen = openMemoId === memo.id;
+
+  //         // prefer transaction_pickings (detailed pick records). fallback to outbound_memo_items
+  //         let items: any[] = [];
+  //         if (
+  //           Array.isArray(memo.transaction_pickings) &&
+  //           memo.transaction_pickings.length > 0
+  //         ) {
+  //           items = memo.transaction_pickings.map((tp: any) => ({
+  //             id: tp.id,
+  //             sku: tp.item?.sku ?? tp.item?.item_number ?? "-",
+  //             quantity: tp.quantity ?? 0,
+  //             uom: tp.uom ?? "-",
+  //             week: tp.week_number ?? "-",
+  //           }));
+  //         } else if (
+  //           Array.isArray(memo.outbound_memo_items) &&
+  //           memo.outbound_memo_items.length > 0
+  //         ) {
+  //           items = memo.outbound_memo_items.map((mi: any) => ({
+  //             id: mi.id,
+  //             sku: mi.item?.sku ?? mi.item?.item_number ?? "-",
+  //             quantity: mi.quantity_plan ?? 0,
+  //             uom: mi.uom ?? "-",
+  //             week: mi.week_number ?? "-",
+  //           }));
+  //         }
+
+  //         return (
+  //           <li key={memo.id} className="border border-gray-200 rounded-md p-2">
+  //             {/* HEADER */}
+  //             <div className="flex items-center justify-between">
+  //               <div className="text-xs font-semibold">
+  //                 {memo.outbound_memo_number ?? memo.memo_number ?? memo.id}
+  //               </div>
+
+  //               {/* TOGGLE */}
+  //               <button
+  //                 type="button"
+  //                 onClick={() => setOpenMemoId(isOpen ? null : memo.id)}
+  //                 className="text-xs text-blue-600 hover:underline"
+  //               >
+  //                 {isOpen ? "Hide Items" : `Show Items (${items.length})`}
+  //               </button>
+  //             </div>
+
+  //             {/* EXPANDED CONTENT */}
+  //             {isOpen && (
+  //               <ul className="mt-2 ml-4 list-disc space-y-1 text-xs">
+  //                 {items.length === 0 ? (
+  //                   <li className="text-xs text-slate-500">No items</li>
+  //                 ) : (
+
+  //                   items.map((it) => (
+  //                     <li
+  //                       key={it.id}
+  //                       className="flex flex-wrap gap-2 items-center"
+  //                     >
+  //                       <span className="font-medium">{it.sku}</span>
+  //                       <span className="ml-2 text-xs text-gray-500">
+  //                         | Qty {it.quantity}
+  //                       </span>
+  //                       <span className="ml-2 text-xs text-gray-500">
+  //                         | UOM {it.uom}
+  //                       </span>
+  //                       <span className="ml-2 text-xs text-gray-500">
+  //                         | Week {it.week}
+  //                       </span>
+  //                     </li>
+  //                   ))
+  //                 )}
+  //               </ul>
+  //             )}
+  //           </li>
+  //         );
+  //       })}
+  //     </ul>
+  //   );
+  // };
 
   const columns: ColumnDef<MemoData>[] = useMemo(
     () => [

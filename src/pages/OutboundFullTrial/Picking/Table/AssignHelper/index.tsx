@@ -14,12 +14,9 @@ const AssignHelperTable: React.FC<AssignHelperTableProps> = ({
   const [globalFilter, setGlobalFilter] = useState<string>("");
   const [pageIndex, setPageIndex] = useState<number>(0);
   const [pageSize, setPageSize] = useState<number>(10);
-  const { list, fetchById, fetchAll } = useStorePickingAssignHelper();
-
-  console.log("detailData in AssignHelperTable:", detailData);
+  const { list, fetchAll } = useStorePickingAssignHelper();
 
   useEffect(() => {
-    // fetchById(memoId);
     fetchAll();
   }, [fetchAll]);
 
@@ -29,16 +26,13 @@ const AssignHelperTable: React.FC<AssignHelperTableProps> = ({
     ? (list as any).data
     : [];
 
-
-    console.log("Raw list in AssignHelperTable:", rawList);
-    
+  console.log("rawList in AssignHelperTable:", rawList);
 
   const columns = [
     {
-      accessorKey: "memo_id",
-      header: "Memo Id",
+      accessorKey: "outbound_memo_number",
+      header: "Memo Number",
     },
-    { accessorKey: "picking_user_id", header: "Device Id" },
     {
       accessorKey: "picking_name",
       header: "Helper Name",
@@ -47,20 +41,7 @@ const AssignHelperTable: React.FC<AssignHelperTableProps> = ({
       accessorKey: "picking_phone",
       header: "Helper Phone",
     },
-    // {
-    //   accessorKey: "status",
-    //   header: "Status",
-    // },
   ];
-
-  //   MAP FILTER DARI API
-  //   const mappedData = rawList.map((item: any) => ({
-  //     picking_user_id: item.picking_user_id ?? "",
-  //     picking_name: item.picking_name ?? "",
-  //     picking_phone: item.picking_phone ?? "",
-  //     memo_id: item.memo_id ?? item.memo?.id ?? "",
-  //     status: item.memo?.status ?? item.status ?? "N/A",
-  //   }));
 
   const memoIdsFromDetail: string[] | undefined = (() => {
     if (!detailData) return undefined;
@@ -89,6 +70,7 @@ const AssignHelperTable: React.FC<AssignHelperTableProps> = ({
       picking_phone: item.picking_phone ?? "",
       memo_id: item.memo_id ?? item.memo?.id ?? "",
       status: item.memo?.status ?? item.status ?? "N/A",
+      outbound_memo_number: item.memo?.outbound_memo_number ?? "N/A",
     }));
 
   return (

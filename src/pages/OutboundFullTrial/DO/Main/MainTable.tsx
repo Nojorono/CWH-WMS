@@ -47,17 +47,6 @@ const MainTable = () => {
     <>
       <div className="p-4 bg-white shadow rounded-md mb-5">
         <div className="flex justify-between items-center">
-          {/* <div className="space-x-4">
-            <Label htmlFor="search">Search</Label>
-            <Input
-              onChange={(e) => setGlobalFilter(e.target.value)}
-              type="text"
-              id="search"
-              placeholder="🔍 Masukan data.."
-              value={globalFilter}
-            />
-          </div> */}
-
           <div className="space-x-4">
             <Label htmlFor="status">Status</Label>
             <Select
