@@ -13,8 +13,14 @@ import {
   useStoreOutboundDeliveryOrder,
   useStorePickingAssignHelper,
 } from "../../../../DynamicAPI/stores/Store/MasterStore";
-import { useLocation } from "react-router";
-import { FaClipboardList, FaEye, FaTasks, FaUsers } from "react-icons/fa";
+import { useLocation, useNavigate } from "react-router";
+import {
+  FaArrowLeft,
+  FaClipboardList,
+  FaEye,
+  FaTasks,
+  FaUsers,
+} from "react-icons/fa";
 import SuggestionTable from "../Table/SuggestionPicking/SuggestionTable";
 import ModalPickingList from "../Modal/ModalPickingList";
 import ModalAssignHelper from "../Modal/ModalAssignHelper";
@@ -23,8 +29,8 @@ import { MemoFormValues } from "../Types/types";
 import AssignHelperTable from "../Table/AssignHelper";
 import { SuggestionItemLocation } from "./SuggestionItemLocation";
 
-
 const PickingSuggestion: React.FC = () => {
+  const navigate = useNavigate();
   const location = useLocation();
   const { data: deliveryOrderId, mode, title } = location.state || {};
   const isSuggestion = mode === "suggestion";
@@ -223,20 +229,34 @@ const PickingSuggestion: React.FC = () => {
       <SuggestionItemLocation
         memoDetail={selectedMemoForSuggestion}
         DOid={deliveryOrderId}
-         onBack={() => setSelectedMemoForSuggestion(null)}
+        onBack={() => setSelectedMemoForSuggestion(null)}
       />
     );
   }
 
+  const handleBack = () => {
+    navigate(-1); // Ini akan membawa kembali ke /memo?page=x
+  };
+
   // === Default Layout ===
   return (
     <div className="p-6 space-y-6">
-      <PageBreadcrumb
-        breadcrumbs={[
-          { title: "Delivery Order List", path: "/outbound_do" },
-          { title: title || "Detail", path: "#" },
-        ]}
-      />
+      <div className="flex justify-between items-center">
+        <PageBreadcrumb
+          breadcrumbs={[
+            { title: "Delivery Order List", path: "/outbound_do" },
+            { title: title || "Detail", path: "#" },
+          ]}
+        />
+
+        <Button
+          variant="primary"
+          onClick={handleBack}
+          startIcon={<FaArrowLeft />}
+        >
+          Back to List DO
+        </Button>
+      </div>
 
       {/* === FORM DETAIL === */}
       <section className="bg-white p-5 rounded-xl shadow-sm border border-gray-200">
@@ -253,6 +273,7 @@ const PickingSuggestion: React.FC = () => {
           watch={methods.watch}
         />
       </section>
+
       <TabsSection
         tabs={[
           {
