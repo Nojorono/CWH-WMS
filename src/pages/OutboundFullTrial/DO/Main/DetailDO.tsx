@@ -16,6 +16,7 @@ import {
 import { useLocation, useNavigate } from "react-router";
 import { formatDateIndo } from "../../../../helper/FormatDate";
 import ConfirmationModal from "../Modal/Sequence";
+import { FaArrowLeft } from "react-icons/fa";
 
 type MemoFormValues = {
   requestor: string;
@@ -179,7 +180,6 @@ const DetailDO: React.FC = () => {
       };
 
       console.log("Final PAYLOAD to submit:", PAYLOAD);
-      
 
       const res = await createData(PAYLOAD);
       if (res?.success) {
@@ -201,12 +201,22 @@ const DetailDO: React.FC = () => {
 
   return (
     <div className="p-6 space-y-6">
-      <PageBreadcrumb
-        breadcrumbs={[
-          { title: "Delivery Order List", path: "/outbound_do" },
-          { title: title || "Detail", path: "#" },
-        ]}
-      />
+      <div className="flex justify-between items-center">
+        <PageBreadcrumb
+          breadcrumbs={[
+            { title: "Delivery Order List", path: "/outbound_do" },
+            { title: title || "Detail", path: "#" },
+          ]}
+        />
+
+        <Button
+          variant="primary"
+          onClick={() => navigate(-1)}
+          startIcon={<FaArrowLeft />}
+        >
+          Back to List DO
+        </Button>
+      </div>
 
       {/* === FORM DETAIL === */}
       <section className="bg-white p-5 rounded-xl shadow-sm border border-gray-200">
