@@ -31,11 +31,11 @@ const ModalReviewFinalSuggestion: React.FC<Props> = ({
 }) => {
   if (!open) return null;
 
-  console.log("Review Data:", data);
-
   const hasError = data.some(
     (g) => g.status === "OVER" || g.status === "UOM_MISMATCH"
   );
+
+  const isDataEmpty = !data || data.length === 0;
 
   return (
     <div className="fixed inset-0 z-999 flex items-center justify-center backdrop-blur-md bg-transparent">
@@ -124,7 +124,7 @@ const ModalReviewFinalSuggestion: React.FC<Props> = ({
 
           <Button
             variant="action"
-            disabled={hasError}
+            disabled={hasError || isDataEmpty}
             onClick={() => {
               Swal.fire({
                 icon: "question",

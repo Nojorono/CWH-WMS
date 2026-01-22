@@ -125,10 +125,26 @@ export default function InboundPlanningFormContainer() {
 
   // SUBMIT CREATE OR UPDATE
   const onFinalSubmit = async (data: FormValues) => {
-    const payload = mapToPayload(data);   
-    
-    console.log("Final payload to submit:", payload);
-    
+    let payload = mapToPayload(data);
+
+    // Bersihkan inbound_po_date jika kosong di setiap item inbound_dos
+    if (payload.inbound_dos && Array.isArray(payload.inbound_dos)) {
+      payload.inbound_dos = payload.inbound_dos.map((doItem: any) => {
+        // Buat salinan item untuk menghindari mutasi langsung
+        const cleanedDo = { ...doItem };
+
+        // Hapus properti jika string kosong, null, atau hanya berisi spasi
+        if (
+          !cleanedDo.inbound_po_date ||
+          cleanedDo.inbound_po_date.trim() === ""
+        ) {
+          delete cleanedDo.inbound_po_date;
+        }
+
+        return cleanedDo;
+      });
+    }
+
     const id = dataInbound?.id;
     if (isCreateMode) {
       const res = await createData(payload);

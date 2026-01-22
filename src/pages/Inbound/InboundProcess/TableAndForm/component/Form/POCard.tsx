@@ -1,9 +1,5 @@
 import { useEffect, useState } from "react";
-import {
-  useFormContext,
-  useFieldArray,
-  useWatch,
-} from "react-hook-form";
+import { useFormContext, useFieldArray, useWatch } from "react-hook-form";
 import { FormValues, ItemForm } from "../formTypes";
 import { inputCls } from "../constants";
 import ItemTable from "../Table/ItemTable";
@@ -257,10 +253,10 @@ export default function POCard({
       }
 
       // Set Nama Vendor (Casting to any to avoid TS Error)
-      if (so.CUSTOMER_NAME || so.VENDOR_NAME) {
+      if (so.ORG_NAME) {
         setValue(
           `deliveryOrders.${doIndex}.pos.${posIndex}.vendor_name` as any,
-          so.CUSTOMER_NAME || so.VENDOR_NAME
+          so.ORG_NAME
         );
       }
 

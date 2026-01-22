@@ -92,7 +92,9 @@ export function mapDetailToFormValues(detail: any): FormValues {
             pos: [
                 {
                     po_no: doItem.inbound_po_number ?? "",
-                    po_date: doItem.inbound_po_date ?? "",
+                    po_date: doItem.inbound_po_date
+                        ? new Date(doItem.inbound_po_date).toISOString()
+                        : "",
                     flag_validated: doItem.flag_validated ?? false,
 
                     // --- 🧱 Mapping Items
