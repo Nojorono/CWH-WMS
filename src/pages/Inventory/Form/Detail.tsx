@@ -1,6 +1,6 @@
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import { useEffect, useState } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import DynamicForm, {
   FieldConfig,
@@ -9,6 +9,8 @@ import { useStoreInventoryTracking } from "../../../DynamicAPI/stores/Store/Mast
 import MovementHistoryTable from "../Tabs/HistoryTable";
 import TabsSection from "../../../components/wms-components/inbound-component/tabs/TabsSection";
 import CurrentQuantityTable from "../../Master/MasterPallet/Tabs/Current";
+import Button from "../../../components/ui/button/Button";
+import { FaArrowLeft } from "react-icons/fa";
 
 // === Helper Function: Mapping Data API → Form ===
 function mapDetailToForm(detail: any) {
@@ -80,6 +82,7 @@ function buildFieldsConfig(isDetailMode: boolean): FieldConfig[] {
 // === Main Component ===
 export default function DetailInventory() {
   const location = useLocation();
+  const navigate = useNavigate();
   const { invListId } = location.state || {};
 
   // === Zustand Store ===
@@ -123,12 +126,22 @@ export default function DetailInventory() {
   return (
     <div className="p-6 bg-slate-50 min-h-screen">
       {/* Breadcrumb Header */}
-      <PageBreadcrumb
-        breadcrumbs={[
-          { title: "Inventory List", path: "/inventory" },
-          { title: "Inventory Detail", path: "/inventory/detail" },
-        ]}
-      />
+      <div className="flex justify-between items-center">
+        <PageBreadcrumb
+          breadcrumbs={[
+            { title: "Inventory List", path: "/main_inventory" },
+            { title: "Inventory Detail", path: "/inventory/detail" },
+          ]}
+        />
+
+        <Button
+          variant="primary"
+          onClick={() => navigate(-1)}
+          startIcon={<FaArrowLeft />}
+        >
+          Back to List Inventory
+        </Button>
+      </div>
 
       {/* Form Section */}
       <section className="mt-6 flex justify-center">

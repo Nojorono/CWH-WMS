@@ -18,7 +18,7 @@ import { useLocation, useNavigate } from "react-router";
 import { EndPoint } from "../../../../utils/EndPoint";
 import { useCustomerByOutboundType } from "./FetchCustomer";
 import Select from "../../../../components/form/Select";
-import { FaCheck, FaUndo } from "react-icons/fa";
+import { FaArrowLeft, FaCheck, FaUndo } from "react-icons/fa";
 import Swal from "sweetalert2";
 import { formatDateIndo } from "../../../../helper/FormatDate";
 
@@ -59,14 +59,6 @@ const LoadingIndicator = () => (
     <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-orange-500 border-solid"></div>
   </div>
 );
-
-// export const formatDate = (date: Date | string | null): string => {
-//   if (!date) return "";
-//   const d = typeof date === "string" ? new Date(date) : date;
-//   const tzOffset = d.getTimezoneOffset() * 60000;
-//   const localISO = new Date(d.getTime() - tzOffset).toISOString().slice(0, 10);
-//   return localISO; // Hasil: "2025-10-14"
-// };
 
 const CreateMemo: React.FC = () => {
   const location = useLocation();
@@ -248,24 +240,6 @@ const CreateMemo: React.FC = () => {
     if (!detailDataMemo || (!isDetail && !isEdit)) return;
 
     const dateOnly = formatDateIndo(detailDataMemo.delivery_date);
-
-    // methods.reset({
-    //   requestor: detailDataMemo.requestor || "",
-    //   origin: detailDataMemo.origin || "",
-    //   ship_to: detailDataMemo.ship_to || "",
-    //   destination: detailDataMemo.destination || "",
-    //   delivery_date: dateOnly,
-    //   notes: detailDataMemo.notes || "",
-    //   type_outbound: detailDataMemo.type
-    //     ? { label: detailDataMemo.type, value: detailDataMemo.type }
-    //     : { label: "", value: "" },
-    //   selected_destination: detailDataMemo.ship_to
-    //     ? {
-    //         label: detailDataMemo.ship_to,
-    //         value: detailDataMemo.ship_to,
-    //       }
-    //     : { label: "", value: "" },
-    // });
 
     methods.reset({
       requestor: detailDataMemo.requestor || "",
@@ -586,14 +560,29 @@ const CreateMemo: React.FC = () => {
     );
   }
 
+  const handleBack = () => {
+    navigate(-1); // Ini akan membawa kembali ke /memo?page=x
+  };
+
   return (
     <div className="p-6 space-y-6">
-      <PageBreadcrumb
-        breadcrumbs={[
-          { title: "All Memo", path: "/memo" },
-          { title: title || "Process Memo", path: "/memo/process" },
-        ]}
-      />
+      <div className="flex justify-between items-center">
+        <PageBreadcrumb
+          breadcrumbs={[
+            { title: "All Memo", path: "/memo" },
+            { title: title || "Process Memo", path: "/memo/process" },
+          ]}
+        />
+
+        {/* TOMBOL BACK DI ATAS */}
+        <Button
+          variant="primary"
+          onClick={handleBack}
+          startIcon={<FaArrowLeft />}
+        >
+          Back to List Memo
+        </Button>
+      </div>
 
       {/* FORM */}
       <section className="bg-white p-4 rounded-xl shadow-sm mb-6">

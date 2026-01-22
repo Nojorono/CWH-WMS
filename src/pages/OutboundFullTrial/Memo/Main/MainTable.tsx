@@ -1,6 +1,5 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import Input from "../../../../components/form/input/InputField";
 import AdjustTable from "./AdjustTable";
 import Label from "../../../../components/form/Label";
 import Button from "../../../../components/ui/button/Button";
@@ -15,8 +14,7 @@ const MainTable = () => {
   const [selectedStatus, setSelectedStatus] = useState<any>(null);
   const [selectedTypeOutbound, setSelectedTypeOutbound] = useState<any>(null);
   const [selectedHasDO, setSelectedHasDO] = useState<any>(null);
-
-
+  
   const handleCreate = () => {
     navigate("/memo/process", {
       state: { data: [], mode: "create", title: "Create Memo Form" },
