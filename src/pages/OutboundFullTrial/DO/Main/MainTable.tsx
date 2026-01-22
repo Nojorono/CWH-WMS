@@ -14,11 +14,6 @@ const MainTable = () => {
   const [selectedStatus, setSelectedStatus] = useState<any>(null);
   const [selectedTypeOutbound, setSelectedTypeOutbound] = useState<any>(null);
 
-  const handleResetFilters = () => {
-    setGlobalFilter("");
-    setSelectedStatus(null);
-  };
-
   const handleCreate = () => {
     navigate("/outbound_do/process", {
       state: { data: [], mode: "create", title: "Create DO" },
@@ -47,17 +42,6 @@ const MainTable = () => {
     <>
       <div className="p-4 bg-white shadow rounded-md mb-5">
         <div className="flex justify-between items-center">
-          {/* <div className="space-x-4">
-            <Label htmlFor="search">Search</Label>
-            <Input
-              onChange={(e) => setGlobalFilter(e.target.value)}
-              type="text"
-              id="search"
-              placeholder="🔍 Masukan data.."
-              value={globalFilter}
-            />
-          </div> */}
-
           <div className="space-x-4">
             <Label htmlFor="status">Status</Label>
             <Select

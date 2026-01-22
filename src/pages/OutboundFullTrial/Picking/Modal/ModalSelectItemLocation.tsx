@@ -50,10 +50,8 @@ export default function ModalInventoryItemModal({
           }
         );
         const data = await response.json();
-        console.log("Fetched item data:", data);
         
         // Handle the fetched data as needed
-        console.log(data);
         setItemList(data.data);
       } catch (error) {
         console.error("Error fetching item:", error);
@@ -239,6 +237,15 @@ export default function ModalInventoryItemModal({
             />
           </div>
 
+          
+        {/* DUPLICATE LOCATION INFO */}
+        {isDuplicateLocationInAdd && (
+          <div className="mt-3 p-3 rounded-md bg-red-50 border border-red-200 text-sm text-black-800">
+            Selected location sudah ada untuk item ini pada week yang sama.
+            Mohon pilih week dan lokasi lain!
+          </div>
+        )}
+
           {/* LOCATION */}
           <div>
             <label className="font-semibold text-gray-700 text-sm">
@@ -321,13 +328,6 @@ export default function ModalInventoryItemModal({
           )}
         </div>
 
-        {/* DUPLICATE LOCATION INFO */}
-        {isDuplicateLocationInAdd && (
-          <div className="mt-3 p-3 rounded-md bg-yellow-50 border border-yellow-200 text-sm text-yellow-800">
-            Selected location sudah ada untuk item ini pada week yang sama.
-            Mohon pilih week dan lokasi lain!
-          </div>
-        )}
 
         {/* QTY PICK */}
         <div>

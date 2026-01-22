@@ -77,11 +77,11 @@ export const useAuthStore = create<AuthState>((set) => ({
       const response = await loginService(data);
       const resData = response.data?.data || response.data || response;
 
-      if (!resData || !resData.token || !resData.user) {
+      if (!resData || !resData.accessToken || !resData.user) {
         throw new Error("Invalid login response structure");
       }
 
-      const accessToken = resData.token;
+      const accessToken = resData.accessToken;
       const refreshToken = resData.refreshToken || null;
       const user = resData.user;
       const menus = resData.menus || [];

@@ -34,7 +34,8 @@ import {
     MasterAMOService,
     MasterSubdistService,
     ApprovalSetUpService,
-    PickingTransactionListService
+    PickingTransactionListService,
+    InventoryVisibilityService
 } from "../../services/Service/MasterService";
 
 import { Uom, CreateUom, UpdateUom } from "../../types/UomTypes";
@@ -70,6 +71,7 @@ import { CreateMasterAMO, UpdateMasterAMO, MasterAMO } from "../../types/MasterA
 import { MasterSubdist, CreateMasterSubdist, UpdateMasterSubdist } from "../../types/MasterSubdistTypes.ts";
 import { ApprovalSetUp, CreateApprovalSetUp, UpdateApprovalSetUp } from "../../types/ApprovalSetUpTypes";
 
+import { InventoryVisibilityResponse } from '../../types/InventoryVisibilty.ts'
 
 
 // Daftar semua store di sini
@@ -248,3 +250,7 @@ export const useStoreApprovalSetUp = createCrudStore<ApprovalSetUp, CreateApprov
     service: ApprovalSetUpService,
 });
 
+export const useStoreInventoryVisibility = createCrudStore<InventoryVisibilityResponse, null, null>({
+    name: "InventoryVisibility",
+    service: InventoryVisibilityService,
+});

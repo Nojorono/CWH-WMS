@@ -9,6 +9,7 @@ import { useStoreOutboundDeliveryOrder } from "../../../../DynamicAPI/stores/Sto
 import { useLocation, useNavigate } from "react-router";
 import { formatDateIndo } from "../../../../helper/FormatDate";
 import {
+  FaArrowLeft,
   FaCheck,
   FaEye,
   FaPlus,
@@ -217,14 +218,28 @@ const DetachAttach: React.FC = () => {
     }
   };
 
+  const handleBack = () => {
+    navigate(-1); // Ini akan membawa kembali ke /memo?page=x
+  };
+
   return (
     <div className="p-6 space-y-6">
-      <PageBreadcrumb
-        breadcrumbs={[
-          { title: "Picking Transaction", path: "/picking_transaction" },
-          { title: "Lepas Memo & Cancel Task", path: "#" },
-        ]}
-      />
+      <div className="flex justify-between items-center">
+        <PageBreadcrumb
+          breadcrumbs={[
+            { title: "Picking Transaction", path: "/picking_transaction" },
+            { title: "Lepas Memo & Cancel Task", path: "#" },
+          ]}
+        />
+
+        <Button
+          variant="primary"
+          onClick={handleBack}
+          startIcon={<FaArrowLeft />}
+        >
+          Back to List DO
+        </Button>
+      </div>
 
       <section className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
         {/* HEADER + ACTIONS */}
@@ -234,7 +249,7 @@ const DetachAttach: React.FC = () => {
           </h3>
 
           <div className="flex gap-2">
-            {statusDO === "APPROVED" ? null : (
+            {statusDO === "APPROVED" || statusDO === "APPROVED_LOAD" ? null : (
               <Button
                 size="sm"
                 variant="secondary"

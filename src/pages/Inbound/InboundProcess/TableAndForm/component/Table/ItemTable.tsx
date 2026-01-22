@@ -30,6 +30,18 @@ export default function ItemTable({
 }) {
   const { register } = useFormContext<FormValues>();
 
+  // Cek apakah ada minimal satu quantity_inspection yang terisi
+  const showQtyInspection = useMemo(
+    () =>
+      items.some(
+        (item) =>
+          item.quantity_inspection !== undefined &&
+          item.quantity_inspection !== "" &&
+          item.quantity_inspection !== 0
+      ),
+    [items]
+  );
+
   const columns = useMemo<ColumnDef<ItemForm>[]>(
     () => [
       {
@@ -59,6 +71,24 @@ export default function ItemTable({
           );
         },
       },
+      ...(showQtyInspection
+        ? [
+            {
+              accessorKey: "quantity_inspection",
+              header: "Qty Inspection",
+              cell: ({ row }: CellContext<ItemForm, unknown>) => {
+                const value = row.original.quantity_inspection;
+                return (
+                  <div>
+                    {value !== undefined && value !== null && value !== ""
+                      ? value
+                      : "-"}
+                  </div>
+                );
+              },
+            },
+          ]
+        : []),
       {
         accessorKey: "uom",
         header: "UOM",

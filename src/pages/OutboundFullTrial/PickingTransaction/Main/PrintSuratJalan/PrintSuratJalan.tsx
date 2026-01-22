@@ -3,6 +3,9 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { useReactToPrint } from "react-to-print";
 import PrintTemplate from "./PrintTemplate";
 import { useStoreOutboundDeliveryOrder } from "../../../../../DynamicAPI/stores/Store/MasterStore";
+import Swal from "sweetalert2";
+import Button from "../../../../../components/ui/button/Button";
+import { FaArrowLeft } from "react-icons/fa";
 
 const PrintSuratJalan = () => {
   const location = useLocation();
@@ -23,6 +26,32 @@ const PrintSuratJalan = () => {
   useEffect(() => {
     if (params) fetchById(params);
   }, [params, fetchById]);
+
+  const handleConfirmPrint = async () => {
+    const result = await Swal.fire({
+      title: "PERHATIAN",
+      html: `Pastikan Nomor Seal dan data lainnya sudah benar.<br><br>Dokumen yang sudah dicetak <b>tidak dapat diubah kembali</b>.<br><br>Lanjutkan cetak?`,
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "Ya, Cetak Sekarang",
+      cancelButtonText: "Batal",
+      reverseButtons: true,
+      focusCancel: true,
+      // Tambahkan ini agar alert muncul di atas modal
+      target: document.body,
+      didOpen: () => {
+        // Memaksa Z-Index SweetAlert lebih tinggi dari modal Anda (9999)
+        const container = Swal.getContainer();
+        if (container) {
+          container.style.zIndex = "10000";
+        }
+      },
+    });
+
+    if (result.isConfirmed) {
+      handlePrint();
+    }
+  };
 
   const handlePrint = useReactToPrint({
     contentRef: printRef,
@@ -53,12 +82,14 @@ const PrintSuratJalan = () => {
               Pilih memo untuk mencetak dokumen operasional
             </p>
           </div>
-          <button
+
+          <Button
+            variant="primary"
             onClick={() => navigate(-1)}
-            className="text-slate-600 hover:text-slate-800 font-medium transition"
+            startIcon={<FaArrowLeft />}
           >
-            ← Kembali
-          </button>
+            Back to List DO
+          </Button>
         </header>
 
         {/* Tabel List Memo yang Diperbaiki */}
@@ -195,7 +226,7 @@ const PrintSuratJalan = () => {
                   ← Ubah Seal Number
                 </button>
                 <button
-                  onClick={handlePrint}
+                  onClick={handleConfirmPrint}
                   className="bg-green-600 hover:bg-green-700 text-white px-10 py-3 rounded-xl font-bold shadow-lg shadow-green-200 transition active:scale-95"
                 >
                   Cetak Sekarang
