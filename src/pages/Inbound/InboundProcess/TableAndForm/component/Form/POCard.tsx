@@ -399,7 +399,7 @@ export default function POCard({
         {!isDetailMode && (
           <div>
             <label className="block text-xs text-slate-600 mb-1">
-              Nama Vendor
+              Nama Pengirim
             </label>
             <input
               className={`${inputCls} bg-gray-100 text-gray-500 cursor-not-allowed w-full`}
