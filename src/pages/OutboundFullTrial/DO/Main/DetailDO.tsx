@@ -248,7 +248,7 @@ const DetailDO: React.FC = () => {
                   )
                 : approvedMemos.filter(
                     (m: any) => typeof m.id === "string"
-                  )) as import("d:/New-WMS/src/DynamicAPI/types/DeliverOrderTypes").OutboundMemo[]
+                  )) as import("../../../../DynamicAPI/types/DeliverOrderTypes").OutboundMemo[]
             }
             columns={columnsTableItem}
             pageSize={10}
