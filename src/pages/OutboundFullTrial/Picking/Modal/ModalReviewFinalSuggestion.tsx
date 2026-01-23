@@ -42,6 +42,7 @@ const ModalReviewFinalSuggestion: React.FC<Props> = ({
       <div className="bg-white w-2/5 max-h-[90vh] overflow-auto rounded-lg shadow-lg p-6">
         <h2 className="text-lg font-bold mb-4">Review Final Suggestion</h2>
 
+        
         {data.map((group) => (
           <div key={group.item_id} className="border rounded-lg p-4 mb-5">
             {/* ===== CARD SUMMARY ===== */}
