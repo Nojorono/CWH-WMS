@@ -1,4 +1,6 @@
-import axios from "axios";
+// import axios from "axios";
+import axiosInstance from "../../../../DynamicAPI/AxiosInstance";
+
 
 const API_BASE_URL = "http://10.0.29.47:9005";
 
@@ -19,8 +21,7 @@ export async function fetchAssignedGate(): Promise<AssignedGateResponse> {
             throw new Error("Token not found in localStorage");
         }
 
-        const response = await axios.get(
-            // `${API_BASE_URL}/assigned-gate?status=PENDING`,
+        const response = await axiosInstance.get(
             `${API_BASE_URL}/assigned-gate`,
 
             {

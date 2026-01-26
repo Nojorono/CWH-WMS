@@ -21,6 +21,7 @@ type Props = {
   isCreateMode: boolean;
   isEditMode: boolean;
   isDetailMode: boolean;
+  isAddToReceiveMode: boolean;
   formTitle: string;
   handlePreview: () => void;
   previewData: FormValues | null;
@@ -30,6 +31,7 @@ type Props = {
   reset: (values: FormValues) => void;
   emptyFormValues: FormValues;
   inboundID?: string;
+  inboundNumber?: string;
 };
 
 // ==== Helpers ==== //
@@ -101,11 +103,12 @@ const buildFieldsConfig = (isDetailMode: boolean): FieldConfig[] => {
 const ActionButtons = ({
   isCreateMode,
   isEditMode,
+  isAddToReceiveMode,
   appendDO,
   reset,
   emptyFormValues,
 }: Props) => {
-  if (!(isCreateMode || isEditMode)) return null;
+  if (!(isCreateMode || isEditMode || isAddToReceiveMode)) return null;
 
   return (
     <div className="mt-4 flex justify-end gap-1">
@@ -132,6 +135,7 @@ const DOSection = ({
   isCreateMode,
   isDetailMode,
   isEditMode,
+  isAddToReceiveMode,
   methods,
 }: Props & { methods: UseFormReturn<FormValues> }) => {
   const inboundTypeObj = methods.watch("inbound_type");
@@ -153,6 +157,7 @@ const DOSection = ({
           isCreateMode={isCreateMode}
           isDetailMode={isDetailMode}
           isEditMode={isEditMode}
+          isAddToReceiveMode={isAddToReceiveMode}
           inbType={inboundType as "PO" | "SO" | "RETUR"}
         />
       ))}
@@ -186,7 +191,6 @@ const DetailTabs = ({
                   totalDO={doFields.length}
                   isEditMode={false}
                   isDetailMode={true}
-                  // isCreateMode={false}
                   inbType={inboundType as "PO" | "SO" | "RETUR"}
                 />
               ))}
@@ -211,10 +215,11 @@ const DetailTabs = ({
 const SubmitSection = ({
   isCreateMode,
   isEditMode,
+  isAddToReceiveMode,
   handlePreview,
   methods,
 }: Props) => {
-  if (!(isCreateMode || isEditMode)) return null;
+  if (!(isCreateMode || isEditMode || isAddToReceiveMode)) return null;
 
   const values = methods.watch();
   const deliveryOrders = values.deliveryOrders || [];
@@ -300,14 +305,18 @@ export default function InboundPlanningFormView(props: Props) {
     isCreateMode,
     isEditMode,
     isDetailMode,
+    isAddToReceiveMode,
     formTitle,
     onFinalSubmit,
     previewData,
     isConfirmOpen,
     setIsConfirmOpen,
+    inboundNumber,
   } = props;
 
   const fieldsConfig = buildFieldsConfig(isDetailMode);
+
+  console.log("Inbound Number:", inboundNumber);
 
   return (
     <div className="p-6 bg-slate-50 min-h-screen">
@@ -315,7 +324,9 @@ export default function InboundPlanningFormView(props: Props) {
         breadcrumbs={[
           { title: "Inbound List", path: "/inbound_planning" },
           {
-            title: isCreateMode
+            title: isAddToReceiveMode
+              ? "Add to Receive Inbound"
+              : isCreateMode
               ? "Create Inbound Planning"
               : isEditMode
               ? formTitle
@@ -324,6 +335,10 @@ export default function InboundPlanningFormView(props: Props) {
           },
         ]}
       />
+
+      <h3 className="text-xl font-semibold text-slate-700 mb-4">
+        Reference Inbound No ({inboundNumber})
+      </h3>
 
       {/* Header Form */}
       <section className="bg-white p-4 rounded-xl shadow-sm mb-6">
@@ -344,7 +359,7 @@ export default function InboundPlanningFormView(props: Props) {
       <ActionButtons {...props} />
 
       {/* Delivery Orders / Tabs */}
-      {(isCreateMode || isEditMode) && (
+      {(isCreateMode || isEditMode || isAddToReceiveMode) && (
         <DOSection {...props} methods={methods} />
       )}
       {isDetailMode && (
@@ -360,7 +375,7 @@ export default function InboundPlanningFormView(props: Props) {
       <SubmitSection {...props} methods={methods} />
 
       {/* Confirmation Modal */}
-      {(isCreateMode || isEditMode) && previewData && (
+      {(isCreateMode || isEditMode || isAddToReceiveMode) && previewData && (
         <ConfirmationModal
           isOpen={isConfirmOpen}
           onClose={() => setIsConfirmOpen(false)}

@@ -10,24 +10,12 @@ const GateLoadingPage = () => {
   const [assignedGateList, setAssignedGateList] = useState<any[]>([]);
   const [selectedDOId, setSelectedDOId] = useState<string | null>(null);
 
-  // const refreshData = async () => {
-  //   setLoading(true);
-  //   const res = await fetchAssignedGate();
-  //   if (res.success) {
-  //     const uiData = mapOutboundGateToUILoading(res.data);
-  //     setAssignedGateList(uiData);
-  //     if (uiData.length > 0 && !selectedDOId) setSelectedDOId(uiData[0].do_id);
-  //   }
-  //   setLoading(false);
-  // };
-
   const refreshData = async () => {
     setLoading(true);
     const res = await fetchAssignedGate();
     if (res.success) {
       let uiData = mapOutboundGateToUILoading(res.data);
-      // Filter: hanya tampilkan data yang status-nya BUKAN "APPROVED"
-      uiData = uiData.filter((item: any) => item.status !== "APPROVED_LOAD" );      
+      uiData = uiData.filter((item: any) => item.status !== "APPROVED" );      
       setAssignedGateList(uiData);
       if (uiData.length > 0 && !selectedDOId) setSelectedDOId(uiData[0].do_id);
     }

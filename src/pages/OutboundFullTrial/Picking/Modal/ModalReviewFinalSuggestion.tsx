@@ -31,17 +31,18 @@ const ModalReviewFinalSuggestion: React.FC<Props> = ({
 }) => {
   if (!open) return null;
 
-  console.log("Review Data:", data);
-
   const hasError = data.some(
     (g) => g.status === "OVER" || g.status === "UOM_MISMATCH"
   );
+
+  const isDataEmpty = !data || data.length === 0;
 
   return (
     <div className="fixed inset-0 z-999 flex items-center justify-center backdrop-blur-md bg-transparent">
       <div className="bg-white w-2/5 max-h-[90vh] overflow-auto rounded-lg shadow-lg p-6">
         <h2 className="text-lg font-bold mb-4">Review Final Suggestion</h2>
 
+        
         {data.map((group) => (
           <div key={group.item_id} className="border rounded-lg p-4 mb-5">
             {/* ===== CARD SUMMARY ===== */}
@@ -124,7 +125,7 @@ const ModalReviewFinalSuggestion: React.FC<Props> = ({
 
           <Button
             variant="action"
-            disabled={hasError}
+            disabled={hasError || isDataEmpty}
             onClick={() => {
               Swal.fire({
                 icon: "question",

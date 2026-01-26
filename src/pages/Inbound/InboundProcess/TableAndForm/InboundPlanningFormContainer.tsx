@@ -33,6 +33,7 @@ export default function InboundPlanningFormContainer() {
   const isCreateMode = mode === "create";
   const isEditMode = mode === "edit";
   const isDetailMode = mode === "detail";
+  const isAddToReceiveMode = mode === "add";
 
   const { fetchById, detail, createData, updateData } =
     useStoreInboundGoodStock();
@@ -62,7 +63,15 @@ export default function InboundPlanningFormContainer() {
     else if (isDetailMode && dataInbound)
       reset(mapDetailToFormValues(dataInbound));
     else if (isCreateMode) reset(emptyFormValues);
-  }, [isEditMode, isDetailMode, isCreateMode, detail, dataInbound, reset]);
+  }, [
+    isEditMode,
+    isDetailMode,
+    isCreateMode,
+    isAddToReceiveMode,
+    detail,
+    dataInbound,
+    reset,
+  ]);
 
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [previewData, setPreviewData] = useState<FormValues | null>(null);
@@ -125,26 +134,75 @@ export default function InboundPlanningFormContainer() {
 
   // SUBMIT CREATE OR UPDATE
   const onFinalSubmit = async (data: FormValues) => {
-    const payload = mapToPayload(data);   
-    
-    console.log("Final payload to submit:", payload);
-    
+    let payload = mapToPayload(data);
+
+    // Bersihkan inbound_po_date jika kosong di setiap item inbound_dos
+    if (payload.inbound_dos && Array.isArray(payload.inbound_dos)) {
+      payload.inbound_dos = payload.inbound_dos.map((doItem: any) => {
+        // Buat salinan item untuk menghindari mutasi langsung
+        const cleanedDo = { ...doItem };
+        // Hapus properti jika string kosong, null, atau hanya berisi spasi
+        if (
+          !cleanedDo.inbound_po_date ||
+          cleanedDo.inbound_po_date.trim() === ""
+        ) {
+          delete cleanedDo.inbound_po_date;
+        }
+
+        return cleanedDo;
+      });
+    }
+
     const id = dataInbound?.id;
+
+    // 1. Tentukan fungsi API mana yang akan dipanggil
+    let apiAction = null;
+
     if (isCreateMode) {
-      const res = await createData(payload);
-      if (res?.success) {
-        reset(emptyFormValues);
-        setIsConfirmOpen(false);
-        navigate("/inbound_planning");
-      }
+      console.log("Create Payload:", payload);
+      apiAction = () => createData(payload);
     } else if (isEditMode && id) {
-      const res = await updateData(id, payload);
+      apiAction = () => updateData(id, payload);
+    } else if (isAddToReceiveMode && id) {
+      const addToReceivePayload = {
+        ...payload,
+        inbound_id_reference: id,
+      };
+
+      console.log("Add to Receive Payload:", addToReceivePayload);
+      apiAction = () => createData(addToReceivePayload);
+    }
+    // 2. Eksekusi jika ada action
+    if (apiAction) {
+      const res = await apiAction();
+
       if (res?.success) {
         reset(emptyFormValues);
         setIsConfirmOpen(false);
         navigate("/inbound_planning");
       }
     }
+
+    // if (isCreateMode ) {
+    //   // const res = await createData(payload);
+    //   // if (res?.success) {
+    //   //   reset(emptyFormValues);
+    //   //   setIsConfirmOpen(false);
+    //   //   navigate("/inbound_planning");
+    //   // }
+    //   console.log("Create Payload:", payload);
+    // }else if (isAddToReceiveMode) {
+    //   console.log("Add Payload:", payload);
+    // }else if (isEditMode && id) {
+    //   // const res = await updateData(id, payload);
+    //   // if (res?.success) {
+    //   //   reset(emptyFormValues);
+    //   //   setIsConfirmOpen(false);
+    //   //   navigate("/inbound_planning");
+    //   // }
+
+    //   console.log("Update Payload for ID", id, ":", payload);
+    // }
   };
 
   return (
@@ -159,6 +217,7 @@ export default function InboundPlanningFormContainer() {
         isCreateMode={isCreateMode}
         isEditMode={isEditMode}
         isDetailMode={isDetailMode}
+        isAddToReceiveMode={isAddToReceiveMode}
         formTitle={formTitle}
         onFinalSubmit={onFinalSubmit}
         handlePreview={handlePreview}
@@ -168,6 +227,7 @@ export default function InboundPlanningFormContainer() {
         reset={reset}
         emptyFormValues={emptyFormValues}
         inboundID={dataInbound.id}
+        inboundNumber={dataInbound.inbound_number}
       />
     </FormProvider>
   );

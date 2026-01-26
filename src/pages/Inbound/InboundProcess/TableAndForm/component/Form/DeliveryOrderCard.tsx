@@ -29,6 +29,7 @@ export default function DeliveryOrderCard({
   isEditMode,
   isDetailMode,
   isCreateMode,
+  isAddToReceiveMode,
   inbType,
 }: {
   doIndex: number;
@@ -37,6 +38,7 @@ export default function DeliveryOrderCard({
   isEditMode?: boolean;
   isDetailMode?: boolean;
   isCreateMode?: boolean;
+  isAddToReceiveMode?: boolean;
   inbType: "PO" | "SO" | "RETUR";
 }) {
   const {
@@ -141,7 +143,6 @@ export default function DeliveryOrderCard({
 
   // ✅ VALIDASI DO DAN AUTO-GENERATE PO
   const handleCheckDO = async () => {
-    
     // if (inbType === "SO") {
     //   showErrorToast(
     //     "Validasi DO hanya untuk PO saja, untuk SO belum tersedia"
@@ -233,9 +234,12 @@ export default function DeliveryOrderCard({
   };
 
   // ✅ Hitung kondisi input aktif
-  const canInputDO = (isCreateMode || isEditMode) && !!inbType;
+  const canInputDO =
+    (isCreateMode || isEditMode || isAddToReceiveMode) && !!inbType;
   const canClickCheckDO =
-    (isCreateMode || isEditMode) && !!inbType && !isDetailMode;
+    (isCreateMode || isEditMode || isAddToReceiveMode) &&
+    !!inbType &&
+    !isDetailMode;
 
   const watchedDO = watch(`deliveryOrders.${doIndex}.do_no`);
   useEffect(() => {
@@ -286,7 +290,7 @@ export default function DeliveryOrderCard({
           </div>
 
           {/* === RIGHT SECTION: Action Buttons === */}
-          {(isEditMode || isCreateMode) && (
+          {(isEditMode || isCreateMode || isAddToReceiveMode) && (
             <div className="flex flex-wrap items-center justify-end gap-2 w-full sm:w-auto">
               {totalDO > 1 && (
                 <Button
@@ -355,7 +359,8 @@ export default function DeliveryOrderCard({
             {/* === Attachment === */}
             <div className="flex flex-col">
               <label className="block text-xs text-slate-600 mb-1">
-                Attachment <span className="text-red-500">*tidak boleh dari 2 MB</span>
+                Attachment{" "}
+                <span className="text-red-500">*tidak boleh dari 2 MB</span>
               </label>
 
               {fileUrl ? (
@@ -371,7 +376,7 @@ export default function DeliveryOrderCard({
                   </a>
 
                   {/* Tombol Delete hanya muncul di Create/Edit Mode */}
-                  {(isCreateMode || isEditMode) && (
+                  {(isCreateMode || isEditMode || isAddToReceiveMode) && (
                     <button
                       type="button"
                       className={`text-xs flex items-center gap-1 ${
@@ -408,7 +413,7 @@ export default function DeliveryOrderCard({
                     disabled={
                       isDetailMode ||
                       uploading ||
-                      (isCreateMode && !isDOChecked) // ⛔️ hanya create mode yang perlu validasi SJ
+                      ((isCreateMode || isAddToReceiveMode) && !isDOChecked)
                     }
                     onChange={async (e) => {
                       if (isDetailMode) return;
@@ -418,8 +423,15 @@ export default function DeliveryOrderCard({
                   />
 
                   {/* Overlay lock hanya muncul di Create Mode + belum validasi SJ */}
-                  {isCreateMode && !isDOChecked && (
-                    <div className="absolute inset-0 flex items-center justify-center bg-gray-100 bg-opacity-70 text-gray-500 text-xs rounded cursor-not-allowed">
+                  {/* {isCreateMode ||
+                    (isAddToReceiveMode && !isDOChecked && (
+                      <div className="absolute inset-0 flex items-center justify-center bg-gray-100 bg-opacity-70 text-gray-500 text-xs rounded cursor-not-allowed">
+                        🔒 Harus validasi SJ dahulu
+                      </div>
+                    ))} */}
+
+                  {(isCreateMode || isAddToReceiveMode) && !isDOChecked && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-gray-100 bg-opacity-70 text-gray-500 text-xs rounded cursor-not-allowed pointer-events-none">
                       🔒 Harus validasi SJ dahulu
                     </div>
                   )}
@@ -481,6 +493,7 @@ export default function DeliveryOrderCard({
                 isEditMode={isEditMode}
                 isDetailMode={isDetailMode}
                 isCreateMode={isCreateMode}
+                isAddToReceiveMode={isAddToReceiveMode}
                 InbType={inbType}
                 dataPO={posField.po_no || ""}
                 isDOChecked={isDOChecked}
