@@ -17,7 +17,6 @@ import PutAway from "../pages/PutAway";
 import PutAwayProcess from "../pages/PutAway/Table/PutAwayProcess";
 import InventoryVisibility from "../pages/InventoryVisibility";
 
-
 // INVENTORY
 import Inventory from "../pages/Inventory";
 import InventoryDetail from "../pages/Inventory/Form/Detail";
@@ -52,15 +51,14 @@ import CreateDO from "../pages/OutboundFullTrial/DO/Main/CreateDO";
 import DetailDO from "../pages/OutboundFullTrial/DO/Main/DetailDO";
 import PickingSuggestion from "../pages/OutboundFullTrial/Picking/Main/PickingSuggestion";
 import PickingTransaction from "../pages/OutboundFullTrial/PickingTransaction";
-import DetachAttachProcess from '../pages/OutboundFullTrial/PickingTransaction/Main/DetachAttach';
-import GateLoading from '../pages/OutboundFullTrial/GateLoading'
+import DetachAttachProcess from "../pages/OutboundFullTrial/PickingTransaction/Main/DetachAttach";
+import GateLoading from "../pages/OutboundFullTrial/GateLoading";
 
 // Approval Set Up
-import ApprovalSetup from '../pages/ApprovalSetup/index'
-import CreateApproval from '../pages/ApprovalSetup/Table/CreateApprovalSetup'
-import ApprovalProcess from '../pages/ApprovalSetup/Table/ApprovalProcess'
+import ApprovalSetup from "../pages/ApprovalSetup/index";
+import CreateApproval from "../pages/ApprovalSetup/Table/CreateApprovalSetup";
+import ApprovalProcess from "../pages/ApprovalSetup/Table/ApprovalProcess";
 import PrintSuratJalan from "../pages/OutboundFullTrial/PickingTransaction/Main/PrintSuratJalan/PrintSuratJalan";
-
 
 export {
   // PAGE MASTER
@@ -115,9 +113,8 @@ export {
   GateLoading,
   PrintSuratJalan,
 
-
   // Approval Set Up
   ApprovalSetup,
   CreateApproval,
-  ApprovalProcess
+  ApprovalProcess,
 };

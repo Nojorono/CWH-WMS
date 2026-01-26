@@ -83,7 +83,7 @@ const AdjustTable = ({
             variant="solid"
             size="sm"
           />
-        ),
+        ), 
       },
       {
         id: "actions",
