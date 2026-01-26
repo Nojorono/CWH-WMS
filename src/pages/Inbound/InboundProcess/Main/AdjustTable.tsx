@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { FaEye, FaEdit, FaTrash } from "react-icons/fa";
+import { FaEye, FaEdit, FaTrash, FaPlus } from "react-icons/fa";
 import { ColumnDef } from "@tanstack/react-table";
 import { useNavigate } from "react-router-dom";
 import { formatDateIndo } from "../../../../helper/FormatDate";
@@ -24,7 +24,7 @@ const AdjustTable = ({
   const navigate = useNavigate();
 
   const { fetchUsingPagination, deleteData, list, pagination, isLoading } =
-    useStoreInboundGoodStock();    
+    useStoreInboundGoodStock();
 
   // 🔹 local state pagination
   const [pageIndex, setPageIndex] = useState(0);
@@ -48,7 +48,11 @@ const AdjustTable = ({
         accessorKey: "inbound_number",
         header: "Inbound No",
       },
-          {
+      {
+        accessorKey: "inbound_id_reference",
+        header: "Inbound ID Reference",
+      },
+      {
         accessorKey: "inbound_type",
         header: "Inbound Type",
       },
@@ -93,6 +97,7 @@ const AdjustTable = ({
                 onClick={() => handleDetail(item)}
                 title="Detail"
               />
+
               {["CREATED", "WAITING FOR REVISION"].includes(item.status) && (
                 <>
                   <FaEdit
@@ -106,6 +111,15 @@ const AdjustTable = ({
                     title="Delete"
                   />
                 </>
+              )}
+
+              {(!item.inbound_id_reference ||
+                item.inbound_id_reference === "") && (
+                <FaPlus
+                  className="size-5 cursor-pointer text-purple-600"
+                  onClick={() => handleAdd(item)}
+                  title="Detail"
+                />
               )}
             </div>
           );
@@ -129,6 +143,13 @@ const AdjustTable = ({
 
   const handleDelete = (id: any) => {
     deleteData(id);
+  };
+
+  const handleAdd = (data: any) => {
+    console.log("Add data:", data);
+    navigate("/inbound_planning/process", {
+      state: { data, mode: "add", title: "Add Inbound Planning" },
+    });
   };
 
   return (
