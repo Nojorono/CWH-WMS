@@ -136,6 +136,20 @@ export default function InboundPlanningFormContainer() {
   const onFinalSubmit = async (data: FormValues) => {
     let payload = mapToPayload(data);
 
+    const expeditionField = payload.expedition as any; // Pakai any sementara untuk bypass pengecekan ketat
+    if (
+      expeditionField &&
+      typeof expeditionField === "object" &&
+      "value" in expeditionField
+    ) {
+      payload.expedition = expeditionField.value;
+    }
+
+    const typeField = payload.inbound_type as any;
+    if (typeField && typeof typeField === "object" && "value" in typeField) {
+      payload.inbound_type = typeField.value;
+    }
+
     // Bersihkan inbound_po_date jika kosong di setiap item inbound_dos
     if (payload.inbound_dos && Array.isArray(payload.inbound_dos)) {
       payload.inbound_dos = payload.inbound_dos.map((doItem: any) => {
@@ -172,6 +186,7 @@ export default function InboundPlanningFormContainer() {
       console.log("Add to Receive Payload:", addToReceivePayload);
       apiAction = () => createData(addToReceivePayload);
     }
+
     // 2. Eksekusi jika ada action
     if (apiAction) {
       const res = await apiAction();

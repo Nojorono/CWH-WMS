@@ -67,7 +67,6 @@ export default function InboundConfirmModal({
     {}
   );
 
-
   const totalSKU = allItems.length;
 
   // Summary per SKU (pakai item_id, tampilkan item_name, item_number, DO, dan PO breakdown)
@@ -188,17 +187,17 @@ export default function InboundConfirmModal({
                   />
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-600 mb-1">
-                    Expedition
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.expedition}
-                    disabled
-                    className="w-full rounded-md border-gray-300 bg-gray-100 text-gray-700 text-sm px-3 py-2 focus:outline-none"
-                  />
-                </div>
+                <input
+                  type="text"
+                  // Cek jika expedition adalah objek, ambil label/value-nya. Jika string, pakai langsung.
+                  value={
+                    typeof formData.expedition === "object"
+                      ? formData.expedition?.label || ""
+                      : formData.expedition || ""
+                  }
+                  disabled
+                  className="w-full rounded-md border-gray-300 bg-gray-100 text-gray-700 text-sm px-3 py-2 focus:outline-none"
+                />
 
                 <div>
                   <label className="block text-sm font-medium text-gray-600 mb-1">
@@ -261,16 +260,20 @@ export default function InboundConfirmModal({
                 <div className="p-3 bg-white rounded-lg shadow-sm">
                   <p className="text-2xl font-bold text-gray-900">
                     {(() => {
-                      const globalUomTotals = Object.values(skuSummaryWithDifferentUOM)
+                      const globalUomTotals = Object.values(
+                        skuSummaryWithDifferentUOM
+                      )
                         .flat()
                         .reduce((acc, item) => {
                           acc[item.uom] = (acc[item.uom] || 0) + item.qty;
                           return acc;
                         }, {} as Record<string, number>);
 
-                      return Object.entries(globalUomTotals)
-                        .map(([uom, qty]) => `${qty} ${uom}`)
-                        .join(", ") || "0";
+                      return (
+                        Object.entries(globalUomTotals)
+                          .map(([uom, qty]) => `${qty} ${uom}`)
+                          .join(", ") || "0"
+                      );
                     })()}
                   </p>
                   <p className="text-xs text-gray-500">Total Quantity</p>

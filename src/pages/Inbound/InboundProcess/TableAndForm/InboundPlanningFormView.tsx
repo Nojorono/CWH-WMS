@@ -10,8 +10,9 @@ import ConfirmationModal from "./component/Modal/InboundConfirmModal";
 import { FaPlus, FaRedoAlt } from "react-icons/fa";
 import { UseFormReturn } from "react-hook-form";
 import { FormValues } from "./component/formTypes";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import ScanHistory from "./component/Tabs/ScanHistory";
+import { useStoreMasterSupplier } from "../../../../DynamicAPI/stores/Store/MasterStore";
 
 type Props = {
   methods: UseFormReturn<FormValues>;
@@ -35,7 +36,10 @@ type Props = {
 };
 
 // ==== Helpers ==== //
-const buildFieldsConfig = (isDetailMode: boolean): FieldConfig[] => {
+const buildFieldsConfig = (
+  isDetailMode: boolean,
+  supplierOptions: { value: string; label: string }[]
+): FieldConfig[] => {
   const baseFields: FieldConfig[] = [
     {
       name: "inbound_plan_no",
@@ -56,7 +60,8 @@ const buildFieldsConfig = (isDetailMode: boolean): FieldConfig[] => {
     {
       name: "expedition",
       label: "Ekspedisi",
-      type: "text" as const,
+      type: "select" as const, // Ubah dari text ke select
+      options: supplierOptions, // Masukkan data dari API di sini
       validation: { required: "Ekspedisi wajib diisi" },
     },
     {
@@ -314,9 +319,50 @@ export default function InboundPlanningFormView(props: Props) {
     inboundNumber,
   } = props;
 
-  const fieldsConfig = buildFieldsConfig(isDetailMode);
+  // const fieldsConfig =  (isDetailMode);
 
-  console.log("Inbound Number:", inboundNumber);
+  const { list: masterSupplierData, fetchUsingParam } =
+    useStoreMasterSupplier();
+
+  useEffect(() => {
+    const attribute7 = "FREIGHT (FRG)";
+    fetchUsingParam({
+      attribute7: attribute7,
+    });
+  }, [fetchUsingParam]);
+
+  const supplierOptions = masterSupplierData.map((item: any) => ({
+    value: item.VENDOR_NAME, // atau item.VENDOR_ID jika database butuh ID
+    label: item.VENDOR_NAME,
+  }));
+
+  const fieldsConfig = buildFieldsConfig(isDetailMode, supplierOptions);
+
+  useEffect(() => {
+    // Jalankan hanya jika dalam mode Edit atau Detail
+    if (isEditMode || isDetailMode) {
+      const currentExpedition = methods.getValues("expedition");
+
+      // Jika nilainya masih string (misal: "KAS NEGARA")
+      if (typeof currentExpedition === "string" && currentExpedition !== "") {
+        // Cari objek yang sesuai di supplierOptions
+        const foundOption = supplierOptions.find(
+          (opt) => opt.value === currentExpedition
+        );
+
+        if (foundOption) {
+          // Set ulang field expedition menjadi objek agar Select bisa menampilkan labelnya
+          methods.setValue("expedition", foundOption);
+        } else {
+          // Jika tidak ada di master, buat objek temporary agar tetap muncul teksnya
+          methods.setValue("expedition", { 
+            value: currentExpedition, 
+            label: currentExpedition 
+          });
+        }
+      }
+    }
+  }, [masterSupplierData, isEditMode, isDetailMode, methods]);
 
   return (
     <div className="p-6 bg-slate-50 min-h-screen">
@@ -336,9 +382,11 @@ export default function InboundPlanningFormView(props: Props) {
         ]}
       />
 
-      <h3 className="text-xl font-semibold text-slate-700 mb-4">
-        Reference Inbound No ({inboundNumber})
-      </h3>
+      {isAddToReceiveMode && (
+        <h3 className="text-xl font-semibold text-slate-700 mb-4">
+          Reference Inbound No ({inboundNumber})
+        </h3>
+      )}
 
       {/* Header Form */}
       <section className="bg-white p-4 rounded-xl shadow-sm mb-6">

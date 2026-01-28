@@ -39,7 +39,7 @@ export type FormValues = {
     id: any;
     inbound_plan_no?: string;
     inbound_type: string | { value: string; label: string };
-    expedition?: string;
+    expedition?: string | { value: string; label: string };
     driver?: string;
     no_pol?: string;
     origin?: string;

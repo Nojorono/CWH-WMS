@@ -150,7 +150,7 @@ const AdjustTable = ({
 
   const columns: ColumnDef<InventoryData>[] = useMemo(
     () => [
-      { accessorKey: "id", header: "ID", selectedRow: true },
+      // { accessorKey: "id", header: "ID" },
       { accessorKey: "pallet_code", header: "Pallet ID" },
       {
         accessorKey: "item_name",

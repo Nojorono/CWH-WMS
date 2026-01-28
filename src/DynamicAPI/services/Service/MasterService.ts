@@ -31,10 +31,8 @@ import { UserManagement, CreateUserManagement, UpdateUserManagement } from "../.
 import { CreateMasterAMO, UpdateMasterAMO, MasterAMO } from "../../types/MasterAMOtypes.ts";
 import { MasterSubdist, CreateMasterSubdist, UpdateMasterSubdist } from "../../types/MasterSubdistTypes.ts";
 import { ApprovalSetUp, CreateApprovalSetUp, UpdateApprovalSetUp } from "../../types/ApprovalSetUpTypes";
-
 import { InventoryVisibilityResponse } from '../../types/InventoryVisibilty.ts'
-
-
+import { MasterSupplier, CreateMasterSupplier, UpdateMasterSupplier} from '../../types/MasterSupplier.ts'
 
 
 // Daftar semua entitas service di sini
@@ -73,5 +71,6 @@ export const UserManagementService = createCrudService<UserManagement, CreateUse
 export const MasterAMOService = createCrudService<MasterAMO, CreateMasterAMO, UpdateMasterAMO>("/customer/main");
 export const MasterSubdistService = createCrudService<MasterSubdist, CreateMasterSubdist, UpdateMasterSubdist>("/customer/subdist");
 export const ApprovalSetUpService = createCrudService<ApprovalSetUp, CreateApprovalSetUp, UpdateApprovalSetUp>("/approval-setup");
-
 export const InventoryVisibilityService = createCrudService<InventoryVisibilityResponse, null, null>("/inventory-tracking/visibility/warehouse");
+
+export const MasterSupplierService = createCrudService<MasterSupplier, CreateMasterSupplier, UpdateMasterSupplier>("/master-supplier/attribute7");
