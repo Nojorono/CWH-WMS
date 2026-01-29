@@ -1,8 +1,6 @@
 // import axios from "axios";
 import axiosInstance from "../../../../DynamicAPI/AxiosInstance";
-
-
-const API_BASE_URL = "http://10.0.29.47:9005";
+import { EndPoint } from "../../../../utils/EndPoint";
 
 export interface AssignedGateResponse {
     success: boolean;
@@ -52,7 +50,6 @@ export interface AssignedGateResponse {
 // }
 
 
-
 export async function fetchAssignedGate(): Promise<AssignedGateResponse> {
     try {
         const token = localStorage.getItem("token");
@@ -62,7 +59,7 @@ export async function fetchAssignedGate(): Promise<AssignedGateResponse> {
         }
 
         const response = await axiosInstance.get(
-            `${API_BASE_URL}/assigned-gate`,
+            `${EndPoint}assigned-gate`,
             {
                 headers: {
                     Authorization: `Bearer ${token}`,
@@ -74,14 +71,15 @@ export async function fetchAssignedGate(): Promise<AssignedGateResponse> {
         const rawData = response.data.data || response.data;
 
         // Logika Filter: Buang data yang sudah "APPROVED"
-        const filteredData = Array.isArray(rawData)
-            ? rawData.filter((item: any) => item.status !== "APPROVED")
-            : [];
+        // const filteredData = Array.isArray(rawData)
+        //     ? rawData.filter((item: any) => item.status !== "APPROVED")
+        //     : [];
 
         return {
             success: true,
             message: "Successfully fetched assigned gate",
-            data: filteredData
+            // data: filteredData
+            data: rawData
         };
 
     } catch (error: any) {

@@ -25,27 +25,25 @@ export const DODetailPanel: React.FC<{
   // 1. Logika State untuk Accordion
   // Kita set default memo pertama yang terbuka
   const [openMemoId, setOpenMemoId] = useState<string | null>(
-    doData.memos.length > 0 ? doData.memos[0].memo_id : null
+    doData.memos.length > 0 ? doData.memos[0].memo_id : null,
   );
 
   const deviceId = useMemo(() => localStorage.getItem("device_id"), []);
 
   const assignedPalletIds = useMemo(
     () => new Set(doData.assigned_pallets.map((p) => p.pallet_id)),
-    [doData]
+    [doData],
   );
 
   const gateHelpers: UIGateUser[] = useMemo(
     () => ((doData as any).assigned_gate_helpers ?? []) as UIGateUser[],
-    [doData]
+    [doData],
   );
 
   const isCompleteLoadGate = useMemo(
     () => isGateLoadComplete(doData),
-    [doData]
+    [doData],
   );
-
-  console.log("isCompleteLoadGate", isCompleteLoadGate);
 
   // 2. Handler Finish Loading
   async function handleCompleteLoadGate(id: string) {
@@ -93,12 +91,24 @@ export const DODetailPanel: React.FC<{
           <h2 className="text-3xl font-black text-indigo-700 leading-none">
             {doData.gate.gate_name}
           </h2>
+
+          <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">
+            Gate Status
+          </p>
+          <h2 className="text-sm font-black text-green-500 leading-none">
+            {doData.status}
+          </h2>
+
           <p className="text-slate-500 font-bold mt-2 text-lg">
             {doData.do_number}
           </p>
-          <p className="text-slate-500 font-bold mt-2 text-sm">
-            {doData.status}
+
+          <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">
+            DO Status
           </p>
+          <h2 className="text-sm font-black text-green-500 leading-none">
+            {doData.main_status}
+          </h2>
         </div>
 
         {/* Kolom 2: Vehicle */}
@@ -176,7 +186,7 @@ export const DODetailPanel: React.FC<{
           const isOpen = openMemoId === memo.memo_id;
           const isMemoComplete = isMemoGateLoadComplete(
             memo,
-            doData.assigned_gate_loads
+            doData.assigned_gate_loads,
           );
 
           return (
@@ -213,7 +223,7 @@ export const DODetailPanel: React.FC<{
                         {memo.memo_number}
                       </h3>
                       {isMemoComplete && (
-                        <span className="bg-blue-600 text-white text-[8px] px-2 py-0.5 rounded font-black uppercase tracking-tighter">
+                        <span className="bg-blue-600 text-white text-[10px] px-2 py-0.5 rounded font-black uppercase tracking-tighter">
                           COMPLETED
                         </span>
                       )}
@@ -245,9 +255,12 @@ export const DODetailPanel: React.FC<{
                     {memo.pallets.map((pallet: any) => (
                       <div key={pallet.pallet_id} className="space-y-4">
                         <div className="flex items-center gap-3">
-                          <span className="px-3 py-1 bg-orange-500 text-white text-[12px] font-black rounded-lg shadow-sm uppercase">
-                            Pallet Code: {pallet.pallet_code}
-                          </span>
+                          <p className="text-[12px] font-black text-slate-400 uppercase tracking-[0.2em]">
+                            Pallet Code
+                          </p>
+                          <h2 className="text-xl font-black text-orange-500 leading-none">
+                           {pallet.pallet_code}
+                          </h2>
                         </div>
 
                         {/* Grid SKUs */}
