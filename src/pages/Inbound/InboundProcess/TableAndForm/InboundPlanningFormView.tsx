@@ -327,7 +327,7 @@ export default function InboundPlanningFormView(props: Props) {
   useEffect(() => {
     const attribute7 = "FREIGHT (FRG)";
     fetchUsingParam({
-      attribute7: attribute7,
+      ATTRIBUTE7: attribute7,
     });
   }, [fetchUsingParam]);
 

@@ -293,7 +293,7 @@ const DetachAttach: React.FC = () => {
         <div className="p-4">
           <>
             <div className="flex justify-end mb-4">
-              {statusDO === "APPROVED" ? null : (
+              {statusDO === "APPROVED" || statusDO === "APPROVED_LOAD" ? null : (
                 <Button
                   size="sm"
                   type="button"

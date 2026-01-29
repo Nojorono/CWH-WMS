@@ -150,6 +150,7 @@ export const DODetailPanel: React.FC<{
               startIcon={<FaCheck />}
               disabled={
                 doData.status === "APPROVED" ||
+                doData.status === "DONE" ||
                 doData.status === "APPROVED_LOAD"
               }
             >

@@ -138,6 +138,7 @@ export interface UIItemRow {
 
 // ===== DO
 export interface OutboundDo {
+    seal_number: string;
     id: string;
     outbound_do_number: string;
     origin: string;

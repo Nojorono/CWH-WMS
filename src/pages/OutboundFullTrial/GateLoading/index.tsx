@@ -13,9 +13,13 @@ const GateLoadingPage = () => {
   const refreshData = async () => {
     setLoading(true);
     const res = await fetchAssignedGate();
+
+    console.log("Fetch Assigned Gate Response:", res);
+
     if (res.success) {
       let uiData = mapOutboundGateToUILoading(res.data);
-      uiData = uiData.filter((item: any) => item.status !== "APPROVED" );      
+      console.log("Mapped UI Data:", uiData);
+
       setAssignedGateList(uiData);
       if (uiData.length > 0 && !selectedDOId) setSelectedDOId(uiData[0].do_id);
     }
@@ -28,7 +32,7 @@ const GateLoadingPage = () => {
 
   const activeDO = useMemo(
     () => assignedGateList.find((doItem) => doItem.do_id === selectedDOId),
-    [assignedGateList, selectedDOId]
+    [assignedGateList, selectedDOId],
   );
 
   // Urutkan assignedGateList: yang pending (belum selesai) di atas, selesai di bawah
@@ -117,7 +121,7 @@ const GateLoadingPage = () => {
                   >
                     {item.do_number}
                   </h4>
-                  
+
                   <p className="text-[10px] text-slate-400 font-bold uppercase mt-1 tracking-wider">
                     Plat: {item.driver.license_plate}
                   </p>
