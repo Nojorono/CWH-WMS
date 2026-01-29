@@ -73,7 +73,7 @@ export const DODetailPanel: React.FC<{
     <div className="p-8 max-w-7xl mx-auto space-y-10 pb-32">
       {/* --- TOP INFO CARD (HEADER) --- */}
       <div
-        className="bg-white rounded-3xl shadow-sm border border-slate-200 p-8 grid grid-cols-1 md:grid-cols-4 gap-8 items-start z-20"
+        className="bg-white rounded-3xl shadow-sm border border-slate-200 p-8 grid grid-cols-1 md:grid-cols-5 gap-8 items-start z-20"
         style={{
           position: "sticky",
           top: 0,
@@ -83,8 +83,8 @@ export const DODetailPanel: React.FC<{
           marginRight: "auto",
         }}
       >
-        {/* Kolom 1: Gate & DO */}
-        <div className="space-y-1">
+        {/* Kolom 1: Gate */}
+        <div className="space-y-2">
           <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">
             Gate Information
           </p>
@@ -95,29 +95,47 @@ export const DODetailPanel: React.FC<{
           <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">
             Gate Status
           </p>
-          <h2 className="text-sm font-black text-green-500 leading-none">
-            {doData.status}
-          </h2>
-
-          <p className="text-slate-500 font-bold mt-2 text-lg">
-            {doData.do_number}
-          </p>
-
-          <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">
-            DO Status
-          </p>
-          <h2 className="text-sm font-black text-green-500 leading-none">
+          <h2
+            className={`text-sm font-black leading-none ${
+              doData.main_status === "APPROVED"
+                ? "text-green-500"
+                : "text-yellow-400"
+            }`}
+          >
             {doData.main_status}
           </h2>
         </div>
 
-        {/* Kolom 2: Vehicle */}
+        {/* Kolom 2: DO */}
+        <div className="space-y-2 border-l-2 pl-8 border-slate-100">
+          <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">
+            DO Number
+          </p>
+          <h2 className="text-sm font-black text-indigo-700 leading-none">
+            {doData.do_number}
+          </h2>
+
+          <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">
+            DO Status
+          </p>
+          <h2
+            className={`text-sm font-black leading-none ${
+              doData.status === "APPROVED_LOAD"
+                ? "text-green-500"
+                : "text-yellow-400"
+            }`}
+          >
+            {doData.status}
+          </h2>
+        </div>
+
+        {/* Kolom 3: Vehicle */}
         <div className="space-y-3 border-l-2 pl-8 border-slate-100">
           <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2">
             <FaTruck /> Vehicle
           </p>
           <div>
-            <span className="text-xl font-black text-slate-800 block leading-tight">
+            <span className="text-xl font-black text-indigo-700 block leading-tight">
               {doData.driver.license_plate}
             </span>
             <span className="text-xs text-emerald-600 font-bold uppercase tracking-wider">
@@ -126,7 +144,7 @@ export const DODetailPanel: React.FC<{
           </div>
         </div>
 
-        {/* Kolom 3: Forklift & Helper */}
+        {/* Kolom 4: Forklift & Helper */}
         <div className="space-y-3 border-l-2 pl-8 border-slate-100">
           <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2">
             <FaUserFriends /> Loading Team
@@ -150,7 +168,7 @@ export const DODetailPanel: React.FC<{
           </div>
         </div>
 
-        {/* Kolom 4: Action */}
+        {/* Kolom 5: Action */}
         <div className="flex items-center justify-end h-full">
           {isCompleteLoadGate ? (
             <Button
@@ -259,7 +277,7 @@ export const DODetailPanel: React.FC<{
                             Pallet Code
                           </p>
                           <h2 className="text-xl font-black text-orange-500 leading-none">
-                           {pallet.pallet_code}
+                            {pallet.pallet_code}
                           </h2>
                         </div>
 
