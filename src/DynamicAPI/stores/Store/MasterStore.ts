@@ -35,7 +35,8 @@ import {
     MasterSubdistService,
     ApprovalSetUpService,
     PickingTransactionListService,
-    InventoryVisibilityService
+    InventoryVisibilityService,
+    MasterSupplierService
 } from "../../services/Service/MasterService";
 
 import { Uom, CreateUom, UpdateUom } from "../../types/UomTypes";
@@ -63,15 +64,16 @@ import { OutboundDelivery, OutboundDeliveryCreateUpdate } from '../../types/Deli
 import { PickingSuggestion, CreatePickingSuggestion, UpdatePickingSuggestion } from '../../types/PickingSuggestionTypes.tsx'
 import { TransactionPicking, CreateTransactionPicking, UpdateTransactionPicking } from '../../types/TransactionPickingTypes.tsx'
 import { PickingList, CreatePickingList, UpdatePickingList } from '../../types/PickingList.tsx'
-
 import { PickingAssignHelper, CreatePickingAssignHelper, UpdatePickingAssignHelper } from '../../types/PickingAssignHelper.tsx'
 import { PickingSuggestionItem, UpdatePickingSuggestionItem, CreatePickingSuggestionItem } from "../../types/PickingSuggestionItem.tsx";
 import { UserManagement, CreateUserManagement, UpdateUserManagement } from "../../types/UserManagement.tsx";
 import { CreateMasterAMO, UpdateMasterAMO, MasterAMO } from "../../types/MasterAMOtypes.ts";
 import { MasterSubdist, CreateMasterSubdist, UpdateMasterSubdist } from "../../types/MasterSubdistTypes.ts";
 import { ApprovalSetUp, CreateApprovalSetUp, UpdateApprovalSetUp } from "../../types/ApprovalSetUpTypes";
-
 import { InventoryVisibilityResponse } from '../../types/InventoryVisibilty.ts'
+
+import { MasterSupplier, CreateMasterSupplier, UpdateMasterSupplier } from '../../types/MasterSupplier.ts'
+
 
 
 // Daftar semua store di sini
@@ -253,4 +255,9 @@ export const useStoreApprovalSetUp = createCrudStore<ApprovalSetUp, CreateApprov
 export const useStoreInventoryVisibility = createCrudStore<InventoryVisibilityResponse, null, null>({
     name: "InventoryVisibility",
     service: InventoryVisibilityService,
+});
+
+export const useStoreMasterSupplier = createCrudStore<MasterSupplier, CreateMasterSupplier, UpdateMasterSupplier>({
+    name: "MasterSupplier",
+    service: MasterSupplierService,
 });

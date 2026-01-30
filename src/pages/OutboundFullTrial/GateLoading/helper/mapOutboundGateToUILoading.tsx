@@ -3,6 +3,7 @@
 ======================= */
 
 export interface UIGateLoadingDO {
+  main_status: string;
   assigned_gate_id: string;
   do_id: string;
   do_number: string;
@@ -128,7 +129,7 @@ const safeObject = <T = any,>(v: any): T =>
 ======================= */
 
 export function mapOutboundGateToUILoading(
-  data: any[] = []
+  data: any[] = [],
 ): UIGateLoadingDO[] {
   return safeArray(data).map((gateItem) => {
     const doData = safeObject(gateItem?.outbound_do);
@@ -157,6 +158,10 @@ export function mapOutboundGateToUILoading(
       origin: doData?.origin ?? "-",
       destination_date: doData?.delivery_date ?? null,
       outboundType: doData?.outbound_type ?? "-",
+
+      main_status: gateItem?.status ?? "", 
+      main_createdAt: gateItem?.createdAt ?? "",
+      main_updatedAt: gateItem?.updatedAt ?? "",
 
       driver: {
         name: doData?.driver_name ?? "-",
@@ -221,7 +226,7 @@ export function mapOutboundGateToUILoading(
           item_id: l?.item_id ?? "",
           quantity_loaded: l?.quantity_loaded ?? 0,
           status: l?.status ?? "PENDING",
-        })
+        }),
       ),
 
       /* =======================
@@ -264,7 +269,7 @@ export function mapOutboundGateToUILoading(
                   item_name:
                     picking?.item_name ??
                     assignedPallet?.pallet?.currentItems?.find(
-                      (i: any) => i?.item_id === scan?.item_id
+                      (i: any) => i?.item_id === scan?.item_id,
                     )?.item_name ??
                     "-",
                   uom: scan?.uom ?? picking?.uom ?? "-",
@@ -274,7 +279,7 @@ export function mapOutboundGateToUILoading(
                     scan?.production_date ??
                     picking?.production_date ??
                     assignedPallet?.pallet?.currentItems?.find(
-                      (i: any) => i?.item_id === scan?.item_id
+                      (i: any) => i?.item_id === scan?.item_id,
                     )?.production_date ??
                     null,
 
@@ -287,7 +292,7 @@ export function mapOutboundGateToUILoading(
             PICKING LEVEL
           ======================= */
               let pickingUI = sku.pickings.find(
-                (p) => p.picking_id === picking?.id
+                (p) => p.picking_id === picking?.id,
               );
 
               if (!pickingUI) {

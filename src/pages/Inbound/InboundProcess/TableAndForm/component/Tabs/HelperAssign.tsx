@@ -15,8 +15,6 @@ const HelperAssign: React.FC<HelperAssignProps> = ({ inboundID }) => {
       });
     }
   }, [fetchUsingParam, inboundID]);
-
-  console.log("HelperAssign list:", list);
   
 
   return (

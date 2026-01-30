@@ -10,9 +10,9 @@ const SKUCard = ({ sku, pallet, memo, doData, canEdit, onRefresh }: any) => {
         sum +
         p.scans.reduce(
           (s: number, sc: any) => s + (sc.quantity_picked ?? 0),
-          0
+          0,
         ),
-      0
+      0,
     );
   }, [sku]);
 
@@ -22,7 +22,7 @@ const SKUCard = ({ sku, pallet, memo, doData, canEdit, onRefresh }: any) => {
       (l: any) =>
         l.item_id === sku.item_id &&
         l.pallet_id === pallet.pallet_id &&
-        l.outbound_memo_id === memo.memo_id
+        l.outbound_memo_id === memo.memo_id,
     );
   }, [doData.assigned_gate_loads, sku, pallet, memo]);
 
@@ -32,7 +32,7 @@ const SKUCard = ({ sku, pallet, memo, doData, canEdit, onRefresh }: any) => {
         (l: any) =>
           l.item_id === sku.item_id &&
           l.pallet_id === pallet.pallet_id &&
-          l.outbound_memo_id === memo.memo_id
+          l.outbound_memo_id === memo.memo_id,
       )?.quantity_loaded ?? 0
     );
   }, [doData.assigned_gate_loads, sku, pallet, memo]);
@@ -107,10 +107,33 @@ const SKUCard = ({ sku, pallet, memo, doData, canEdit, onRefresh }: any) => {
                   {finalQtyLoaded}
                 </div>
               ) : (
+                // <input
+                //   type="number"
+                //   value={qty}
+                //   onChange={(e) => setQty(Number(e.target.value))}
+                //   disabled={!canEdit || submitting}
+                //   className="w-full h-12 bg-white border-2 border-slate-200 rounded-xl px-4 text-center font-black text-2xl focus:border-orange-500 focus:ring-0 transition-all outline-none"
+                // />
+
+                // Cari bagian input type="number" dan ubah menjadi seperti ini:
                 <input
                   type="number"
                   value={qty}
-                  onChange={(e) => setQty(Number(e.target.value))}
+                  onChange={(e) => {
+                    const val = Number(e.target.value);
+                    // Jika input lebih besar dari qtyPicking, set ke qtyPicking
+                    // Jika input kurang dari 0, set ke 0
+                    if (val > qtyPicking) {
+                      setQty(qtyPicking);
+                    } else if (val < 0) {
+                      setQty(0);
+                    } else {
+                      setQty(val);
+                    }
+                  }}
+                  // Tambahkan atribut max untuk kontrol native browser
+                  max={qtyPicking}
+                  min={0}
                   disabled={!canEdit || submitting}
                   className="w-full h-12 bg-white border-2 border-slate-200 rounded-xl px-4 text-center font-black text-2xl focus:border-orange-500 focus:ring-0 transition-all outline-none"
                 />

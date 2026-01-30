@@ -93,6 +93,7 @@ export function mapPickingTransactions(list: any[] = []): OutboundDo[] {
             memo_sequence: raw.memo_sequence || [],
             outbound_memos,
             uiItems: sortedUIItems,
+            seal_number: raw.seal_number,
         };
     });
 }

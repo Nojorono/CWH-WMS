@@ -25,27 +25,25 @@ export const DODetailPanel: React.FC<{
   // 1. Logika State untuk Accordion
   // Kita set default memo pertama yang terbuka
   const [openMemoId, setOpenMemoId] = useState<string | null>(
-    doData.memos.length > 0 ? doData.memos[0].memo_id : null
+    doData.memos.length > 0 ? doData.memos[0].memo_id : null,
   );
 
   const deviceId = useMemo(() => localStorage.getItem("device_id"), []);
 
   const assignedPalletIds = useMemo(
     () => new Set(doData.assigned_pallets.map((p) => p.pallet_id)),
-    [doData]
+    [doData],
   );
 
   const gateHelpers: UIGateUser[] = useMemo(
     () => ((doData as any).assigned_gate_helpers ?? []) as UIGateUser[],
-    [doData]
+    [doData],
   );
 
   const isCompleteLoadGate = useMemo(
     () => isGateLoadComplete(doData),
-    [doData]
+    [doData],
   );
-
-  console.log("isCompleteLoadGate", isCompleteLoadGate);
 
   // 2. Handler Finish Loading
   async function handleCompleteLoadGate(id: string) {
@@ -75,7 +73,7 @@ export const DODetailPanel: React.FC<{
     <div className="p-8 max-w-7xl mx-auto space-y-10 pb-32">
       {/* --- TOP INFO CARD (HEADER) --- */}
       <div
-        className="bg-white rounded-3xl shadow-sm border border-slate-200 p-8 grid grid-cols-1 md:grid-cols-4 gap-8 items-start z-20"
+        className="bg-white rounded-3xl shadow-sm border border-slate-200 p-8 grid grid-cols-1 md:grid-cols-5 gap-8 items-start z-20"
         style={{
           position: "sticky",
           top: 0,
@@ -85,29 +83,59 @@ export const DODetailPanel: React.FC<{
           marginRight: "auto",
         }}
       >
-        {/* Kolom 1: Gate & DO */}
-        <div className="space-y-1">
+        {/* Kolom 1: Gate */}
+        <div className="space-y-2">
           <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">
             Gate Information
           </p>
           <h2 className="text-3xl font-black text-indigo-700 leading-none">
             {doData.gate.gate_name}
           </h2>
-          <p className="text-slate-500 font-bold mt-2 text-lg">
-            {doData.do_number}
+
+          <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">
+            Gate Status
           </p>
-          <p className="text-slate-500 font-bold mt-2 text-sm">
-            {doData.status}
-          </p>
+          <h2
+            className={`text-sm font-black leading-none ${
+              doData.main_status === "APPROVED"
+                ? "text-green-500"
+                : "text-yellow-400"
+            }`}
+          >
+            {doData.main_status}
+          </h2>
         </div>
 
-        {/* Kolom 2: Vehicle */}
+        {/* Kolom 2: DO */}
+        <div className="space-y-2 border-l-2 pl-8 border-slate-100">
+          <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">
+            DO Number
+          </p>
+          <h2 className="text-sm font-black text-indigo-700 leading-none">
+            {doData.do_number}
+          </h2>
+
+          <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">
+            DO Status
+          </p>
+          <h2
+            className={`text-sm font-black leading-none ${
+              doData.status === "APPROVED_LOAD"
+                ? "text-green-500"
+                : "text-yellow-400"
+            }`}
+          >
+            {doData.status}
+          </h2>
+        </div>
+
+        {/* Kolom 3: Vehicle */}
         <div className="space-y-3 border-l-2 pl-8 border-slate-100">
           <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2">
             <FaTruck /> Vehicle
           </p>
           <div>
-            <span className="text-xl font-black text-slate-800 block leading-tight">
+            <span className="text-xl font-black text-indigo-700 block leading-tight">
               {doData.driver.license_plate}
             </span>
             <span className="text-xs text-emerald-600 font-bold uppercase tracking-wider">
@@ -116,7 +144,7 @@ export const DODetailPanel: React.FC<{
           </div>
         </div>
 
-        {/* Kolom 3: Forklift & Helper */}
+        {/* Kolom 4: Forklift & Helper */}
         <div className="space-y-3 border-l-2 pl-8 border-slate-100">
           <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2">
             <FaUserFriends /> Loading Team
@@ -140,7 +168,7 @@ export const DODetailPanel: React.FC<{
           </div>
         </div>
 
-        {/* Kolom 4: Action */}
+        {/* Kolom 5: Action */}
         <div className="flex items-center justify-end h-full">
           {isCompleteLoadGate ? (
             <Button
@@ -150,6 +178,7 @@ export const DODetailPanel: React.FC<{
               startIcon={<FaCheck />}
               disabled={
                 doData.status === "APPROVED" ||
+                doData.status === "DONE" ||
                 doData.status === "APPROVED_LOAD"
               }
             >
@@ -175,7 +204,7 @@ export const DODetailPanel: React.FC<{
           const isOpen = openMemoId === memo.memo_id;
           const isMemoComplete = isMemoGateLoadComplete(
             memo,
-            doData.assigned_gate_loads
+            doData.assigned_gate_loads,
           );
 
           return (
@@ -212,7 +241,7 @@ export const DODetailPanel: React.FC<{
                         {memo.memo_number}
                       </h3>
                       {isMemoComplete && (
-                        <span className="bg-blue-600 text-white text-[8px] px-2 py-0.5 rounded font-black uppercase tracking-tighter">
+                        <span className="bg-blue-600 text-white text-[10px] px-2 py-0.5 rounded font-black uppercase tracking-tighter">
                           COMPLETED
                         </span>
                       )}
@@ -244,9 +273,12 @@ export const DODetailPanel: React.FC<{
                     {memo.pallets.map((pallet: any) => (
                       <div key={pallet.pallet_id} className="space-y-4">
                         <div className="flex items-center gap-3">
-                          <span className="px-3 py-1 bg-orange-500 text-white text-[12px] font-black rounded-lg shadow-sm uppercase">
-                            Pallet Code: {pallet.pallet_code}
-                          </span>
+                          <p className="text-[12px] font-black text-slate-400 uppercase tracking-[0.2em]">
+                            Pallet Code
+                          </p>
+                          <h2 className="text-xl font-black text-orange-500 leading-none">
+                            {pallet.pallet_code}
+                          </h2>
                         </div>
 
                         {/* Grid SKUs */}
