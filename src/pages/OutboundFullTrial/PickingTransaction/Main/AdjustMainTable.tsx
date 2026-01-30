@@ -697,6 +697,7 @@ import { useStoreOutboundDeliveryOrder } from "../../../../DynamicAPI/stores/Sto
 import { mapPickingTransactions } from "../Helper/mappedList";
 import { formatDateIndo } from "../../../../helper/FormatDate";
 import Swal from "sweetalert2"; // Pastikan sweetalert2 terinstall
+import Button from "../../../../components/ui/button/Button";
 
 type Props = {
   globalFilter?: string;
@@ -980,7 +981,7 @@ const AdjustTableTransactionPicking = ({
         cell: ({ row }) => (
           <div className="flex gap-3">
             <FaTasks
-              className={`size-5 cursor-pointer text-blue-600 ${row.original.status === "PENDING" ? "opacity-20 cursor-not-allowed" : ""}`}
+              className={`size-5 cursor-pointer text-orange-600 ${row.original.status === "PENDING" ? "opacity-20 cursor-not-allowed" : ""}`}
               onClick={() =>
                 row.original.status !== "PENDING" && handleAdjust(row.original)
               }
@@ -1012,6 +1013,26 @@ const AdjustTableTransactionPicking = ({
           </div>
         ),
       },
+      {
+        id: "ship_confirm",
+        header: "Ship Confirm",
+        cell: ({ row }) =>
+          row.original.seal_number && row.original.seal_number.trim() !== "" ? (
+            <div className="flex gap-3">
+              <Button
+                onClick={() => handleShipConfirm(row.original)}
+                variant="action"
+                className={`text-sm bg-emerald-600 hover:bg-emerald-700 text-white w-full py-2 rounded-2xl shadow-lg shadow-emerald-100 animate-pulse text-xs font-black tracking-widest uppercase ${
+                  row.original.status !== "APPROVED_LOAD"
+                    ? "opacity-20 cursor-not-allowed"
+                    : ""
+                }`}
+              >
+                Confirm
+              </Button>
+            </div>
+          ) : null,
+      },
     ],
     [currentPage, pageSize],
   );
@@ -1024,6 +1045,11 @@ const AdjustTableTransactionPicking = ({
         title: "Adjust Picking Transaction",
       },
     });
+  };
+
+  const handleShipConfirm = (data: OutboundDo) => {
+    console.log("Ship Confirm clicked for DO:", data);
+    alert("Ship Confirm clicked for DO: " + data.outbound_do_number);
   };
 
   return (
