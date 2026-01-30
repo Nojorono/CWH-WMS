@@ -19,11 +19,21 @@ export function mapToPayload(data: FormValues): CreateInboundPlanning {
             : (data.inbound_type as any)?.value || "";
 
     return {
-        expedition: data.expedition ?? "",
+        expedition: typeof data.expedition === "string"
+            ? data.expedition
+            : (data.expedition as any)?.value || "",
         origin: "CWH",
         license_plate:
-            data.no_pol?.toUpperCase().replace(/\s+/g, "").trim() ?? "",
-        driver_name: data.driver?.toUpperCase() ?? "",
+            typeof data.no_pol === "string"
+                ? data.no_pol.toUpperCase().replace(/\s+/g, "").trim()
+                : (data.no_pol as any)?.value
+                    ? (data.no_pol as any).value.toUpperCase().replace(/\s+/g, "").trim()
+                    : "",
+        driver_name: typeof data.driver === "string"
+            ? data.driver.toUpperCase()
+            : (data.driver as any)?.value
+                ? (data.driver as any).value.toUpperCase()
+                : "",
         driver_phone: data.driver_phone ?? "",
         status: "CREATED",
         inbound_type: inboundType,
