@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import Button from "../../../../components/ui/button/Button";
 import PageBreadcrumb from "../../../../components/common/PageBreadCrumb";
@@ -29,6 +29,7 @@ const DetachAttach: React.FC = () => {
   const navigate = useNavigate();
   const { params } = location.state || {};
   const statusDO = params.status;
+  const roleName = localStorage.getItem("role_name");
 
   // 🔹 local state pagination
   const [pageIndex, setPageIndex] = useState(0);
@@ -44,15 +45,28 @@ const DetachAttach: React.FC = () => {
   // Mapping outbound_memos dari params
   const outboundMemos = params?.outbound_memos || [];
 
-  console.log("outbound memos detech attach", outboundMemos);
+  console.log("roleName:", roleName);
 
-  const canApproveDO = React.useMemo(() => {
-    return outboundMemos.some((memo: any) =>
-      memo.transaction_pickings?.some(
-        (tp: any) => tp.transactionScanPicking?.length > 0
-      )
-    );
-  }, [outboundMemos]);
+  // const canApproveDO = useMemo(() => {
+  //   return outboundMemos.some((memo: any) =>
+  //     memo.transaction_pickings?.some(
+  //       (tp: any) => tp.transactionScanPicking?.length > 0,
+  //     ),
+  //   );
+  // }, [outboundMemos, roleName]);
+
+  const canApproveDO = useMemo(() => {
+    // Syarat: role SUPERVISOR DAN minimal 1 SKU sudah scan picking
+    if (roleName === "SUPERVISOR") {
+      return outboundMemos.some((memo: any) =>
+        memo.transaction_pickings?.some(
+          (tp: any) => tp.transactionScanPicking?.length > 0,
+        ),
+      );
+    }
+    // Role lain tidak bisa approve
+    return false;
+  }, [outboundMemos, roleName]);
 
   const columnsTableItem = [
     { accessorKey: "outbound_memo_number", header: "Memo No" },
@@ -168,7 +182,7 @@ const DetachAttach: React.FC = () => {
             headers: {
               Authorization: `Bearer ${token}`,
             },
-          }
+          },
         );
 
         if (!response.ok) {
@@ -192,7 +206,7 @@ const DetachAttach: React.FC = () => {
   const handleApproveDO = async () => {
     if (!canApproveDO) {
       showErrorToast(
-        "Minimal harus 1 SKU sudah di-scan picking untuk menyetujui DO ini."
+        "Minimal harus 1 SKU sudah di-scan picking untuk menyetujui DO ini.",
       );
       return;
     }
@@ -222,6 +236,8 @@ const DetachAttach: React.FC = () => {
     navigate(-1); // Ini akan membawa kembali ke /memo?page=x
   };
 
+  console.log("Can Approve DO:", canApproveDO);
+
   return (
     <div className="p-6 space-y-6">
       <div className="flex justify-between items-center">
@@ -245,7 +261,7 @@ const DetachAttach: React.FC = () => {
         {/* HEADER + ACTIONS */}
         <div className="flex items-center justify-between mb-5">
           <h3 className="font-semibold text-gray-800 text-lg">
-            Delivery Order Details
+            Picking Order Details
           </h3>
 
           <div className="flex gap-2">
@@ -293,7 +309,8 @@ const DetachAttach: React.FC = () => {
         <div className="p-4">
           <>
             <div className="flex justify-end mb-4">
-              {statusDO === "APPROVED" || statusDO === "APPROVED_LOAD" ? null : (
+              {statusDO === "APPROVED" ||
+              statusDO === "APPROVED_LOAD" ? null : (
                 <Button
                   size="sm"
                   type="button"
