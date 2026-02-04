@@ -32,7 +32,6 @@ const DataTable = () => {
 
   const columns = useMemo(
     () => [
-      { accessorKey: "id", header: "ID" },
       {
         accessorKey: "organization_id",
         header: "Organization",
