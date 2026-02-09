@@ -22,7 +22,7 @@ import { PutAwaySuggestionResponse } from '../../types/PutAwaySuggestionTypes.ts
 import { PutAway, CreatePutAway, UpdatePutAway } from '../../types/PutAwayTypes.tsx'
 import { OutboundMemo, OutboundMemoCreate, OutboundMemoUpdateItem } from '../../types/MemoTypes.tsx'
 import { OutboundDelivery, OutboundDeliveryCreateUpdate } from '../../types/DeliverOrderTypes.tsx'
-import { PickingSuggestion, CreatePickingSuggestion, UpdatePickingSuggestion } from '../../types/PickingSuggestionTypes.tsx'
+import { PickingSuggestion, CreatePickingSuggestion, UpdatePickingSuggestion } from '../../types/PickingSuggestionTypes.ts'
 import { TransactionPicking, CreateTransactionPicking, UpdateTransactionPicking } from '../../types/TransactionPickingTypes.tsx'
 import { PickingList, CreatePickingList, UpdatePickingList } from '../../types/PickingList.tsx'
 import { PickingAssignHelper, CreatePickingAssignHelper, UpdatePickingAssignHelper } from "../../types/PickingAssignHelper.tsx";
@@ -34,6 +34,7 @@ import { ApprovalSetUp, CreateApprovalSetUp, UpdateApprovalSetUp } from "../../t
 import { InventoryVisibilityResponse } from '../../types/InventoryVisibilty.ts'
 import { MasterSupplier, CreateMasterSupplier, UpdateMasterSupplier} from '../../types/MasterSupplier.ts'
 
+import {InventoryMovementListResponse} from '../../types/InventoryMovement.ts'
 
 // Daftar semua entitas service di sini
 export const uomService = createCrudService<Uom, CreateUom, UpdateUom>("/master-uom");
@@ -74,3 +75,4 @@ export const ApprovalSetUpService = createCrudService<ApprovalSetUp, CreateAppro
 export const InventoryVisibilityService = createCrudService<InventoryVisibilityResponse, null, null>("/inventory-tracking/visibility/warehouse");
 
 export const MasterSupplierService = createCrudService<MasterSupplier, CreateMasterSupplier, UpdateMasterSupplier>("/master-supplier/attribute7");
+export const InventoryMovementService = createCrudService<InventoryMovementListResponse, null, null>("/inventory-movement");

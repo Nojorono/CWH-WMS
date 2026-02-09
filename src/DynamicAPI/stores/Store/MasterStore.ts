@@ -36,7 +36,8 @@ import {
     ApprovalSetUpService,
     PickingTransactionListService,
     InventoryVisibilityService,
-    MasterSupplierService
+    MasterSupplierService,
+    InventoryMovementService
 } from "../../services/Service/MasterService";
 
 import { Uom, CreateUom, UpdateUom } from "../../types/UomTypes";
@@ -61,7 +62,7 @@ import { PutAwaySuggestionResponse } from '../../types/PutAwaySuggestionTypes.ts
 import { PutAway, CreatePutAway, UpdatePutAway } from '../../types/PutAwayTypes.tsx'
 import { OutboundMemo, OutboundMemoCreate, OutboundMemoUpdateItem } from '../../types/MemoTypes.tsx'
 import { OutboundDelivery, OutboundDeliveryCreateUpdate } from '../../types/DeliverOrderTypes.tsx'
-import { PickingSuggestion, CreatePickingSuggestion, UpdatePickingSuggestion } from '../../types/PickingSuggestionTypes.tsx'
+import { PickingSuggestion, CreatePickingSuggestion, UpdatePickingSuggestion } from '../../types/PickingSuggestionTypes.ts'
 import { TransactionPicking, CreateTransactionPicking, UpdateTransactionPicking } from '../../types/TransactionPickingTypes.tsx'
 import { PickingList, CreatePickingList, UpdatePickingList } from '../../types/PickingList.tsx'
 import { PickingAssignHelper, CreatePickingAssignHelper, UpdatePickingAssignHelper } from '../../types/PickingAssignHelper.tsx'
@@ -74,7 +75,7 @@ import { InventoryVisibilityResponse } from '../../types/InventoryVisibilty.ts'
 
 import { MasterSupplier, CreateMasterSupplier, UpdateMasterSupplier } from '../../types/MasterSupplier.ts'
 
-
+import {InventoryMovementListResponse} from '../../types/InventoryMovement.ts'
 
 // Daftar semua store di sini
 export const useStoreUom = createCrudStore<Uom, CreateUom, UpdateUom>({
@@ -260,4 +261,9 @@ export const useStoreInventoryVisibility = createCrudStore<InventoryVisibilityRe
 export const useStoreMasterSupplier = createCrudStore<MasterSupplier, CreateMasterSupplier, UpdateMasterSupplier>({
     name: "MasterSupplier",
     service: MasterSupplierService,
+});
+
+export const useStoreInventoryMovement = createCrudStore<InventoryMovementListResponse, null, null>({
+    name: "InventoryMovement",
+    service: InventoryMovementService,
 });

@@ -1,7 +1,5 @@
 "use client";
-
-import React, { useEffect, useMemo, useState } from "react";
-import { useForm } from "react-hook-form";
+import React, { useMemo, useState } from "react";
 import Button from "../../../../components/ui/button/Button";
 import PageBreadcrumb from "../../../../components/common/PageBreadCrumb";
 import TableComponent from "../Table/TableComponent";
@@ -44,16 +42,6 @@ const DetachAttach: React.FC = () => {
 
   // Mapping outbound_memos dari params
   const outboundMemos = params?.outbound_memos || [];
-
-  console.log("roleName:", roleName);
-
-  // const canApproveDO = useMemo(() => {
-  //   return outboundMemos.some((memo: any) =>
-  //     memo.transaction_pickings?.some(
-  //       (tp: any) => tp.transactionScanPicking?.length > 0,
-  //     ),
-  //   );
-  // }, [outboundMemos, roleName]);
 
   const canApproveDO = useMemo(() => {
     // Syarat: role SUPERVISOR DAN minimal 1 SKU sudah scan picking
@@ -235,8 +223,6 @@ const DetachAttach: React.FC = () => {
   const handleBack = () => {
     navigate(-1); // Ini akan membawa kembali ke /memo?page=x
   };
-
-  console.log("Can Approve DO:", canApproveDO);
 
   return (
     <div className="p-6 space-y-6">
