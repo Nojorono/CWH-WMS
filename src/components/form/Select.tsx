@@ -1,5 +1,96 @@
+// import React from "react";
+// import ReactSelect, { SingleValue } from "react-select";
+
+// interface Option {
+//   value: string;
+//   label: string;
+// }
+
+// interface SelectProps {
+//   options: Option[];
+//   placeholder?: string;
+//   onChange: (value: string) => void;
+//   className?: string;
+//   value?: string;
+//   width?: string | number;
+//   disabled?: boolean; // ✅ tambahkan prop disabled
+// }
+
+// const Select: React.FC<SelectProps> = ({
+//   options,
+//   placeholder = "Select an option",
+//   onChange,
+//   className = "",
+//   value,
+//   width = "200px",
+//   disabled = false, // ✅ default false
+// }) => {
+//   const selectedOption = options.find((option) => option.value === value);
+
+//   const handleChange = (selectedOption: SingleValue<Option>) => {
+//     if (!disabled) {
+//       onChange(selectedOption?.value || "");
+//     }
+//   };
+
+//   return (
+//     <ReactSelect
+//       className={className}
+//       options={options}
+//       placeholder={placeholder}
+//       value={selectedOption || null}
+//       onChange={handleChange}
+//       classNamePrefix="react-select"
+//       // biar dropdown dapat menempel ke atas kalau ruang bawah tidak cukup
+//       menuPlacement="auto"
+//       // portal ke body agar tidak ter-clip oleh parent overflow
+//       menuPosition="fixed"
+//       menuPortalTarget={
+//         typeof document !== "undefined" ? document.body : undefined
+//       }
+//       styles={{
+//         control: (base) => ({
+//           ...base,
+//           borderRadius: "0.5rem",
+//           borderColor: "#d1d5db",
+//           boxShadow: "none",
+//           "&:hover": { borderColor: "#a1a1aa" },
+//           width,
+//           backgroundColor: disabled ? "#f3f4f6" : base.backgroundColor, // ✅ warna jika disable
+//           cursor: disabled ? "not-allowed" : "pointer", // ✅ cursor jika disable
+//         }),
+//         menu: (base) => ({
+//           ...base,
+//           width,
+//         }),
+//         // style untuk portal agar z-index tinggi dan lebar sesuai control
+//         menuPortal: (base) => ({
+//           ...base,
+//           zIndex: 999999999999,
+//         }),
+//         placeholder: (base) => ({
+//           ...base,
+//           color: "#9ca3af",
+//         }),
+//         singleValue: (base) => ({
+//           ...base,
+//           width,
+//           overflow: "hidden",
+//           textOverflow: "ellipsis",
+//           whiteSpace: "nowrap",
+//         }),
+//       }}
+//       isDisabled={disabled} // ✅ react-select prop
+//     />
+//   );
+// };
+
+// export default Select;
+
+
+
 import React from "react";
-import ReactSelect, { SingleValue } from "react-select";
+import ReactSelect, { MultiValue, SingleValue } from "react-select";
 
 interface Option {
   value: string;
@@ -9,11 +100,13 @@ interface Option {
 interface SelectProps {
   options: Option[];
   placeholder?: string;
-  onChange: (value: string) => void;
+  // Ubah tipe data agar bisa menerima string atau array string
+  onChange: (value: any) => void; 
   className?: string;
-  value?: string;
+  value?: string | string[]; // Bisa string tunggal atau array
   width?: string | number;
-  disabled?: boolean; // ✅ tambahkan prop disabled
+  disabled?: boolean;
+  isMulti?: boolean; // Tambahkan prop ini
 }
 
 const Select: React.FC<SelectProps> = ({
@@ -23,31 +116,39 @@ const Select: React.FC<SelectProps> = ({
   className = "",
   value,
   width = "200px",
-  disabled = false, // ✅ default false
+  disabled = false,
+  isMulti = false, // Defaultnya false
 }) => {
-  const selectedOption = options.find((option) => option.value === value);
+  // Logika untuk menentukan nilai yang terpilih
+  const selectedOption = isMulti
+    ? options.filter((opt) => (value as string[])?.includes(opt.value))
+    : options.find((opt) => opt.value === value);
 
-  const handleChange = (selectedOption: SingleValue<Option>) => {
+  const handleChange = (newValue: SingleValue<Option> | MultiValue<Option>) => {
     if (!disabled) {
-      onChange(selectedOption?.value || "");
+      if (isMulti) {
+        // Jika multi, kirim array ID saja ke parent
+        const values = (newValue as MultiValue<Option>).map((opt) => opt.value);
+        onChange(values);
+      } else {
+        // Jika single, kirim string ID saja
+        onChange((newValue as SingleValue<Option>)?.value || "");
+      }
     }
   };
 
   return (
     <ReactSelect
+      isMulti={isMulti} // Teruskan ke react-select
       className={className}
       options={options}
       placeholder={placeholder}
       value={selectedOption || null}
       onChange={handleChange}
       classNamePrefix="react-select"
-      // biar dropdown dapat menempel ke atas kalau ruang bawah tidak cukup
       menuPlacement="auto"
-      // portal ke body agar tidak ter-clip oleh parent overflow
       menuPosition="fixed"
-      menuPortalTarget={
-        typeof document !== "undefined" ? document.body : undefined
-      }
+      menuPortalTarget={typeof document !== "undefined" ? document.body : undefined}
       styles={{
         control: (base) => ({
           ...base,
@@ -55,32 +156,16 @@ const Select: React.FC<SelectProps> = ({
           borderColor: "#d1d5db",
           boxShadow: "none",
           "&:hover": { borderColor: "#a1a1aa" },
-          width,
-          backgroundColor: disabled ? "#f3f4f6" : base.backgroundColor, // ✅ warna jika disable
-          cursor: disabled ? "not-allowed" : "pointer", // ✅ cursor jika disable
+          minWidth: width, // Gunakan minWidth agar fleksibel saat multi-select memanjang
+          backgroundColor: disabled ? "#f3f4f6" : base.backgroundColor,
+          cursor: disabled ? "not-allowed" : "pointer",
         }),
-        menu: (base) => ({
-          ...base,
-          width,
-        }),
-        // style untuk portal agar z-index tinggi dan lebar sesuai control
         menuPortal: (base) => ({
           ...base,
           zIndex: 999999999999,
         }),
-        placeholder: (base) => ({
-          ...base,
-          color: "#9ca3af",
-        }),
-        singleValue: (base) => ({
-          ...base,
-          width,
-          overflow: "hidden",
-          textOverflow: "ellipsis",
-          whiteSpace: "nowrap",
-        }),
       }}
-      isDisabled={disabled} // ✅ react-select prop
+      isDisabled={disabled}
     />
   );
 };

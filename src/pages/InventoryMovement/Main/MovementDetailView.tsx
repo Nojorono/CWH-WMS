@@ -18,17 +18,21 @@ const MovementDetailView = ({
   // State untuk Modal
   const [showModal, setShowModal] = useState(false);
 
-  // State untuk Hirarki Form
+  // State untuk Hirarki Form Lokasi
   const [selectedSub, setSelectedSub] = useState("");
   const [selectedBin, setSelectedBin] = useState("");
-  const [selectedForklift, setSelectedForklift] = useState("");
+
+  // State untuk Input User (Temporary)
   const [selectedDevice, setSelectedDevice] = useState("");
+  const [tempUsername, setTempUsername] = useState(""); // Menyimpan username terpilih untuk UI
+  const [selectedForklift, setSelectedForklift] = useState("");
+
+  // State untuk Menampung List User yang akan di-assign (Payload Utama)
+  const [assignedUsers, setAssignedUsers] = useState<any[]>([]);
 
   const { fetchAll: fetchZone, list: listZone } = useStoreSubWarehouse();
   const { detail: binList, fetchById: fetchBinList } = useStoreBinByZone();
-  const { fetchAll: fetchForklifts, list: listForklifts } =
-    useStoreUserManagement();
-
+  const { fetchAll: fetchForklifts, list: listForklifts } = useStoreUserManagement();
   const { fetchAll: fetchDeviceId, list: listDeviceId } = useStoreUser();
   const { updateData } = useStoreInventoryMovement();
 
@@ -44,22 +48,53 @@ const MovementDetailView = ({
     }
   }, [selectedSub]);
 
-  // Tambahkan fungsi untuk reset semua form modal
+  // Fungsi untuk memasukkan pasangan Device + Driver ke dalam list
+  const addUserToList = () => {
+    const selectedForkliftDetail = listForklifts?.find(
+      (f: any) => f.id === selectedForklift
+    );
+
+    if (selectedDevice && selectedForkliftDetail) {
+      const newUser = {
+        user_id: selectedDevice,       // ID untuk backend
+        user_account: tempUsername,    // Username untuk tampilan UI
+        user_name: selectedForkliftDetail.name || "",
+        user_phone: selectedForkliftDetail.phone || "",
+      };
+
+      // Cek agar tidak ada duplikasi Device ID
+      if (!assignedUsers.find((u) => u.user_id === selectedDevice)) {
+        setAssignedUsers([...assignedUsers, newUser]);
+      }
+
+      // Reset dropdown dan temporary state
+      setSelectedDevice("");
+      setTempUsername("");
+      setSelectedForklift("");
+    }
+  };
+
+  const removeUserFromList = (userId: string) => {
+    setAssignedUsers(assignedUsers.filter((u) => u.user_id !== userId));
+  };
+
   const resetModalForm = () => {
     setSelectedSub("");
     setSelectedBin("");
     setSelectedForklift("");
     setSelectedDevice("");
+    setTempUsername("");
+    setAssignedUsers([]);
   };
 
   const handleSubmit = async () => {
-  
-    // 2. Cari data forklift driver yang dipilih
-    const selectedForkliftDetail = listForklifts?.find(
-      (f: any) => f.id === selectedForklift,
-    );
+    // Membersihkan field UI (user_account) sebelum dikirim ke backend
+    const finalUsers = assignedUsers.map(({ user_id, user_name, user_phone }) => ({
+      user_id,
+      user_name,
+      user_phone,
+    }));
 
-    // 3. Susun Payload sesuai kontrak API Anda
     const payload = {
       movement_number: data.movement_number,
       movement_type: data.movement_type,
@@ -72,23 +107,16 @@ const MovementDetailView = ({
       source_bin_id: data.source_bin_id,
       status: "PENDING",
       notes: data.notes || "",
-      users: [
-        {
-          user_id: selectedDevice || "",
-          user_name: selectedForkliftDetail?.name || "",
-          user_phone: selectedForkliftDetail?.phone || "",
-        },
-      ],
+      users: finalUsers,
       destination_warehouse_id: data.source_warehouse_id,
       destination_warehouse_sub_id: selectedSub,
       destination_bin_id: selectedBin,
-      completed_date: new Date().toISOString(),
-      moved_by: selectedForklift, // ID Forklift yang dipilih
-    };
+    };    
 
     try {
-      updateData(data.id, payload as any);
-      onBack(); 
+      console.log("Submitting payload:", payload);
+      await updateData(data.id, payload as any);
+      onBack();
     } catch (error) {
       console.error("Failed to submit:", error);
     }
@@ -96,14 +124,11 @@ const MovementDetailView = ({
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen relative">
+      {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <div>
-          <nav className="text-sm text-orange-500 mb-1">
-            Movement &gt; Move Location &gt; Detail
-          </nav>
-          <h2 className="text-xl font-bold text-indigo-900">
-            Move Location Detail
-          </h2>
+          <nav className="text-sm text-orange-500 mb-1">Movement &gt; Move Location &gt; Detail</nav>
+          <h2 className="text-xl font-bold text-indigo-900">Move Location Detail</h2>
         </div>
         <div className="flex gap-2">
           <button
@@ -112,87 +137,43 @@ const MovementDetailView = ({
           >
             Assign Forklift
           </button>
-          <button
-            onClick={onBack}
-            className="bg-gray-200 text-gray-700 px-4 py-2 rounded hover:bg-gray-300"
-          >
+          <button onClick={onBack} className="bg-gray-200 text-gray-700 px-4 py-2 rounded hover:bg-gray-300">
             Back
           </button>
         </div>
       </div>
 
-      {/* Header Info Section */}
+      {/* Info Cards */}
       <div className="grid grid-cols-2 gap-4 mb-6">
         <div className="space-y-4">
           <div>
-            <label className="text-xs text-gray-500 block">Data ID</label>
-            <input
-              disabled
-              value={data.id}
-              className="w-full bg-gray-200 p-2 rounded text-sm border"
-            />
-          </div>
-
-          <div>
             <label className="text-xs text-gray-500 block">Move Loc ID</label>
-            <input
-              disabled
-              value={data.movement_number}
-              className="w-full bg-gray-200 p-2 rounded text-sm border"
-            />
+            <input disabled value={data.movement_number} className="w-full bg-gray-200 p-2 rounded text-sm border" />
           </div>
           <div>
             <label className="text-xs text-gray-500 block">Status</label>
-            <input
-              disabled
-              value={data.status}
-              className="w-full bg-gray-200 p-2 rounded text-sm border"
-            />
-          </div>
-          <div>
-            <label className="text-xs text-gray-500 block">Source</label>
-            <input
-              disabled
-              value={data.sourceWarehouseSub?.name || "-"}
-              className="w-full bg-gray-200 p-2 rounded text-sm border"
-            />
+            <input disabled value={data.status} className="w-full bg-gray-200 p-2 rounded text-sm border" />
           </div>
         </div>
         <div className="space-y-4">
           <div>
             <label className="text-xs text-gray-500 block">Date</label>
-            <input
-              disabled
-              value={new Date(data.createdAt).toLocaleDateString()}
-              className="w-full bg-gray-200 p-2 rounded text-sm border"
-            />
+            <input disabled value={new Date(data.createdAt).toLocaleDateString()} className="w-full bg-gray-200 p-2 rounded text-sm border" />
           </div>
           <div>
             <label className="text-xs text-gray-500 block">Action</label>
-            <input
-              disabled
-              value={data.movement_type}
-              className="w-full bg-gray-200 p-2 rounded text-sm border"
-            />
-          </div>
-          <div>
-            <label className="text-xs text-gray-500 block">Destination</label>
-            <input
-              disabled
-              value={data.destinationWarehouseSub?.name || "-"}
-              className="w-full bg-gray-200 p-2 rounded text-sm border"
-            />
+            <input disabled value={data.movement_type} className="w-full bg-gray-200 p-2 rounded text-sm border" />
           </div>
         </div>
       </div>
 
-      {/* Pallet Table Section */}
+      {/* Table Main */}
       <div className="bg-white rounded shadow overflow-hidden">
         <table className="w-full text-left">
           <thead className="bg-orange-500 text-white text-sm">
             <tr>
-              <th className="p-3 border-r border-orange-400">Pallet</th>
-              <th className="p-3 border-r border-orange-400">No. Of SKU</th>
+              <th className="p-3">Pallet</th>
+              <th className="p-3">No. Of SKU</th>
               <th className="p-3">SKU</th>
             </tr>
           </thead>
@@ -210,141 +191,118 @@ const MovementDetailView = ({
 
       {/* --- MODAL OVERLAY --- */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-5000">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[5000]">
           <div className="bg-white rounded-lg shadow-2xl w-full max-w-2xl overflow-hidden">
-            {/* max-w-2xl agar modal lebih besar */}
             <div className="bg-orange-500 p-6 flex justify-between items-center text-white">
               <h3 className="font-bold text-lg">Assign Forklift Driver</h3>
-              <button
-                onClick={() => setShowModal(false)}
-                className="hover:rotate-90 transition-transform text-2xl"
-              >
-                ✕
-              </button>
+              <button onClick={() => setShowModal(false)} className="hover:rotate-90 transition-transform text-2xl">✕</button>
             </div>
-            <div className="p-8 space-y-6">
-              {/* Select Destination Zone */}
-              <div>
-                {/* Select Destination Zone */}
+
+            <div className="p-8 space-y-6 max-h-[80vh] overflow-y-auto">
+              {/* Destination Section */}
+              <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-xs font-bold text-gray-500 mb-1 block uppercase">
-                    Destination Zone
-                  </label>
+                  <label className="text-xs font-bold text-gray-500 mb-1 block uppercase">Destination Zone</label>
                   <Select
                     width={"100%"}
-                    options={
-                      listZone
-                        ?.filter(
-                          (s: any) =>
-                            s.is_good_stock === true &&
-                            s.is_gate === false &&
-                            s.name !== data.sourceWarehouseSub?.name,
-                        )
-                        .map((s: any) => ({
-                          value: s.id,
-                          label: s.name,
-                        })) || []
-                    }
+                    options={listZone?.filter((s: any) => s.is_good_stock && !s.is_gate && s.name !== data.sourceWarehouseSub?.name).map((s: any) => ({ value: s.id, label: s.name })) || []}
                     placeholder="Pilih Zone"
-                    onChange={(val: string) => {
-                      setSelectedSub(val);
-                      setSelectedBin("");
-                    }}
+                    onChange={(val) => { setSelectedSub(val); setSelectedBin(""); }}
                     value={selectedSub}
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-gray-500 mb-1 block uppercase">Destination Bin</label>
+                  <Select
+                    width={"100%"}
+                    options={Array.isArray(binList) ? binList.map((s: any) => ({ value: s.id, label: s.name })) : []}
+                    placeholder="Pilih Bin"
+                    onChange={(val) => setSelectedBin(val)}
+                    value={selectedBin}
                   />
                 </div>
               </div>
 
-              {/* Select Source Bin (Dependent) */}
-              <div>
-                <label className="text-xs font-bold text-gray-500 mb-1 block uppercase">
-                  Destination Bin
-                </label>
-                <Select
-                  width={"100%"}
-                  options={
-                    Array.isArray(binList)
-                      ? binList.map((s: any) => ({
-                          value: s.id,
-                          label: s.name,
-                        }))
-                      : []
-                  }
-                  placeholder="Pilih Zone"
-                  onChange={(val: string) => {
-                    setSelectedBin(val);
-                  }}
-                  value={selectedBin}
-                />
-              </div>
-
+              {/* Add User Section */}
               <div className="border-t pt-6">
-                <label className="text-xs font-bold text-gray-500 mb-1 block uppercase">
-                  Select Device
-                </label>
-                <Select
-                  width={"100%"}
-                  options={
-                    Array.isArray(listDeviceId)
-                      ? listDeviceId
-                          .filter(
-                            (s: any) => s.role?.name === "DRIVER_FORKLIFT",
-                          )
-                          .map((s: any) => ({
-                            value: s.id,
-                            label: s.username,
-                          }))
-                      : []
-                  }
-                  placeholder="Pilih Device"
-                  onChange={(val: string) => {
-                    setSelectedDevice(val);
-                  }}
-                  value={selectedDevice}
-                />
+                <div className="grid grid-cols-2 gap-4 mb-4">
+                  <div>
+                    <label className="text-xs font-bold text-gray-500 mb-1 block uppercase">Select Device</label>
+                    <Select
+                      width={"100%"}
+                      options={listDeviceId?.filter((s: any) => s.role?.name === "DRIVER_FORKLIFT").map((s: any) => ({ value: s.id, label: s.username })) || []}
+                      placeholder="Pilih Akun/Device"
+                      onChange={(val: any) => {
+                        // Find the selected option's label for username
+                        const selectedOption = (listDeviceId?.filter((s: any) => s.role?.name === "DRIVER_FORKLIFT")
+                          .map((s: any) => ({ value: s.id, label: s.username })) || []).find((opt: any) => opt.value === val);
+                        setSelectedDevice(val);
+                        setTempUsername(selectedOption?.label || "");
+                      }}
+                      value={selectedDevice}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold text-gray-500 mb-1 block uppercase">Select Driver</label>
+                    <Select
+                      width={"100%"}
+                      options={listForklifts?.filter((s: any) => s.roleName !== "HELPER").map((s: any) => ({ value: s.id, label: s.name })) || []}
+                      placeholder="Pilih Nama Driver"
+                      onChange={(val) => setSelectedForklift(val)}
+                      value={selectedForklift}
+                    />
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={addUserToList}
+                  disabled={!selectedDevice || !selectedForklift}
+                  className="w-full py-2 bg-indigo-50 text-indigo-600 border border-indigo-200 rounded text-sm font-semibold hover:bg-indigo-100"
+                >
+                  + Add Driver to Queue
+                </button>
               </div>
 
-              <div>
-                <label className="text-xs font-bold text-gray-500 mb-1 block uppercase">
-                  Select Forklift Driver
-                </label>
-                <Select
-                  width={"100%"}
-                  options={
-                    listForklifts
-                      ?.filter((s: any) => s.roleName !== "HELPER")
-                      .map((s: any) => ({
-                        value: s.id,
-                        label: s.name,
-                      })) || []
-                  }
-                  placeholder="Pilih Forklift"
-                  onChange={(val: string) => {
-                    setSelectedForklift(val);
-                  }}
-                  value={selectedForklift}
-                />
-              </div>
+              {/* List Assigned Users Table */}
+              {assignedUsers.length > 0 && (
+                <div className="border rounded-lg overflow-hidden">
+                  <table className="w-full text-sm">
+                    <thead className="bg-gray-50 border-b">
+                      <tr>
+                        <th className="p-2 text-left text-gray-600">Account (Username)</th>
+                        <th className="p-2 text-left text-gray-600">Driver Name</th>
+                        <th className="p-2 text-center text-gray-600">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {assignedUsers.map((u) => (
+                        <tr key={u.user_id} className="border-b last:border-0 hover:bg-gray-50">
+                          <td className="p-2 font-medium text-indigo-600">{u.user_account}</td>
+                          <td className="p-2">{u.user_name}</td>
+                          <td className="p-2 text-center">
+                            <button onClick={() => removeUserFromList(u.user_id)} className="text-red-500 hover:text-red-700">Remove</button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
 
               {/* Action Buttons */}
-              <div className="flex gap-4 mt-8">
+              <div className="flex gap-4 pt-4">
                 <button
-                  onClick={() => {
-                    resetModalForm();
-                    setShowModal(false);
-                  }}
-                  className="flex-1 py-3 border border-gray-300 rounded text-gray-600 hover:bg-gray-50 font-medium text-base"
+                  onClick={() => { resetModalForm(); setShowModal(false); }}
+                  className="flex-1 py-3 border border-gray-300 rounded text-gray-600 hover:bg-gray-50 font-medium"
                 >
                   Cancel
                 </button>
                 <button
-                  onClick={handleSubmit} // <--- Tambahkan ini
-                  disabled={
-                    !selectedBin || !selectedForklift || !selectedDevice
-                  } // Tambahkan pengecekan device
-                  className="flex-1 py-3 bg-orange-500 text-white rounded shadow hover:bg-orange-600 disabled:bg-gray-300 font-medium text-base"
+                  onClick={handleSubmit}
+                  disabled={!selectedBin || assignedUsers.length === 0}
+                  className="flex-1 py-3 bg-orange-500 text-white rounded shadow hover:bg-orange-600 disabled:bg-gray-300 font-medium"
                 >
-                  Submit
+                  Submit Movement
                 </button>
               </div>
             </div>
