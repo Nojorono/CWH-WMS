@@ -32,13 +32,33 @@ const InventoryMovement: React.FC = () => {
     columnHelper.accessor("sourceWarehouseSub.name", {
       header: "Source Zone",
     }),
+    columnHelper.accessor("sourceBin.name", {
+      header: "Source Bin",
+    }),
     columnHelper.accessor("destinationWarehouseSub.name", {
       header: "Destination Zone",
+    }),
+    columnHelper.accessor("destinationBin.name", {
+      header: "Destination Bin",
     }),
     columnHelper.accessor("status", {
       header: "Status",
       cell: (info) => (
-        <span className="px-3 py-1 rounded-full text-xs font-semibold bg-orange-100 text-orange-600">
+        <span
+          className={`px-3 py-1 rounded-full text-xs font-semibold
+            ${
+              info.getValue() === "PENDING"
+                ? "bg-yellow-100 text-yellow-700"
+                : info.getValue() === "APPROVED"
+                  ? "bg-blue-100 text-blue-700"
+                  : info.getValue() === "COMPLETED"
+                    ? "bg-green-100 text-green-700"
+                    : info.getValue() === "CANCELLED"
+                      ? "bg-red-100 text-red-700"
+                      : "bg-gray-100 text-gray-700"
+            }
+          `}
+        >
           {info.getValue()}
         </span>
       ),
@@ -48,35 +68,53 @@ const InventoryMovement: React.FC = () => {
       header: "Action",
       cell: (info) => (
         <>
-          <FaPlus
-            className="inline mr-2 cursor-pointer text-orange-600"
-            onClick={() =>
-              setSelectedMovement({ ...info.row.original, addOnly: true })
-            }
-            title="Add"
-          />
-          {Array.isArray(info.row.original.users) &&
-            info.row.original.users.length > 0 && (
-              <FaEdit
-                className="inline mr-2 cursor-pointer text-blue-600"
+          {info.row.original.status === "COMPLETED" ? (
+            <FaEye
+              className="inline mr-2 cursor-pointer text-green-600"
+              onClick={() =>
+                setSelectedMovement({ ...info.row.original, viewOnly: true })
+              }
+              title="View"
+            />
+          ) : (
+            <>
+              {(!Array.isArray(info.row.original.users) ||
+                info.row.original.users.length === 0) && (
+                <FaPlus
+                  className="inline mr-2 cursor-pointer text-orange-600"
+                  onClick={() =>
+                    setSelectedMovement({ ...info.row.original, addOnly: true })
+                  }
+                  title="Add"
+                />
+              )}
+              {Array.isArray(info.row.original.users) &&
+                info.row.original.users.length > 0 && (
+                  <FaEdit
+                    className="inline mr-2 cursor-pointer text-blue-600"
+                    onClick={() =>
+                      setSelectedMovement({
+                        ...info.row.original,
+                        editOnly: true,
+                      })
+                    }
+                    title="Edit"
+                  />
+                )}
+              <FaEye
+                className="inline mr-2 cursor-pointer text-green-600"
                 onClick={() =>
-                  setSelectedMovement({ ...info.row.original, editOnly: true })
+                  setSelectedMovement({ ...info.row.original, viewOnly: true })
                 }
-                title="Edit"
+                title="View"
               />
-            )}
-          <FaEye
-            className="inline mr-2 cursor-pointer text-green-600"
-            onClick={() =>
-              setSelectedMovement({ ...info.row.original, viewOnly: true })
-            }
-            title="View"
-          />
-          <FaTrash
-            className="inline cursor-pointer text-red-600"
-            onClick={() => handleDelete(info.row.original.id)}
-            title="Delete"
-          />
+              <FaTrash
+                className="inline cursor-pointer text-red-600"
+                onClick={() => handleDelete(info.row.original.id)}
+                title="Delete"
+              />
+            </>
+          )}
         </>
       ),
     }),

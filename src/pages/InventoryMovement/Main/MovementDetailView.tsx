@@ -104,17 +104,7 @@ const MovementDetailView = ({
     );
 
     const payload = {
-      movement_number: data.movement_number,
-      movement_type: data.movement_type,
-      pallets: data.pallets.map((p: any) => ({
-        pallet_id: p.pallet_id,
-        inventory_tracking_id: p.inventory_tracking_id,
-      })),
-      source_warehouse_id: data.source_warehouse_id,
-      source_warehouse_sub_id: data.source_warehouse_sub_id,
-      source_bin_id: data.source_bin_id,
       status: "APPROVED",
-      notes: data.notes || "",
       users: finalUsers,
       destination_warehouse_id: data.source_warehouse_id,
       destination_warehouse_sub_id: selectedSub,
@@ -130,7 +120,29 @@ const MovementDetailView = ({
     }
   };
 
-  const deviceUser = data.users?.[0];
+  useEffect(() => {
+    if (showModal && editOnly) {
+      // Isi assignedUsers dari data.users
+      setAssignedUsers(
+        Array.isArray(data.users)
+          ? data.users.map((u: any) => ({
+              user_id: u.user_id,
+              user_account: u.user?.username || "",
+              user_name: u.user_name,
+              user_phone: u.user_phone,
+            }))
+          : [],
+      );
+      // Isi destination zone & bin dari data
+      setSelectedSub(data.destination_warehouse_sub_id || "");
+      setSelectedBin(data.destination_bin_id || "");
+    }
+    // Jika modal ditutup, reset form
+    if (!showModal) {
+      resetModalForm();
+    }
+    // eslint-disable-next-line
+  }, [showModal, editOnly]);
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen relative">
@@ -237,29 +249,6 @@ const MovementDetailView = ({
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-4 mb-6">
-        <div>
-          <label className="text-xs text-gray-500 block">Device</label>
-          <input
-            disabled
-            value={deviceUser?.user?.username || "-"}
-            className="w-full bg-gray-200 p-2 rounded text-sm border"
-          />
-        </div>
-        <div>
-          <label className="text-xs text-gray-500 block">Forklift Driver</label>
-          <input
-            disabled
-            value={
-              deviceUser
-                ? `${deviceUser.user_name} (${deviceUser.user_phone})`
-                : "-"
-            }
-            className="w-full bg-gray-200 p-2 rounded text-sm border"
-          />
-        </div>
-      </div>
-
       {/* Table Main */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
         {/* Pallet Table */}
@@ -268,16 +257,12 @@ const MovementDetailView = ({
             <thead className="bg-orange-500 text-white text-sm">
               <tr>
                 <th className="p-3">Pallet</th>
-                <th className="p-3">No. Of SKU</th>
-                {/* <th className="p-3">SKU</th> */}
               </tr>
             </thead>
             <tbody>
               {data.pallets.map((item: any) => (
                 <tr key={item.id} className="border-b hover:bg-gray-50 text-sm">
                   <td className="p-3">{item.pallet.pallet_code}</td>
-                  <td className="p-3">1</td>
-                  {/* <td className="p-3"></td> */}
                 </tr>
               ))}
             </tbody>
@@ -300,7 +285,10 @@ const MovementDetailView = ({
             <tbody>
               {Array.isArray(data.users) && data.users.length > 0 ? (
                 data.users.map((user: any) => (
-                  <tr key={user.id} className="border-b hover:bg-gray-50 text-sm">
+                  <tr
+                    key={user.id}
+                    className="border-b hover:bg-gray-50 text-sm"
+                  >
                     <td className="p-3">{user.user?.username || "-"}</td>
                     <td className="p-3">{user.user_name || "-"}</td>
                     <td className="p-3">{user.user_phone || "-"}</td>
