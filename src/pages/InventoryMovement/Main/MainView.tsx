@@ -7,10 +7,11 @@ import {
 } from "@tanstack/react-table";
 import { useStoreInventoryMovement } from "../../../DynamicAPI/stores/Store/MasterStore";
 import MovementDetailView from "./MovementDetailView"; // Kita buat component ini di bawah
-import { FaEdit, FaEye, FaTrash } from "react-icons/fa";
+import { FaEdit, FaEye, FaPlus, FaTrash } from "react-icons/fa";
+import { EndPoint } from "../../../utils/EndPoint";
 
 const InventoryMovement: React.FC = () => {
-  const { fetchAll, list } = useStoreInventoryMovement();
+  const { fetchAll, list, deleteData } = useStoreInventoryMovement();
   const [selectedMovement, setSelectedMovement] = useState<any | null>(null);
 
   useEffect(() => {
@@ -29,10 +30,10 @@ const InventoryMovement: React.FC = () => {
       cell: (info) => new Date(info.getValue()).toLocaleDateString("id-ID"),
     }),
     columnHelper.accessor("sourceWarehouseSub.name", {
-      header: "Sumber",
+      header: "Source Zone",
     }),
     columnHelper.accessor("destinationWarehouseSub.name", {
-      header: "Tujuan",
+      header: "Destination Zone",
     }),
     columnHelper.accessor("status", {
       header: "Status",
@@ -47,19 +48,33 @@ const InventoryMovement: React.FC = () => {
       header: "Action",
       cell: (info) => (
         <>
-          <FaEdit
-            className="inline mr-2 cursor-pointer text-blue-600"
-            onClick={() => setSelectedMovement(info.row.original)}
-            title="Edit"
+          <FaPlus
+            className="inline mr-2 cursor-pointer text-orange-600"
+            onClick={() =>
+              setSelectedMovement({ ...info.row.original, addOnly: true })
+            }
+            title="Add"
           />
+          {Array.isArray(info.row.original.users) &&
+            info.row.original.users.length > 0 && (
+              <FaEdit
+                className="inline mr-2 cursor-pointer text-blue-600"
+                onClick={() =>
+                  setSelectedMovement({ ...info.row.original, editOnly: true })
+                }
+                title="Edit"
+              />
+            )}
           <FaEye
             className="inline mr-2 cursor-pointer text-green-600"
-            onClick={() => setSelectedMovement(info.row.original)}
+            onClick={() =>
+              setSelectedMovement({ ...info.row.original, viewOnly: true })
+            }
             title="View"
           />
           <FaTrash
             className="inline cursor-pointer text-red-600"
-            onClick={() => {}}
+            onClick={() => handleDelete(info.row.original.id)}
             title="Delete"
           />
         </>
@@ -74,8 +89,6 @@ const InventoryMovement: React.FC = () => {
   });
 
   if (selectedMovement) {
-    console.log("Selected Movement:", selectedMovement);
-
     return (
       <MovementDetailView
         data={selectedMovement}
@@ -83,6 +96,38 @@ const InventoryMovement: React.FC = () => {
       />
     );
   }
+
+  const handleDelete = async (id: string) => {
+    console.log("Attempting to delete item with id:", id);
+
+    // Import Swal if not already imported
+    import("sweetalert2").then(async (Swal) => {
+      const result = await Swal.default.fire({
+        title: "Are you sure?",
+        text: "This action cannot be undone.",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonColor: "#d33",
+        cancelButtonColor: "#3085d6",
+        confirmButtonText: "Yes, delete it!",
+      });
+
+      if (result.isConfirmed) {
+        try {
+          const axios = (await import("axios")).default;
+          const token = localStorage.getItem("token");
+          await axios.delete(`${EndPoint}inventory-movement/${id}`, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
+          fetchAll();
+        } catch (error) {
+          Swal.default.fire("Error", "Failed to delete item.", "error");
+        }
+      }
+    });
+  };
 
   return (
     <div className="p-6">
