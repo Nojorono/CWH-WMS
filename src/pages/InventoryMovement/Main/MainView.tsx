@@ -152,15 +152,15 @@ const InventoryMovement: React.FC = () => {
 
       if (result.isConfirmed) {
         try {
-          // const axios = (await import("axios")).default;
-          // const token = localStorage.getItem("token");
-          // await axios.delete(`${EndPoint}inventory-movement/${id}`, {
-          //   headers: {
-          //     Authorization: `Bearer ${token}`,
-          //   },
-          // });
+          const axios = (await import("axios")).default;
+          const token = localStorage.getItem("token");
+          await axios.delete(`${EndPoint}inventory-movement/${id}`, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
 
-          deleteData(id);
+          // deleteData(id);
           fetchAll();
         } catch (error) {
           Swal.default.fire("Error", "Failed to delete item.", "error");
