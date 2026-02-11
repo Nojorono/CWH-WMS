@@ -254,23 +254,24 @@ const AdjustTable = ({
       id: item.id,
       warehouse_sub_name: item.warehouseSub?.name || "-",
       warehouse_bin_name: item.warehouseBin?.name || null,
-      pallet_code: item.pallet?.pallet_code || "NO-PALLET",
+      pallet_code: item.pallet?.pallet_code
+      ? item.pallet.pallet_code
+      : <span className="text-red-600 font-bold">NO-PALLET</span>,
       inventory_status: item.inventory_status || "",
       progression_status: item.progression_status || "",
       current_items: item.pallet?.currentItems || [],
-      // Map seluruh array inventoryTrackingBad
       bad_inventory: Array.isArray(item.inventoryTrackingBad)
-        ? item.inventoryTrackingBad.map((bad: any) => ({
-            item_id: bad.item_id,
-            item_name: bad.item_name || bad.item_id,
-            quantity: bad.quantity,
-            uom: bad.uom,
-            production_date: bad.production_date,
-            year: bad.year,
-            hje: bad.hje,
-            notes: bad.notes,
-          }))
-        : [],
+      ? item.inventoryTrackingBad.map((bad: any) => ({
+        item_id: bad.item_id,
+        item_name: bad.item_name || bad.item_id,
+        quantity: bad.quantity,
+        uom: bad.uom,
+        production_date: bad.production_date,
+        year: bad.year,
+        hje: bad.hje,
+        notes: bad.notes,
+        }))
+      : [],
     }));
   }, [list, pageIndex, pageSize]);
 
@@ -305,7 +306,7 @@ const AdjustTable = ({
               {row.original.warehouse_sub_name}
             </span>
             <span className="text-[14px] text-gray-500 font-medium px-2 italic">
-              Bin: {row.original.warehouse_bin_name || "Unassigned"}
+              Bin: {row.original.warehouse_bin_name || "-"}
             </span>
           </div>
         ),
