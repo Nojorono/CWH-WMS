@@ -96,7 +96,8 @@ const TableComponent = <T extends { [key: string]: any }>({
       <div className="overflow-x-auto">
         <div className="max-h-[600px] overflow-y-auto">
           <table className="min-w-full table-auto border border-gray-200">
-            <thead className="sticky top-0 bg-gray-100">
+            {/* <thead className="sticky top-0 bg-gray-100"> */}
+            <thead className="bg-orange-500 text-white text-sm sticky top-0">
               {table.getHeaderGroups().map((headerGroup) => (
                 <tr key={headerGroup.id} className="text-left">
                   {headerGroup.headers.map((header) => (
@@ -110,7 +111,7 @@ const TableComponent = <T extends { [key: string]: any }>({
                         ? null
                         : flexRender(
                             header.column.columnDef.header,
-                            header.getContext()
+                            header.getContext(),
                           )}
                       {header.column.getIsSorted() === "asc" && " 🔼"}
                       {header.column.getIsSorted() === "desc" && " 🔽"}
@@ -130,7 +131,7 @@ const TableComponent = <T extends { [key: string]: any }>({
                     <td key={cell.id} className="px-4 py-2 border-b">
                       {flexRender(
                         cell.column.columnDef.cell,
-                        cell.getContext()
+                        cell.getContext(),
                       )}
                     </td>
                   ))}

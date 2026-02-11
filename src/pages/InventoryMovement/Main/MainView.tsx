@@ -20,6 +20,8 @@ const InventoryMovement: React.FC = () => {
 
   const columnHelper = createColumnHelper<any>();
 
+  console.log("Inventory Movement List:", list);
+
   const columns = [
     columnHelper.accessor("movement_number", {
       header: "Move Location ID",
@@ -66,41 +68,15 @@ const InventoryMovement: React.FC = () => {
     columnHelper.display({
       id: "action",
       header: "Action",
-      cell: (info) => (
-        <>
-          {info.row.original.status === "COMPLETED" ? (
-            <FaEye
-              className="inline mr-2 cursor-pointer text-green-600"
-              onClick={() =>
-                setSelectedMovement({ ...info.row.original, viewOnly: true })
-              }
-              title="View"
-            />
-          ) : (
-            <>
-              {(!Array.isArray(info.row.original.users) ||
-                info.row.original.users.length === 0) && (
-                <FaPlus
-                  className="inline mr-2 cursor-pointer text-orange-600"
-                  onClick={() =>
-                    setSelectedMovement({ ...info.row.original, addOnly: true })
-                  }
-                  title="Add"
-                />
-              )}
-              {Array.isArray(info.row.original.users) &&
-                info.row.original.users.length > 0 && (
-                  <FaEdit
-                    className="inline mr-2 cursor-pointer text-blue-600"
-                    onClick={() =>
-                      setSelectedMovement({
-                        ...info.row.original,
-                        editOnly: true,
-                      })
-                    }
-                    title="Edit"
-                  />
-                )}
+      cell: (info) => {
+        // Cek jika ada minimal satu pallet is_completed === true
+        const hasCompletedPallet =
+          Array.isArray(info.row.original.pallets) &&
+          info.row.original.pallets.some((p: any) => p.is_completed === true);
+
+        return (
+          <>
+            {info.row.original.status === "COMPLETED" ? (
               <FaEye
                 className="inline mr-2 cursor-pointer text-green-600"
                 onClick={() =>
@@ -108,15 +84,57 @@ const InventoryMovement: React.FC = () => {
                 }
                 title="View"
               />
-              <FaTrash
-                className="inline cursor-pointer text-red-600"
-                onClick={() => handleDelete(info.row.original.id)}
-                title="Delete"
-              />
-            </>
-          )}
-        </>
-      ),
+            ) : (
+              <>
+                {(!Array.isArray(info.row.original.users) ||
+                  info.row.original.users.length === 0) && (
+                  <FaPlus
+                    className="inline mr-2 cursor-pointer text-orange-600"
+                    onClick={() =>
+                      setSelectedMovement({
+                        ...info.row.original,
+                        addOnly: true,
+                      })
+                    }
+                    title="Add"
+                  />
+                )}
+                {Array.isArray(info.row.original.users) &&
+                  info.row.original.users.length > 0 &&
+                  !hasCompletedPallet && (
+                    <FaEdit
+                      className="inline mr-2 cursor-pointer text-blue-600"
+                      onClick={() =>
+                        setSelectedMovement({
+                          ...info.row.original,
+                          editOnly: true,
+                        })
+                      }
+                      title="Edit"
+                    />
+                  )}
+                <FaEye
+                  className="inline mr-2 cursor-pointer text-green-600"
+                  onClick={() =>
+                    setSelectedMovement({
+                      ...info.row.original,
+                      viewOnly: true,
+                    })
+                  }
+                  title="View"
+                />
+                {!hasCompletedPallet && (
+                  <FaTrash
+                    className="inline cursor-pointer text-red-600"
+                    onClick={() => handleDelete(info.row.original.id)}
+                    title="Delete"
+                  />
+                )}
+              </>
+            )}
+          </>
+        );
+      },
     }),
   ];
 
@@ -171,7 +189,6 @@ const InventoryMovement: React.FC = () => {
 
   return (
     <div className="p-6">
-      <h2 className="text-xl font-bold text-indigo-900 mb-4">Move Location</h2>
       <div className="bg-white rounded-lg shadow border border-gray-200 overflow-hidden">
         <table className="w-full text-left">
           <thead className="bg-orange-500 text-white text-sm">
