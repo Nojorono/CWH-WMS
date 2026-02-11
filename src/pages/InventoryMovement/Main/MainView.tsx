@@ -69,10 +69,22 @@ const InventoryMovement: React.FC = () => {
       id: "action",
       header: "Action",
       cell: (info) => {
-        // Cek jika ada minimal satu pallet is_completed === true
         const hasCompletedPallet =
           Array.isArray(info.row.original.pallets) &&
           info.row.original.pallets.some((p: any) => p.is_completed === true);
+
+        // Jika status CANCELLED, hanya tampilkan FaEye
+        if (info.row.original.status === "CANCELLED") {
+          return (
+            <FaEye
+              className="inline mr-2 cursor-pointer text-green-600"
+              onClick={() =>
+                setSelectedMovement({ ...info.row.original, viewOnly: true })
+              }
+              title="View"
+            />
+          );
+        }
 
         return (
           <>
