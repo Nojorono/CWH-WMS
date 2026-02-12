@@ -1,3 +1,5 @@
+import Dashboard from "../pages/Dashboard/Home";
+
 // PAGE MASTER
 import MasterUser from "../pages/Master/MasterUser";
 import MasterMenu from "../pages/Master/MasterMenu";
@@ -20,8 +22,7 @@ import PutAwayProcess from "../pages/PutAway/Table/PutAwayProcess";
 import Inventory from "../pages/Inventory";
 import InventoryDetail from "../pages/Inventory/Form/Detail";
 import InventoryVisibility from "../pages/InventoryVisibility";
-import InventoryMovement from '../pages/InventoryMovement';
-
+import InventoryMovement from "../pages/InventoryMovement";
 
 // MASTER PALLET
 import MasterPallet from "../pages/Master/MasterPallet";
@@ -63,6 +64,9 @@ import ApprovalProcess from "../pages/ApprovalSetup/Table/ApprovalProcess";
 import PrintSuratJalan from "../pages/OutboundFullTrial/PickingTransaction/Main/PrintSuratJalan/PrintSuratJalan";
 
 export {
+  // DASHBOARD
+  Dashboard,
+
   // PAGE MASTER
   MasterUser,
   MasterUserManagement,

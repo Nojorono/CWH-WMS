@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { Link, useLocation } from "react-router";
+import { Link, To, useLocation } from "react-router";
 import { ChevronDownIcon, HorizontaLDots } from "../icons";
 import { useSidebar } from "../context/SidebarContext";
 import { useDynamicSidebarItems } from "./useDynamicSidebarItems";
@@ -67,6 +67,11 @@ const AppSidebar: React.FC = () => {
     }
   };
 
+  const sortMenuItems = (items: any[]) => [
+    ...items.filter((item) => !item.subItems || item.subItems.length === 0),
+    ...items.filter((item) => item.subItems && item.subItems.length > 0),
+  ];
+
   const renderSection = (
     items: typeof menuItems,
     type: "main" | "settings",
@@ -85,7 +90,7 @@ const AppSidebar: React.FC = () => {
         )}
       </h2>
       <ul className="flex flex-col gap-4">
-        {items.map((nav, index) => {
+        {sortMenuItems(items).map((nav, index) => {
           const isOpen =
             type === "main"
               ? openMainSubmenu === index
@@ -160,12 +165,12 @@ const AppSidebar: React.FC = () => {
                   }}
                 >
                   <ul className="mt-2 space-y-1 ml-9">
-                    {nav.subItems.map((sub) => (
-                      <li key={sub.name}>
+                    {nav.subItems.map((sub: { name: boolean | React.ReactElement<unknown, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | Promise<string | number | bigint | boolean | React.ReactPortal | React.ReactElement<unknown, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | null | undefined> | React.Key | null | undefined; path: To; }, subIndex: number) => (
+                      <li key={`subitem-${index}-${subIndex}`}>
                         <Link
                           to={sub.path}
                           className={`menu-dropdown-item ${
-                            isActive(sub.path)
+                            isActive(String(sub.path))
                               ? "menu-dropdown-item-active"
                               : "menu-dropdown-item-inactive"
                           }`}

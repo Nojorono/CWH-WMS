@@ -5,6 +5,7 @@ import MonthlyTarget from "../../components/ecommerce/MonthlyTarget";
 import RecentOrders from "../../components/ecommerce/RecentOrders";
 import DemographicCard from "../../components/ecommerce/DemographicCard";
 import PageMeta from "../../components/common/PageMeta";
+import MainView from "./CWHLayout/Main";
 
 export default function Home() {
   return (
@@ -36,6 +37,8 @@ export default function Home() {
           <RecentOrders />
         </div>
       </div> */}
+
+      <MainView/>
     </>
   );
 }

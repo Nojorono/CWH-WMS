@@ -16,10 +16,12 @@ import {
   FaCog,
   FaBoxes,
   FaShippingFast,
-  FaPeopleCarry 
+  FaPeopleCarry,
+  FaChartPie,
 } from "react-icons/fa";
 
 const iconOptions = [
+  { value: "FaChartPie ", label: "Dashboard", icon: <FaChartPie /> },
   { value: "FaRegFileAlt", label: "Master Data", icon: <FaRegFileAlt /> },
   { value: "FaWarehouse", label: "Inbound", icon: <FaWarehouse /> },
   { value: "FaShippingFast", label: "Outbound", icon: <FaShippingFast /> },
@@ -58,7 +60,7 @@ const DataTable = () => {
       { accessorKey: "parentId", header: "Parent ID" },
       { accessorKey: "order", header: "Order" },
     ],
-    []
+    [],
   );
 
   const formFields = [
@@ -113,7 +115,7 @@ const DataTable = () => {
   const tableData = useMemo(() => {
     const flattenMenus = (
       menus: any[],
-      parentId: number | null = null
+      parentId: number | null = null,
     ): any[] =>
       menus.reduce((acc, menu) => {
         const { children, ...rest } = menu;
