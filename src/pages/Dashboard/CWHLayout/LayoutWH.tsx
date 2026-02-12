@@ -10,7 +10,7 @@ import {
 
 const WarehouseMapView = ({ data }: { data: any[] }) => {
   const [selectedPallet, setSelectedPallet] = useState<any>(null);
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(true);
 
   // Grouping Data menggunakan useMemo agar tidak re-render berat
   const zones = useMemo(() => {
@@ -149,7 +149,7 @@ const WarehouseMapView = ({ data }: { data: any[] }) => {
                           className={`group relative flex flex-col items-center justify-center w-full h-20 rounded-2xl transition-all border-2 
                             ${
                               unused
-                                ? "bg-gray-100 border-gray-300 hover:border-gray-400"
+                                ? "bg-red-100 border-gray-300 hover:border-gray-400"
                                 : pallet.bad_inventory.length > 0
                                   ? "bg-red-50 border-red-100 hover:border-red-400 hover:shadow-md hover:shadow-red-50"
                                   : "bg-blue-50 border-blue-50 hover:border-blue-400 hover:shadow-md hover:shadow-blue-50"
@@ -158,7 +158,7 @@ const WarehouseMapView = ({ data }: { data: any[] }) => {
                           <FaBox
                             className={
                               unused
-                                ? "text-gray-400"
+                                ? "text-red-500"
                                 : pallet.bad_inventory.length > 0
                                   ? "text-red-500"
                                   : "text-blue-500"
