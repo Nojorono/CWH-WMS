@@ -30,24 +30,30 @@ const WarehouseMapView = ({ data }: { data: any[] }) => {
     if (Array.isArray(pallet.bad_inventory) && pallet.bad_inventory.length > 0)
       return false;
     // Jika tidak ada current_items, dianggap unused
-    if (!Array.isArray(pallet.current_items) || pallet.current_items.length === 0)
+    if (
+      !Array.isArray(pallet.current_items) ||
+      pallet.current_items.length === 0
+    )
       return true;
     // Jika semua qty === 0, unused
     return pallet.current_items.every(
-      (item: any) => Number(item.current_quantity) === 0
+      (item: any) => Number(item.current_quantity) === 0,
     );
   };
 
   // Helper untuk ambil last used info (misal: updatedAt)
   const getLastUsed = (pallet: any) => {
     // Bisa pakai updatedAt, atau cari dari item terakhir yang qty > 0
-    if (Array.isArray(pallet.current_items) && pallet.current_items.length > 0) {
+    if (
+      Array.isArray(pallet.current_items) &&
+      pallet.current_items.length > 0
+    ) {
       const lastUsedItem = pallet.current_items
         .filter((item: any) => Number(item.current_quantity) > 0)
         .sort(
           (a: any, b: any) =>
             new Date(b.updatedAt || 0).getTime() -
-            new Date(a.updatedAt || 0).getTime()
+            new Date(a.updatedAt || 0).getTime(),
         )[0];
       if (lastUsedItem && lastUsedItem.updatedAt) {
         return new Date(lastUsedItem.updatedAt).toLocaleString();
@@ -115,9 +121,10 @@ const WarehouseMapView = ({ data }: { data: any[] }) => {
               </div>
               <div className="flex items-center gap-2 bg-slate-50 px-3 py-1 rounded-full border border-slate-100">
                 <FaCubes className="text-slate-400" size={12} />
-                <span className="text-[11px] font-bold text-slate-600 uppercase italic">
-                  {Object.keys(zones[zoneName]).length} Bins
-                </span>
+                {/* <span className="text-[11px] font-bold text-slate-600 uppercase italic">
+                  {zones[zoneName] ? Object.keys(zones[zoneName]).length : 0}
+                  Bins
+                </span> */}
               </div>
             </div>
 
@@ -144,8 +151,8 @@ const WarehouseMapView = ({ data }: { data: any[] }) => {
                               unused
                                 ? "bg-gray-100 border-gray-300 hover:border-gray-400"
                                 : pallet.bad_inventory.length > 0
-                                ? "bg-red-50 border-red-100 hover:border-red-400 hover:shadow-md hover:shadow-red-50"
-                                : "bg-blue-50 border-blue-50 hover:border-blue-400 hover:shadow-md hover:shadow-blue-50"
+                                  ? "bg-red-50 border-red-100 hover:border-red-400 hover:shadow-md hover:shadow-red-50"
+                                  : "bg-blue-50 border-blue-50 hover:border-blue-400 hover:shadow-md hover:shadow-blue-50"
                             }`}
                         >
                           <FaBox
@@ -153,8 +160,8 @@ const WarehouseMapView = ({ data }: { data: any[] }) => {
                               unused
                                 ? "text-gray-400"
                                 : pallet.bad_inventory.length > 0
-                                ? "text-red-500"
-                                : "text-blue-500"
+                                  ? "text-red-500"
+                                  : "text-blue-500"
                             }
                             size={22}
                           />
@@ -246,9 +253,10 @@ const WarehouseMapView = ({ data }: { data: any[] }) => {
                     <span className="text-gray-400 text-lg font-bold mb-2">
                       Pallet Unused
                     </span>
-                    {/* <span className="text-xs text-gray-500">
-                      Last Used: {getLastUsed(selectedPallet)}
-                    </span> */}
+                    <span className="text-xs text-red-500">
+                      You can check history for this Pallet in Master Pallet
+                      menu.
+                    </span>
                   </div>
                 ) : selectedPallet.current_items &&
                   selectedPallet.current_items.length > 0 ? (
@@ -265,7 +273,9 @@ const WarehouseMapView = ({ data }: { data: any[] }) => {
                         <p className="text-[10px] text-gray-400 font-medium">
                           Prod. Date:{" "}
                           {item.production_date
-                            ? new Date(item.production_date).toLocaleDateString()
+                            ? new Date(
+                                item.production_date,
+                              ).toLocaleDateString()
                             : "-"}
                         </p>
                       </div>
