@@ -140,7 +140,7 @@ const TableComponent = <T extends { [key: string]: any }>({
           </div>
 
           <table className="min-w-full table-auto border border-gray-200">
-            <thead className="sticky top-0 bg-gray-100">
+            <thead className="sticky top-0 bg-orange-500 text-white text-sm">
               {table.getHeaderGroups().map((headerGroup) => (
                 <tr key={headerGroup.id}>
                   {headerGroup.headers.map((header) => (

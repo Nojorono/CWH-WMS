@@ -10,9 +10,9 @@ import {
   useStoreBinByZone,
   useStoreItem,
 } from "../../../DynamicAPI/stores/Store/MasterStore";
+import Select from "../../../components/form/Select";
 import Button from "../../../components/ui/button/Button";
 import { FaPlus } from "react-icons/fa";
-import Select from "../../../components/form/Select";
 
 const MainTable = () => {
   const navigate = useNavigate();
@@ -125,17 +125,6 @@ const MainTable = () => {
               width={"200px"}
             />
           </div>
-
-          {/* <div className="space-x-3 mt-4">
-            <Button
-              variant="primary"
-              size="sm"
-              // onClick={() => setCreateModalOpen(true)}
-              disabled={!selectedZone || selectedStatus !== "IN_INVENTORY"}
-            >
-              <FaPlus className="mr-2" /> Movement Inventory
-            </Button>
-          </div> */}
         </div>
       </div>
 

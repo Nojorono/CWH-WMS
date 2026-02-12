@@ -8,7 +8,7 @@ import {
   flexRender,
   createColumnHelper,
   ColumnDef,
-  getSortedRowModel
+  getSortedRowModel,
 } from "@tanstack/react-table";
 import { useStoreInventoryVisibility } from "../../../DynamicAPI/stores/Store/MasterStore";
 import {
@@ -154,7 +154,7 @@ const InventoryVisibility: React.FC = () => {
         ),
       }),
     ],
-    []
+    [],
   );
 
   const table = useReactTable({
@@ -243,21 +243,20 @@ const InventoryVisibility: React.FC = () => {
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
-            <thead>
+            <thead className="bg-orange-500 text-white text-sm">
               {table.getHeaderGroups().map((hg) => (
                 <tr
                   key={hg.id}
-                  className="bg-slate-50/80 border-b border-slate-200"
                 >
                   {hg.headers.map((header) => (
                     <th
                       key={header.id}
-                      className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest"
+                      className="px-6 py-4 text-[10px] font-black text-white-400 uppercase tracking-widest"
                       onClick={header.column.getToggleSortingHandler()}
                     >
                       {flexRender(
                         header.column.columnDef.header,
-                        header.getContext()
+                        header.getContext(),
                       )}
                     </th>
                   ))}
@@ -279,7 +278,7 @@ const InventoryVisibility: React.FC = () => {
                       >
                         {flexRender(
                           cell.column.columnDef.cell,
-                          cell.getContext()
+                          cell.getContext(),
                         )}
                       </td>
                     ))}
@@ -345,7 +344,7 @@ const InventoryVisibility: React.FC = () => {
                                     acc[curr.do_number].push(curr);
                                     return acc;
                                   },
-                                  {}
+                                  {},
                                 );
 
                               const uniqueDOCount =
@@ -408,11 +407,11 @@ const InventoryVisibility: React.FC = () => {
                                                     </p>
                                                   </div>
                                                 </div>
-                                              )
+                                              ),
                                             )}
                                           </div>
                                         </div>
-                                      )
+                                      ),
                                     )}
 
                                     {row.original.booking_details.length ===

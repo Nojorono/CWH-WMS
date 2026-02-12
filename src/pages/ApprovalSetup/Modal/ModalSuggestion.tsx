@@ -55,6 +55,7 @@ const AdjustmentModal: React.FC<AdjustmentModalProps> = ({
   onSave,
   mode = "create",
 }) => {
+  
   const {
     detail: binList,
     fetchById: fetchBinList,

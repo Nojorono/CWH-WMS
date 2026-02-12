@@ -8,6 +8,8 @@ export interface SubWarehouse {
   capacity_bin?: number;
   barcode_image_url?: string;
   is_staging?: string;
+  is_good_stock?: boolean;
+  is_gate?: boolean;
 }
 
 export type CreateSubWarehouse = Omit<SubWarehouse, "id">;

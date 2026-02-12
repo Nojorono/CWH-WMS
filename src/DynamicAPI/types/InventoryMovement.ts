@@ -102,10 +102,10 @@ export interface Inventory {
 // =============================
 
 // GET ALL
-export interface InventoryListResponse {
+export interface InventoryMovementListResponse {
   success: boolean;
   message: string;
-  data: Inventory[];
+  data: InventoryMovement[];
   meta: {
     page: number;
     limit: number;
@@ -154,4 +154,92 @@ export interface InventoryTrackingBad {
   year?: number;
   hje?: string;
   notes?: string;
+}
+
+// =============================
+// USER TYPE
+// =============================
+export interface InventoryMovementUser {
+  id: string;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt: string | null;
+  inventory_movement_id: string;
+  user_id: string;
+  user: {
+    id: string;
+    createdAt: string;
+    updatedAt: string;
+    deletedAt: string | null;
+    username: string;
+    password: string;
+    isActive: boolean;
+    roleId: number;
+  };
+  user_name: string;
+  user_phone: string;
+}
+
+// =============================
+// INVENTORY TRACKING TYPE
+// =============================
+export interface InventoryTracking {
+  id: string;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt: string | null;
+  pallet_id: string;
+  warehouse_id: string;
+  warehouse_sub_id: string;
+  warehouse_bin_id: string;
+  inventory_date: string;
+  inventory_status: string;
+  progression_status: string;
+  inventory_note: string;
+}
+
+// =============================
+// MOVEMENT PALLET TYPE
+// =============================
+export interface InventoryMovementPallet {
+  id: string;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt: string | null;
+  inventory_movement_id: string;
+  pallet_id: string;
+  pallet: Pallet;
+  inventory_tracking_id: string;
+  inventoryTracking: InventoryTracking;
+  is_completed: boolean;
+  completed_at: string | null;
+}
+
+// =============================
+// MAIN INVENTORY MOVEMENT TYPE
+// =============================
+export interface InventoryMovement {
+  id: string;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt: string | null;
+  movement_number: string;
+  movement_type: string;
+  pallets: InventoryMovementPallet[];
+  users: InventoryMovementUser[];
+  source_warehouse_id: string;
+  sourceWarehouse: Warehouse;
+  source_warehouse_sub_id: string;
+  sourceWarehouseSub: WarehouseSub;
+  source_bin_id: string;
+  sourceBin: WarehouseBin;
+  destination_warehouse_id: string;
+  destinationWarehouse: Warehouse;
+  destination_warehouse_sub_id: string;
+  destinationWarehouseSub: WarehouseSub;
+  destination_bin_id: string;
+  destinationBin: WarehouseBin;
+  status: string;
+  completed_date: string;
+  notes: string | null;
 }

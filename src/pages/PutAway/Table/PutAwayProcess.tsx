@@ -529,35 +529,6 @@ const PutAwayDetail: React.FC = () => {
             <label className="block text-sm font-medium mb-1">
               Driver Name <span className="text-red-500">*</span>
             </label>
-            {/* <Controller
-              name="driverName"
-              control={control}
-              rules={{ required: "Driver name is required" }}
-              render={({ field }) => (
-                <>
-                  <Select
-                    {...field}
-                    placeholder="Select Driver"
-                    options={forkliftDriverName.map((u: any) => ({
-                      value: u.id,
-                      label: u.name,
-                    }))}
-                    onChange={(val: string) => {
-                      handleDriverNameSelect(val);
-                      field.onChange(val);
-                    }}
-                    disabled={isDetail}
-                    width="100%"
-                  />
-                  {errors.driverName && (
-                    <p className="text-red-500 text-sm mt-1">
-                      {errors.driverName.message}
-                    </p>
-                  )}
-                </>
-              )}
-            /> */}
-
             <Controller
               name="driverId" // ⬅️ BUKAN driverName
               control={control}

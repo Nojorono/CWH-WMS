@@ -56,6 +56,7 @@ import {
   GateLoading,
   PrintSuratJalan,
   InventoryVisibility,
+  InventoryMovement,
 } from "./utils/PagesComponent";
 
 const DefaultPage = () => <> </>;
@@ -166,6 +167,7 @@ export function AppRoutes() {
       "/picking_transaction": <PickingTransaction />,
       "/gate_loading": <GateLoading />,
       "/inventory_visibility": <InventoryVisibility />,
+      "/inventory_movement": <InventoryMovement />,
     };
     return map[path] || <DefaultPage />;
   };

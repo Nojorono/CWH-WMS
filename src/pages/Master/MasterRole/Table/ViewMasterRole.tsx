@@ -1,7 +1,6 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { FaPlus } from "react-icons/fa";
-
 import { useRoleStore } from "../../../../API/store/MasterStore";
 import Input from "../../../../components/form/input/InputField";
 import Button from "../../../../components/ui/button/Button";
@@ -10,11 +9,7 @@ import { usePagePermissions } from "../../../../utils/UserPermission/UserPagePer
 
 const TableMasterRole = () => {
   const navigate = useNavigate();
-  const { canCreate, canManage } = usePagePermissions();
-
-  console.log("Permissions for this page:", { canCreate, canManage });
-  
-
+  const { canCreate, canManage } = usePagePermissions();  
   const { fetchRoles, roles, deleteRole } = useRoleStore();
   const [globalFilter, setGlobalFilter] = useState<string>("");
 

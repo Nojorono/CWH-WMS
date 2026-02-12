@@ -140,7 +140,7 @@ const TableComponent = <T extends { [key: string]: any }>({
           </div>
 
           <table className="min-w-full table-auto border border-gray-200">
-            <thead className="sticky top-0 bg-gray-100">
+            <thead className="sticky top-0 bg-orange-500 text-white text-sm">
               {table.getHeaderGroups().map((headerGroup) => (
                 <tr key={headerGroup.id}>
                   {headerGroup.headers.map((header) => (
@@ -153,7 +153,7 @@ const TableComponent = <T extends { [key: string]: any }>({
                         ? null
                         : flexRender(
                             header.column.columnDef.header,
-                            header.getContext()
+                            header.getContext(),
                           )}
                       {header.column.getIsSorted() === "asc" && " 🔼"}
                       {header.column.getIsSorted() === "desc" && " 🔽"}
@@ -180,11 +180,11 @@ const TableComponent = <T extends { [key: string]: any }>({
                         {cell.column.columnDef.cell
                           ? flexRender(
                               cell.column.columnDef.cell,
-                              cell.getContext()
+                              cell.getContext(),
                             )
                           : flexRender(
                               cell.getValue() as any,
-                              cell.getContext()
+                              cell.getContext(),
                             )}
                       </td>
                     ))}
@@ -237,11 +237,6 @@ const TableComponent = <T extends { [key: string]: any }>({
 };
 
 export default TableComponent;
-
-
-
-
-
 
 // import { useState, useMemo, useEffect } from "react";
 // import {
