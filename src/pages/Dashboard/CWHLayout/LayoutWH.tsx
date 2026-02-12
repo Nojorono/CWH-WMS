@@ -160,7 +160,7 @@ const WarehouseMapView = ({ data }: { data: any[] }) => {
                               unused
                                 ? "text-red-500"
                                 : pallet.bad_inventory.length > 0
-                                  ? "text-red-500"
+                                  ? "text-black-500"
                                   : "text-blue-500"
                             }
                             size={22}
@@ -298,7 +298,7 @@ const WarehouseMapView = ({ data }: { data: any[] }) => {
                       className="flex flex-col p-4 bg-red-50 rounded-2xl border border-red-100 relative overflow-hidden"
                     >
                       <div className="absolute top-0 right-0 px-2 py-0.5 bg-red-500 text-[8px] font-black text-white uppercase rounded-bl-lg">
-                        Damaged
+                        Bad Stock
                       </div>
                       <div className="flex justify-between items-start mb-2">
                         <div>
