@@ -15,6 +15,7 @@ import {
   STATUS_PROGRESSION_INVENTORY,
 } from "../../../constants/statusMaps";
 import { useStoreInventoryTracking } from "../../../DynamicAPI/stores/Store/MasterStore";
+import WarehouseMapView from "./LayoutWH";
 
 // --- Sub-Component untuk Menangani 10+ Varian Item (Normal & Bad Stock) ---
 const InventoryContentCell = ({
@@ -27,7 +28,9 @@ const InventoryContentCell = ({
   const [isExpanded, setIsExpanded] = useState(false);
 
   // Filter hanya item dengan qty > 0
-  const filteredItems = (items || []).filter((item) => item.current_quantity > 0);
+  const filteredItems = (items || []).filter(
+    (item) => item.current_quantity > 0,
+  );
   const filteredBad = (badInventory || []).filter((bad) => bad.quantity > 0);
 
   const totalNormal = filteredItems.length;
@@ -35,9 +38,7 @@ const InventoryContentCell = ({
   const totalVariants = totalNormal + totalBad;
 
   if (totalVariants === 0)
-    return (
-      <span className="text-gray-400 italic text-xs">tidak ada item</span>
-    );
+    return <span className="text-gray-400 italic text-xs">tidak ada item</span>;
 
   return (
     <div className="flex flex-col gap-1 w-full min-w-[300px] py-2">
@@ -134,7 +135,9 @@ const InventoryContentCell = ({
                   <span>
                     Produ:{" "}
                     {bad.production_date
-                      ? new Date(bad.production_date).toLocaleDateString("id-ID")
+                      ? new Date(bad.production_date).toLocaleDateString(
+                          "id-ID",
+                        )
                       : "-"}
                   </span>
                 </div>
@@ -254,24 +257,26 @@ const AdjustTable = ({
       id: item.id,
       warehouse_sub_name: item.warehouseSub?.name || "-",
       warehouse_bin_name: item.warehouseBin?.name || null,
-      pallet_code: item.pallet?.pallet_code
-      ? item.pallet.pallet_code
-      : <span className="text-red-600 font-bold">NO-PALLET</span>,
+      pallet_code: item.pallet?.pallet_code ? (
+        item.pallet.pallet_code
+      ) : (
+        <span className="text-red-600 font-bold">NO-PALLET</span>
+      ),
       inventory_status: item.inventory_status || "",
       progression_status: item.progression_status || "",
       current_items: item.pallet?.currentItems || [],
       bad_inventory: Array.isArray(item.inventoryTrackingBad)
-      ? item.inventoryTrackingBad.map((bad: any) => ({
-        item_id: bad.item_id,
-        item_name: bad.item_name || bad.item_id,
-        quantity: bad.quantity,
-        uom: bad.uom,
-        production_date: bad.production_date,
-        year: bad.year,
-        hje: bad.hje,
-        notes: bad.notes,
-        }))
-      : [],
+        ? item.inventoryTrackingBad.map((bad: any) => ({
+            item_id: bad.item_id,
+            item_name: bad.item_name || bad.item_id,
+            quantity: bad.quantity,
+            uom: bad.uom,
+            production_date: bad.production_date,
+            year: bad.year,
+            hje: bad.hje,
+            notes: bad.notes,
+          }))
+        : [],
     }));
   }, [list, pageIndex, pageSize]);
 
@@ -355,8 +360,12 @@ const AdjustTable = ({
     [navigate],
   );
 
+  console.log("Mapped List:", mappedList);
+
   return (
     <div className="flex flex-col gap-4">
+      <WarehouseMapView data={mappedList} />
+
       <div className="overflow-hidden rounded-2xl border border-gray-200 shadow-sm bg-white p-2">
         <TableComponent
           data={mappedList}
