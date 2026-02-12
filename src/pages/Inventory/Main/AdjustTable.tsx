@@ -360,8 +360,6 @@ const AdjustTable = ({
     [navigate],
   );
 
-  console.log("Mapped List:", mappedList);
-
   return (
     <div className="flex flex-col gap-4">
       <WarehouseMapView data={mappedList} />

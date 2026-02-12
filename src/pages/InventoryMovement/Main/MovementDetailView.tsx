@@ -108,9 +108,9 @@ const MovementDetailView = ({
       users: finalUsers,
       destination_warehouse_id: data.source_warehouse_id,
       destination_warehouse_sub_id: selectedSub,
-      destination_bin_id: selectedBin,
+      destination_bin_id: selectedBin  || null,
     };
-
+    
     try {
       console.log("Submitting payload:", payload);
       await updateData(data.id, payload as any);
@@ -489,7 +489,7 @@ const MovementDetailView = ({
                 </button>
                 <button
                   onClick={handleSubmit}
-                  disabled={!selectedBin || assignedUsers.length === 0}
+                  disabled={assignedUsers.length === 0}
                   className="flex-1 py-3 bg-orange-500 text-white rounded shadow hover:bg-orange-600 disabled:bg-gray-300 font-medium"
                 >
                   Submit Movement
