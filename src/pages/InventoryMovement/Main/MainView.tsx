@@ -11,7 +11,9 @@ import { FaEdit, FaEye, FaPlus, FaTrash } from "react-icons/fa";
 import { EndPoint } from "../../../utils/EndPoint";
 
 const InventoryMovement: React.FC = () => {
-  const { fetchAll, list, deleteData } = useStoreInventoryMovement();
+  const { fetchAll, list, deleteData, updateData } =
+    useStoreInventoryMovement();
+
   const [selectedMovement, setSelectedMovement] = useState<any | null>(null);
 
   useEffect(() => {
@@ -20,15 +22,13 @@ const InventoryMovement: React.FC = () => {
 
   const columnHelper = createColumnHelper<any>();
 
-  console.log("Inventory Movement List:", list);
-
   const columns = [
     columnHelper.accessor("movement_number", {
       header: "Move Location ID",
       cell: (info) => <span className="font-bold">{info.getValue()}</span>,
     }),
     columnHelper.accessor("createdAt", {
-      header: "Date",
+      header: "Create Date",
       cell: (info) => new Date(info.getValue()).toLocaleDateString("id-ID"),
     }),
     columnHelper.accessor("sourceWarehouseSub.name", {
@@ -166,8 +166,6 @@ const InventoryMovement: React.FC = () => {
   }
 
   const handleDelete = async (id: string) => {
-    console.log("Attempting to delete item with id:", id);
-
     // Import Swal if not already imported
     import("sweetalert2").then(async (Swal) => {
       const result = await Swal.default.fire({
@@ -177,23 +175,19 @@ const InventoryMovement: React.FC = () => {
         showCancelButton: true,
         confirmButtonColor: "#d33",
         cancelButtonColor: "#3085d6",
-        confirmButtonText: "Yes, delete it!",
+        confirmButtonText: "Yes, cancel it!",
       });
 
       if (result.isConfirmed) {
         try {
-          const axios = (await import("axios")).default;
-          const token = localStorage.getItem("token");
-          await axios.delete(`${EndPoint}inventory-movement/${id}`, {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          });
+          const payload = {
+            status: "CANCELLED",
+          };
 
-          // deleteData(id);
+          updateData(id, payload as any);
           fetchAll();
         } catch (error) {
-          Swal.default.fire("Error", "Failed to delete item.", "error");
+          Swal.default.fire("Error", "Failed to cancel item.", "error");
         }
       }
     });

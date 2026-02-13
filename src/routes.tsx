@@ -15,6 +15,7 @@ import { ProtectedRoute } from "./utils/ProtectedRoute";
 
 // Pages...
 import {
+  Dashboard,
   MasterMenu,
   MasterPallet,
   MasterUser,
@@ -142,6 +143,7 @@ export function AppRoutes() {
   // Map path ke komponen
   const getElementByPath = (path: string): JSX.Element => {
     const map: Record<string, JSX.Element> = {
+      "/dashboard": <Dashboard />,
       "/master_user": <MasterUser />,
       "/master_user_management": <MasterUserManagement />,
       "/master_menu": <MasterMenu />,
