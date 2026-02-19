@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { Link, To, useLocation } from "react-router";
+import { Link, useLocation } from "react-router";
 import { ChevronDownIcon, HorizontaLDots } from "../icons";
 import { useSidebar } from "../context/SidebarContext";
 import { useDynamicSidebarItems } from "./useDynamicSidebarItems";
@@ -11,34 +11,54 @@ const AppSidebar: React.FC = () => {
 
   const [openMainSubmenu, setOpenMainSubmenu] = useState<number | null>(null);
   const [openSettingsSubmenu, setOpenSettingsSubmenu] = useState<number | null>(
-    null
+    null,
   );
   const [subMenuHeight, setSubMenuHeight] = useState<Record<string, number>>(
-    {}
+    {},
   );
   const subMenuRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   const isActive = useCallback(
     (path: string) => location.pathname === path,
-    [location.pathname]
+    [location.pathname],
   );
 
+  const sortedMenuItems = [...menuItems].sort((a, b) => {
+    if (!a.subItems && b.subItems) return -1;
+    if (a.subItems && !b.subItems) return 1;
+    return 0;
+  });
+
+  const sortedSettingsItems = [...settingsItems].sort((a, b) => {
+    if (!a.subItems && b.subItems) return -1;
+    if (a.subItems && !b.subItems) return 1;
+    return 0;
+  });
+
+  const lastPathname = useRef(location.pathname);
+
   useEffect(() => {
-    menuItems.forEach((nav, index) => {
-      nav.subItems?.forEach((sub) => {
-        if (isActive(sub.path)) {
-          setOpenMainSubmenu(index);
-        }
+    if (lastPathname.current !== location.pathname) {
+      sortedMenuItems.forEach((nav, index) => {
+        nav.subItems?.forEach((sub) => {
+          if (isActive(sub.path)) {
+            setOpenMainSubmenu(index);
+          }
+        });
       });
-    });
-    settingsItems.forEach((nav, index) => {
-      nav.subItems?.forEach((sub) => {
-        if (isActive(sub.path)) {
-          setOpenSettingsSubmenu(index);
-        }
+
+      sortedSettingsItems.forEach((nav, index) => {
+        nav.subItems?.forEach((sub) => {
+          if (isActive(sub.path)) {
+            setOpenSettingsSubmenu(index);
+          }
+        });
       });
-    });
-  }, [location.pathname, isActive, menuItems, settingsItems]);
+
+      // Update path terakhir
+      lastPathname.current = location.pathname;
+    }
+  }, [location.pathname, isActive, sortedMenuItems, sortedSettingsItems]);
 
   useEffect(() => {
     const refs = [
@@ -67,15 +87,10 @@ const AppSidebar: React.FC = () => {
     }
   };
 
-  const sortMenuItems = (items: any[]) => [
-    ...items.filter((item) => !item.subItems || item.subItems.length === 0),
-    ...items.filter((item) => item.subItems && item.subItems.length > 0),
-  ];
-
   const renderSection = (
     items: typeof menuItems,
     type: "main" | "settings",
-    title: string
+    title: string,
   ) => (
     <div>
       <h2
@@ -90,7 +105,7 @@ const AppSidebar: React.FC = () => {
         )}
       </h2>
       <ul className="flex flex-col gap-4">
-        {sortMenuItems(items).map((nav, index) => {
+        {items.map((nav, index) => {
           const isOpen =
             type === "main"
               ? openMainSubmenu === index
@@ -165,12 +180,12 @@ const AppSidebar: React.FC = () => {
                   }}
                 >
                   <ul className="mt-2 space-y-1 ml-9">
-                    {nav.subItems.map((sub: { name: boolean | React.ReactElement<unknown, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | Promise<string | number | bigint | boolean | React.ReactPortal | React.ReactElement<unknown, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | null | undefined> | React.Key | null | undefined; path: To; }, subIndex: number) => (
-                      <li key={`subitem-${index}-${subIndex}`}>
+                    {nav.subItems.map((sub) => (
+                      <li key={sub.name}>
                         <Link
                           to={sub.path}
                           className={`menu-dropdown-item ${
-                            isActive(String(sub.path))
+                            isActive(sub.path)
                               ? "menu-dropdown-item-active"
                               : "menu-dropdown-item-inactive"
                           }`}
@@ -238,11 +253,13 @@ const AppSidebar: React.FC = () => {
       <div className="flex flex-col justify-between flex-1 overflow-y-auto duration-300 ease-linear no-scrollbar">
         <nav className="mb-6 flex flex-col flex-grow">
           <div className="flex flex-col gap-8 flex-grow">
-            {renderSection(menuItems, "main", "Menu")}
+            {/* Gunakan sortedMenuItems di sini */}
+            {renderSection(sortedMenuItems, "main", "Menu")}
           </div>
           {settingsItems.length > 0 && (
             <div className="mt-auto pt-6 border-t border-gray-200 dark:border-gray-800">
-              {renderSection(settingsItems, "settings", "Settings")}
+              {/* Gunakan sortedSettingsItems di sini */}
+              {renderSection(sortedSettingsItems, "settings", "Settings")}
             </div>
           )}
         </nav>
