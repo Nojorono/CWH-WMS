@@ -10,6 +10,7 @@ import {
 } from "../../../DynamicAPI/stores/Store/MasterStore";
 import { EndPoint } from "../../../utils/EndPoint";
 import { showErrorToast } from "../../../components/toast";
+import axiosInstance from "../../../DynamicAPI/AxiosInstance";
 
 type AdjustmentForm = {
   destinationWarehouseSubName: string | undefined;
@@ -55,7 +56,6 @@ const AdjustmentModal: React.FC<AdjustmentModalProps> = ({
   onSave,
   mode = "create",
 }) => {
-  
   const {
     detail: binList,
     fetchById: fetchBinList,
@@ -63,7 +63,7 @@ const AdjustmentModal: React.FC<AdjustmentModalProps> = ({
   } = useStoreBinByZone();
 
   const [formValues, setFormValues] = useState<AdjustmentForm>(
-    data ?? defaultFormValues
+    data ?? defaultFormValues,
   );
 
   // local state untuk sub-warehouse (zone) dan loading
@@ -83,17 +83,13 @@ const AdjustmentModal: React.FC<AdjustmentModalProps> = ({
         headers["Authorization"] = `Bearer ${token}`;
       }
 
-      const res = await fetch(
+      const res = await axiosInstance.get(
         `${EndPoint}master-warehouse-sub/is-staging?is_staging=null`,
-        {
-          method: "GET",
-          headers,
-        }
+        { headers },
       );
-      if (!res.ok) throw new Error(`Failed to fetch: ${res.status}`);
-      const json = await res.json();
+      const json = res.data;
 
-      const list = Array.isArray(json) ? json : json.data ?? json;
+      const list = Array.isArray(json) ? json : (json.data ?? json);
       setSubWarehouseList(list);
     } catch (error) {
       console.error("Error fetching sub warehouses:", error);
@@ -177,7 +173,7 @@ const AdjustmentModal: React.FC<AdjustmentModalProps> = ({
         bin_id: "",
       }));
     },
-    [availableZones]
+    [availableZones],
   );
 
   // ⚙️ Handle Bin Change
@@ -192,7 +188,7 @@ const AdjustmentModal: React.FC<AdjustmentModalProps> = ({
         bin_id: selectedBin.value,
       }));
     },
-    [availableBins]
+    [availableBins],
   );
 
   // 🧩 Handle Submit
@@ -291,8 +287,8 @@ const AdjustmentModal: React.FC<AdjustmentModalProps> = ({
                   label: binLoading
                     ? "Loading Bins..."
                     : formValues.zone_id
-                    ? "-- Select Bin --"
-                    : "Select Zone first",
+                      ? "-- Select Bin --"
+                      : "Select Zone first",
                 },
                 ...(formValues.zone_id ? availableBins : []),
               ]}

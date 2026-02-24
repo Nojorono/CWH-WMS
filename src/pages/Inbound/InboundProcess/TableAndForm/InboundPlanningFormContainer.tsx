@@ -173,7 +173,7 @@ export default function InboundPlanningFormContainer() {
     let apiAction = null;
 
     if (isCreateMode) {
-      console.log("Create Payload:", payload);
+      // console.log("Create Payload:", payload);
       apiAction = () => createData(payload);
     } else if (isEditMode && id) {
       apiAction = () => updateData(id, payload);
@@ -197,27 +197,6 @@ export default function InboundPlanningFormContainer() {
         navigate("/inbound_planning");
       }
     }
-
-    // if (isCreateMode ) {
-    //   // const res = await createData(payload);
-    //   // if (res?.success) {
-    //   //   reset(emptyFormValues);
-    //   //   setIsConfirmOpen(false);
-    //   //   navigate("/inbound_planning");
-    //   // }
-    //   console.log("Create Payload:", payload);
-    // }else if (isAddToReceiveMode) {
-    //   console.log("Add Payload:", payload);
-    // }else if (isEditMode && id) {
-    //   // const res = await updateData(id, payload);
-    //   // if (res?.success) {
-    //   //   reset(emptyFormValues);
-    //   //   setIsConfirmOpen(false);
-    //   //   navigate("/inbound_planning");
-    //   // }
-
-    //   console.log("Update Payload for ID", id, ":", payload);
-    // }
   };
 
   return (

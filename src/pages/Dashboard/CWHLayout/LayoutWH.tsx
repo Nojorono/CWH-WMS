@@ -41,27 +41,6 @@ const WarehouseMapView = ({ data }: { data: any[] }) => {
     );
   };
 
-  // Helper untuk ambil last used info (misal: updatedAt)
-  const getLastUsed = (pallet: any) => {
-    // Bisa pakai updatedAt, atau cari dari item terakhir yang qty > 0
-    if (
-      Array.isArray(pallet.current_items) &&
-      pallet.current_items.length > 0
-    ) {
-      const lastUsedItem = pallet.current_items
-        .filter((item: any) => Number(item.current_quantity) > 0)
-        .sort(
-          (a: any, b: any) =>
-            new Date(b.updatedAt || 0).getTime() -
-            new Date(a.updatedAt || 0).getTime(),
-        )[0];
-      if (lastUsedItem && lastUsedItem.updatedAt) {
-        return new Date(lastUsedItem.updatedAt).toLocaleString();
-      }
-    }
-    // Fallback ke pallet.updatedAt
-    return pallet.updatedAt ? new Date(pallet.updatedAt).toLocaleString() : "-";
-  };
 
   return (
     <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden transition-all duration-300 p-6">

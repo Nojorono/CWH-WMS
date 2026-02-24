@@ -33,8 +33,10 @@ import { MasterSubdist, CreateMasterSubdist, UpdateMasterSubdist } from "../../t
 import { ApprovalSetUp, CreateApprovalSetUp, UpdateApprovalSetUp } from "../../types/ApprovalSetUpTypes";
 import { InventoryVisibilityResponse } from '../../types/InventoryVisibilty.ts'
 import { MasterSupplier, CreateMasterSupplier, UpdateMasterSupplier} from '../../types/MasterSupplier.ts'
-
 import {InventoryMovementListResponse} from '../../types/InventoryMovement.ts'
+
+import {StockAdjustment, StockAdjustmentCreateRequest} from '../../types/StockAdjustmentTypes.ts'
+
 
 // Daftar semua entitas service di sini
 export const uomService = createCrudService<Uom, CreateUom, UpdateUom>("/master-uom");
@@ -73,6 +75,7 @@ export const MasterAMOService = createCrudService<MasterAMO, CreateMasterAMO, Up
 export const MasterSubdistService = createCrudService<MasterSubdist, CreateMasterSubdist, UpdateMasterSubdist>("/customer/subdist");
 export const ApprovalSetUpService = createCrudService<ApprovalSetUp, CreateApprovalSetUp, UpdateApprovalSetUp>("/approval-setup");
 export const InventoryVisibilityService = createCrudService<InventoryVisibilityResponse, null, null>("/inventory-tracking/visibility/warehouse");
-
 export const MasterSupplierService = createCrudService<MasterSupplier, CreateMasterSupplier, UpdateMasterSupplier>("/master-supplier/attribute7");
 export const InventoryMovementService = createCrudService<InventoryMovementListResponse, null, null>("/inventory-movement");
+
+export const StockAdjustmentService = createCrudService<StockAdjustment, StockAdjustmentCreateRequest, StockAdjustmentCreateRequest>("/adjustment-stock");

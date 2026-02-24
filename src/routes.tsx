@@ -58,6 +58,7 @@ import {
   PrintSuratJalan,
   InventoryVisibility,
   InventoryMovement,
+  StockAdjustment,
 } from "./utils/PagesComponent";
 
 const DefaultPage = () => <> </>;
@@ -76,7 +77,7 @@ export function AppRoutes() {
     const stored = localStorage.getItem("user_login_data");
     try {
       return stored && stored !== "undefined"
-        ? JSON.parse(stored).menus ?? []
+        ? (JSON.parse(stored).menus ?? [])
         : [];
     } catch {
       console.warn("Failed to parse user_login_data");
@@ -170,6 +171,7 @@ export function AppRoutes() {
       "/gate_loading": <GateLoading />,
       "/inventory_visibility": <InventoryVisibility />,
       "/inventory_movement": <InventoryMovement />,
+      "/stock_adjustment": <StockAdjustment />,
     };
     return map[path] || <DefaultPage />;
   };

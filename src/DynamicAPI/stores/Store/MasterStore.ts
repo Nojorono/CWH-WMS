@@ -37,7 +37,8 @@ import {
     PickingTransactionListService,
     InventoryVisibilityService,
     MasterSupplierService,
-    InventoryMovementService
+    InventoryMovementService,
+    StockAdjustmentService
 } from "../../services/Service/MasterService";
 
 import { Uom, CreateUom, UpdateUom } from "../../types/UomTypes";
@@ -72,10 +73,10 @@ import { CreateMasterAMO, UpdateMasterAMO, MasterAMO } from "../../types/MasterA
 import { MasterSubdist, CreateMasterSubdist, UpdateMasterSubdist } from "../../types/MasterSubdistTypes.ts";
 import { ApprovalSetUp, CreateApprovalSetUp, UpdateApprovalSetUp } from "../../types/ApprovalSetUpTypes";
 import { InventoryVisibilityResponse } from '../../types/InventoryVisibilty.ts'
-
 import { MasterSupplier, CreateMasterSupplier, UpdateMasterSupplier } from '../../types/MasterSupplier.ts'
-
 import {InventoryMovementListResponse} from '../../types/InventoryMovement.ts'
+
+import { StockAdjustment, StockAdjustmentCreateRequest } from "../../types/StockAdjustmentTypes.ts";
 
 // Daftar semua store di sini
 export const useStoreUom = createCrudStore<Uom, CreateUom, UpdateUom>({
@@ -266,4 +267,9 @@ export const useStoreMasterSupplier = createCrudStore<MasterSupplier, CreateMast
 export const useStoreInventoryMovement = createCrudStore<InventoryMovementListResponse, null, null>({
     name: "InventoryMovement",
     service: InventoryMovementService,
+});
+
+export const useStoreStockAdjustment = createCrudStore<StockAdjustment, StockAdjustmentCreateRequest, StockAdjustmentCreateRequest>({
+    name: "StockAdjustment",
+    service: StockAdjustmentService,
 });

@@ -57,11 +57,17 @@ const buildFieldsConfig = (
       ],
       validation: { required: "Tipe inbound wajib diisi" },
     },
+    // {
+    //   name: "expedition",
+    //   label: "Ekspedisi",
+    //   type: "select" as const, // Ubah dari text ke select
+    //   options: supplierOptions, // Masukkan data dari API di sini
+    //   validation: { required: "Ekspedisi wajib diisi" },
+    // },
     {
       name: "expedition",
       label: "Ekspedisi",
-      type: "select" as const, // Ubah dari text ke select
-      options: supplierOptions, // Masukkan data dari API di sini
+      type: "text" as const, // Ubah dari text ke select
       validation: { required: "Ekspedisi wajib diisi" },
     },
     {
@@ -338,31 +344,31 @@ export default function InboundPlanningFormView(props: Props) {
 
   const fieldsConfig = buildFieldsConfig(isDetailMode, supplierOptions);
 
-  useEffect(() => {
-    // Jalankan hanya jika dalam mode Edit atau Detail
-    if (isEditMode || isDetailMode) {
-      const currentExpedition = methods.getValues("expedition");
+  // useEffect(() => {
+  //   // Jalankan hanya jika dalam mode Edit atau Detail
+  //   if (isEditMode || isDetailMode) {
+  //     const currentExpedition = methods.getValues("expedition");
 
-      // Jika nilainya masih string (misal: "KAS NEGARA")
-      if (typeof currentExpedition === "string" && currentExpedition !== "") {
-        // Cari objek yang sesuai di supplierOptions
-        const foundOption = supplierOptions.find(
-          (opt) => opt.value === currentExpedition
-        );
+  //     // Jika nilainya masih string (misal: "KAS NEGARA")
+  //     if (typeof currentExpedition === "string" && currentExpedition !== "") {
+  //       // Cari objek yang sesuai di supplierOptions
+  //       const foundOption = supplierOptions.find(
+  //         (opt) => opt.value === currentExpedition
+  //       );
 
-        if (foundOption) {
-          // Set ulang field expedition menjadi objek agar Select bisa menampilkan labelnya
-          methods.setValue("expedition", foundOption);
-        } else {
-          // Jika tidak ada di master, buat objek temporary agar tetap muncul teksnya
-          methods.setValue("expedition", { 
-            value: currentExpedition, 
-            label: currentExpedition 
-          });
-        }
-      }
-    }
-  }, [masterSupplierData, isEditMode, isDetailMode, methods]);
+  //       if (foundOption) {
+  //         // Set ulang field expedition menjadi objek agar Select bisa menampilkan labelnya
+  //         methods.setValue("expedition", foundOption);
+  //       } else {
+  //         // Jika tidak ada di master, buat objek temporary agar tetap muncul teksnya
+  //         methods.setValue("expedition", { 
+  //           value: currentExpedition, 
+  //           label: currentExpedition 
+  //         });
+  //       }
+  //     }
+  //   }
+  // }, [masterSupplierData, isEditMode, isDetailMode, methods]);
 
   return (
     <div className="p-6 bg-slate-50 min-h-screen">

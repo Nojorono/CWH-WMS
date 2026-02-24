@@ -3,8 +3,8 @@ import {
   useReactTable,
   getCoreRowModel,
   getExpandedRowModel,
-  getFilteredRowModel, // Tambahkan ini
-  getPaginationRowModel, // Tambahkan ini
+  getFilteredRowModel,
+  getPaginationRowModel,
   flexRender,
   createColumnHelper,
   ColumnDef,

@@ -10,6 +10,7 @@ import axios from "axios";
 import DataTable from "./TableTab";
 import { EndPoint } from "../../../../utils/EndPoint";
 import { formatDateIndo } from "../../../../helper/FormatDate";
+import axiosInstance from "../../../../DynamicAPI/AxiosInstance";
 
 type ItemData = {
   item_id: string;
@@ -32,7 +33,7 @@ export default function CurrentQuantityTable({ palletCode }: HistoryProps) {
 
     setIsLoading(true);
     const token = localStorage.getItem("token");
-    axios
+    axiosInstance
       .get(`${EndPoint}master-pallet/by-code/${palletCode}/current`, {
         headers: {
           Authorization: `Bearer ${token}`,
