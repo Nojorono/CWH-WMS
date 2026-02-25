@@ -36,6 +36,8 @@ const AdjustTableRole = ({
     navigate(`/master_role/update`, { state: { id } });
   }
 
+  console.log("Data in AdjustTableRole:", data);
+
   const columns: ColumnDef<Role>[] = useMemo(
     () => [
       {
@@ -48,28 +50,22 @@ const AdjustTableRole = ({
         header: "Deskripsi",
         cell: (info) => String(info.getValue()),
       },
-      {
-        accessorKey: "status",
-        header: "Status",
-        cell: (info) => {
-          const status = info.getValue() as string | undefined;
-          return (
-            <Badge
-              variant="solid"
-              size="sm"
-              color={
-                status === "Active"
-                  ? "success"
-                  : status === "Pending"
-                  ? "warning"
-                  : "error"
-              }
-            >
-              {status || "No Status"}
-            </Badge>
-          );
-        },
-      },
+      // {
+      //   accessorKey: "isActive",
+      //   header: "Status",
+      //   cell: (info) => {
+      //     const isActive = info.getValue() as boolean | undefined;
+      //     return (
+      //       <Badge
+      //         variant="solid"
+      //         size="sm"
+      //         color={isActive ? "success" : "error"}
+      //       >
+      //         {isActive ? "Active" : "Inactive"}
+      //       </Badge>
+      //     );
+      //   },
+      // },
       {
         id: "actions",
         header: "Actions",
@@ -99,7 +95,7 @@ const AdjustTableRole = ({
         ),
       },
     ],
-    [onDelete, onDetail]
+    [onDelete, canUpdate, canDelete, canManage, navigateToUpdateRole],
   );
 
   return (

@@ -117,7 +117,7 @@ const AdjustTable = ({
                 item.inbound_id_reference === "") && (
                 <FaPlus
                   className="size-5 cursor-pointer text-purple-600"
-                  onClick={() => handleAdd(item)}
+                  onClick={() => handleAddToReceive(item)}
                   title="Detail"
                 />
               )}
@@ -145,7 +145,7 @@ const AdjustTable = ({
     deleteData(id);
   };
 
-  const handleAdd = (data: any) => {
+  const handleAddToReceive = (data: any) => {
     console.log("Add data:", data);
     navigate("/inbound_planning/process", {
       state: { data, mode: "add", title: "Add Inbound Planning" },

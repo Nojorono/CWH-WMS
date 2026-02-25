@@ -36,21 +36,55 @@ const InputField = ({
   placeholder,
   type = "text",
   ...rest
-}: any) => (
-  <div className="mt-4">
-    <label htmlFor={id} className="block text-sm font-medium text-gray-700">
-      {label}
-    </label>
-    <input
-      type={type}
-      id={id}
-      {...register(id)}
-      placeholder={placeholder}
-      className={commonClasses}
-      {...rest}
-    />
-  </div>
-);
+}: any) => {
+  // get register props so we can wrap onChange for formatting when needed
+  const reg = register ? register(id) : {};
+
+  const formatToSnakeUpper = (val: any) => {
+    if (val == null) return "";
+    let s = String(val).toUpperCase();
+    // replace spaces or dashes with underscore
+    s = s.replace(/[\s-]+/g, "_");
+    // allow only A-Z, 0-9 and underscore
+    s = s.replace(/[^A-Z0-9_]/g, "");
+    // collapse multiple underscores
+    s = s.replace(/_+/g, "_");
+    // keep leading/trailing underscore allowed (user can type them)
+    return s;
+  };
+
+  const handleChangeWrapper = (e: any) => {
+    // only format for the "nama" field
+    if (id === "nama") {
+      const formatted = formatToSnakeUpper(e.target.value);
+      // mutate event target value so react-hook-form receives formatted value
+      e.target.value = formatted;
+    }
+    // call original onChange from register if exists
+    if (reg && typeof reg.onChange === "function") {
+      reg.onChange(e);
+    }
+  };
+
+  return (
+    <div className="mt-4">
+      <label htmlFor={id} className="block text-sm font-medium text-gray-700">
+        {label}
+      </label>
+      <input
+        type={type}
+        id={id}
+        // spread register props but override onChange to apply formatting for nama
+        {...reg}
+        onChange={handleChangeWrapper}
+        placeholder={placeholder}
+        className={commonClasses}
+        style={id === "nama" ? { textTransform: "uppercase" } : undefined}
+        {...rest}
+      />
+    </div>
+  );
+};
 
 // Reusable Select Component
 const SelectField = ({ label, name, control, options, placeholder }: any) => (
@@ -172,7 +206,7 @@ export default function UpdateFormWithTable(paramRole: any) {
           .map(([permissionType]) => ({
             menu_id: Number(menuId),
             action: permissionType,
-          }))
+          })),
     );
 
     const updateId = paramRole.paramRole.id;
@@ -205,7 +239,7 @@ export default function UpdateFormWithTable(paramRole: any) {
     }
 
     showSuccessToast(
-      "Role berhasil diupdate. Dan silahkan sign in kembali untuk update state"
+      "Role berhasil diupdate. Dan silahkan sign in kembali untuk update state",
     );
     setTimeout(() => {
       signOut(navigate);
@@ -223,7 +257,7 @@ export default function UpdateFormWithTable(paramRole: any) {
             label="Nama"
             id="nama"
             register={register}
-            placeholder="Nama Posisi"
+            placeholder="Contoh: DRIVER_FORKLIFT atau NAMA_PENGEMUDI"
           />
 
           <div className="mt-4">
@@ -242,13 +276,13 @@ export default function UpdateFormWithTable(paramRole: any) {
             />
           </div>
 
-          <SelectField
+          {/* <SelectField
             label="Status"
             name="status"
             control={control}
             options={STATUS_OPTIONS}
             placeholder="-- Pilih Status --"
-          />
+          /> */}
 
           {/* <SelectField
             label="Akses Mobile"

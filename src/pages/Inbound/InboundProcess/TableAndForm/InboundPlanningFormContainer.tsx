@@ -222,6 +222,7 @@ export default function InboundPlanningFormContainer() {
         emptyFormValues={emptyFormValues}
         inboundID={dataInbound.id}
         inboundNumber={dataInbound.inbound_number}
+        inboundType={dataInbound.inbound_type}
       />
     </FormProvider>
   );
