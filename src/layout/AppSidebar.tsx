@@ -101,7 +101,7 @@ const AppSidebar: React.FC = () => {
         {isExpanded || isHovered || isMobileOpen ? (
           title
         ) : (
-          <HiDotsHorizontal className="size-6" />
+          <HorizontaLDots className="size-6" />
         )}
       </h2>
       <ul className="flex flex-col gap-4">
@@ -137,7 +137,7 @@ const AppSidebar: React.FC = () => {
                     <span className="menu-item-text">{nav.name}</span>
                   )}
                   {(isExpanded || isHovered || isMobileOpen) && (
-                    <FaChevronDown
+                    <ChevronDownIcon
                       className={`ml-auto w-5 h-5 transition-transform duration-200 ${
                         isOpen ? "rotate-180 text-brand-500" : ""
                       }`}
