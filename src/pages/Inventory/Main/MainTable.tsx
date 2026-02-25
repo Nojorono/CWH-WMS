@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import Input from "../../../components/form/input/InputField";
 import AdjustTable from "./AdjustTable";
 import Label from "../../../components/form/Label";
@@ -11,11 +10,9 @@ import {
   useStoreItem,
 } from "../../../DynamicAPI/stores/Store/MasterStore";
 import Select from "../../../components/form/Select";
-import Button from "../../../components/ui/button/Button";
-import { FaPlus } from "react-icons/fa";
+
 
 const MainTable = () => {
-  const navigate = useNavigate();
   const [globalFilter, setGlobalFilter] = useState<string>("");
   const debouncedFilter = useDebounce(globalFilter, 500);
   const [selectedStatus, setSelectedStatus] = useState<any>("");

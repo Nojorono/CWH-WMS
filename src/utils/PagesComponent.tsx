@@ -62,6 +62,7 @@ import ApprovalSetup from "../pages/ApprovalSetup/index";
 import CreateApproval from "../pages/ApprovalSetup/Table/CreateApprovalSetup";
 import ApprovalProcess from "../pages/ApprovalSetup/Table/ApprovalProcess";
 import PrintSuratJalan from "../pages/OutboundFullTrial/PickingTransaction/Main/PrintSuratJalan/PrintSuratJalan";
+import StockAdjustment from "../pages/StockAdjustment/index";
 
 export {
   // DASHBOARD
@@ -107,6 +108,7 @@ export {
   InventoryDetail,
   InventoryVisibility,
   InventoryMovement,
+  StockAdjustment,
 
   // OUTBOUND
   Memo,

@@ -68,7 +68,7 @@ export default function DeliveryOrderCard({
 
   const detailsRef = useRef<HTMLDetailsElement>(null);
   const integrationStatus = watch(
-    `deliveryOrders.${doIndex}.integration_status` as any
+    `deliveryOrders.${doIndex}.integration_status` as any,
   );
 
   useEffect(() => {
@@ -143,13 +143,6 @@ export default function DeliveryOrderCard({
 
   // ✅ VALIDASI DO DAN AUTO-GENERATE PO
   const handleCheckDO = async () => {
-    // if (inbType === "SO") {
-    //   showErrorToast(
-    //     "Validasi DO hanya untuk PO saja, untuk SO belum tersedia"
-    //   );
-    //   return;
-    // }
-
     const doNo = watch(`deliveryOrders.${doIndex}.do_no`);
     if (!doNo) {
       showErrorToast("No Surat Jalan wajib diisi");
@@ -190,7 +183,7 @@ export default function DeliveryOrderCard({
         // === ✅ Jika ada PO, berarti validasi surat jalan TRUE
         setValue(
           `deliveryOrders.${doIndex}.validation_surat_jalan`,
-          daftarPOArr.length > 0
+          daftarPOArr.length > 0,
         );
 
         if (daftarPOArr.length > 0) {
@@ -199,18 +192,18 @@ export default function DeliveryOrderCard({
             daftarPOArr.map((po: any) => ({
               po_no: po,
               items: [],
-            }))
+            })),
           );
           showSuccessToast(
             `Validasi Surat Jalan berhasil: ditemukan ${
               daftarPOArr.length
-            } PO (${daftarPOArr.join(", ")})`
+            } PO (${daftarPOArr.join(", ")})`,
           );
         } else {
           setDoStatus("failed");
           replacePos([]);
           showErrorToast(
-            "Tidak ada nomor PO/SO ditemukan dalam Surat Jalan ini. Tambahkan PO/SO secara manual !"
+            "Tidak ada nomor PO/SO ditemukan dalam Surat Jalan ini. Tambahkan PO/SO secara manual !",
           );
           append({
             po_no: "",
@@ -334,7 +327,7 @@ export default function DeliveryOrderCard({
                     required: "No Surat Jalan wajib diisi",
                   })}
                   className={`${inputClass(
-                    !!getError("do_no")
+                    !!getError("do_no"),
                   )} w-full sm:flex-1`}
                   disabled={!canInputDO}
                 />
@@ -404,7 +397,7 @@ export default function DeliveryOrderCard({
                   <input
                     type="file"
                     className={`${inputClass(
-                      !!getError("attachment")
+                      !!getError("attachment"),
                     )} text-xs w-full ${
                       isDetailMode || uploading
                         ? "bg-gray-100 cursor-not-allowed"
@@ -464,7 +457,7 @@ export default function DeliveryOrderCard({
                           ? date[0]
                           : date;
                         field.onChange(
-                          selectedDate ? formatDateIndo(selectedDate) : ""
+                          selectedDate ? formatDateIndo(selectedDate) : "",
                         );
                       }}
                       readOnly={isDetailMode || !isDOChecked}

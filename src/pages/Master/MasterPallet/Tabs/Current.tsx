@@ -6,10 +6,10 @@ import {
   flexRender,
   ColumnDef,
 } from "@tanstack/react-table";
-import axios from "axios";
 import DataTable from "./TableTab";
 import { EndPoint } from "../../../../utils/EndPoint";
 import { formatDateIndo } from "../../../../helper/FormatDate";
+import axiosInstance from "../../../../DynamicAPI/AxiosInstance";
 
 type ItemData = {
   item_id: string;
@@ -27,14 +27,12 @@ export default function CurrentQuantityTable({ palletCode }: HistoryProps) {
   const [data, setData] = useState<ItemData[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
-  console.log("data pallet code Current Quantity:", data);
-
   useEffect(() => {
     if (!palletCode) return;
 
     setIsLoading(true);
     const token = localStorage.getItem("token");
-    axios
+    axiosInstance
       .get(`${EndPoint}master-pallet/by-code/${palletCode}/current`, {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -42,7 +40,6 @@ export default function CurrentQuantityTable({ palletCode }: HistoryProps) {
       })
       .then((res) => {
         console.log("Fetched items Current Data:", res.data.data);
-
         setData(res.data.data);
       })
       .catch((err) => {

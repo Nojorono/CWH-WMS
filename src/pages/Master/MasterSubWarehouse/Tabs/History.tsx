@@ -1,11 +1,11 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import axios from "axios";
 import DataTable from "./TableTab";
 import { ColumnDef } from "@tanstack/react-table";
 import { EndPoint } from "../../../../utils/EndPoint";
 import { formatDateIndo } from "../../../../helper/FormatDate";
+import axiosInstance from "../../../../DynamicAPI/AxiosInstance";
 
 type QuantityHistory = {
   id: string;
@@ -36,7 +36,7 @@ export default function QuantityHistoryTable({ palletCode }: HistoryProps) {
     if (!palletCode) return;
 
     const token = localStorage.getItem("token");
-    axios
+    axiosInstance
       .get(`${EndPoint}master-pallet/by-code/${palletCode}/quantity-history`, {
         headers: { Authorization: `Bearer ${token}` },
       })
