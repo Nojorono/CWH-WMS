@@ -7,6 +7,7 @@ import StatusBadge from "../../../../common/statusBadge";
 import { STATUS_MAP_INBOUND } from "../../../../constants/statusMaps";
 import { useStoreInboundGoodStock } from "../../../../DynamicAPI/stores/Store/MasterStore";
 import TableComponent from "../TableAndForm/component/Table/TableComponent";
+import { usePagePermissions } from "../../../../utils/UserPermission/UserPagePermissions";
 
 type MenuTableProps = {
   globalFilter?: string;
@@ -22,6 +23,7 @@ const AdjustTable = ({
   filteredStatus,
 }: MenuTableProps) => {
   const navigate = useNavigate();
+  const { canCreate, canManage } = usePagePermissions();
 
   const { fetchUsingPagination, deleteData, list, pagination, isLoading } =
     useStoreInboundGoodStock();
@@ -83,7 +85,7 @@ const AdjustTable = ({
             variant="solid"
             size="sm"
           />
-        ), 
+        ),
       },
       {
         id: "actions",
@@ -105,6 +107,7 @@ const AdjustTable = ({
                     onClick={() => handleUpdate(item)}
                     title="Edit"
                   />
+
                   <FaTrash
                     className="size-5 cursor-pointer text-red-600"
                     onClick={() => handleDelete(item.id)}
@@ -126,7 +129,7 @@ const AdjustTable = ({
         },
       },
     ],
-    []
+    [],
   );
 
   const handleDetail = (data: any) => {

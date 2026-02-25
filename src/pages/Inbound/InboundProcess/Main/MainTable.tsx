@@ -7,9 +7,12 @@ import Button from "../../../../components/ui/button/Button";
 import { FaPlus, FaUndo } from "react-icons/fa";
 import { useDebounce } from "../../../../helper/useDebounce";
 import Select from "../../../../components/form/Select";
+import { usePagePermissions } from "../../../../utils/UserPermission/UserPagePermissions";
 
 const MainTable = () => {
   const navigate = useNavigate();
+  const { canCreate, canManage } = usePagePermissions();
+
   const [selectedStatus, setSelectedStatus] = useState<any>(null);
   const [globalFilter, setGlobalFilter] = useState<string>("");
   const debouncedFilter = useDebounce(globalFilter, 500);
@@ -59,14 +62,16 @@ const MainTable = () => {
           </div>
 
           <div className="space-x-4">
-            <Button
-              size="sm"
-              variant="primary"
-              startIcon={<FaPlus className="size-5" />}
-              onClick={() => handleCreate()}
-            >
-              Add Inbound Planning
-            </Button>
+            {canCreate && canManage && (
+              <Button
+                size="sm"
+                variant="primary"
+                startIcon={<FaPlus className="size-5" />}
+                onClick={() => handleCreate()}
+              >
+                Add Inbound Planning
+              </Button>
+            )}
           </div>
         </div>
       </div>
