@@ -358,9 +358,12 @@ const AdjustTableTransactionPicking = ({
     });
   };
 
-  const handleShipConfirm = (data: OutboundDo) => {
-    console.log("Ship Confirm clicked for DO:", data);
-    alert("Ship Confirm clicked for DO: " + data.outbound_do_number);
+  const handleShipConfirm = async (data: OutboundDo) => {
+    Swal.fire({
+      title: "Confirm Ship",
+      text: `Are you sure you want to confirm shipment for DO ${data.outbound_do_number}?`,
+      icon: "warning",
+    });
   };
 
   return (
@@ -426,8 +429,6 @@ const AdjustTableTransactionPicking = ({
 };
 
 export default AdjustTableTransactionPicking;
-
-
 
 // // // NEW CODE
 // import { useEffect, useMemo, useState, useRef } from "react";

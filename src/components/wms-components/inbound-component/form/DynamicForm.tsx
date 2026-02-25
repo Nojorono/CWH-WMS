@@ -109,6 +109,10 @@ const DynamicForm: React.FC<DynamicFormProps> = ({
                 {...register(field.name, {
                   ...field.validation,
                   required: true,
+                  onChange: (e: React.ChangeEvent<HTMLInputElement>) => {
+                    e.target.value = e.target.value.toUpperCase();
+                  },
+                  setValueAs: (v: string) => (v ? v.toUpperCase() : v),
                 })}
                 className={`${fieldError ? errorClasses : commonClasses} ${
                   isDisabled ? disabledClasses : ""
@@ -170,8 +174,8 @@ const DynamicForm: React.FC<DynamicFormProps> = ({
                         boxShadow: fieldError
                           ? "0 0 0 1px #f87171"
                           : state.isFocused
-                          ? "0 0 0 1px #3b82f6"
-                          : base.boxShadow,
+                            ? "0 0 0 1px #3b82f6"
+                            : base.boxShadow,
                         "&:hover": {
                           borderColor: fieldError ? "#f87171" : "#3b82f6",
                         },

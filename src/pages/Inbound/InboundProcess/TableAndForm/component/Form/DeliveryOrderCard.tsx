@@ -197,7 +197,7 @@ export default function DeliveryOrderCard({
           showSuccessToast(
             `Validasi Surat Jalan berhasil: ditemukan ${
               daftarPOArr.length
-            } PO (${daftarPOArr.join(", ")})`,
+            } Dokumen (${daftarPOArr.join(", ")})`,
           );
         } else {
           setDoStatus("failed");

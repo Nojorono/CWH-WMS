@@ -25,12 +25,12 @@ export default function InboundConfirmModal({
   const totalDO = formData.deliveryOrders.length;
 
   const allItems = formData.deliveryOrders.flatMap((do_) =>
-    do_.pos.flatMap((po) => po.items)
+    do_.pos.flatMap((po) => po.items),
   );
 
   const totalQty = allItems.reduce(
     (sum, i) => sum + (typeof i.qty === "number" ? i.qty : 0),
-    0
+    0,
   );
 
   const skuSummaryWithDifferentUOM = formData.deliveryOrders.reduce(
@@ -39,7 +39,7 @@ export default function InboundConfirmModal({
         string,
         { item_number: string; item_name: string; qty: number; uom: string }[]
       >,
-      do_
+      do_,
     ) => {
       do_.pos.forEach((po) => {
         po.items.forEach((item) => {
@@ -64,7 +64,7 @@ export default function InboundConfirmModal({
 
       return acc;
     },
-    {}
+    {},
   );
 
   const totalSKU = allItems.length;
@@ -86,7 +86,7 @@ export default function InboundConfirmModal({
           }[];
         }
       >,
-      do_
+      do_,
     ) => {
       do_.pos.forEach((po) => {
         po.items.forEach((item) => {
@@ -134,7 +134,7 @@ export default function InboundConfirmModal({
 
       return acc;
     },
-    {}
+    {},
   );
 
   const toggleExpand = (do_no: string) => {
@@ -187,17 +187,21 @@ export default function InboundConfirmModal({
                   />
                 </div>
 
-                <input
-                  type="text"
-                  // Cek jika expedition adalah objek, ambil label/value-nya. Jika string, pakai langsung.
-                  value={
-                    typeof formData.expedition === "object"
-                      ? formData.expedition?.label || ""
-                      : formData.expedition || ""
-                  }
-                  disabled
-                  className="w-full rounded-md border-gray-300 bg-gray-100 text-gray-700 text-sm px-3 py-2 focus:outline-none"
-                />
+                <div>
+                  <label className="block text-sm font-medium text-gray-600 mb-1">
+                    Ekspedisi
+                  </label>
+                  <input
+                    type="text"
+                    value={
+                      typeof formData.expedition === "object"
+                        ? formData.expedition?.label || ""
+                        : formData.expedition || ""
+                    }
+                    disabled
+                    className="w-full rounded-md border-gray-300 bg-gray-100 text-gray-700 text-sm px-3 py-2 focus:outline-none"
+                  />
+                </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-600 mb-1">
@@ -261,13 +265,16 @@ export default function InboundConfirmModal({
                   <p className="text-2xl font-bold text-gray-900">
                     {(() => {
                       const globalUomTotals = Object.values(
-                        skuSummaryWithDifferentUOM
+                        skuSummaryWithDifferentUOM,
                       )
                         .flat()
-                        .reduce((acc, item) => {
-                          acc[item.uom] = (acc[item.uom] || 0) + item.qty;
-                          return acc;
-                        }, {} as Record<string, number>);
+                        .reduce(
+                          (acc, item) => {
+                            acc[item.uom] = (acc[item.uom] || 0) + item.qty;
+                            return acc;
+                          },
+                          {} as Record<string, number>,
+                        );
 
                       return (
                         Object.entries(globalUomTotals)
@@ -361,7 +368,7 @@ export default function InboundConfirmModal({
                             </div>
                           </div>
                         </div>
-                      )
+                      ),
                     )}
                   </div>
                 </div>
