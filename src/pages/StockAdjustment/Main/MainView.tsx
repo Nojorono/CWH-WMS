@@ -140,7 +140,7 @@ const StockAdjustment: React.FC = () => {
             }}
           />
 
-          {/* <FaEdit
+          <FaEdit
             className={`text-green-600 hover:text-green-800 cursor-pointer ${info.row.original.status !== "PENDING" ? "opacity-50 cursor-not-allowed" : ""}`}
             title="Edit"
             onClick={() => {
@@ -157,7 +157,7 @@ const StockAdjustment: React.FC = () => {
             onClick={() => {
               handleDelete(info.row.original.id);
             }}
-          /> */}
+          />
         </div>
       ),
     }),
