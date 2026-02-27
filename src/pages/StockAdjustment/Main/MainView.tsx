@@ -106,30 +106,6 @@ const StockAdjustment: React.FC = () => {
       header: "Action",
       cell: (info) => (
         <div className="flex gap-2">
-          {/* <button
-            onClick={() => {
-              setSelectedData(info.row.original);
-              setViewMode("detail");
-              setShowDetail(true);
-            }}
-            className="text-orange-600 hover:text-orange-800 font-medium text-xs underline"
-          >
-            View
-          </button> */}
-
-          {/* {info.row.original.status === "PENDING" && (
-            <button
-              onClick={() => {
-                setSelectedData(info.row.original);
-                setViewMode("update");
-                setShowDetail(true);
-              }}
-              className="text-blue-600 hover:text-blue-800 font-medium text-xs underline"
-            >
-              Edit
-            </button>
-          )} */}
-
           <FaEye
             className="text-blue-600 hover:text-blue-800 font-medium text-xs underline"
             title="View"
