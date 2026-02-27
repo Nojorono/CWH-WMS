@@ -52,7 +52,8 @@ const DetailView: React.FC<DetailViewProps> = ({
   const isUpdateMode = mode === "update";
 
   const { fetchAll, list } = useStorePallet();
-  const { createData } = useStoreStockAdjustment();
+  const { createData, updateData } = useStoreStockAdjustment();
+  const [originalData, setOriginalData] = useState<any>(null);
 
   const [selectedPallets, setSelectedPallets] = useState<string[]>([]);
   const [palletItems, setPalletItems] = useState<PalletItem[]>([]);
@@ -64,24 +65,53 @@ const DetailView: React.FC<DetailViewProps> = ({
   const [reviewPayload, setReviewPayload] = useState<any>(null);
 
   // S3 States
-  const [documentUrl, setDocumentUrl] = useState<string>("");
+  // Multiple document URLs for create mode
+  const [documentUrls, setDocumentUrls] = useState<string[]>([]);
   const [isUploading, setIsUploading] = useState(false);
+  const [uploadedThisSession, setUploadedThisSession] = useState<string[]>([]);
 
   // =============================
   // EFFECT: INITIAL DATA LOADING
   // =============================
+
+  useEffect(() => {
+    if (isUpdateMode && initialData) {
+      setOriginalData(initialData);
+    }
+  }, [isUpdateMode, initialData]);
+
   useEffect(() => {
     if ((isDetailMode || isUpdateMode) && initialData) {
       setNotes(initialData.notes || "");
       setSelectedSubInventory(initialData.is_inventory || "GOOD_STOCK");
-      setDocumentUrl(initialData.document || ""); // Load existing document URL
+      // Parse document string (comma-separated) into array for detail/update mode
+      let docArr: string[] = [];
+      if (
+        typeof initialData.document === "string" &&
+        initialData.document.trim() !== ""
+      ) {
+        docArr = initialData.document
+          .split(",")
+          .map((v: string) => v.trim())
+          .filter(Boolean);
+      } else if (Array.isArray(initialData.document)) {
+        docArr = initialData.document;
+      }
+      setDocumentUrls(docArr);
+
+      // Ambil pallet_code dari adjustmentStockItems
+      const palletCodes =
+        initialData.adjustmentStockItems
+          ?.map((item: any) => item.pallet?.pallet_code)
+          ?.filter(Boolean) || [];
+      setSelectedPallets(palletCodes);
 
       const mappedItems =
         initialData.adjustmentStockItems?.map((item: any) => ({
           id: item.pallet_id,
           pallet_code: item.pallet?.pallet_code || "-",
           item_id: item.item_id,
-          item_name: item.item?.description || item.item?.sku || "-",
+          item_name: item.item?.sku || item.item?.sku || "-",
           uom: item.uom,
           week_number: item.pallet?.currentWeekNumber || 0,
           current_quantity: item.pallet?.currentQuantity || 0,
@@ -155,21 +185,21 @@ const DetailView: React.FC<DetailViewProps> = ({
   // =============================
   // S3 HANDLERS
   // =============================
+
+  // Multiple file upload handler for create mode
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
 
     setIsUploading(true);
     try {
-      // If there's an existing file, delete it first
-      if (documentUrl) {
-        await deleteFileFromS3(documentUrl);
+      const uploadedUrls: string[] = [];
+      for (let i = 0; i < files.length; i++) {
+        const url = await uploadFileToS3(files[i]);
+        if (url) uploadedUrls.push(url);
       }
-
-      const url = await uploadFileToS3(file);
-      if (url) {
-        setDocumentUrl(url);
-      }
+      setDocumentUrls((prev) => [...prev, ...uploadedUrls]);
+      setUploadedThisSession((prev) => [...prev, ...uploadedUrls]);
     } catch (error) {
       showErrorToast("Gagal memproses file");
     } finally {
@@ -178,13 +208,16 @@ const DetailView: React.FC<DetailViewProps> = ({
     }
   };
 
-  const handleFileDelete = async () => {
-    if (!documentUrl) return;
+  // Delete a specific file (for create mode)
+  const handleFileDelete = async (urlToDelete: string) => {
+    if (!urlToDelete) return;
     if (!window.confirm("Hapus file ini?")) return;
-
     try {
-      await deleteFileFromS3(documentUrl);
-      setDocumentUrl("");
+      await deleteFileFromS3(urlToDelete);
+      setDocumentUrls((prev) => prev.filter((url) => url !== urlToDelete));
+      setUploadedThisSession((prev) =>
+        prev.filter((url) => url !== urlToDelete),
+      );
     } catch (error) {
       showErrorToast("Gagal menghapus file");
     }
@@ -274,8 +307,19 @@ const DetailView: React.FC<DetailViewProps> = ({
       return;
     }
 
+    // Validation: Adjusted qty must be different from current qty
+    const invalidItem = items.find(
+      (item) => Number(item.quantity) === Number(item.current_quantity),
+    );
+    if (invalidItem) {
+      showErrorToast(
+        `Qty adjustment untuk pallet ${invalidItem.pallet_code} SKU ${invalidItem.item_name} harus berbeda dari current qty!`,
+      );
+      return;
+    }
+
     setReviewPayload({
-      document: documentUrl, // Use S3 URL here
+      document: documentUrls,
       type: "PHYSICAL_FIT",
       code: initialData?.code || "",
       notes,
@@ -286,18 +330,129 @@ const DetailView: React.FC<DetailViewProps> = ({
     setReviewOpen(true);
   };
 
+  const buildUpdatePayload = () => {
+    if (!originalData) return null;
+
+    const updatedFields: any = {};
+
+    // 🔹 NOTES
+    if (notes !== originalData.notes) {
+      updatedFields.notes = notes;
+    }
+
+    // 🔹 SUB INVENTORY
+    if (selectedSubInventory !== originalData.is_inventory) {
+      updatedFields.is_inventory = selectedSubInventory;
+    }
+
+    // 🔹 DOCUMENT
+    const normalizedCurrentDoc = documentUrls.join(", ");
+    const normalizedOriginalDoc = (originalData.document || "")
+      .split(",")
+      .map((v: string) => v.trim())
+      .filter(Boolean)
+      .join(", ");
+
+    if (normalizedCurrentDoc !== normalizedOriginalDoc) {
+      updatedFields.document = normalizedCurrentDoc;
+    }
+
+    // 🔹 ITEMS (lebih kompleks)
+    // hanya kirim jika qty berubah
+    const changedItems = [];
+
+    for (const item of palletItems) {
+      const key = getItemKey(item);
+      const newQty = Number(adjustedQty[key]);
+
+      const originalItem = originalData.adjustmentStockItems?.find(
+        (i: any) =>
+          i.pallet_id === item.id &&
+          i.item_id === item.item_id &&
+          i.uom === item.uom,
+      );
+
+      if (!originalItem) continue;
+
+      if (Number(originalItem.quantity) !== newQty) {
+        changedItems.push({
+          pallet_id: item.id,
+          item_id: item.item_id,
+          quantity: newQty,
+          uom: item.uom,
+        });
+      }
+    }
+
+    if (changedItems.length > 0) {
+      updatedFields.items = changedItems;
+    }
+
+    return updatedFields;
+  };
+
   const handleFinalSubmit = async () => {
     try {
       if (!reviewPayload) return;
+
+      const normalizeDocument = (doc: unknown): string => {
+        if (Array.isArray(doc)) {
+          return doc
+            .map((v) => String(v).trim())
+            .filter(Boolean)
+            .join(", ");
+        }
+
+        if (typeof doc === "string") {
+          const raw = doc.trim();
+
+          // Handle format: "{doc1, doc2, doc3}"
+          if (raw.startsWith("{") && raw.endsWith("}")) {
+            return raw
+              .slice(1, -1)
+              .split(",")
+              .map((v) => v.trim().replace(/^"|"$/g, ""))
+              .filter(Boolean)
+              .join(", ");
+          }
+
+          return raw;
+        }
+
+        return "";
+      };
+
       const payloadToSend = {
         ...reviewPayload,
+        document: normalizeDocument(reviewPayload.document), // "doc1, doc2, doc3"
         items: reviewPayload.items.map(
           ({ pallet_code, item_name, current_quantity, ...rest }: any) => rest,
         ),
       };
+      console.log("payloadToSend", payloadToSend);
 
-      await createData(payloadToSend);
-      onBack();
+      if (isUpdateMode) {
+        const updatePayload = buildUpdatePayload();
+
+        if (!updatePayload || Object.keys(updatePayload).length === 1) {
+          showErrorToast("Tidak ada perubahan data");
+          return;
+        }
+
+        const id = initialData?.id;
+
+        if (!id) {
+          showErrorToast("ID tidak ditemukan untuk update");
+          return;
+        }
+
+        await updateData(id, updatePayload);
+      } else {
+        await createData(payloadToSend);
+      }
+
+      setUploadedThisSession([]);
+      handleBack();
     } catch (error) {
       showErrorToast("Gagal submit adjustment");
     }
@@ -316,6 +471,16 @@ const DetailView: React.FC<DetailViewProps> = ({
     );
   };
 
+  const handleBack = () => {
+    // Hapus file S3 yang diupload di sesi ini
+    uploadedThisSession.forEach(async (url) => {
+      try {
+        await deleteFileFromS3(url);
+      } catch {}
+    });
+    onBack();
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 p-8 text-sm">
       <div className="max-w-7xl mx-auto bg-white p-8 rounded shadow border">
@@ -324,7 +489,7 @@ const DetailView: React.FC<DetailViewProps> = ({
             {mode} Stock Adjustment {initialData?.code}
           </h2>
           <button
-            onClick={onBack}
+            onClick={handleBack}
             className="bg-gray-200 px-6 py-2 rounded hover:bg-gray-300"
           >
             Back
@@ -413,58 +578,72 @@ const DetailView: React.FC<DetailViewProps> = ({
           <div className="flex items-start mb-6">
             <label className="w-32 font-bold pt-2">Dokumen</label>
             <div className="flex-1">
-              {!documentUrl ? (
-                !isDetailMode && (
-                  <div className="relative">
-                    <input
-                      type="file"
-                      onChange={handleFileUpload}
-                      className="hidden"
-                      id="file-upload"
-                      disabled={isUploading}
-                    />
-                    <label
-                      htmlFor="file-upload"
-                      className={`flex items-center justify-center gap-2 w-max px-4 py-2 border-2 border-dashed rounded-md cursor-pointer hover:bg-gray-50 transition-colors ${
-                        isUploading
-                          ? "opacity-50"
-                          : "border-gray-300 text-gray-600"
-                      }`}
-                    >
-                      <FaCloudUploadAlt className="text-xl" />
-                      {isUploading
-                        ? "Uploading..."
-                        : "Click to upload document (Max 2MB)"}
-                    </label>
-                  </div>
-                )
-              ) : (
-                <div className="flex items-center gap-4 p-3 bg-blue-50 border border-blue-200 rounded-md w-max">
-                  <FaFileAlt className="text-blue-500 text-lg" />
-                  <a
-                    href={documentUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-blue-700 font-medium hover:underline flex items-center gap-1"
-                  >
-                    View Document <FaExternalLinkAlt className="text-[10px]" />
-                  </a>
-                  {!isDetailMode && (
-                    <button
-                      type="button"
-                      onClick={handleFileDelete}
-                      className="ml-2 text-red-500 hover:text-red-700 transition-colors"
-                      title="Hapus file"
-                    >
-                      <FaTrash />
-                    </button>
-                  )}
-                </div>
-              )}
-              {!documentUrl && isDetailMode && (
+              {/* LIST DOCUMENT */}
+              {documentUrls.length === 0 && isDetailMode && (
                 <span className="text-gray-400 italic pt-2 block">
                   Tidak ada dokumen dilampirkan
                 </span>
+              )}
+
+              {/* UPLOAD BUTTON (CREATE + UPDATE ONLY) */}
+              {!isDetailMode && (
+                <div className="relative mb-2">
+                  <input
+                    type="file"
+                    onChange={handleFileUpload}
+                    className="hidden"
+                    id="file-upload"
+                    multiple
+                    disabled={isUploading}
+                  />
+                  <label
+                    htmlFor="file-upload"
+                    className={`flex items-center justify-center gap-2 w-max px-4 py-2 border-2 border-dashed rounded-md cursor-pointer hover:bg-gray-50 transition-colors ${
+                      isUploading
+                        ? "opacity-50"
+                        : "border-gray-300 text-gray-600"
+                    }`}
+                  >
+                    <FaCloudUploadAlt className="text-xl" />
+                    {isUploading
+                      ? "Uploading..."
+                      : "Click to upload document (Max 2MB)"}
+                  </label>
+                </div>
+              )}
+
+              {documentUrls.length > 0 && (
+                <div className="flex flex-col gap-2 mb-3">
+                  {documentUrls.map((url, idx) => (
+                    <div
+                      key={url}
+                      className="flex items-center gap-4 p-3 bg-blue-50 border border-blue-200 rounded-md w-max"
+                    >
+                      <FaFileAlt className="text-blue-500 text-lg" />
+
+                      <a
+                        href={url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-700 font-medium hover:underline flex items-center gap-1"
+                      >
+                        Document {idx + 1}
+                        <FaExternalLinkAlt className="text-[10px]" />
+                      </a>
+
+                      {!isDetailMode && (
+                        <button
+                          type="button"
+                          onClick={() => handleFileDelete(url)}
+                          className="ml-2 text-red-500 hover:text-red-700 transition-colors"
+                          title="Hapus file"
+                        >
+                          <FaTrash />
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
               )}
             </div>
           </div>

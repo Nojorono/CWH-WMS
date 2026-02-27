@@ -105,7 +105,7 @@ const ModalForm: React.FC<ModalFormProps> = ({
                 className="react-select-container"
                 classNamePrefix="react-select"
                 value={field.options?.find(
-                  (opt) => opt.value === controllerField.value
+                  (opt) => opt.value === controllerField.value,
                 )}
                 onChange={(option) =>
                   controllerField.onChange(option?.value ?? "")
@@ -170,13 +170,34 @@ const ModalForm: React.FC<ModalFormProps> = ({
           </>
         );
 
+      // default:
+      //   return (
+      //     <input
+      //       type={field.type}
+      //       {...register(field.name, field.validation)}
+      //       className={isDisabled ? disabledCls : inputCls}
+      //       disabled={isDisabled}
+      //     />
+      //   );
+
       default:
         return (
           <input
             type={field.type}
-            {...register(field.name, field.validation)}
+            {...register(field.name, {
+              ...field.validation,
+              onChange:
+                field.type === "text"
+                  ? (e) => {
+                      e.target.value = e.target.value.toUpperCase();
+                    }
+                  : undefined,
+            })}
             className={isDisabled ? disabledCls : inputCls}
             disabled={isDisabled}
+            style={
+              field.type === "text" ? { textTransform: "uppercase" } : undefined
+            }
           />
         );
     }
@@ -223,7 +244,7 @@ const ModalForm: React.FC<ModalFormProps> = ({
                     );
                   })}
                 </div>
-              )
+              ),
           )}
         </div>
 
