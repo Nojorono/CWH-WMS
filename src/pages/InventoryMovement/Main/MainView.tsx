@@ -55,16 +55,26 @@ const InventoryMovement: React.FC = () => {
       header: "Create Date",
       cell: (info) => new Date(info.getValue()).toLocaleDateString("id-ID"),
     }),
-    columnHelper.accessor("sourceWarehouseSub.name", {
-      header: "Source Zone",
-    }),
-    columnHelper.accessor("sourceBin.name", {
+    columnHelper.accessor(
+      (row) => row?.sourceWarehouseSub?.name ?? "",
+      {
+        id: "sourceWarehouseSub.name",
+        header: "Source Zone",
+      },
+    ),
+    columnHelper.accessor((row) => row?.sourceBin?.name ?? "", {
+      id: "sourceBin.name",
       header: "Source Bin",
     }),
-    columnHelper.accessor("destinationWarehouseSub.name", {
-      header: "Destination Zone",
-    }),
-    columnHelper.accessor("destinationBin.name", {
+    columnHelper.accessor(
+      (row) => row?.destinationWarehouseSub?.name ?? "",
+      {
+        id: "destinationWarehouseSub.name",
+        header: "Destination Zone",
+      },
+    ),
+    columnHelper.accessor((row) => row?.destinationBin?.name ?? "", {
+      id: "destinationBin.name",
       header: "Destination Bin",
     }),
     columnHelper.accessor("status", {
