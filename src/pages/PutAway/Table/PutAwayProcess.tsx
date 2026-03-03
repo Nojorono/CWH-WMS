@@ -66,8 +66,6 @@ const PutAwayDetail: React.FC = () => {
   const { list: putAwaySuggestions, fetchAll: fetchPutAwaySuggestions } =
     useStorePutAwaySuggestion();
 
-  console.log("putAwaySuggestions", putAwaySuggestions);
-
   const { list: userDevice, fetchAll: fetchUserDevice } = useStoreUser();
   const { list: userList, fetchAll: fetchUserList } = useStoreUserManagement();
 
@@ -106,7 +104,7 @@ const PutAwayDetail: React.FC = () => {
   } = useForm<DriverFormValues>({
     defaultValues: {
       forkliftDriverId: detailDataPutaway?.forkliftDriverId || "",
-      driverId: "",
+      driverId: detailDataPutaway?.driverId || "",
       driverName: detailDataPutaway?.driverName || "",
       driverPhone: detailDataPutaway?.driverPhone || "",
     },
@@ -116,6 +114,7 @@ const PutAwayDetail: React.FC = () => {
     if (detailDataPutaway) {
       reset({
         forkliftDriverId: detailDataPutaway.forkliftDriverId || "",
+        driverId: detailDataPutaway.driverId || "",
         driverName: detailDataPutaway.driverName || "",
         driverPhone: detailDataPutaway.driverPhone || "",
       });
@@ -127,7 +126,7 @@ const PutAwayDetail: React.FC = () => {
   // 🔹 TABLE DATA (EDIT/CREATE)
   // ==============================
   useEffect(() => {
-    if ((isDetail || isEdit) && detailDataPutaway) {
+    if ((isDetail || isEdit) && detailDataPutaway && userList.length > 0) {
       const palletItems = detailDataPutaway.palletItems || [];
       const formatted: PutAwayRow[] = [
         {
@@ -158,8 +157,13 @@ const PutAwayDetail: React.FC = () => {
 
       setMappedData(formatted);
 
+      const matchedDriver = userList.find(
+        (u: any) => u.name === detailDataPutaway.driverName,
+      );
+
       // Isi form driver
       setValue("forkliftDriverId", detailDataPutaway.forkliftDriverId);
+      setValue("driverId", matchedDriver?.id || "");
       setValue("driverName", detailDataPutaway.driverName);
       setValue("driverPhone", detailDataPutaway.driverPhone);
     } else if (isCreate && putAwaySuggestions) {
@@ -168,7 +172,7 @@ const PutAwayDetail: React.FC = () => {
         (Array.isArray(putAwaySuggestions)
           ? putAwaySuggestions.flatMap(
               (res: any) =>
-                res.data?.palletSuggestions || res.palletSuggestions || []
+                res.data?.palletSuggestions || res.palletSuggestions || [],
             )
           : []);
 
@@ -203,7 +207,7 @@ const PutAwayDetail: React.FC = () => {
             SKUname: SKUname,
             palletItemUom: palletItems?.[0]?.uom,
           };
-        }
+        },
       );
       setMappedData(formatted);
     }
@@ -214,6 +218,7 @@ const PutAwayDetail: React.FC = () => {
     detailDataPutaway,
     putAwaySuggestions,
     setValue,
+    userList
   ]);
 
   // 🟢 Auto-select baris pertama kalau edit
@@ -248,14 +253,14 @@ const PutAwayDetail: React.FC = () => {
           accessorKey: "destinationWarehouseSubCode",
           header: "Destination Zone",
         },
-        { accessorKey: "destinationBinCode", header: "Destination Bin" }
+        { accessorKey: "destinationBinCode", header: "Destination Bin" },
       );
 
       // kolom tambahan hanya jika bukan detail
       if (!isDetail) {
         cols.push(
           { accessorKey: "suggestZone", header: "Update Zone" },
-          { accessorKey: "suggestBin", header: "Update Bin" }
+          { accessorKey: "suggestBin", header: "Update Bin" },
         );
       }
 
@@ -274,14 +279,14 @@ const PutAwayDetail: React.FC = () => {
         { accessorKey: "palletCode", header: "Pallet Code" },
         { accessorKey: "SKUname", header: "SKU Name" },
         { accessorKey: "palletItemUom", header: "UoM" },
-        { accessorKey: "totalQty", header: "Total Qty" }
+        { accessorKey: "totalQty", header: "Total Qty" },
       );
 
       // kolom tambahan hanya jika bukan detail
       if (!isDetail) {
         cols.push(
           { accessorKey: "suggestZone", header: "Suggest Zone" },
-          { accessorKey: "suggestBin", header: "Suggest Bin" }
+          { accessorKey: "suggestBin", header: "Suggest Bin" },
         );
       }
     }
@@ -330,8 +335,8 @@ const PutAwayDetail: React.FC = () => {
               suggestBinId: adjustPutaway.bin_id,
               suggestBin: adjustPutaway.suggestBin,
             }
-          : item
-      )
+          : item,
+      ),
     );
     setIsAdjustmentOpen(false);
   };
@@ -345,7 +350,7 @@ const PutAwayDetail: React.FC = () => {
   const driverDevice =
     Array.isArray(userDevice) && userDevice.length > 0
       ? userDevice.filter(
-          (u: any) => u.role?.name?.toUpperCase() === "DRIVER_FORKLIFT"
+          (u: any) => u.role?.name?.toUpperCase() === "DRIVER_FORKLIFT",
         )
       : [];
 
@@ -543,7 +548,7 @@ const PutAwayDetail: React.FC = () => {
                   value={field.value}
                   onChange={(driverId: string) => {
                     const driver = forkliftDriverName.find(
-                      (u: any) => u.id === driverId
+                      (u: any) => u.id === driverId,
                     );
 
                     if (!driver) return;
