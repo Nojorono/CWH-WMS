@@ -176,6 +176,22 @@ const DetailView: React.FC<DetailViewProps> = ({
     }
   };
 
+  const handleStatusUpdate = async (newStatus: string) => {
+    try {
+      const id = initialData?.id;
+      if (!id) return;
+
+      const payload = {
+        status: newStatus,
+      };
+
+      await updateData(id, payload as any);
+      handleBack(); // Kembali ke list setelah sukses
+    } catch (error) {
+      showErrorToast(`Gagal update status ke ${newStatus}`);
+    }
+  };
+
   const handleBack = () => {
     cleanupUploadedFiles();
     onBack();
@@ -250,18 +266,57 @@ const DetailView: React.FC<DetailViewProps> = ({
             onFileDelete={handleFileDelete}
           />
 
-          {!isDetailMode && (
+          {/* {!isDetailMode && (
             <div className="flex justify-end">
               <button
                 type="submit"
                 disabled={isUploading}
-                className={`bg-orange-500 text-white px-6 py-2 rounded hover:bg-orange-600 ${isUploading ? "opacity-50 cursor-not-allowed" : ""
-                  }`}
+                className={`bg-orange-500 text-white px-6 py-2 rounded hover:bg-orange-600 ${
+                  isUploading ? "opacity-50 cursor-not-allowed" : ""
+                }`}
               >
                 {isUpdateMode ? "Update Adjustment" : "Submit Adjustment"}
               </button>
             </div>
-          )}
+          )} */}
+
+          {/* Ganti bagian Render Tombol di bagian bawah form */}
+          <div className="flex justify-end gap-3">
+            {/* Kondisi 1: Tombol Submit/Update (Hanya jika BUKAN mode detail) */}
+            {!isDetailMode && (
+              <button
+                type="submit"
+                disabled={isUploading}
+                className={`bg-orange-500 text-white px-6 py-2 rounded hover:bg-orange-600 ${
+                  isUploading ? "opacity-50 cursor-not-allowed" : ""
+                }`}
+              >
+                {isUpdateMode ? "Update Adjustment" : "Submit Adjustment"}
+              </button>
+            )}
+
+            {/* Kondisi 2: Approval Manager (Hanya muncul jika status PENDING) */}
+            {isDetailMode && initialData?.status === "PENDING" && (
+              <button
+                type="button"
+                onClick={() => handleStatusUpdate("APPROVED_MANAGER")}
+                className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 font-bold"
+              >
+                Approve as Manager
+              </button>
+            )}
+
+            {/* Kondisi 3: Approval Head of SCM (Hanya muncul jika status APPROVED_MANAGER) */}
+            {isDetailMode && initialData?.status === "APPROVED_MANAGER" && (
+              <button
+                type="button"
+                onClick={() => handleStatusUpdate("APPROVED_HEAD_OF_SCM")}
+                className="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700 font-bold"
+              >
+                Approve as Head of SCM
+              </button>
+            )}
+          </div>
         </form>
       </div>
 
