@@ -4,7 +4,7 @@ import { useForm, Controller } from "react-hook-form";
 import Button from "../../../../components/ui/button/Button";
 import Select from "../../../../components/form/Select";
 import KeyValueCard from "../Helper/KeyValueCard";
-import { formatDate } from "../../Memo/TableAndForm/MemoCreateProcess";
+import formatDate from "../../Memo/TableAndForm/MemoCreateProcess";
 
 type Props = {
   onSubmit?: (d: any) => void;

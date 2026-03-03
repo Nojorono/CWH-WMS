@@ -17,6 +17,7 @@ import { useLocation, useNavigate } from "react-router";
 import { formatDateIndo } from "../../../../helper/FormatDate";
 import ConfirmationModal from "../Modal/Sequence";
 import { FaArrowLeft } from "react-icons/fa";
+import { OutboundMemo } from "../../../../DynamicAPI/types/DeliverOrderTypes";
 
 type MemoFormValues = {
   requestor: string;
@@ -243,12 +244,12 @@ const DetailDO: React.FC = () => {
           <TableComponent
             data={
               (isDetail
-                ? (detail?.outbound_memos || []).filter(
-                    (m: any) => typeof m.id === "string"
-                  )
-                : approvedMemos.filter(
-                    (m: any) => typeof m.id === "string"
-                  )) as import("d:/New-WMS/src/DynamicAPI/types/DeliverOrderTypes").OutboundMemo[]
+          ? (detail?.outbound_memos || []).filter(
+              (m: any) => typeof m.id === "string"
+            )
+          : approvedMemos.filter(
+              (m: any) => typeof m.id === "string"
+            )) as OutboundMemo[]
             }
             columns={columnsTableItem}
             pageSize={10}

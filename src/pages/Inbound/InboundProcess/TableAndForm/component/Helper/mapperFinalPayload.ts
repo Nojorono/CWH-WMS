@@ -19,7 +19,10 @@ export function mapToPayload(data: FormValues): CreateInboundPlanning {
             : (data.inbound_type as any)?.value || "";
 
     return {
-        expedition: data.expedition ?? "",
+        expedition:
+            typeof data.expedition === "string"
+                ? data.expedition
+                : (data.expedition as any)?.value || "",
         origin: "CWH",
         license_plate:
             data.no_pol?.toUpperCase().replace(/\s+/g, "").trim() ?? "",
