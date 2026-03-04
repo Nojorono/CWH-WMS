@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { FaPlus } from "react-icons/fa";
+import { FaPlus, FaEye, FaEyeSlash } from "react-icons/fa";
 import Input from "../../../../components/form/input/InputField";
 import Label from "../../../../components/form/Label";
 import Button from "../../../../components/ui/button/Button";
@@ -25,6 +25,7 @@ const DataTable = () => {
 
   const [resetPasswordId, setResetPasswordId] = useState<number | null>(null);
   const [newPassword, setNewPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     fetchAll();
@@ -255,24 +256,40 @@ const DataTable = () => {
               <h2 className="text-xl font-bold text-gray-900">
                 Reset Password
               </h2>
-              <p className="mt-2 text-sm text-gray-500">
-                Enter new password
-              </p>
+              <p className="mt-2 text-sm text-gray-500">Enter new password</p>
             </div>
 
             {/* Body */}
             <div className="px-6 py-4 space-y-4">
-              <div className="space-y-1">
-                <label className="text-xs font-medium text-gray-700 ml-1">
-                  Password Baru
+              <div className="space-y-1 text-left">
+                <label className="text-xs font-semibold text-gray-600 ml-1">
+                  Password
                 </label>
-                <Input
-                  type="password"
-                  placeholder="••••••••"
-                  className="w-full border-gray-200 focus:ring-blue-500 focus:border-blue-500 rounded-lg transition-all"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                />
+
+                <div className="relative group">
+                  <Input
+                    // Logic toggle tipe input
+                    type={showPassword ? "text" : "password"}
+                    placeholder="••••••••"
+                    className="w-full pr-10 border-gray-200 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 rounded-xl transition-all duration-200 outline-none"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                  />
+
+                  {/* Tombol Toggle Eye dari React Icons */}
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-blue-600 transition-colors focus:outline-none"
+                    tabIndex={-1} // Agar tidak mengganggu alur navigasi tombol Tab
+                  >
+                    {showPassword ? (
+                      <FaEyeSlash className="text-lg" />
+                    ) : (
+                      <FaEye className="text-lg" />
+                    )}
+                  </button>
+                </div>
               </div>
             </div>
 
