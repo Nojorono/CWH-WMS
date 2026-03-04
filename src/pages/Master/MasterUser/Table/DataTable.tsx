@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { FaPlus } from "react-icons/fa";
 import Input from "../../../../components/form/input/InputField";
 import Label from "../../../../components/form/Label";
@@ -7,7 +7,6 @@ import { useDebounce } from "../../../../helper/useDebounce";
 import DynamicTable from "../../../../components/wms-components/DynamicTable";
 import {
   useStoreUser,
-  useStoreIo,
   useStoreSubWarehouse,
 } from "../../../../DynamicAPI/stores/Store/MasterStore";
 import { useRoleStore } from "../../../../API/store/MasterStore";
@@ -58,7 +57,7 @@ const DataTable = () => {
       {
         name: "username",
         label: "Username",
-        type: "text",
+        type: "username",
         validation: { required: "Required" },
       },
       {
@@ -113,15 +112,6 @@ const DataTable = () => {
     return createData(payload);
   };
 
-  // const handleUpdate = (data: any) => {
-  //   const { id, ...rest } = data;
-  //   const payload = {
-  //     ...rest,
-  //     roleId: Number(rest.roleId),
-  //     zoneId: String(rest.roleId) === String(gateRoleId) ? rest.zoneId : null,
-  //   };
-  //   return updateData(id, payload);
-  // };
 
   const handleUpdate = (data: any): Promise<any> => {
   const { id, zoneId, ...rest } = data;
