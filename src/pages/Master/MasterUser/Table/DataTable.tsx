@@ -13,12 +13,7 @@ import { useRoleStore } from "../../../../API/store/MasterStore";
 import { EndPoint } from "../../../../utils/EndPoint";
 
 const DataTable = () => {
-  const {
-    list: userData,
-    createData,
-    updateData,
-    fetchAll,
-  } = useStoreUser();
+  const { list: userData, createData, updateData, fetchAll } = useStoreUser();
 
   const { list: subWarehouseList, fetchAll: fetchSubWarehouses } =
     useStoreSubWarehouse();
@@ -27,6 +22,9 @@ const DataTable = () => {
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounce(search, 500);
   const [isCreateModalOpen, setCreateModalOpen] = useState(false);
+
+  const [resetPasswordId, setResetPasswordId] = useState<number | null>(null);
+  const [newPassword, setNewPassword] = useState("");
 
   useEffect(() => {
     fetchAll();
@@ -61,12 +59,6 @@ const DataTable = () => {
         validation: { required: "Required" },
       },
       {
-        name: "password",
-        label: "Password",
-        type: "password",
-        validation: { required: "Required" },
-      },
-      {
         name: "roleId",
         label: "Role",
         type: "select",
@@ -95,7 +87,12 @@ const DataTable = () => {
         type: "checkbox",
       },
     ],
-    [roles, gateZoneOptions, gateRoleId]
+    [roles, gateZoneOptions, gateRoleId],
+  );
+
+  const updateFormFields = useMemo(
+    () => formFields.filter((f) => f.name !== "password"),
+    [formFields],
   );
 
   const handleCreate = (data: any) => {
@@ -112,39 +109,30 @@ const DataTable = () => {
     return createData(payload);
   };
 
-
   const handleUpdate = (data: any): Promise<any> => {
-  const { id, zoneId, ...rest } = data;
+    const { id, zoneId, ...rest } = data;
 
-  if (!id) {
-    return Promise.reject(new Error("ID is required for update"));
-  }
+    if (!id) {
+      return Promise.reject(new Error("ID is required for update"));
+    }
 
-  const payload = Object.fromEntries(
-    Object.entries({
-      username: rest.username,
-      password: rest.password,
-      isActive: rest.isActive,
-      roleId: rest.roleId ? Number(rest.roleId) : undefined,
-      employeeId: rest.employeeId,
-      email: rest.email,
-      phone: rest.phone,
-      organizationId: rest.organizationId,
-      warehouseSubId:
-        String(rest.roleId) === String(gateRoleId)
-          ? zoneId
-          : undefined,
-    }).filter(
-      ([_, v]) =>
-        v !== undefined &&
-        v !== null &&
-        v !== ""
-    )
-  );
+    const payload = Object.fromEntries(
+      Object.entries({
+        username: rest.username,
+        isActive: rest.isActive,
+        roleId: rest.roleId ? Number(rest.roleId) : undefined,
+        employeeId: rest.employeeId,
+        email: rest.email,
+        phone: rest.phone,
+        organizationId: rest.organizationId,
+        warehouseSubId:
+          String(rest.roleId) === String(gateRoleId) ? zoneId : undefined,
+      }).filter(([_, v]) => v !== undefined && v !== null && v !== ""),
+    );
 
-  console.log("Final Update Payload:", payload);
-  return updateData(id, payload);
-};
+    console.log("Final Update Payload:", payload);
+    return updateData(id, payload);
+  };
 
   const handleHardDelete = async (id: number): Promise<void> => {
     const token = localStorage.getItem("token");
@@ -183,8 +171,18 @@ const DataTable = () => {
         cell: (info: any) => (info.getValue() ? "Active" : "Inactive"),
       },
     ],
-    [roles]
+    [roles],
   );
+
+  const handleResetPassword = async () => {
+    if (!resetPasswordId || !newPassword) return;
+
+    const payload = { password: newPassword };
+    await updateData(resetPasswordId, payload);
+    setResetPasswordId(null);
+    setNewPassword("");
+    fetchAll();
+  };
 
   return (
     <>
@@ -216,13 +214,88 @@ const DataTable = () => {
         onCloseCreateModal={() => setCreateModalOpen(false)}
         columns={columns}
         formFields={formFields}
+        updateFormFields={updateFormFields}
         onSubmit={handleCreate}
         onUpdate={handleUpdate}
         onDelete={handleHardDelete}
         onRefresh={fetchAll}
         getRowId={(row) => row.id}
         title="Form Data"
+        onResetPassword={(id) => setResetPasswordId(id)}
       />
+
+      {/* Modal Reset Password */}
+      {resetPasswordId && (
+        <div className="fixed inset-0 z-1000 flex items-center justify-center p-4">
+          {/* Overlay dengan Backdrop Blur agar terasa premium */}
+          <div
+            className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-300"
+            onClick={() => setResetPasswordId(null)}
+          />
+
+          {/* Modal Container */}
+          <div className="relative bg-white w-full max-w-sm overflow-hidden rounded-2xl shadow-2xl ring-1 ring-black/5 animate-in zoom-in-95 duration-200">
+            {/* Header dengan sedikit aksen warna */}
+            <div className="px-6 pt-8 pb-4 text-center">
+              <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-blue-50">
+                <svg
+                  className="h-6 w-6 text-blue-600"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                  />
+                </svg>
+              </div>
+              <h2 className="text-xl font-bold text-gray-900">
+                Reset Password
+              </h2>
+              <p className="mt-2 text-sm text-gray-500">
+                Enter new password
+              </p>
+            </div>
+
+            {/* Body */}
+            <div className="px-6 py-4 space-y-4">
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-gray-700 ml-1">
+                  Password Baru
+                </label>
+                <Input
+                  type="password"
+                  placeholder="••••••••"
+                  className="w-full border-gray-200 focus:ring-blue-500 focus:border-blue-500 rounded-lg transition-all"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                />
+              </div>
+            </div>
+
+            {/* Footer / Actions */}
+            <div className="bg-gray-50 px-6 py-4 flex gap-3 justify-end">
+              <Button
+                variant="danger"
+                className="text-gray-600 hover:bg-gray-200 font-medium"
+                onClick={() => setResetPasswordId(null)}
+              >
+                Batal
+              </Button>
+              <Button
+                variant="secondary"
+                className="bg-blue-600 hover:bg-blue-700 shadow-md shadow-blue-200 px-6 font-medium transition-all active:scale-95"
+                onClick={handleResetPassword}
+              >
+                Submit
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 };

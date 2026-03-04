@@ -10,6 +10,7 @@ interface Props {
   isEditMode?: boolean;
   formFields: any[];
   title?: string;
+  updateFormFields?: any[];
 }
 
 const DynamicFormModal = ({
@@ -22,7 +23,11 @@ const DynamicFormModal = ({
   onUpdate,
   formFields,
   title,
+  updateFormFields,
 }: Props) => {
+  const activeFields =
+    isEditMode && updateFormFields ? updateFormFields : formFields;
+
   const handleSubmit = async (data: any) => {
     let res;
     if (isEditMode) {
@@ -36,6 +41,7 @@ const DynamicFormModal = ({
     }
     if (res?.success) {
       onRefresh();
+      ``;
       onClose();
     }
   };
@@ -47,7 +53,7 @@ const DynamicFormModal = ({
       isOpen={isOpen}
       onClose={onClose}
       onSubmit={handleSubmit}
-      formFields={formFields}
+     formFields={activeFields}
       defaultValues={defaultValues}
     />
   );

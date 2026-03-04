@@ -1,7 +1,7 @@
 import { useState, useMemo, useCallback } from "react";
 import { ColumnDef } from "@tanstack/react-table";
 import TableComponent from "../../components/tables/MasterDataTable/TableComponent";
-import { FaEdit, FaEye, FaTrash } from "react-icons/fa";
+import { FaEdit, FaEye, FaKey, FaTrash } from "react-icons/fa";
 import DynamicFormModal from "./DynamicFormModal";
 
 interface Props {
@@ -21,7 +21,9 @@ interface Props {
   isDeleted?: boolean;
   isEdited?: boolean;
   isView?: boolean;
-  onSelectedChange?: (ids: any[]) => void; // ✅ callback ke parent
+  onSelectedChange?: (ids: any[]) => void;
+  updateFormFields?: any[];
+  onResetPassword?: (id: any) => void;
 }
 
 const DynamicTable = ({
@@ -42,6 +44,8 @@ const DynamicTable = ({
   isEdited = true,
   isView = false,
   onSelectedChange,
+  updateFormFields,
+  onResetPassword,
 }: Props) => {
   const [selectedItem, setSelectedItem] = useState<any | null>(null);
   const [selectedIds, setSelectedIds] = useState<any[]>([]);
@@ -53,7 +57,7 @@ const DynamicTable = ({
       }
       await onRefresh();
     },
-    [onDelete, onRefresh]
+    [onDelete, onRefresh],
   );
 
   const handleCloseModal = () => {
@@ -96,6 +100,15 @@ const DynamicTable = ({
                 <FaEye />
               </button>
             )}
+
+            {onResetPassword && (
+              <button
+                className="text-yellow-500"
+                onClick={() => onResetPassword(getRowId(row.original))}
+              >
+                <FaKey />
+              </button>
+            )}
           </div>
         ),
       },
@@ -110,7 +123,7 @@ const DynamicTable = ({
         onSelectedChange(ids); // kirim ke parent
       }
     },
-    [onSelectedChange]
+    [onSelectedChange],
   );
 
   return (
@@ -125,6 +138,7 @@ const DynamicTable = ({
         onRefresh={onRefresh}
         formFields={formFields}
         title={title}
+        updateFormFields={updateFormFields}
       />
 
       <TableComponent
