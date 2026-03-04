@@ -25,6 +25,8 @@ type QuantityHistory = {
   createdAt: string;
   production_date: string;
   week_number: number;
+  status_inventory: string;
+  
 };
 
 type HistoryProps = {
@@ -44,7 +46,7 @@ export default function QuantityHistoryTable({ palletCode }: HistoryProps) {
       })
       .then((res) => setData(res.data.data))
       .catch((err) => console.error("Error fetching quantity history:", err));
-  }, []);
+  }, [palletCode]);
 
   const columns: ColumnDef<QuantityHistory>[] = [
     {
@@ -55,28 +57,29 @@ export default function QuantityHistoryTable({ palletCode }: HistoryProps) {
     },
     {
       accessorKey: "operation_type",
-      header: "Action",
+      header: "Operation Type",
       cell: (info) => {
         const value = info.getValue() as string;
         if (value === "ADD")
-          return <span className="text-green-600">Added</span>;
+          return <span className="text-green-600">ADD</span>;
         if (value === "REMOVE")
-          return <span className="text-red-600">Removed</span>;
+          return <span className="text-red-600">REMOVE</span>;
         if (value === "MOVE")
-          return <span className="text-blue-600">Relocated</span>;
+          return <span className="text-blue-600">MOVE</span>;
         return value;
       },
     },
     { accessorKey: "item_name", header: "SKU Name" },
-    { accessorKey: "new_quantity", header: "Qty" },
+    { accessorKey: "new_quantity", header: "Quantity" },
     {
       accessorKey: "production_date",
       header: "Production Date",
       cell: (info) => formatDateIndo(info.getValue() as string),
     },
     { accessorKey: "week_number", header: "Week Number" },
-    // { accessorKey: "user_id", header: "Staff" },
     { accessorKey: "notes", header: "Notes" },
+    { accessorKey: "reference_type", header: "Reference Type" },
+    { accessorKey: "status_inventory", header: "Status Inventory" },
   ];
 
   return (
