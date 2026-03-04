@@ -130,7 +130,7 @@ export const SuggestionCardHeader: React.FC<HeaderProps> = ({
         {/* Metode Suggestion */}
         <div className="flex items-end">
           <div className="mr-4">
-            <p className="text-gray-500 mb-1">Metode Suggestion</p>
+            <p className="text-gray-500 mb-1">Suggestion Method</p>
             <Select
               options={[
                 { value: "", label: "Pilih Metode" },
@@ -144,7 +144,7 @@ export const SuggestionCardHeader: React.FC<HeaderProps> = ({
 
           {/* Search Button */}
           <Button size="sm" onClick={onSearch} disabled={!metodeSuggestion}>
-            Cari Suggestion
+            Search Suggestion
           </Button>
         </div>
       </div>

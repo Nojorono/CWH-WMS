@@ -12,7 +12,7 @@ import { useStoreMenu } from "../../../../DynamicAPI/stores/Store/MasterStore";
 
 // Constants for options
 const STATUS_OPTIONS = [
-  { value: "", label: "-- Pilih Status --" },
+  { value: "", label: "-- Select Status --" },
   { value: true, label: "Active" },
   { value: false, label: "Inactive" },
 ];
@@ -281,7 +281,7 @@ export default function UpdateFormWithTable(paramRole: any) {
             name="status"
             control={control}
             options={STATUS_OPTIONS}
-            placeholder="-- Pilih Status --"
+            placeholder="-- Select Status --"
           /> */}
 
           {/* <SelectField

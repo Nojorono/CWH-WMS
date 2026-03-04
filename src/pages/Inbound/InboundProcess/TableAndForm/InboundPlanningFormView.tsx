@@ -51,18 +51,11 @@ const buildFieldsConfig = (
     },
     {
       name: "inbound_type",
-      label: "Tipe Inbound",
+      label: "Inbound Type",
       type: "select" as const,
       options: inboundTypeOptions,
-      validation: { required: "Tipe inbound wajib diisi" },
+      validation: { required: "Inbound type is required!" },
     },
-    // {
-    //   name: "expedition",
-    //   label: "Ekspedisi",
-    //   type: "select" as const, // Ubah dari text ke select
-    //   options: supplierOptions, // Masukkan data dari API di sini
-    //   validation: { required: "Ekspedisi wajib diisi" },
-    // },
     {
       name: "expedition",
       label: "Ekspedisi",
@@ -77,9 +70,9 @@ const buildFieldsConfig = (
     },
     {
       name: "no_pol",
-      label: "No Polisi",
+      label: "Plat Nomor",
       type: "text" as const,
-      validation: { required: "No polisi wajib diisi" },
+      validation: { required: "Plat nomor wajib diisi" },
     },
     {
       name: "driver_phone",

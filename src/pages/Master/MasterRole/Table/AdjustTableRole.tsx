@@ -47,25 +47,9 @@ const AdjustTableRole = ({
       },
       {
         accessorKey: "description",
-        header: "Deskripsi",
+        header: "Description",
         cell: (info) => String(info.getValue()),
       },
-      // {
-      //   accessorKey: "isActive",
-      //   header: "Status",
-      //   cell: (info) => {
-      //     const isActive = info.getValue() as boolean | undefined;
-      //     return (
-      //       <Badge
-      //         variant="solid"
-      //         size="sm"
-      //         color={isActive ? "success" : "error"}
-      //       >
-      //         {isActive ? "Active" : "Inactive"}
-      //       </Badge>
-      //     );
-      //   },
-      // },
       {
         id: "actions",
         header: "Actions",

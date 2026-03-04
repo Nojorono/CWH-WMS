@@ -207,7 +207,7 @@ const DataTable = () => {
               onClick={() => setCreateModalOpen(true)}
               disabled={isLoadingFetch}
             >
-              <FaPlus className="mr-2" /> Tambah Data
+              <FaPlus className="mr-2" /> Add Data
             </Button>
 
             <Button
