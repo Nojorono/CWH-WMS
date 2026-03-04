@@ -197,6 +197,8 @@ const DetailView: React.FC<DetailViewProps> = ({
     onBack();
   };
 
+  const roleName = localStorage.getItem("role_name");
+
   return (
     <div className="min-h-screen bg-gray-50 p-8 text-sm">
       <div className="max-w-7xl mx-auto bg-white p-8 rounded shadow border">
@@ -266,20 +268,6 @@ const DetailView: React.FC<DetailViewProps> = ({
             onFileDelete={handleFileDelete}
           />
 
-          {/* {!isDetailMode && (
-            <div className="flex justify-end">
-              <button
-                type="submit"
-                disabled={isUploading}
-                className={`bg-orange-500 text-white px-6 py-2 rounded hover:bg-orange-600 ${
-                  isUploading ? "opacity-50 cursor-not-allowed" : ""
-                }`}
-              >
-                {isUpdateMode ? "Update Adjustment" : "Submit Adjustment"}
-              </button>
-            </div>
-          )} */}
-
           {/* Ganti bagian Render Tombol di bagian bawah form */}
           <div className="flex justify-end gap-3">
             {/* Kondisi 1: Tombol Submit/Update (Hanya jika BUKAN mode detail) */}
@@ -296,18 +284,18 @@ const DetailView: React.FC<DetailViewProps> = ({
             )}
 
             {/* Kondisi 2: Approval Manager (Hanya muncul jika status PENDING) */}
-            {isDetailMode && initialData?.status === "PENDING" && (
+            {isDetailMode && initialData?.status === "PENDING" && roleName === "MANAGER" && (
               <button
-                type="button"
-                onClick={() => handleStatusUpdate("APPROVED_MANAGER")}
-                className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 font-bold"
+              type="button"
+              onClick={() => handleStatusUpdate("APPROVED_MANAGER")}
+              className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 font-bold"
               >
-                Approve as Manager
+              Approve as Manager
               </button>
             )}
 
             {/* Kondisi 3: Approval Head of SCM (Hanya muncul jika status APPROVED_MANAGER) */}
-            {isDetailMode && initialData?.status === "APPROVED_MANAGER" && (
+            {isDetailMode && initialData?.status === "APPROVED_MANAGER"  && roleName === "HEAD_OF_SCM" && (
               <button
                 type="button"
                 onClick={() => handleStatusUpdate("APPROVED_HEAD_OF_SCM")}
