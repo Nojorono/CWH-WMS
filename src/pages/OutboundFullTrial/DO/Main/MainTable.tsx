@@ -38,6 +38,8 @@ const MainTable = () => {
     { value: "SUBDIST", label: "SUBDIST" },
   ];
 
+  const roleName = localStorage.getItem("role_name");
+
   return (
     <>
       <div className="p-4 bg-white shadow rounded-md mb-5">
@@ -63,14 +65,16 @@ const MainTable = () => {
           </div>
 
           <div className="space-x-4">
-            <Button
-              size="sm"
-              variant="primary"
-              startIcon={<FaPlus className="size-5" />}
-              onClick={handleCreate}
-            >
-              Create DO
-            </Button>
+            {roleName === "TRANSPORT_SUPERVISOR" && (
+              <Button
+                size="sm"
+                variant="primary"
+                startIcon={<FaPlus className="size-5" />}
+                onClick={handleCreate}
+              >
+                Create DO
+              </Button>
+            )}
           </div>
         </div>
       </div>
