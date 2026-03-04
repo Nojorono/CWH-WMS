@@ -276,8 +276,6 @@
 
 // export default ModalForm;
 
-
-
 import React, { useEffect, useState } from "react";
 import { useForm, SubmitHandler, Controller } from "react-hook-form";
 import Select from "react-select";
@@ -336,6 +334,8 @@ const PasswordField: React.FC<{
         {...registerProps}
         className={`${isDisabled ? disabledCls : inputCls} pr-10`}
         disabled={isDisabled}
+        autoComplete="current-password"
+        style={{ textTransform: "none" }}
       />
       {!isDisabled && (
         <button
@@ -408,7 +408,7 @@ const UsernameField: React.FC<{
       setHint("⚠️ Username tidak boleh mengandung spasi.");
     } else if (val && !/^[a-z0-9_]+$/.test(val)) {
       setHint(
-        "💡 Disarankan menggunakan snake_case (huruf kecil, angka, dan underscore saja)."
+        "💡 Disarankan menggunakan snake_case (huruf kecil, angka, dan underscore saja).",
       );
     } else {
       setHint(null);
@@ -437,7 +437,8 @@ const UsernameField: React.FC<{
       )}
       {!hint && !isDisabled && (
         <p className="text-xs mt-1 text-gray-400">
-          Gunakan snake_case, contoh: <span className="font-mono">john_doe</span>
+          Gunakan snake_case, contoh:{" "}
+          <span className="font-mono">john_doe</span>
         </p>
       )}
     </div>
@@ -512,7 +513,7 @@ const ModalForm: React.FC<ModalFormProps> = ({
                 className="react-select-container"
                 classNamePrefix="react-select"
                 value={field.options?.find(
-                  (opt) => opt.value === controllerField.value
+                  (opt) => opt.value === controllerField.value,
                 )}
                 onChange={(option) =>
                   controllerField.onChange(option?.value ?? "")
@@ -669,7 +670,7 @@ const ModalForm: React.FC<ModalFormProps> = ({
                     );
                   })}
                 </div>
-              )
+              ),
           )}
         </div>
 

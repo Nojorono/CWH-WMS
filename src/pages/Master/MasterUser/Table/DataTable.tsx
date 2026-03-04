@@ -60,6 +60,12 @@ const DataTable = () => {
         validation: { required: "Required" },
       },
       {
+        name: "password",
+        label: "Password",
+        type: "password",
+        validation: { required: "Required" },
+      },
+      {
         name: "roleId",
         label: "Role",
         type: "select",
