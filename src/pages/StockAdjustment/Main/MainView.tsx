@@ -117,10 +117,15 @@ const StockAdjustment: React.FC = () => {
           />
 
           <FaEdit
-            className={`text-green-600 hover:text-green-800 cursor-pointer ${info.row.original.status !== "PENDING" ? "opacity-50 cursor-not-allowed" : ""}`}
+            className={`text-green-600 hover:text-green-800 cursor-pointer ${["PENDING", "REJECTED_MANAGER"].includes(info.row.original.status) ? "" : "opacity-50 cursor-not-allowed"}`}
             title="Edit"
             onClick={() => {
-              if (info.row.original.status !== "PENDING") return;
+              if (
+                !["PENDING", "REJECTED_MANAGER"].includes(
+                  info.row.original.status,
+                )
+              )
+                return;
               setSelectedData(info.row.original);
               setViewMode("update");
               setShowDetail(true);
@@ -128,7 +133,7 @@ const StockAdjustment: React.FC = () => {
           />
 
           <FaTrash
-            className={`text-red-600 hover:text-red-800 cursor-pointer ${info.row.original.status !== "PENDING" ? "opacity-50 cursor-not-allowed" : ""}`}
+            className={`text-red-600 hover:text-red-800 cursor-pointer ${["PENDING"].includes(info.row.original.status) ? "" : "opacity-50 cursor-not-allowed"}`}
             title="Delete"
             onClick={() => {
               handleDelete(info.row.original.id);
@@ -168,7 +173,7 @@ const StockAdjustment: React.FC = () => {
     setShowDetail(true);
   };
 
-  const handleDelete = (id: string) => {    
+  const handleDelete = (id: string) => {
     deleteData(id);
   };
 

@@ -1,4 +1,4 @@
-// import { useEffect, useMemo } from "react";
+// import { useEffect, useMemo, useRef } from "react";
 // import { useStorePallet } from "../../../../DynamicAPI/stores/Store/MasterStore";
 // import axiosInstance from "../../../../DynamicAPI/AxiosInstance";
 // import { EndPoint } from "../../../../utils/EndPoint";
@@ -29,41 +29,83 @@
 //     fetchAll();
 //   }, [fetchAll]);
 
+//   // Prevent infinite re-run when parent provides non-stable callbacks.
+//   const prevSelectedRef = useRef<string | null>(null);
+
 //   useEffect(() => {
-//     if (isDetailMode || selectedPallets.length === 0) return;
+//     if (isDetailMode) return;
 
-//     const fetchData = async () => {
-//       try {
-//         const responses = await Promise.all(
-//           selectedPallets.map(async (code) => {
-//             const res = await axiosInstance.get(
-//               `${EndPoint}master-pallet/by-code/${code}/current`,
-//             );
-//             return res.data.data.map((item: any) => ({
-//               ...item,
-//               pallet_code: code,
-//             }));
-//           }),
-//         );
+//     const key = Array.isArray(selectedPallets)
+//       ? selectedPallets.join("|")
+//       : "";
 
-//         const newItems = responses
-//           .flat()
-//           .filter((it: any) => Number(it.current_quantity) > 0);
+//     // If selected pallets didn't change, do nothing.
+//     if (prevSelectedRef.current === key) return;
+//     prevSelectedRef.current = key;
 
-//         setPalletItems((prevItems) => {
-//           const existingKeys = new Set(prevItems.map((item) => getItemKey(item)));
-//           const filteredNewItems = newItems.filter(
-//             (newItem) => !existingKeys.has(getItemKey(newItem)),
+//     // Jika selectedPallets kosong, clear semua items
+//     if (!selectedPallets || selectedPallets.length === 0) {
+//       setPalletItems([]);
+//       return;
+//     }
+
+//     // Remove items for pallets that are no longer selected and fetch only new pallets
+//     setPalletItems((prevItems) => {
+//       const afterRemove = prevItems.filter((item) =>
+//         selectedPallets.includes(item.pallet_code),
+//       );
+
+//       const existingPalletCodes = new Set(
+//         afterRemove.map((item) => item.pallet_code),
+//       );
+//       const newPalletCodes = selectedPallets.filter(
+//         (code) => !existingPalletCodes.has(code),
+//       );
+
+//       if (newPalletCodes.length === 0) return afterRemove;
+
+//       console.log("CODE PALLET", newPalletCodes);
+
+
+//       // Fetch data for new pallets asynchronously and append when ready
+//       (async () => {
+//         try {
+//           const responses = await Promise.all(
+//             newPalletCodes.map(async (code) => {
+//               const res = await axiosInstance.get(
+//                 `${EndPoint}master-pallet/by-code/${code}/current`,
+//               );
+//               return res.data.data.map((item: any) => ({
+//                 ...item,
+//                 pallet_code: code,
+//               }));
+//             }),
 //           );
-//           return [...prevItems, ...filteredNewItems];
-//         });
-//       } catch (error) {
-//         console.error("Gagal mengambil data pallet:", error);
-//       }
-//     };
 
-//     fetchData();
-//   }, [selectedPallets, isDetailMode, setPalletItems, getItemKey]);
+//           const newItems = responses
+//             .flat()
+//             .filter((it: any) => Number(it.current_quantity) > 0);
+
+//           if (newItems.length === 0) return;
+
+//           setPalletItems((latest) => {
+//             const existingKeys = new Set(latest.map((item) => getItemKey(item)));
+//             const filteredNewItems = newItems.filter(
+//               (newItem: PalletItem) => !existingKeys.has(getItemKey(newItem)),
+//             );
+//             return [...latest, ...filteredNewItems];
+//           });
+//         } catch (error) {
+//           console.error("Gagal mengambil data pallet:", error);
+//         }
+//       })();
+
+//       return afterRemove;
+//     });
+//     // Note: intentionally omitting getItemKey from deps to avoid re-running when
+//     // parent recreates the function on each render. This effect is driven by
+//     // `selectedPallets` and `isDetailMode` only.
+//   }, [selectedPallets, isDetailMode, setPalletItems]);
 
 //   const palletOptions = useMemo(() => {
 //     if (!Array.isArray(list)) return [];
@@ -85,7 +127,7 @@
 
 
 
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useStorePallet } from "../../../../DynamicAPI/stores/Store/MasterStore";
 import axiosInstance from "../../../../DynamicAPI/AxiosInstance";
 import { EndPoint } from "../../../../utils/EndPoint";
@@ -112,44 +154,47 @@ export const usePalletData = (
 ) => {
   const { fetchAll, list } = useStorePallet();
 
+  // ✅ Simpan pallet code yang valid (punya setidaknya 1 item qty > 0)
+  const [validPalletCodes, setValidPalletCodes] = useState<Set<string>>(new Set());
+
   useEffect(() => {
     fetchAll();
   }, [fetchAll]);
 
+  const prevSelectedRef = useRef<string | null>(null);
+
   useEffect(() => {
     if (isDetailMode) return;
 
-    // ✅ Jika selectedPallets kosong, clear semua items
-    if (selectedPallets.length === 0) {
+    const key = Array.isArray(selectedPallets)
+      ? selectedPallets.join("|")
+      : "";
+
+    if (prevSelectedRef.current === key) return;
+    prevSelectedRef.current = key;
+
+    if (!selectedPallets || selectedPallets.length === 0) {
       setPalletItems([]);
       return;
     }
 
-    const fetchData = async () => {
-      try {
-        // ✅ Hanya fetch pallet yang BARU ditambahkan (belum ada di prevItems)
-        // Remove pallet yang sudah tidak ada di selectedPallets ditangani di sini
-        setPalletItems((prevItems) => {
-          // Step 1: Remove items yang palletnya sudah tidak ada di selectedPallets
-          const afterRemove = prevItems.filter((item) =>
-            selectedPallets.includes(item.pallet_code),
-          );
+    setPalletItems((prevItems) => {
+      const afterRemove = prevItems.filter((item) =>
+        selectedPallets.includes(item.pallet_code),
+      );
 
-          // Step 2: Cari pallet mana yang belum ada datanya di table
-          const existingPalletCodes = new Set(
-            afterRemove.map((item) => item.pallet_code),
-          );
-          const newPalletCodes = selectedPallets.filter(
-            (code) => !existingPalletCodes.has(code),
-          );
+      const existingPalletCodes = new Set(
+        afterRemove.map((item) => item.pallet_code),
+      );
+      const newPalletCodes = selectedPallets.filter(
+        (code) => !existingPalletCodes.has(code),
+      );
 
-          // Jika tidak ada pallet baru, return hasil remove saja
-          if (newPalletCodes.length === 0) {
-            return afterRemove;
-          }
+      if (newPalletCodes.length === 0) return afterRemove;
 
-          // Step 3: Fetch data untuk pallet yang baru
-          Promise.all(
+      (async () => {
+        try {
+          const responses = await Promise.all(
             newPalletCodes.map(async (code) => {
               const res = await axiosInstance.get(
                 `${EndPoint}master-pallet/by-code/${code}/current`,
@@ -159,44 +204,72 @@ export const usePalletData = (
                 pallet_code: code,
               }));
             }),
-          )
-            .then((responses) => {
-              const newItems = responses
-                .flat()
-                .filter((it: any) => Number(it.current_quantity) > 0);
+          );
 
-              if (newItems.length === 0) return;
+          // ✅ Filter: hanya item dengan current_quantity > 0
+          const newItems = responses
+            .flat()
+            .filter((it: any) => Number(it.current_quantity) > 0);
 
-              setPalletItems((latest) => {
-                const existingKeys = new Set(
-                  latest.map((item) => getItemKey(item)),
-                );
-                const filteredNewItems = newItems.filter(
-                  (newItem: PalletItem) =>
-                    !existingKeys.has(getItemKey(newItem)),
-                );
-                return [...latest, ...filteredNewItems];
-              });
-            })
-            .catch((error) => {
-              console.error("Gagal mengambil data pallet:", error);
-            });
+          if (newItems.length === 0) return;
 
-          // Return afterRemove dulu (optimistic), data baru akan di-append via Promise
-          return afterRemove;
-        });
+          setPalletItems((latest) => {
+            const existingKeys = new Set(latest.map((item) => getItemKey(item)));
+            const filteredNewItems = newItems.filter(
+              (newItem: PalletItem) => !existingKeys.has(getItemKey(newItem)),
+            );
+            return [...latest, ...filteredNewItems];
+          });
+        } catch (error) {
+          console.error("Gagal mengambil data pallet:", error);
+        }
+      })();
+
+      return afterRemove;
+    });
+  }, [selectedPallets, isDetailMode, setPalletItems]);
+
+  // ✅ Fetch semua pallet untuk cek validitas (ada item qty > 0)
+  useEffect(() => {
+    if (!Array.isArray(list) || list.length === 0) return;
+
+    const checkAllPallets = async () => {
+      try {
+        const results = await Promise.all(
+          list.map(async (p: any) => {
+            try {
+              const res = await axiosInstance.get(
+                `${EndPoint}master-pallet/by-code/${p.pallet_code}/current`,
+              );
+              const items: any[] = res.data.data || [];
+              // ✅ Pallet valid jika ada minimal 1 item dengan qty > 0
+              const hasStock = items.some(
+                (it) => Number(it.current_quantity) > 0,
+              );
+              return { code: p.pallet_code, valid: hasStock };
+            } catch {
+              return { code: p.pallet_code, valid: false };
+            }
+          }),
+        );
+
+        const validCodes = new Set(
+          results.filter((r) => r.valid).map((r) => r.code),
+        );
+        setValidPalletCodes(validCodes);
       } catch (error) {
-        console.error("Gagal mengambil data pallet:", error);
+        console.error("Gagal validasi pallet options:", error);
       }
     };
 
-    fetchData();
-  }, [selectedPallets, isDetailMode, setPalletItems, getItemKey]);
+    checkAllPallets();
+  }, [list]);
 
   const palletOptions = useMemo(() => {
     if (!Array.isArray(list)) return [];
     return list
       .slice()
+      .filter((p: any) => validPalletCodes.has(p.pallet_code)) // ✅ Hanya pallet valid
       .sort((a: any, b: any) =>
         String(a.pallet_code).localeCompare(String(b.pallet_code), undefined, {
           numeric: true,
@@ -206,7 +279,7 @@ export const usePalletData = (
         label: p.pallet_code,
         value: p.pallet_code,
       }));
-  }, [list]);
+  }, [list, validPalletCodes]);
 
   return { palletOptions };
 };
