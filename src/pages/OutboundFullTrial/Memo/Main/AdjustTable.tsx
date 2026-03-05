@@ -248,29 +248,32 @@ const AdjustTable = ({
                 title="Detail"
                 onClick={() => handleDetail(memo.id)}
               />
-              {roleName !== "SUPERVISOR" && (
-                <ActionIcon
-                  icon={FaEdit}
-                  enabled={canEdit}
-                  color="text-blue-600"
-                  title={memo.has_do ? "Memo has DO" : "Edit"}
-                  onClick={() => handleUpdate(memo.id)}
-                />
+
+              {roleName === "TRANSPORT_SUPERVISOR" && (
+                <>
+                  <ActionIcon
+                    icon={FaEdit}
+                    enabled={canEdit}
+                    color="text-blue-600"
+                    title={memo.has_do ? "Memo has DO" : "Edit"}
+                    onClick={() => handleUpdate(memo.id)}
+                  />
+
+                  <ActionIcon
+                    icon={FaRegTimesCircle}
+                    enabled={canDelete}
+                    color="text-red-600"
+                    title="Cancel Memo"
+                    onClick={() => handleDelete(memo.id)}
+                  />
+                </>
               )}
-              <ActionIcon
-                icon={FaRegTimesCircle}
-                enabled={canDelete}
-                color="text-red-600"
-                title="Cancel Memo"
-                onClick={() => handleDelete(memo.id)}
-              />
             </div>
           );
         },
       },
     ],
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [roleName, currentPage, pageSize]
+    [roleName, currentPage, pageSize],
   );
 
   const mappedList = useMemo(() => {
@@ -309,10 +312,6 @@ const AdjustTable = ({
 };
 
 export default AdjustTable;
-
-
-
-
 
 // import { useEffect, useMemo, useState } from "react";
 // import { FaEye, FaEdit, FaTrash, FaRegTimesCircle } from "react-icons/fa";

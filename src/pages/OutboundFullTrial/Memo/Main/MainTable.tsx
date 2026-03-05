@@ -14,7 +14,7 @@ const MainTable = () => {
   const [selectedStatus, setSelectedStatus] = useState<any>(null);
   const [selectedTypeOutbound, setSelectedTypeOutbound] = useState<any>(null);
   const [selectedHasDO, setSelectedHasDO] = useState<any>(null);
-  
+
   const handleCreate = () => {
     navigate("/memo/process", {
       state: { data: [], mode: "create", title: "Create Memo Form" },
@@ -39,11 +39,13 @@ const MainTable = () => {
     { value: "SUBDIST", label: "SUBDIST" },
   ];
 
-    const hasDOflag = [
+  const hasDOflag = [
     { value: "", label: "All Flag" },
     { value: "true", label: "Yes" },
     { value: "false", label: "No" },
   ];
+
+  const roleName = localStorage.getItem("role_name");
 
   return (
     <>
@@ -80,14 +82,16 @@ const MainTable = () => {
           </div>
 
           <div className="space-x-4">
-            <Button
-              size="sm"
-              variant="primary"
-              startIcon={<FaPlus className="size-5" />}
-              onClick={handleCreate}
-            >
-              Create Memo
-            </Button>
+            {roleName === "TRANSPORT_STAFF" && (
+              <Button
+                size="sm"
+                variant="primary"
+                startIcon={<FaPlus className="size-5" />}
+                onClick={handleCreate}
+              >
+                Create Memo
+              </Button>
+            )}
           </div>
         </div>
       </div>

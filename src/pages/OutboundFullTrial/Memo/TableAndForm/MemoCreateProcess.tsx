@@ -271,7 +271,7 @@ const CreateMemo: React.FC = () => {
       item_id: it.item_id || it.item?.id || "",
       item_name: it.item?.description || it.item?.sku || "",
       quantity_plan: Number(it.quantity_plan ?? 0),
-      uom: typeof it.uom === "string" ? it.uom : it.uom_name ?? "",
+      uom: typeof it.uom === "string" ? it.uom : (it.uom_name ?? ""),
       uom_name: it.uom_name ?? (typeof it.uom === "string" ? it.uom : ""),
       classification_name:
         it.classification_name ?? it.classification?.classification_name ?? "",
@@ -294,7 +294,7 @@ const CreateMemo: React.FC = () => {
   const handleUpdateItemField = (
     index: number,
     field: keyof ItemRow,
-    value: any
+    value: any,
   ) => {
     setItems((prev) => {
       const copy = [...prev];
@@ -462,7 +462,7 @@ const CreateMemo: React.FC = () => {
             item_id: it.item_id || it.item?.id || "",
             item_name: it.item?.description || it.item?.sku || "",
             quantity_plan: Number(it.quantity_plan ?? 0),
-            uom: typeof it.uom === "string" ? it.uom : it.uom_name ?? "",
+            uom: typeof it.uom === "string" ? it.uom : (it.uom_name ?? ""),
             uom_name: it.uom_name ?? (typeof it.uom === "string" ? it.uom : ""),
             classification_name:
               it.classification_name ??
@@ -529,7 +529,7 @@ const CreateMemo: React.FC = () => {
               "Content-Type": "application/json",
               Authorization: `Bearer ${token}`,
             },
-          }
+          },
         );
         const data = await res.json();
         if (res.ok) {
@@ -598,7 +598,8 @@ const CreateMemo: React.FC = () => {
           watch={methods.watch}
         />
 
-        {localStorage.getItem("role_name") === "TRANSPORT_SUPERVISOR" &&
+        {isDetail &&
+          localStorage.getItem("role_name") === "TRANSPORT_SUPERVISOR" &&
           detailDataMemo?.status !== "APPROVED" && (
             <div className="flex justify-end mt-4 gap-3">
               <Button
