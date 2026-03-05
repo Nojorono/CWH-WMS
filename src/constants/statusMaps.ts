@@ -67,7 +67,7 @@ export const STATUS_MAP_PUTAWAY: StatusMap = {
 
 export const STATUS_MAP_DO: StatusMap = {
   PENDING: "dark",
-  IN_PROGRESS: "grey",
+  IN_PROGRESS: "warning",
   APPROVED: "info",
   APPROVED_LOAD: "success",
   COMPLETED: "secondary",
