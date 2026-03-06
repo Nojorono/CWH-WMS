@@ -65,6 +65,7 @@ const DataTable = () => {
       currentQuantity: Number(rest.currentQuantity),
     });
   };
+  
 
   const columns = useMemo(
     () => [

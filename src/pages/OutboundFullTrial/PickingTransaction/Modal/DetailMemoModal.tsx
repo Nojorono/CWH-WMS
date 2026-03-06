@@ -17,7 +17,6 @@ const TransactionPickingsModal: React.FC<TransactionPickingsModalProps> = ({
   if (!isOpen) return null;
 
   console.log("items modal picking detail", items);
-  
 
   // Normalisasi data
   const normalizedItems = Array.isArray(items) ? items : items ? [items] : [];
@@ -91,23 +90,20 @@ const TransactionPickingsModal: React.FC<TransactionPickingsModalProps> = ({
 
                     <div className="flex items-center gap-3">
                       <span className="text-sm text-gray-500">
-                        {trx.transactionScanPicking.length === 0 ? (
-                          <span className="text-sm text-red-500">Belum dilakukan proses scan picking</span>
+                        {trx.status === "CANCELLED" ? (
+                          <span className="text-sm text-red-500">
+                            CANCELLED
+                          </span>
+                        ) : trx.transactionScanPicking.length === 0 ? (
+                          <span className="text-sm text-red-500">
+                            Belum dilakukan proses scan picking
+                          </span>
                         ) : (
-                          <span className="text-sm text-green-500">Sudah di-scan picking</span>
+                          <span className="text-sm text-green-500">
+                            Sudah di-scan picking
+                          </span>
                         )}
                       </span>
-                      {/* <span
-                        className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                          trx?.status === "PENDING"
-                            ? "bg-yellow-100 text-yellow-700"
-                            : trx?.status === "INSPECTION"
-                            ? "bg-blue-100 text-blue-700"
-                            : "bg-red-200 text-red-700"
-                        }`}
-                      >
-                        {trx?.status ?? "-"}
-                      </span> */}
 
                       {isOpenItem ? (
                         <FaChevronUp className="text-gray-500" />
