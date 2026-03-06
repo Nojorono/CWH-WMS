@@ -189,7 +189,7 @@ const DetachAttach: React.FC = () => {
           });
 
           if (!patchRes.ok) {
-            console.error("Failed to update DO status to PENDING");
+            console.error("Failed to update DO status to PENDING");``
             showErrorToast("Gagal mengubah status DO menjadi PENDING");
           }
         } catch (err) {

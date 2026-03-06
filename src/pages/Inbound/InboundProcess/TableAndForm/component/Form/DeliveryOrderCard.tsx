@@ -415,14 +415,6 @@ export default function DeliveryOrderCard({
                     }}
                   />
 
-                  {/* Overlay lock hanya muncul di Create Mode + belum validasi SJ */}
-                  {/* {isCreateMode ||
-                    (isAddToReceiveMode && !isDOChecked && (
-                      <div className="absolute inset-0 flex items-center justify-center bg-gray-100 bg-opacity-70 text-gray-500 text-xs rounded cursor-not-allowed">
-                        🔒 Harus validasi SJ dahulu
-                      </div>
-                    ))} */}
-
                   {(isCreateMode || isAddToReceiveMode) && !isDOChecked && (
                     <div className="absolute inset-0 flex items-center justify-center bg-gray-100 bg-opacity-70 text-gray-500 text-xs rounded cursor-not-allowed pointer-events-none">
                       🔒 Harus validasi SJ dahulu

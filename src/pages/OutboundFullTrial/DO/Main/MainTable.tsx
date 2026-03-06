@@ -65,7 +65,8 @@ const MainTable = () => {
           </div>
 
           <div className="space-x-4">
-            {roleName === "TRANSPORT_SUPERVISOR" && (
+            {(roleName === "TRANSPORT_SUPERVISOR" ||
+              roleName === "superadmin") && (
               <Button
                 size="sm"
                 variant="primary"

@@ -82,7 +82,7 @@ const MainTable = () => {
           </div>
 
           <div className="space-x-4">
-            {roleName === "TRANSPORT_STAFF" && (
+            {roleName === "TRANSPORT_STAFF" || roleName === "superadmin" ? (
               <Button
                 size="sm"
                 variant="primary"
@@ -91,7 +91,7 @@ const MainTable = () => {
               >
                 Create Memo
               </Button>
-            )}
+            ) : null}
           </div>
         </div>
       </div>
