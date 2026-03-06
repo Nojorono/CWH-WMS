@@ -14,7 +14,7 @@ import {
 import { isGateLoadComplete } from "../helper/isGateLoadComplete";
 import { isMemoGateLoadComplete } from "../helper/isMemoLoadComplete";
 import { EndPoint } from "../../../../utils/EndPoint";
-import { showErrorToast } from "../../../../components/toast";
+import { showErrorToast, showSuccessToast } from "../../../../components/toast";
 import Button from "../../../../components/ui/button/Button";
 import SKUCardNew from "./SKUcard";
 
@@ -58,6 +58,7 @@ export const DODetailPanel: React.FC<{
         body: JSON.stringify({ status: "DONE" }),
       });
       if (!res.ok) throw new Error("Failed to approve");
+      showSuccessToast("Gate loading completed successfully");
       onRefresh();
     } catch (err) {
       showErrorToast("Gagal melakukan approve gate loading");
@@ -176,7 +177,7 @@ export const DODetailPanel: React.FC<{
               variant="action"
               className="bg-emerald-600 hover:bg-emerald-700 text-white w-full py-4 rounded-2xl shadow-lg shadow-emerald-100 animate-pulse text-xs font-black tracking-widest uppercase"
               startIcon={<FaCheck />}
-              disabled={doData.main_status === "APPROVED"}
+              disabled={doData.main_status === "DONE"}
             >
               FINISH LOADING
             </Button>

@@ -45,8 +45,7 @@ export default function ModalAssignHelper({
 
   const driverDeviceOptions = (userDevice as any[])
     .filter(
-      (d: any) =>
-        d?.role?.name === "DRIVER_FORKLIFT" || d?.role?.name === "HELPER"
+      (d: any) => d?.role?.name === "HELPER"
     )
     .map((d: any) => ({ value: d.id, label: d.username ?? d.id }));
 
