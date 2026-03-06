@@ -12,6 +12,7 @@ import {
   useStoreUom,
 } from "../../../../../../DynamicAPI/stores/Store/MasterStore";
 import { showErrorToast } from "../../../../../../components/toast";
+import { Server47 } from "../../../../../../utils/EndPoint";
 
 export default function POCard({
   doIndex,
@@ -120,7 +121,7 @@ export default function POCard({
     }
 
     const poNo = getValues(
-      `deliveryOrders.${doIndex}.pos.${posIndex}.po_no`
+      `deliveryOrders.${doIndex}.pos.${posIndex}.po_no`,
     ) as string;
 
     if (!poNo) {
@@ -131,7 +132,7 @@ export default function POCard({
     setLoading(true);
     try {
       const res = await fetch(
-        `http://10.0.29.49:8000/api/po_detail?po_no=${poNo}`
+        `${Server47}/api/po_detail?po_no=${poNo}`,
       );
       if (!res.ok) throw new Error("Gagal fetch PO");
       const data = await res.json();
@@ -140,11 +141,11 @@ export default function POCard({
         setValue(`deliveryOrders.${doIndex}.pos.${posIndex}.po_date`, "");
         setValue(
           `deliveryOrders.${doIndex}.pos.${posIndex}.vendor_name` as any,
-          ""
+          "",
         );
         replaceItems([]);
         showErrorToast(
-          `Detail PO ${poNo} tidak ditemukan di META. Tambahkan Item secara manual.`
+          `Detail PO ${poNo} tidak ditemukan di META. Tambahkan Item secara manual.`,
         );
         return;
       }
@@ -155,7 +156,7 @@ export default function POCard({
         if (po.TANGGAL_PEMBUATAN_PO) {
           setValue(
             `deliveryOrders.${doIndex}.pos.${posIndex}.po_date`,
-            new Date(po.TANGGAL_PEMBUATAN_PO).toISOString()
+            new Date(po.TANGGAL_PEMBUATAN_PO).toISOString(),
           );
         }
 
@@ -163,18 +164,16 @@ export default function POCard({
         if (po.NAMA_VENDOR) {
           setValue(
             `deliveryOrders.${doIndex}.pos.${posIndex}.vendor_name` as any,
-            po.NAMA_VENDOR
+            po.NAMA_VENDOR,
           );
         }
-
-        console.log("nama Vendor:", po.NAMA_VENDOR);
 
         const items: ItemForm[] = [];
         let notFound: string[] = [];
 
         po.ITEM?.forEach?.((it: any) => {
           const master = list.find(
-            (m) => m.item_number === it.KODE_ITEM || m.sku === it.SKU
+            (m) => m.item_number === it.KODE_ITEM || m.sku === it.SKU,
           );
 
           if (!master) {
@@ -198,7 +197,7 @@ export default function POCard({
 
         if (notFound.length > 0) {
           showErrorToast(
-            `Item berikut tidak ada di Master Item:\n- ${notFound.join("\n- ")}`
+            `Item berikut tidak ada di Master Item:\n- ${notFound.join("\n- ")}`,
           );
         }
 
@@ -217,7 +216,7 @@ export default function POCard({
   // ===== Fetch SO =====
   const handleSearchSO = async () => {
     const soNo = getValues(
-      `deliveryOrders.${doIndex}.pos.${posIndex}.so_no`
+      `deliveryOrders.${doIndex}.pos.${posIndex}.so_no`,
     ) as string;
 
     if (!soNo) {
@@ -228,7 +227,7 @@ export default function POCard({
     setLoading(true);
     try {
       const res = await fetch(
-        `http://10.0.29.49:9000/api/v1/sales-order?order_number=${soNo}`
+        `${Server47}/api/v1/sales-order?order_number=${soNo}`,
       );
       if (!res.ok) throw new Error("Gagal fetch SO");
       const result = await res.json();
@@ -238,7 +237,7 @@ export default function POCard({
         setValue(`deliveryOrders.${doIndex}.pos.${posIndex}.so_date`, "");
         setValue(
           `deliveryOrders.${doIndex}.pos.${posIndex}.vendor_name` as any,
-          ""
+          "",
         );
         replaceItems([]);
 
@@ -251,7 +250,7 @@ export default function POCard({
       if (so.ORDERED_DATE) {
         setValue(
           `deliveryOrders.${doIndex}.pos.${posIndex}.so_date`,
-          formatDateIndo(new Date(so.ORDERED_DATE))
+          formatDateIndo(new Date(so.ORDERED_DATE)),
         );
       }
 
@@ -259,7 +258,7 @@ export default function POCard({
       if (so.ORG_NAME) {
         setValue(
           `deliveryOrders.${doIndex}.pos.${posIndex}.vendor_name` as any,
-          so.ORG_NAME
+          so.ORG_NAME,
         );
       }
 
@@ -268,7 +267,7 @@ export default function POCard({
 
       so.ITEM?.forEach?.((it: any) => {
         const master = list.find(
-          (m) => m.item_number === it.ITEM_NUMBER || m.sku === it.ITEM_CODE
+          (m) => m.item_number === it.ITEM_NUMBER || m.sku === it.ITEM_CODE,
         );
 
         if (!master) {
@@ -292,7 +291,7 @@ export default function POCard({
 
       if (notFound.length > 0) {
         showErrorToast(
-          `Item berikut tidak ada di Master Item:\n- ${notFound.join("\n- ")}`
+          `Item berikut tidak ada di Master Item:\n- ${notFound.join("\n- ")}`,
         );
       }
 
@@ -327,10 +326,10 @@ export default function POCard({
               <div className="flex flex-col gap-2 w-full sm:flex-row">
                 <input
                   className={`${inputCls} ${getDisabledCls(
-                    isPOFieldDisabled
+                    isPOFieldDisabled,
                   )} w-full flex-1 min-w-0`}
                   {...register(
-                    `deliveryOrders.${doIndex}.pos.${posIndex}.po_no` as const
+                    `deliveryOrders.${doIndex}.pos.${posIndex}.po_no` as const,
                   )}
                   defaultValue={dataPO || ""}
                   disabled={isPOFieldDisabled}
@@ -364,10 +363,10 @@ export default function POCard({
               <div className="flex flex-col sm:flex-row gap-2">
                 <input
                   className={`${inputCls} ${getDisabledCls(
-                    isPOFieldDisabled
+                    isPOFieldDisabled,
                   )} w-full flex-1 min-w-0`}
                   {...register(
-                    `deliveryOrders.${doIndex}.pos.${posIndex}.so_no` as const
+                    `deliveryOrders.${doIndex}.pos.${posIndex}.so_no` as const,
                   )}
                   defaultValue={dataPO || ""}
                   disabled={isPOFieldDisabled}
@@ -403,7 +402,7 @@ export default function POCard({
             <input
               className={`${inputCls} bg-gray-100 text-gray-500 cursor-not-allowed w-full`}
               {...register(
-                `deliveryOrders.${doIndex}.pos.${posIndex}.vendor_name` as any
+                `deliveryOrders.${doIndex}.pos.${posIndex}.vendor_name` as any,
               )}
               placeholder="Otomatis terisi jika ada..."
               readOnly

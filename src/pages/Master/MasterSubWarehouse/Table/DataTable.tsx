@@ -260,7 +260,7 @@ const DataTable = () => {
               size="sm"
               onClick={() => setCreateModalOpen(true)}
             >
-              <FaPlus className="mr-2" /> Tambah Data
+              <FaPlus className="mr-2" /> Add Data
             </Button>
 
             <Button

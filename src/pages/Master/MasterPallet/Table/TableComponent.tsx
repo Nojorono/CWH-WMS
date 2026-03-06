@@ -70,12 +70,14 @@ const DynamicTable = ({
             >
               <FaEdit />
             </button>
+            
             {/* <button
               onClick={() => handleDelete(getRowId(row.original))}
               className="text-red-500"
             >
               <FaTrash />
             </button> */}
+
             <button
               onClick={() => goToDetailPage(getRowId(row.original))}
               className="text-blue-500"

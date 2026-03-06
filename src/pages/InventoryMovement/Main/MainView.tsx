@@ -1,157 +1,316 @@
-import React from "react";
-import { 
-  FaExclamationCircle, 
-  FaFileAlt, 
-  FaBoxOpen, 
-  FaTimes, 
-  FaCheckCircle 
-} from "react-icons/fa";
+import React, { useEffect, useState } from "react";
+import {
+  useReactTable,
+  getCoreRowModel,
+  flexRender,
+  createColumnHelper,
+} from "@tanstack/react-table";
+import { useStoreInventoryMovement } from "../../../DynamicAPI/stores/Store/MasterStore";
+import MovementDetailView from "./MovementDetailView";
+import { FaEdit, FaEye, FaPlus, FaTrash } from "react-icons/fa";
+import { useSearchParams } from "react-router-dom";
 
-interface ReviewModalProps {
-  open: boolean;
-  onClose: () => void;
-  onConfirm: () => void;
-  payload: any;
-}
+const InventoryMovement: React.FC = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
 
-const ReviewAdjustmentModal: React.FC<ReviewModalProps> = ({
-  open,
-  onClose,
-  onConfirm,
-  payload,
-}) => {
-  if (!open || !payload) return null;
+  const { fetchUsingPagination, list, updateData, pagination } =
+    useStoreInventoryMovement();
 
+  const currentPage = parseInt(searchParams.get("page") || "1");
+  const pageIndex = currentPage - 1;
+
+  const [pageSize, setPageSize] = useState(20);
+  const [selectedMovement, setSelectedMovement] = useState<any | null>(null);
+
+  // ================= FETCH SERVER SIDE =================
+  useEffect(() => {
+    if (!fetchUsingPagination) return;
+
+    fetchUsingPagination({
+      page: currentPage,
+      limit: pageSize,
+      sortOrder: "DESC",
+      sortBy: "progression_status",
+    });
+  }, [fetchUsingPagination, currentPage, pageSize]);
+
+  // ================= HANDLE PAGE CHANGE =================
+  const handlePageChange = (newPageIndex: number, newSize: number) => {
+    const newParams = new URLSearchParams(searchParams);
+    newParams.set("page", (newPageIndex + 1).toString());
+    setSearchParams(newParams);
+
+    if (newSize !== pageSize) setPageSize(newSize);
+  };
+
+  // ================= COLUMNS =================
+  const columnHelper = createColumnHelper<any>();
+
+  const columns = [
+    columnHelper.accessor("movement_number", {
+      header: "Move Location ID",
+      cell: (info) => <span className="font-bold">{info.getValue()}</span>,
+    }),
+    columnHelper.accessor("createdAt", {
+      header: "Create Date",
+      cell: (info) => new Date(info.getValue()).toLocaleDateString("id-ID"),
+    }),
+    columnHelper.accessor(
+      (row) => row?.sourceWarehouseSub?.name ?? "",
+      {
+        id: "sourceWarehouseSub.name",
+        header: "Source Zone",
+      },
+    ),
+    columnHelper.accessor((row) => row?.sourceBin?.name ?? "", {
+      id: "sourceBin.name",
+      header: "Source Bin",
+    }),
+    columnHelper.accessor(
+      (row) => row?.destinationWarehouseSub?.name ?? "",
+      {
+        id: "destinationWarehouseSub.name",
+        header: "Destination Zone",
+      },
+    ),
+    columnHelper.accessor((row) => row?.destinationBin?.name ?? "", {
+      id: "destinationBin.name",
+      header: "Destination Bin",
+    }),
+    columnHelper.accessor("status", {
+      header: "Status",
+      cell: (info) => (
+        <span
+          className={`px-3 py-1 rounded-full text-xs font-semibold
+            ${
+              info.getValue() === "PENDING"
+                ? "bg-yellow-100 text-yellow-700"
+                : info.getValue() === "APPROVED"
+                  ? "bg-blue-100 text-blue-700"
+                  : info.getValue() === "COMPLETED"
+                    ? "bg-green-100 text-green-700"
+                    : info.getValue() === "CANCELLED"
+                      ? "bg-red-100 text-red-700"
+                      : "bg-gray-100 text-gray-700"
+            }
+          `}
+        >
+          {info.getValue()}
+        </span>
+      ),
+    }),
+    columnHelper.display({
+      id: "action",
+      header: "Action",
+      cell: (info) => {
+        const hasCompletedPallet =
+          Array.isArray(info.row.original.pallets) &&
+          info.row.original.pallets.some((p: any) => p.is_completed);
+
+        if (info.row.original.status === "CANCELLED") {
+          return (
+            <FaEye
+              className="inline mr-2 cursor-pointer text-green-600"
+              onClick={() =>
+                setSelectedMovement({
+                  ...info.row.original,
+                  viewOnly: true,
+                })
+              }
+            />
+          );
+        }
+
+        return (
+          <>
+            {info.row.original.status === "COMPLETED" ? (
+              <FaEye
+                className="inline mr-2 cursor-pointer text-green-600"
+                onClick={() =>
+                  setSelectedMovement({
+                    ...info.row.original,
+                    viewOnly: true,
+                  })
+                }
+              />
+            ) : (
+              <>
+                {(!info.row.original.users ||
+                  info.row.original.users.length === 0) && (
+                  <FaPlus
+                    className="inline mr-2 cursor-pointer text-orange-600"
+                    onClick={() =>
+                      setSelectedMovement({
+                        ...info.row.original,
+                        addOnly: true,
+                      })
+                    }
+                  />
+                )}
+
+                {info.row.original.users?.length > 0 && !hasCompletedPallet && (
+                  <FaEdit
+                    className="inline mr-2 cursor-pointer text-blue-600"
+                    onClick={() =>
+                      setSelectedMovement({
+                        ...info.row.original,
+                        editOnly: true,
+                      })
+                    }
+                  />
+                )}
+
+                <FaEye
+                  className="inline mr-2 cursor-pointer text-green-600"
+                  onClick={() =>
+                    setSelectedMovement({
+                      ...info.row.original,
+                      viewOnly: true,
+                    })
+                  }
+                />
+
+                {!hasCompletedPallet && (
+                  <FaTrash
+                    className="inline cursor-pointer text-red-600"
+                    onClick={() => handleDelete(info.row.original.id)}
+                  />
+                )}
+              </>
+            )}
+          </>
+        );
+      },
+    }),
+  ];
+
+  // ================= TABLE =================
+  const table = useReactTable({
+    data: list || [],
+    columns,
+    pageCount: pagination?.totalPages ?? 0,
+    state: {
+      pagination: {
+        pageIndex,
+        pageSize,
+      },
+    },
+    manualPagination: true,
+    onPaginationChange: (updater) => {
+      const newPagination =
+        typeof updater === "function"
+          ? updater({ pageIndex, pageSize })
+          : updater;
+
+      handlePageChange(newPagination.pageIndex, newPagination.pageSize);
+    },
+    getCoreRowModel: getCoreRowModel(),
+  });
+
+  // ================= DELETE =================
+  const handleDelete = async (id: string) => {
+    const Swal = (await import("sweetalert2")).default;
+
+    const result = await Swal.fire({
+      title: "Are you sure?",
+      text: "This action cannot be undone.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#d33",
+      cancelButtonColor: "#3085d6",
+      confirmButtonText: "Yes, cancel it!",
+    });
+
+    if (result.isConfirmed) {
+      const payload = { status: "CANCELLED" };
+
+      try {
+        await updateData(id, payload as any);
+      } catch {
+        Swal.fire("Error", "Failed to cancel item.", "error");
+      }
+    }
+  };
+
+  // ================= DETAIL VIEW =================
+  if (selectedMovement) {
+    return (
+      <MovementDetailView
+        data={selectedMovement}
+        onBack={() => setSelectedMovement(null)}
+      />
+    );
+  }
+
+  // ================= RENDER =================
   return (
-    <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center z-[5000] p-4">
-      <div className="bg-white w-full max-w-5xl rounded-xl shadow-2xl overflow-hidden border border-slate-200 animate-in fade-in zoom-in duration-200">
-        
-        {/* HEADER SECTION */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-white">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-orange-50 text-orange-600 rounded-lg flex items-center justify-center">
-              <FaFileAlt size={20} />
-            </div>
-            <div>
-              <h2 className="text-xl font-bold text-slate-800 leading-tight">Review Stock Adjustment</h2>
-              <p className="text-xs text-slate-500 font-medium">Please verify the quantities before finalizing the adjustment.</p>
-            </div>
-          </div>
-          <button 
-            onClick={onClose} 
-            className="text-slate-400 hover:text-slate-600 p-2 hover:bg-slate-100 rounded-full transition-all"
-          >
-            <FaTimes size={18} />
-          </button>
-        </div>
+    <div className="p-6">
+      <div className="bg-white rounded-lg shadow border border-gray-200 overflow-hidden">
+        <table className="w-full text-left">
+          <thead className="bg-orange-500 text-white text-sm">
+            {table.getHeaderGroups().map((headerGroup) => (
+              <tr key={headerGroup.id}>
+                {headerGroup.headers.map((header) => (
+                  <th key={header.id} className="p-3">
+                    {flexRender(
+                      header.column.columnDef.header,
+                      header.getContext(),
+                    )}
+                  </th>
+                ))}
+              </tr>
+            ))}
+          </thead>
 
-        <div className="p-6">
-          {/* HEADER INFO CARDS */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-            <div className="bg-slate-50 p-3 rounded-lg border border-slate-100">
-              <span className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">Document</span>
-              <span className="text-sm font-semibold text-slate-700">{payload.document}</span>
-            </div>
-            <div className="bg-slate-50 p-3 rounded-lg border border-slate-100">
-              <span className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">Reference Code</span>
-              <span className="text-sm font-semibold text-slate-700">{payload.code}</span>
-            </div>
-            <div className="bg-slate-50 p-3 rounded-lg border border-slate-100">
-              <span className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">Sub Inventory</span>
-              <span className="text-sm font-semibold text-slate-700">{payload.is_inventory}</span>
-            </div>
-            <div className="bg-slate-50 p-3 rounded-lg border border-slate-100">
-              <span className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">Status</span>
-              <span className="inline-flex items-center px-2 py-0.5 mt-1 rounded text-[11px] font-bold bg-blue-100 text-blue-700 uppercase">
-                {payload.status}
-              </span>
-            </div>
+          <tbody>
+            {table.getRowModel().rows.map((row) => (
+              <tr key={row.id} className="border-b hover:bg-gray-50">
+                {row.getVisibleCells().map((cell) => (
+                  <td key={cell.id} className="p-3 text-sm text-gray-600">
+                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+
+        {/* ================= PAGINATION ================= */}
+        <div className="flex items-center justify-between px-4 py-3 bg-gray-50 border-t">
+          <div className="text-sm text-gray-600">
+            Page {pageIndex + 1} of {pagination?.totalPages ?? 1}
           </div>
 
-          {/* NOTES BOX */}
-          <div className="mb-6 flex items-start gap-3 p-4 bg-amber-50/50 border border-amber-100 rounded-xl">
-            <FaExclamationCircle className="text-amber-500 mt-0.5 shrink-0" size={16} />
-            <div>
-              <h4 className="text-xs font-bold text-amber-800 uppercase tracking-tighter">Adjustment Notes</h4>
-              <p className="text-sm text-amber-700 leading-relaxed">{payload.notes || "No additional remarks provided."}</p>
-            </div>
-          </div>
-
-          {/* TABLE CONTAINER */}
-          <div className="border border-slate-200 rounded-xl overflow-hidden shadow-sm bg-white">
-            <div className="max-h-[350px] overflow-y-auto custom-scrollbar">
-              <table className="w-full text-left border-separate border-spacing-0">
-                <thead>
-                  <tr className="bg-slate-50 border-b border-slate-200">
-                    <th className="px-4 py-3 text-[11px] font-bold text-slate-500 uppercase tracking-widest sticky top-0 bg-slate-50 z-10 border-b border-slate-200">Pallet</th>
-                    <th className="px-4 py-3 text-[11px] font-bold text-slate-500 uppercase tracking-widest sticky top-0 bg-slate-50 z-10 border-b border-slate-200">SKU / Item Name</th>
-                    <th className="px-4 py-3 text-[11px] font-bold text-slate-500 uppercase tracking-widest sticky top-0 bg-slate-50 z-10 border-b border-slate-200 text-right">Current</th>
-                    <th className="px-4 py-3 text-[11px] font-bold text-slate-500 uppercase tracking-widest sticky top-0 bg-slate-50 z-10 border-b border-slate-200 text-right font-bold">Adjusted</th>
-                    <th className="px-4 py-3 text-[11px] font-bold text-slate-500 uppercase tracking-widest sticky top-0 bg-slate-50 z-10 border-b border-slate-200 text-center">Difference</th>
-                    <th className="px-4 py-3 text-[11px] font-bold text-slate-500 uppercase tracking-widest sticky top-0 bg-slate-50 z-10 border-b border-slate-200 text-center font-bold">UOM</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {payload.items.map((item: any, index: number) => {
-                    const current = Number(item.current_quantity) || 0;
-                    const adjusted = Number(item.quantity) || 0;
-                    const diff = adjusted - current;
-
-                    return (
-                      <tr key={index} className="hover:bg-blue-50/30 transition-colors group">
-                        <td className="px-4 py-3 text-sm font-medium text-slate-600">
-                          <div className="flex items-center gap-2">
-                            <FaBoxOpen className="text-slate-300 group-hover:text-blue-400 transition-colors" size={14} />
-                            {item.pallet_code}
-                          </div>
-                        </td>
-                        <td className="px-4 py-3 text-sm text-slate-800 font-medium">{item.item_name}</td>
-                        <td className="px-4 py-3 text-sm text-slate-500 text-right font-mono tabular-nums">{current}</td>
-                        <td className="px-4 py-3 text-sm font-bold text-slate-900 text-right font-mono tabular-nums bg-slate-50/50">{adjusted}</td>
-                        <td className="px-4 py-3 text-sm text-center">
-                          <span className={`inline-block px-2.5 py-0.5 rounded-md font-bold font-mono text-xs shadow-sm ${
-                            diff > 0 ? "bg-emerald-50 text-emerald-600 border border-emerald-100" : 
-                            diff < 0 ? "bg-rose-50 text-rose-600 border border-rose-100" : 
-                            "bg-slate-100 text-slate-500 border border-slate-200"
-                          }`}>
-                            {diff > 0 ? `+${diff}` : diff}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3 text-[10px] text-slate-400 text-center font-black uppercase">
-                          {item.uom}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-
-        {/* FOOTER ACTION SECTION */}
-        <div className="px-6 py-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between">
-          <div className="flex items-center gap-2 text-slate-500">
-            <span className="text-xs uppercase font-bold tracking-tighter">Items Count:</span>
-            <span className="bg-slate-200 text-slate-700 px-2 py-0.5 rounded text-xs font-bold leading-none">
-              {payload.items.length}
-            </span>
-          </div>
-          
-          <div className="flex gap-3">
-            <button 
-              onClick={onClose} 
-              className="px-5 py-2 text-sm font-bold text-slate-500 hover:text-slate-700 hover:bg-slate-200 rounded-lg transition-all"
-            >
-              Discard
-            </button>
+          <div className="flex items-center gap-2">
             <button
-              onClick={onConfirm}
-              className="flex items-center gap-2 px-6 py-2 text-sm font-bold bg-orange-600 hover:bg-orange-700 text-white rounded-lg shadow-md shadow-orange-200 active:scale-95 transition-all"
+              onClick={() => table.previousPage()}
+              disabled={!table.getCanPreviousPage()}
+              className="px-3 py-1 text-sm border rounded disabled:opacity-50"
             >
-              <FaCheckCircle size={14} />
-              Confirm Submit
+              Previous
             </button>
+
+            <button
+              onClick={() => table.nextPage()}
+              disabled={!table.getCanNextPage()}
+              className="px-3 py-1 text-sm border rounded disabled:opacity-50"
+            >
+              Next
+            </button>
+
+            <select
+              value={pageSize}
+              onChange={(e) =>
+                handlePageChange(pageIndex, Number(e.target.value))
+              }
+              className="border rounded px-2 py-1 text-sm"
+            >
+              {[10, 20, 50, 100].map((size) => (
+                <option key={size} value={size}>
+                  Show {size}
+                </option>
+              ))}
+            </select>
           </div>
         </div>
       </div>
@@ -159,4 +318,4 @@ const ReviewAdjustmentModal: React.FC<ReviewModalProps> = ({
   );
 };
 
-export default ReviewAdjustmentModal;
+export default InventoryMovement;

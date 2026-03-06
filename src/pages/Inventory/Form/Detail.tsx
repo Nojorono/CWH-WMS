@@ -111,10 +111,8 @@ export default function DetailInventory() {
 
   // === Submit Handler ===
   const onFinalSubmit = (data: any) => {
-    console.log("Form submitted:", data);
+    console.log("Form submitted Detail Invtry:", data);
   };
-
-  console.log("Detail Inventory Data:", detail);
 
   // const palletId = detail && "pallet_id" in detail ? detail.pallet_id : "";
   // const palletCode = detail && "pallet_code" in detail ? String(detail.pallet_code) : "";

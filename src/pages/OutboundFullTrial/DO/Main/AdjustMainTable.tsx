@@ -383,11 +383,13 @@ const AdjustTableDO = ({
                 title="Detail"
               />
 
-              <FaTasks
-                className="size-5 cursor-pointer text-yellow-600 hover:scale-110 transition"
-                onClick={() => handleAdjust(row.original.id)}
-                title="Adjust Memo"
-              />
+              {roleName === "TRANSPORT_SUPERVISOR" && (
+                <FaTasks
+                  className="size-5 cursor-pointer text-yellow-600 hover:scale-110 transition"
+                  onClick={() => handleAdjust(row.original.id)}
+                  title="PickingSuggestion"
+                />
+              )}
 
               <FaTrash
                 className={`size-5 transition ${
@@ -404,8 +406,8 @@ const AdjustTableDO = ({
                   !deletable
                     ? "Cannot delete - DO has memos"
                     : isCancelled
-                    ? "Cannot delete - DO is cancelled"
-                    : "Delete"
+                      ? "Cannot delete - DO is cancelled"
+                      : "Delete"
                 }
               />
             </div>
@@ -414,7 +416,7 @@ const AdjustTableDO = ({
       },
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [roleName, currentPage, pageSize]
+    [roleName, currentPage, pageSize],
   );
 
   const mappedList = (list || []).map((item: any, index: number) => ({
@@ -459,8 +461,6 @@ const AdjustTableDO = ({
 };
 
 export default AdjustTableDO;
-
-
 
 // import { useEffect, useMemo, useState } from "react";
 // import { FaEye, FaTasks, FaTrash } from "react-icons/fa";

@@ -10,35 +10,8 @@ import { useNavigate } from "react-router-dom";
 import { showSuccessToast } from "../../../../components/toast";
 
 const fields: FieldConfig[] = [
-  { name: "name", label: "Name", type: "text" },
+  { name: "name", label: "Name", type: "role_format" },
   { name: "description", label: "Description", type: "textarea" },
-  {
-    name: "status",
-    label: "Status",
-    type: "select",
-    options: [
-      { value: "active", label: "Active" },
-      { value: "inactive", label: "Inactive" },
-    ],
-  },
-  {
-    name: "accessMobile",
-    label: "Akses Mobile",
-    type: "select",
-    options: [
-      { value: "yes", label: "Yes" },
-      { value: "no", label: "No" },
-    ],
-  },
-  {
-    name: "accessDashboard",
-    label: "Akses Dashboard",
-    type: "select",
-    options: [
-      { value: "admin", label: "Admin" },
-      { value: "user", label: "User" },
-    ],
-  },
 ];
 
 function CreateRole() {
@@ -46,9 +19,6 @@ function CreateRole() {
   const { createRole } = useRoleStore();
   const {
     list: menus,
-    createData,
-    updateData,
-    deleteData,
     fetchAll: fetchMenus,
   } = useStoreMenu();
   const tablePermissionRef = useRef<any>(null);
@@ -66,14 +36,8 @@ function CreateRole() {
       description: formData.description,
       permissions: selectedPermissions,
     };
-
-    console.log("Payload to create role:", payload);
-
+    
     const res = await createRole(payload);
-    // if (res.ok === false) {
-    //   showErrorToast(res.message);
-    //   return;
-    // }
     showSuccessToast("Role berhasil ditambahkan");
     setTimeout(() => {
       navigate("/master_role");
@@ -135,7 +99,7 @@ function CreateRole() {
               document
                 .querySelector("form")
                 ?.dispatchEvent(
-                  new Event("submit", { cancelable: true, bubbles: true })
+                  new Event("submit", { cancelable: true, bubbles: true }),
                 )
             }
           >

@@ -13,7 +13,7 @@ import { useNavigate } from "react-router";
 import { showErrorToast } from "../../../../../components/toast";
 import { FaArrowLeft, FaCheck, FaUndo } from "react-icons/fa";
 import { EndPoint } from "../../../../../utils/EndPoint";
-import formatDate from "../../../Memo/TableAndForm/MemoCreateProcess";
+import formatDate  from "../../../Memo/TableAndForm/MemoCreateProcess";
 import ActIndicator from "../../../../../components/ui/activityIndicator";
 
 interface SuggestionTableProps {

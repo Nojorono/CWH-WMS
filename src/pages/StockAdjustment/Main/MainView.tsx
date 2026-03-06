@@ -106,30 +106,6 @@ const StockAdjustment: React.FC = () => {
       header: "Action",
       cell: (info) => (
         <div className="flex gap-2">
-          {/* <button
-            onClick={() => {
-              setSelectedData(info.row.original);
-              setViewMode("detail");
-              setShowDetail(true);
-            }}
-            className="text-orange-600 hover:text-orange-800 font-medium text-xs underline"
-          >
-            View
-          </button> */}
-
-          {/* {info.row.original.status === "PENDING" && (
-            <button
-              onClick={() => {
-                setSelectedData(info.row.original);
-                setViewMode("update");
-                setShowDetail(true);
-              }}
-              className="text-blue-600 hover:text-blue-800 font-medium text-xs underline"
-            >
-              Edit
-            </button>
-          )} */}
-
           <FaEye
             className="text-blue-600 hover:text-blue-800 font-medium text-xs underline"
             title="View"
@@ -140,11 +116,16 @@ const StockAdjustment: React.FC = () => {
             }}
           />
 
-          {/* <FaEdit
-            className={`text-green-600 hover:text-green-800 cursor-pointer ${info.row.original.status !== "PENDING" ? "opacity-50 cursor-not-allowed" : ""}`}
+          <FaEdit
+            className={`text-green-600 hover:text-green-800 cursor-pointer ${["PENDING", "REJECTED_MANAGER"].includes(info.row.original.status) ? "" : "opacity-50 cursor-not-allowed"}`}
             title="Edit"
             onClick={() => {
-              if (info.row.original.status !== "PENDING") return;
+              if (
+                !["PENDING", "REJECTED_MANAGER"].includes(
+                  info.row.original.status,
+                )
+              )
+                return;
               setSelectedData(info.row.original);
               setViewMode("update");
               setShowDetail(true);
@@ -152,12 +133,12 @@ const StockAdjustment: React.FC = () => {
           />
 
           <FaTrash
-            className={`text-red-600 hover:text-red-800 cursor-pointer ${info.row.original.status !== "PENDING" ? "opacity-50 cursor-not-allowed" : ""}`}
+            className={`text-red-600 hover:text-red-800 cursor-pointer ${["PENDING"].includes(info.row.original.status) ? "" : "opacity-50 cursor-not-allowed"}`}
             title="Delete"
             onClick={() => {
               handleDelete(info.row.original.id);
             }}
-          /> */}
+          />
         </div>
       ),
     }),
@@ -192,7 +173,7 @@ const StockAdjustment: React.FC = () => {
     setShowDetail(true);
   };
 
-  const handleDelete = (id: string) => {    
+  const handleDelete = (id: string) => {
     deleteData(id);
   };
 

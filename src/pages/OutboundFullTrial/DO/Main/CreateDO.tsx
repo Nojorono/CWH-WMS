@@ -109,7 +109,7 @@ const CreateDO: React.FC = () => {
     },
     {
       accessorKey: "createdAt",
-      header: "Created Date",
+      header: "Memo Created Date",
       cell: ({ row }: any) => formatDateIndo(row.original.createdAt),
     },
   ];
@@ -223,7 +223,7 @@ const CreateDO: React.FC = () => {
               htmlFor="type-outbound"
               className="mb-1 text-sm font-medium text-gray-600"
             >
-              Type Outbound
+             Filter Type Outbound
             </Label>
             <Select
               options={options}

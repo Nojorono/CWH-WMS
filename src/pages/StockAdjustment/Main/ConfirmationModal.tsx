@@ -21,6 +21,7 @@ const ReviewAdjustmentModal: React.FC<ReviewModalProps> = ({
   payload,
 }) => {
   if (!open || !payload) return null;
+  
 
   return (
     <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center z-[5000] p-4">
@@ -51,14 +52,14 @@ const ReviewAdjustmentModal: React.FC<ReviewModalProps> = ({
         <div className="p-6">
           {/* HEADER INFO CARDS */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-            <div className="bg-slate-50 p-3 rounded-lg border border-slate-100">
+            {/* <div className="bg-slate-50 p-3 rounded-lg border border-slate-100">
               <span className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">
                 Document
               </span>
               <span className="text-sm font-semibold text-slate-700">
-                {payload.document ?? "-"}
+                {payload.document?.length ?? 0}
               </span>
-            </div>
+            </div> */}
             <div className="bg-slate-50 p-3 rounded-lg border border-slate-100">
               <span className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">
                 Reference Code

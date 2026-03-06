@@ -5,6 +5,7 @@ export interface Role {
   id?: any;
   name: string;
   description: string;
+  isActive?: boolean;
   permissions: { menu_id: number; permission_type: string }[];
   menus?: { menu_id: number; permission_type: string }[];
 }
@@ -12,6 +13,7 @@ export interface Role {
 export interface RolePayload {
   name: string;
   description: string;
+  isActive?: boolean;
   permissions: { menu_id: number; action: string }[];
   menus?: { menu_id: number; permission_type: string }[];
 }
@@ -31,6 +33,7 @@ export const fetchAllRole = async (): Promise<Role[]> => {
     id: r.id,
     name: r.name,
     description: r.description,
+    isActive: r.isActive,
     menus: r.menus ?? [],
     permissions: [], // API tidak mengembalikan permissions, set empty array
   }));
@@ -43,6 +46,7 @@ export const getRoleById = async (id: number): Promise<Role> => {
   return {
     id: data.data.id,
     name: data.data.name,
+    isActive: data.data.isActive,
     description: data.data.description,
     permissions:
       data.data.permissions?.map((p: any) => ({

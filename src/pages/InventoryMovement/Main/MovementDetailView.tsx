@@ -10,16 +10,17 @@ import {
 import Select from "../../../components/form/Select";
 
 const MovementDetailView = ({
-  data,
+  data = {},
   onBack,
 }: {
   data: any;
   onBack: () => void;
 }) => {
+  
   // State untuk Modal
-  const viewOnly = data.viewOnly === true;
-  const addOnly = data.addOnly === true;
-  const editOnly = data.editOnly === true;
+  const viewOnly = data?.viewOnly === true;
+  const addOnly = data?.addOnly === true;
+  const editOnly = data?.editOnly === true;
 
   const [showModal, setShowModal] = useState(false);
 
@@ -108,9 +109,9 @@ const MovementDetailView = ({
       users: finalUsers,
       destination_warehouse_id: data.source_warehouse_id,
       destination_warehouse_sub_id: selectedSub,
-      destination_bin_id: selectedBin  || null,
+      destination_bin_id: selectedBin || null,
     };
-    
+
     try {
       console.log("Submitting payload:", payload);
       await updateData(data.id, payload as any);

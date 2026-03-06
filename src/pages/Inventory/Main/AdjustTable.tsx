@@ -157,7 +157,7 @@ const AdjustTable = ({
 
   const currentPage = parseInt(searchParams.get("page") || "1");
   const pageIndex = currentPage - 1;
-  const [pageSize, setPageSize] = useState(20);
+  const [pageSize, setPageSize] = useState<number>(20);
 
   const isInitialMount = useRef(true);
   const prevFiltersRef = useRef({
@@ -199,6 +199,9 @@ const AdjustTable = ({
   }, [globalFilter, filteredStatus, filteredZone, filteredBin, filteredItem]);
 
   useEffect(() => {
+    console.log("currentPage", currentPage);
+    console.log("pageSize", pageSize);
+
     if (!fetchUsingPagination) return;
     fetchUsingPagination({
       page: currentPage,
@@ -221,6 +224,8 @@ const AdjustTable = ({
     filteredBin,
     filteredItem,
   ]);
+
+  console.log("List From API", list);
 
   // Transformasi Data
   const mappedList = useMemo(() => {
@@ -254,6 +259,7 @@ const AdjustTable = ({
     () => mappedList.filter((item) => item.current_items.length > 0),
     [mappedList],
   );
+
   const badStockData = useMemo(
     () => mappedList.filter((item) => item.bad_inventory.length > 0),
     [mappedList],

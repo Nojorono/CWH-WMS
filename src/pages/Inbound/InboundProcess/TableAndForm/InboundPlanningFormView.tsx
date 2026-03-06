@@ -10,7 +10,7 @@ import ConfirmationModal from "./component/Modal/InboundConfirmModal";
 import { FaPlus, FaRedoAlt } from "react-icons/fa";
 import { UseFormReturn } from "react-hook-form";
 import { FormValues } from "./component/formTypes";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import ScanHistory from "./component/Tabs/ScanHistory";
 import { useStoreMasterSupplier } from "../../../../DynamicAPI/stores/Store/MasterStore";
 
@@ -33,12 +33,14 @@ type Props = {
   emptyFormValues: FormValues;
   inboundID?: string;
   inboundNumber?: string;
+  inboundType?: string;
 };
 
 // ==== Helpers ==== //
 const buildFieldsConfig = (
   isDetailMode: boolean,
-  supplierOptions: { value: string; label: string }[]
+  supplierOptions: { value: string; label: string }[],
+  inboundTypeOptions: { value: string; label: string }[],
 ): FieldConfig[] => {
   const baseFields: FieldConfig[] = [
     {
@@ -49,21 +51,11 @@ const buildFieldsConfig = (
     },
     {
       name: "inbound_type",
-      label: "Tipe Inbound",
+      label: "Inbound Type",
       type: "select" as const,
-      options: [
-        { value: "PO", label: "PO" },
-        { value: "SO", label: "SO" },
-      ],
-      validation: { required: "Tipe inbound wajib diisi" },
+      options: inboundTypeOptions,
+      validation: { required: "Inbound type is required!" },
     },
-    // {
-    //   name: "expedition",
-    //   label: "Ekspedisi",
-    //   type: "select" as const, // Ubah dari text ke select
-    //   options: supplierOptions, // Masukkan data dari API di sini
-    //   validation: { required: "Ekspedisi wajib diisi" },
-    // },
     {
       name: "expedition",
       label: "Ekspedisi",
@@ -78,9 +70,9 @@ const buildFieldsConfig = (
     },
     {
       name: "no_pol",
-      label: "No Polisi",
+      label: "Plat Nomor",
       type: "text" as const,
-      validation: { required: "No polisi wajib diisi" },
+      validation: { required: "Plat nomor wajib diisi" },
     },
     {
       name: "driver_phone",
@@ -239,15 +231,15 @@ const SubmitSection = ({
   const hasNoDO = deliveryOrders.every((doItem: any) => !doItem.do_no?.trim());
 
   const hasMultiplePO = deliveryOrders.some(
-    (doItem: any) => doItem.pos?.length > 1
+    (doItem: any) => doItem.pos?.length > 1,
   );
 
   const hasDOWithoutPO = deliveryOrders.some(
-    (doItem: any) => !doItem.pos || doItem.pos.length === 0
+    (doItem: any) => !doItem.pos || doItem.pos.length === 0,
   );
 
   const hasPOWithoutItem = deliveryOrders.some((doItem: any) =>
-    doItem.pos?.some((po: any) => !po.items || po.items.length === 0)
+    doItem.pos?.some((po: any) => !po.items || po.items.length === 0),
   );
 
   const requiredFields: (keyof FormValues)[] = [
@@ -323,9 +315,8 @@ export default function InboundPlanningFormView(props: Props) {
     isConfirmOpen,
     setIsConfirmOpen,
     inboundNumber,
+    inboundType,
   } = props;
-
-  // const fieldsConfig =  (isDetailMode);
 
   const { list: masterSupplierData, fetchUsingParam } =
     useStoreMasterSupplier();
@@ -342,7 +333,53 @@ export default function InboundPlanningFormView(props: Props) {
     label: item.VENDOR_NAME,
   }));
 
-  const fieldsConfig = buildFieldsConfig(isDetailMode, supplierOptions);
+  const defaultInboundTypeOptions = [
+    { value: "PO", label: "PO" },
+    { value: "SO", label: "SO" },
+  ];
+
+  const [inboundTypeOptions, setInboundTypeOptions] = useState(
+    defaultInboundTypeOptions,
+  );
+
+  // jika props.inboundType diberikan, eliminasi opsi lain dan pilih nilai itu di form
+  const inboundTypeInitRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!inboundType) return;
+
+    // jalankan hanya sekali saat inboundType berubah
+    if (inboundTypeInitRef.current === inboundType) return;
+    inboundTypeInitRef.current = inboundType;
+
+    const opt = { value: inboundType, label: inboundType };
+    // set options hanya berisi nilai inboundType (mengeliminasi opsi lain)
+    setInboundTypeOptions([opt]);
+
+    // set nilai form ke object option agar Select menampilkan labelnya
+    try {
+      const current = methods.getValues?.("inbound_type");
+      const needSet =
+        !current ||
+        (typeof current === "string" && current !== inboundType) ||
+        (typeof current === "object" && current?.value !== inboundType);
+
+      if (needSet) {
+        methods.setValue("inbound_type", opt, {
+          shouldDirty: false,
+          shouldTouch: false,
+          shouldValidate: false,
+        });
+      }
+    } catch {
+      // ignore
+    }
+  }, [inboundType, methods]);
+
+  const fieldsConfig = buildFieldsConfig(
+    isDetailMode,
+    supplierOptions,
+    inboundTypeOptions,
+  );
 
   // useEffect(() => {
   //   // Jalankan hanya jika dalam mode Edit atau Detail
@@ -361,14 +398,16 @@ export default function InboundPlanningFormView(props: Props) {
   //         methods.setValue("expedition", foundOption);
   //       } else {
   //         // Jika tidak ada di master, buat objek temporary agar tetap muncul teksnya
-  //         methods.setValue("expedition", { 
-  //           value: currentExpedition, 
-  //           label: currentExpedition 
+  //         methods.setValue("expedition", {
+  //           value: currentExpedition,
+  //           label: currentExpedition
   //         });
   //       }
   //     }
   //   }
   // }, [masterSupplierData, isEditMode, isDetailMode, methods]);
+
+  console.log("inboundType di View", inboundType);
 
   return (
     <div className="p-6 bg-slate-50 min-h-screen">
@@ -379,10 +418,10 @@ export default function InboundPlanningFormView(props: Props) {
             title: isAddToReceiveMode
               ? "Add to Receive Inbound"
               : isCreateMode
-              ? "Create Inbound Planning"
-              : isEditMode
-              ? formTitle
-              : "Detail Inbound Planning",
+                ? "Create Inbound Planning"
+                : isEditMode
+                  ? formTitle
+                  : "Detail Inbound Planning",
             path: "/inbound_planning/process",
           },
         ]}
