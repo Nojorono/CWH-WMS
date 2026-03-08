@@ -42,6 +42,11 @@ export default function POCard({
   const { fetchAll, list } = useStoreItem();
   const { fetchAll: fetchAllUom, list: uomList } = useStoreUom();
 
+  const normalizedInbType: string =
+    typeof InbType === "object" && InbType !== null
+      ? ((InbType as any).value ?? "")
+      : (InbType ?? "");
+
   useEffect(() => {
     fetchAll();
     fetchAllUom();
@@ -131,9 +136,7 @@ export default function POCard({
 
     setLoading(true);
     try {
-      const res = await fetch(
-        `${Server47}/api/po_detail?po_no=${poNo}`,
-      );
+      const res = await fetch(`${Server47}/api/po_detail?po_no=${poNo}`);
       if (!res.ok) throw new Error("Gagal fetch PO");
       const data = await res.json();
 
@@ -318,7 +321,7 @@ export default function POCard({
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3 items-end">
         {/* === Input PO / SO === */}
         <div>
-          {InbType === "PO" && (
+          {normalizedInbType === "PO" && (
             <div>
               <label className="block text-xs text-slate-600 mb-1">
                 Nomor PO
@@ -355,7 +358,7 @@ export default function POCard({
             </div>
           )}
 
-          {InbType === "SO" && (
+          {normalizedInbType === "SO" && (
             <div>
               <label className="block text-xs text-slate-600 mb-1">
                 Nomor SO

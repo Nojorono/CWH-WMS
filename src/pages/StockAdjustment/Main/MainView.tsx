@@ -54,15 +54,15 @@ const StockAdjustment: React.FC = () => {
         <span className="capitalize">{info.getValue()?.replace("_", " ")}</span>
       ),
     }),
-    columnHelper.accessor("adjustmentStockItems", {
-      id: "location",
-      header: "Zone / Bin",
-      cell: (info) => {
-        const firstItem = info.getValue()?.[0];
-        if (!firstItem) return "-";
-        return `${firstItem.warehouseSub?.name ?? "-"} / ${firstItem.warehouseBin?.name ?? "-"}`;
-      },
-    }),
+    // columnHelper.accessor("adjustmentStockItems", {
+    //   id: "location",
+    //   header: "Zone / Bin",
+    //   cell: (info) => {
+    //     const firstItem = info.getValue()?.[0];
+    //     if (!firstItem) return "-";
+    //     return `${firstItem.warehouseSub?.name ?? "-"} / ${firstItem.warehouseBin?.name ?? "-"}`;
+    //   },
+    // }),
     columnHelper.accessor("adjustmentStockItems", {
       id: "item_info",
       header: "Item & Qty",

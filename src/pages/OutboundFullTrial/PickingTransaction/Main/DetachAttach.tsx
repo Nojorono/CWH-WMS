@@ -177,6 +177,27 @@ const DetachAttach: React.FC = () => {
           throw new Error("Network response was not ok");
         }
 
+        // Setelah memo berhasil dilepas, update status outbound DO menjadi PENDING
+        try {
+          const patchRes = await fetch(`${EndPoint}outbound-do/${params.id}`, {
+            method: "PATCH",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ status: "PENDING" }),
+          });
+
+          if (!patchRes.ok) {
+            console.error("Failed to update DO status to PENDING");
+            ``;
+            showErrorToast("Gagal mengubah status DO menjadi PENDING");
+          }
+        } catch (err) {
+          console.error("Error updating DO status:", err);
+          showErrorToast("Gagal mengubah status DO menjadi PENDING");
+        }
+
         navigate("/picking_transaction");
       } catch (error) {
         console.error("Error detaching memo:", error);
@@ -251,7 +272,7 @@ const DetachAttach: React.FC = () => {
           </h3>
 
           <div className="flex gap-2">
-            {statusDO === "APPROVED" || statusDO === "APPROVED_LOAD" ? null : (
+            {statusDO != "IN_PROGRESS" ? null : (
               <Button
                 size="sm"
                 variant="secondary"

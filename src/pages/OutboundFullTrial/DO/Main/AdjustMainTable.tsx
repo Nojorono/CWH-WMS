@@ -383,13 +383,14 @@ const AdjustTableDO = ({
                 title="Detail"
               />
 
-              {roleName === "TRANSPORT_SUPERVISOR" && (
+              {roleName === "TRANSPORT_SUPERVISOR" ||
+              roleName === "superadmin" ? (
                 <FaTasks
                   className="size-5 cursor-pointer text-yellow-600 hover:scale-110 transition"
                   onClick={() => handleAdjust(row.original.id)}
                   title="PickingSuggestion"
                 />
-              )}
+              ) : null}
 
               <FaTrash
                 className={`size-5 transition ${
