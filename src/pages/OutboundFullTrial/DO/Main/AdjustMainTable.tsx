@@ -57,7 +57,7 @@ const AdjustTableDO = ({
   filteredTypeOutbound,
 }: MenuTableProps) => {
   const navigate = useNavigate();
-  const [searchParams, setSearchParams] = useSearchParams(); // 🔹 Gunakan URL params
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const { fetchUsingPagination, list, pagination } =
     useStoreOutboundDeliveryOrder();
@@ -138,9 +138,9 @@ const AdjustTableDO = ({
     });
   };
 
-  const handleAdjust = (id: string) => {
+  const handleAdjust = (id: string, status: string) => {
     navigate("/outbound_do/picking_suggestion", {
-      state: { data: id, mode: "suggestion", title: "Picking Suggestion List" },
+      state: { data: id, mode: "suggestion", title: "Picking Suggestion List", status },
     });
   };
 
@@ -391,7 +391,7 @@ const AdjustTableDO = ({
                 <>
                   <FaTasks
                     className="size-5 cursor-pointer text-yellow-600 hover:scale-110 transition"
-                    onClick={() => handleAdjust(row.original.id)}
+                    onClick={() => handleAdjust(row.original.id, row.original.status)}
                     title="PickingSuggestion"
                   />
 
