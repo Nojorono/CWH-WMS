@@ -39,6 +39,10 @@ const MainTable = () => {
   ];
 
   const roleName = localStorage.getItem("role_name");
+  const canCreateDO =
+    roleName === "SUPERVISOR" ||
+    roleName === "MANAGER" ||
+    roleName === "superadmin";
 
   return (
     <>
@@ -65,8 +69,7 @@ const MainTable = () => {
           </div>
 
           <div className="space-x-4">
-            {(roleName === "TRANSPORT_SUPERVISOR" ||
-              roleName === "superadmin") && (
+            {canCreateDO && (
               <Button
                 size="sm"
                 variant="primary"

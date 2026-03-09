@@ -257,6 +257,12 @@ const AdjustTableTransactionPicking = ({
     );
   };
 
+  const roleName = localStorage.getItem("role_name");
+  const canActionDO =
+    roleName === "SUPERVISOR" ||
+    roleName === "MANAGER" ||
+    roleName === "superadmin";
+
   const columns: ColumnDef<OutboundDo>[] = useMemo(
     () => [
       { accessorKey: "outbound_do_number", header: "DO Number" },
@@ -298,36 +304,41 @@ const AdjustTableTransactionPicking = ({
         header: "Action",
         cell: ({ row }) => (
           <div className="flex gap-3">
-            <FaTasks
-              className={`size-5 cursor-pointer text-orange-600 ${row.original.status === "PENDING" ? "opacity-20 cursor-not-allowed" : ""}`}
-              onClick={() =>
-                row.original.status !== "PENDING" && handleAdjust(row.original)
-              }
-              title="Adjust Picking Transaction"
-            />
-
-            <FaPrint
-              className={`size-5 cursor-pointer text-blue-600 ${row.original.status !== "APPROVED_LOAD" ? "opacity-20 cursor-not-allowed" : ""}`}
-              onClick={() => {
-                if (row.original.status === "APPROVED_LOAD") {
-                  const currentSeal = row.original.seal_number;
-
-                  // 🔹 LOGIKA BARU: Cek keberadaan Seal Number
-                  if (currentSeal && currentSeal.trim() !== "") {
-                    // Jika sudah ada, langsung gas print (navigasi)
-                    navigate("/outbound_do/print_surat_jalan", {
-                      state: { params: row.original.id },
-                    });
-                  } else {
-                    // Jika kosong, buka modal input seal
-                    setSelectedDO(row.original);
-                    setSealInput("");
-                    setShowSealModal(true);
+            {canActionDO && (
+              <>
+                <FaTasks
+                  className={`size-5 cursor-pointer text-orange-600 ${row.original.status === "PENDING" ? "opacity-20 cursor-not-allowed" : ""}`}
+                  onClick={() =>
+                    row.original.status !== "PENDING" &&
+                    handleAdjust(row.original)
                   }
-                }
-              }}
-              title="Print Surat Jalan"
-            />
+                  title="Adjust Picking Transaction"
+                />
+
+                <FaPrint
+                  className={`size-5 cursor-pointer text-blue-600 ${row.original.status !== "APPROVED_LOAD" ? "opacity-20 cursor-not-allowed" : ""}`}
+                  onClick={() => {
+                    if (row.original.status === "APPROVED_LOAD") {
+                      const currentSeal = row.original.seal_number;
+
+                      // 🔹 LOGIKA BARU: Cek keberadaan Seal Number
+                      if (currentSeal && currentSeal.trim() !== "") {
+                        // Jika sudah ada, langsung gas print (navigasi)
+                        navigate("/outbound_do/print_surat_jalan", {
+                          state: { params: row.original.id },
+                        });
+                      } else {
+                        // Jika kosong, buka modal input seal
+                        setSelectedDO(row.original);
+                        setSealInput("");
+                        setShowSealModal(true);
+                      }
+                    }
+                  }}
+                  title="Print Surat Jalan"
+                />
+              </>
+            )}
           </div>
         ),
       },
@@ -337,17 +348,19 @@ const AdjustTableTransactionPicking = ({
         cell: ({ row }) =>
           row.original.seal_number && row.original.seal_number.trim() !== "" ? (
             <div className="flex gap-3">
-              <Button
-                onClick={() => handleShipConfirm(row.original)}
-                variant="action"
-                className={`text-sm bg-emerald-600 hover:bg-emerald-700 text-white w-full py-2 rounded-2xl shadow-lg shadow-emerald-100 animate-pulse text-xs font-black tracking-widest uppercase ${
-                  row.original.status !== "APPROVED_LOAD"
-                    ? "opacity-20 cursor-not-allowed"
-                    : ""
-                }`}
-              >
-                Confirm
-              </Button>
+              {canActionDO && (
+                <Button
+                  onClick={() => handleShipConfirm(row.original)}
+                  variant="action"
+                  className={`text-sm bg-emerald-600 hover:bg-emerald-700 text-white w-full py-2 rounded-2xl shadow-lg shadow-emerald-100 animate-pulse text-xs font-black tracking-widest uppercase ${
+                    row.original.status !== "APPROVED_LOAD"
+                      ? "opacity-20 cursor-not-allowed"
+                      : ""
+                  }`}
+                >
+                  Confirm
+                </Button>
+              )}
             </div>
           ) : null,
       },
