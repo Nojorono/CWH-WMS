@@ -40,8 +40,7 @@ const MainTable = () => {
 
   const roleName = localStorage.getItem("role_name");
   const canCreateDO =
-    roleName === "SUPERVISOR" ||
-    roleName === "MANAGER" ||
+    roleName === "TRANSPORT_SUPERVISOR" ||
     roleName === "superadmin";
 
   return (
