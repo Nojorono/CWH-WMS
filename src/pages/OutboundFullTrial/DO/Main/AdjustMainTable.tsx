@@ -140,7 +140,12 @@ const AdjustTableDO = ({
 
   const handleAdjust = (id: string, status: string) => {
     navigate("/outbound_do/picking_suggestion", {
-      state: { data: id, mode: "suggestion", title: "Picking Suggestion List", status },
+      state: {
+        data: id,
+        mode: "suggestion",
+        title: "Picking Suggestion List",
+        status,
+      },
     });
   };
 
@@ -188,153 +193,276 @@ const AdjustTableDO = ({
     }
   };
 
+  // const MemoCell = ({ memos }: { memos: any[] }) => {
+  //   const [openMemoId, setOpenMemoId] = useState<string | null>(null);
+
+  //   if (!Array.isArray(memos) || memos.length === 0) {
+  //     return (
+  //       <div className="text-sm italic text-slate-400">No memos attached</div>
+  //     );
+  //   }
+
+  //   return (
+  //     <div className="flex flex-col gap-2 min-w-[250px]">
+  //       {memos.map((memo) => {
+  //         const isOpen = openMemoId === memo.id;
+
+  //         let items: any[] = [];
+  //         if (
+  //           Array.isArray(memo.transaction_pickings) &&
+  //           memo.transaction_pickings.length > 0
+  //         ) {
+  //           items = memo.transaction_pickings.map((tp: any) => ({
+  //             id: tp.id,
+  //             sku: tp.item?.sku ?? tp.item?.item_number ?? "-",
+  //             quantity: tp.quantity ?? 0,
+  //             uom: tp.uom ?? "-",
+  //             week: tp.week_number ?? "-",
+  //           }));
+  //         } else if (
+  //           Array.isArray(memo.outbound_memo_items) &&
+  //           memo.outbound_memo_items.length > 0
+  //         ) {
+  //           items = memo.outbound_memo_items.map((mi: any) => ({
+  //             id: mi.id,
+  //             sku: mi.item?.sku ?? mi.item?.item_number ?? "-",
+  //             quantity: mi.quantity_plan ?? 0,
+  //             uom: mi.uom ?? "-",
+  //             week: mi.week_number ?? "-",
+  //           }));
+  //         }
+
+  //         return (
+  //           <div
+  //             key={memo.id}
+  //             className={`border rounded-lg overflow-hidden transition-all duration-200 ${
+  //               isOpen
+  //                 ? "border-blue-300 ring-1 ring-blue-100 shadow-sm"
+  //                 : "border-slate-200"
+  //             }`}
+  //           >
+  //             <div
+  //               onClick={() => setOpenMemoId(isOpen ? null : memo.id)}
+  //               className={`flex items-center justify-between p-2 cursor-pointer transition-colors ${
+  //                 isOpen ? "bg-blue-50" : "bg-white hover:bg-slate-50"
+  //               }`}
+  //             >
+  //               <div className="flex flex-col">
+  //                 <span className="text-[11px] uppercase tracking-wider text-slate-500 font-bold">
+  //                   Memo Number
+  //                 </span>
+  //                 <span className="text-xs font-semibold text-slate-800">
+  //                   {memo.outbound_memo_number ?? memo.memo_number ?? memo.id}
+  //                 </span>
+  //               </div>
+
+  //               <div className="flex items-center gap-2">
+  //                 <span
+  //                   className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${
+  //                     items.length > 0
+  //                       ? "bg-blue-100 text-blue-700"
+  //                       : "bg-slate-100 text-slate-500"
+  //                   }`}
+  //                 >
+  //                   {items.length} Items
+  //                 </span>
+  //                 <div
+  //                   className={`transition-transform duration-200 ${
+  //                     isOpen ? "rotate-180" : ""
+  //                   }`}
+  //                 >
+  //                   <svg
+  //                     width="12"
+  //                     height="12"
+  //                     viewBox="0 0 24 24"
+  //                     fill="none"
+  //                     stroke="currentColor"
+  //                     strokeWidth="3"
+  //                     strokeLinecap="round"
+  //                     strokeLinejoin="round"
+  //                   >
+  //                     <path d="m6 9 6 6 6-6" />
+  //                   </svg>
+  //                 </div>
+  //               </div>
+  //             </div>
+
+  //             {isOpen && (
+  //               <div className="bg-white border-t border-blue-100 max-h-[200px] overflow-y-auto">
+  //                 {items.length === 0 ? (
+  //                   <div className="p-3 text-center text-xs text-slate-400 italic">
+  //                     No items found
+  //                   </div>
+  //                 ) : (
+  //                   <div className="divide-y divide-slate-100">
+  //                     {items.map((it) => (
+  //                       <div
+  //                         key={it.id}
+  //                         className="p-2 hover:bg-slate-50 transition-colors"
+  //                       >
+  //                         <div className="flex justify-between items-start mb-1">
+  //                           <span className="text-xs font-bold text-blue-600 break-all">
+  //                             {it.sku}
+  //                           </span>
+  //                         </div>
+  //                         <div className="flex flex-wrap gap-1">
+  //                           <div className="flex items-center bg-slate-100 rounded px-1.5 py-0.5">
+  //                             <span className="text-[10px] text-slate-500 mr-1">
+  //                               Qty:
+  //                             </span>
+  //                             <span className="text-[10px] font-bold text-slate-700">
+  //                               {it.quantity}
+  //                             </span>
+  //                           </div>
+  //                           <div className="flex items-center bg-slate-100 rounded px-1.5 py-0.5">
+  //                             <span className="text-[10px] text-slate-500 mr-1">
+  //                               UOM:
+  //                             </span>
+  //                             <span className="text-[10px] font-bold text-slate-700">
+  //                               {it.uom}
+  //                             </span>
+  //                           </div>
+  //                           <div className="flex items-center bg-slate-100 rounded px-1.5 py-0.5">
+  //                             <span className="text-[10px] text-slate-500 mr-1">
+  //                               W:
+  //                             </span>
+  //                             <span className="text-[10px] font-bold text-slate-700">
+  //                               {it.week}
+  //                             </span>
+  //                           </div>
+  //                         </div>
+  //                       </div>
+  //                     ))}
+  //                   </div>
+  //                 )}
+  //               </div>
+  //             )}
+  //           </div>
+  //         );
+  //       })}
+  //     </div>
+  //   );
+  // };
+
   const MemoCell = ({ memos }: { memos: any[] }) => {
     const [openMemoId, setOpenMemoId] = useState<string | null>(null);
-
-    if (!Array.isArray(memos) || memos.length === 0) {
+    if (!memos || memos.length === 0)
       return (
-        <div className="text-sm italic text-slate-400">No memos attached</div>
+        <span className="text-slate-400 italic text-xs">
+          No memos available
+        </span>
       );
-    }
 
     return (
-      <div className="flex flex-col gap-2 min-w-[250px]">
-        {memos.map((memo) => {
-          const isOpen = openMemoId === memo.id;
+      <div className="flex flex-col gap-2 min-w-[280px]">
+        {memos
+          .filter((memo) => memo.status !== "CANCELLED")
+          .map((memo) => {
+            const isOpen = openMemoId === memo.id;
+            const pickingsRaw = Array.isArray(memo.transaction_pickings)
+              ? memo.transaction_pickings
+              : memo.transaction_pickings
+                ? [memo.transaction_pickings]
+                : [];
 
-          let items: any[] = [];
-          if (
-            Array.isArray(memo.transaction_pickings) &&
-            memo.transaction_pickings.length > 0
-          ) {
-            items = memo.transaction_pickings.map((tp: any) => ({
-              id: tp.id,
-              sku: tp.item?.sku ?? tp.item?.item_number ?? "-",
-              quantity: tp.quantity ?? 0,
-              uom: tp.uom ?? "-",
-              week: tp.week_number ?? "-",
-            }));
-          } else if (
-            Array.isArray(memo.outbound_memo_items) &&
-            memo.outbound_memo_items.length > 0
-          ) {
-            items = memo.outbound_memo_items.map((mi: any) => ({
-              id: mi.id,
-              sku: mi.item?.sku ?? mi.item?.item_number ?? "-",
-              quantity: mi.quantity_plan ?? 0,
-              uom: mi.uom ?? "-",
-              week: mi.week_number ?? "-",
-            }));
-          }
+            const pickings = pickingsRaw.filter(
+              (p: any) => p.status !== "CANCELLED",
+            );
 
-          return (
-            <div
-              key={memo.id}
-              className={`border rounded-lg overflow-hidden transition-all duration-200 ${
-                isOpen
-                  ? "border-blue-300 ring-1 ring-blue-100 shadow-sm"
-                  : "border-slate-200"
-              }`}
-            >
+            return (
               <div
-                onClick={() => setOpenMemoId(isOpen ? null : memo.id)}
-                className={`flex items-center justify-between p-2 cursor-pointer transition-colors ${
-                  isOpen ? "bg-blue-50" : "bg-white hover:bg-slate-50"
-                }`}
+                key={memo.id}
+                className={`group transition-all duration-200 border rounded-lg overflow-hidden ${isOpen ? "border-blue-400 shadow-md ring-1 ring-blue-100" : "border-slate-200 hover:border-slate-300 shadow-sm"}`}
               >
-                <div className="flex flex-col">
-                  <span className="text-[11px] uppercase tracking-wider text-slate-500 font-bold">
-                    Memo Number
-                  </span>
-                  <span className="text-xs font-semibold text-slate-800">
-                    {memo.outbound_memo_number ?? memo.memo_number ?? memo.id}
-                  </span>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <span
-                    className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${
-                      items.length > 0
-                        ? "bg-blue-100 text-blue-700"
-                        : "bg-slate-100 text-slate-500"
-                    }`}
-                  >
-                    {items.length} Items
-                  </span>
-                  <div
-                    className={`transition-transform duration-200 ${
-                      isOpen ? "rotate-180" : ""
-                    }`}
-                  >
-                    <svg
-                      width="12"
-                      height="12"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="3"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
+                <div
+                  onClick={() => setOpenMemoId(isOpen ? null : memo.id)}
+                  className={`flex items-center justify-between p-2.5 cursor-pointer transition-colors ${isOpen ? "bg-blue-50" : "bg-white hover:bg-slate-50"}`}
+                >
+                  <div className="flex flex-col">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">
+                      Memo No
+                    </span>
+                    <span className="text-xs font-bold text-slate-700">
+                      {memo.outbound_memo_number || "N/A"}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span
+                      className={`text-[10px] px-2 py-0.5 rounded-full font-semibold border ${pickings.length > 0 ? "bg-blue-100 text-blue-700 border-blue-200" : "bg-slate-100 text-slate-500 border-slate-200"}`}
                     >
-                      <path d="m6 9 6 6 6-6" />
-                    </svg>
+                      {pickings.length} Items
+                    </span>
+                    <div
+                      className={`transition-transform duration-300 ${isOpen ? "rotate-180 text-blue-600" : "text-slate-400"}`}
+                    >
+                      <svg
+                        width="14"
+                        height="14"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="3"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="m6 9 6 6 6-6" />
+                      </svg>
+                    </div>
                   </div>
                 </div>
-              </div>
-
-              {isOpen && (
-                <div className="bg-white border-t border-blue-100 max-h-[200px] overflow-y-auto">
-                  {items.length === 0 ? (
-                    <div className="p-3 text-center text-xs text-slate-400 italic">
-                      No items found
-                    </div>
-                  ) : (
-                    <div className="divide-y divide-slate-100">
-                      {items.map((it) => (
-                        <div
-                          key={it.id}
-                          className="p-2 hover:bg-slate-50 transition-colors"
-                        >
-                          <div className="flex justify-between items-start mb-1">
-                            <span className="text-xs font-bold text-blue-600 break-all">
-                              {it.sku}
-                            </span>
-                          </div>
-                          <div className="flex flex-wrap gap-1">
-                            <div className="flex items-center bg-slate-100 rounded px-1.5 py-0.5">
-                              <span className="text-[10px] text-slate-500 mr-1">
-                                Qty:
-                              </span>
-                              <span className="text-[10px] font-bold text-slate-700">
-                                {it.quantity}
-                              </span>
-                            </div>
-                            <div className="flex items-center bg-slate-100 rounded px-1.5 py-0.5">
-                              <span className="text-[10px] text-slate-500 mr-1">
-                                UOM:
-                              </span>
-                              <span className="text-[10px] font-bold text-slate-700">
-                                {it.uom}
-                              </span>
-                            </div>
-                            <div className="flex items-center bg-slate-100 rounded px-1.5 py-0.5">
-                              <span className="text-[10px] text-slate-500 mr-1">
-                                W:
-                              </span>
-                              <span className="text-[10px] font-bold text-slate-700">
-                                {it.week}
-                              </span>
-                            </div>
-                          </div>
+                {isOpen && (
+                  <div className="bg-white border-t border-blue-100 animate-in fade-in slide-in-from-top-1 duration-200">
+                    <div className="max-h-[200px] overflow-y-auto divide-y divide-slate-100">
+                      {pickings.length === 0 ? (
+                        <div className="p-4 text-center text-xs text-red-400 italic">
+                          No Suggestion Items yet in this memo
                         </div>
-                      ))}
+                      ) : (
+                        pickings.map((tp: any) => (
+                          <div
+                            key={tp.id}
+                            className="p-2.5 hover:bg-blue-50/30 transition-colors"
+                          >
+                            <div className="flex items-center gap-2 ml-2">
+                              <span className="text-blue-600 truncate">
+                                {tp.item?.sku}
+                              </span>
+                            </div>
+                            <div className="flex flex-wrap gap-1.5">
+                              <div className="bg-slate-100 border border-slate-200 rounded px-2 py-0.5 flex items-center">
+                                <span className="text-[9px] text-slate-500 mr-1 font-medium uppercase">
+                                  Qty
+                                </span>
+                                <span className="text-xs font-bold text-slate-700">
+                                  {tp.quantity}
+                                </span>
+                              </div>
+                              <div className="bg-slate-100 border border-slate-200 rounded px-2 py-0.5 flex items-center">
+                                <span className="text-[9px] text-slate-500 mr-1 font-medium uppercase">
+                                  UOM
+                                </span>
+                                <span className="text-xs font-bold text-slate-700">
+                                  {tp.uom}
+                                </span>
+                              </div>
+                              <div className="bg-slate-100 border border-slate-200 rounded px-2 py-0.5 flex items-center">
+                                <span className="text-[9px] text-slate-500 mr-1 font-medium uppercase">
+                                  Week
+                                </span>
+                                <span className="text-xs font-bold text-slate-700">
+                                  {tp.week_number}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        ))
+                      )}
                     </div>
-                  )}
-                </div>
-              )}
-            </div>
-          );
-        })}
+                  </div>
+                )}
+              </div>
+            );
+          })}
       </div>
     );
   };
@@ -391,7 +519,9 @@ const AdjustTableDO = ({
                 <>
                   <FaTasks
                     className="size-5 cursor-pointer text-yellow-600 hover:scale-110 transition"
-                    onClick={() => handleAdjust(row.original.id, row.original.status)}
+                    onClick={() =>
+                      handleAdjust(row.original.id, row.original.status)
+                    }
                     title="PickingSuggestion"
                   />
 

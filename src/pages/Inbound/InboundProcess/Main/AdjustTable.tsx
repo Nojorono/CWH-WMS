@@ -97,7 +97,7 @@ const AdjustTable = ({
               <FaEye
                 className="size-5 cursor-pointer text-green-600"
                 onClick={() => handleDetail(item)}
-                title="Detail"
+                title="View"
               />
 
               {["CREATED", "WAITING FOR REVISION"].includes(item.status) && (
@@ -121,7 +121,7 @@ const AdjustTable = ({
                 <FaPlus
                   className="size-5 cursor-pointer text-purple-600"
                   onClick={() => handleAddToReceive(item)}
-                  title="Detail"
+                  title="Add to Receive"
                 />
               )}
             </div>
