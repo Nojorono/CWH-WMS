@@ -28,6 +28,8 @@ const MainTable = () => {
     { value: "", label: "All Status" },
     { value: "PENDING", label: "PENDING" },
     { value: "IN_PROGRESS", label: "IN_PROGRESS" },
+    { value: "APPROVED", label: "APPROVED" },
+    { value: "APPROVED_LOAD", label: "APPROVED_LOAD" },
     { value: "COMPLETED", label: "COMPLETED" },
     { value: "CANCELLED", label: "CANCELLED" },
   ];
