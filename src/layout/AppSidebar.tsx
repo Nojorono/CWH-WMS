@@ -23,9 +23,24 @@ const AppSidebar: React.FC = () => {
     [location.pathname],
   );
 
+  // const sortedMenuItems = [...menuItems].sort((a, b) => {
+  //   if (!a.subItems && b.subItems) return -1;
+  //   if (a.subItems && !b.subItems) return 1;
+  //   return 0;
+  // });
+
   const sortedMenuItems = [...menuItems].sort((a, b) => {
+    const isReportingA = a.path === "/reporting";
+    const isReportingB = b.path === "/reporting";
+
+    // Reporting selalu paling bawah
+    if (isReportingA && !isReportingB) return 1;
+    if (!isReportingA && isReportingB) return -1;
+
+    // Sorting lama
     if (!a.subItems && b.subItems) return -1;
     if (a.subItems && !b.subItems) return 1;
+
     return 0;
   });
 

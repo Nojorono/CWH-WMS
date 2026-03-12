@@ -611,20 +611,9 @@ const ModalForm: React.FC<ModalFormProps> = ({
         return (
           <input
             type={field.type}
-            {...register(field.name, {
-              ...field.validation,
-              onChange:
-                field.type === "text"
-                  ? (e) => {
-                      e.target.value = e.target.value.toUpperCase();
-                    }
-                  : undefined,
-            })}
+            {...register(field.name, field.validation)}
             className={isDisabled ? disabledCls : inputCls}
             disabled={isDisabled}
-            style={
-              field.type === "text" ? { textTransform: "uppercase" } : undefined
-            }
           />
         );
     }

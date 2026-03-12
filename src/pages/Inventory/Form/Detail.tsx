@@ -114,9 +114,6 @@ export default function DetailInventory() {
     console.log("Form submitted Detail Invtry:", data);
   };
 
-  // const palletId = detail && "pallet_id" in detail ? detail.pallet_id : "";
-  // const palletCode = detail && "pallet_code" in detail ? String(detail.pallet_code) : "";
-
   const palletId = (detail as any)?.pallet_id ?? "";
   const palletCode = (detail as any)?.pallet?.pallet_code ?? "";
   const [activeTab, setActiveTab] = useState(0);

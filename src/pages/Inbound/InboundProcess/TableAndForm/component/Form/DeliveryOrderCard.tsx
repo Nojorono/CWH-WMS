@@ -60,7 +60,7 @@ export default function DeliveryOrderCard({
     name: `deliveryOrders.${doIndex}.pos`,
   });
 
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [daftarPO, setDaftarPO] = useState<string[]>([]);
@@ -163,6 +163,7 @@ export default function DeliveryOrderCard({
           Authorization: `Bearer ${token}`,
         },
       });
+
       const data = await res.json();
 
       if (
@@ -214,12 +215,14 @@ export default function DeliveryOrderCard({
       } else {
         replacePos([]);
         setDoStatus("failed");
-        showErrorToast("Validasi gagal atau format tidak sesuai");
+        if (data?.message) {
+          showErrorToast(`Gagal cek Surat Jalan: ${data.message}`);
+        }
       }
     } catch (err) {
       replacePos([]);
       setDoStatus("failed");
-      showErrorToast("Gagal cek Surat Jalan");
+      showErrorToast(`Gagal cek Surat Jalan: ${(err as Error).message}`);
     } finally {
       setIsDOChecked(true);
       setIsCheckDisabled(true);
@@ -250,7 +253,7 @@ export default function DeliveryOrderCard({
 
   return (
     <div className="bg-white rounded-lg shadow p-3 md:p-4 lg:p-5">
-      <details ref={detailsRef}>
+      <details ref={detailsRef} open={open}>
         <summary
           className="flex flex-col sm:flex-row justify-between items-start sm:items-center cursor-pointer
              px-3 py-2 bg-orange-100 rounded-md gap-3 sm:gap-4"

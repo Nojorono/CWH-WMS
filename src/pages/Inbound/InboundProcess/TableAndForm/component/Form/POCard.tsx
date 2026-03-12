@@ -136,8 +136,10 @@ export default function POCard({
 
     setLoading(true);
     try {
-      const res = await fetch(`${Server47}/api/po_detail?po_no=${poNo}`);
-      if (!res.ok) throw new Error("Gagal fetch PO");
+      const res = await fetch(`${Server47}/api/v1/purchase-order?nomorPO=${poNo}`);
+      console.log("res PO", res);
+      
+      if (!res.ok) throw new Error("Failed fetch PO");
       const data = await res.json();
 
       if (Array.isArray(data) && data.length === 0) {
@@ -232,7 +234,7 @@ export default function POCard({
       const res = await fetch(
         `${Server47}/api/v1/sales-order?order_number=${soNo}`,
       );
-      if (!res.ok) throw new Error("Gagal fetch SO");
+      if (!res.ok) throw new Error("Failed fetch SO");
       const result = await res.json();
 
       const data = result?.data?.data || [];

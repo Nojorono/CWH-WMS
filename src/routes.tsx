@@ -59,7 +59,11 @@ import {
   InventoryVisibility,
   InventoryMovement,
   StockAdjustment,
+  Reporting,
+  Reporting1,
+  Reporting2,
 } from "./utils/PagesComponent";
+import MainView from "./pages/Dashboard/CWHLayout/Main";
 
 const DefaultPage = () => <> </>;
 
@@ -139,6 +143,10 @@ export function AppRoutes() {
       { path: "create", element: <CreateApproval /> },
       { path: "process", element: <ApprovalProcess /> },
     ],
+    // "/reporting": [
+    //   { path: "report1", element: <Reporting1 /> },
+    //   { path: "report2", element: <Reporting2 /> },
+    // ],
   };
 
   // Map path ke komponen
@@ -172,6 +180,10 @@ export function AppRoutes() {
       "/inventory_visibility": <InventoryVisibility />,
       "/inventory_movement": <InventoryMovement />,
       "/stock_adjustment": <StockAdjustment />,
+      "/reporting1": <Reporting />,
+      "/reporting2": <Reporting1 />,
+      "/reporting3": <Reporting2 />,
+
     };
     return map[path] || <DefaultPage />;
   };

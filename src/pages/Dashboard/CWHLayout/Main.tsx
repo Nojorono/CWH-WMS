@@ -25,8 +25,6 @@ const MainView = ({}: MenuTableProps) => {
     });
   }, [fetchUsingPagination]);
 
-  console.log("Inventory Tracking List:", list);
-
   const mappedList = useMemo(() => {
     return (list || []).map((item: any, index: number) => ({
       id: item.id,

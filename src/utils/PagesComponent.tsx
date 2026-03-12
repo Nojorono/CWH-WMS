@@ -64,6 +64,13 @@ import ApprovalProcess from "../pages/ApprovalSetup/Table/ApprovalProcess";
 import PrintSuratJalan from "../pages/OutboundFullTrial/PickingTransaction/Main/PrintSuratJalan/PrintSuratJalan";
 import StockAdjustment from "../pages/StockAdjustment/index";
 
+
+//Reporting
+import Reporting from "../pages/Reporting/Main/Report";
+import Reporting1 from "../pages/Reporting/Main/Report1";
+import Reporting2 from "../pages/Reporting/Main/Report2";
+
+
 export {
   // DASHBOARD
   Dashboard,
@@ -126,4 +133,8 @@ export {
   ApprovalSetup,
   CreateApproval,
   ApprovalProcess,
+
+  Reporting,
+  Reporting1,
+  Reporting2,
 };
