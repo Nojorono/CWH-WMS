@@ -12,7 +12,7 @@ import {
   useStoreUom,
 } from "../../../../../../DynamicAPI/stores/Store/MasterStore";
 import { showErrorToast } from "../../../../../../components/toast";
-import { Server47 } from "../../../../../../utils/EndPoint";
+import { MetaService, Server47 } from "../../../../../../utils/EndPoint";
 
 export default function POCard({
   doIndex,
@@ -119,6 +119,107 @@ export default function POCard({
     disabled ? "bg-gray-100 text-gray-500 cursor-not-allowed" : "";
 
   // ===== Fetch PO =====
+  // const handleSearchPO = async () => {
+  //   if (!doNo) {
+  //     showErrorToast("Isi Surat Jalan terlebih dahulu sebelum mencari PO.");
+  //     return;
+  //   }
+
+  //   const poNo = getValues(
+  //     `deliveryOrders.${doIndex}.pos.${posIndex}.po_no`,
+  //   ) as string;
+
+  //   if (!poNo) {
+  //     showErrorToast("Masukkan nomor PO terlebih dahulu!");
+  //     return;
+  //   }
+
+  //   setLoading(true);
+  //   try {
+  //     const res = await fetch(`${MetaService}/purchase-order?nomorPO=${poNo}`);
+  //     console.log("res PO", res);
+
+  //     if (!res.ok) throw new Error("Failed fetch PO");
+  //     const data = await res.json();
+
+  //     console.log("data PO", data);
+
+  //     if (Array.isArray(data) && data.length === 0) {
+  //       setValue(`deliveryOrders.${doIndex}.pos.${posIndex}.po_date`, "");
+  //       setValue(
+  //         `deliveryOrders.${doIndex}.pos.${posIndex}.vendor_name` as any,
+  //         "",
+  //       );
+  //       replaceItems([]);
+  //       showErrorToast(
+  //         `Detail PO ${poNo} tidak ditemukan di META. Tambahkan Item secara manual.`,
+  //       );
+  //       return;
+  //     }
+
+  //     if (data && data.length > 0) {
+  //       const po = data[0];
+
+  //       if (po.TANGGAL_PEMBUATAN_PO) {
+  //         setValue(
+  //           `deliveryOrders.${doIndex}.pos.${posIndex}.po_date`,
+  //           new Date(po.TANGGAL_PEMBUATAN_PO).toISOString(),
+  //         );
+  //       }
+
+  //       // Set Nama Vendor (Casting to any to avoid TS Error)
+  //       if (po.NAMA_VENDOR) {
+  //         setValue(
+  //           `deliveryOrders.${doIndex}.pos.${posIndex}.vendor_name` as any,
+  //           po.NAMA_VENDOR,
+  //         );
+  //       }
+
+  //       const items: ItemForm[] = [];
+  //       let notFound: string[] = [];
+
+  //       po.ITEM?.forEach?.((it: any) => {
+  //         const master = list.find(
+  //           (m) => m.item_number === it.KODE_ITEM || m.sku === it.SKU,
+  //         );
+
+  //         if (!master) {
+  //           notFound.push(`${it.KODE_ITEM} (${it.DESKRIPSI_ITEM_LINE_PO})`);
+  //         } else {
+  //           items.push({
+  //             item_id: String(master.id ?? ""),
+  //             item_name: master.description ?? "",
+  //             sku: master.sku ?? "",
+  //             item_number: master.item_number ?? "",
+  //             description: master.description ?? "",
+  //             qty: Number(it.PO_LINE_QUANTITY),
+  //             uom: it.ORDER_QUANTITY_UOM ?? it.UOM ?? "DUS",
+  //             expired_date: "",
+  //             classification: "",
+  //             qty_plan: () => 0,
+  //             id: String(master.id ?? ""),
+  //           });
+  //         }
+  //       });
+
+  //       if (notFound.length > 0) {
+  //         showErrorToast(
+  //           `Item berikut tidak ada di Master Item:\n- ${notFound.join("\n- ")}`,
+  //         );
+  //       }
+
+  //       if (items.length > 0) {
+  //         replaceItems(items);
+  //       }
+  //     }
+  //   } catch (err) {
+  //     console.error(err);
+  //     showErrorToast(`Gagal mencari PO, ${(err as Error).message}`);
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
+
   const handleSearchPO = async () => {
     if (!doNo) {
       showErrorToast("Isi Surat Jalan terlebih dahulu sebelum mencari PO.");
@@ -134,15 +235,35 @@ export default function POCard({
       return;
     }
 
+    const parseOracleDate = (dateStr: string): string => {
+      const months: Record<string, string> = {
+        JAN: "01",
+        FEB: "02",
+        MAR: "03",
+        APR: "04",
+        MAY: "05",
+        JUN: "06",
+        JUL: "07",
+        AUG: "08",
+        SEP: "09",
+        OCT: "10",
+        NOV: "11",
+        DEC: "12",
+      };
+      const [day, mon, year] = dateStr.split("-");
+      return new Date(`${year}-${months[mon]}-${day}`).toISOString();
+    };
+
     setLoading(true);
     try {
-      const res = await fetch(`${Server47}/api/v1/purchase-order?nomorPO=${poNo}`);
-      console.log("res PO", res);
-      
-      if (!res.ok) throw new Error("Failed fetch PO");
-      const data = await res.json();
+      const res = await fetch(`${MetaService}/purchase-order?nomorPO=${poNo}`);
 
-      if (Array.isArray(data) && data.length === 0) {
+      if (!res.ok) throw new Error("Failed fetch PO");
+
+      const json = await res.json();
+      const data: any[] = json?.data?.data ?? [];
+
+      if (data.length === 0) {
         setValue(`deliveryOrders.${doIndex}.pos.${posIndex}.po_date`, "");
         setValue(
           `deliveryOrders.${doIndex}.pos.${posIndex}.vendor_name` as any,
@@ -155,60 +276,57 @@ export default function POCard({
         return;
       }
 
-      if (data && data.length > 0) {
-        const po = data[0];
+      const po = data[0];
 
-        if (po.TANGGAL_PEMBUATAN_PO) {
-          setValue(
-            `deliveryOrders.${doIndex}.pos.${posIndex}.po_date`,
-            new Date(po.TANGGAL_PEMBUATAN_PO).toISOString(),
-          );
+      if (po.TANGGAL_PEMBUATAN_PO) {
+        setValue(
+          `deliveryOrders.${doIndex}.pos.${posIndex}.po_date`,
+          parseOracleDate(po.TANGGAL_PEMBUATAN_PO),
+        );
+      }
+
+      if (po.NAMA_VENDOR) {
+        setValue(
+          `deliveryOrders.${doIndex}.pos.${posIndex}.vendor_name` as any,
+          po.NAMA_VENDOR,
+        );
+      }
+
+      const items: ItemForm[] = [];
+      const notFound: string[] = [];
+
+      po.ITEM?.forEach?.((it: any) => {
+        const master = list.find(
+          (m) => m.item_number === it.KODE_ITEM || m.sku === it.SKU,
+        );
+
+        if (!master) {
+          notFound.push(`${it.KODE_ITEM} (${it.DESKRIPSI_ITEM_LINE_PO})`);
+        } else {
+          items.push({
+            item_id: String(master.id ?? ""),
+            item_name: master.description ?? "",
+            sku: master.sku ?? "",
+            item_number: master.item_number ?? "",
+            description: master.description ?? "",
+            qty: Number(it.PO_LINE_QUANTITY),
+            uom: it.UOM ?? "",
+            expired_date: "",
+            classification: "",
+            qty_plan: () => 0,
+            id: String(master.id ?? ""),
+          });
         }
+      });
 
-        // Set Nama Vendor (Casting to any to avoid TS Error)
-        if (po.NAMA_VENDOR) {
-          setValue(
-            `deliveryOrders.${doIndex}.pos.${posIndex}.vendor_name` as any,
-            po.NAMA_VENDOR,
-          );
-        }
+      if (notFound.length > 0) {
+        showErrorToast(
+          `Item berikut tidak ada di Master Item:\n- ${notFound.join("\n- ")}`,
+        );
+      }
 
-        const items: ItemForm[] = [];
-        let notFound: string[] = [];
-
-        po.ITEM?.forEach?.((it: any) => {
-          const master = list.find(
-            (m) => m.item_number === it.KODE_ITEM || m.sku === it.SKU,
-          );
-
-          if (!master) {
-            notFound.push(`${it.KODE_ITEM} (${it.DESKRIPSI_ITEM_LINE_PO})`);
-          } else {
-            items.push({
-              item_id: String(master.id ?? ""),
-              item_name: master.description ?? "",
-              sku: master.sku ?? "",
-              item_number: master.item_number ?? "",
-              description: master.description ?? "",
-              qty: Number(it.PO_LINE_QUANTITY),
-              uom: it.ORDER_QUANTITY_UOM ?? it.UOM ?? "DUS",
-              expired_date: "",
-              classification: "",
-              qty_plan: () => 0,
-              id: String(master.id ?? ""),
-            });
-          }
-        });
-
-        if (notFound.length > 0) {
-          showErrorToast(
-            `Item berikut tidak ada di Master Item:\n- ${notFound.join("\n- ")}`,
-          );
-        }
-
-        if (items.length > 0) {
-          replaceItems(items);
-        }
+      if (items.length > 0) {
+        replaceItems(items);
       }
     } catch (err) {
       console.error(err);

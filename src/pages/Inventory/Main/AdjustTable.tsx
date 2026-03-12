@@ -139,6 +139,7 @@ type MenuTableProps = {
   filteredZone?: any;
   filteredBin?: any;
   filteredItem?: any;
+  filteredPallet?: any;
 };
 
 const AdjustTable = ({
@@ -148,6 +149,7 @@ const AdjustTable = ({
   filteredZone,
   filteredBin,
   filteredItem,
+  filteredPallet,
 }: MenuTableProps) => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState(0);
@@ -166,6 +168,7 @@ const AdjustTable = ({
     filteredZone,
     filteredBin,
     filteredItem,
+    filteredPallet
   });
 
   const handlePageChange = (newPageIndex: number, newSize: number) => {
@@ -183,7 +186,10 @@ const AdjustTable = ({
     const hasFilterChanged =
       prevFiltersRef.current.globalFilter !== globalFilter ||
       prevFiltersRef.current.filteredStatus !== filteredStatus ||
-      prevFiltersRef.current.filteredZone !== filteredZone;
+      prevFiltersRef.current.filteredZone !== filteredZone ||
+      prevFiltersRef.current.filteredBin !== filteredBin ||
+      prevFiltersRef.current.filteredItem !== filteredItem ||
+      prevFiltersRef.current.filteredPallet !== filteredPallet;
     if (hasFilterChanged) {
       prevFiltersRef.current = {
         globalFilter,
@@ -191,28 +197,27 @@ const AdjustTable = ({
         filteredZone,
         filteredBin,
         filteredItem,
+        filteredPallet
       };
       const newParams = new URLSearchParams(searchParams);
       newParams.set("page", "1");
       setSearchParams(newParams, { replace: true });
     }
-  }, [globalFilter, filteredStatus, filteredZone, filteredBin, filteredItem]);
+  }, [globalFilter, filteredStatus, filteredZone, filteredBin, filteredItem, filteredPallet]);
 
   useEffect(() => {
-    console.log("currentPage", currentPage);
-    console.log("pageSize", pageSize);
-
     if (!fetchUsingPagination) return;
     fetchUsingPagination({
       page: currentPage,
       limit: pageSize,
-      search: globalFilter || "",
+      search: globalFilter,
       inventory_status: filteredStatus || "",
       warehouse_sub_id: filteredZone || "",
       warehouse_bin_id: filteredBin || "",
       item_id: filteredItem || "",
       sortOrder: "DESC",
       sortBy: "progression_status",
+      pallet_id: filteredPallet || "",
     });
   }, [
     fetchUsingPagination,
@@ -223,6 +228,9 @@ const AdjustTable = ({
     filteredZone,
     filteredBin,
     filteredItem,
+    filteredPallet,
+  
+
   ]);
 
   console.log("List From API", list);
@@ -242,9 +250,10 @@ const AdjustTable = ({
       inventory_status: item.inventory_status || "",
       progression_status: item.progression_status || "",
       // Filter items yang qty > 0 saja
-      current_items: (item.pallet?.currentItems || []).filter(
-        (i: any) => i.current_quantity > 0,
-      ),
+      // current_items: (item.pallet?.currentItems || []).filter(
+      //   (i: any) => i.current_quantity > 0,
+      // ),
+      current_items: item.pallet?.currentItems || [],
       bad_inventory: (item.inventoryTrackingBad || [])
         .filter((b: any) => b.quantity > 0)
         .map((bad: any) => ({
@@ -257,8 +266,12 @@ const AdjustTable = ({
   // Pisahkan Data untuk masing-masing Tab
   const goodStockData = useMemo(
     () => mappedList.filter((item) => item.current_items.length > 0),
+    // () => mappedList,
     [mappedList],
   );
+
+  console.log("mappedList",mappedList);
+  
 
   const badStockData = useMemo(
     () => mappedList.filter((item) => item.bad_inventory.length > 0),
@@ -355,6 +368,7 @@ const AdjustTable = ({
     return columns;
   };
 
+  
   return (
     <div className="flex flex-col gap-4">
       <TabsSection
