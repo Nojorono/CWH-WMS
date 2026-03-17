@@ -55,7 +55,7 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
     <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-[999]">
       <div className="bg-white rounded-2xl w-[1000px] max-h-[85vh] overflow-y-auto shadow-xl p-6 animate-fadeIn">
         <h2 className="text-xl font-semibold text-gray-800 border-b pb-3 mb-4">
-          Konfirmasi Data Outbound
+          Confirm Data Outbound
         </h2>
 
         {/* Detail Info */}

@@ -272,7 +272,7 @@ const DetachAttach: React.FC = () => {
           </h3>
 
           <div className="flex gap-2">
-            {statusDO != "IN_PROGRESS" ? null : (
+            {statusDO != "IN_PROGRESS" && statusDO != "COMPLETED" ? null : (
               <Button
                 size="sm"
                 variant="secondary"

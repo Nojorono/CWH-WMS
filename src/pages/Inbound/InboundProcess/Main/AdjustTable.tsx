@@ -55,6 +55,19 @@ const AdjustTable = ({
         header: "Inbound Reference No",
       },
       {
+        header: "Principal",
+        id: "principal", // Gunakan id karena kita pakai accessorFn/cell
+        cell: ({ row }) => {
+          const dos = row.original.inbound_dos;
+          // Cek jika ada data di inbound_dos
+          if (dos && dos.length > 0) {
+            // Jika Anda hanya ingin mengambil principal dari DO pertama:
+            return dos[0].principal || "-";
+          }
+          return "-";
+        },
+      },
+      {
         accessorKey: "inbound_type",
         header: "Inbound Type",
       },

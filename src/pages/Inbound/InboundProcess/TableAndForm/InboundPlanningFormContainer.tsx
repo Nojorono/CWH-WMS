@@ -20,7 +20,21 @@ const emptyFormValues: FormValues = {
   arrival_date: "",
   flag_validated: undefined,
   deliveryOrders: [
-    { do_no: "", date: "", attachment: "", pos: [{ po_no: "", items: [] }] },
+    {
+      do_no: "",
+      date: "",
+      attachment: "",
+      // JANGAN taruh principal di sini
+      pos: [
+        {
+          po_no: "",
+          so_no: "", // Tambahkan agar konsisten
+          vendor_name: "", // Untuk UI
+          principal: "", // Untuk Payload API
+          items: [],
+        },
+      ],
+    },
   ],
   id: "",
 };
@@ -114,7 +128,7 @@ export default function InboundPlanningFormContainer() {
           showErrorToast(
             `Nomor SJ ${doItem.do_no} → PO ke-${
               j + 1
-            } wajib punya PO No atau SO No.`
+            } wajib punya PO No atau SO No.`,
           );
           return;
         }
@@ -173,7 +187,7 @@ export default function InboundPlanningFormContainer() {
     let apiAction = null;
 
     if (isCreateMode) {
-      // console.log("Create Payload:", payload);
+      console.log("Create Payload:", payload);
       apiAction = () => createData(payload);
     } else if (isEditMode && id) {
       apiAction = () => updateData(id, payload);
@@ -205,7 +219,20 @@ export default function InboundPlanningFormContainer() {
         methods={methods}
         doFields={doFields}
         appendDO={() =>
-          append({ do_no: "", date: "", attachment: "", pos: [] })
+          append({
+            do_no: "",
+            date: "",
+            attachment: "",
+            pos: [
+              {
+                po_no: "",
+                so_no: "",
+                vendor_name: "",
+                principal: "",
+                items: [],
+              },
+            ],
+          })
         }
         removeDO={remove}
         isCreateMode={isCreateMode}

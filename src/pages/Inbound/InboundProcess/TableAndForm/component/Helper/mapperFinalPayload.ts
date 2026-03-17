@@ -97,6 +97,7 @@ export function mapToPayload(data: FormValues): CreateInboundPlanning {
                                     : po.so_date
                                         ? formatDateIndo(po.so_date)
                                         : "",
+                    principal: (po as any).principal || (po as any).vendor_name || "",
                     flag_validated: doItem.flag_validated ?? false,
                     validation_surat_jalan:
                         doItem.validation_surat_jalan ?? false,

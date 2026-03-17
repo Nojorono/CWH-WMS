@@ -233,8 +233,6 @@ const AdjustTable = ({
 
   ]);
 
-  console.log("List From API", list);
-
   // Transformasi Data
   const mappedList = useMemo(() => {
     return (list || []).map((item: any, index: number) => ({
