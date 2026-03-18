@@ -266,10 +266,7 @@ const AdjustTable = ({
     () => mappedList.filter((item) => item.current_items.length > 0),
     // () => mappedList,
     [mappedList],
-  );
-
-  console.log("mappedList",mappedList);
-  
+  );  
 
   const badStockData = useMemo(
     () => mappedList.filter((item) => item.bad_inventory.length > 0),

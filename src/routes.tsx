@@ -180,7 +180,7 @@ export function AppRoutes() {
       "/inventory_visibility": <InventoryVisibility />,
       "/inventory_movement": <InventoryMovement />,
       "/stock_adjustment": <StockAdjustment />,
-      "/reporting1": <Reporting />,
+      "/report_inbound": <Reporting />,
       "/reporting2": <Reporting1 />,
       "/reporting3": <Reporting2 />,
 

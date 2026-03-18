@@ -34,7 +34,6 @@ import { ApprovalSetUp, CreateApprovalSetUp, UpdateApprovalSetUp } from "../../t
 import { InventoryVisibilityResponse } from '../../types/InventoryVisibilty.ts'
 import { MasterSupplier, CreateMasterSupplier, UpdateMasterSupplier} from '../../types/MasterSupplier.ts'
 import {InventoryMovementListResponse} from '../../types/InventoryMovement.ts'
-
 import {StockAdjustment, StockAdjustmentCreateRequest} from '../../types/StockAdjustmentTypes.ts'
 
 
@@ -77,5 +76,6 @@ export const ApprovalSetUpService = createCrudService<ApprovalSetUp, CreateAppro
 export const InventoryVisibilityService = createCrudService<InventoryVisibilityResponse, null, null>("/inventory-tracking/visibility/warehouse");
 export const MasterSupplierService = createCrudService<MasterSupplier, CreateMasterSupplier, UpdateMasterSupplier>("/master-supplier/attribute7");
 export const InventoryMovementService = createCrudService<InventoryMovementListResponse, null, null>("/inventory-movement");
-
 export const StockAdjustmentService = createCrudService<StockAdjustment, StockAdjustmentCreateRequest, StockAdjustmentCreateRequest>("/adjustment-stock");
+
+export const ReportInboundService = createCrudService<InboundPlanning, CreateInboundPlanning, UpdateInboundPlanning>("/report/inbound");
