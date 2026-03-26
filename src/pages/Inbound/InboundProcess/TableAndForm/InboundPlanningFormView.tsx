@@ -321,12 +321,12 @@ export default function InboundPlanningFormView(props: Props) {
   const { list: masterSupplierData, fetchUsingParam } =
     useStoreMasterSupplier();
 
-  useEffect(() => {
-    const attribute7 = "FREIGHT (FRG)";
-    fetchUsingParam({
-      ATTRIBUTE7: attribute7,
-    });
-  }, [fetchUsingParam]);
+  // useEffect(() => {
+  //   const attribute7 = "FREIGHT (FRG)";
+  //   fetchUsingParam({
+  //     ATTRIBUTE7: attribute7,
+  //   });
+  // }, [fetchUsingParam]);
 
   const supplierOptions = masterSupplierData.map((item: any) => ({
     value: item.VENDOR_NAME, // atau item.VENDOR_ID jika database butuh ID
@@ -381,33 +381,6 @@ export default function InboundPlanningFormView(props: Props) {
     inboundTypeOptions,
   );
 
-  // useEffect(() => {
-  //   // Jalankan hanya jika dalam mode Edit atau Detail
-  //   if (isEditMode || isDetailMode) {
-  //     const currentExpedition = methods.getValues("expedition");
-
-  //     // Jika nilainya masih string (misal: "KAS NEGARA")
-  //     if (typeof currentExpedition === "string" && currentExpedition !== "") {
-  //       // Cari objek yang sesuai di supplierOptions
-  //       const foundOption = supplierOptions.find(
-  //         (opt) => opt.value === currentExpedition
-  //       );
-
-  //       if (foundOption) {
-  //         // Set ulang field expedition menjadi objek agar Select bisa menampilkan labelnya
-  //         methods.setValue("expedition", foundOption);
-  //       } else {
-  //         // Jika tidak ada di master, buat objek temporary agar tetap muncul teksnya
-  //         methods.setValue("expedition", {
-  //           value: currentExpedition,
-  //           label: currentExpedition
-  //         });
-  //       }
-  //     }
-  //   }
-  // }, [masterSupplierData, isEditMode, isDetailMode, methods]);
-
-  console.log("inboundType di View", inboundType);
 
   return (
     <div className="p-6 bg-slate-50 min-h-screen">

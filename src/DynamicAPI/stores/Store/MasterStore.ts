@@ -38,7 +38,8 @@ import {
     InventoryVisibilityService,
     MasterSupplierService,
     InventoryMovementService,
-    StockAdjustmentService
+    StockAdjustmentService,
+    ReportInboundService
 } from "../../services/Service/MasterService";
 
 import { Uom, CreateUom, UpdateUom } from "../../types/UomTypes";
@@ -272,4 +273,9 @@ export const useStoreInventoryMovement = createCrudStore<InventoryMovementListRe
 export const useStoreStockAdjustment = createCrudStore<StockAdjustment, StockAdjustmentCreateRequest, StockAdjustmentCreateRequest>({
     name: "StockAdjustment",
     service: StockAdjustmentService,
+});
+
+export const useStoreReportInbound = createCrudStore<InboundPlanning, CreateInboundPlanning, UpdateInboundPlanning>({
+    name: "ReportInbound",
+    service: ReportInboundService,
 });

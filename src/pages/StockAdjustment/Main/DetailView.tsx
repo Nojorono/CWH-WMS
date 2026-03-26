@@ -320,7 +320,7 @@ const DetailView: React.FC<DetailViewProps> = ({
                 onChange={(e) => setSelectedSubInventory(e.target.value)}
               >
                 <option value="GOOD_STOCK">Good Stock</option>
-                <option value="BAD_STOCK">Damaged Stock</option>
+                {/* <option value="BAD_STOCK">Bad Stock</option> */}
               </select>
             </div>
             {!isDetailMode && (

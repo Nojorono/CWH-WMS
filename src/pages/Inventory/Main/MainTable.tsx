@@ -8,9 +8,9 @@ import {
   useStoreSubWarehouse,
   useStoreBinByZone,
   useStoreItem,
+  useStorePallet,
 } from "../../../DynamicAPI/stores/Store/MasterStore";
 import Select from "../../../components/form/Select";
-
 
 const MainTable = () => {
   const [globalFilter, setGlobalFilter] = useState<string>("");
@@ -19,14 +19,17 @@ const MainTable = () => {
   const [selectedZone, setSelectedZone] = useState<any>("");
   const [selectedBin, setSelectedBin] = useState<any>("");
   const [selectedItem, setSelectedItem] = useState<any>("");
+  const [selectedPallet, setSelectedPallet] = useState<any>("");
 
   const { fetchAll, list: listZone } = useStoreSubWarehouse();
   const { fetchAll: fetchAllItem, list: listItems } = useStoreItem();
   const { fetchById: fetchBinById, detail: listBins } = useStoreBinByZone();
+  const { fetchAll: fetchAllPallet, list: listPallets } = useStorePallet();
 
   useEffect(() => {
     fetchAll();
     fetchAllItem();
+    fetchAllPallet();
   }, []);
 
   useEffect(() => {
@@ -47,6 +50,17 @@ const MainTable = () => {
       value: zone.id,
       label: zone.code,
     })),
+  ];
+
+  const optPallet = [
+    { value: "", label: "All Pallet" },
+    ...listPallets
+      .filter((pallet) => pallet.id !== undefined && pallet.id !== null)
+      .map((pallet) => ({
+        value: String(pallet.id),
+        label: pallet.pallet_code,
+      }))
+      .sort((a, b) => a.label.localeCompare(b.label)),
   ];
 
   const itemsOnly = listItems.map(({ id, sku }) => ({ id: String(id), sku }));
@@ -113,6 +127,17 @@ const MainTable = () => {
           </div>
 
           <div className="space-x-3">
+            <Label htmlFor="status">Pallet</Label>
+            <Select
+              options={optPallet}
+              placeholder="Pilih Pallet"
+              onChange={(value) => setSelectedPallet(value)}
+              value={selectedPallet}
+              width={"200px"}
+            />
+          </div>
+
+          <div className="space-x-3">
             <Label htmlFor="status">Item</Label>
             <Select
               options={optItems}
@@ -132,6 +157,7 @@ const MainTable = () => {
         filteredZone={selectedZone}
         filteredBin={selectedBin}
         filteredItem={selectedItem}
+        filteredPallet={selectedPallet}
       />
     </>
   );

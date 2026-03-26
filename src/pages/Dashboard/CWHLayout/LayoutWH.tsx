@@ -95,15 +95,11 @@ const WarehouseMapView = ({ data }: { data: any[] }) => {
               <div className="flex items-center gap-2">
                 <div className="w-2 h-6 bg-blue-600 rounded-full" />
                 <h3 className="text-gray-800 font-extrabold tracking-tight">
-                  ZONE {zoneName}
+                  Zone {zoneName === "-" || !zoneName ? "Empty Pallet" : zoneName}
                 </h3>
               </div>
               <div className="flex items-center gap-2 bg-slate-50 px-3 py-1 rounded-full border border-slate-100">
                 <FaCubes className="text-slate-400" size={12} />
-                {/* <span className="text-[11px] font-bold text-slate-600 uppercase italic">
-                  {zones[zoneName] ? Object.keys(zones[zoneName]).length : 0}
-                  Bins
-                </span> */}
               </div>
             </div>
 

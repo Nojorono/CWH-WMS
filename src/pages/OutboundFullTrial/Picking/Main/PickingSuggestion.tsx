@@ -32,12 +32,17 @@ import { SuggestionItemLocation } from "./SuggestionItemLocation";
 const PickingSuggestion: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { data: deliveryOrderId, mode, title } = location.state || {};
+  const {
+    data: deliveryOrderId,
+    status: statusDO,
+    mode,
+    title,
+  } = location.state || {};
   const isSuggestion = mode === "suggestion";
   const [activeTab, setActiveTab] = useState(0);
   const [assignHelperOpen, setAssignHelperOpen] = useState(false);
   const [assignHelperMemoId, setAssignHelperMemoId] = useState<string | null>(
-    null
+    null,
   );
 
   const methods = useForm<MemoFormValues>({
@@ -72,7 +77,7 @@ const PickingSuggestion: React.FC = () => {
   // === Approved Memo List ===
   const approvedMemos = useMemo(
     () => memoList.filter((item) => item.status === "APPROVED"),
-    [memoList]
+    [memoList],
   );
 
   // === Set Form Value (Mode Detail) ===
@@ -88,7 +93,7 @@ const PickingSuggestion: React.FC = () => {
 
     methods.setValue(
       "delivery_date",
-      detail.delivery_date ? detail.delivery_date.split("T")[0] : ""
+      detail.delivery_date ? detail.delivery_date.split("T")[0] : "",
     );
 
     if (detail.outbound_memos?.length > 0) {
@@ -132,7 +137,7 @@ const PickingSuggestion: React.FC = () => {
       header: "Action",
       cell: ({ row }: { row: any }) => (
         <div className="flex gap-2">
-          {isSuggestion ? (
+          {isSuggestion && statusDO !== "COMPLETED" ? (
             <Button
               type="button"
               variant="primary"
@@ -143,10 +148,7 @@ const PickingSuggestion: React.FC = () => {
               Picking Suggestion Items
             </Button>
           ) : (
-            <FaTasks
-              className="size-5 cursor-pointer text-yellow-600 hover:scale-110 transition"
-              title="Adjust Memo"
-            />
+            <></>
           )}
 
           <Button
@@ -204,7 +206,7 @@ const PickingSuggestion: React.FC = () => {
 
   const handleSelectionChange = (selectedIds: string[]) => {
     const filtered = approvedMemos.filter(
-      (m) => typeof m.id === "string" && selectedIds.includes(m.id)
+      (m) => typeof m.id === "string" && selectedIds.includes(m.id),
     );
     // setSelectedMemoIds(selectedIds);
     // setSelectedMemos(filtered);
@@ -290,10 +292,10 @@ const PickingSuggestion: React.FC = () => {
                       data={
                         (isSuggestion
                           ? (detail?.outbound_memos || []).filter(
-                              (m: any) => typeof m.id === "string"
+                              (m: any) => typeof m.id === "string",
                             )
                           : approvedMemos.filter(
-                              (m: any) => typeof m.id === "string"
+                              (m: any) => typeof m.id === "string",
                             )) as any[]
                       }
                       columns={columnSuggestionPick}

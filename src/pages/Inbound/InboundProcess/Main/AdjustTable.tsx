@@ -30,7 +30,7 @@ const AdjustTable = ({
 
   // 🔹 local state pagination
   const [pageIndex, setPageIndex] = useState(0);
-  const [pageSize, setPageSize] = useState(5);
+  const [pageSize, setPageSize] = useState(25);
 
   // 🔹 Fetch data setiap kali pagination / search berubah
   useEffect(() => {
@@ -51,8 +51,21 @@ const AdjustTable = ({
         header: "Inbound No",
       },
       {
-        accessorKey: "inbound_id_reference",
-        header: "Inbound ID Reference",
+        accessorKey: "inbound_reference_number",
+        header: "Inbound Reference No",
+      },
+      {
+        header: "Principal",
+        id: "principal", // Gunakan id karena kita pakai accessorFn/cell
+        cell: ({ row }) => {
+          const dos = row.original.inbound_dos;
+          // Cek jika ada data di inbound_dos
+          if (dos && dos.length > 0) {
+            // Jika Anda hanya ingin mengambil principal dari DO pertama:
+            return dos[0].principal || "-";
+          }
+          return "-";
+        },
       },
       {
         accessorKey: "inbound_type",
@@ -97,7 +110,7 @@ const AdjustTable = ({
               <FaEye
                 className="size-5 cursor-pointer text-green-600"
                 onClick={() => handleDetail(item)}
-                title="Detail"
+                title="View"
               />
 
               {["CREATED", "WAITING FOR REVISION"].includes(item.status) && (
@@ -121,7 +134,7 @@ const AdjustTable = ({
                 <FaPlus
                   className="size-5 cursor-pointer text-purple-600"
                   onClick={() => handleAddToReceive(item)}
-                  title="Detail"
+                  title="Add to Receive"
                 />
               )}
             </div>

@@ -24,6 +24,9 @@ export type POSForm = {
 
     items: ItemForm[];
     flag_validated?: boolean;
+
+    vendor_name?: string;
+    principal?: string;
 };
 
 export type DOForm = {
@@ -49,5 +52,5 @@ export type FormValues = {
     deliveryOrders: DOForm[];
     flag_validated?: boolean;
     integration_status?: string;
-    
+
 };

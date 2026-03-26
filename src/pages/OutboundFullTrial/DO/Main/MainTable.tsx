@@ -28,6 +28,8 @@ const MainTable = () => {
     { value: "", label: "All Status" },
     { value: "PENDING", label: "PENDING" },
     { value: "IN_PROGRESS", label: "IN_PROGRESS" },
+    { value: "APPROVED", label: "APPROVED" },
+    { value: "APPROVED_LOAD", label: "APPROVED_LOAD" },
     { value: "COMPLETED", label: "COMPLETED" },
     { value: "CANCELLED", label: "CANCELLED" },
   ];
@@ -39,6 +41,9 @@ const MainTable = () => {
   ];
 
   const roleName = localStorage.getItem("role_name");
+  const canCreateDO =
+    roleName === "TRANSPORT_SUPERVISOR" ||
+    roleName === "superadmin";
 
   return (
     <>
@@ -65,8 +70,7 @@ const MainTable = () => {
           </div>
 
           <div className="space-x-4">
-            {(roleName === "TRANSPORT_SUPERVISOR" ||
-              roleName === "superadmin") && (
+            {canCreateDO && (
               <Button
                 size="sm"
                 variant="primary"

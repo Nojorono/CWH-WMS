@@ -275,30 +275,6 @@ export default function UpdateFormWithTable(paramRole: any) {
               className={commonClasses}
             />
           </div>
-
-          {/* <SelectField
-            label="Status"
-            name="status"
-            control={control}
-            options={STATUS_OPTIONS}
-            placeholder="-- Select Status --"
-          /> */}
-
-          {/* <SelectField
-            label="Akses Mobile"
-            name="aksesMobile"
-            control={control}
-            options={ACCESS_OPTIONS}
-            placeholder="-- Pilih Opsi --"
-          />
-
-          <SelectField
-            label="Akses Dashboard"
-            name="aksesDashboard"
-            control={control}
-            options={ACCESS_OPTIONS}
-            placeholder="-- Pilih Opsi --"
-          /> */}
         </form>
       </div>
 
@@ -307,6 +283,7 @@ export default function UpdateFormWithTable(paramRole: any) {
         <h3 className="text-lg font-semibold mb-4">Akses Menu</h3>
 
         <table className="w-full border-collapse border border-gray-300">
+          
           <thead>
             <tr className="bg-gray-100">
               <th className="border border-gray-300 px-4 py-2">Id</th>
@@ -318,6 +295,7 @@ export default function UpdateFormWithTable(paramRole: any) {
               ))}
             </tr>
           </thead>
+
           <tbody>
             {flattenedMenus.map((menu: any) => (
               <tr key={menu.id}>

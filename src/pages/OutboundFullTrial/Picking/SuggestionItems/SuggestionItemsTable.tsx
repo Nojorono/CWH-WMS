@@ -826,8 +826,6 @@ export const SuggestionItemsTable: React.FC<TableProps> = ({
       destinationBinId
     );
 
-    console.log("FINAL API PAYLOAD", finalPayload);
-
     // ===== API CALL =====
     if (typeof createBulkData === "function") {
       const res = await createBulkData(finalPayload as any);

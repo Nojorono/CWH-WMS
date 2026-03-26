@@ -9,6 +9,9 @@ import { useStoreStockAdjustment } from "../../../DynamicAPI/stores/Store/Master
 import { useSearchParams } from "react-router-dom";
 import DetailView from "./DetailView";
 import { FaEdit, FaEye, FaTrash } from "react-icons/fa";
+import { showErrorToast, showSuccessToast } from "../../../components/toast";
+import { EndPoint } from "../../../utils/EndPoint";
+import axiosInstance from "../../../DynamicAPI/AxiosInstance";
 
 const StockAdjustment: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -54,15 +57,6 @@ const StockAdjustment: React.FC = () => {
         <span className="capitalize">{info.getValue()?.replace("_", " ")}</span>
       ),
     }),
-    // columnHelper.accessor("adjustmentStockItems", {
-    //   id: "location",
-    //   header: "Zone / Bin",
-    //   cell: (info) => {
-    //     const firstItem = info.getValue()?.[0];
-    //     if (!firstItem) return "-";
-    //     return `${firstItem.warehouseSub?.name ?? "-"} / ${firstItem.warehouseBin?.name ?? "-"}`;
-    //   },
-    // }),
     columnHelper.accessor("adjustmentStockItems", {
       id: "item_info",
       header: "Item & Qty",
@@ -173,8 +167,34 @@ const StockAdjustment: React.FC = () => {
     setShowDetail(true);
   };
 
-  const handleDelete = (id: string) => {
-    deleteData(id);
+  const handleDelete = async (id: string) => {
+    const token = localStorage.getItem("token");
+    try {
+      const response = await axiosInstance(
+        `${EndPoint}adjustment-stock/${id}`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+
+      if (response.status === 204) {
+        showSuccessToast("Stock adjustment deleted successfully");
+        if (!fetchUsingPagination) return;
+        fetchUsingPagination({
+          page: currentPage,
+          limit: pageSize,
+          sortOrder: "DESC",
+        });
+      } else {
+        showErrorToast("Failed to delete stock adjustment");
+      }
+    } catch (error) {
+      console.error("Error deleting stock adjustment:", error);
+      showErrorToast("Error deleting stock adjustment");
+    }
   };
 
   if (showDetail) {
