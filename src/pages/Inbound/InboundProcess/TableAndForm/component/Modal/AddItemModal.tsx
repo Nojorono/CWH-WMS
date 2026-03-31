@@ -68,9 +68,7 @@ export default function AddItemModal({
       uom: tempUom,
       classification: tempClassification,
       expired_date: null,
-      qty_plan: function (qty_plan: any): number {
-        throw new Error("Function not implemented.");
-      },
+      qty_plan: Number(tempQty),
       item_name: selectedMaster?.description ?? "",
     });
 
@@ -169,29 +167,11 @@ export default function AddItemModal({
                 value={tempQty as any}
                 onChange={(e) =>
                   setTempQty(
-                    e.target.value === "" ? "" : Number(e.target.value)
+                    e.target.value === "" ? "" : Number(e.target.value),
                   )
                 }
               />
             </div>
-
-            {/* Classification */}
-            {/* <div className="flex flex-col">
-              <label className="text-xs text-slate-600 font-bold mb-1">
-                Classification
-              </label>
-              <Select
-                options={classificationList.map((c: any) => ({
-                  value: c.id,
-                  label: c.classification_name,
-                }))}
-                value={tempClassification}
-                onChange={setTempClassification}
-                placeholder="-- Classification --"
-                className="w-full"
-                width="100%"
-              />
-            </div> */}
           </div>
 
           {/* Action Buttons */}

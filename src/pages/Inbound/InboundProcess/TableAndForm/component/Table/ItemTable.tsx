@@ -30,6 +30,9 @@ export default function ItemTable({
 }) {
   const { register } = useFormContext<FormValues>();
 
+  console.log("mapping items", items);
+  console.log("uomList", uomList);
+
   // Cek apakah ada minimal satu quantity_inspection yang terisi
   const showQtyInspection = useMemo(
     () =>
@@ -37,9 +40,9 @@ export default function ItemTable({
         (item) =>
           item.quantity_inspection !== undefined &&
           item.quantity_inspection !== "" &&
-          item.quantity_inspection !== 0
+          item.quantity_inspection !== 0,
       ),
-    [items]
+    [items],
   );
 
   const columns = useMemo<ColumnDef<ItemForm>[]>(
@@ -63,7 +66,7 @@ export default function ItemTable({
               className="border px-2 py-1 w-20 text-right rounded"
               {...register(
                 `deliveryOrders.${doIndex}.pos.${posIndex}.items.${rowIndex}.qty`,
-                { valueAsNumber: true }
+                { valueAsNumber: true },
               )}
             />
           ) : (
@@ -89,18 +92,53 @@ export default function ItemTable({
             },
           ]
         : []),
+      // {
+      //   accessorKey: "uom",
+      //   header: "UOM",
+      //   cell: ({ row, getValue }: CellContext<ItemForm, unknown>) => {
+      //     const rowIndex = row.index;
+
+      //     return isEditMode ? (
+      //       <select
+      //         className="border px-2 py-1 rounded w-full"
+      //         {...register(
+      //           `deliveryOrders.${doIndex}.pos.${posIndex}.items.${rowIndex}.uom` as const,
+      //           { required: "UoM wajib dipilih" }
+      //         )}
+      //       >
+      //         <option value="">-- Select UoM --</option>
+      //         {uomList.map((u) => (
+      //           <option key={u.id} value={u.code}>
+      //             {u.name}
+      //           </option>
+      //         ))}
+      //       </select>
+      //     ) : (
+      //       <div>{getValue() as string}</div>
+      //     );
+      //   },
+      // },
+
       {
         accessorKey: "uom",
         header: "UOM",
         cell: ({ row, getValue }: CellContext<ItemForm, unknown>) => {
           const rowIndex = row.index;
+          const rawUom = row.original.uom ?? "";
+
+          // Normalize: cari code di uomList yang cocok secara case-insensitive
+          const matchedUom = uomList.find(
+            (u) => u.code.toUpperCase() === rawUom.toUpperCase(),
+          );
+          const normalizedUomCode = matchedUom?.code ?? rawUom.toUpperCase();
 
           return isEditMode ? (
             <select
               className="border px-2 py-1 rounded w-full"
+              defaultValue={normalizedUomCode} // ← pakai matched code
               {...register(
                 `deliveryOrders.${doIndex}.pos.${posIndex}.items.${rowIndex}.uom` as const,
-                { required: "UoM wajib dipilih" }
+                { required: "UoM wajib dipilih" },
               )}
             >
               <option value="">-- Select UoM --</option>
@@ -111,7 +149,8 @@ export default function ItemTable({
               ))}
             </select>
           ) : (
-            <div>{getValue() as string}</div>
+            // Di view mode, tampilkan nama UOM yang matched, fallback ke raw value
+            <div>{matchedUom?.name ?? rawUom}</div>
           );
         },
       },
@@ -134,7 +173,7 @@ export default function ItemTable({
           ]
         : []),
     ],
-    [doIndex, posIndex, isEditMode, register, removeItem]
+    [doIndex, posIndex, isEditMode, register, removeItem],
   );
 
   const table = useReactTable({
