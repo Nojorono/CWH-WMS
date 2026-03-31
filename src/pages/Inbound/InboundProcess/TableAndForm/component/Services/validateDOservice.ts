@@ -12,7 +12,7 @@ export const validateDOservice = async (doNo: string, inbType: any) => {
     const encodedDoNo = encodeURIComponent(doNo);
 
     const res = await fetch(
-        `${EndPoint}inbound/do-validation/${type}/${encodedDoNo}`,
+        `${EndPoint}inbound/do-validation/${type}?suratJalan=${encodedDoNo}`,
         {
             headers: {
                 Authorization: `Bearer ${token}`,
@@ -26,7 +26,5 @@ export const validateDOservice = async (doNo: string, inbType: any) => {
     }
 
     const data = await res.json();
-    console.log("res data DO service", data);
-
     return data;
 };
