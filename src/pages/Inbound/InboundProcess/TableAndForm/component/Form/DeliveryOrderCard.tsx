@@ -70,7 +70,7 @@ export default function DeliveryOrderCard({
     setIsDOChecked,
     watchedDONo,
     handleCheckDO,
-  } = useDOValidation(doIndex, replacePos, append);
+  } = useDOValidation(doIndex, replacePos, append, inbType);
 
   const [open, setOpen] = useState(true);
   const [uploading, setUploading] = useState(false);
@@ -91,16 +91,10 @@ export default function DeliveryOrderCard({
 
   // ✅ Wrapper Handle Check DO
   const onCheckDO = async () => {
-    // 1. Tambahkan validasi inbType di sini
-    // Kita cek apakah inbType ada nilainya (tidak null/undefined/empty string)
-    if (!inbType) {
-      showErrorToast(
-        "Silakan pilih Tipe Inbound (PO/SO/RETUR) terlebih dahulu!",
-      );
-      return; // Stop eksekusi jika kosong
+    if (inbType !== "PO" && inbType !== "SO") {
+      showErrorToast("Hanya PO atau SO yang bisa divalidasi!");
+      return;
     }
-
-    // 2. Jika lolos, baru jalankan logic validasi seperti biasa
     lastValidatedDONo.current = watchedDONo || "";
     await handleCheckDO();
   };
@@ -149,6 +143,7 @@ export default function DeliveryOrderCard({
   };
 
   const isInputDisabled = !isCreateMode && !isEditMode && !isAddToReceiveMode;
+  const isValidType = inbType === "PO" || inbType === "SO";
 
   return (
     <div className="bg-white rounded-lg shadow p-3 md:p-5">
@@ -205,7 +200,9 @@ export default function DeliveryOrderCard({
                     size="xsm"
                     variant="primary"
                     onClick={onCheckDO} // Gunakan wrapper onCheckDO
-                   disabled={!inbType || (isDOChecked && doStatus === "success")}
+                    disabled={
+                      !isValidType || (isDOChecked && doStatus === "success")
+                    }
                   >
                     <FaSearch />
                   </Button>
@@ -300,7 +297,7 @@ export default function DeliveryOrderCard({
                 isCreateMode={isCreateMode}
                 isAddToReceiveMode={isAddToReceiveMode}
                 InbType={inbType}
-                dataPO={posField.po_no}
+                dataPO={inbType === "PO" ? posField.po_no : posField.so_no}
                 isDOChecked={isDOChecked}
               />
             ))}
@@ -311,7 +308,7 @@ export default function DeliveryOrderCard({
   );
 }
 
-// OLD CODE
+// // OLD CODE
 // import { useFormContext, useFieldArray, Controller } from "react-hook-form";
 // import { FormValues } from "../formTypes";
 // import { inputCls } from "../constants";
@@ -414,50 +411,64 @@ export default function DeliveryOrderCard({
 //     if (!watchedDONo) return showErrorToast("No Surat Jalan wajib diisi");
 
 //     const token = localStorage.getItem("token");
+
 //     try {
 //       const res = await fetch(
-//         `${EndPoint}inbound/do-validation/${watchedDONo}`,
+//         `${EndPoint}inbound/do-validation/${inbType}/${watchedDONo}`,
 //         {
 //           headers: { Authorization: `Bearer ${token}` },
 //         },
 //       );
+
 //       const data = await res.json();
 //       console.log("res data DO", data);
 
-//       if (res.ok && data?.success) {
-//         const poString = data?.data?.data?.[0]?.DAFTAR_NO_PO || "";
-//         const poArr = poString
-//           ? poString.split(",").map((s: string) => s.trim())
-//           : [];
+//       if (!res.ok || !data?.success) {
+//         setDoStatus("failed");
+//         return showErrorToast(data?.message || "Gagal validasi Surat Jalan");
+//       }
 
-//         setValue(`deliveryOrders.${doIndex}.flag_validated`, true);
-//         setValue(
-//           `deliveryOrders.${doIndex}.validation_surat_jalan`,
-//           poArr.length > 0,
+//       // ✅ ambil dari struktur baru
+//       const poString = data?.data?.data_po?.[0]?.DAFTAR_NO_PO ?? "";
+
+//       const poArr = poString
+//         ? poString.split(",").map((s: string) => s.trim())
+//         : [];
+
+//       // ✅ set flag
+//       setValue(`deliveryOrders.${doIndex}.flag_validated`, true);
+//       setValue(
+//         `deliveryOrders.${doIndex}.validation_surat_jalan`,
+//         poArr.length > 0,
+//       );
+
+//       if (poArr.length > 0) {
+//         setDoStatus("success");
+
+//         replacePos(
+//           poArr.map((po: string) => ({
+//             po_no: po,
+//             items: [],
+//             vendor_name: "",
+//             principal: "",
+//           })),
 //         );
 
-//         if (poArr.length > 0) {
-//           setDoStatus("success");
-//           replacePos(
-//             poArr.map((po: string) => ({
-//               po_no: po,
-//               items: [],
-//               vendor_name: "",
-//               principal: "",
-//             })),
-//           );
-//           showSuccessToast(
-//             `Validasi berhasil: ditemukan ${poArr.length} Dokumen`,
-//           );
-//         } else {
-//           setDoStatus("failed");
-//           replacePos([]);
-//           append({ po_no: "", items: [], vendor_name: "", principal: "" });
-//           showErrorToast("Nomor PO tidak ditemukan, silakan isi manual.");
-//         }
+//         showSuccessToast(
+//           `Validasi berhasil: ditemukan ${poArr.length} Dokumen`,
+//         );
 //       } else {
 //         setDoStatus("failed");
-//         showErrorToast(data?.message || "Gagal validasi Surat Jalan");
+
+//         replacePos([]);
+//         append({
+//           po_no: "",
+//           items: [],
+//           vendor_name: "",
+//           principal: "",
+//         });
+
+//         showErrorToast("Nomor PO tidak ditemukan, silakan isi manual.");
 //       }
 //     } catch (err) {
 //       setDoStatus("failed");

@@ -1,51 +1,106 @@
 import { useState } from "react";
-import { useFormContext, UseFieldArrayReplace, UseFieldArrayAppend } from "react-hook-form";
-import { validateDOService } from "../Services/DoService";
+import { useFormContext } from "react-hook-form";
+import { validateDOservice } from "../Services/validateDOservice";
 import { showErrorToast, showSuccessToast } from "../../../../../../components/toast";
 import { FormValues } from "../formTypes";
 
-// useDOValidation.ts
-export const useDOValidation = (doIndex: number, replacePos: any, append: any) => {
+// helper type
+const getInboundType = (inbType: any): "PO" | "SO" => {
+    if (inbType === "PO" || inbType?.value === "PO") return "PO";
+    return "SO";
+};
+
+// helper extract doc number (🔥 inti fix ada disini)
+const extractDocNumbers = (rawList: any[], type: "PO" | "SO"): string[] => {
+    if (type === "PO") {
+        return rawList.flatMap((item: any) => {
+            const raw = item.DAFTAR_NO_PO;
+
+            return raw
+                ? raw.split(",").map((s: string) => s.trim()).filter(Boolean)
+                : [];
+        });
+    }
+
+    // SO (beda struktur!)
+    return rawList.map((item: any) => String(item.ORDER_NUMBER));
+};
+
+export const useDOValidation = (
+    doIndex: number,
+    replacePos: any,
+    append: any,
+    inbType: any
+) => {
     const { setValue, watch } = useFormContext<FormValues>();
+
     const [doStatus, setDoStatus] = useState<"success" | "failed" | null>(null);
     const [isDOChecked, setIsDOChecked] = useState(false);
 
     const watchedDONo = watch(`deliveryOrders.${doIndex}.do_no`);
 
-    const handleCheckDO = async (): Promise<boolean> => { // Tambahkan return boolean
+    const handleCheckDO = async (): Promise<boolean> => {
         if (!watchedDONo) {
             showErrorToast("No Surat Jalan wajib diisi");
             return false;
         }
 
         try {
-            const data = await validateDOService(watchedDONo);
-            if (data?.success) {
-                const poString = data?.data?.data?.[0]?.DAFTAR_NO_PO || "";
-                const poArr = poString ? poString.split(",").map((s: string) => s.trim()) : [];
+            const data = await validateDOservice(watchedDONo, inbType);
 
-                setValue(`deliveryOrders.${doIndex}.flag_validated`, true);
-                setValue(`deliveryOrders.${doIndex}.validation_surat_jalan`, poArr.length > 0);
+            if (!data?.success) return false;
 
-                if (poArr.length > 0) {
-                    setDoStatus("success");
-                    replacePos(poArr.map((po: string) => ({
-                        po_no: po,
+            const type = getInboundType(inbType);
+            const isPO = type === "PO";
+
+            // ambil list sesuai type
+            const rawList = isPO
+                ? data?.data?.data_po ?? []
+                : data?.data?.data_so ?? [];
+
+            // 🔥 FIX utama: parsing beda PO vs SO
+            const docNumbers = extractDocNumbers(rawList, type);
+
+            // set flag form
+            setValue(`deliveryOrders.${doIndex}.flag_validated`, true);
+            setValue(
+                `deliveryOrders.${doIndex}.validation_surat_jalan`,
+                docNumbers.length > 0
+            );
+
+            if (docNumbers.length > 0) {
+                setDoStatus("success");
+
+                replacePos(
+                    docNumbers.map((no: string) => ({
+                        ...(isPO ? { po_no: no } : { so_no: no }),
                         items: [],
                         vendor_name: "",
                         principal: "",
-                    })));
-                    showSuccessToast(`Validasi berhasil: ditemukan ${poArr.length} Dokumen`);
-                } else {
-                    setDoStatus("failed");
-                    replacePos([]);
-                    append({ po_no: "", items: [], vendor_name: "", principal: "" });
-                    showErrorToast("Nomor PO tidak ditemukan, silakan isi manual.");
-                }
-                setIsDOChecked(true); // Set TRUE di sini sebelum return
-                return true;
+                    }))
+                );
+
+                showSuccessToast(
+                    `Validasi berhasil: ditemukan ${docNumbers.length} Dokumen`
+                );
+            } else {
+                setDoStatus("failed");
+
+                replacePos([]);
+                append({
+                    ...(isPO ? { po_no: "" } : { so_no: "" }),
+                    items: [],
+                    vendor_name: "",
+                    principal: "",
+                });
+
+                showErrorToast(
+                    "Nomor dokumen tidak ditemukan, silakan isi manual."
+                );
             }
-            return false;
+
+            setIsDOChecked(true);
+            return true;
         } catch (err: any) {
             setDoStatus("failed");
             showErrorToast(err.message || "Terjadi kesalahan koneksi");
@@ -53,5 +108,12 @@ export const useDOValidation = (doIndex: number, replacePos: any, append: any) =
         }
     };
 
-    return { doStatus, setDoStatus, isDOChecked, setIsDOChecked, watchedDONo, handleCheckDO };
+    return {
+        doStatus,
+        setDoStatus,
+        isDOChecked,
+        setIsDOChecked,
+        watchedDONo,
+        handleCheckDO,
+    };
 };
