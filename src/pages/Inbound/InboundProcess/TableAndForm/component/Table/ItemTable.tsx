@@ -30,9 +30,6 @@ export default function ItemTable({
 }) {
   const { register } = useFormContext<FormValues>();
 
-  console.log("mapping items", items);
-  console.log("uomList", uomList);
-
   // Cek apakah ada minimal satu quantity_inspection yang terisi
   const showQtyInspection = useMemo(
     () =>

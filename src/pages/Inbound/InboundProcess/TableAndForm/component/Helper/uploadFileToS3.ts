@@ -1,7 +1,7 @@
 // utils/uploadFileToS3.ts
-import axios from "axios";
 import { S3EndPoint } from "../../../../../../utils/EndPoint";
 import { showErrorToast } from "../../../../../../components/toast";
+import axiosInstance from "../../../../../../API/services/AxiosInstance";
 
 const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2 MB
 
@@ -21,7 +21,7 @@ export async function uploadFileToS3(file: File): Promise<string | null> {
         formData.append("contentType", file.type);
         formData.append("acl", "public-read");
 
-        const res = await axios.post(`${S3EndPoint}/upload`, formData, {
+        const res = await axiosInstance.post(`${S3EndPoint}/upload`, formData, {
             headers: {
                 "Content-Type": "multipart/form-data",
                 ...(token ? { Authorization: `Bearer ${token}` } : {}),
