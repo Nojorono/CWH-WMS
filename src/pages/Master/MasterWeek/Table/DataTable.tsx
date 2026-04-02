@@ -1,32 +1,26 @@
-import React, { useState, useMemo, useEffect } from "react";
-import { FaSync } from "react-icons/fa";
+import React, { useEffect, useState, useMemo } from "react";
+import { FaPlus, FaSync } from "react-icons/fa";
+import Input from "../../../../components/form/input/InputField";
+import Label from "../../../../components/form/Label";
 import Button from "../../../../components/ui/button/Button";
 import { useDebounce } from "../../../../helper/useDebounce";
 import DynamicTable from "../../../../components/wms-components/DynamicTable";
+import { useStoreMasterWeek } from "../../../../DynamicAPI/stores/Store/MasterStore";
 import ActIndicator from "../../../../components/ui/activityIndicator";
-import axiosInstance from "../../../../API/services/AxiosInstance";
-import { showErrorToast, showSuccessToast } from "../../../../components/toast";
-
-// Interface untuk type-safety
-interface MasterWeekData {
-  TAHUN: string;
-  MINGGU: string;
-  BULAN: string;
-  QUARTER: number;
-  TANGGAL_AWAL_MINGGU_REAL: string;
-  TANGGAL_AKHIR_MINGGU_REAL: string;
-}
+import { EndPoint } from "../../../../utils/EndPoint";
+import axiosInstance from "../../../../DynamicAPI/AxiosInstance";
 
 const DataTable = () => {
+  const { list: listWeek, fetchAll, isLoading } = useStoreMasterWeek();
+
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounce(search, 500);
-  const [loadingSync, setLoadingSync] = useState(false);
+  const [isCreateModalOpen, setCreateModalOpen] = useState(false);
+  const [loadingSycn, setLoadingSycn] = useState(false);
 
-  // Inisialisasi state dari localStorage agar data tidak hilang saat pindah halaman
-  const [dataSync, setDataSync] = useState<MasterWeekData[]>(() => {
-    const savedData = localStorage.getItem("last_sync_master_week");
-    return savedData ? JSON.parse(savedData) : [];
-  });
+  useEffect(() => {
+    fetchAll();
+  }, []);
 
   const columns = useMemo(
     () => [
@@ -54,67 +48,89 @@ const DataTable = () => {
     [],
   );
 
-  const syncDataAMOfromMeta = async () => {
-    setLoadingSync(true);
+  // const sycnDataAMOfromMeta = async () => {
+  //   setLoadingSycn(true);
+
+  //   try {
+  //     const token = localStorage.getItem("token"); // Replace with your actual token key
+  //     const response = await fetch(
+  //       `${EndPoint}customer/main/sync-from-meta-oracle`,
+  //       {
+  //         method: "POST",
+  //         headers: {
+  //           Authorization: `Bearer ${token}`,
+  //         },
+  //       }
+  //     );
+  //     if (!response.ok) {
+  //       throw new Error("Network response was not ok");
+  //     }
+  //     setLoadingSycn(false);
+  //     fetchAll();
+  //   } catch (error) {
+  //     console.error("Error fetching data:", error);
+  //   }
+  // };
+
+  const syncDataWeekfromMeta = async () => {
     const currentYear = new Date().getFullYear();
 
     try {
-      // Pastikan method sesuai dengan backend (POST/GET)
       const response = await axiosInstance.get(
         `master-week/sync-from-meta-oracle/${currentYear}`,
       );
 
-      const resultData = response.data?.data?.data || [];
-      setDataSync(resultData);
-
-      // Simpan ke localStorage
-      localStorage.setItem("last_sync_master_week", JSON.stringify(resultData));
-
-      showSuccessToast("Sinkronisasi Berhasil");
+      console.log("response", response);
     } catch (error) {
       console.error("Error fetching data:", error);
-      showErrorToast("Gagal sinkronisasi data");
     } finally {
-      setLoadingSync(false);
+      fetchAll();
     }
   };
+
+  const formFields = [{}];
 
   return (
     <>
       <div className="p-4 bg-white shadow rounded-md mb-5">
-        <div className="flex justify-end items-center">
-          <Button
-            variant="primary"
-            size="sm"
-            disabled={loadingSync}
-            onClick={syncDataAMOfromMeta}
-          >
-            {loadingSync ? (
-              "Processing..."
-            ) : (
-              <>
-                <FaSync className="mr-2" /> Sync Week {new Date().getFullYear()}
-              </>
-            )}
-          </Button>
+        <div className="flex justify-between items-center">
+          <div className="space-x-4">
+            <Label htmlFor="search">Search</Label>
+            <Input
+              onChange={(e) => setSearch(e.target.value)}
+              type="text"
+              id="search"
+              placeholder="🔍 Masukan data.."
+            />
+          </div>
+          <div className="space-x-4">
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={() => syncDataWeekfromMeta()}
+            >
+              <FaSync className="mr-2" /> Sync Week {new Date().getFullYear()}
+            </Button>
+          </div>
         </div>
       </div>
 
-      {loadingSync ? (
-        <ActIndicator />
+      {isLoading || loadingSycn ? (
+        <>
+          <ActIndicator />
+        </>
       ) : (
         <DynamicTable
-          data={dataSync}
+          data={listWeek}
           globalFilter={debouncedSearch}
+          isCreateModalOpen={isCreateModalOpen}
+          onCloseCreateModal={() => setCreateModalOpen(false)}
           columns={columns}
-          getRowId={(row: any) => `${row.TAHUN}-${row.MINGGU}`}
-          title="Master Week Sync Result"
+          formFields={formFields}
+          onRefresh={fetchAll}
+          getRowId={(row) => row.id}
+          title="Form Data"
           noActions={true}
-          // Membersihkan props yang tidak digunakan agar tidak error
-          isCreateModalOpen={false}
-          onCloseCreateModal={() => {}}
-          formFields={[]}
-          onRefresh={syncDataAMOfromMeta}
         />
       )}
     </>
