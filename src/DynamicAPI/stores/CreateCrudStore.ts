@@ -157,6 +157,8 @@ export const createCrudStore = <TData, TCreate, TUpdate>({
                 const msg = err.message || `Failed to create ${name}`;
                 showErrorToast(msg);
                 set({ error: msg });
+                await get().fetchAll();
+
                 return { success: false, message: msg };
             } finally {
                 set({ isLoading: false });
