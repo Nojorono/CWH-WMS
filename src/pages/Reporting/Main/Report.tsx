@@ -9,11 +9,10 @@ import { useStoreReportInbound } from "../../../DynamicAPI/stores/Store/MasterSt
 import { FaFileExcel, FaBox, FaPallet, FaCalendarAlt } from "react-icons/fa";
 import { useSearchParams } from "react-router-dom";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
-import * as XLSX from "xlsx";
-import { saveAs } from "file-saver";
 import TabsSection from "../../../components/wms-components/inbound-component/tabs/TabsSection";
-import DatePicker from "../../../components/form/date-picker"; // Sesuaikan path import komponen Anda
+import DatePicker from "../../../components/form/date-picker";
 import { formatDateIndo } from "../../../helper/FormatDate";
+import { exportInboundToExcel } from "../hooks/exportInboundExcel";
 
 const columnHelper = createColumnHelper<any>();
 
@@ -29,17 +28,14 @@ const Reporting = () => {
   // ================= 0. STATE FILTER TANGGAL (RANGE MODE) =================
   const dateNow = new Date().toISOString().split("T")[0];
 
-  // Menggunakan any/Date[] agar kompatibel dengan Flatpickr value
   const [dateRange, setDateRange] = useState<any>([dateNow, dateNow]);
 
-  // Helper untuk mendapatkan string YYYY-MM-DD dari state dateRange
   const startDate = useMemo(() => {
     const d = Array.isArray(dateRange) ? dateRange[0] : dateRange;
     return d ? formatDateIndo(d) : dateNow;
   }, [dateRange, dateNow]);
 
   const endDate = useMemo(() => {
-    // Jika mode range, ambil index 1. Jika belum ada index 1, gunakan index 0
     const d = Array.isArray(dateRange)
       ? dateRange[1] || dateRange[0]
       : dateRange;
@@ -75,6 +71,7 @@ const Reporting = () => {
           inbound_do_number: doItem.inbound_do_number,
           inbound_po_number: doItem.inbound_po_number,
           principal: doItem.principal || "-",
+          penerima: inbound.origin || "-",
           expedition: inbound.expedition,
           license_plate: inbound.license_plate,
           item_number: itemRow.item?.item_number,
@@ -83,6 +80,7 @@ const Reporting = () => {
           uom: itemRow.uom,
           inbound_number: inbound.inbound_number,
           createdAt: formatDateIndo(inbound.createdAt),
+          tgl_receipt: formatDateIndo(inbound.updatedAt),
         })),
       ),
     );
@@ -122,7 +120,15 @@ const Reporting = () => {
                   : "-",
                 no_pallet: scan.pallet?.pallet_code || "-",
                 waktu_update_pallet: scan.updatedAt
-                  ? new Date(scan.updatedAt).toLocaleString("id-ID")
+                  ? new Intl.DateTimeFormat("en-GB", {
+                      day: "numeric",
+                      month: "numeric",
+                      year: "numeric",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                      second: "2-digit",
+                      hour12: false,
+                    }).format(new Date(scan.updatedAt))
                   : "-",
                 user_loading: scan.user_name || "-",
                 inbound_number: inbound.inbound_number,
@@ -139,150 +145,14 @@ const Reporting = () => {
     return results;
   }, [list]);
 
-  // ================= 3. EXPORT EXCEL =================
+  // ================= 3. EXPORT HANDLER (delegasi ke utility) =================
   const handleExportExcel = (type: "SKU" | "PALLET") => {
-    const isPallet = type === "PALLET";
-    const dataToExport = isPallet ? flatDataPallet : flatDataSKU;
-
-    const headerMetadata = [
-      ["REPORT PENERIMAAN BARANG"],
-      [],
-      [
-        "TANGGAL AWAL",
-        `: ${startDate}`,
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "PRINT DATE",
-        `: ${new Date().toLocaleDateString("id-ID")}`,
-      ],
-      [
-        "TANGGAL AKHIR",
-        `: ${endDate}`,
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "PRINT BY",
-        ": USER WMS",
-      ],
-      ["TYPE STORAGE", `: ${type}`],
-      [],
-    ];
-
-    const tableHeaders = isPallet
-      ? [
-          "TANGGAL INBOUND PLANNING",
-          "NO SURAT JALAN",
-          "NO PO",
-          "PENGIRIM",
-          "PENERIMA",
-          "EXPEDISI",
-          "NOPOL",
-          "KODE ITEM",
-          "DESKRIPSI",
-          "QTY",
-          "UOM",
-          "KODE PRODUKSI",
-          "NO PALLET",
-          "WAKTU UPDATE PALLET",
-          "USER LOADING",
-          "NO RECEIPT",
-          "TGL RECEIPT",
-          "RECEIPT BY",
-        ]
-      : [
-          "TANGGAL INBOUND",
-          "NO SURAT JALAN",
-          "NO PO",
-          "PENGIRIM",
-          "EXPEDISI",
-          "NOPOL",
-          "KODE ITEM",
-          "DESKRIPSI",
-          "QTY",
-          "UOM",
-          "NO RECEIPT",
-        ];
-
-    const tableRows = dataToExport.map((item: any) =>
-      isPallet
-        ? [
-            item.arrival_date
-              ? new Date(item.arrival_date).toLocaleDateString("id-ID")
-              : "-",
-            item.inbound_do_number,
-            item.inbound_po_number,
-            item.principal,
-            item.penerima,
-            item.expedition,
-            item.license_plate,
-            item.item_number,
-            item.description,
-            item.quantity,
-            item.uom,
-            item.kode_produksi,
-            item.no_pallet,
-            item.waktu_update_pallet,
-            item.user_loading,
-            item.inbound_number,
-            item.tgl_receipt,
-            item.receipt_by,
-          ]
-        : [
-            item.arrival_date
-              ? new Date(item.arrival_date).toLocaleDateString("id-ID")
-              : "-",
-            item.inbound_do_number,
-            item.inbound_po_number,
-            item.principal,
-            item.expedition,
-            item.license_plate,
-            item.item_number,
-            item.description,
-            item.quantity,
-            item.uom,
-            item.inbound_number,
-          ],
-    );
-
-    const worksheet = XLSX.utils.aoa_to_sheet([
-      ...headerMetadata,
-      tableHeaders,
-      ...tableRows,
-    ]);
-
-    if (!worksheet["!merges"]) worksheet["!merges"] = [];
-    worksheet["!merges"].push({
-      s: { r: 0, c: 0 },
-      e: { r: 0, c: isPallet ? 17 : 10 },
+    exportInboundToExcel({
+      type,
+      data: type === "PALLET" ? flatDataPallet : flatDataSKU,
+      startDate,
+      endDate,
     });
-
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Report");
-    const excelBuffer = XLSX.write(workbook, {
-      bookType: "xlsx",
-      type: "array",
-    });
-    saveAs(
-      new Blob([excelBuffer]),
-      `Report_${type}_${new Date().getTime()}.xlsx`,
-    );
   };
 
   // ================= 4. TABLE COLUMNS =================
@@ -293,6 +163,7 @@ const Reporting = () => {
     columnHelper.accessor("inbound_do_number", { header: "Surat Jalan" }),
     columnHelper.accessor("inbound_po_number", { header: "No PO" }),
     columnHelper.accessor("principal", { header: "Pengirim" }),
+    columnHelper.accessor("penerima", { header: "Penerima" }),
     columnHelper.accessor("item_number", {
       header: "Kode Item",
       cell: (i) => (
@@ -306,6 +177,7 @@ const Reporting = () => {
     }),
     columnHelper.accessor("uom", { header: "UOM" }),
     columnHelper.accessor("inbound_number", { header: "No Receipt" }),
+    columnHelper.accessor("tgl_receipt", { header: "Tgl Receipt" }),
   ];
 
   const columnsPallet = [
@@ -336,6 +208,7 @@ const Reporting = () => {
     columns: columnsSKU,
     getCoreRowModel: getCoreRowModel(),
   });
+
   const tablePallet = useReactTable({
     data: flatDataPallet,
     columns: columnsPallet,
@@ -426,11 +299,8 @@ const Reporting = () => {
   };
 
   const handleReset = () => {
-    // Kembalikan ke tanggal hari ini (sesuaikan dengan logic dateNow Anda)
     const today = new Date().toISOString().split("T")[0];
     setDateRange([today, today]);
-
-    // Jika Anda menggunakan searchParams untuk page, sebaiknya reset ke page 1 juga
     setSearchParams({ page: "1" });
   };
 
@@ -438,9 +308,8 @@ const Reporting = () => {
     <div className="flex flex-col gap-6 p-2">
       <PageBreadcrumb breadcrumbs={[{ title: "Reporting Inbound" }]} />
 
-      {/* ================= FILTER SECTION (NEW RANGE DATEPICKER) ================= */}
+      {/* ================= FILTER SECTION ================= */}
       <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-200 flex flex-wrap items-end gap-6">
-        {/* Date Picker Section */}
         <div className="flex flex-col gap-2 min-w-[320px]">
           <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
             <FaCalendarAlt className="text-blue-500" /> Filter Date Range
@@ -458,7 +327,6 @@ const Reporting = () => {
           />
         </div>
 
-        {/* Info & Reset Button Section */}
         <div className="pb-1 flex items-center gap-3">
           <div className="bg-gray-50 border border-gray-200 px-4 py-2 rounded-lg">
             <p className="text-[11px] text-gray-500 font-medium">
@@ -468,7 +336,6 @@ const Reporting = () => {
             </p>
           </div>
 
-          {/* Tombol Reset */}
           <button
             onClick={handleReset}
             className="flex items-center gap-2 px-4 py-2 text-[11px] font-bold uppercase tracking-wider text-red-500 bg-red-50 border border-red-100 rounded-lg hover:bg-red-100 transition-all active:scale-95"
@@ -508,7 +375,7 @@ const Reporting = () => {
         ]}
       />
 
-      {/* Pagination (Global) */}
+      {/* ================= PAGINATION ================= */}
       <div className="flex flex-col sm:flex-row items-center justify-between bg-white p-4 rounded-xl shadow-sm border border-gray-200 gap-4">
         <div className="flex items-center gap-4">
           <span className="text-sm text-gray-500 whitespace-nowrap">

@@ -1,6 +1,6 @@
 // utils/deleteFileFromS3.ts
-import axios from "axios";
 import { S3EndPoint } from "../../../../../../utils/EndPoint";
+import axiosInstance from "../../../../../../DynamicAPI/AxiosInstance";
 
 export async function deleteFileFromS3(fileUrl: string) {
     try {
@@ -12,7 +12,7 @@ export async function deleteFileFromS3(fileUrl: string) {
         const bucket = parts[2]; // "wms-cwh"
         const path = parts.slice(3).join("/"); 
 
-        await axios.delete(`${S3EndPoint}/${bucket}/${path}`, {
+        await axiosInstance.delete(`${S3EndPoint}/${bucket}/${path}`, {
             headers: { Authorization: `Bearer ${token}` },
         });
     } catch (err) {

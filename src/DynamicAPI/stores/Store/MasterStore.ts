@@ -39,7 +39,8 @@ import {
     MasterSupplierService,
     InventoryMovementService,
     StockAdjustmentService,
-    ReportInboundService
+    ReportInboundService,
+    MasterWeekService
 } from "../../services/Service/MasterService";
 
 import { Uom, CreateUom, UpdateUom } from "../../types/UomTypes";
@@ -75,9 +76,11 @@ import { MasterSubdist, CreateMasterSubdist, UpdateMasterSubdist } from "../../t
 import { ApprovalSetUp, CreateApprovalSetUp, UpdateApprovalSetUp } from "../../types/ApprovalSetUpTypes";
 import { InventoryVisibilityResponse } from '../../types/InventoryVisibilty.ts'
 import { MasterSupplier, CreateMasterSupplier, UpdateMasterSupplier } from '../../types/MasterSupplier.ts'
-import {InventoryMovementListResponse} from '../../types/InventoryMovement.ts'
-
+import { InventoryMovementListResponse } from '../../types/InventoryMovement.ts'
 import { StockAdjustment, StockAdjustmentCreateRequest } from "../../types/StockAdjustmentTypes.ts";
+
+import { MasterWeek, CreateMasterWeek, UpdateMasterWeek } from '../../types/MasterWeekTypes.ts'
+
 
 // Daftar semua store di sini
 export const useStoreUom = createCrudStore<Uom, CreateUom, UpdateUom>({
@@ -279,3 +282,9 @@ export const useStoreReportInbound = createCrudStore<InboundPlanning, CreateInbo
     name: "ReportInbound",
     service: ReportInboundService,
 });
+
+export const useStoreMasterWeek = createCrudStore<MasterWeek, null, null>({
+    name: "ReportInbound",
+    service: MasterWeekService,
+});
+

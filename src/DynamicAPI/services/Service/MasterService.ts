@@ -36,6 +36,8 @@ import { MasterSupplier, CreateMasterSupplier, UpdateMasterSupplier} from '../..
 import {InventoryMovementListResponse} from '../../types/InventoryMovement.ts'
 import {StockAdjustment, StockAdjustmentCreateRequest} from '../../types/StockAdjustmentTypes.ts'
 
+import { MasterWeek, CreateMasterWeek, UpdateMasterWeek} from '../../types/MasterWeekTypes.ts'
+
 
 // Daftar semua entitas service di sini
 export const uomService = createCrudService<Uom, CreateUom, UpdateUom>("/master-uom");
@@ -77,5 +79,7 @@ export const InventoryVisibilityService = createCrudService<InventoryVisibilityR
 export const MasterSupplierService = createCrudService<MasterSupplier, CreateMasterSupplier, UpdateMasterSupplier>("/master-supplier/attribute7");
 export const InventoryMovementService = createCrudService<InventoryMovementListResponse, null, null>("/inventory-movement");
 export const StockAdjustmentService = createCrudService<StockAdjustment, StockAdjustmentCreateRequest, StockAdjustmentCreateRequest>("/adjustment-stock");
-
 export const ReportInboundService = createCrudService<InboundPlanning, CreateInboundPlanning, UpdateInboundPlanning>("/report/inbound");
+
+export const MasterWeekService = createCrudService<MasterWeek, null, null>("/master-week");
+

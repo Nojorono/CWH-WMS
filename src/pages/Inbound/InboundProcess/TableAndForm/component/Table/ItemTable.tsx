@@ -30,9 +30,6 @@ export default function ItemTable({
 }) {
   const { register } = useFormContext<FormValues>();
 
-  console.log("mapping items", items);
-  console.log("uomList", uomList);
-
   // Cek apakah ada minimal satu quantity_inspection yang terisi
   const showQtyInspection = useMemo(
     () =>
@@ -92,33 +89,6 @@ export default function ItemTable({
             },
           ]
         : []),
-      // {
-      //   accessorKey: "uom",
-      //   header: "UOM",
-      //   cell: ({ row, getValue }: CellContext<ItemForm, unknown>) => {
-      //     const rowIndex = row.index;
-
-      //     return isEditMode ? (
-      //       <select
-      //         className="border px-2 py-1 rounded w-full"
-      //         {...register(
-      //           `deliveryOrders.${doIndex}.pos.${posIndex}.items.${rowIndex}.uom` as const,
-      //           { required: "UoM wajib dipilih" }
-      //         )}
-      //       >
-      //         <option value="">-- Select UoM --</option>
-      //         {uomList.map((u) => (
-      //           <option key={u.id} value={u.code}>
-      //             {u.name}
-      //           </option>
-      //         ))}
-      //       </select>
-      //     ) : (
-      //       <div>{getValue() as string}</div>
-      //     );
-      //   },
-      // },
-
       {
         accessorKey: "uom",
         header: "UOM",

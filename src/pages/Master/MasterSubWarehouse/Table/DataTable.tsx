@@ -217,17 +217,20 @@ const DataTable = () => {
       code,
       description,
       barcode_image_url,
+      is_gate,
     };
 
     if (is_staging === "NO") {
       payload.capacity_bin =
         capacity_bin !== undefined ? Number(capacity_bin) : undefined;
+        payload.is_staging = null
       // is_staging tidak dibawa
     } else {
       payload.is_staging = is_staging;
       // capacity_bin tidak dibawa
     }
 
+    console.log("payload", payload);
     return updateData(id, payload);
   };
 
