@@ -1,7 +1,10 @@
 import React, { useEffect, useMemo } from "react";
 import Select from "react-select";
 import Button from "../../../../components/ui/button/Button";
-import { useStoreBinByZone } from "../../../../DynamicAPI/stores/Store/MasterStore";
+import {
+  useStoreBinByZone,
+  useStoreSubWarehouse,
+} from "../../../../DynamicAPI/stores/Store/MasterStore";
 import { formatDateIndo } from "../../../../helper/FormatDate";
 
 interface HeaderProps {
@@ -39,10 +42,21 @@ export const SuggestionCardHeader: React.FC<HeaderProps> = ({
   const { detail: binDataRaw, fetchById: fetchBINbyZoneId } =
     useStoreBinByZone();
 
-  // Fetch bin list once
+  const { fetchUsingParam, list: lsOutBound } = useStoreSubWarehouse();
+
   useEffect(() => {
-    fetchBINbyZoneId("73b1e685-d258-440b-b3cf-d66f34dd8187");
-  }, [fetchBINbyZoneId]);
+    fetchUsingParam({
+      is_staging: "OUTBOUND",
+    });
+  }, [fetchUsingParam]);
+
+  useEffect(() => {
+    if (lsOutBound && lsOutBound.length > 0) {
+      const zoneId = lsOutBound[0].id;
+
+      fetchBINbyZoneId(zoneId);
+    }
+  }, [lsOutBound, fetchBINbyZoneId]);
 
   // Convert API data -> Select options
   const binOptions = useMemo(() => {
