@@ -32,7 +32,7 @@ import {
   MasterClassification,
   MasterVehicle,
   MasterZone,
-  // MasterBin,
+  MasterWeek,
   MasterSource,
   MasterSupplier,
   Inventory,
@@ -169,6 +169,7 @@ export function AppRoutes() {
       "/master_vehicle": <MasterVehicle />,
       "/master_zone": <MasterZone />,
       "/master_source": <MasterSource />,
+      "/master_week": <MasterWeek />,
       "/main_inventory": <Inventory />,
       "/memo": <Memo />,
       "/outbound_do": <OutboundDO />,
@@ -183,7 +184,6 @@ export function AppRoutes() {
       "/report_inbound": <Reporting />,
       "/reporting2": <Reporting1 />,
       "/reporting3": <Reporting2 />,
-
     };
     return map[path] || <DefaultPage />;
   };

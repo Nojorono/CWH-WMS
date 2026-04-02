@@ -36,6 +36,8 @@ import MasterClassification from "../pages/Master/MasterClassification";
 import MasterVehicle from "../pages/Master/MasterVehicle";
 import MasterAMO from "../pages/Master/MasterAMO";
 import MasterSubdist from "../pages/Master/MasterSubdist";
+import MasterWeek from "../pages/Master/MasterWeek";
+
 
 // MASTER ZONE
 import MasterZone from "../pages/Master/MasterSubWarehouse";
@@ -88,6 +90,7 @@ export {
   MasterVehicle,
   MasterAMO,
   MasterSubdist,
+  MasterWeek,
 
   // PAGE MASTER ZONE
   MasterZone,
