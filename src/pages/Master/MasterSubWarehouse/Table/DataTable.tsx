@@ -52,7 +52,8 @@ const DataTable = () => {
         header: "Organization",
         cell: ({ row }: { row: { original: any } }) => {
           const org = ioList.find(
-            (item: any) => item.organization_id === row.original.organization_id
+            (item: any) =>
+              item.organization_id === row.original.organization_id,
           );
           return org ? org.organization_name : row.original.organization_id;
         },
@@ -62,7 +63,7 @@ const DataTable = () => {
         header: "Warehouse",
         cell: ({ row }: { row: { original: any } }) => {
           const wh = Warehouse.find(
-            (item: any) => item.id === row.original.warehouse_id
+            (item: any) => item.id === row.original.warehouse_id,
           );
           return wh ? wh.name : row.original.warehouse_id;
         },
@@ -88,7 +89,7 @@ const DataTable = () => {
         },
       },
     ],
-    [ioList, Warehouse]
+    [ioList, Warehouse],
   );
 
   const formFields = [
@@ -195,7 +196,6 @@ const DataTable = () => {
     return createData(payload);
   };
 
-  // Fungsi untuk format payload update
   const handleUpdate = (data: any) => {
     const {
       id,
@@ -220,14 +220,20 @@ const DataTable = () => {
       is_gate,
     };
 
-    if (is_staging === "NO") {
+    // PRIORITAS 1: kalau gate → capacity_bin null
+    if (is_gate === true) {
+      payload.capacity_bin = null;
+      payload.is_staging = null; // optional, biar konsisten
+    }
+    // PRIORITAS 2: staging logic
+    else if (is_staging === "NO") {
       payload.capacity_bin =
         capacity_bin !== undefined ? Number(capacity_bin) : undefined;
-        payload.is_staging = null
-      // is_staging tidak dibawa
-    } else {
+      payload.is_staging = null;
+    }
+    // PRIORITAS 3: staging selain NO
+    else {
       payload.is_staging = is_staging;
-      // capacity_bin tidak dibawa
     }
 
     console.log("payload", payload);
