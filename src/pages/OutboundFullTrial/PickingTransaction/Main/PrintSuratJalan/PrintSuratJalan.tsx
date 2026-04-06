@@ -14,6 +14,9 @@ const PrintSuratJalan = () => {
   const stateAny = location.state as any;
   const params = stateAny?.params ?? stateAny?.data ?? stateAny ?? undefined;
 
+  console.log("params print SJ", params);
+  
+
   const { fetchById, detail } = useStoreOutboundDeliveryOrder();
 
   // State

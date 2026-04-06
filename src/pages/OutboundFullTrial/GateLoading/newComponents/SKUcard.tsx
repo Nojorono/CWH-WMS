@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from "react";
 import { submitGateLoadingSKU } from "../helper/submitGateLoadingSKU";
 import { showErrorToast } from "../../../../components/toast";
+import Swal from "sweetalert2";
 
 const SKUCard = ({ sku, pallet, memo, doData, canEdit, onRefresh }: any) => {
   // Logic Qty Picking gabungan dari komponen lama
@@ -40,8 +41,52 @@ const SKUCard = ({ sku, pallet, memo, doData, canEdit, onRefresh }: any) => {
   const [qty, setQty] = useState(qtyPicking);
   const [submitting, setSubmitting] = useState(false);
 
+  // const handleLoadItem = async () => {
+  //   if (!canEdit || isAlreadySubmitted) return;
+  //   try {
+  //     setSubmitting(true);
+  //     const payload = {
+  //       assigned_gate_id: doData.assigned_gate_id,
+  //       outbound_do_id: doData.do_id,
+  //       outbound_memo_id: memo.memo_id,
+  //       pallet_id: pallet.pallet_id,
+  //       item_id: sku.item_id,
+  //       uom: sku.uom,
+  //       quantity_picked: qtyPicking,
+  //       quantity_loaded: qty,
+  //       quantity_unloaded: qtyPicking - qty,
+  //       status: "PENDING" as const,
+  //       production_date: sku.production_date,
+  //       week_number: sku.week_number,
+  //     };
+  //     await submitGateLoadingSKU(payload);
+  //     onRefresh();
+  //   } catch (err) {
+  //     showErrorToast("Gagal submit SKU");
+  //   } finally {
+  //     setSubmitting(false);
+  //   }
+  // };
+
   const handleLoadItem = async () => {
     if (!canEdit || isAlreadySubmitted) return;
+
+    // 1. Tampilkan Konfirmasi
+    const result = await Swal.fire({
+      title: 'Konfirmasi Simpan',
+      text: "Apakah Anda yakin ingin memproses data ini?",
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Ya, Submit!',
+      cancelButtonText: 'Batal'
+    });
+
+    // 2. Jika User klik "Batal" atau klik luar, hentikan eksekusi
+    if (!result.isConfirmed) return;
+
+    // 3. Jika "Yes", lanjutkan proses submit
     try {
       setSubmitting(true);
       const payload = {
@@ -58,7 +103,8 @@ const SKUCard = ({ sku, pallet, memo, doData, canEdit, onRefresh }: any) => {
         production_date: sku.production_date,
         week_number: sku.week_number,
       };
-      await submitGateLoadingSKU(payload);
+
+      await submitGateLoadingSKU(payload);      
       onRefresh();
     } catch (err) {
       showErrorToast("Gagal submit SKU");
@@ -66,8 +112,6 @@ const SKUCard = ({ sku, pallet, memo, doData, canEdit, onRefresh }: any) => {
       setSubmitting(false);
     }
   };
-
-  // UNTUK SKU YANG BELUM TER_SUMBIT LOADING MAKA URUTKAN PALING ATAS/AWAL
 
   return (
     <div
@@ -107,14 +151,6 @@ const SKUCard = ({ sku, pallet, memo, doData, canEdit, onRefresh }: any) => {
                   {finalQtyLoaded}
                 </div>
               ) : (
-                // <input
-                //   type="number"
-                //   value={qty}
-                //   onChange={(e) => setQty(Number(e.target.value))}
-                //   disabled={!canEdit || submitting}
-                //   className="w-full h-12 bg-white border-2 border-slate-200 rounded-xl px-4 text-center font-black text-2xl focus:border-orange-500 focus:ring-0 transition-all outline-none"
-                // />
-
                 // Cari bagian input type="number" dan ubah menjadi seperti ini:
                 <input
                   type="number"
