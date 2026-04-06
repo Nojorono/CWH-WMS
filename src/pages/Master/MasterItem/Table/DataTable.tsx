@@ -155,12 +155,6 @@ const DataTable = () => {
       validation: { required: "Required" },
     },
     {
-      name: "dus_per_stack",
-      label: "Dus per Stack",
-      type: "number",
-      validation: { required: "Required" },
-    },
-    {
       name: "bal_per_dus",
       label: "Bal per Dus",
       type: "number",

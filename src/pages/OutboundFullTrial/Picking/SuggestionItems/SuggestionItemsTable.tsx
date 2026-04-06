@@ -134,8 +134,6 @@ export const SuggestionItemsTable: React.FC<TableProps> = ({
     RawSuggestion[]
   >([]);
 
-  console.log("Items in Table Suggestion:", items);
-
   // const normalizeItems = (items: Item[]): Item[] => {
   //   const result: Item[] = [];
 
