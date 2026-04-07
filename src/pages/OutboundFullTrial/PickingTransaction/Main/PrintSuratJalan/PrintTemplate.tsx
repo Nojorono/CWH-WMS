@@ -58,6 +58,7 @@ const PrintTemplate = React.forwardRef<
   while (paddedItems.length < MIN_ROWS) {
     paddedItems.push({ nama: "", qtyValue: 0, uom: "" });
   }
+  const storedFullName = localStorage.getItem("full_name");
 
   return (
     <div
@@ -161,9 +162,7 @@ const PrintTemplate = React.forwardRef<
       <div className="text-[11px] mt-10">
         <div className="flex justify-between items-center mb-1">
           <p className="">Diterima Tgl :</p>
-          <p className="">
-            {formatDateIndo(memo.delivery_date)}
-          </p>
+          <p className="">{formatDateIndo(memo.delivery_date)}</p>
         </div>
         <div className="grid grid-cols-3 border border-black">
           <div className="border-r border-black h-24 flex flex-col justify-between p-1">
@@ -176,7 +175,7 @@ const PrintTemplate = React.forwardRef<
           </div>
           <div className="h-24 flex flex-col justify-between p-1">
             <p className="text-center">Gudang Pengirim,</p>
-            <div className="w-full border-t border-black/20 mt-auto"></div>
+            <div className="w-full border-t border-black/20 mt-auto">{storedFullName}</div>
           </div>
         </div>
       </div>

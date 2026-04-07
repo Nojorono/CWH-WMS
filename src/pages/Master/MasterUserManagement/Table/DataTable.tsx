@@ -67,15 +67,6 @@ const DataTable = () => {
     return updateData(id, payload);
   };
 
-  const columns = useMemo(
-    () => [
-      { accessorKey: "name", header: "Name" },
-      { accessorKey: "phone", header: "Phone" },
-      { accessorKey: "roleName", header: "Role" },
-    ],
-    []
-  );
-
   const formFields = [
     {
       name: "name",
@@ -99,6 +90,15 @@ const DataTable = () => {
       ],
     },
   ];
+
+  const columns = useMemo(
+    () => [
+      { accessorKey: "name", header: "Name" },
+      { accessorKey: "phone", header: "Phone" },
+      { accessorKey: "roleName", header: "Role" },
+    ],
+    [],
+  );
 
   return (
     <>

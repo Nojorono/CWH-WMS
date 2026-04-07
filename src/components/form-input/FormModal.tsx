@@ -20,6 +20,7 @@ export type FormField = {
     | "checkbox"
     | "radio"
     | "password"
+    | "phone"
     | "username";
   options?: OptionType[];
   validation?: {
