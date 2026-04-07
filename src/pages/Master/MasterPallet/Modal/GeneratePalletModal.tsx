@@ -22,7 +22,7 @@ const initialFormState = {
   organization_id: "",
   capacity: 100,
   isActive: true,
-  uom: "PCS",
+  uom: "DUS",
 };
 
 const GeneratePalletModal: React.FC<GeneratePalletModalProps> = ({
@@ -224,7 +224,7 @@ const GeneratePalletModal: React.FC<GeneratePalletModalProps> = ({
                     onChange={handleChange}
                     className="w-4 h-4 text-blue-600"
                   />
-                  Yes, Active
+                  Yes
                 </label>
                 <label className="flex items-center gap-2 cursor-pointer text-sm font-medium">
                   <input
@@ -235,7 +235,7 @@ const GeneratePalletModal: React.FC<GeneratePalletModalProps> = ({
                     onChange={handleChange}
                     className="w-4 h-4 text-blue-600"
                   />
-                  No, Inactive
+                  No
                 </label>
               </div>
             </div>
