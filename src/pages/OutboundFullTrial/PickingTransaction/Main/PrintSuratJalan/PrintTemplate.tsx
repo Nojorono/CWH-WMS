@@ -47,10 +47,6 @@ const PrintTemplate = React.forwardRef<
     });
   });
 
-  // Format string untuk kolom Total (misal: "200 DUS, 50 BAL")
-  // const totalQtyString = Object.entries(totalsByUom)
-  //   .map(([uom, total]) => `${total} ${uom}`)
-  //   .join(", ");
   const FIXED_UOMS = ["DUS", "BAL", "PRESS", "BKS"];
   const totalQtyString = FIXED_UOMS.map(
     (uom) => `${totalsByUom[uom] ?? 0} ${uom}`,
