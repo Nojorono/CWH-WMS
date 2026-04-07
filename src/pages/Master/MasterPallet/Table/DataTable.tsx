@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from "react";
-import { FaBarcode, FaPlus, FaPrint, FaQrcode } from "react-icons/fa";
+import { FaBarcode, FaPlus, FaPrint, FaQrcode, FaRocket } from "react-icons/fa";
 import Input from "../../../../components/form/input/InputField";
 import Label from "../../../../components/form/Label";
 import Button from "../../../../components/ui/button/Button";
@@ -12,6 +12,7 @@ import {
 } from "../../../../DynamicAPI/stores/Store/MasterStore";
 import PrintBarcodeModal from "../Modal/PrintBarcodeModal";
 import { showErrorToast } from "../../../../components/toast";
+import GeneratePalletModal from "../Modal/GeneratePalletModal";
 
 const DataTable = () => {
   const {
@@ -32,6 +33,7 @@ const DataTable = () => {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [isPrintModalOpen, setPrintModalOpen] = useState(false);
   const [selectedPallets, setSelectedPallets] = useState<any[]>([]);
+  const [isGenerateModalOpen, setGenerateModalOpen] = useState(false); // 🔑 State baru
 
   useEffect(() => {
     fetchPallet();
@@ -206,6 +208,14 @@ const DataTable = () => {
             </Button>
 
             <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => setGenerateModalOpen(true)}
+            >
+              <FaRocket className="mr-2" /> Generate Pallet
+            </Button>
+
+            <Button
               variant="primary"
               size="sm"
               onClick={handlePrintBarcode}
@@ -241,6 +251,14 @@ const DataTable = () => {
         onClose={() => setPrintModalOpen(false)}
         items={selectedPallets}
         useQRCode={true} // true kalau QR, false kalau barcode
+      />
+
+      <GeneratePalletModal
+        isOpen={isGenerateModalOpen}
+        onClose={() => setGenerateModalOpen(false)}
+        onSuccess={fetchPallet}
+        organizations={IoList}
+        uoms={uomList}
       />
     </>
   );
