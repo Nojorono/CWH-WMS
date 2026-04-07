@@ -20,7 +20,7 @@ export type FormField = {
     | "checkbox"
     | "radio"
     | "password"
-    | "username"; // ← NEW
+    | "username";
   options?: OptionType[];
   validation?: {
     required?: boolean | string;

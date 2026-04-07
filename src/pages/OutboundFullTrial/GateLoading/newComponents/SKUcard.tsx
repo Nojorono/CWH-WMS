@@ -41,33 +41,6 @@ const SKUCard = ({ sku, pallet, memo, doData, canEdit, onRefresh }: any) => {
   const [qty, setQty] = useState(qtyPicking);
   const [submitting, setSubmitting] = useState(false);
 
-  // const handleLoadItem = async () => {
-  //   if (!canEdit || isAlreadySubmitted) return;
-  //   try {
-  //     setSubmitting(true);
-  //     const payload = {
-  //       assigned_gate_id: doData.assigned_gate_id,
-  //       outbound_do_id: doData.do_id,
-  //       outbound_memo_id: memo.memo_id,
-  //       pallet_id: pallet.pallet_id,
-  //       item_id: sku.item_id,
-  //       uom: sku.uom,
-  //       quantity_picked: qtyPicking,
-  //       quantity_loaded: qty,
-  //       quantity_unloaded: qtyPicking - qty,
-  //       status: "PENDING" as const,
-  //       production_date: sku.production_date,
-  //       week_number: sku.week_number,
-  //     };
-  //     await submitGateLoadingSKU(payload);
-  //     onRefresh();
-  //   } catch (err) {
-  //     showErrorToast("Gagal submit SKU");
-  //   } finally {
-  //     setSubmitting(false);
-  //   }
-  // };
-
   const handleLoadItem = async () => {
     if (!canEdit || isAlreadySubmitted) return;
 
