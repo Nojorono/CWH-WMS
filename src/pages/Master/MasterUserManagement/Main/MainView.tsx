@@ -96,14 +96,14 @@ const DataTable = () => {
   const formFields = [
     {
       name: "name",
-      label: "User Name",
+      label: "Name",
       type: "text",
       validation: { required: "Name is required" },
     },
     {
       name: "phone",
       label: "Phone Number",
-      type: "text",
+      type: "phone",
       validation: { required: "Phone is required" },
     },
     {
@@ -164,7 +164,7 @@ const DataTable = () => {
       {/* Search & Add Action */}
       <div className="p-4 bg-white shadow rounded-lg flex justify-between items-center">
         <div className="flex flex-col w-64">
-          <Label htmlFor="search">Quick Search</Label>
+          <Label htmlFor="search">Search</Label>
           <Input
             id="search"
             value={search}
