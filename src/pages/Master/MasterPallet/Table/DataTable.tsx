@@ -65,7 +65,6 @@ const DataTable = () => {
       currentQuantity: Number(rest.currentQuantity),
     });
   };
-  
 
   const columns = useMemo(
     () => [
@@ -79,7 +78,8 @@ const DataTable = () => {
         header: "Organization",
         cell: ({ row }: { row: { original: any } }) => {
           const org = IoList.find(
-            (item: any) => item.organization_id === row.original.organization_id
+            (item: any) =>
+              item.organization_id === row.original.organization_id,
           );
           return org ? org.organization_name : row.original.organization_id;
         },
@@ -117,7 +117,7 @@ const DataTable = () => {
         },
       },
     ],
-    [IoList, uomList]
+    [IoList, uomList],
   );
 
   const formFields = [
@@ -159,6 +159,16 @@ const DataTable = () => {
       ],
       validation: { required: "Required" },
     },
+    {
+      name: "isActive",
+      label: "Active",
+      type: "radio",
+      options: [
+        { label: "Yes", value: "true" },
+        { label: "No", value: "false" },
+      ],
+      validation: { required: "Required" },
+    },
   ];
 
   const handlePrintBarcode = () => {
@@ -167,7 +177,7 @@ const DataTable = () => {
       return;
     }
     const selected = pallet.filter(
-      (p) => typeof p.id === "string" && selectedIds.includes(p.id)
+      (p) => typeof p.id === "string" && selectedIds.includes(p.id),
     );
     setSelectedPallets(selected);
     setPrintModalOpen(true); // buka modal preview
