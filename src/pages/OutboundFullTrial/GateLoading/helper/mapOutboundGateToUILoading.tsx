@@ -62,6 +62,7 @@ export interface UIGateAssignedGateLoad {
   item_id: string;
   quantity_loaded: number;
   status: string;
+  uom: string;
 }
 
 export interface UIMemo {
@@ -226,6 +227,7 @@ export function mapOutboundGateToUILoading(
           item_id: l?.item_id ?? "",
           quantity_loaded: l?.quantity_loaded ?? 0,
           status: l?.status ?? "PENDING",
+          uom: l?.uom ?? "",
         }),
       ),
 
