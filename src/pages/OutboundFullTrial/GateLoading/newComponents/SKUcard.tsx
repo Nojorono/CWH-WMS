@@ -199,7 +199,6 @@ const SKUCard = ({
         </div>
 
         {/* FOOTER ACTION */}
-        {/* FOOTER ACTION */}
         <div className="mt-6">
           {!canEdit ? (
             <div className="flex items-center justify-center gap-3 py-4 bg-amber-50 text-amber-700 text-xs font-black rounded-2xl border border-amber-200 uppercase tracking-wider">
