@@ -68,6 +68,7 @@ export default defineConfig({
 
   server: {
     open: "/signin",
+    host: true,
     proxy: {
       "/api": {
         target: "http://10.0.29.49:9000",
