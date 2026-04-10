@@ -1,8 +1,5 @@
 import React, { useMemo, useState } from "react";
 import {
-  FaCheck,
-  FaTruck,
-  FaUserFriends,
   FaBoxOpen,
   FaChevronDown,
 } from "react-icons/fa";
@@ -102,7 +99,11 @@ export const DODetailPanel: React.FC<{
       {/* --- TOP INFO CARD (HEADER) --- 
           Dioptimalkan menjadi grid yang lebih rapat untuk landscape 1200px height
       */}
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-3 grid grid-cols-5 gap-2 items-center sticky top-0 z-30">
+      {/* 
+          Meningkatkan z-index ke z-50 agar selalu di atas header memo (z-40).
+          Menambahkan shadow-md agar terlihat terpisah dari list saat scrolling.
+      */}
+      <div className="bg-white rounded-xl shadow-md border border-slate-200 p-3 grid grid-cols-5 gap-2 items-center sticky top-0 z-50">
         <div>
           <p className="text-[8px] font-black text-slate-400 uppercase">Gate</p>
           <h2 className="text-lg font-black text-indigo-700 leading-none">
@@ -162,7 +163,7 @@ export const DODetailPanel: React.FC<{
         </div>
       </div>
 
-      {/* --- LIST MEMO --- */}
+      {/* --- LIST MEMO SECTION --- */}
       <div className="grid grid-cols-1 gap-4">
         {doData.memos.map((memo: any) => {
           const isOpen = openMemoId === memo.memo_id;
@@ -175,16 +176,24 @@ export const DODetailPanel: React.FC<{
           return (
             <div
               key={memo.memo_id}
-              className={`transition-all duration-200 rounded-2xl border ${
+              className={`transition-all duration-200 rounded-2xl border relative ${
                 isOpen
                   ? "bg-white border-indigo-300 shadow-lg"
                   : "bg-slate-50 border-slate-200"
               }`}
             >
-              <button
-                onClick={() => toggleMemo(memo.memo_id)}
-                className="w-full flex items-center justify-between p-4 focus:outline-none"
-              >
+              {/* 
+                  STACKED STICKY:
+                  Membuat header memo ikut sticky. top-[72px] adalah estimasi tinggi Info Card + 2px gap.
+                  z-40 memastikan ini di bawah Info Card (z-50) tapi di atas list SKU.
+              */}
+              <div className="icky top-[80px] z-40 rounded-t-2xl">
+                {/* Spacer 2px untuk menciptakan jarak visual saat menempel di bawah header utama */}
+                <div className="absolute -top-[2px] left-0 right-0 h-[2px] bg-slate-100" />
+                <button
+                  onClick={() => toggleMemo(memo.memo_id)}
+                  className={`w-full flex items-center justify-between p-4 focus:outline-none rounded-t-2xl ${isOpen ? "bg-white" : "bg-slate-50"}`}
+                >
                 <div className="flex items-center gap-4 text-left">
                   <div
                     className={`p-3 rounded-xl ${isOpen ? "bg-indigo-600 text-white" : "bg-white text-slate-400 shadow-sm"}`}
@@ -220,7 +229,8 @@ export const DODetailPanel: React.FC<{
                   size={16}
                   className={`transition-transform ${isOpen ? "rotate-180 text-indigo-600" : "text-slate-300"}`}
                 />
-              </button>
+                </button>
+              </div>
 
               {isOpen && (
                 <div className="p-4 border-t border-slate-50">

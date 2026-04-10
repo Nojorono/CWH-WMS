@@ -8,6 +8,7 @@ import DynamicTable from "../../../../components/wms-components/DynamicTable";
 import {
   useStoreUser,
   useStoreSubWarehouse,
+  useStoreIo,
 } from "../../../../DynamicAPI/stores/Store/MasterStore";
 import { useRoleStore } from "../../../../API/store/MasterStore";
 import { EndPoint } from "../../../../utils/EndPoint";
@@ -17,6 +18,7 @@ const DataTable = () => {
   const { list: subWarehouseList, fetchAll: fetchSubWarehouses } =
     useStoreSubWarehouse();
   const { fetchRoles, roles } = useRoleStore();
+  const { list: IoList, fetchAll: fetchIO } = useStoreIo();
 
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounce(search, 500);
@@ -32,6 +34,7 @@ const DataTable = () => {
     fetchAll();
     fetchRoles();
     fetchSubWarehouses();
+    fetchIO();
   }, []);
 
   const gateRoleId = useMemo(() => {
@@ -54,6 +57,17 @@ const DataTable = () => {
 
   const formFields = useMemo(
     () => [
+      {
+        name: "organizationId",
+        label: "Organization / IO",
+        type: "select",
+        options:
+          IoList?.map((io: any) => ({
+            label: io.organization_name,
+            value: io.organization_id,
+          })) || [],
+        validation: { required: "Required" },
+      },
       {
         name: "username",
         label: "Username",
@@ -118,7 +132,7 @@ const DataTable = () => {
         options: gateZoneOptions,
         validation: { required: "Required" },
         hiddenWhen: (values: any) => {
-          if (!values.roleId || !gateRoleId) return true;
+          if (!values?.roleId || !gateRoleId) return true;
           return String(values.roleId) !== String(gateRoleId);
         },
       },
@@ -126,21 +140,30 @@ const DataTable = () => {
         name: "isActive",
         label: "is Active?",
         type: "checkbox",
+        onlyUpdate: true, // Penanda bahwa ini hanya untuk mode update
       },
     ],
     [roles, gateZoneOptions, gateRoleId],
   );
 
+  // Filter untuk Modal CREATE (Password muncul, IsActive hilang)
+  const createFormFields = useMemo(
+    () => formFields.filter((f) => !f.onlyUpdate),
+    [formFields],
+  );
+
+  // Filter untuk Modal UPDATE (Password hilang, IsActive muncul)
   const updateFormFields = useMemo(
     () => formFields.filter((f) => f.name !== "password"),
     [formFields],
   );
 
   const handleCreate = (data: any) => {
-    const { zoneId, ...rest } = data;
+    const { zoneId, organizationId, ...rest } = data;
     const payload = {
       ...rest,
       roleId: Number(data.roleId),
+      organizationId: Number(organizationId),
       warehouseSubId:
         String(data.roleId) === String(gateRoleId) ? data.zoneId : null,
     };
@@ -149,7 +172,7 @@ const DataTable = () => {
   };
 
   const handleUpdate = (data: any): Promise<any> => {
-    const { id, zoneId, ...rest } = data;
+    const { id, zoneId, organizationId, ...rest } = data;
     if (!id) return Promise.reject(new Error("ID is required"));
 
     const payload = Object.fromEntries(
@@ -161,6 +184,7 @@ const DataTable = () => {
         email: rest.email,
         isActive: rest.isActive,
         roleId: rest.roleId ? Number(rest.roleId) : undefined,
+        organizationId: Number(organizationId),
         warehouseSubId:
           String(rest.roleId) === String(gateRoleId) ? zoneId : undefined,
       }).filter(([_, v]) => v !== undefined && v !== null && v !== ""),
@@ -212,6 +236,7 @@ const DataTable = () => {
 
   const columns = useMemo(
     () => [
+      { accessorKey: "organizationId", header: "Organization" },
       { accessorKey: "username", header: "Username" },
       { accessorKey: "firstName", header: "First Name" },
       { accessorKey: "lastName", header: "Last Name" },
@@ -246,8 +271,11 @@ const DataTable = () => {
     email: user.userDetail?.email ?? "",
     phone: user.userDetail?.phone ?? "",
     employeeId: user.userDetail?.employee_id ?? "",
-    organizationId: user.userDetail?.organizationId ?? "",
+    organizationId: user.userDetail?.organization_id ?? "",
   });
+
+  console.log("mapUserToFlat", mapUserToFlat);
+  
 
   // Tambahkan mapping saat render
   const mappedUserData = useMemo(
@@ -284,7 +312,7 @@ const DataTable = () => {
         isCreateModalOpen={isCreateModalOpen}
         onCloseCreateModal={() => setCreateModalOpen(false)}
         columns={columns}
-        formFields={formFields}
+        formFields={createFormFields}
         updateFormFields={updateFormFields}
         onSubmit={handleCreate}
         onUpdate={handleUpdate}

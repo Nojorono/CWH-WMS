@@ -399,21 +399,27 @@ const ModalForm: React.FC<ModalFormProps> = ({
         >
           {[left, right].map((group, gIdx) => (
             <div key={gIdx} className="space-y-4">
-              {group.map((field) => (
-                <div key={field.name}>
-                  {field.type !== "checkbox" && (
-                    <label className="block text-sm font-semibold text-gray-700 mb-1">
-                      {field.label}
-                    </label>
-                  )}
-                  {renderField(field)}
-                  {errors[field.name] && (
-                    <p className="text-red-500 text-xs mt-1">
-                      {(errors[field.name] as any).message}
-                    </p>
-                  )}
-                </div>
-              ))}
+              {group.map((field) => {
+                // 1. TAMBAHKAN PENGECEKAN DI SINI
+                const isHidden = field.hiddenWhen?.(values);
+                if (isHidden) return null; // Jika hidden, maka satu blok div ini tidak dirender
+
+                return (
+                  <div key={field.name}>
+                    {field.type !== "checkbox" && (
+                      <label className="block text-sm font-semibold text-gray-700 mb-1">
+                        {field.label}
+                      </label>
+                    )}
+                    {renderField(field)}
+                    {errors[field.name] && (
+                      <p className="text-red-500 text-xs mt-1">
+                        {(errors[field.name] as any).message}
+                      </p>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           ))}
         </div>
