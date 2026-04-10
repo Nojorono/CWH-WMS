@@ -7,10 +7,23 @@ import {
 } from "../../../../DynamicAPI/stores/Store/MasterStore";
 import Select from "../../../../components/form/Select";
 
+interface ItemData {
+  item_id: string;
+  sku: string;
+  item_number: string;
+  item_name: string;
+  quantity_plan: number;
+  uom_id: string;
+  uom_name: string;
+  classification_id: string;
+  classification_name: string;
+  notes: string;
+}
+
 type Props = {
   open: boolean;
   onClose: () => void;
-  onSubmit: (item: any) => void;
+  onSubmit: (item: ItemData) => void;
 };
 
 const ModalAddItem: React.FC<Props> = ({ open, onClose, onSubmit }) => {
@@ -61,7 +74,7 @@ const ModalAddItem: React.FC<Props> = ({ open, onClose, onSubmit }) => {
     }
     setErrors({});
 
-    const itemData = {
+    const itemData: ItemData = {
       item_id: selectedItem?.id ?? "",
       sku: selectedItem?.sku ?? "",
       item_number: selectedItem?.item_number ?? "",

@@ -9,6 +9,7 @@ import { useStoreOutboundMemo } from "../../../../DynamicAPI/stores/Store/Master
 import { ActionIcon } from "../Helper/ActionIcon ";
 import { formatDateIndo } from "../../../../helper/FormatDate";
 import { EndPoint } from "../../../../utils/EndPoint";
+import { getCurrentRole } from "../../../../utils/rolePermissions";
 
 type MemoData = {
   outbound_do: any;
@@ -55,7 +56,7 @@ const AdjustTable = ({
   filteredHasDO,
 }: MenuTableProps) => {
   const navigate = useNavigate();
-  const roleName = localStorage.getItem("role_name") || "";
+  const roleName = getCurrentRole() || "";
   const { fetchUsingPagination, list, pagination } = useStoreOutboundMemo();
 
   // 🔹 Sinkronisasi dengan URL Search Params

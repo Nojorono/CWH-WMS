@@ -1,0 +1,56 @@
+export type ItemForm = {
+    id: any;
+    qty_plan: number;
+    item_id?: any;
+    item_name: string;
+    sku: string;
+    item_number?: string;
+    description?: string;
+    qty?: number | "";
+    uom?: string;
+    classification?: string;
+    expired_date?: string | null;
+    quantity_inspection?: any;
+};
+
+export type POSForm = {
+    // Untuk PO
+    po_no?: string;
+    po_date?: string;
+
+    // Untuk SO
+    so_no?: string;
+    so_date?: string;
+
+    items: ItemForm[];
+    flag_validated?: boolean;
+
+    vendor_name?: string;
+    principal?: string;
+};
+
+export type DOForm = {
+    do_no: string;
+    date?: string;
+    attachment?: string;
+    pos: POSForm[];  // ✅ ganti dari POForm ke POSForm
+    validation_surat_jalan?: boolean;
+    flag_validated?: boolean;
+};
+
+export type FormValues = {
+    id: any;
+    inbound_plan_no?: string;
+    inbound_type: string | { value: string; label: string };
+    expedition?: string | { value: string; label: string };
+    driver?: string;
+    no_pol?: string;
+    origin?: string;
+    destination?: string;
+    driver_phone?: string;
+    arrival_date?: string;
+    deliveryOrders: DOForm[];
+    flag_validated?: boolean;
+    integration_status?: string;
+
+};
