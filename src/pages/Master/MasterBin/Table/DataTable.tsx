@@ -13,6 +13,7 @@ import {
 } from "../../../../DynamicAPI/stores/Store/MasterStore";
 import PrintBarcodeModal from "../Modal/PrintBarcodeModal";
 import { showErrorToast } from "../../../../components/toast";
+import { showConfirmDialog } from "../../../../components/swal-confirm";
 
 interface DataTableProps {
   params?: {
@@ -60,7 +61,8 @@ const DataTable: React.FC<DataTableProps> = ({ params }) => {
         header: "Organization",
         cell: ({ row }: any) => {
           const org = ioList.find(
-            (item: any) => item.organization_id === row.original.organization_id
+            (item: any) =>
+              item.organization_id === row.original.organization_id,
           );
           return org ? org.organization_name : row.original.organization_id;
         },
@@ -70,7 +72,7 @@ const DataTable: React.FC<DataTableProps> = ({ params }) => {
         header: "Zone",
         cell: ({ row }: any) => {
           const subWh = subWHList.find(
-            (item: any) => item.id === row.original.warehouse_sub_id
+            (item: any) => item.id === row.original.warehouse_sub_id,
           );
           return subWh ? subWh.name : row.original.warehouse_sub_id;
         },
@@ -80,30 +82,10 @@ const DataTable: React.FC<DataTableProps> = ({ params }) => {
       { accessorKey: "description", header: "Deskripsi" },
       { accessorKey: "capacity_pallet", header: "Kapasitas Pallet" },
     ],
-    [ioList, subWHList]
+    [ioList, subWHList],
   );
 
   const formFields = [
-    // {
-    //   name: "organization_id",
-    //   label: "Organization",
-    //   type: "select",
-    //   options: ioList.map((item: any) => ({
-    //     label: item.organization_name,
-    //     value: item.organization_id,
-    //   })),
-    //   validation: { required: "Required" },
-    // },
-    // {
-    //   name: "warehouse_sub_id",
-    //   label: "Zone",
-    //   type: "select",
-    //   options: subWHList.map((item: any) => ({
-    //     label: item.name,
-    //     value: item.id,
-    //   })),
-    //   validation: { required: "Required" },
-    // },
     {
       name: "name",
       label: "Nama Bin",
@@ -183,15 +165,29 @@ const DataTable: React.FC<DataTableProps> = ({ params }) => {
       return;
     }
     const selected = binList.filter(
-      (p) => typeof p.id === "string" && selectedIds.includes(p.id)
+      (p) => typeof p.id === "string" && selectedIds.includes(p.id),
     );
     setSelectedBin(selected);
     setPrintModalOpen(true); // buka modal preview
   };
 
-  const handleDelete = async (id: string) => {
-    console.log("Deleting id:", id);
-    await deleteData(id);
+  const handleDelete = (id: number) => {
+    showConfirmDialog(
+      async () => {
+        try {
+          await deleteData(id);
+          fetchAll();
+        } catch (error) {
+          console.error(error);
+        }
+      },
+      {
+        title: "Confirm Delete",
+        text: "Anda yakin ingin menghapus data ini?",
+        confirmButtonText: "Yes, Delete!",
+        cancelButtonText: "No, Cancel",
+      },
+    );
   };
 
   const filteredBinList = useMemo(() => {
@@ -244,7 +240,9 @@ const DataTable: React.FC<DataTableProps> = ({ params }) => {
         formFields={formFields}
         onSubmit={handleCreate}
         onUpdate={handleUpdate}
-        onDelete={handleDelete}
+        onDelete={async (id) => {
+          handleDelete(id);
+        }}
         onRefresh={fetchAll}
         getRowId={(row) => row.id}
         title="Form UOM"

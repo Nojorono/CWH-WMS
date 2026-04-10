@@ -11,6 +11,7 @@ import {
 } from "../../../../DynamicAPI/stores/Store/MasterStore";
 import { showErrorToast, showSuccessToast } from "../../../../components/toast";
 import { EndPoint } from "../../../../utils/EndPoint";
+import { showConfirmDialog } from "../../../../components/swal-confirm";
 
 const DataTable = () => {
   const {
@@ -80,7 +81,7 @@ const DataTable = () => {
             accept: "*/*",
             Authorization: `Bearer ${token}`,
           },
-        }
+        },
       );
       if (!response.ok) {
         throw new Error("Failed to fetch item from Meta Oracle");
@@ -104,7 +105,8 @@ const DataTable = () => {
         header: "Organization",
         cell: ({ row }: any) => {
           const org = ioList.find(
-            (item: any) => item.organization_id === row.original.organization_id
+            (item: any) =>
+              item.organization_id === row.original.organization_id,
           );
           return org ? org.organization_name : row.original.organization_id;
         },
@@ -116,7 +118,7 @@ const DataTable = () => {
       { accessorKey: "bks_per_press", header: "Bks/Press" },
       { accessorKey: "btg_per_bks", header: "Btg/Bks" },
     ],
-    []
+    [],
   );
 
   const formFields = [
@@ -180,6 +182,25 @@ const DataTable = () => {
     },
   ];
 
+  const handleDelete = (id: number) => {
+    showConfirmDialog(
+      async () => {
+        try {
+          await deleteData(id);
+          fetchAll();
+        } catch (error) {
+          console.error(error);
+        }
+      },
+      {
+        title: "Confirm Delete",
+        text: "Anda yakin ingin menghapus data ini?",
+        confirmButtonText: "Yes, Delete!",
+        cancelButtonText: "No, Cancel",
+      },
+    );
+  };
+
   return (
     <>
       <div className="p-4 bg-white shadow rounded-md mb-5">
@@ -234,7 +255,7 @@ const DataTable = () => {
           onSubmit={handleCreate}
           onUpdate={handleUpdate}
           onDelete={async (id) => {
-            await deleteData(id);
+            handleDelete(id);
           }}
           onRefresh={fetchAll}
           getRowId={(row) => row.id}

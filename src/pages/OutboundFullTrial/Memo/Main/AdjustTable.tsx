@@ -10,6 +10,7 @@ import { ActionIcon } from "../Helper/ActionIcon ";
 import { formatDateIndo } from "../../../../helper/FormatDate";
 import { EndPoint } from "../../../../utils/EndPoint";
 import { getCurrentRole } from "../../../../utils/rolePermissions";
+import { showConfirmDialog } from "../../../../components/swal-confirm";
 
 type MemoData = {
   outbound_do: any;
@@ -156,31 +157,42 @@ const AdjustTable = ({
   };
 
   const handleDelete = async (id: string) => {
-    try {
-      const token = localStorage.getItem("token");
-      if (!token) return;
+    showConfirmDialog(
+      async () => {
+        try {
+          const token = localStorage.getItem("token");
+          if (!token) return;
 
-      const url = `${EndPoint}outbound-memo/${id}/cancelled`;
-      const res = await fetch(url, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
+          const url = `${EndPoint}outbound-memo/${id}/cancelled`;
+          const res = await fetch(url, {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          });
 
-      if (res.ok && fetchUsingPagination) {
-        fetchUsingPagination({
-          page: currentPage,
-          limit: pageSize,
-          search: globalFilter || "",
-          status: filteredStatus || "",
-          sortOrder: "DESC",
-        });
-      }
-    } catch (error) {
-      console.error("Error cancelling memo:", error);
-    }
+          if (res.ok && fetchUsingPagination) {
+            fetchUsingPagination({
+              page: currentPage,
+              limit: pageSize,
+              search: globalFilter || "",
+              status: filteredStatus || "",
+              sortOrder: "DESC",
+            });
+          }
+        } catch (error) {
+          console.error("Error cancelling memo:", error);
+        }
+      },
+      {
+        title: "Cancel Memo",
+        text: "Apakah Anda yakin ingin membatalkan memo ini?",
+        icon: "warning",
+        confirmButtonText: "Ya, Cancel Memo!",
+        cancelButtonText: "Tidak, Batalkan",
+      },
+    );
   };
 
   const canEditMemo = (memo: MemoData, roleName: string) => {

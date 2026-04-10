@@ -20,9 +20,10 @@ import { EndPoint } from "../../../../utils/EndPoint";
 import { useCustomerByOutboundType } from "./FetchCustomer";
 import Select from "../../../../components/form/Select";
 import { FaArrowLeft, FaCheck, FaSearch, FaUndo } from "react-icons/fa";
-import Swal from "sweetalert2";
 import { formatDateIndo } from "../../../../helper/FormatDate";
 import { searchSO } from "../Main/SOSearchService";
+import { showConfirmDialog } from "../../../../components/swal-confirm";
+
 
 // ✅ Tambahkan selected_destination
 type MemoFormValues = {
@@ -340,45 +341,52 @@ const CreateMemo: React.FC = () => {
       return;
     }
 
-    const username = localStorage.getItem("username");
+    // Tampilkan konfirmasi sebelum hit API
+    showConfirmDialog(
+      async () => {
+        const username = localStorage.getItem("username");
+        const payload = {
+          requestor: username,
+          origin: "CWH",
+          destination: data.ship_to,
+          ship_to: data.address,
+          delivery_date: formatDateIndo(data.delivery_date),
+          notes: data.notes,
+          status: "PENDING",
+          type: data.type_outbound?.value || "",
+          outbound_memo_items: items.map((i) => ({
+            item_id: i.item_id,
+            quantity_plan: Number(i.quantity_plan ?? 0),
+            uom: i.uom ?? i.uom_name ?? "",
+          })),
+        };
 
-    // ✅ Build only required schema
-    const payload = {
-      requestor: username,
-      origin: "CWH",
-      destination: data.ship_to,
-      ship_to: data.address,
-      delivery_date: formatDateIndo(data.delivery_date),
-      notes: data.notes,
-      status: "PENDING",
-      type: data.type_outbound?.value || "",
-      outbound_memo_items: items.map((i) => ({
-        item_id: i.item_id,
-        quantity_plan: Number(i.quantity_plan ?? 0),
-        uom: i.uom ?? i.uom_name ?? "",
-      })),
-    };
+        try {
+          let res: any = null;
+          if (isEdit && memoId) {
+            res = await updateData(memoId, payload as any);
+          } else {
+            res = await createData(payload as any);
+          }
 
-    try {
-      let res: any = null;
-      if (isEdit && memoId) {
-        res = await updateData(memoId, payload as any);
-      } else {
-        res = await createData(payload as any);
+          if (res && res.success) {
+            methods.reset();
+            setItems([]);
+            navigate("/memo");
+          } else {
+            showErrorToast(res?.message || "Operation failed");
+          }
+        } catch (err: any) {
+          console.error("Submit error:", err);
+          showErrorToast("Gagal menyimpan data.");
+        }
+      },
+      {
+        title: isEdit ? "Konfirmasi Update?" : "Simpan Memo?",
+        text: "Pastikan semua data item dan tujuan sudah benar.",
+        confirmButtonText: "Ya, Simpan",
       }
-
-      // createData/updateData dari store mengembalikan objek { success: boolean, message?: string }
-      if (res && res.success) {
-        methods.reset();
-        setItems([]);
-        navigate("/memo");
-      } else {
-        showErrorToast(res?.message || "Operation failed");
-      }
-    } catch (err: any) {
-      console.error("Submit error:", err);
-      showErrorToast("Gagal menyimpan data.");
-    }
+    );
   };
 
   const columnsTableItem = [
@@ -439,20 +447,10 @@ const CreateMemo: React.FC = () => {
   ];
 
   const handleReset = () => {
-    // SweetAlert confirmation before resetting the form
-    Swal.fire({
-      title: "Apakah Anda Yakin?",
-      text: "Jika Anda mereset, semua data yang telah Anda masukkan akan hilang!",
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonColor: "#3085d6",
-      cancelButtonColor: "#d33",
-      confirmButtonText: "Ya, reset!",
-    }).then((result) => {
-      if (result.isConfirmed) {
+    showConfirmDialog(
+      () => {
         if (isEdit && detailDataMemo) {
           const dateOnly = formatDateIndo(detailDataMemo.delivery_date);
-
           methods.reset({
             requestor: detailDataMemo.requestor || "",
             origin: detailDataMemo.origin || "",
@@ -461,7 +459,6 @@ const CreateMemo: React.FC = () => {
             delivery_date: dateOnly,
             notes: detailDataMemo.notes || "",
           });
-
           const mappedItems: ItemRow[] = (
             detailDataMemo.outbound_memo_items || []
           ).map((it: any) => ({
@@ -476,10 +473,8 @@ const CreateMemo: React.FC = () => {
               "",
             notes: it.notes ?? "",
           }));
-
           setItems(mappedItems);
         } else {
-          // Mode create → reset semua jadi kosong
           methods.reset({
             requestor: "",
             origin: "",
@@ -490,8 +485,13 @@ const CreateMemo: React.FC = () => {
           });
           setItems([]);
         }
+      },
+      {
+        title: "Reset Form?",
+        text: "Semua data yang telah diinput akan hilang.",
+        confirmButtonText: "Ya, Reset!",
       }
-    });
+    );
   };
 
   const handleApproveMemo = (memoId: string) => {
