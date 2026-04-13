@@ -55,6 +55,9 @@ const DataTable = () => {
   // Regex: Minimal 8 karakter, harus ada minimal 1 huruf dan 1 angka
   const PWD_REGEX = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/;
 
+  console.log("IoList", IoList);
+  
+
   const formFields = useMemo(
     () => [
       {
@@ -64,7 +67,7 @@ const DataTable = () => {
         options:
           IoList?.map((io: any) => ({
             label: io.organization_name,
-            value: io.organization_id,
+            value: io.id,
           })) || [],
         validation: { required: "Required" },
       },
@@ -163,11 +166,10 @@ const DataTable = () => {
     const payload = {
       ...rest,
       roleId: Number(data.roleId),
-      organizationId: Number(organizationId),
+      organizationId: String(organizationId),
       warehouseSubId:
         String(data.roleId) === String(gateRoleId) ? data.zoneId : null,
     };
-
     return createData(payload);
   };
 
@@ -184,7 +186,7 @@ const DataTable = () => {
         email: rest.email,
         isActive: rest.isActive,
         roleId: rest.roleId ? Number(rest.roleId) : undefined,
-        organizationId: Number(organizationId),
+        organizationId: String(organizationId),
         warehouseSubId:
           String(rest.roleId) === String(gateRoleId) ? zoneId : undefined,
       }).filter(([_, v]) => v !== undefined && v !== null && v !== ""),
@@ -236,7 +238,7 @@ const DataTable = () => {
 
   const columns = useMemo(
     () => [
-      { accessorKey: "organizationId", header: "Organization" },
+      { accessorKey: "organizationId", header: "Organization/Io" },
       { accessorKey: "username", header: "Username" },
       { accessorKey: "firstName", header: "First Name" },
       { accessorKey: "lastName", header: "Last Name" },
@@ -271,11 +273,8 @@ const DataTable = () => {
     email: user.userDetail?.email ?? "",
     phone: user.userDetail?.phone ?? "",
     employeeId: user.userDetail?.employee_id ?? "",
-    organizationId: user.userDetail?.organization_id ?? "",
-  });
-
-  console.log("mapUserToFlat", mapUserToFlat);
-  
+    organizationId: user.userDetail?.organizationId ?? "",
+  });  
 
   // Tambahkan mapping saat render
   const mappedUserData = useMemo(
@@ -316,7 +315,7 @@ const DataTable = () => {
         updateFormFields={updateFormFields}
         onSubmit={handleCreate}
         onUpdate={handleUpdate}
-        onDelete={handleHardDelete}
+        // onDelete={handleHardDelete}
         onRefresh={fetchAll}
         getRowId={(row) => row.id}
         title="Form Data User"

@@ -82,7 +82,8 @@ const DynamicTable = ({
                 <FaEdit />
               </button>
             )}
-
+            
+            {/* 
             {isDeleted && (
               <button
                 onClick={() => handleDelete(getRowId(row.original))}
@@ -90,7 +91,7 @@ const DynamicTable = ({
               >
                 <FaTrash />
               </button>
-            )}
+            )} */}
 
             {isView && (
               <button
