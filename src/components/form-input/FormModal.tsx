@@ -31,6 +31,9 @@ export type FormField = {
   };
   info?: string;
   hiddenWhen?: (values: Record<string, any>) => boolean;
+  onChange?: (value: any) => void;
+  placeholder?: string;
+  description?: string;
 };
 
 export type FormValues = Record<string, any>;
@@ -227,15 +230,22 @@ const ModalForm: React.FC<ModalFormProps> = ({
               <Select
                 {...controllerField}
                 options={field.options}
-                placeholder="Select..."
+                placeholder={field.placeholder || "Select..."}
                 classNamePrefix="react-select"
                 value={field.options?.find(
                   (opt) => opt.value === controllerField.value,
                 )}
-                onChange={(opt) => controllerField.onChange(opt?.value ?? "")}
+                // onChange={(opt) => controllerField.onChange(opt?.value ?? "")}
                 isDisabled={isDisabled}
                 styles={{ menuPortal: (base) => ({ ...base, zIndex: 9999 }) }}
                 menuPortalTarget={document.body}
+                onChange={(opt) => {
+                  const value = opt?.value ?? "";
+                  controllerField.onChange(value);
+                  if (typeof (field as any).onChange === "function") {
+                    (field as any).onChange(value);
+                  }
+                }}
               />
             )}
           />
@@ -272,7 +282,7 @@ const ModalForm: React.FC<ModalFormProps> = ({
             }
             className={isDisabled ? disabledCls : inputCls}
             disabled={isDisabled}
-            placeholder="081234567..."
+            placeholder={field.placeholder || "081234567..."}
           />
         );
 
@@ -373,12 +383,18 @@ const ModalForm: React.FC<ModalFormProps> = ({
 
       default:
         return (
-          <input
-            type={field.type}
-            {...register(field.name, field.validation)}
-            className={isDisabled ? disabledCls : inputCls}
-            disabled={isDisabled}
-          />
+          <div>
+            <input
+              type={field.type}
+              {...register(field.name, field.validation)}
+              className={isDisabled ? disabledCls : inputCls}
+              disabled={isDisabled}
+              placeholder={field.placeholder}
+            />
+            {field.description && (
+              <p className="text-xs text-gray-600 mt-1">{field.description}</p>
+            )}
+          </div>
         );
     }
   };

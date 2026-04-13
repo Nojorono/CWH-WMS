@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { use, useEffect, useMemo, useState } from "react";
 import { ColumnDef } from "@tanstack/react-table";
 import { FaEdit } from "react-icons/fa";
 import Button from "../../../components/ui/button/Button";
@@ -11,6 +11,7 @@ import {
   useStoreUserManagement,
   useStoreBulkPutAway,
   useStorePutAway,
+  useStoreUser,
 } from "../../../DynamicAPI/stores/Store/MasterStore";
 import { PutAwaySuggestion } from "../../../DynamicAPI/types/PutAwaySuggestionTypes";
 import ModalSuggestion from "../Modal/ModalSuggestion";
@@ -65,10 +66,8 @@ const PutAwayDetail: React.FC = () => {
   const { list: putAwaySuggestions, fetchAll: fetchPutAwaySuggestions } =
     useStorePutAwaySuggestion();
 
+  const { list: userDevice, fetchAll: fetchUserDevice } = useStoreUser();
   const { list: userList, fetchAll: fetchUserList } = useStoreUserManagement();
-
-  console.log("userList", userList);
-  
 
   const { createBulkData } = useStoreBulkPutAway();
   const { updateData } = useStorePutAway();
@@ -78,19 +77,30 @@ const PutAwayDetail: React.FC = () => {
   const [isAdjustmentOpen, setIsAdjustmentOpen] = useState(false);
   const [selectedRow, setSelectedRow] = useState<PutAwayRow | null>(null);
 
+  // Fetch data awal
   useEffect(() => {
     if (isCreate || isEdit || isDetail) {
       fetchPutAwaySuggestions();
       fetchUserList();
+      fetchUserDevice();
     }
-  }, [isCreate, isEdit, isDetail, fetchPutAwaySuggestions, fetchUserList]);
+  }, [
+    isCreate,
+    isEdit,
+    isDetail,
+    fetchPutAwaySuggestions,
+    fetchUserList,
+    fetchUserDevice,
+  ]);
 
+  // react-hook-form setup
   const {
     control,
     handleSubmit,
     setValue,
     formState: { errors },
     reset,
+    watch,
   } = useForm<DriverFormValues>({
     defaultValues: {
       forkliftDriverId: detailDataPutaway?.forkliftDriverId || "",
@@ -111,6 +121,10 @@ const PutAwayDetail: React.FC = () => {
     }
   }, [detailDataPutaway, reset]);
 
+  // Mapping data tabel
+  // ==============================
+  // 🔹 TABLE DATA (EDIT/CREATE)
+  // ==============================
   useEffect(() => {
     if ((isDetail || isEdit) && detailDataPutaway && userList.length > 0) {
       const palletItems = detailDataPutaway.palletItems || [];
@@ -120,10 +134,10 @@ const PutAwayDetail: React.FC = () => {
           palletId: detailDataPutaway.palletId,
           palletCode: detailDataPutaway.palletCode,
           totalQty: detailDataPutaway.totalQty,
-          uom: detailDataPutaway.uom,
-          week_number: detailDataPutaway.week_number,
-          production_date: detailDataPutaway.production_date,
-          inbound_id: detailDataPutaway.inbound_id,
+          uom: detailDataPutaway.uom, // Added uom
+          week_number: detailDataPutaway.week_number, // Added week_number
+          production_date: detailDataPutaway.production_date, // Added production_date
+          inbound_id: detailDataPutaway.inbound_id, // Added inbound_id
           warehouseName: detailDataPutaway.warehouseSubName,
           stagingArea: detailDataPutaway.warehouseSubName,
           suggestZoneId: detailDataPutaway.destination_bin_id,
@@ -137,16 +151,17 @@ const PutAwayDetail: React.FC = () => {
             detailDataPutaway.destinationWarehouseSubCode,
           destinationBinCode: detailDataPutaway.destinationBinCode,
           destinationWarehouseSubName:
-            detailDataPutaway.destinationWarehouseSubName,
+            detailDataPutaway.destinationWarehouseSubName, // Added destinationWarehouseSubName
         },
       ];
 
       setMappedData(formatted);
 
       const matchedDriver = userList.find(
-        (u: any) => u.id === detailDataPutaway.forkliftDriverId,
+        (u: any) => u.name === detailDataPutaway.driverName,
       );
 
+      // Isi form driver
       setValue("forkliftDriverId", detailDataPutaway.forkliftDriverId);
       setValue("driverId", matchedDriver?.id || "");
       setValue("driverName", detailDataPutaway.driverName);
@@ -165,6 +180,7 @@ const PutAwayDetail: React.FC = () => {
         (suggestion: PutAwaySuggestion) => {
           const staging = suggestion.stagingPallet;
           const palletItems = suggestion.palletItems || [];
+
           const pallet = staging?.pallet;
           const warehouse = staging?.warehouse;
           const stagingArea = staging?.warehouseSub;
@@ -202,9 +218,10 @@ const PutAwayDetail: React.FC = () => {
     detailDataPutaway,
     putAwaySuggestions,
     setValue,
-    userList,
+    userList
   ]);
 
+  // 🟢 Auto-select baris pertama kalau edit
   useEffect(() => {
     if (isEdit && mappedData.length > 0) {
       const firstId = mappedData[0].stagingPalletId;
@@ -212,10 +229,13 @@ const PutAwayDetail: React.FC = () => {
     }
   }, [isEdit, mappedData]);
 
+  // Table columns
   const columns = useMemo<ExtendedColumnDef<PutAwayRow>[]>(() => {
     const cols: ExtendedColumnDef<PutAwayRow>[] = [];
 
+    // === EDIT / DETAIL MODE ===
     if (!isCreate) {
+      // tampilkan hanya jika bukan detail
       if (!isDetail && !isEdit) {
         cols.push({
           accessorKey: "stagingPalletId",
@@ -236,13 +256,17 @@ const PutAwayDetail: React.FC = () => {
         { accessorKey: "destinationBinCode", header: "Destination Bin" },
       );
 
+      // kolom tambahan hanya jika bukan detail
       if (!isDetail) {
         cols.push(
           { accessorKey: "suggestZone", header: "Update Zone" },
           { accessorKey: "suggestBin", header: "Update Bin" },
         );
       }
+
+      // === CREATE MODE ===
     } else {
+      // tampilkan hanya jika bukan detail
       if (!isDetail) {
         cols.push({
           accessorKey: "stagingPalletId",
@@ -258,6 +282,7 @@ const PutAwayDetail: React.FC = () => {
         { accessorKey: "totalQty", header: "Total Qty" },
       );
 
+      // kolom tambahan hanya jika bukan detail
       if (!isDetail) {
         cols.push(
           { accessorKey: "suggestZone", header: "Suggest Zone" },
@@ -266,6 +291,7 @@ const PutAwayDetail: React.FC = () => {
       }
     }
 
+    // tombol action hanya muncul jika bukan detail
     if (!isDetail) {
       cols.push({
         id: "actions",
@@ -286,9 +312,14 @@ const PutAwayDetail: React.FC = () => {
 
   const [tableKey, setTableKey] = useState(0);
 
+  // handleEdit
   const handleEdit = (row: PutAwayRow) => {
+    // kosongkan selected ids
     setSelectedIds([]);
+
+    // paksa remount tabel agar internal selection reset
     setTableKey((k) => k + 1);
+
     setSelectedRow(row);
     setIsAdjustmentOpen(true);
   };
@@ -310,13 +341,39 @@ const PutAwayDetail: React.FC = () => {
     setIsAdjustmentOpen(false);
   };
 
-  // Filter khusus untuk role DRIVER_FORKLIFT dari userList
-  const forkliftDrivers = useMemo(() => {
-    return Array.isArray(userList)
-      ? userList.filter((u: any) => u.role?.name === "DRIVER_FORKLIFT")
+  // Filter user forklift driver
+  const forkliftDriverName =
+    Array.isArray(userList) && userList.length > 0
+      ? userList.filter((u: any) => u.roleName?.toUpperCase() === "DRIVER")
       : [];
-  }, [userList]);
 
+  const driverDevice =
+    Array.isArray(userDevice) && userDevice.length > 0
+      ? userDevice.filter(
+          (u: any) => u.role?.name?.toUpperCase() === "DRIVER_FORKLIFT",
+        )
+      : [];
+
+  const handleDriverDeviceSelect = (val: string) => {
+    const driver = forkliftDriverName.find((d: any) => d.id === val);
+    if (driver) {
+      setValue("forkliftDriverId", driver.id || "");
+    }
+  };
+
+  const handleDriverNameSelect = (val: string) => {
+    const driver = userList.find((d: any) => d.id === val);
+
+    if (driver) {
+      setValue("driverName", driver.name || "");
+      setValue("driverPhone", driver.phone || "");
+    }
+  };
+
+  // Submit handler
+  // ==============================
+  // 🔹 HANDLE SUBMIT
+  // ==============================
   const onSubmit = async (data: DriverFormValues) => {
     if (!data.forkliftDriverId || !data.driverName || !data.driverPhone) {
       showErrorToast("Please fill in all driver fields");
@@ -326,6 +383,7 @@ const PutAwayDetail: React.FC = () => {
     try {
       if (isDetail) return;
 
+      // 🔸 MODE CREATE → bulk create
       if (isCreate) {
         if (selectedIds.length === 0) {
           showErrorToast("Please select at least one pallet!");
@@ -341,41 +399,56 @@ const PutAwayDetail: React.FC = () => {
           return;
         }
 
+        console.log("data PUTAWAY", data);
+
+        const driver = {
+          id: data.forkliftDriverId,
+          name: data.driverName,
+          phone: data.driverPhone,
+        };
+
         const payload = {
           data: mappedData
             .filter((r) => selectedIds.includes(r.stagingPalletId))
             .map((r) => ({
               inventory_tracking_id: r.stagingPalletId,
               destination_bin_id: r.suggestBinId,
-              forklift_driver_id: data.forkliftDriverId,
-              driver_name: data.driverName,
-              driver_phone: data.driverPhone,
+              forklift_driver_id: driver.id,
+              driver_name: driver.name,
+              driver_phone: driver.phone,
               status: "PENDING",
               notes: "",
-              uom: r.palletItemUom,
-              quantity: r.totalQty,
-              week_number: r.week_number,
-              production_date: formatDateIndo(r.production_date),
-              inbound_id: r.inbound_id || "",
+              uom: r.palletItemUom, // Added UoM
+              quantity: r.totalQty, // Added Quantity
+              week_number: r.week_number, // Assuming a function to get the current week number
+              production_date: formatDateIndo(r.production_date), // Added Production Date
+              inbound_id: r.inbound_id || "", // Added Inbound ID
             })),
         };
 
-        console.log("putaway payload", payload);
-
-
-        // if (typeof createBulkData === "function") {
-        //   const res = await createBulkData(payload as any);
-        //   if (res?.success) {
-        //     navigate("/putaway");
-        //   }
-        // }
+        if (typeof createBulkData === "function") {
+          const res = await createBulkData(payload as any);
+          if (res?.success) {
+            navigate("/putaway");
+          }
+        } else {
+          showErrorToast("Put Away creation function is not available.");
+        }
       }
 
+      // 🔸 MODE EDIT → single update
       if (isEdit && detailDataPutaway?.id) {
         const originalBinId = detailDataPutaway.destinationBinId;
         const updatedBinId = mappedData?.[0]?.suggestBinId ?? null;
-        const finalBinId =
-          updatedBinId && updatedBinId !== "-" ? updatedBinId : originalBinId;
+
+        // cek apakah user benar-benar memilih bin baru
+        const binIsEdited =
+          updatedBinId &&
+          updatedBinId !== "-" &&
+          updatedBinId !== originalBinId;
+
+        // final value
+        const finalBinId = binIsEdited ? updatedBinId : originalBinId;
 
         const payload = {
           inventory_tracking_id: detailDataPutaway.inventory_tracking_id,
@@ -385,7 +458,7 @@ const PutAwayDetail: React.FC = () => {
           driver_phone: data.driverPhone,
           status: detailDataPutaway.status || "PENDING",
           notes: detailDataPutaway.notes || "",
-        };   
+        };
 
         const res = await updateData(detailDataPutaway.id, payload);
         if (res?.success) {
@@ -414,44 +487,33 @@ const PutAwayDetail: React.FC = () => {
         onSelectionChange={!isDetail && isCreate ? setSelectedIds : undefined}
       />
 
+      {/* Driver Form */}
       <form
         onSubmit={handleSubmit(onSubmit)}
         className="border rounded-lg p-4 shadow-md space-y-4"
       >
         <h2 className="font-semibold text-lg">Driver Details</h2>
         <div className="grid grid-cols-2 gap-4">
-          {/* Driver Device (Username) */}
+          {/* Forklift Username */}
           <div>
             <label className="block text-sm font-medium mb-1">
-              Username <span className="text-red-500">*</span>
+              Driver Device <span className="text-red-500">*</span>
             </label>
             <Controller
               name="forkliftDriverId"
               control={control}
-              rules={{ required: "Please select a driver device" }}
+              rules={{ required: "Please select a forklift driver" }}
               render={({ field }) => (
                 <>
                   <Select
                     {...field}
-                    placeholder="Select Driver Username"
-                    options={forkliftDrivers.map((d: any) => ({
+                    placeholder="Select Forklift Driver"
+                    options={driverDevice.map((d: any) => ({
                       value: d.id,
                       label: d.username,
                     }))}
                     onChange={(val: string) => {
-                      const selected = forkliftDrivers.find(
-                        (u: any) => u.id === val,
-                      );
-                      if (selected) {
-                        const fullName =
-                          `${selected.userDetail?.firstName || ""} ${selected.userDetail?.lastName || ""}`.trim();
-                        setValue("driverId", selected.id);
-                        setValue("driverName", fullName);
-                        setValue(
-                          "driverPhone",
-                          selected.userDetail?.phone || "",
-                        );
-                      }
+                      handleDriverDeviceSelect(val);
                       field.onChange(val);
                     }}
                     disabled={isDetail}
@@ -467,36 +529,41 @@ const PutAwayDetail: React.FC = () => {
             />
           </div>
 
-          {/* Driver Name (Full Name dari UserDetail) */}
+          {/* Driver Name */}
           <div>
             <label className="block text-sm font-medium mb-1">
               Driver Name <span className="text-red-500">*</span>
             </label>
             <Controller
-              name="driverId"
+              name="driverId" // ⬅️ BUKAN driverName
               control={control}
               rules={{ required: "Driver name is required" }}
               render={({ field }) => (
                 <Select
-                  {...field}
-                  placeholder="Select Driver Name"
-                  options={forkliftDrivers.map((u: any) => ({
-                    value: u.id,
-                    label:
-                      `${u.userDetail?.firstName || ""} ${u.userDetail?.lastName || ""}`.trim(),
+                  placeholder="Select Driver"
+                  options={forkliftDriverName.map((u: any) => ({
+                    value: u.id, // ✅ ID untuk logic
+                    label: u.name, // ✅ NAME untuk UI
                   }))}
-                  onChange={(id: string) => {
-                    const selected = forkliftDrivers.find(
-                      (u: any) => u.id === id,
+                  value={field.value}
+                  onChange={(driverId: string) => {
+                    const driver = forkliftDriverName.find(
+                      (u: any) => u.id === driverId,
                     );
-                    if (selected) {
-                      const fullName =
-                        `${selected.userDetail?.firstName || ""} ${selected.userDetail?.lastName || ""}`.trim();
-                      setValue("forkliftDriverId", selected.id);
-                      setValue("driverName", fullName);
-                      setValue("driverPhone", selected.userDetail?.phone || "");
-                    }
-                    field.onChange(id);
+
+                    if (!driver) return;
+
+                    // 👉 SIMPAN NAME (BUKAN ID)
+                    setValue("driverName", driver.name, {
+                      shouldDirty: true,
+                    });
+
+                    // 👉 AUTO FILL PHONE
+                    setValue("driverPhone", driver.phone || "", {
+                      shouldDirty: true,
+                    });
+
+                    field.onChange(driverId);
                   }}
                   disabled={isDetail}
                   width="100%"
@@ -505,22 +572,37 @@ const PutAwayDetail: React.FC = () => {
             />
           </div>
 
-          {/* Driver Phone - Auto Filled & Read Only */}
-          <div className="col-span-2">
+          {/* Driver Phone - auto filled */}
+          <div>
             <label className="block text-sm font-medium mb-1">
               Driver Phone <span className="text-red-500">*</span>
             </label>
             <Controller
               name="driverPhone"
               control={control}
+              rules={{
+                required: "Driver phone number is required",
+                pattern: {
+                  value: /^[0-9]+$/,
+                  message: "Phone must contain only numbers",
+                },
+              }}
               render={({ field }) => (
-                <input
-                  {...field}
-                  readOnly
-                  type="text"
-                  placeholder="Auto-filled phone number"
-                  className="border p-2 rounded w-full bg-gray-100 cursor-not-allowed"
-                />
+                <>
+                  <input
+                    {...field}
+                    disabled={true}
+                    type="text"
+                    className={`border p-2 rounded w-full ${
+                      errors.driverPhone ? "border-red-500" : ""
+                    }`}
+                  />
+                  {errors.driverPhone && (
+                    <p className="text-red-500 text-sm mt-1">
+                      {errors.driverPhone.message}
+                    </p>
+                  )}
+                </>
               )}
             />
           </div>

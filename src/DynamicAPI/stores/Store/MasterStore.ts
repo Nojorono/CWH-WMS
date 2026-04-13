@@ -233,10 +233,16 @@ export const useStorePickingAssignHelper = createCrudStore<PickingAssignHelper, 
     service: PickingAssignHelperService,
 });
 
-export const useStoreUserManagement = createCrudStore<UserManagement, CreateUserManagement, UpdateUserManagement>({
+// export const useStoreUserManagement = createCrudStore<UserManagement, CreateUserManagement, UpdateUserManagement>({
+//     name: "UserManagement",
+//     service: UserManagementService,
+// });
+
+export const useStoreUserManagement = createCrudStore<User, CreateUser, UpdateUser>({
     name: "UserManagement",
     service: UserManagementService,
 });
+
 
 export const useStorePickingSuggestionItem = createCrudStore<PickingSuggestionItem, CreatePickingSuggestionItem, UpdatePickingSuggestionItem>({
     name: "PickingSuggestionItem",

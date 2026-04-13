@@ -34,6 +34,8 @@ const DataTable = () => {
   const [isPrintModalOpen, setPrintModalOpen] = useState(false);
   const [selectedPallets, setSelectedPallets] = useState<any[]>([]);
   const [isGenerateModalOpen, setGenerateModalOpen] = useState(false); // 🔑 State baru
+  const [selectedOrgName, setSelectedOrgName] = useState("");
+  console.log("Selected Organization Name:", selectedOrgName);
 
   useEffect(() => {
     fetchPallet();
@@ -42,9 +44,17 @@ const DataTable = () => {
   }, []);
 
   const handleCreate = async (data: any) => {
+    // 1. Cari nama organisasi dari list yang ada
+    const selectedOrg = IoList.find(
+      (item: any) => String(item.id) === String(data.organization_id),
+    );
+    const orgName = selectedOrg ? selectedOrg.organization_name : "";
+
     const formattedData = {
-      organization_id: Number(data.organization_id),
-      pallet_code: String(data.pallet_code),
+      ...data,
+      pallet_code: orgName
+        ? `${data.pallet_code}-${orgName}`
+        : data.pallet_code,
       capacity: Number(data.capacity),
       isActive: true,
       isFull: false,
@@ -57,9 +67,22 @@ const DataTable = () => {
 
   const handleUpdate = (data: any) => {
     const { id, ...rest } = data;
+
+    const selectedOrg = IoList.find(
+      (item: any) => String(item.id) === String(rest.organization_id),
+    );
+    const orgName = selectedOrg ? selectedOrg.organization_name : "";
+
+    let baseCode = String(rest.pallet_code);
+    if (orgName && baseCode.endsWith(`-${orgName}`)) {
+      baseCode = baseCode.replace(`-${orgName}`, "");
+    }
+
+    const finalPalletCode = orgName ? `${baseCode}-${orgName}` : baseCode;
+
     return updateData(id, {
-      organization_id: Number(rest.organization_id),
-      pallet_code: String(rest.pallet_code),
+      organization_id: rest.organization_id, // Gunakan format asli (string/UUID) sesuai API
+      pallet_code: finalPalletCode,
       capacity: Number(rest.capacity),
       isActive: rest.isActive === "true" || rest.isActive === true,
       isFull: rest.isFull === "true" || rest.isFull === true,
@@ -122,56 +145,73 @@ const DataTable = () => {
     [IoList, uomList],
   );
 
-  const formFields = [
-    {
-      name: "organization_id",
-      label: "Organization",
-      type: "select",
-      options: [
-        { label: "--Select--", value: "" },
-        ...IoList.map((item: any) => ({
-          label: item.organization_name,
-          value: item.organization_id,
-        })),
-      ],
-      validation: { required: "Required" },
-    },
-    {
-      name: "pallet_code",
-      label: "Pallet Code",
-      type: "text",
-      validation: { required: "Required" },
-    },
-    {
-      name: "capacity",
-      label: "Capacity",
-      type: "number",
-      validation: { required: "Required" },
-    },
-    {
-      name: "uom",
-      label: "UOM",
-      type: "select",
-      options: [
-        { label: "--Select--", value: "" },
-        ...uomList.map((item: any) => ({
-          label: item.name,
-          value: item.name,
-        })),
-      ],
-      validation: { required: "Required" },
-    },
-    {
-      name: "isActive",
-      label: "Active",
-      type: "radio",
-      options: [
-        { label: "Yes", value: "true" },
-        { label: "No", value: "false" },
-      ],
-      validation: { required: "Required" },
-    },
-  ];
+  const dynamicFormFields = useMemo(() => {
+    return [
+      {
+        name: "organization_id",
+        label: "Organization",
+        type: "select",
+        options: [
+          { label: "--Select--", value: "" },
+          ...IoList.map((item: any) => ({
+            label: item.organization_name,
+            value: item.id,
+          })),
+        ],
+        validation: { required: "Required" },
+        onChange: (e: any) => {
+          const val = e?.target ? e.target.value : e;
+          const org = IoList.find(
+            (item: any) => String(item.id) === String(val),
+          );
+          if (org) {
+            setSelectedOrgName(org.organization_name);
+          } else {
+            setSelectedOrgName("");
+            console.log("tak ada org_name");
+          }
+        },
+      },
+      {
+        name: "pallet_code",
+        label: `Pallet Code ${selectedOrgName ? `- ${selectedOrgName}` : ""}`,
+        type: "text",
+        placeholder: "Masukkan kode pallet...",
+        description:
+          "Format akhir akan otomatis menjadi: pallet_code + organization_name",
+        validation: { required: "Required" },
+      },
+      {
+        name: "capacity",
+        label: "Capacity",
+        type: "number",
+        validation: { required: "Required" },
+      },
+      {
+        name: "uom",
+        label: "UOM",
+        type: "select",
+        options: [
+          { label: "--Select--", value: "" },
+          ...uomList.map((item: any) => ({
+            label: item.name,
+            value: item.name,
+          })),
+        ],
+        validation: { required: "Required" },
+      },
+      {
+        name: "isActive",
+        label: "Active",
+        type: "radio",
+        options: [
+          { label: "Yes", value: "true" },
+          { label: "No", value: "false" },
+        ],
+        validation: { required: "Required" },
+      },
+    ];
+  }, [IoList, selectedOrgName, uomList]);
 
   const handlePrintBarcode = () => {
     if (selectedIds.length === 0) {
@@ -233,7 +273,7 @@ const DataTable = () => {
         isCreateModalOpen={isCreateModalOpen}
         onCloseCreateModal={() => setCreateModalOpen(false)}
         columns={columns}
-        formFields={formFields}
+        formFields={dynamicFormFields}
         onSubmit={handleCreate}
         onUpdate={handleUpdate}
         onDelete={async (id) => {

@@ -82,7 +82,14 @@ const DynamicTable = ({
                 <FaEdit />
               </button>
             )}
-            
+
+            {/* <button
+              className="text-green-600"
+              onClick={() => console.log(row.original)}
+            >
+              <FaEdit />
+            </button> */}
+
             {/* 
             {isDeleted && (
               <button

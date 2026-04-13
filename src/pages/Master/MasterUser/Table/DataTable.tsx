@@ -53,10 +53,7 @@ const DataTable = () => {
   }, [subWarehouseList]);
 
   // Regex: Minimal 8 karakter, harus ada minimal 1 huruf dan 1 angka
-  const PWD_REGEX = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/;
-
-  console.log("IoList", IoList);
-  
+  const PWD_REGEX = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/;  
 
   const formFields = useMemo(
     () => [
@@ -315,7 +312,7 @@ const DataTable = () => {
         updateFormFields={updateFormFields}
         onSubmit={handleCreate}
         onUpdate={handleUpdate}
-        // onDelete={handleHardDelete}
+        // onDelete={()}
         onRefresh={fetchAll}
         getRowId={(row) => row.id}
         title="Form Data User"
@@ -364,7 +361,7 @@ const DataTable = () => {
                     value={newPassword}
                     onChange={(e) => {
                       setNewPassword(e.target.value);
-                      if (passwordError) setPasswordError(""); // Hapus error saat user mengetik ulang
+                      if (passwordError) setPasswordError("");
                     }}
                   />
                   <button
