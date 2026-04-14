@@ -15,6 +15,7 @@ interface GeneratePalletModalProps {
 }
 
 const initialFormState = {
+  id: "",
   prefix: "PAL-",
   start: 1,
   end: 10,
@@ -58,20 +59,37 @@ const GeneratePalletModal: React.FC<GeneratePalletModalProps> = ({
     e.preventDefault();
     setLoading(true);
 
-    if (!formData.organization_id) {
+    // Gunakan formData.id (UUID) sebagai validasi
+    if (!formData.id) {
       showErrorToast("Silakan pilih Organization terlebih dahulu.");
       setLoading(false);
       return;
     }
 
+    // 1. Cari nama organisasi berdasarkan UUID (id)
+    const selectedOrg = organizations.find(
+      (org) => String(org.id) === String(formData.id),
+    );
+    const orgName = selectedOrg ? selectedOrg.organization_name : "";
+
+    // 2. Modifikasi prefix agar Nama Organisasi berada di DEPAN
+    const finalPrefix = orgName
+      ? `${orgName}-${formData.prefix}`
+      : formData.prefix;
+
+    const { id, ...rest } = formData;
+
     const payload = {
-      ...formData,
-      organization_id: Number(formData.organization_id),
+      ...rest,
+      prefix: finalPrefix,
+      organization_id: formData.id, // 🔑 Kirim UUID (dari formData.id) ke API
       start: Number(formData.start),
       end: Number(formData.end),
       padding: Number(formData.padding),
       capacity: Number(formData.capacity),
     };
+
+    console.log("create bulk pallet", payload);
 
     showConfirmDialog(
       async () => {
@@ -81,7 +99,7 @@ const GeneratePalletModal: React.FC<GeneratePalletModalProps> = ({
             payload,
           );
           showSuccessToast(
-            `Berhasil generate pallet dari ${formData.start} sampai ${formData.end}`,
+            `Berhasil generate pallet dari ${finalPrefix}${String(formData.start).padStart(formData.padding, "0")} sampai ${finalPrefix}${String(formData.end).padStart(formData.padding, "0")}`,
           );
           onSuccess();
           onClose();
@@ -95,12 +113,60 @@ const GeneratePalletModal: React.FC<GeneratePalletModalProps> = ({
       },
       {
         title: "Confirm Generate",
-        text: `Apakah anda ingin generate pallet dari ${formData.prefix}${String(formData.start).padStart(formData.padding, "0")} sampai ${formData.prefix}${String(formData.end).padStart(formData.padding, "0")}?`,
+        text: `Apakah anda ingin generate pallet dari ${finalPrefix}${String(formData.start).padStart(formData.padding, "0")} sampai ${finalPrefix}${String(formData.end).padStart(formData.padding, "0")}?`,
         confirmButtonText: "Yes, Generate!",
         cancelButtonText: "No, Cancel",
       },
     );
   };
+
+  // const handleSubmit = async (e: React.FormEvent) => {
+  //   e.preventDefault();
+  //   setLoading(true);
+
+  //   if (!formData.organization_id) {
+  //     showErrorToast("Silakan pilih Organization terlebih dahulu.");
+  //     setLoading(false);
+  //     return;
+  //   }
+
+  //   const payload = {
+  //     ...formData,
+  //     organization_id: Number(formData.organization_id),
+  //     start: Number(formData.start),
+  //     end: Number(formData.end),
+  //     padding: Number(formData.padding),
+  //     capacity: Number(formData.capacity),
+  //   };
+
+  //   showConfirmDialog(
+  //     async () => {
+  //       try {
+  //         await axiosInstance.post(
+  //           `${EndPoint}master-pallet/generate-range`,
+  //           payload,
+  //         );
+  //         showSuccessToast(
+  //           `Berhasil generate pallet dari ${formData.start} sampai ${formData.end}`,
+  //         );
+  //         onSuccess();
+  //         onClose();
+  //       } catch (error: any) {
+  //         showErrorToast(
+  //           error.response?.data?.message || "Gagal generate pallet",
+  //         );
+  //       } finally {
+  //         setLoading(false);
+  //       }
+  //     },
+  //     {
+  //       title: "Confirm Generate",
+  //       text: `Apakah anda ingin generate pallet dari ${formData.prefix}${String(formData.start).padStart(formData.padding, "0")} sampai ${formData.prefix}${String(formData.end).padStart(formData.padding, "0")}?`,
+  //       confirmButtonText: "Yes, Generate!",
+  //       cancelButtonText: "No, Cancel",
+  //     },
+  //   );
+  // };
 
   const inputClass =
     "w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all text-sm";
@@ -132,15 +198,15 @@ const GeneratePalletModal: React.FC<GeneratePalletModalProps> = ({
             <div className="md:col-span-2">
               <label className={labelClass}>Organization</label>
               <select
-                name="organization_id"
+                name="id"
                 required
-                value={formData.organization_id}
+                value={formData.id}
                 onChange={handleChange}
                 className={inputClass}
               >
                 <option value="">-- Select Organization --</option>
                 {organizations.map((org) => (
-                  <option key={org.organization_id} value={org.organization_id}>
+                  <option key={org.id} value={org.id}>
                     {org.organization_name}
                   </option>
                 ))}

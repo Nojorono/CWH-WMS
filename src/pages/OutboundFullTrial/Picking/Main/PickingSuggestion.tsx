@@ -21,7 +21,6 @@ import {
   FaTasks,
   FaUsers,
 } from "react-icons/fa";
-import SuggestionTable from "../Table/SuggestionPicking/SuggestionTable";
 import ModalPickingList from "../Modal/ModalPickingList";
 import ModalAssignHelper from "../Modal/ModalAssignHelper";
 import TabsSection from "../../../../components/wms-components/inbound-component/tabs/TabsSection";

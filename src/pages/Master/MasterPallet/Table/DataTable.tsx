@@ -44,7 +44,6 @@ const DataTable = () => {
   }, []);
 
   const handleCreate = async (data: any) => {
-    // 1. Cari nama organisasi dari list yang ada
     const selectedOrg = IoList.find(
       (item: any) => String(item.id) === String(data.organization_id),
     );
@@ -52,8 +51,9 @@ const DataTable = () => {
 
     const formattedData = {
       ...data,
+      // Format baru: ORG-PALLET (Contoh: CWH-PAL-001)
       pallet_code: orgName
-        ? `${data.pallet_code}-${orgName}`
+        ? `${orgName}-${data.pallet_code}`
         : data.pallet_code,
       capacity: Number(data.capacity),
       isActive: true,
@@ -74,14 +74,23 @@ const DataTable = () => {
     const orgName = selectedOrg ? selectedOrg.organization_name : "";
 
     let baseCode = String(rest.pallet_code);
-    if (orgName && baseCode.endsWith(`-${orgName}`)) {
-      baseCode = baseCode.replace(`-${orgName}`, "");
+
+    // Logika Pembersihan: Hapus orgName lama jika ada di depan atau di belakang
+    if (orgName) {
+      // Hapus jika ada di depan (Format baru)
+      if (baseCode.startsWith(`${orgName}-`)) {
+        baseCode = baseCode.replace(`${orgName}-`, "");
+      }
+      // Hapus jika ada di belakang (Jaga-jaga data lama)
+      if (baseCode.endsWith(`-${orgName}`)) {
+        baseCode = baseCode.replace(`-${orgName}`, "");
+      }
     }
 
-    const finalPalletCode = orgName ? `${baseCode}-${orgName}` : baseCode;
+    const finalPalletCode = orgName ? `${orgName}-${baseCode}` : baseCode;
 
     return updateData(id, {
-      organization_id: rest.organization_id, // Gunakan format asli (string/UUID) sesuai API
+      organization_id: rest.organization_id,
       pallet_code: finalPalletCode,
       capacity: Number(rest.capacity),
       isActive: rest.isActive === "true" || rest.isActive === true,
@@ -174,11 +183,12 @@ const DataTable = () => {
       },
       {
         name: "pallet_code",
-        label: `Pallet Code ${selectedOrgName ? `- ${selectedOrgName}` : ""}`,
+        label: `Pallet Code ${selectedOrgName ? `(${selectedOrgName}- ...)` : ""}`,
         type: "text",
         placeholder: "Masukkan kode pallet...",
-        description:
-          "Format akhir akan otomatis menjadi: pallet_code + organization_name",
+        description: selectedOrgName
+          ? `Hasil akhir: ${selectedOrgName}-[inputan_anda]`
+          : "Pilih organisasi dlu untuk melihat format prefix.",
         validation: { required: "Required" },
       },
       {
