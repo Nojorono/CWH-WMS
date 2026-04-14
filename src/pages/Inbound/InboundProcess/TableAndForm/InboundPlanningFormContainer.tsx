@@ -187,7 +187,6 @@ export default function InboundPlanningFormContainer() {
     let apiAction = null;
 
     if (isCreateMode) {
-      console.log("Create Payload:", payload);
       apiAction = () => createData(payload);
     } else if (isEditMode && id) {
       apiAction = () => updateData(id, payload);
@@ -196,8 +195,6 @@ export default function InboundPlanningFormContainer() {
         ...payload,
         inbound_id_reference: id,
       };
-
-      console.log("Add to Receive Payload:", addToReceivePayload);
       apiAction = () => createData(addToReceivePayload);
     }
 

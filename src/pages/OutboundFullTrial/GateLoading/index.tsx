@@ -30,8 +30,6 @@ const GateLoadingPage = () => {
     [assignedGateList, selectedDOId],
   );
 
-  console.log("activeDO", activeDO);
-
   const sortedGateList = useMemo(() => {
     return [...assignedGateList].sort((a, b) => {
       const aFinished = isGateLoadComplete(a);

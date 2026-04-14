@@ -151,8 +151,6 @@ const FormDetailUser: React.FC<FormDetailUserProps> = ({
   };
 
   const onSubmit = async (data: any) => {
-    console.log("log", user_login.employee_id);
-
     const validToIso = data.valid_to
       ? toIsoPreserveDate(new Date(data.valid_to))
       : "";

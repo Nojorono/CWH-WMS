@@ -22,15 +22,9 @@ export const SuggestionItemLocation: React.FC<SuggestionTableProps> = ({
   const [isLoadingFetch, setLoadingFetch] = useState<boolean>(false);
   const [dataSuggestion, setDataSuggestion] = useState<any[]>([]);
 
-  console.log("dataSuggestion:", dataSuggestion);
+  const handleEdit = (item: any) => {};
 
-  const handleEdit = (item: any) => {
-    console.log("Edit item:", item);
-  };
-
-  const handleAddItem = (item: any) => {
-    console.log("Add item:", item);
-  };
+  const handleAddItem = (item: any) => {};
 
   const fetchPickingSuggestionById = async () => {
     const memoId = memoDetail.id; // Ambil memo_id dari memoDetail.id
@@ -54,7 +48,7 @@ export const SuggestionItemLocation: React.FC<SuggestionTableProps> = ({
         throw new Error("Network response was not ok");
       }
 
-      const data = await response.json();      
+      const data = await response.json();
       setDataSuggestion(data.data);
       setLoadingFetch(false);
     } catch (error) {

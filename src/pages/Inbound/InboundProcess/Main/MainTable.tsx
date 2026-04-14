@@ -17,9 +17,7 @@ const MainTable = () => {
   const [globalFilter, setGlobalFilter] = useState<string>("");
   const debouncedFilter = useDebounce(globalFilter, 500);
 
-  const handleDetail = (id: any) => {
-    console.log(`Navigating to detail page for ID: ${id}`);
-  };
+  const handleDetail = (id: any) => {};
 
   const handleCreate = () => {
     navigate("/inbound_planning/process", {

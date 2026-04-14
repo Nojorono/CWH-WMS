@@ -44,9 +44,6 @@ const Reporting = () => {
 
   // ================= 1. FETCHING LOGIC =================
   useEffect(() => {
-    console.log("startDate", startDate);
-    console.log("endDate", endDate);
-
     if (fetchUsingPagination) {
       fetchUsingPagination({
         page: currentPage,

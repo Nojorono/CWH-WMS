@@ -102,9 +102,6 @@ export const useAuthStore = create<AuthState>((set) => ({
       const menus = resData.menus || [];
       const permissions = resData.permissions || [];
 
-      console.log("login resData", resData);
-
-
       // Simpan ke localStorage
       localStorage.setItem(
         "user_login_data",

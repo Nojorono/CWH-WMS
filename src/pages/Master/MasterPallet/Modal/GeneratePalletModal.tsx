@@ -89,8 +89,6 @@ const GeneratePalletModal: React.FC<GeneratePalletModalProps> = ({
       capacity: Number(formData.capacity),
     };
 
-    console.log("create bulk pallet", payload);
-
     showConfirmDialog(
       async () => {
         try {

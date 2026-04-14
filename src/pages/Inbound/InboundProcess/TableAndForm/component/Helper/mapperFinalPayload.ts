@@ -11,8 +11,6 @@ import { showErrorToast } from "../../../../../../components/toast";
  */
 export function mapToPayload(data: FormValues): CreateInboundPlanning {
 
-    console.log("Mapping to payload with data:", data);
-
     const inboundType =
         typeof data.inbound_type === "string"
             ? data.inbound_type

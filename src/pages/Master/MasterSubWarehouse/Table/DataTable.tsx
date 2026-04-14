@@ -236,8 +236,6 @@ const DataTable = () => {
     else {
       payload.is_staging = is_staging;
     }
-
-    console.log("payload", payload);
     return updateData(id, payload);
   };
 

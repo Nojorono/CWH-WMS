@@ -55,8 +55,6 @@ const DataTable = () => {
       const response = await axiosInstance.get(
         `master-week/sync-from-meta-oracle/${currentYear}`,
       );
-
-      console.log("response", response);
     } catch (error) {
       console.error("Error fetching data:", error);
     } finally {

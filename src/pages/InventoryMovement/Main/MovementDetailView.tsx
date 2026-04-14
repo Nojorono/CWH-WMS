@@ -16,7 +16,6 @@ const MovementDetailView = ({
   data: any;
   onBack: () => void;
 }) => {
-  
   // State untuk Modal
   const viewOnly = data?.viewOnly === true;
   const addOnly = data?.addOnly === true;
@@ -113,7 +112,6 @@ const MovementDetailView = ({
     };
 
     try {
-      console.log("Submitting payload:", payload);
       await updateData(data.id, payload as any);
       onBack();
     } catch (error) {

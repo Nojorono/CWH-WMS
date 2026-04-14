@@ -162,7 +162,6 @@ const AdjustTable = ({
   };
 
   const handleAddToReceive = (data: any) => {
-    console.log("Add data:", data);
     navigate("/inbound_planning/process", {
       state: { data, mode: "add", title: "Add Inbound Planning" },
     });

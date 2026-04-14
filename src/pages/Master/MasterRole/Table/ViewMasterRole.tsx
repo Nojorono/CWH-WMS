@@ -9,7 +9,7 @@ import { usePagePermissions } from "../../../../utils/UserPermission/UserPagePer
 
 const TableMasterRole = () => {
   const navigate = useNavigate();
-  const { canCreate, canManage } = usePagePermissions();  
+  const { canCreate, canManage } = usePagePermissions();
   const { fetchRoles, roles, deleteRole } = useRoleStore();
   const [globalFilter, setGlobalFilter] = useState<string>("");
 
@@ -17,14 +17,11 @@ const TableMasterRole = () => {
     fetchRoles();
   }, []);
 
-  const handleDetail = (id: number) => {
-    console.log(`Detail role with ID: ${id}`);
-  };
+  const handleDetail = (id: number) => {};
 
   const handleDelete = async (id: number) => {
     try {
       await deleteRole(id);
-      console.log(`Role with ID: ${id} has been deleted.`);
       fetchRoles(); // Refresh the roles list after deletion
     } catch (error) {
       console.error(`Failed to delete role with ID: ${id}`, error);

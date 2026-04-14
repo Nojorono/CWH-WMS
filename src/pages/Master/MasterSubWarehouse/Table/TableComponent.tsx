@@ -44,12 +44,10 @@ const DynamicTable = ({
 
   const handleDelete = useCallback(
     async (id: any) => {
-      console.log("Deleting id:", id);
-      
       await onDelete(id);
       await onRefresh();
     },
-    [onDelete, onRefresh]
+    [onDelete, onRefresh],
   );
 
   const handleCloseModal = () => {
@@ -79,7 +77,7 @@ const DynamicTable = ({
               <FaEye />
             </button>
 
-             <button
+            <button
               onClick={() => handleDelete(getRowId(row.original))}
               className="text-red-500"
             >
@@ -99,10 +97,10 @@ const DynamicTable = ({
         onSelectedChange(ids); // kirim ke parent
       }
     },
-    [onSelectedChange]
+    [onSelectedChange],
   );
 
-  const goToDetailPage = (idZone: string) => {    
+  const goToDetailPage = (idZone: string) => {
     navigate("/master_zone/detail", {
       state: { idZone }, // kirim state
     });

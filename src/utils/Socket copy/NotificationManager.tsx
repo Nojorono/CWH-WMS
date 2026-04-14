@@ -21,7 +21,6 @@ const NotificationManager: React.FC<{ userId: string }> = ({ userId }) => {
     const fetchNotifications = async () => {
       try {
         const data = await NotificationService.getByRecipient(userId);
-        console.log("Fetched notifications:", data);
 
         const notifications: NotificationItem[] = Array.isArray(data)
           ? data

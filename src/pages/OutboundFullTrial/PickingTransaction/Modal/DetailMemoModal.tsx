@@ -16,8 +16,6 @@ const TransactionPickingsModal: React.FC<TransactionPickingsModalProps> = ({
 }) => {
   if (!isOpen) return null;
 
-  console.log("items modal picking detail", items);
-
   // Normalisasi data
   const normalizedItems = Array.isArray(items) ? items : items ? [items] : [];
 

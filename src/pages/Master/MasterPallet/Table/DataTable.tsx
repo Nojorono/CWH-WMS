@@ -35,7 +35,6 @@ const DataTable = () => {
   const [selectedPallets, setSelectedPallets] = useState<any[]>([]);
   const [isGenerateModalOpen, setGenerateModalOpen] = useState(false); // 🔑 State baru
   const [selectedOrgName, setSelectedOrgName] = useState("");
-  console.log("Selected Organization Name:", selectedOrgName);
 
   useEffect(() => {
     fetchPallet();
@@ -177,7 +176,6 @@ const DataTable = () => {
             setSelectedOrgName(org.organization_name);
           } else {
             setSelectedOrgName("");
-            console.log("tak ada org_name");
           }
         },
       },

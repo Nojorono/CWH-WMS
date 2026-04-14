@@ -192,7 +192,6 @@ const CreateDO: React.FC = () => {
   };
 
   const onChangeType = (value: any) => {
-    console.log("value selected type:", value);
     setSelectTypeOutbound(value);
 
     if (!fetchUsingPagination) return;

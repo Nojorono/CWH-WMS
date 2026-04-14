@@ -23,10 +23,8 @@ const AssignHelperTable: React.FC<AssignHelperTableProps> = ({
   const rawList = Array.isArray(list)
     ? list
     : list && Array.isArray((list as any).data)
-    ? (list as any).data
-    : [];
-
-  console.log("rawList in AssignHelperTable:", rawList);
+      ? (list as any).data
+      : [];
 
   const columns = [
     {

@@ -94,7 +94,7 @@ const buildFinalPayload = (
   raws: RawSuggestion[],
   doId: string | null,
   destinationWarehouseSubId: string,
-  destinationBinId: string
+  destinationBinId: string,
 ): PickingPayload => {
   return {
     data: raws.map((r) => ({
@@ -168,7 +168,7 @@ export const SuggestionItemsTable: React.FC<TableProps> = ({
             _isManual: false,
             qty_pick: Math.min(
               item.required_quantity ?? 0,
-              loc.available_quantity ?? 0
+              loc.available_quantity ?? 0,
             ),
           });
         });
@@ -201,13 +201,13 @@ export const SuggestionItemsTable: React.FC<TableProps> = ({
   const getTotalPickedForItem = (
     itemId: string,
     overrideIndex?: number,
-    overrideValue?: number
+    overrideValue?: number,
   ) => {
     return localItems.reduce((sum, it, idx) => {
       const v =
         overrideIndex !== undefined && idx === overrideIndex
-          ? overrideValue ?? 0
-          : it.qty_pick ?? 0;
+          ? (overrideValue ?? 0)
+          : (it.qty_pick ?? 0);
       return it.item_id === itemId ? sum + (Number(v) || 0) : sum;
     }, 0);
   };
@@ -228,7 +228,7 @@ export const SuggestionItemsTable: React.FC<TableProps> = ({
             p.item_id === it.item_id &&
             p.memo_id === it.memo_id &&
             p.suggested_locations?.[0]?.bin_id ===
-              it.suggested_locations?.[0]?.bin_id
+              it.suggested_locations?.[0]?.bin_id,
         );
 
         // compute default qty_pick: min(required_quantity, available)
@@ -245,12 +245,12 @@ export const SuggestionItemsTable: React.FC<TableProps> = ({
             existing && existing.qty_pick !== undefined
               ? existing.qty_pick
               : it.qty_pick !== undefined
-              ? it.qty_pick
-              : computedQty > 0
-              ? computedQty
-              : undefined,
+                ? it.qty_pick
+                : computedQty > 0
+                  ? computedQty
+                  : undefined,
         };
-      })
+      }),
     );
   }, [items]);
 
@@ -335,7 +335,7 @@ export const SuggestionItemsTable: React.FC<TableProps> = ({
         it.suggested_locations?.[0]?.week_number === loc.week_number &&
         it.suggested_locations?.[0]?.warehouse_sub_code ===
           loc.warehouse_sub_code &&
-        it.suggested_locations?.[0]?.bin_code === loc.bin_code
+        it.suggested_locations?.[0]?.bin_code === loc.bin_code,
     );
 
     if (isDuplicate) {
@@ -400,7 +400,7 @@ export const SuggestionItemsTable: React.FC<TableProps> = ({
             warehouse_sub_code: data.location_data.warehouse_sub_code, // Update warehouse_sub_code
             place: data.location_data.place, // Update place
           };
-        }
+        },
       ),
     };
 
@@ -423,7 +423,7 @@ export const SuggestionItemsTable: React.FC<TableProps> = ({
       (i) =>
         i.item_id === itemId &&
         i.suggested_locations?.length > 0 &&
-        !i._isManual
+        !i._isManual,
     );
 
     if (withLocation !== -1) return withLocation;
@@ -661,7 +661,7 @@ export const SuggestionItemsTable: React.FC<TableProps> = ({
           const totalIfSet = getTotalPickedForItem(
             item.item_id,
             rowIndex,
-            value
+            value,
           );
 
           // ❗ validasi available location
@@ -720,7 +720,7 @@ export const SuggestionItemsTable: React.FC<TableProps> = ({
               <button
                 onClick={() =>
                   setLocalItems((prev) =>
-                    prev.filter((it) => it._localId !== item._localId)
+                    prev.filter((it) => it._localId !== item._localId),
                   )
                 }
                 className="text-rose-600"
@@ -760,13 +760,7 @@ export const SuggestionItemsTable: React.FC<TableProps> = ({
   const prepareReview = () => {
     const apiRaw = buildRawSuggestions(localItems);
     const reviewRaw = buildReviewSuggestions(localItems);
-
-    console.log("API RAW", apiRaw);
-    console.log("REVIEW RAW", reviewRaw);
-
     const groups = prepareReviewGroups(reviewRaw);
-    console.log("REVIEW GROUPS", groups);
-
     setReviewGroups(groups);
     setFinalRawSuggestions(apiRaw);
     setOpenReview(true);
@@ -821,7 +815,7 @@ export const SuggestionItemsTable: React.FC<TableProps> = ({
       finalRawSuggestions,
       DOid,
       destinationZoneId,
-      destinationBinId
+      destinationBinId,
     );
 
     // ===== API CALL =====

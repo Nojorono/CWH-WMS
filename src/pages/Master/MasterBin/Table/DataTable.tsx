@@ -24,8 +24,6 @@ interface DataTableProps {
 }
 
 const DataTable: React.FC<DataTableProps> = ({ params }) => {
-  console.log("DataTable params:", params);
-
   const { list: Warehouse, fetchAll } = useStoreWarehouse();
   const { fetchAll: fetchAllIo, list: ioList } = useStoreIo();
   const { fetchAll: fetchSubWH, list: subWHList } = useStoreSubWarehouse();

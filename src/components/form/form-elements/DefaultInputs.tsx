@@ -16,7 +16,6 @@ export default function DefaultInputs() {
   ];
 
   const handleSelectChange = (value: string) => {
-    console.log("Selected value:", value);
   };
 
   return (

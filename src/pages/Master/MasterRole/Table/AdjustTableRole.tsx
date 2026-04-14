@@ -36,8 +36,6 @@ const AdjustTableRole = ({
     navigate(`/master_role/update`, { state: { id } });
   }
 
-  console.log("Data in AdjustTableRole:", data);
-
   const columns: ColumnDef<Role>[] = useMemo(
     () => [
       {

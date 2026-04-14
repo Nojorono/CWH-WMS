@@ -107,9 +107,7 @@ export default function ModalInventoryItem({
     };
 
     // Jika mode adalah "add", kirim data baru
-    if (mode === "add") {
-      console.log("Submitting new suggestion:", newSuggestion);
-      
+    if (mode === "add") {      
       onSubmit?.(newSuggestion); // Kirim data baru ke parent
     } else {
       // Jika mode adalah "edit", kirim data yang sudah ada
