@@ -23,7 +23,8 @@ export type FormField = {
     | "password"
     | "phone"
     | "email"
-    | "username";
+    | "username"
+    | "custom";
   options?: OptionType[];
   validation?: {
     required?: boolean | string;
@@ -34,6 +35,13 @@ export type FormField = {
   onChange?: (value: any) => void;
   placeholder?: string;
   description?: string;
+  renderCustom?: (methods: {
+    control: any;
+    register: any;
+    setValue?: any;
+    watch: any;
+    errors: any;
+  }) => React.ReactNode;
 };
 
 export type FormValues = Record<string, any>;
@@ -175,6 +183,7 @@ const ModalForm: React.FC<ModalFormProps> = ({
     formState: { errors },
     reset,
     watch,
+    setValue
   } = useForm<FormValues>({ defaultValues });
 
   const [isEditing, setIsEditing] = useState(false);
@@ -202,6 +211,11 @@ const ModalForm: React.FC<ModalFormProps> = ({
     if (field.hiddenWhen?.(values)) return null;
 
     switch (field.type) {
+      case "custom":
+        return field.renderCustom
+          ? field.renderCustom({ control, register, setValue, watch, errors })
+          : null;
+
       case "textarea":
         return (
           <textarea
