@@ -66,10 +66,6 @@ const PutAwayDetail: React.FC = () => {
     useStorePutAwaySuggestion();
 
   const { list: userList, fetchAll: fetchUserList } = useStoreUserManagement();
-
-  console.log("userList", userList);
-  
-
   const { createBulkData } = useStoreBulkPutAway();
   const { updateData } = useStorePutAway();
 
@@ -360,15 +356,12 @@ const PutAwayDetail: React.FC = () => {
             })),
         };
 
-        console.log("putaway payload", payload);
-
-
-        // if (typeof createBulkData === "function") {
-        //   const res = await createBulkData(payload as any);
-        //   if (res?.success) {
-        //     navigate("/putaway");
-        //   }
-        // }
+        if (typeof createBulkData === "function") {
+          const res = await createBulkData(payload as any);
+          if (res?.success) {
+            navigate("/putaway");
+          }
+        }
       }
 
       if (isEdit && detailDataPutaway?.id) {
@@ -385,7 +378,7 @@ const PutAwayDetail: React.FC = () => {
           driver_phone: data.driverPhone,
           status: detailDataPutaway.status || "PENDING",
           notes: detailDataPutaway.notes || "",
-        };   
+        };
 
         const res = await updateData(detailDataPutaway.id, payload);
         if (res?.success) {
@@ -473,33 +466,15 @@ const PutAwayDetail: React.FC = () => {
               Driver Name <span className="text-red-500">*</span>
             </label>
             <Controller
-              name="driverId"
+              name="driverName"
               control={control}
-              rules={{ required: "Driver name is required" }}
               render={({ field }) => (
-                <Select
+                <input
                   {...field}
-                  placeholder="Select Driver Name"
-                  options={forkliftDrivers.map((u: any) => ({
-                    value: u.id,
-                    label:
-                      `${u.userDetail?.firstName || ""} ${u.userDetail?.lastName || ""}`.trim(),
-                  }))}
-                  onChange={(id: string) => {
-                    const selected = forkliftDrivers.find(
-                      (u: any) => u.id === id,
-                    );
-                    if (selected) {
-                      const fullName =
-                        `${selected.userDetail?.firstName || ""} ${selected.userDetail?.lastName || ""}`.trim();
-                      setValue("forkliftDriverId", selected.id);
-                      setValue("driverName", fullName);
-                      setValue("driverPhone", selected.userDetail?.phone || "");
-                    }
-                    field.onChange(id);
-                  }}
-                  disabled={isDetail}
-                  width="100%"
+                  readOnly
+                  type="text"
+                  placeholder="Auto-filled driver name"
+                  className="border p-2 rounded w-full bg-gray-100 cursor-not-allowed"
                 />
               )}
             />
