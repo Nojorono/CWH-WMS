@@ -63,12 +63,12 @@ const GateLoadingPage = () => {
                 onClick={() => setSelectedDOId(item.do_id)}
                 className={`p-2.5 rounded-lg border-2 transition-all cursor-pointer relative overflow-hidden ${
                   isSelected
-                    ? "border-indigo-600 bg-white shadow-sm scale-[0.98]"
+                    ? "border-indigo-300 bg-white shadow-sm scale-[0.98]"
                     : "border-transparent bg-white/40 opacity-80"
                 }`}
               >
                 <div
-                  className={`absolute left-0 top-0 bottom-0 w-1 ${isFinished ? "bg-emerald-500" : "bg-rose-400"}`}
+                  className={`absolute left-0 top-0 bottom-0 w-2 ${isFinished ? "bg-emerald-500" : "bg-red-500"}`}
                 />
                 <div className="flex justify-between items-center mb-0.5 pl-1">
                   <span className="text-[8px] font-black text-indigo-700 bg-indigo-50 px-1.5 py-0.5 rounded">
