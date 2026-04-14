@@ -267,6 +267,13 @@ const DataTable = () => {
     [userData],
   );
 
+  const handleDelete = async (id: any) => {
+    const payload = {
+      isActive: false,
+    };
+    await updateData(id, payload);
+  };
+
   return (
     <>
       <div className="p-4 bg-white shadow rounded-md mb-5">
@@ -300,7 +307,7 @@ const DataTable = () => {
         updateFormFields={updateFormFields}
         onSubmit={handleCreate}
         onUpdate={handleUpdate}
-        // onDelete={handleHardDelete}
+        onDelete={handleDelete}
         onRefresh={fetchAll}
         getRowId={(row) => row.id}
         title="Form Data User"

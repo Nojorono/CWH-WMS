@@ -50,6 +50,21 @@ const DynamicTable = ({
   const [selectedItem, setSelectedItem] = useState<any | null>(null);
   const [selectedIds, setSelectedIds] = useState<any[]>([]);
 
+  // const handleDelete = useCallback(
+  //   async (id: any) => {
+  //     if (onDelete) {
+  //       await onDelete(id);
+  //     }
+  //     await onRefresh();
+  //   },
+  //   [onDelete, onRefresh],
+  // );
+
+  const handleCloseModal = () => {
+    setSelectedItem(null);
+    onCloseCreateModal();
+  };
+
   const handleDelete = useCallback(
     async (id: any) => {
       if (onDelete) {
@@ -59,11 +74,6 @@ const DynamicTable = ({
     },
     [onDelete, onRefresh],
   );
-
-  const handleCloseModal = () => {
-    setSelectedItem(null);
-    onCloseCreateModal();
-  };
 
   const enhancedColumns = useMemo(() => {
     if (noActions) return columns;
@@ -90,7 +100,6 @@ const DynamicTable = ({
               <FaEdit />
             </button> */}
 
-            {/* 
             {isDeleted && (
               <button
                 onClick={() => handleDelete(getRowId(row.original))}
@@ -98,7 +107,7 @@ const DynamicTable = ({
               >
                 <FaTrash />
               </button>
-            )} */}
+            )}
 
             {isView && (
               <button
