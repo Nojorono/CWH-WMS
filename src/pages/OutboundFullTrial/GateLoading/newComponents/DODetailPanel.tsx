@@ -1,8 +1,5 @@
 import React, { useMemo, useState } from "react";
-import {
-  FaBoxOpen,
-  FaChevronDown,
-} from "react-icons/fa";
+import { FaBoxOpen, FaChevronDown } from "react-icons/fa";
 import {
   UIGateLoadingDO,
   UIGateUser,
@@ -96,13 +93,9 @@ export const DODetailPanel: React.FC<{
   return (
     /* Optimasi Padding untuk Tablet */
     <div className="p-4 md:p-6 lg:p-8 max-w-[1920px] mx-auto space-y-6 pb-20">
-      {/* --- TOP INFO CARD (HEADER) --- 
-          Dioptimalkan menjadi grid yang lebih rapat untuk landscape 1200px height
-      */}
-      {/* 
-          Meningkatkan z-index ke z-50 agar selalu di atas header memo (z-40).
-          Menambahkan shadow-md agar terlihat terpisah dari list saat scrolling.
-      */}
+      {/* --- TOP INFO CARD (HEADER) ---
+       */}
+
       <div className="bg-white rounded-xl shadow-md border border-slate-200 p-3 grid grid-cols-5 gap-2 items-center sticky top-0 z-50">
         <div>
           <p className="text-[8px] font-black text-slate-400 uppercase">Gate</p>
@@ -116,16 +109,15 @@ export const DODetailPanel: React.FC<{
           <h2
             className={`text-sm font-black leading-none ${
               doData.main_status === "DONE"
-                ? "text-emerald-500" // Hijau jika DONE
+                ? "text-emerald-500"
                 : doData.main_status === "APPROVED"
-                  ? "text-blue-500" // Biru jika APPROVED
-                  : "text-amber-400" // Kuning jika PENDING (default)
+                  ? "text-blue-500"
+                  : "text-amber-400"
             }`}
           >
             {doData.main_status}
           </h2>
         </div>
-
         <div className="border-l pl-3">
           <p className="text-[8px] font-black text-slate-400 uppercase">
             DO Number
@@ -182,62 +174,56 @@ export const DODetailPanel: React.FC<{
                   : "bg-slate-50 border-slate-200"
               }`}
             >
-              {/* 
-                  STACKED STICKY:
-                  Membuat header memo ikut sticky. top-[72px] adalah estimasi tinggi Info Card + 2px gap.
-                  z-40 memastikan ini di bawah Info Card (z-50) tapi di atas list SKU.
-              */}
-              <div className="icky top-[80px] z-40 rounded-t-2xl">
-                {/* Spacer 2px untuk menciptakan jarak visual saat menempel di bawah header utama */}
+              <div className="sticky top-[72px] z-40 rounded-t-2xl shadow-sm">
                 <div className="absolute -top-[2px] left-0 right-0 h-[2px] bg-slate-100" />
                 <button
                   onClick={() => toggleMemo(memo.memo_id)}
-                  className={`w-full flex items-center justify-between p-4 focus:outline-none rounded-t-2xl ${isOpen ? "bg-white" : "bg-slate-50"}`}
+                  className={`w-full flex items-center justify-between p-4 focus:outline-none rounded-t-2xl ${isOpen ? "bg-emerald-100" : "bg-slate-50"}`}
                 >
-                <div className="flex items-center gap-4 text-left">
-                  <div
-                    className={`p-3 rounded-xl ${isOpen ? "bg-indigo-600 text-white" : "bg-white text-slate-400 shadow-sm"}`}
-                  >
-                    <FaBoxOpen size={18} />
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <h3
-                        className={`text-lg font-black ${isOpen ? "text-slate-900" : "text-slate-600"}`}
-                      >
-                        {memo.memo_number}
-                      </h3>
-                      {isMemoComplete && (
-                        <span className="bg-blue-600 text-white text-[8px] px-1.5 py-0.5 rounded font-black">
-                          COMPLETED
-                        </span>
-                      )}
+                  <div className="flex items-center gap-4 text-left">
+                    <div
+                      className={`p-3 rounded-xl ${isOpen ? "bg-indigo-600 text-white" : "bg-white text-slate-400 shadow-sm"}`}
+                    >
+                      <FaBoxOpen size={18} />
                     </div>
-                    <div className="flex items-center gap-2 mt-0.5">
-                      <p className="text-[10px] font-bold text-slate-400 uppercase">
-                        {memo.pallets.length} Pallets
-                      </p>
-                      {memoSummary && (
-                        <p className="text-[10px] font-black text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">
-                          Loaded: {memoSummary}
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h3
+                          className={`text-lg font-black ${isOpen ? "text-slate-900" : "text-slate-600"}`}
+                        >
+                          {memo.memo_number}
+                        </h3>
+                        {isMemoComplete && (
+                          <span className="bg-blue-600 text-white text-[8px] px-1.5 py-0.5 rounded font-black">
+                            COMPLETED
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        <p className="text-[10px] font-bold text-slate-400 uppercase">
+                          {memo.pallets.length} Pallets
                         </p>
-                      )}
+                        {memoSummary && (
+                          <p className="text-[10px] font-black text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">
+                            Loaded: {memoSummary}
+                          </p>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
-                <FaChevronDown
-                  size={16}
-                  className={`transition-transform ${isOpen ? "rotate-180 text-indigo-600" : "text-slate-300"}`}
-                />
+                  <FaChevronDown
+                    size={16}
+                    className={`transition-transform ${isOpen ? "rotate-180 text-indigo-600" : "text-slate-300"}`}
+                  />
                 </button>
               </div>
 
               {isOpen && (
                 <div className="p-4 border-t border-slate-50">
-                  <div className="grid grid-cols-1 gap-8">
+                  <div className="grid grid-cols-1 gap-8 bg">
                     {memo.pallets.map((pallet: any) => (
                       <div key={pallet.pallet_id} className="space-y-3">
-                        <div className="flex items-center gap-2 bg-orange-50 w-fit px-3 py-1 rounded-lg">
+                        <div className="sticky top-[135px] z-30 py-2 bg-white/80 backdrop-blur-md">
                           <p className="text-[10px] font-black text-orange-400 uppercase">
                             Pallet
                           </p>
