@@ -59,8 +59,8 @@ import {
   InventoryVisibility,
   InventoryMovement,
   StockAdjustment,
-  Reporting,
-  Reporting1,
+  ReportInbound,
+  ReportOutbound,
   Reporting2,
 } from "./utils/PagesComponent";
 import MainView from "./pages/Dashboard/CWHLayout/Main";
@@ -180,8 +180,8 @@ export function AppRoutes() {
       "/inventory_visibility": <InventoryVisibility />,
       "/inventory_movement": <InventoryMovement />,
       "/stock_adjustment": <StockAdjustment />,
-      "/report_inbound": <Reporting />,
-      "/reporting2": <Reporting1 />,
+      "/report_inbound": <ReportInbound />,
+      "/report_outbound": <ReportOutbound />,
       "/reporting3": <Reporting2 />,
     };
     return map[path] || <DefaultPage />;

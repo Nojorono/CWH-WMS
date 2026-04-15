@@ -5,29 +5,36 @@ import {
   flexRender,
   createColumnHelper,
 } from "@tanstack/react-table";
-import { useStoreReportInbound } from "../../../DynamicAPI/stores/Store/MasterStore";
-import { FaFileExcel, FaBox, FaPallet, FaCalendarAlt } from "react-icons/fa";
+import { useStoreReportOutbound } from "../../../DynamicAPI/stores/Store/MasterStore";
+import {
+  FaFileExcel,
+  FaPallet,
+  FaCalendarAlt,
+  FaTruckLoading,
+} from "react-icons/fa";
 import { useSearchParams } from "react-router-dom";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import TabsSection from "../../../components/wms-components/inbound-component/tabs/TabsSection";
 import DatePicker from "../../../components/form/date-picker";
 import { formatDateIndo } from "../../../helper/FormatDate";
-import { exportInboundToExcel } from "../hooks/exportInboundExcel";
+import { exportOutboundToExcel } from "../hooks/exportOutboundExcel";
+import { showErrorToast } from "../../../components/toast";
 
 const columnHelper = createColumnHelper<any>();
 
-const Reporting = () => {
+const ReportOutbound = () => {
   const [activeTab, setActiveTab] = useState(0);
   const [searchParams, setSearchParams] = useSearchParams();
+
+  // Menggunakan store outbound
   const { fetchUsingPagination, list, pagination, isLoading } =
-    useStoreReportInbound();
+    useStoreReportOutbound();
 
   const currentPage = parseInt(searchParams.get("page") || "1");
   const [pageSize, setPageSize] = useState(20);
 
-  // ================= 0. STATE FILTER TANGGAL (RANGE MODE) =================
+  // ================= 0. STATE FILTER TANGGAL =================
   const dateNow = new Date().toISOString().split("T")[0];
-
   const [dateRange, setDateRange] = useState<any>([dateNow, dateNow]);
 
   const startDate = useMemo(() => {
@@ -48,8 +55,7 @@ const Reporting = () => {
       fetchUsingPagination({
         page: currentPage,
         limit: pageSize,
-        sortOrder: "ASC",
-        status: "INTEGRATED",
+        sortOrder: "DESC",
         start_date: startDate,
         end_date: endDate,
         sortBy: "createdAt",
@@ -57,147 +63,131 @@ const Reporting = () => {
     }
   }, [fetchUsingPagination, currentPage, pageSize, startDate, endDate]);
 
-  // ================= 2. DATA TRANSFORMATION =================
+  console.log("list report out", list);
+
+  // ================= 2. DATA TRANSFORMATION (OUTBOUND) =================
   const flatDataSKU = useMemo(() => {
     if (!list || !Array.isArray(list)) return [];
-    return list.flatMap((inbound: any) =>
-      (inbound.inbound_dos || []).flatMap((doItem: any) =>
-        (doItem.inbound_items || []).map((itemRow: any) => ({
-          id_unique: `${inbound.id}-${doItem.id}-${itemRow.id}`,
-          arrival_date: inbound.arrival_date,
-          inbound_do_number: doItem.inbound_do_number,
-          inbound_po_number: doItem.inbound_po_number,
-          principal: doItem.principal || "-",
-          penerima: inbound.origin || "-",
-          expedition: inbound.expedition,
-          license_plate: inbound.license_plate,
-          item_number: itemRow.item?.item_number,
-          description: itemRow.item?.description,
-          quantity: itemRow.quantity,
-          uom: itemRow.uom,
-          inbound_number: inbound.inbound_number,
-          createdAt: formatDateIndo(inbound.createdAt),
-          tgl_receipt: formatDateIndo(inbound.updatedAt),
-        })),
-      ),
-    );
+
+    return list.flatMap((outbound: any) => {
+      // Ambil semua memo yang ada di outbound ini
+      const memos = outbound.outbound_memos || [];
+
+      return memos.flatMap((memo: any) => {
+        // Ambil semua item yang ada di dalam memo ini
+        const memoItems = memo.outbound_memo_items || [];
+
+        return memoItems.map((itemRow: any) => ({
+          id_unique: `${outbound.id}-${memo.id}-${itemRow.id}`,
+          no_surat_jalan: outbound.outbound_do_number || "-", // Key di JSON adalah outbound_do_number
+          tanggal_kirim: formatDateIndo(
+            outbound.delivery_date || outbound.createdAt,
+          ),
+          pengirim: "DC CENTRAL WAREHOUSE JATI",
+          penerima: memo.ship_to || "-", // Penerima ada di level memo (ship_to)
+          jenis_pengiriman: outbound.outbound_type || "-",
+          expedisi: outbound.expedition || "-",
+          nopol: outbound.license_plate || "-",
+          kode_item: itemRow.item?.item_number || "-",
+          deskripsi: itemRow.item?.description || "-",
+          qty: itemRow.quantity_plan || 0, // Di JSON outbound menggunakan quantity_plan
+          uom: itemRow.uom || "DUS",
+        }));
+      });
+    });
   }, [list]);
 
   const flatDataPallet = useMemo(() => {
     if (!list || !Array.isArray(list)) return [];
     const results: any[] = [];
 
-    list.forEach((inbound: any) => {
-      const dos = inbound.inbound_dos || [];
-      const scans = inbound.transaction_scan_inbounds || [];
-
-      dos.forEach((doItem: any) => {
-        (doItem.inbound_items || []).forEach((itemRow: any) => {
-          const matchedScans = scans.filter(
-            (s: any) => s.item_id === itemRow.item_id,
-          );
-
-          if (matchedScans.length > 0) {
-            matchedScans.forEach((scan: any) => {
-              results.push({
-                ...itemRow,
-                arrival_date: inbound.arrival_date,
-                inbound_do_number: doItem.inbound_do_number,
-                inbound_po_number: doItem.inbound_po_number,
-                principal: doItem.principal,
-                penerima: inbound.origin || "-",
-                expedition: inbound.expedition,
-                license_plate: inbound.license_plate,
-                item_number: itemRow.item?.item_number,
-                description: itemRow.item?.description,
-                quantity: scan.quantity,
-                uom: scan.uom || itemRow.uom,
-                kode_produksi: scan.week_number
-                  ? `W${String(scan.week_number).padStart(2, "0")}`
-                  : "-",
-                no_pallet: scan.pallet?.pallet_code || "-",
-                waktu_update_pallet: scan.updatedAt
-                  ? new Intl.DateTimeFormat("en-GB", {
-                      day: "numeric",
-                      month: "numeric",
-                      year: "numeric",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                      second: "2-digit",
-                      hour12: false,
-                    }).format(new Date(scan.updatedAt))
-                  : "-",
-                user_loading: scan.user_name || "-",
-                inbound_number: inbound.inbound_number,
-                tgl_receipt: inbound.arrival_date
-                  ? new Date(inbound.arrival_date).toLocaleDateString("id-ID")
-                  : "-",
-                receipt_by: scan.user_name || "-",
-              });
+    list.forEach((outbound: any) => {
+      (outbound.outbound_memos || []).forEach((memo: any) => {
+        (memo.outbound_memo_items || []).forEach((itemRow: any) => {
+          // Data pallet ada di dalam assigned_gate_load
+          (itemRow.assigned_gate_load || []).forEach((gateLoad: any) => {
+            results.push({
+              tanggal_kirim: formatDateIndo(outbound.delivery_date),
+              no_surat_jalan: outbound.outbound_do_number,
+              penerima: memo.ship_to || "-",
+              kode_item: gateLoad.item?.item_number || "-",
+              qty: gateLoad.quantity_loaded || 0,
+              no_pallet: gateLoad.pallet?.pallet_code || "-",
+              waktu_out: gateLoad.updatedAt
+                ? formatDateIndo(gateLoad.updatedAt)
+                : "-",
             });
-          }
+          });
         });
       });
     });
     return results;
   }, [list]);
 
-  // ================= 3. EXPORT HANDLER (delegasi ke utility) =================
+  // ================= 3. EXPORT HANDLER =================
   const handleExportExcel = (type: "SKU" | "PALLET") => {
-    exportInboundToExcel({
+    const dataToExport = type === "PALLET" ? flatDataPallet : flatDataSKU;
+
+    if (!dataToExport || dataToExport.length === 0) {
+      showErrorToast(
+        `Tidak ada data ${type} untuk periode ${startDate} sampai ${endDate}`,
+      );
+      return;
+    }
+
+    exportOutboundToExcel({
       type,
-      data: type === "PALLET" ? flatDataPallet : flatDataSKU,
+      data: dataToExport,
       startDate,
       endDate,
     });
   };
 
-  // ================= 4. TABLE COLUMNS =================
+  // ================= 4. TABLE COLUMNS (Sesuai Gambar) =================
   const columnsSKU = [
-    columnHelper.accessor("createdAt", {
-      header: "Tanggal Inbound",
+    columnHelper.accessor("no_surat_jalan", { header: "No Surat Jalan" }),
+    columnHelper.accessor("tanggal_kirim", { header: "Tanggal Kirim" }),
+    columnHelper.accessor("pengirim", { header: "Pengirim" }),
+    columnHelper.accessor("penerima", {
+      header: "Penerima",
+      cell: (info) => (
+        <div className="min-w-[250px] max-w-[400px] whitespace-normal break-words leading-relaxed">
+          {info.getValue()}
+        </div>
+      ),
     }),
-    columnHelper.accessor("inbound_do_number", { header: "Surat Jalan" }),
-    columnHelper.accessor("inbound_po_number", { header: "No PO" }),
-    columnHelper.accessor("principal", { header: "Pengirim" }),
-    columnHelper.accessor("penerima", { header: "Penerima" }),
-    columnHelper.accessor("item_number", {
+    columnHelper.accessor("jenis_pengiriman", { header: "Jenis Pengiriman" }),
+    columnHelper.accessor("expedisi", { header: "Ekspedisi" }),
+    columnHelper.accessor("nopol", { header: "Nopol" }),
+    columnHelper.accessor("kode_item", {
       header: "Kode Item",
       cell: (i) => (
         <span className="font-bold text-blue-600">{i.getValue()}</span>
       ),
     }),
-    columnHelper.accessor("description", { header: "Deskripsi" }),
-    columnHelper.accessor("quantity", {
+    columnHelper.accessor("deskripsi", { header: "Deskripsi" }),
+    columnHelper.accessor("qty", {
       header: "Qty",
       cell: (i) => <span className="font-bold">{i.getValue()}</span>,
     }),
     columnHelper.accessor("uom", { header: "UOM" }),
-    columnHelper.accessor("inbound_number", { header: "No Receipt" }),
-    columnHelper.accessor("tgl_receipt", { header: "Tgl Receipt" }),
   ];
 
   const columnsPallet = [
-    columnHelper.accessor("arrival_date", {
-      header: "Tanggal Inbound",
-      cell: (i) => new Date(i.getValue()).toLocaleDateString("id-ID"),
-    }),
-    columnHelper.accessor("inbound_do_number", { header: "Surat Jalan" }),
-    columnHelper.accessor("principal", { header: "Pengirim" }),
+    columnHelper.accessor("tanggal_kirim", { header: "Tgl Kirim" }),
+    columnHelper.accessor("no_surat_jalan", { header: "Surat Jalan" }),
     columnHelper.accessor("penerima", { header: "Penerima" }),
-    columnHelper.accessor("item_number", { header: "Item" }),
-    columnHelper.accessor("quantity", { header: "Qty" }),
+    columnHelper.accessor("kode_item", { header: "Item" }),
+    columnHelper.accessor("qty", { header: "Qty" }),
     columnHelper.accessor("no_pallet", {
       header: "No Pallet",
       cell: (i) => (
-        <span className="badge bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs font-bold">
+        <span className="badge bg-orange-100 text-orange-700 px-2 py-1 rounded text-xs font-bold">
           {i.getValue()}
         </span>
       ),
     }),
-    columnHelper.accessor("kode_produksi", { header: "Prod Code" }),
-    columnHelper.accessor("waktu_update_pallet", { header: "Update At" }),
-    columnHelper.accessor("inbound_number", { header: "Receipt No" }),
+    columnHelper.accessor("waktu_out", { header: "Waktu Keluar" }),
   ];
 
   const tableSKU = useReactTable({
@@ -217,19 +207,19 @@ const Reporting = () => {
       <div className="flex justify-between items-center">
         <div className="flex items-center gap-2">
           {type === "SKU" ? (
-            <FaBox className="text-orange-500" />
+            <FaTruckLoading className="text-orange-500" />
           ) : (
             <FaPallet className="text-blue-500" />
           )}
           <h3 className="font-bold text-gray-700 uppercase tracking-tight">
-            Data Penerimaan {type}
+            Data Pengeluaran {type}
           </h3>
         </div>
         <button
           onClick={() => handleExportExcel(type)}
           className="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2 rounded-lg flex items-center gap-2 text-sm font-medium shadow-md transition-all active:scale-95"
         >
-          <FaFileExcel /> Export {type}
+          <FaFileExcel /> Export by {type}
         </button>
       </div>
 
@@ -262,7 +252,7 @@ const Reporting = () => {
                     {row.getVisibleCells().map((cell: any) => (
                       <td
                         key={cell.id}
-                        className="p-4 text-sm text-gray-600 whitespace-nowrap"
+                        className="p-4 text-sm text-gray-600 break-words max-w-[300px]"
                       >
                         {flexRender(
                           cell.column.columnDef.cell,
@@ -278,7 +268,7 @@ const Reporting = () => {
                     colSpan={100}
                     className="p-20 text-center text-gray-400 italic bg-gray-50/50"
                   >
-                    Belum ada data tersedia untuk periode ini.
+                    Tidak ada data outbound pada periode ini.
                   </td>
                 </tr>
               )}
@@ -291,8 +281,7 @@ const Reporting = () => {
 
   const handlePageChange = (newPage: number, newSize: number) => {
     setPageSize(newSize);
-    const targetPage = newSize !== pageSize ? "1" : newPage.toString();
-    setSearchParams({ page: targetPage });
+    setSearchParams({ page: newSize !== pageSize ? "1" : newPage.toString() });
   };
 
   const handleReset = () => {
@@ -303,23 +292,21 @@ const Reporting = () => {
 
   return (
     <div className="flex flex-col gap-6 p-2">
-      <PageBreadcrumb breadcrumbs={[{ title: "Reporting Inbound" }]} />
+      <PageBreadcrumb breadcrumbs={[{ title: "Reporting Outbound" }]} />
 
-      {/* ================= FILTER SECTION ================= */}
+      {/* FILTER SECTION */}
       <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-200 flex flex-wrap items-end gap-6">
         <div className="flex flex-col gap-2 min-w-[320px]">
           <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
-            <FaCalendarAlt className="text-blue-500" /> Filter Date Range
+            <FaCalendarAlt className="text-blue-500" /> Filter Tanggal Outbound
           </label>
           <DatePicker
             id="range-date-picker"
             mode="range"
-            placeholder="Select start and end date"
+            placeholder="Pilih range tanggal"
             value={dateRange}
             onChange={(selectedDates: any) => {
-              if (selectedDates.length === 2) {
-                setDateRange(selectedDates);
-              }
+              if (selectedDates.length === 2) setDateRange(selectedDates);
             }}
           />
         </div>
@@ -332,26 +319,10 @@ const Reporting = () => {
               <span className="text-blue-600 font-bold">{endDate}</span>
             </p>
           </div>
-
           <button
             onClick={handleReset}
             className="flex items-center gap-2 px-4 py-2 text-[11px] font-bold uppercase tracking-wider text-red-500 bg-red-50 border border-red-100 rounded-lg hover:bg-red-100 transition-all active:scale-95"
-            title="Reset Filter"
           >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-3 w-3"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={3}
-                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-              />
-            </svg>
             Reset
           </button>
         </div>
@@ -362,55 +333,50 @@ const Reporting = () => {
         onTabChange={setActiveTab}
         tabs={[
           {
-            label: "Report Inbound SKU",
+            label: "Report Outbound SKU",
             content: renderTable(tableSKU, "SKU"),
           },
           {
-            label: "Report Inbound Pallet",
+            label: "Report Outbound Pallet",
             content: renderTable(tablePallet, "PALLET"),
           },
         ]}
       />
 
-      {/* ================= PAGINATION ================= */}
+      {/* PAGINATION */}
       <div className="flex flex-col sm:flex-row items-center justify-between bg-white p-4 rounded-xl shadow-sm border border-gray-200 gap-4">
         <div className="flex items-center gap-4">
-          <span className="text-sm text-gray-500 whitespace-nowrap">
-            Showing page <strong>{currentPage}</strong> of{" "}
+          <span className="text-sm text-gray-500">
+            Halaman <strong>{currentPage}</strong> dari{" "}
             {pagination?.totalPages || 1}
           </span>
-          <div className="flex items-center gap-2 border-l pl-4 border-gray-200">
-            <span className="text-xs text-gray-400 font-medium uppercase italic">
-              Rows:
-            </span>
-            <select
-              value={pageSize}
-              onChange={(e) => handlePageChange(1, Number(e.target.value))}
-              className="bg-gray-50 border border-gray-300 text-gray-700 text-xs rounded-lg p-1.5 outline-none font-semibold cursor-pointer hover:bg-white transition-all"
-            >
-              {[1, 5, 10, 20, 50, 100].map((size) => (
-                <option key={size} value={size}>
-                  Show {size}
-                </option>
-              ))}
-            </select>
-          </div>
+          <select
+            value={pageSize}
+            onChange={(e) => handlePageChange(1, Number(e.target.value))}
+            className="bg-gray-50 border border-gray-300 text-gray-700 text-xs rounded-lg p-1.5 outline-none font-semibold cursor-pointer"
+          >
+            {[10, 20, 50, 100].map((size) => (
+              <option key={size} value={size}>
+                Tampilkan {size}
+              </option>
+            ))}
+          </select>
         </div>
 
         <div className="flex gap-2">
           <button
             disabled={currentPage === 1 || isLoading}
             onClick={() => handlePageChange(currentPage - 1, pageSize)}
-            className="px-4 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-30 transition-all text-sm font-semibold text-gray-600 shadow-sm"
+            className="px-4 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-30 text-sm font-semibold"
           >
-            Previous
+            Kembali
           </button>
           <button
             disabled={currentPage >= (pagination?.totalPages || 1) || isLoading}
             onClick={() => handlePageChange(currentPage + 1, pageSize)}
-            className="px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-700 disabled:opacity-30 transition-all text-sm font-semibold shadow-md active:scale-95 shadow-gray-200"
+            className="px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-700 disabled:opacity-30 text-sm font-semibold shadow-md"
           >
-            Next
+            Berikutnya
           </button>
         </div>
       </div>
@@ -418,4 +384,4 @@ const Reporting = () => {
   );
 };
 
-export default Reporting;
+export default ReportOutbound;

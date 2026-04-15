@@ -1,12 +1,8 @@
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
 
-// ============================================================
-//  TYPE DEFINITIONS
-// ============================================================
 
 export type ExportType = "SKU" | "PALLET";
-
 export interface ExportInboundParams {
     type: ExportType;
     data: any[];
@@ -17,11 +13,6 @@ export interface ExportInboundParams {
 // ============================================================
 //  INTERNAL HELPERS
 // ============================================================
-
-/**
- * Membangun baris metadata header (judul, tanggal, type storage)
- * yang ditampilkan di atas tabel pada file Excel.
- */
 function buildHeaderMetadata(
     startDate: string,
     endDate: string,
@@ -97,11 +88,6 @@ const TABLE_HEADERS: Record<ExportType, string[]> = {
 // ============================================================
 //  ROW MAPPERS PER TYPE
 // ============================================================
-
-/**
- * Memetakan satu item data SKU menjadi satu baris array untuk Excel.
- * Urutan kolom harus sesuai dengan TABLE_HEADERS["SKU"].
- */
 function mapRowSKU(item: any): any[] {
     return [
         item.arrival_date
@@ -122,10 +108,6 @@ function mapRowSKU(item: any): any[] {
     ];
 }
 
-/**
- * Memetakan satu item data PALLET menjadi satu baris array untuk Excel.
- * Urutan kolom harus sesuai dengan TABLE_HEADERS["PALLET"].
- */
 function mapRowPallet(item: any): any[] {
     return [
         item.arrival_date
@@ -159,17 +141,6 @@ const ROW_MAPPERS: Record<ExportType, (item: any) => any[]> = {
 // ============================================================
 //  MAIN EXPORT FUNCTION
 // ============================================================
-
-/**
- * Mengekspor data inbound (SKU atau PALLET) ke file Excel (.xlsx).
- *
- * Untuk menambah/mengubah kolom:
- *   1. Edit TABLE_HEADERS["SKU"] atau TABLE_HEADERS["PALLET"]
- *   2. Edit mapRowSKU() atau mapRowPallet() sesuai urutan kolom baru
- *
- * Untuk mengubah format metadata header:
- *   Edit fungsi buildHeaderMetadata() di atas.
- */
 export function exportInboundToExcel({
     type,
     data,
@@ -195,7 +166,6 @@ export function exportInboundToExcel({
         ...tableRows,
     ]);
 
-    // Merge sel judul "REPORT PENERIMAAN BARANG" sepanjang semua kolom
     if (!worksheet["!merges"]) worksheet["!merges"] = [];
     worksheet["!merges"].push({
         s: { r: 0, c: 0 },

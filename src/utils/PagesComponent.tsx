@@ -67,8 +67,8 @@ import StockAdjustment from "../pages/StockAdjustment/index";
 
 
 //Reporting
-import Reporting from "../pages/Reporting/Main/Report";
-import Reporting1 from "../pages/Reporting/Main/Report1";
+import ReportInbound from "../pages/Reporting/Main/ReportInbound";
+import ReportOutbound from "../pages/Reporting/Main/ReportOutbound";
 import Reporting2 from "../pages/Reporting/Main/Report2";
 
 
@@ -136,7 +136,7 @@ export {
   CreateApproval,
   ApprovalProcess,
 
-  Reporting,
-  Reporting1,
+  ReportInbound,
+  ReportOutbound,
   Reporting2,
 };
