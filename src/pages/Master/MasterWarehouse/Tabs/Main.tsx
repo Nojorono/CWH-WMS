@@ -9,6 +9,9 @@ export default function MainScreen() {
   const { WHdata } = location.state || {};
   const WHid = WHdata?.id;
 
+  console.log("WHdata", WHdata);
+  
+
   return (
     <div className="p-6">
       <PageBreadcrumb
