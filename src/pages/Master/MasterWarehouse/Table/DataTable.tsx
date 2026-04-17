@@ -32,8 +32,6 @@ const DataTable = () => {
   const [selectedOrgCode, setSelectedOrgCode] = useState("");
 
   const fetchLocators = async (orgCode: string) => {
-    console.log("orgCode", orgCode);
-
     if (!orgCode) return;
     try {
       const response = await axiosInstance.get(
