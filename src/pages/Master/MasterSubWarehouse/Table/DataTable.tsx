@@ -481,10 +481,16 @@ const DataTable = ({ params }: DataTableProps) => {
       name: "warehouse_id",
       label: "Warehouse",
       type: "select",
-      options: Warehouse.map((item: any) => ({
+      options: Warehouse.filter((item: any) => {
+        if (params?.WHid) {
+          return item.id === params.WHid;
+        }
+        return true;
+      }).map((item: any) => ({
         label: item.name,
         value: item.id,
       })),
+      defaultValue: params?.WHid,
       validation: { required: "Required" },
     },
     {
@@ -550,7 +556,7 @@ const DataTable = ({ params }: DataTableProps) => {
 
     const payload: any = {
       organization_id: Number(organization_id),
-      warehouse_id,
+      warehouse_id: WHdetail?.id,
       name,
       code,
       description,
