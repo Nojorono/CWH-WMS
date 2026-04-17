@@ -30,7 +30,10 @@ import MainTabPallet from "../pages/Master/MasterPallet/Tabs/Main";
 
 import MasterUOM from "../pages/Master/MasterUOM";
 import MasterIO from "../pages/Master/MasterIO";
+
 import MasterWarehouse from "../pages/Master/MasterWarehouse";
+import MainTabWarehouse from "../pages/Master/MasterWarehouse/Tabs/Main";
+
 import MasterItem from "../pages/Master/MasterItem";
 import MasterClassification from "../pages/Master/MasterClassification";
 import MasterVehicle from "../pages/Master/MasterVehicle";
@@ -84,7 +87,10 @@ export {
   MainTabPallet,
   MasterUOM,
   MasterIO,
+
   MasterWarehouse,
+  MainTabWarehouse,
+  
   MasterItem,
   MasterClassification,
   MasterVehicle,

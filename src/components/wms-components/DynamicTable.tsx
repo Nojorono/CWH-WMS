@@ -93,16 +93,15 @@ const DynamicTable = ({
                 <FaTrash />
               </button>
             )}
-            
-            {/* 
+
             {isView && (
               <button
-                onClick={() => handleView(getRowId(row.original))}
+                onClick={() => handleView(row.original)}
                 className="text-blue-500"
               >
                 <FaPlus />
               </button>
-            )} */}
+            )}
 
             {onResetPassword && (
               <button
@@ -129,9 +128,12 @@ const DynamicTable = ({
     [onSelectedChange],
   );
 
-  // const handleView = (id: any) => {
-  //   console.log("selected id", id);
-  // };
+  const handleView = (WHdata: any) => {
+    console.log("selected ", WHdata);
+    navigate("/master_warehouse/detail", {
+      state: { WHdata: WHdata },
+    });
+  };
 
   return (
     <>

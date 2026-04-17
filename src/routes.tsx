@@ -28,6 +28,7 @@ import {
   MasterUOM,
   MasterIO,
   MasterWarehouse,
+  MainTabWarehouse,
   MasterItem,
   MasterClassification,
   MasterVehicle,
@@ -63,7 +64,6 @@ import {
   ReportOutbound,
   Reporting2,
 } from "./utils/PagesComponent";
-import MainView from "./pages/Dashboard/CWHLayout/Main";
 
 const DefaultPage = () => <> </>;
 
@@ -127,6 +127,7 @@ export function AppRoutes() {
     ],
     "/master_pallet": [{ path: "detail", element: <MainTabPallet /> }],
     "/master_zone": [{ path: "detail", element: <MainTabZone /> }],
+    "/master_warehouse": [{ path: "detail", element: <MainTabWarehouse /> }],
     "/inbound_planning": [{ path: "process", element: <InboundProcess /> }],
     "/putaway": [{ path: "process", element: <PutAwayProcess /> }],
     "/inventory": [{ path: "detail", element: <InventoryDetail /> }],

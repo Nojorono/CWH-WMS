@@ -27,6 +27,7 @@ const DataTable: React.FC<DataTableProps> = ({ params }) => {
   const { list: Warehouse, fetchAll } = useStoreWarehouse();
   const { fetchAll: fetchAllIo, list: ioList } = useStoreIo();
   const { fetchAll: fetchSubWH, list: subWHList } = useStoreSubWarehouse();
+  
   const {
     fetchAll: fetchBin,
     list: binList,

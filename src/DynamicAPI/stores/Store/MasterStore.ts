@@ -41,7 +41,8 @@ import {
     StockAdjustmentService,
     ReportInboundService,
     MasterWeekService,
-    ReportOutboundService
+    ReportOutboundService,
+    zoneByWarehouseService
 } from "../../services/Service/MasterService";
 
 import { Uom, CreateUom, UpdateUom } from "../../types/UomTypes";
@@ -153,6 +154,11 @@ export const useStoreTransporter = createCrudStore<Transporter, CreateTransporte
 export const useStoreSubWarehouse = createCrudStore<SubWarehouse, CreateSubWarehouse, UpdateSubWarehouse>({
     name: "SubWarehouse",
     service: subWarehouseService,
+});
+
+export const useStoreZoneByWarehouse = createCrudStore<SubWarehouse, CreateSubWarehouse, UpdateSubWarehouse>({
+    name: "ZoneByWarehouse",
+    service: zoneByWarehouseService,
 });
 
 export const useStoreBin = createCrudStore<Bin, CreateBin, UpdateBin>({
