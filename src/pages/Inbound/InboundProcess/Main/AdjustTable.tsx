@@ -51,6 +51,10 @@ const AdjustTable = ({
         header: "Inbound No",
       },
       {
+        accessorKey: "origin",
+        header: "Origin",
+      },
+      {
         accessorKey: "inbound_reference_number",
         header: "Inbound Reference No",
       },

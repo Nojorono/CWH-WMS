@@ -142,10 +142,6 @@ export function AppRoutes() {
       { path: "create", element: <CreateApproval /> },
       { path: "process", element: <ApprovalProcess /> },
     ],
-    // "/reporting": [
-    //   { path: "report1", element: <Reporting1 /> },
-    //   { path: "report2", element: <Reporting2 /> },
-    // ],
   };
 
   // Map path ke komponen

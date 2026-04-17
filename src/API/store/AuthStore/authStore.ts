@@ -100,7 +100,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       const user = resData.user;
       const userDetail = user.userDetail;
       const menus = resData.menus || [];
-      const permissions = resData.permissions || [];
+      const permissions = resData.permissions || [];  
 
       // Simpan ke localStorage
       localStorage.setItem(
@@ -118,7 +118,8 @@ export const useAuthStore = create<AuthState>((set) => ({
       localStorage.setItem("email", userDetail?.email || "");
       localStorage.setItem("phone", userDetail?.phone || "");
       localStorage.setItem("full_name", `${userDetail?.firstName} ${userDetail?.lastName}`);
-
+      localStorage.setItem("organization_id", `${userDetail?.organizatinId}`);
+      
       // Update state global
       set({
         accessToken,

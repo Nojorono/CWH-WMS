@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { FaPlus } from "react-icons/fa";
 import Input from "../../../../components/form/input/InputField";
 import Label from "../../../../components/form/Label";
@@ -38,15 +38,17 @@ const DataTable = () => {
         header: "Organization",
         cell: ({ row }: any) => {
           const org = ioList.find(
-            (item: any) => item.organization_id === row.original.organization_id
+            (item: any) =>
+              item.organization_id === row.original.organization_id,
           );
           return org ? org.organization_name : row.original.organization_id;
         },
       },
-      { accessorKey: "name", header: "Nama Gudang" },
-      { accessorKey: "description", header: "Deskripsi" },
+      { accessorKey: "locator_name", header: "Locator Name" },
+      { accessorKey: "name", header: "Warehouse Name" },
+      { accessorKey: "description", header: "Description" },
     ],
-    [ioList]
+    [ioList],
   );
 
   const formFields = [
@@ -61,14 +63,20 @@ const DataTable = () => {
       validation: { required: "Required" },
     },
     {
+      name: "locator_name",
+      label: "Locator Name",
+      type: "text",
+      validation: { required: "Required" },
+    },
+    {
       name: "name",
-      label: "Nama Gudang",
+      label: "Warehouse Name",
       type: "text",
       validation: { required: "Required" },
     },
     {
       name: "description",
-      label: "Deskripsi",
+      label: "Description",
       type: "text",
       validation: { required: "Required" },
     },
@@ -76,11 +84,13 @@ const DataTable = () => {
 
   // Fungsi untuk format payload create
   const handleCreate = (data: any) => {
-    const { organization_id, name, description } = data;
+    const { organization_id, name, description, locator_id, locator_name} = data;
     return createData({
-      organization_id: Number(organization_id),
+      organization_id: organization_id,
       name,
       description,
+      locator_id,
+      locator_name,
     });
   };
 
@@ -94,25 +104,24 @@ const DataTable = () => {
     });
   };
 
-    const handleDelete = (id: number) => {
-      showConfirmDialog(
-        async () => {
-          try {
-            await deleteData(id);
-            fetchAll();
-          } catch (error) {
-            console.error(error);
-          }
-        },
-        {
-          title: "Confirm Delete",
-          text: "Anda yakin ingin menghapus data ini?",
-          confirmButtonText: "Yes, Delete!",
-          cancelButtonText: "No, Cancel",
-        },
-      );
-    };
-  
+  const handleDelete = (id: number) => {
+    showConfirmDialog(
+      async () => {
+        try {
+          await deleteData(id);
+          fetchAll();
+        } catch (error) {
+          console.error(error);
+        }
+      },
+      {
+        title: "Confirm Delete",
+        text: "Anda yakin ingin menghapus data ini?",
+        confirmButtonText: "Yes, Delete!",
+        cancelButtonText: "No, Cancel",
+      },
+    );
+  };
 
   return (
     <>
@@ -148,12 +157,13 @@ const DataTable = () => {
         formFields={formFields}
         onSubmit={handleCreate}
         onUpdate={handleUpdate}
-         onDelete={async (id) => {
+        onDelete={async (id) => {
           handleDelete(id);
         }}
         onRefresh={fetchAll}
         getRowId={(row) => row.id}
         title="Form UOM"
+        isView={true}
       />
     </>
   );

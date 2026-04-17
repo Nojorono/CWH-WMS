@@ -1,8 +1,9 @@
 import { useState, useMemo, useCallback } from "react";
 import { ColumnDef } from "@tanstack/react-table";
 import TableComponent from "../../components/tables/MasterDataTable/TableComponent";
-import { FaEdit, FaEye, FaKey, FaTrash } from "react-icons/fa";
+import { FaEdit, FaEye, FaKey, FaPlus, FaTrash } from "react-icons/fa";
 import DynamicFormModal from "./DynamicFormModal";
+import { useNavigate } from "react-router-dom";
 
 interface Props {
   data: any[];
@@ -49,16 +50,7 @@ const DynamicTable = ({
 }: Props) => {
   const [selectedItem, setSelectedItem] = useState<any | null>(null);
   const [selectedIds, setSelectedIds] = useState<any[]>([]);
-
-  // const handleDelete = useCallback(
-  //   async (id: any) => {
-  //     if (onDelete) {
-  //       await onDelete(id);
-  //     }
-  //     await onRefresh();
-  //   },
-  //   [onDelete, onRefresh],
-  // );
+  const navigate = useNavigate();
 
   const handleCloseModal = () => {
     setSelectedItem(null);
@@ -93,13 +85,6 @@ const DynamicTable = ({
               </button>
             )}
 
-            {/* <button
-              className="text-green-600"
-              onClick={() => console.log(row.original)}
-            >
-              <FaEdit />
-            </button> */}
-
             {isDeleted && (
               <button
                 onClick={() => handleDelete(getRowId(row.original))}
@@ -108,15 +93,16 @@ const DynamicTable = ({
                 <FaTrash />
               </button>
             )}
-
+            
+            {/* 
             {isView && (
               <button
-                onClick={() => console.log("View", getRowId(row.original))}
+                onClick={() => handleView(getRowId(row.original))}
                 className="text-blue-500"
               >
-                <FaEye />
+                <FaPlus />
               </button>
-            )}
+            )} */}
 
             {onResetPassword && (
               <button
@@ -142,6 +128,10 @@ const DynamicTable = ({
     },
     [onSelectedChange],
   );
+
+  // const handleView = (id: any) => {
+  //   console.log("selected id", id);
+  // };
 
   return (
     <>

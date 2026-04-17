@@ -3,6 +3,8 @@ export interface Warehouse {
   organization_id: number;
   name: string;
   description: string;
+  locator_id?: number;
+  locator_name?: string;
 }
 
 export type CreateWarehouse = Omit<Warehouse, "id">;
