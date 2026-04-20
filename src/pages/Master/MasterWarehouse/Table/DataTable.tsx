@@ -173,18 +173,16 @@ const DataTable = () => {
 
   const handleCreate = async (data: any) => {
     try {
-      // 1. Cari objek locator lengkap untuk mendapatkan namanya
       const selectedLoc = locatorList.find(
         (l) => l.LOCATOR_ID.toString() === data.locator_id.toString(),
       );
 
-      // 2. Susun payload sesuai keinginan BE
       const payload = {
         organization_id: data.organization_id,
-        name: data.name, // Ini berisi SUBINVENTORY_CODE dari autofill
+        name: data.name,
         description: data.description,
-        locator_id: Number(data.locator_id), // Paksa jadi Number
-        locator_name: selectedLoc ? selectedLoc.LOCATOR : "", // Tambahkan field ini
+        locator_id: Number(data.locator_id),
+        locator_name: selectedLoc ? selectedLoc.LOCATOR : "",
       };
 
       await createData(payload);
@@ -199,7 +197,6 @@ const DataTable = () => {
     try {
       const id = data.id;
 
-      // Cari objek locator lengkap
       const selectedLoc = locatorList.find(
         (l) => l.LOCATOR_ID.toString() === data.locator_id.toString(),
       );
@@ -208,7 +205,7 @@ const DataTable = () => {
         organization_id: data.organization_id,
         name: data.name,
         description: data.description,
-        locator_id: Number(data.locator_id), // Paksa jadi Number
+        locator_id: Number(data.locator_id),
         locator_name: selectedLoc ? selectedLoc.LOCATOR : "",
       };
 
@@ -252,14 +249,17 @@ const DataTable = () => {
               placeholder="🔍 Masukan data.."
             />
           </div>
+
           <div className="space-x-4">
-            <Button
-              variant="primary"
-              size="sm"
-              onClick={() => setCreateModalOpen(true)}
-            >
-              <FaPlus className="mr-2" /> Add Data
-            </Button>
+            {roleName === "superadmin" && (
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={() => setCreateModalOpen(true)}
+              >
+                <FaPlus className="mr-2" /> Add Data
+              </Button>
+            )}
           </div>
         </div>
       </div>
