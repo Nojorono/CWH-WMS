@@ -99,16 +99,14 @@ export default function DeliveryOrderCard({
     await handleCheckDO();
   };
 
-  // ✅ Reset status: Hanya jika user mengganti nomor SJ secara manual
   useEffect(() => {
     if (!isDOChecked || isDetailMode) return;
 
-    // BANDINGKAN: Jika input saat ini beda dengan yang divalidasi terakhir
     if (watchedDONo !== lastValidatedDONo.current) {
       const handler = setTimeout(() => {
         setDoStatus(null);
         setIsDOChecked(false);
-        lastValidatedDONo.current = ""; // Reset ref juga
+        lastValidatedDONo.current = "";
       }, 1000);
       return () => clearTimeout(handler);
     }
@@ -143,6 +141,9 @@ export default function DeliveryOrderCard({
 
   const isInputDisabled = !isCreateMode && !isEditMode && !isAddToReceiveMode;
   const isValidType = inbType === "PO" || inbType === "SO";
+
+  console.log("posFields", posFields);
+  
 
   return (
     <div className="bg-white rounded-lg shadow p-3 md:p-5">
@@ -298,6 +299,7 @@ export default function DeliveryOrderCard({
                 InbType={inbType}
                 dataPO={inbType === "PO" ? posField.po_no : posField.so_no}
                 isDOChecked={isDOChecked}
+                isPOValidated={!!(posField as any).validation_surat_jalan}
               />
             ))}
           </div>

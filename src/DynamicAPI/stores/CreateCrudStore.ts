@@ -103,7 +103,7 @@ export const createCrudStore = <TData, TCreate, TUpdate>({
             set({ isLoading: true, error: null });
 
             try {
-                const result = await service.fetchUsingPagination(params);
+                const result = await service.fetchUsingPagination(params);                
 
                 // 🧠 Defensive handling untuk nilai undefined/null
                 const data = Array.isArray(result?.data) ? result.data : [];

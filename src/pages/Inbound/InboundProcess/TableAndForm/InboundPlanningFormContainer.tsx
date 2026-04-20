@@ -182,11 +182,10 @@ export default function InboundPlanningFormContainer() {
     }
 
     const id = dataInbound?.id;
-
-    // 1. Tentukan fungsi API mana yang akan dipanggil
     let apiAction = null;
 
     if (isCreateMode) {
+      // console.log("Inbound Payload:", payload);
       apiAction = () => createData(payload);
     } else if (isEditMode && id) {
       apiAction = () => updateData(id, payload);
@@ -198,7 +197,6 @@ export default function InboundPlanningFormContainer() {
       apiAction = () => createData(addToReceivePayload);
     }
 
-    // 2. Eksekusi jika ada action
     if (apiAction) {
       const res = await apiAction();
 
