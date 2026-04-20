@@ -183,6 +183,7 @@ export function AppRoutes() {
       "/report_inbound": <ReportInbound />,
       "/report_outbound": <ReportOutbound />,
       "/reporting3": <Reporting2 />,
+      "/setup_master_warehouse": <MasterWarehouse />,
     };
     return map[path] || <DefaultPage />;
   };
