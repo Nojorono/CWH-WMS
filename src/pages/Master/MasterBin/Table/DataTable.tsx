@@ -20,6 +20,8 @@ interface DataTableProps {
     orgId?: any;
     zoneId?: any;
     zoneCode?: any;
+    locatorId?: Number;
+    locatorName?: String;
   };
 }
 
@@ -27,7 +29,7 @@ const DataTable: React.FC<DataTableProps> = ({ params }) => {
   const { list: Warehouse, fetchAll } = useStoreWarehouse();
   const { fetchAll: fetchAllIo, list: ioList } = useStoreIo();
   const { fetchAll: fetchSubWH, list: subWHList } = useStoreSubWarehouse();
-  
+
   const {
     fetchAll: fetchBin,
     list: binList,
@@ -55,17 +57,6 @@ const DataTable: React.FC<DataTableProps> = ({ params }) => {
   const columns = useMemo(
     () => [
       { accessorKey: "id", header: "ID", selectedRow: true },
-      {
-        accessorKey: "organization_id",
-        header: "Organization",
-        cell: ({ row }: any) => {
-          const org = ioList.find(
-            (item: any) =>
-              item.organization_id === row.original.organization_id,
-          );
-          return org ? org.organization_name : row.original.organization_id;
-        },
-      },
       {
         accessorKey: "warehouse_sub_id",
         header: "Zone",
@@ -112,26 +103,18 @@ const DataTable: React.FC<DataTableProps> = ({ params }) => {
     },
   ];
 
-  // Fungsi untuk format payload create
-  const handleCreate = (data: any) => {
-    const {
-      // organization_id,
-      // warehouse_sub_id,
-      name,
-      code,
-      description,
-      capacity_pallet,
-    } = data;
+  const handleCreate = async (data: any) => {
+    const { name, code, description, capacity_pallet } = data;
 
     const payload: any = {
-      organization_id: params?.orgId,
       warehouse_sub_id: params?.zoneId,
       name,
       code,
       description,
+      locator_id: params?.locatorId || data.locator_id,
+      locator_name: params?.locatorName || data.locator_name,
     };
 
-    // Hapus capacity_pallet dari payload jika kosong string
     if (capacity_pallet != null) {
       const cp =
         typeof capacity_pallet === "string"
@@ -142,20 +125,46 @@ const DataTable: React.FC<DataTableProps> = ({ params }) => {
       }
     }
 
-    return createData(payload);
+    try {
+      await createData(payload);
+      fetchBin();
+      return { success: true };
+    } catch (error) {
+      console.error(error);
+      return { success: false };
+    }
   };
 
-  // Fungsi untuk format payload update
-  const handleUpdate = (data: any) => {
-    const { id, name, code, description, capacity_pallet } = data;
-    return updateData(id, {
-      organization_id: params?.orgId,
+  const handleUpdate = async (data: any) => {
+    const {
+      id,
+      name,
+      code,
+      description,
+      capacity_pallet,
+      locator_id,
+      locator_name,
+    } = data;
+
+    const payload = {
       warehouse_sub_id: params?.zoneId,
       name,
       code,
       description,
       capacity_pallet: Number(capacity_pallet),
-    });
+      // Mempertahankan locator data saat update
+      locator_id: locator_id || params?.locatorId,
+      locator_name: locator_name || params?.locatorName,
+    };
+
+    try {
+      await updateData(id, payload);
+      fetchBin();
+      return { success: true };
+    } catch (error) {
+      console.error(error);
+      return { success: false };
+    }
   };
 
   const handlePrintBarcode = () => {
@@ -167,7 +176,7 @@ const DataTable: React.FC<DataTableProps> = ({ params }) => {
       (p) => typeof p.id === "string" && selectedIds.includes(p.id),
     );
     setSelectedBin(selected);
-    setPrintModalOpen(true); // buka modal preview
+    setPrintModalOpen(true);
   };
 
   const handleDelete = (id: number) => {
@@ -242,7 +251,7 @@ const DataTable: React.FC<DataTableProps> = ({ params }) => {
         onDelete={async (id) => {
           handleDelete(id);
         }}
-        onRefresh={fetchAll}
+        onRefresh={fetchBin}
         getRowId={(row) => row.id}
         title="Form UOM"
         onSelectedChange={setSelectedIds}

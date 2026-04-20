@@ -8,9 +8,8 @@ export default function MainScreen() {
   const location = useLocation();
   const { WHdata } = location.state || {};
   const WHid = WHdata?.id;
-
-  console.log("WHdata", WHdata);
-  
+  const locatorId = WHdata?.locator_id;
+  const locatorName = WHdata?.locator_name;  
 
   return (
     <div className="p-6">
@@ -27,6 +26,8 @@ export default function MainScreen() {
       <ZoneTable
         params={{
           WHid: WHid,
+          locatorId: locatorId,
+          locatorName: locatorName,
         }}
       />
     </div>

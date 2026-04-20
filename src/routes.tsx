@@ -127,7 +127,10 @@ export function AppRoutes() {
     ],
     "/master_pallet": [{ path: "detail", element: <MainTabPallet /> }],
     "/master_zone": [{ path: "detail", element: <MainTabZone /> }],
-    "/master_warehouse": [{ path: "detail", element: <MainTabWarehouse /> }],
+    "/master_warehouse": [
+      { path: "detail", element: <MainTabWarehouse /> },
+      { path: "zone", element: <MainTabZone /> },
+    ],
     "/inbound_planning": [{ path: "process", element: <InboundProcess /> }],
     "/putaway": [{ path: "process", element: <PutAwayProcess /> }],
     "/inventory": [{ path: "detail", element: <InventoryDetail /> }],
