@@ -108,9 +108,6 @@ export const useAuthStore = create<AuthState>((set) => ({
         JSON.stringify({ accessToken, refreshToken, user, menus, permissions })
       );
 
-      console.log("userDetail", userDetail);
-
-
       localStorage.setItem("role_id", user?.roleId?.toString() || "");
       localStorage.setItem("role_name", user?.role?.name || "");
       localStorage.setItem("token", accessToken);

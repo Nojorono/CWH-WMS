@@ -12,6 +12,8 @@ import {
 import { showConfirmDialog } from "../../../../components/swal-confirm";
 import axiosInstance from "../../../../DynamicAPI/AxiosInstance";
 import { EndPoint } from "../../../../utils/EndPoint";
+import { Controller } from "react-hook-form";
+import Select from "../../../../components/form/Select";
 
 const DataTable = () => {
   const {
@@ -117,18 +119,49 @@ const DataTable = () => {
     {
       name: "locator_id",
       label: "Locator",
-      type: "select",
-      options: locatorList.map((item: any) => ({
-        label: item.LOCATOR,
-        value: item.LOCATOR_ID,
-      })),
-      validation: { required: "Required" },
+      type: "custom",
+      renderCustom: ({ control, setValue, errors }: any) => (
+        <Controller
+          name="locator_id"
+          control={control}
+          rules={{ required: "Required" }}
+          render={({ field: controllerField }) => (
+            <Select
+              options={locatorList.map((item: any) => ({
+                label: item.LOCATOR,
+                value: item.LOCATOR_ID.toString(),
+              }))}
+              value={controllerField.value}
+              placeholder="Select Locator..."
+              width="100%"
+              onChange={(val: any) => {
+                controllerField.onChange(val);
+                const selectedLoc = locatorList.find(
+                  (l) => l.LOCATOR_ID.toString() === val.toString(),
+                );
+
+                if (selectedLoc) {
+                  setValue("name", selectedLoc.SUBINVENTORY_CODE);
+                }
+              }}
+            />
+          )}
+        />
+      ),
     },
     {
       name: "name",
       label: "Warehouse Name",
-      type: "text",
-      validation: { required: "Required" },
+      type: "custom",
+      renderCustom: ({ register }: any) => (
+        <input
+          {...register("name", { required: "Required" })}
+          readOnly
+          onKeyDown={(e) => e.preventDefault()}
+          className="w-full px-3 py-2 border rounded-md bg-gray-100 cursor-not-allowed text-gray-500 focus:outline-none"
+          placeholder="Auto-filled from Locator"
+        />
+      ),
     },
     {
       name: "description",
@@ -140,14 +173,22 @@ const DataTable = () => {
 
   const handleCreate = async (data: any) => {
     try {
-      // Pastikan payload yang dikirim sesuai dengan yang diharapkan API
-      await createData({
+      // 1. Cari objek locator lengkap untuk mendapatkan namanya
+      const selectedLoc = locatorList.find(
+        (l) => l.LOCATOR_ID.toString() === data.locator_id.toString(),
+      );
+
+      // 2. Susun payload sesuai keinginan BE
+      const payload = {
         organization_id: data.organization_id,
-        name: data.name,
+        name: data.name, // Ini berisi SUBINVENTORY_CODE dari autofill
         description: data.description,
-        locator_id: data.locator_id,
-      });
-      fetchAll(); // Refresh data setelah create
+        locator_id: Number(data.locator_id), // Paksa jadi Number
+        locator_name: selectedLoc ? selectedLoc.LOCATOR : "", // Tambahkan field ini
+      };
+
+      await createData(payload);
+      fetchAll();
       setCreateModalOpen(false);
     } catch (error) {
       console.error("Create Error:", error);
@@ -156,15 +197,24 @@ const DataTable = () => {
 
   const handleUpdate = async (data: any) => {
     try {
-      // ID baris biasanya ada di data.id saat mode edit di DynamicTable
       const id = data.id;
-      await updateData(id, {
+
+      // Cari objek locator lengkap
+      const selectedLoc = locatorList.find(
+        (l) => l.LOCATOR_ID.toString() === data.locator_id.toString(),
+      );
+
+      const payload = {
         organization_id: data.organization_id,
         name: data.name,
         description: data.description,
-        locator_id: data.locator_id,
-      });
-      fetchAll(); // Refresh data setelah update
+        locator_id: Number(data.locator_id), // Paksa jadi Number
+        locator_name: selectedLoc ? selectedLoc.LOCATOR : "",
+      };
+
+      await updateData(id, payload);
+      fetchAll();
+      setCreateModalOpen(false);
     } catch (error) {
       console.error("Update Error:", error);
     }
