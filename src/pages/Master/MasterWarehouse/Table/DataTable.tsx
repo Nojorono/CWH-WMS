@@ -76,14 +76,9 @@ const DataTable = () => {
       },
       {
         accessorKey: "locator_id",
-        header: "Locator Name",
-        cell: ({ row }: any) => {
-          const loc = locatorList.find(
-            (l: any) => l.LOCATOR_ID === row.original.locator_id,
-          );
-          return loc ? loc.LOCATOR : "N/A";
-        },
+        header: "Locator Id",
       },
+      { accessorKey: "locator_name", header: "Locator Name" },
       { accessorKey: "name", header: "Warehouse Name" },
       { accessorKey: "description", header: "Description" },
     ],
