@@ -87,7 +87,6 @@ export function mapToPayload(data: FormValues): any {
                     inbound_do_date: doItem.date ? new Date(doItem.date).toISOString().split('T')[0] : "",
                     attachment: doItem.attachment ?? "",
 
-                    // Gunakan rawType (PO) atau apiType (SO_INTERNAL) untuk keamanan pengecekan
                     inbound_po_number: (rawType === "PO" || apiType === "SO_INTERNAL")
                         ? (po.po_no ?? null)
                         : (po.so_no ?? null),
@@ -95,7 +94,6 @@ export function mapToPayload(data: FormValues): any {
                     inbound_po_date: po.po_date ? new Date(po.po_date).toISOString() : null,
                     flag_validated: (po as any).flag_validated ?? true,
 
-                    // 3. ITEM LEVEL
                     inbound_items: finalItems
                 };
             })
