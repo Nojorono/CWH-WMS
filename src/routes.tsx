@@ -28,6 +28,7 @@ import {
   MasterUOM,
   MasterIO,
   MasterWarehouse,
+  MainTabWarehouse,
   MasterItem,
   MasterClassification,
   MasterVehicle,
@@ -59,11 +60,10 @@ import {
   InventoryVisibility,
   InventoryMovement,
   StockAdjustment,
-  Reporting,
-  Reporting1,
+  ReportInbound,
+  ReportOutbound,
   Reporting2,
 } from "./utils/PagesComponent";
-import MainView from "./pages/Dashboard/CWHLayout/Main";
 
 const DefaultPage = () => <> </>;
 
@@ -105,7 +105,6 @@ export function AppRoutes() {
     if (isAuthenticated() && location.pathname === "/signin") {
       // Redirect ke halaman pertama menu yang bisa diakses
       navigate(getFirstAccessiblePath(userMenus), { replace: true });
-      console.log("First accessible path:", getFirstAccessiblePath(userMenus));
     }
   }, [location.pathname, isAuthenticated, navigate, userMenus]);
 
@@ -128,6 +127,10 @@ export function AppRoutes() {
     ],
     "/master_pallet": [{ path: "detail", element: <MainTabPallet /> }],
     "/master_zone": [{ path: "detail", element: <MainTabZone /> }],
+    "/master_warehouse": [
+      { path: "detail", element: <MainTabWarehouse /> },
+      { path: "zone", element: <MainTabZone /> },
+    ],
     "/inbound_planning": [{ path: "process", element: <InboundProcess /> }],
     "/putaway": [{ path: "process", element: <PutAwayProcess /> }],
     "/inventory": [{ path: "detail", element: <InventoryDetail /> }],
@@ -143,10 +146,6 @@ export function AppRoutes() {
       { path: "create", element: <CreateApproval /> },
       { path: "process", element: <ApprovalProcess /> },
     ],
-    // "/reporting": [
-    //   { path: "report1", element: <Reporting1 /> },
-    //   { path: "report2", element: <Reporting2 /> },
-    // ],
   };
 
   // Map path ke komponen
@@ -181,9 +180,10 @@ export function AppRoutes() {
       "/inventory_visibility": <InventoryVisibility />,
       "/inventory_movement": <InventoryMovement />,
       "/stock_adjustment": <StockAdjustment />,
-      "/report_inbound": <Reporting />,
-      "/reporting2": <Reporting1 />,
+      "/report_inbound": <ReportInbound />,
+      "/report_outbound": <ReportOutbound />,
       "/reporting3": <Reporting2 />,
+      "/setup_master_warehouse": <MasterWarehouse />,
     };
     return map[path] || <DefaultPage />;
   };

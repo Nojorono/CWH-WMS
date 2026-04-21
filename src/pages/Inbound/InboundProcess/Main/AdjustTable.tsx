@@ -26,7 +26,7 @@ const AdjustTable = ({
   const { canCreate, canManage } = usePagePermissions();
 
   const { fetchUsingPagination, deleteData, list, pagination, isLoading } =
-    useStoreInboundGoodStock();
+    useStoreInboundGoodStock();    
 
   // 🔹 local state pagination
   const [pageIndex, setPageIndex] = useState(0);
@@ -36,7 +36,7 @@ const AdjustTable = ({
   useEffect(() => {
     if (!fetchUsingPagination) return;
     fetchUsingPagination({
-      page: pageIndex + 1, // jika backend 1-based
+      page: pageIndex + 1,
       limit: pageSize,
       search: globalFilter || "",
       status: filteredStatus || "",
@@ -49,6 +49,10 @@ const AdjustTable = ({
       {
         accessorKey: "inbound_number",
         header: "Inbound No",
+      },
+      {
+        accessorKey: "origin",
+        header: "Origin",
       },
       {
         accessorKey: "inbound_reference_number",
@@ -162,7 +166,6 @@ const AdjustTable = ({
   };
 
   const handleAddToReceive = (data: any) => {
-    console.log("Add data:", data);
     navigate("/inbound_planning/process", {
       state: { data, mode: "add", title: "Add Inbound Planning" },
     });

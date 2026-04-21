@@ -27,17 +27,14 @@ export async function fetchAssignedGate(): Promise<AssignedGateResponse> {
         );
 
         const rawData = response.data.data || response.data;
-
-        // Logika Filter: Buang data yang sudah "APPROVED"
         const filteredData = Array.isArray(rawData)
             ? rawData.filter((item: any) => item.status !== "APPROVED")
-            : [];
+            : [];            
 
         return {
             success: true,
             message: "Successfully fetched assigned gate",
             data: filteredData
-            // data: rawData
         };
 
     } catch (error: any) {

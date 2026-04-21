@@ -103,7 +103,7 @@ export const createCrudStore = <TData, TCreate, TUpdate>({
             set({ isLoading: true, error: null });
 
             try {
-                const result = await service.fetchUsingPagination(params);
+                const result = await service.fetchUsingPagination(params);                
 
                 // 🧠 Defensive handling untuk nilai undefined/null
                 const data = Array.isArray(result?.data) ? result.data : [];
@@ -168,9 +168,6 @@ export const createCrudStore = <TData, TCreate, TUpdate>({
         // ✅ Fungsi baru khusus untuk bulk insert (pakai { data: [...] })
         createBulkData: async (payload: { data: TCreate[] }) => {  // ✅ ubah di sini
             set({ isLoading: true, error: null });
-
-            console.log("Payload for bulk create:", payload);  // Debugging line
-
             try {
                 if (!Array.isArray(payload.data) || payload.data.length === 0) {
                     throw new Error("Bulk payload must be a non-empty array");

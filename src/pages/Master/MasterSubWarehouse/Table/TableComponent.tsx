@@ -44,12 +44,10 @@ const DynamicTable = ({
 
   const handleDelete = useCallback(
     async (id: any) => {
-      console.log("Deleting id:", id);
-      
       await onDelete(id);
       await onRefresh();
     },
-    [onDelete, onRefresh]
+    [onDelete, onRefresh],
   );
 
   const handleCloseModal = () => {
@@ -72,14 +70,15 @@ const DynamicTable = ({
             >
               <FaEdit />
             </button>
+
             <button
-              onClick={() => goToDetailPage(getRowId(row.original))}
+              onClick={() => goToDetailPage(row.original)}
               className="text-blue-500"
             >
               <FaEye />
             </button>
 
-             <button
+            <button
               onClick={() => handleDelete(getRowId(row.original))}
               className="text-red-500"
             >
@@ -99,12 +98,16 @@ const DynamicTable = ({
         onSelectedChange(ids); // kirim ke parent
       }
     },
-    [onSelectedChange]
+    [onSelectedChange],
   );
 
-  const goToDetailPage = (idZone: string) => {    
-    navigate("/master_zone/detail", {
-      state: { idZone }, // kirim state
+  const goToDetailPage = (zoneData: any) => {
+    const idZone = zoneData.id;
+    const locatorId = zoneData.locator_id;
+    const locatorName = zoneData.locator_name;
+
+    navigate("/master_warehouse/zone", {
+      state: { idZone, locatorId, locatorName },
     });
   };
 

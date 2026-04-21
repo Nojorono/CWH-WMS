@@ -32,11 +32,12 @@ import { CreateMasterAMO, UpdateMasterAMO, MasterAMO } from "../../types/MasterA
 import { MasterSubdist, CreateMasterSubdist, UpdateMasterSubdist } from "../../types/MasterSubdistTypes.ts";
 import { ApprovalSetUp, CreateApprovalSetUp, UpdateApprovalSetUp } from "../../types/ApprovalSetUpTypes";
 import { InventoryVisibilityResponse } from '../../types/InventoryVisibilty.ts'
-import { MasterSupplier, CreateMasterSupplier, UpdateMasterSupplier} from '../../types/MasterSupplier.ts'
-import {InventoryMovementListResponse} from '../../types/InventoryMovement.ts'
-import {StockAdjustment, StockAdjustmentCreateRequest} from '../../types/StockAdjustmentTypes.ts'
+import { MasterSupplier, CreateMasterSupplier, UpdateMasterSupplier } from '../../types/MasterSupplier.ts'
+import { InventoryMovementListResponse } from '../../types/InventoryMovement.ts'
+import { StockAdjustment, StockAdjustmentCreateRequest } from '../../types/StockAdjustmentTypes.ts'
 
-import { MasterWeek, CreateMasterWeek, UpdateMasterWeek} from '../../types/MasterWeekTypes.ts'
+import { MasterWeek, CreateMasterWeek, UpdateMasterWeek } from '../../types/MasterWeekTypes.ts'
+import { OutboundPlanning, UpdateOutboundPlanning } from "../../types/OutboundGoodStock.ts";
 
 
 // Daftar semua entitas service di sini
@@ -54,6 +55,9 @@ export const ClassificationService = createCrudService<Classification, CreateCla
 export const VehicleService = createCrudService<Vehicle, CreateVehicle, UpdateVehicle>("/master-vehicle");
 export const TransporterService = createCrudService<Transporter, CreateTransporter, UpdateTransporter>("/inbound-transporter");
 export const subWarehouseService = createCrudService<SubWarehouse, CreateSubWarehouse, UpdateSubWarehouse>("/master-warehouse-sub");
+
+export const zoneByWarehouseService = createCrudService<SubWarehouse, CreateSubWarehouse, UpdateSubWarehouse>("/master-warehouse-sub/warehouse");
+
 export const binService = createCrudService<Bin, CreateBin, UpdateBin>("/master-warehouse-bin");
 export const binByZoneService = createCrudService<Bin, CreateBin, UpdateBin>("/master-warehouse-bin/warehouse-sub");
 export const sourceService = createCrudService<Source, CreateSource, UpdateSource>("/master-source");
@@ -71,7 +75,8 @@ export const PickingListService = createCrudService<PickingList, CreatePickingLi
 export const PickingTransactionListService = createCrudService<PickingList, CreatePickingList, UpdatePickingList>("/transaction-picking");
 export const PickingAssignHelperService = createCrudService<PickingAssignHelper, CreatePickingAssignHelper, UpdatePickingAssignHelper>("/assigned-picking/");
 export const PickingSuggestionItemService = createCrudService<PickingSuggestionItem, CreatePickingSuggestionItem, UpdatePickingSuggestionItem>("/picking-suggestion/item");
-export const UserManagementService = createCrudService<UserManagement, CreateUserManagement, UpdateUserManagement>("/user-manage");
+// export const UserManagementService = createCrudService<UserManagement, CreateUserManagement, UpdateUserManagement>("/user-manage");
+export const UserManagementService = createCrudService<User, CreateUser, UpdateUser>("/user");
 export const MasterAMOService = createCrudService<MasterAMO, CreateMasterAMO, UpdateMasterAMO>("/customer/main");
 export const MasterSubdistService = createCrudService<MasterSubdist, CreateMasterSubdist, UpdateMasterSubdist>("/customer/subdist");
 export const ApprovalSetUpService = createCrudService<ApprovalSetUp, CreateApprovalSetUp, UpdateApprovalSetUp>("/approval-setup");
@@ -80,6 +85,8 @@ export const MasterSupplierService = createCrudService<MasterSupplier, CreateMas
 export const InventoryMovementService = createCrudService<InventoryMovementListResponse, null, null>("/inventory-movement");
 export const StockAdjustmentService = createCrudService<StockAdjustment, StockAdjustmentCreateRequest, StockAdjustmentCreateRequest>("/adjustment-stock");
 export const ReportInboundService = createCrudService<InboundPlanning, CreateInboundPlanning, UpdateInboundPlanning>("/report/inbound");
+export const ReportOutboundService = createCrudService<OutboundPlanning, UpdateOutboundPlanning, null>("/report/outbound");
+
 
 export const MasterWeekService = createCrudService<MasterWeek, null, null>("/master-week");
 

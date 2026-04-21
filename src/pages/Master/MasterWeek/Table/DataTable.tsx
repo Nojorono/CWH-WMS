@@ -48,30 +48,6 @@ const DataTable = () => {
     [],
   );
 
-  // const sycnDataAMOfromMeta = async () => {
-  //   setLoadingSycn(true);
-
-  //   try {
-  //     const token = localStorage.getItem("token"); // Replace with your actual token key
-  //     const response = await fetch(
-  //       `${EndPoint}customer/main/sync-from-meta-oracle`,
-  //       {
-  //         method: "POST",
-  //         headers: {
-  //           Authorization: `Bearer ${token}`,
-  //         },
-  //       }
-  //     );
-  //     if (!response.ok) {
-  //       throw new Error("Network response was not ok");
-  //     }
-  //     setLoadingSycn(false);
-  //     fetchAll();
-  //   } catch (error) {
-  //     console.error("Error fetching data:", error);
-  //   }
-  // };
-
   const syncDataWeekfromMeta = async () => {
     const currentYear = new Date().getFullYear();
 
@@ -79,8 +55,6 @@ const DataTable = () => {
       const response = await axiosInstance.get(
         `master-week/sync-from-meta-oracle/${currentYear}`,
       );
-
-      console.log("response", response);
     } catch (error) {
       console.error("Error fetching data:", error);
     } finally {

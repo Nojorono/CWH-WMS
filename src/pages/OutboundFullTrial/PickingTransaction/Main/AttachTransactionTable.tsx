@@ -74,8 +74,6 @@ const AttachTransactionTable: React.FC<AttachTransactionTableProps> = ({
     return (list || []).filter((trx) => trx.item?.id === selectedItemId);
   }, [list, selectedItemId]);
 
-  console.log("tableData attach transaction", tableData);
-
   // DEFINISI KOLOM
   const columns = useMemo(
     () => [

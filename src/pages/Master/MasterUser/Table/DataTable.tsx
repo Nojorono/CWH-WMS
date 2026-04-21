@@ -1,5 +1,5 @@
 // import { useEffect, useMemo, useState } from "react";
-// import { FaPlus, FaEye, FaEyeSlash } from "react-icons/fa";
+// import { FaPlus, FaCheckCircle } from "react-icons/fa";
 // import Input from "../../../../components/form/input/InputField";
 // import Label from "../../../../components/form/Label";
 // import Button from "../../../../components/ui/button/Button";
@@ -8,72 +8,144 @@
 // import {
 //   useStoreUser,
 //   useStoreSubWarehouse,
+//   useStoreIo,
 // } from "../../../../DynamicAPI/stores/Store/MasterStore";
 // import { useRoleStore } from "../../../../API/store/MasterStore";
-// import { EndPoint } from "../../../../utils/EndPoint";
+// import { UserVerifyService } from "../../../../DynamicAPI/services/Service/UserVerifyService";
+// import { showErrorToast, showSuccessToast } from "../../../../components/toast";
 
 // const DataTable = () => {
 //   const { list: userData, createData, updateData, fetchAll } = useStoreUser();
-
 //   const { list: subWarehouseList, fetchAll: fetchSubWarehouses } =
 //     useStoreSubWarehouse();
 //   const { fetchRoles, roles } = useRoleStore();
+//   const { list: IoList, fetchAll: fetchIO } = useStoreIo();
 
 //   const [search, setSearch] = useState("");
 //   const debouncedSearch = useDebounce(search, 500);
 //   const [isCreateModalOpen, setCreateModalOpen] = useState(false);
 
-//   const [resetPasswordId, setResetPasswordId] = useState<number | null>(null);
+//   // State Utama
+//   const [userType, setUserType] = useState<"EMPLOYEE" | "NON" | "">("");
+//   const [isNikVerified, setIsNikVerified] = useState(false);
+//   const [nikLoading, setNikLoading] = useState(false);
+//   const [nikInput, setNikInput] = useState("");
+//   const [verifiedEmployeeId, setVerifiedEmployeeId] = useState("");
+
+//   const [resetPasswordId, setResetPasswordId] = useState<string | null>(null);
 //   const [newPassword, setNewPassword] = useState("");
-//   const [showPassword, setShowPassword] = useState(false);
+//   const [passwordError, setPasswordError] = useState("");
 
 //   useEffect(() => {
 //     fetchAll();
 //     fetchRoles();
 //     fetchSubWarehouses();
+//     fetchIO();
 //   }, []);
 
-//   // 1. Dapatkan ID untuk role "GATE" agar perbandingan lebih akurat
-//   const gateRoleId = useMemo(() => {
-//     return roles?.find((r: any) => r.name === "GATE")?.id;
-//   }, [roles]);
+//   const gateRoleId = useMemo(
+//     () => roles?.find((r: any) => r.name === "GATE")?.id,
+//     [roles],
+//   );
 
-//   // 2. Filter list zona yang hanya memiliki is_gate: true
 //   const gateZoneOptions = useMemo(() => {
 //     return (
 //       subWarehouseList
 //         ?.filter((zone: any) => zone.is_gate === true)
-//         ?.map((zone: any) => ({
-//           label: zone.name,
-//           value: zone.id,
-//         })) || []
+//         ?.map((zone: any) => ({ label: zone.name, value: zone.id })) || []
 //     );
 //   }, [subWarehouseList]);
 
-//   // 3. Konfigurasi formFields dengan memanfaatkan hiddenWhen
+//   const PWD_REGEX = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/;
+
 //   const formFields = useMemo(
 //     () => [
 //       {
-//         name: "username",
-//         label: "Username",
-//         type: "username",
-//         validation: { required: "Required" },
+//         name: "userType",
+//         label: "Tipe User",
+//         type: "select",
+//         options: [
+//           { label: "NNA Employee", value: "EMPLOYEE" },
+//           { label: "Non-Employee / External", value: "NON" },
+//         ],
+//         validation: { required: "Pilih tipe user terlebih dahulu" },
+//         onChange: (val: any) => {
+//           setUserType(val); // Update state lokal untuk trigger re-render field lain
+//           setIsNikVerified(false);
+//           setNikInput("");
+//           setVerifiedEmployeeId("");
+//         },
 //       },
 //       {
-//         name: "password",
-//         label: "Password",
-//         type: "password",
-//         validation: {
-//           required: "Password wajib diisi",
-//           minLength: {
-//             value: 8,
-//             message: "Password minimal harus 8 karakter",
-//           },
-//           pattern: {
-//             // Regex: Minimal 1 huruf dan 1 angka
-//             value: /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/,
-//             message: "Password harus mengandung kombinasi huruf dan angka",
-//           },
+//         name: "nik_verify_section",
+//         label: "Verifikasi NIK",
+//         type: "custom",
+//         // Hanya muncul jika userType adalah EMPLOYEE
+//         hiddenWhen: (values: any) => values.userType !== "EMPLOYEE",
+//         renderCustom: ({ setValue }: { setValue: any }) => {
+//           const handleVerify = async () => {
+//             if (!nikInput)
+//               return showErrorToast("Masukkan NIK terlebih dahulu");
+//             setNikLoading(true);
+//             try {
+//               const res = await UserVerifyService.verifyEmployee(nikInput);
+//               if (res.valid) {
+//                 setIsNikVerified(true);
+//                 setVerifiedEmployeeId(res.data.employee_number);
+
+//                 // Auto-fill field yang ada di form
+//                 setValue(
+//                   "firstName",
+//                   res.data.employee_name?.split(" ")[0] || "",
+//                 );
+//                 setValue(
+//                   "lastName",
+//                   res.data.employee_name?.split(" ").slice(1).join(" ") || "-",
+//                 );
+//                 if (res.data.organization_id) {
+//                   setValue("organizationId", String(res.data.organization_id));
+//                 }
+//                 showSuccessToast(`Terverifikasi: ${res.data.employee_name}`);
+//               } else {
+//                 showErrorToast("NIK tidak ditemukan!");
+//               }
+//             } catch (err) {
+//               showErrorToast("Gagal verifikasi server");
+//             } finally {
+//               setNikLoading(false);
+//             }
+//           };
+
+//           return (
+//             <div className="p-3 bg-blue-50 border-l-4 border-blue-500 rounded-r-md space-y-2">
+//               <div className="flex gap-2">
+//                 <input
+//                   type="text"
+//                   placeholder="Input NIK..."
+//                   className="flex-1 px-3 py-2 border rounded text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+//                   value={nikInput}
+//                   onChange={(e) => {
+//                     setNikInput(e.target.value);
+//                     setIsNikVerified(false);
+//                   }}
+//                 />
+//                 <Button
+//                   type="button"
+//                   variant="primary"
+//                   size="sm"
+//                   onClick={handleVerify}
+//                   disabled={nikLoading}
+//                 >
+//                   {nikLoading ? "..." : "Verify"}
+//                 </Button>
+//               </div>
+//               {isNikVerified && (
+//                 <p className="text-[11px] text-green-600 font-bold flex items-center gap-1">
+//                   <FaCheckCircle /> Data Karyawan Sinkron.
+//                 </p>
+//               )}
+//             </div>
+//           );
 //         },
 //       },
 //       {
@@ -81,11 +153,102 @@
 //         label: "Role",
 //         type: "select",
 //         options:
-//           roles?.map((role: any) => ({
-//             label: role.name,
-//             value: role.id,
+//           roles?.map((role: any) => ({ label: role.name, value: role.id })) ||
+//           [],
+//         validation: { required: "Role wajib dipilih" },
+//         hiddenWhen: (values: any) => {
+//           // Sembunyikan jika Tipe User belum dipilih
+//           if (!values.userType) return true;
+//           // Jika Employee, sembunyikan sampai NIK diverifikasi
+//           if (values.userType === "EMPLOYEE") return !isNikVerified;
+//           return false;
+//         },
+//       },
+//       {
+//         name: "organizationId",
+//         label: "Organization / IO",
+//         type: "select",
+//         options:
+//           IoList?.map((io: any) => ({
+//             label: io.organization_name,
+//             value: io.id,
 //           })) || [],
 //         validation: { required: "Required" },
+//         hiddenWhen: (values: any) => {
+//           if (!values.userType) return true;
+//           if (values.userType === "EMPLOYEE") return !isNikVerified;
+//           return false;
+//         },
+//       },
+//       {
+//         name: "username",
+//         label: "Username",
+//         type: "text",
+//         validation: { required: "Required" },
+//         hiddenWhen: (values: any) => {
+//           if (!values.userType) return true;
+//           if (values.userType === "EMPLOYEE") return !isNikVerified;
+//           return false;
+//         },
+//       },
+//       {
+//         name: "firstName",
+//         label: "First Name",
+//         type: "text",
+//         validation: { required: "Required" },
+//         hiddenWhen: (values: any) => {
+//           if (!values.userType) return true;
+//           if (values.userType === "EMPLOYEE") return !isNikVerified;
+//           return false;
+//         },
+//       },
+//       {
+//         name: "lastName",
+//         label: "Last Name",
+//         type: "text",
+//         validation: { required: "Required" },
+//         hiddenWhen: (values: any) => {
+//           if (!values.userType) return true;
+//           if (values.userType === "EMPLOYEE") return !isNikVerified;
+//           return false;
+//         },
+//       },
+//       {
+//         name: "email",
+//         label: "Email",
+//         type: "email",
+//         validation: { required: "Required" },
+//         hiddenWhen: (values: any) => {
+//           if (!values.userType) return true;
+//           if (values.userType === "EMPLOYEE") return !isNikVerified;
+//           return false;
+//         },
+//       },
+//       {
+//         name: "phone",
+//         label: "Phone",
+//         type: "text",
+//         validation: { required: "Required" },
+//         hiddenWhen: (values: any) => {
+//           if (!values.userType) return true;
+//           if (values.userType === "EMPLOYEE") return !isNikVerified;
+//           return false;
+//         },
+//       },
+//       {
+//         name: "password",
+//         label: "Password",
+//         type: "password",
+//         validation: {
+//           required: "Wajib diisi",
+//           minLength: { value: 8, message: "Min 8 karakter" },
+//           pattern: { value: PWD_REGEX, message: "Huruf & Angka" },
+//         },
+//         hiddenWhen: (values: any) => {
+//           if (!values.userType) return true;
+//           if (values.userType === "EMPLOYEE") return !isNikVerified;
+//           return false;
+//         },
 //       },
 //       {
 //         name: "zoneId",
@@ -93,9 +256,9 @@
 //         type: "select",
 //         options: gateZoneOptions,
 //         validation: { required: "Required" },
-//         // LOGIKA UTAMA: Sembunyikan jika roleId yang dipilih BUKAN gateRoleId
 //         hiddenWhen: (values: any) => {
-//           if (!values.roleId || !gateRoleId) return true;
+//           if (!values.userType) return true;
+//           if (values.userType === "EMPLOYEE" && !isNikVerified) return true;
 //           return String(values.roleId) !== String(gateRoleId);
 //         },
 //       },
@@ -103,122 +266,80 @@
 //         name: "isActive",
 //         label: "is Active?",
 //         type: "checkbox",
+//         onlyUpdate: true,
 //       },
 //     ],
-//     [roles, gateZoneOptions, gateRoleId],
-//   );
-
-//   const updateFormFields = useMemo(
-//     () => formFields.filter((f) => f.name !== "password"),
-//     [formFields],
+//     [
+//       roles,
+//       gateZoneOptions,
+//       gateRoleId,
+//       IoList,
+//       isNikVerified,
+//       nikLoading,
+//       nikInput,
+//     ],
 //   );
 
 //   const handleCreate = (data: any) => {
-//     // Hapus zoneId dari payload, hanya kirim warehouseSubId jika role GATE
-//     const { zoneId, ...rest } = data;
+//     const {
+//       zoneId,
+//       organizationId,
+//       userType: type,
+//       nik_verify_section,
+//       ...rest
+//     } = data;
+
 //     const payload = {
 //       ...rest,
+//       employeeId: userType === "EMPLOYEE" ? verifiedEmployeeId : "NON",
 //       roleId: Number(data.roleId),
+//       organizationId: String(organizationId),
 //       warehouseSubId:
 //         String(data.roleId) === String(gateRoleId) ? data.zoneId : null,
 //     };
 
-//     console.log("Create Payload:", payload);
 //     return createData(payload);
 //   };
 
-//   const handleUpdate = (data: any): Promise<any> => {
-//     const { id, zoneId, ...rest } = data;
+//   const handleUpdate = async (data: any): Promise<any> => {
+//     const { id, zoneId, organizationId, ...rest } = data;
 
-//     if (!id) {
-//       return Promise.reject(new Error("ID is required for update"));
-//     }
+//     const payload = {
+//       ...rest,
+//       roleId: rest.roleId ? Number(rest.roleId) : undefined,
+//       organizationId: String(organizationId),
+//       warehouseSubId:
+//         String(rest.roleId) === String(gateRoleId) ? zoneId : null,
+//     };
 
-//     const payload = Object.fromEntries(
-//       Object.entries({
-//         username: rest.username,
-//         isActive: rest.isActive,
-//         roleId: rest.roleId ? Number(rest.roleId) : undefined,
-//         employeeId: rest.employeeId,
-//         email: rest.email,
-//         phone: rest.phone,
-//         organizationId: rest.organizationId,
-//         warehouseSubId:
-//           String(rest.roleId) === String(gateRoleId) ? zoneId : undefined,
-//       }).filter(([_, v]) => v !== undefined && v !== null && v !== ""),
+//     const cleanPayload = Object.fromEntries(
+//       Object.entries(payload).filter(([_, v]) => v !== undefined && v !== ""),
 //     );
 
-//     console.log("Final Update Payload:", payload);
-//     return updateData(id, payload);
-//   };
-
-//   const handleHardDelete = async (id: number): Promise<void> => {
-//     const token = localStorage.getItem("token");
-//     if (!token) {
-//       console.error("No token found in localStorage");
-//       return;
-//     }
-//     try {
-//       await fetch(`${EndPoint}user/${id}/hard`, {
-//         method: "DELETE",
-//         headers: {
-//           Authorization: `Bearer ${token}`,
-//           "Content-Type": "application/json",
-//         },
-//       });
-
-//       // Refresh data setelah penghapusan
-//       await fetchAll();
-//     } catch (error) {
-//       console.error("Hard delete failed:", error);
-//     }
-//   };
-
-//   const columns = useMemo(
-//     () => [
-//       { accessorKey: "username", header: "Username" },
-//       {
-//         accessorKey: "roleId",
-//         header: "Role",
-//         cell: (info: any) =>
-//           roles?.find((r: any) => r.id === info.getValue())?.name || "-",
-//       },
-//       {
-//         accessorKey: "isActive",
-//         header: "Active",
-//         cell: (info: any) => (info.getValue() ? "Active" : "Inactive"),
-//       },
-//     ],
-//     [roles],
-//   );
-
-//   const handleResetPassword = async () => {
-//     if (!resetPasswordId || !newPassword) return;
-
-//     const payload = { password: newPassword };
-//     await updateData(resetPasswordId, payload);
-//     setResetPasswordId(null);
-//     setNewPassword("");
-//     fetchAll();
+//     return updateData(id, cleanPayload);
 //   };
 
 //   return (
 //     <>
-//       <div className="p-4 bg-white shadow rounded-md mb-5">
+//       <div className="p-4 bg-white shadow rounded-md mb-5 text-sm">
 //         <div className="flex justify-between items-center">
-//           <div className="space-x-4">
+//           <div className="flex items-center gap-4">
 //             <Label htmlFor="search">Search</Label>
 //             <Input
 //               onChange={(e) => setSearch(e.target.value)}
 //               type="text"
-//               id="search"
-//               placeholder="🔍 Masukan data.."
+//               placeholder="🔍 Cari data.."
 //             />
 //           </div>
 //           <Button
 //             variant="primary"
 //             size="sm"
-//             onClick={() => setCreateModalOpen(true)}
+//             onClick={() => {
+//               setUserType("");
+//               setIsNikVerified(false);
+//               setNikInput("");
+//               setCreateModalOpen(true);
+//             }}
 //           >
 //             <FaPlus className="mr-2" /> Add Data
 //           </Button>
@@ -226,105 +347,89 @@
 //       </div>
 
 //       <DynamicTable
-//         data={userData}
+//         data={(userData ?? []).map((u: any) => ({
+//           ...u,
+//           id: u.id,
+//           username: u.username,
+//           isActive: u.isActive,
+//           roleId: u.roleId,
+//           firstName: u.userDetail?.firstName ?? "",
+//           lastName: u.userDetail?.lastName ?? "",
+//           email: u.userDetail?.email ?? "",
+//           phone: u.userDetail?.phone ?? "",
+//           organizationId: u.userDetail?.organizationId ?? "",
+//         }))}
 //         globalFilter={debouncedSearch}
 //         isCreateModalOpen={isCreateModalOpen}
 //         onCloseCreateModal={() => setCreateModalOpen(false)}
-//         columns={columns}
-//         formFields={formFields}
-//         updateFormFields={updateFormFields}
+//         columns={useMemo(
+//           () => [
+//             { accessorKey: "organizationId", header: "Org" },
+//             { accessorKey: "username", header: "Username" },
+//             {
+//               accessorKey: "firstName",
+//               header: "Name",
+//               cell: (info: any) =>
+//                 `${info.row.original.firstName} ${info.row.original.lastName}`,
+//             },
+//             {
+//               accessorKey: "roleId",
+//               header: "Role",
+//               cell: (info: any) =>
+//                 roles?.find((r: any) => r.id === info.getValue())?.name || "-",
+//             },
+//             {
+//               accessorKey: "isActive",
+//               header: "Status",
+//               cell: (info: any) =>
+//                 info.getValue() ? "✅ Active" : "❌ Inactive",
+//             },
+//           ],
+//           [roles],
+//         )}
+//         formFields={formFields.filter((f) => !f.onlyUpdate)}
+//         updateFormFields={formFields.filter(
+//           (f) =>
+//             !["password", "userType", "nik_verify_section"].includes(f.name),
+//         )}
 //         onSubmit={handleCreate}
 //         onUpdate={handleUpdate}
-//         onDelete={handleHardDelete}
+//         onDelete={async (id) => {
+//           await updateData(id, { isActive: false });
+//         }}
 //         onRefresh={fetchAll}
 //         getRowId={(row) => row.id}
-//         title="Form Data"
-//         onResetPassword={(id) => setResetPasswordId(id)}
+//         title="Management User WMS"
+//         onResetPassword={(id) => {
+//           setResetPasswordId(id);
+//           setNewPassword("");
+//         }}
 //       />
 
-//       {/* Modal Reset Password */}
+//       {/* Modal Reset Password Tetap Sama */}
 //       {resetPasswordId && (
-//         <div className="fixed inset-0 z-1000 flex items-center justify-center p-4">
-//           {/* Overlay dengan Backdrop Blur agar terasa premium */}
-//           <div
-//             className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-300"
-//             onClick={() => setResetPasswordId(null)}
-//           />
-
-//           {/* Modal Container */}
-//           <div className="relative bg-white w-full max-w-sm overflow-hidden rounded-2xl shadow-2xl ring-1 ring-black/5 animate-in zoom-in-95 duration-200">
-//             {/* Header dengan sedikit aksen warna */}
-//             <div className="px-6 pt-8 pb-4 text-center">
-//               <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-blue-50">
-//                 <svg
-//                   className="h-6 w-6 text-blue-600"
-//                   fill="none"
-//                   stroke="currentColor"
-//                   viewBox="0 0 24 24"
-//                 >
-//                   <path
-//                     strokeLinecap="round"
-//                     strokeLinejoin="round"
-//                     strokeWidth="2"
-//                     d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-//                   />
-//                 </svg>
-//               </div>
-//               <h2 className="text-xl font-bold text-gray-900">
-//                 Reset Password
-//               </h2>
-//               <p className="mt-2 text-sm text-gray-500">Enter new password</p>
-//             </div>
-
-//             {/* Body */}
-//             <div className="px-6 py-4 space-y-4">
-//               <div className="space-y-1 text-left">
-//                 <label className="text-xs font-semibold text-gray-600 ml-1">
-//                   Password
-//                 </label>
-
-//                 <div className="relative group">
-//                   <Input
-//                     // Logic toggle tipe input
-//                     type={showPassword ? "text" : "password"}
-//                     placeholder="••••••••"
-//                     className="w-full pr-10 border-gray-200 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 rounded-xl transition-all duration-200 outline-none"
-//                     value={newPassword}
-//                     onChange={(e) => setNewPassword(e.target.value)}
-//                   />
-
-//                   {/* Tombol Toggle Eye dari React Icons */}
-//                   <button
-//                     type="button"
-//                     onClick={() => setShowPassword(!showPassword)}
-//                     className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-blue-600 transition-colors focus:outline-none"
-//                     tabIndex={-1} // Agar tidak mengganggu alur navigasi tombol Tab
-//                   >
-//                     {showPassword ? (
-//                       <FaEyeSlash className="text-lg" />
-//                     ) : (
-//                       <FaEye className="text-lg" />
-//                     )}
-//                   </button>
-//                 </div>
-//               </div>
-//             </div>
-
-//             {/* Footer / Actions */}
-//             <div className="bg-gray-50 px-6 py-4 flex gap-3 justify-end">
-//               <Button
-//                 variant="danger"
-//                 className="text-gray-600 hover:bg-gray-200 font-medium"
-//                 onClick={() => setResetPasswordId(null)}
-//               >
+//         <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+//           <div className="bg-white w-full max-w-sm rounded-xl p-6 shadow-xl">
+//             <h2 className="text-lg font-bold mb-4">Reset Password</h2>
+//             <Input
+//               type="password"
+//               value={newPassword}
+//               onChange={(e) => setNewPassword(e.target.value)}
+//               placeholder="Password Baru"
+//             />
+//             <div className="flex justify-end gap-2 mt-6">
+//               <Button variant="danger" onClick={() => setResetPasswordId(null)}>
 //                 Batal
 //               </Button>
 //               <Button
 //                 variant="secondary"
-//                 className="bg-blue-600 hover:bg-blue-700 shadow-md shadow-blue-200 px-6 font-medium transition-all active:scale-95"
-//                 onClick={handleResetPassword}
+//                 onClick={async () => {
+//                   await updateData(resetPasswordId, { password: newPassword });
+//                   setResetPasswordId(null);
+//                   fetchAll();
+//                 }}
 //               >
-//                 Submit
+//                 Update
 //               </Button>
 //             </div>
 //           </div>
@@ -337,7 +442,7 @@
 // export default DataTable;
 
 import { useEffect, useMemo, useState } from "react";
-import { FaPlus, FaEye, FaEyeSlash, FaLock } from "react-icons/fa";
+import { FaPlus, FaCheckCircle, FaLock } from "react-icons/fa";
 import Input from "../../../../components/form/input/InputField";
 import Label from "../../../../components/form/Label";
 import Button from "../../../../components/ui/button/Button";
@@ -346,72 +451,143 @@ import DynamicTable from "../../../../components/wms-components/DynamicTable";
 import {
   useStoreUser,
   useStoreSubWarehouse,
+  useStoreIo,
 } from "../../../../DynamicAPI/stores/Store/MasterStore";
 import { useRoleStore } from "../../../../API/store/MasterStore";
-import { EndPoint } from "../../../../utils/EndPoint";
+import { UserVerifyService } from "../../../../DynamicAPI/services/Service/UserVerifyService";
+import { showErrorToast, showSuccessToast } from "../../../../components/toast";
 
 const DataTable = () => {
   const { list: userData, createData, updateData, fetchAll } = useStoreUser();
   const { list: subWarehouseList, fetchAll: fetchSubWarehouses } =
     useStoreSubWarehouse();
   const { fetchRoles, roles } = useRoleStore();
+  const { list: IoList, fetchAll: fetchIO } = useStoreIo();
 
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounce(search, 500);
   const [isCreateModalOpen, setCreateModalOpen] = useState(false);
 
-  // State untuk Reset Password
-  const [resetPasswordId, setResetPasswordId] = useState<number | null>(null);
+  // State Utama (Hanya untuk mode Create)
+  const [userType, setUserType] = useState<"EMPLOYEE" | "NON" | "">("");
+  const [isNikVerified, setIsNikVerified] = useState(false);
+  const [nikLoading, setNikLoading] = useState(false);
+  const [nikInput, setNikInput] = useState("");
+  const [verifiedEmployeeId, setVerifiedEmployeeId] = useState("");
+
+  const [resetPasswordId, setResetPasswordId] = useState<string | null>(null);
   const [newPassword, setNewPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const [passwordError, setPasswordError] = useState(""); // Untuk menampilkan pesan error di modal
 
   useEffect(() => {
     fetchAll();
     fetchRoles();
     fetchSubWarehouses();
+    fetchIO();
   }, []);
 
-  const gateRoleId = useMemo(() => {
-    return roles?.find((r: any) => r.name === "GATE")?.id;
-  }, [roles]);
+  const gateRoleId = useMemo(
+    () => roles?.find((r: any) => r.name === "GATE")?.id,
+    [roles],
+  );
 
   const gateZoneOptions = useMemo(() => {
     return (
       subWarehouseList
         ?.filter((zone: any) => zone.is_gate === true)
-        ?.map((zone: any) => ({
-          label: zone.name,
-          value: zone.id,
-        })) || []
+        ?.map((zone: any) => ({ label: zone.name, value: zone.id })) || []
     );
   }, [subWarehouseList]);
 
-  // Regex: Minimal 8 karakter, harus ada minimal 1 huruf dan 1 angka
   const PWD_REGEX = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/;
 
   const formFields = useMemo(
     () => [
       {
-        name: "username",
-        label: "Username",
-        type: "username",
-        validation: { required: "Required" },
+        name: "userType",
+        label: "Tipe User",
+        type: "select",
+        options: [
+          { label: "NNA Employee", value: "EMPLOYEE" },
+          { label: "Non-Employee / External", value: "NON" },
+        ],
+        validation: { required: "Pilih tipe user terlebih dahulu" },
+        onChange: (val: any) => {
+          setUserType(val);
+          setIsNikVerified(false);
+          setNikInput("");
+          setVerifiedEmployeeId("");
+        },
       },
       {
-        name: "password",
-        label: "Password",
-        type: "password",
-        validation: {
-          required: "Password wajib diisi",
-          minLength: {
-            value: 8,
-            message: "Password minimal harus 8 karakter",
-          },
-          pattern: {
-            value: PWD_REGEX,
-            message: "Password harus mengandung kombinasi huruf dan angka",
-          },
+        name: "nik_verify_section",
+        label: "Verifikasi NIK",
+        type: "custom",
+        // Sembunyikan jika mode Update (values.id ada) atau bukan EMPLOYEE
+        hiddenWhen: (values: any) =>
+          !!values.id || values.userType !== "EMPLOYEE",
+        renderCustom: ({ setValue }: { setValue: any }) => {
+          const handleVerify = async () => {
+            if (!nikInput)
+              return showErrorToast("Masukkan NIK terlebih dahulu");
+            setNikLoading(true);
+            try {
+              const res = await UserVerifyService.verifyEmployee(nikInput);
+              if (res.valid) {
+                setIsNikVerified(true);
+                setVerifiedEmployeeId(res.data.employee_number);
+
+                setValue(
+                  "firstName",
+                  res.data.employee_name?.split(" ")[0] || "",
+                );
+                setValue(
+                  "lastName",
+                  res.data.employee_name?.split(" ").slice(1).join(" ") || "-",
+                );
+                if (res.data.organization_id) {
+                  setValue("organizationId", String(res.data.organization_id));
+                }
+                showSuccessToast(`Terverifikasi: ${res.data.employee_name}`);
+              } else {
+                showErrorToast("NIK tidak ditemukan!");
+              }
+            } catch (err) {
+              showErrorToast("Gagal verifikasi server");
+            } finally {
+              setNikLoading(false);
+            }
+          };
+
+          return (
+            <div className="p-3 bg-blue-50 border-l-4 border-blue-500 rounded-r-md space-y-2">
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  placeholder="Input NIK..."
+                  className="flex-1 px-3 py-2 border rounded text-sm outline-none"
+                  value={nikInput}
+                  onChange={(e) => {
+                    setNikInput(e.target.value);
+                    setIsNikVerified(false);
+                  }}
+                />
+                <Button
+                  type="button"
+                  variant="primary"
+                  size="sm"
+                  onClick={handleVerify}
+                  disabled={nikLoading}
+                >
+                  {nikLoading ? "..." : "Verify"}
+                </Button>
+              </div>
+              {isNikVerified && (
+                <p className="text-[11px] text-green-600 font-bold flex items-center gap-1">
+                  <FaCheckCircle /> Data Karyawan Sinkron.
+                </p>
+              )}
+            </div>
+          );
         },
       },
       {
@@ -419,11 +595,108 @@ const DataTable = () => {
         label: "Role",
         type: "select",
         options:
-          roles?.map((role: any) => ({
-            label: role.name,
-            value: role.id,
+          roles?.map((role: any) => ({ label: role.name, value: role.id })) ||
+          [],
+        validation: { required: "Role wajib dipilih" },
+        hiddenWhen: (values: any) => {
+          if (values.id) return false; // Tampilkan jika mode update
+          if (!values.userType) return true;
+          if (values.userType === "EMPLOYEE") return !isNikVerified;
+          return false;
+        },
+      },
+      {
+        name: "organizationId",
+        label: "Organization / IO",
+        type: "select",
+        options:
+          IoList?.map((io: any) => ({
+            label: io.organization_name,
+            value: io.id,
           })) || [],
         validation: { required: "Required" },
+        hiddenWhen: (values: any) => {
+          if (values.id) return false;
+          if (!values.userType) return true;
+          if (values.userType === "EMPLOYEE") return !isNikVerified;
+          return false;
+        },
+      },
+      {
+        name: "username",
+        label: "Username",
+        type: "text",
+        validation: { required: "Required" },
+        hiddenWhen: (values: any) => {
+          if (values.id) return false;
+          if (!values.userType) return true;
+          if (values.userType === "EMPLOYEE") return !isNikVerified;
+          return false;
+        },
+      },
+      {
+        name: "firstName",
+        label: "First Name",
+        type: "text",
+        validation: { required: "Required" },
+        hiddenWhen: (values: any) => {
+          if (values.id) return false;
+          if (!values.userType) return true;
+          if (values.userType === "EMPLOYEE") return !isNikVerified;
+          return false;
+        },
+      },
+      {
+        name: "lastName",
+        label: "Last Name",
+        type: "text",
+        validation: { required: "Required" },
+        hiddenWhen: (values: any) => {
+          if (values.id) return false;
+          if (!values.userType) return true;
+          if (values.userType === "EMPLOYEE") return !isNikVerified;
+          return false;
+        },
+      },
+      {
+        name: "email",
+        label: "Email",
+        type: "email",
+        validation: { required: "Required" },
+        hiddenWhen: (values: any) => {
+          if (values.id) return false;
+          if (!values.userType) return true;
+          if (values.userType === "EMPLOYEE") return !isNikVerified;
+          return false;
+        },
+      },
+      {
+        name: "phone",
+        label: "Phone",
+        type: "text",
+        validation: { required: "Required" },
+        hiddenWhen: (values: any) => {
+          if (values.id) return false;
+          if (!values.userType) return true;
+          if (values.userType === "EMPLOYEE") return !isNikVerified;
+          return false;
+        },
+      },
+      {
+        name: "password",
+        label: "Password",
+        type: "password",
+        validation: {
+          required: "Wajib diisi",
+          minLength: { value: 8, message: "Min 8 karakter" },
+          pattern: { value: PWD_REGEX, message: "Huruf & Angka" },
+        },
+        hiddenWhen: (values: any) => {
+          if (values.id) return true; // Sembunyikan di update mode (pakai fungsi Reset Password)
+          if (!values.userType) return true;
+          if (values.userType === "EMPLOYEE") return !isNikVerified;
+          return false;
+        },
       },
       {
         name: "zoneId",
@@ -432,7 +705,6 @@ const DataTable = () => {
         options: gateZoneOptions,
         validation: { required: "Required" },
         hiddenWhen: (values: any) => {
-          if (!values.roleId || !gateRoleId) return true;
           return String(values.roleId) !== String(gateRoleId);
         },
       },
@@ -442,118 +714,86 @@ const DataTable = () => {
         type: "checkbox",
       },
     ],
-    [roles, gateZoneOptions, gateRoleId],
-  );
-
-  const updateFormFields = useMemo(
-    () => formFields.filter((f) => f.name !== "password"),
-    [formFields],
+    [
+      roles,
+      gateZoneOptions,
+      gateRoleId,
+      IoList,
+      isNikVerified,
+      nikLoading,
+      nikInput,
+    ],
   );
 
   const handleCreate = (data: any) => {
-    const { zoneId, ...rest } = data;
+    const {
+      zoneId,
+      organizationId,
+      userType: type,
+      nik_verify_section,
+      ...rest
+    } = data;
+
     const payload = {
       ...rest,
+      employeeId: userType === "EMPLOYEE" ? verifiedEmployeeId : "NON",
       roleId: Number(data.roleId),
+      organizationId: String(organizationId),
       warehouseSubId:
         String(data.roleId) === String(gateRoleId) ? data.zoneId : null,
     };
+
     return createData(payload);
   };
 
-  const handleUpdate = (data: any): Promise<any> => {
-    const { id, zoneId, ...rest } = data;
-    if (!id) return Promise.reject(new Error("ID is required"));
+  const handleUpdate = async (data: any): Promise<any> => {
+    // 1. Ekstraksi data
+    const { id, zoneId, organizationId, userType, ...rest } = data;
 
-    const payload = Object.fromEntries(
-      Object.entries({
-        username: rest.username,
-        isActive: rest.isActive,
-        roleId: rest.roleId ? Number(rest.roleId) : undefined,
-        warehouseSubId:
-          String(rest.roleId) === String(gateRoleId) ? zoneId : undefined,
-      }).filter(([_, v]) => v !== undefined && v !== null && v !== ""),
+    // 2. Susun payload sesuai kontrak API
+    const payload = {
+      username: rest.username,
+      isActive: rest.isActive ?? true,
+      roleId: rest.roleId ? Number(rest.roleId) : undefined,
+      employeeId: rest.employeeId, // Diambil dari mapping data table
+      email: rest.email,
+      phone: rest.phone,
+      organizationId: organizationId ? String(organizationId) : undefined,
+      warehouseSubId:
+        String(rest.roleId) === String(gateRoleId) ? String(zoneId) : null,
+      firstName: rest.firstName,
+      lastName: rest.lastName,
+    };
+
+    // 3. Bersihkan payload dari nilai undefined/null string yang kosong
+    const cleanPayload = Object.fromEntries(
+      Object.entries(payload).filter(([_, v]) => v !== undefined && v !== ""),
     );
-    return updateData(id, payload);
+
+    return updateData(id, cleanPayload);
   };
-
-  const handleHardDelete = async (id: number): Promise<void> => {
-    const token = localStorage.getItem("token");
-    if (!token) return;
-    try {
-      await fetch(`${EndPoint}user/${id}/hard`, {
-        method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
-      await fetchAll();
-    } catch (error) {
-      console.error("Hard delete failed:", error);
-    }
-  };
-
-  const handleResetPassword = async () => {
-    setPasswordError(""); // Reset error setiap kali submit ditekan
-
-    if (!newPassword) {
-      setPasswordError("Password tidak boleh kosong");
-      return;
-    }
-
-    // VALIDASI REGEX MANUAL UNTUK MODAL RESET
-    if (!PWD_REGEX.test(newPassword)) {
-      setPasswordError("Minimal 8 karakter (kombinasi huruf & angka)");
-      return;
-    }
-
-    try {
-      const payload = { password: newPassword };
-      await updateData(resetPasswordId!, payload);
-      setResetPasswordId(null);
-      setNewPassword("");
-      fetchAll();
-    } catch (error) {
-      setPasswordError("Gagal memperbarui password");
-    }
-  };
-
-  const columns = useMemo(
-    () => [
-      { accessorKey: "username", header: "Username" },
-      {
-        accessorKey: "roleId",
-        header: "Role",
-        cell: (info: any) =>
-          roles?.find((r: any) => r.id === info.getValue())?.name || "-",
-      },
-      {
-        accessorKey: "isActive",
-        header: "Active",
-        cell: (info: any) => (info.getValue() ? "Active" : "Inactive"),
-      },
-    ],
-    [roles],
-  );
 
   return (
     <>
-      <div className="p-4 bg-white shadow rounded-md mb-5">
+      <div className="p-4 bg-white shadow rounded-md mb-5 text-sm">
         <div className="flex justify-between items-center">
-          <div className="space-x-4 flex items-center">
+          <div className="flex items-center gap-4">
             <Label htmlFor="search">Search</Label>
             <Input
               onChange={(e) => setSearch(e.target.value)}
               type="text"
-              id="search"
-              placeholder="🔍 Masukan data.."
+              placeholder="🔍 Cari data.."
             />
           </div>
           <Button
             variant="primary"
             size="sm"
-            onClick={() => setCreateModalOpen(true)}
+            onClick={() => {
+              setUserType("");
+              setIsNikVerified(false);
+              setNikInput("");
+              setCreateModalOpen(true);
+            }}
           >
             <FaPlus className="mr-2" /> Add Data
           </Button>
@@ -561,119 +801,98 @@ const DataTable = () => {
       </div>
 
       <DynamicTable
-        data={userData}
+        data={(userData ?? []).map((u: any) => ({
+          ...u,
+          id: u.id,
+          // Mapping data ke struktur FLAT agar form mudah membacanya saat edit
+          username: u.username,
+          isActive: u.isActive,
+          roleId: u.roleId,
+          employeeId: u.employeeId,
+          firstName: u.userDetail?.firstName ?? "",
+          lastName: u.userDetail?.lastName ?? "",
+          email: u.userDetail?.email ?? "",
+          phone: u.userDetail?.phone ?? "",
+          organizationId: u.userDetail?.organizationId ?? "",
+          zoneId: u.warehouseSubId ?? "",
+          userType: u.employeeId === "NON" ? "NON" : "EMPLOYEE",
+        }))}
         globalFilter={debouncedSearch}
         isCreateModalOpen={isCreateModalOpen}
         onCloseCreateModal={() => setCreateModalOpen(false)}
-        columns={columns}
-        formFields={formFields}
-        updateFormFields={updateFormFields}
+        columns={useMemo(
+          () => [
+            { accessorKey: "organizationId", header: "Organization Id" },
+            { accessorKey: "username", header: "Username" },
+            {
+              accessorKey: "firstName",
+              header: "Name",
+              cell: (info: any) =>
+                `${info.row.original.firstName} ${info.row.original.lastName}`,
+            },
+            {
+              accessorKey: "roleId",
+              header: "Role",
+              cell: (info: any) =>
+                roles?.find((r: any) => r.id === info.getValue())?.name || "-",
+            },
+            {
+              accessorKey: "isActive",
+              header: "Status",
+              cell: (info: any) =>
+                info.getValue() ? "✅ Active" : "❌ Inactive",
+            },
+          ],
+          [roles],
+        )}
+        formFields={formFields.filter((f) => f.name !== "isActive")}
+        updateFormFields={formFields.filter(
+          (f) =>
+            !["password", "userType", "nik_verify_section"].includes(f.name),
+        )}
         onSubmit={handleCreate}
         onUpdate={handleUpdate}
-        onDelete={handleHardDelete}
+        onDelete={async (id) => {
+          await updateData(id, { isActive: false });
+        }}
         onRefresh={fetchAll}
         getRowId={(row) => row.id}
-        title="Form Data User"
+        title="Management User WMS"
         onResetPassword={(id) => {
           setResetPasswordId(id);
-          setPasswordError(""); // Clear error saat buka modal baru
           setNewPassword("");
         }}
       />
 
       {/* Modal Reset Password */}
       {resetPasswordId && (
-        <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4">
-          <div
-            className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity"
-            onClick={() => setResetPasswordId(null)}
-          />
-
-          <div className="relative bg-white w-full max-w-sm overflow-hidden rounded-2xl shadow-2xl ring-1 ring-black/5 animate-in zoom-in-95 duration-200">
-            <div className="px-6 pt-8 pb-4 text-center">
+        <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+          <div className="bg-white w-full max-w-sm rounded-xl p-6 shadow-xl">
+            <div className="text-center mb-6">
+              <h2 className="text-lg font-bold mb-4">Reset Password</h2>
               <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-blue-50">
                 <FaLock className="h-5 w-5 text-blue-600" />
               </div>
-              <h2 className="text-xl font-bold text-gray-900">
-                Reset Password
-              </h2>
-              <p className="mt-2 text-sm text-gray-500">
-                Masukkan password baru untuk user ini
-              </p>
             </div>
-
-            <div className="px-6 py-4 space-y-4">
-              <div className="space-y-1 text-left">
-                <label className="text-xs font-semibold text-gray-600 ml-1">
-                  Password Baru
-                </label>
-                <div className="relative group">
-                  <Input
-                    type={showPassword ? "text" : "password"}
-                    placeholder="••••••••"
-                    className={`w-full pr-10 rounded-xl transition-all duration-200 outline-none ${
-                      passwordError
-                        ? "border-red-500 ring-1 ring-red-500"
-                        : "border-gray-200 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-                    }`}
-                    value={newPassword}
-                    onChange={(e) => {
-                      setNewPassword(e.target.value);
-                      if (passwordError) setPasswordError(""); // Hapus error saat user mengetik ulang
-                    }}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-blue-600 transition-colors focus:outline-none"
-                    tabIndex={-1}
-                  >
-                    {showPassword ? (
-                      <FaEyeSlash className="text-lg" />
-                    ) : (
-                      <FaEye className="text-lg" />
-                    )}
-                  </button>
-                </div>
-                {passwordError && (
-                  <p className="text-[11px] text-red-500 mt-1 ml-1 font-medium">
-                    {passwordError}
-                  </p>
-                )}
-
-                {/* Petunjuk Password (UX Guide) */}
-                {!passwordError && (
-                  <div className="mt-2 space-y-1">
-                    <p
-                      className={`text-[10px] ${newPassword.length >= 8 ? "text-green-600 font-semibold" : "text-gray-400"}`}
-                    >
-                      {newPassword.length >= 8 ? "✓" : "○"} Minimal 8 karakter
-                    </p>
-                    <p
-                      className={`text-[10px] ${PWD_REGEX.test(newPassword) ? "text-green-600 font-semibold" : "text-gray-400"}`}
-                    >
-                      {PWD_REGEX.test(newPassword) ? "✓" : "○"} Kombinasi huruf
-                      & angka
-                    </p>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <div className="bg-gray-50 px-6 py-4 flex gap-3 justify-end">
-              <Button
-                variant="danger"
-                className="text-gray-600 hover:bg-gray-200 font-medium"
-                onClick={() => setResetPasswordId(null)}
-              >
+            <Input
+              type="password"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              placeholder="Password Baru"
+            />
+            <div className="flex justify-end gap-2 mt-6">
+              <Button variant="danger" onClick={() => setResetPasswordId(null)}>
                 Batal
               </Button>
               <Button
                 variant="secondary"
-                className="bg-blue-600 hover:bg-blue-700 shadow-md shadow-blue-200 px-6 font-medium transition-all active:scale-95"
-                onClick={handleResetPassword}
+                onClick={async () => {
+                  await updateData(resetPasswordId, { password: newPassword });
+                  setResetPasswordId(null);
+                  fetchAll();
+                }}
               >
-                Update Password
+                Update
               </Button>
             </div>
           </div>

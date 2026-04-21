@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { FaPlus } from "react-icons/fa";
 import Input from "../../../../components/form/input/InputField";
 import Label from "../../../../components/form/Label";
@@ -9,6 +9,11 @@ import {
   useStoreWarehouse,
   useStoreIo,
 } from "../../../../DynamicAPI/stores/Store/MasterStore";
+import { showConfirmDialog } from "../../../../components/swal-confirm";
+import axiosInstance from "../../../../DynamicAPI/AxiosInstance";
+import { EndPoint } from "../../../../utils/EndPoint";
+import { Controller } from "react-hook-form";
+import Select from "../../../../components/form/Select";
 
 const DataTable = () => {
   const {
@@ -20,14 +25,41 @@ const DataTable = () => {
   } = useStoreWarehouse();
 
   const { fetchAll: fetchAllIo, list: ioList } = useStoreIo();
-
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounce(search, 500);
   const [isCreateModalOpen, setCreateModalOpen] = useState(false);
+  const [locatorList, setLocatorList] = useState<any[]>([]);
+  const organizationName = localStorage.getItem("organization_name");
+  const roleName = localStorage.getItem("role_name");
+  const [selectedOrgCode, setSelectedOrgCode] = useState("");
+
+  const fetchLocators = async (orgCode: string) => {
+    if (!orgCode) return;
+    try {
+      const response = await axiosInstance.get(
+        `${EndPoint}master-warehouse/locator?organization_code=${orgCode}`,
+      );
+      if (response.data.success) {
+        setLocatorList(response.data.data);
+      }
+    } catch (error) {
+      console.error("Error fetching locators:", error);
+      setLocatorList([]);
+    }
+  };
+
+  useEffect(() => {
+    if (selectedOrgCode) {
+      fetchLocators(selectedOrgCode);
+    }
+  }, [selectedOrgCode]);
 
   useEffect(() => {
     fetchAll();
     fetchAllIo();
+    if (roleName !== "superadmin" && organizationName) {
+      setSelectedOrgCode(organizationName);
+    }
   }, []);
 
   const columns = useMemo(
@@ -37,60 +69,166 @@ const DataTable = () => {
         header: "Organization",
         cell: ({ row }: any) => {
           const org = ioList.find(
-            (item: any) => item.organization_id === row.original.organization_id
+            (item: any) => item.id === row.original.organization_id,
           );
-          return org ? org.organization_name : row.original.organization_id;
+          return org ? org.organization_name : "N/A";
         },
       },
-      { accessorKey: "name", header: "Nama Gudang" },
-      { accessorKey: "description", header: "Deskripsi" },
+      {
+        accessorKey: "locator_id",
+        header: "Locator Id",
+      },
+      { accessorKey: "locator_name", header: "Locator Name" },
+      { accessorKey: "name", header: "Warehouse Name" },
+      { accessorKey: "description", header: "Description" },
     ],
-    [ioList]
+    [ioList],
   );
 
   const formFields = [
     {
       name: "organization_id",
-      label: "Organization ID",
+      label: "Organization",
       type: "select",
-      options: ioList.map((item: any) => ({
-        label: item.organization_name,
-        value: item.organization_id,
-      })),
+      options: ioList
+        .filter((item: any) => {
+          if (roleName === "superadmin") return true;
+          if (!organizationName) return true;
+          return item.organization_name === organizationName;
+        })
+        .map((item: any) => ({
+          label: item.organization_name,
+          value: item.id,
+        })),
       validation: { required: "Required" },
+      onChange: (e: any) => {
+        const selectedId = e?.target ? e.target.value : e;
+        if (selectedId) {
+          const found = ioList.find((io: any) => io.id === selectedId);
+          if (found) {
+            setSelectedOrgCode(found.organization_name);
+          }
+        }
+      },
+    },
+    {
+      name: "locator_id",
+      label: "Locator",
+      type: "custom",
+      renderCustom: ({ control, setValue, errors }: any) => (
+        <Controller
+          name="locator_id"
+          control={control}
+          rules={{ required: "Required" }}
+          render={({ field: controllerField }) => (
+            <Select
+              options={locatorList.map((item: any) => ({
+                label: item.LOCATOR,
+                value: item.LOCATOR_ID.toString(),
+              }))}
+              value={controllerField.value}
+              placeholder="Select Locator..."
+              width="100%"
+              onChange={(val: any) => {
+                controllerField.onChange(val);
+                const selectedLoc = locatorList.find(
+                  (l) => l.LOCATOR_ID.toString() === val.toString(),
+                );
+
+                if (selectedLoc) {
+                  setValue("name", selectedLoc.SUBINVENTORY_CODE);
+                }
+              }}
+            />
+          )}
+        />
+      ),
     },
     {
       name: "name",
-      label: "Nama Gudang",
-      type: "text",
-      validation: { required: "Required" },
+      label: "Warehouse Name",
+      type: "custom",
+      renderCustom: ({ register }: any) => (
+        <input
+          {...register("name", { required: "Required" })}
+          readOnly
+          onKeyDown={(e) => e.preventDefault()}
+          className="w-full px-3 py-2 border rounded-md bg-gray-100 cursor-not-allowed text-gray-500 focus:outline-none"
+          placeholder="Auto-filled from Locator"
+        />
+      ),
     },
     {
       name: "description",
-      label: "Deskripsi",
+      label: "Description",
       type: "text",
       validation: { required: "Required" },
     },
   ];
 
-  // Fungsi untuk format payload create
-  const handleCreate = (data: any) => {
-    const { organization_id, name, description } = data;
-    return createData({
-      organization_id: Number(organization_id),
-      name,
-      description,
-    });
+  const handleCreate = async (data: any) => {
+    try {
+      const selectedLoc = locatorList.find(
+        (l) => l.LOCATOR_ID.toString() === data.locator_id.toString(),
+      );
+
+      const payload = {
+        organization_id: data.organization_id,
+        name: data.name,
+        description: data.description,
+        locator_id: Number(data.locator_id),
+        locator_name: selectedLoc ? selectedLoc.LOCATOR : "",
+      };
+
+      await createData(payload);
+      fetchAll();
+      setCreateModalOpen(false);
+    } catch (error) {
+      console.error("Create Error:", error);
+    }
   };
 
-  // Fungsi untuk format payload update
-  const handleUpdate = (data: any) => {
-    const { id, organization_id, name, description } = data;
-    return updateData(id, {
-      organization_id,
-      name,
-      description,
-    });
+  const handleUpdate = async (data: any) => {
+    try {
+      const id = data.id;
+
+      const selectedLoc = locatorList.find(
+        (l) => l.LOCATOR_ID.toString() === data.locator_id.toString(),
+      );
+
+      const payload = {
+        organization_id: data.organization_id,
+        name: data.name,
+        description: data.description,
+        locator_id: Number(data.locator_id),
+        locator_name: selectedLoc ? selectedLoc.LOCATOR : "",
+      };
+
+      await updateData(id, payload);
+      fetchAll();
+      setCreateModalOpen(false);
+    } catch (error) {
+      console.error("Update Error:", error);
+    }
+  };
+
+  const handleDelete = (id: any) => {
+    showConfirmDialog(
+      async () => {
+        try {
+          await deleteData(id);
+          fetchAll();
+        } catch (error) {
+          console.error(error);
+        }
+      },
+      {
+        title: "Confirm Delete",
+        text: "Anda yakin ingin menghapus data ini?",
+        confirmButtonText: "Yes, Delete!",
+        cancelButtonText: "No, Cancel",
+      },
+    );
   };
 
   return (
@@ -106,14 +244,17 @@ const DataTable = () => {
               placeholder="🔍 Masukan data.."
             />
           </div>
+
           <div className="space-x-4">
-            <Button
-              variant="primary"
-              size="sm"
-              onClick={() => setCreateModalOpen(true)}
-            >
-              <FaPlus className="mr-2" /> Add Data
-            </Button>
+            {roleName === "superadmin" && (
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={() => setCreateModalOpen(true)}
+              >
+                <FaPlus className="mr-2" /> Add Data
+              </Button>
+            )}
           </div>
         </div>
       </div>
@@ -128,11 +269,12 @@ const DataTable = () => {
         onSubmit={handleCreate}
         onUpdate={handleUpdate}
         onDelete={async (id) => {
-          await deleteData(id);
+          handleDelete(id);
         }}
         onRefresh={fetchAll}
         getRowId={(row) => row.id}
-        title="Form UOM"
+        title="Warehouse Management"
+        isView={true}
       />
     </>
   );

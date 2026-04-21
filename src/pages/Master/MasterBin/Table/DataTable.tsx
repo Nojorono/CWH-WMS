@@ -13,21 +13,23 @@ import {
 } from "../../../../DynamicAPI/stores/Store/MasterStore";
 import PrintBarcodeModal from "../Modal/PrintBarcodeModal";
 import { showErrorToast } from "../../../../components/toast";
+import { showConfirmDialog } from "../../../../components/swal-confirm";
 
 interface DataTableProps {
   params?: {
     orgId?: any;
     zoneId?: any;
     zoneCode?: any;
+    locatorId?: Number;
+    locatorName?: String;
   };
 }
 
 const DataTable: React.FC<DataTableProps> = ({ params }) => {
-  console.log("DataTable params:", params);
-
   const { list: Warehouse, fetchAll } = useStoreWarehouse();
   const { fetchAll: fetchAllIo, list: ioList } = useStoreIo();
   const { fetchAll: fetchSubWH, list: subWHList } = useStoreSubWarehouse();
+
   const {
     fetchAll: fetchBin,
     list: binList,
@@ -56,21 +58,11 @@ const DataTable: React.FC<DataTableProps> = ({ params }) => {
     () => [
       { accessorKey: "id", header: "ID", selectedRow: true },
       {
-        accessorKey: "organization_id",
-        header: "Organization",
-        cell: ({ row }: any) => {
-          const org = ioList.find(
-            (item: any) => item.organization_id === row.original.organization_id
-          );
-          return org ? org.organization_name : row.original.organization_id;
-        },
-      },
-      {
         accessorKey: "warehouse_sub_id",
         header: "Zone",
         cell: ({ row }: any) => {
           const subWh = subWHList.find(
-            (item: any) => item.id === row.original.warehouse_sub_id
+            (item: any) => item.id === row.original.warehouse_sub_id,
           );
           return subWh ? subWh.name : row.original.warehouse_sub_id;
         },
@@ -80,30 +72,10 @@ const DataTable: React.FC<DataTableProps> = ({ params }) => {
       { accessorKey: "description", header: "Deskripsi" },
       { accessorKey: "capacity_pallet", header: "Kapasitas Pallet" },
     ],
-    [ioList, subWHList]
+    [ioList, subWHList],
   );
 
   const formFields = [
-    // {
-    //   name: "organization_id",
-    //   label: "Organization",
-    //   type: "select",
-    //   options: ioList.map((item: any) => ({
-    //     label: item.organization_name,
-    //     value: item.organization_id,
-    //   })),
-    //   validation: { required: "Required" },
-    // },
-    // {
-    //   name: "warehouse_sub_id",
-    //   label: "Zone",
-    //   type: "select",
-    //   options: subWHList.map((item: any) => ({
-    //     label: item.name,
-    //     value: item.id,
-    //   })),
-    //   validation: { required: "Required" },
-    // },
     {
       name: "name",
       label: "Nama Bin",
@@ -131,26 +103,18 @@ const DataTable: React.FC<DataTableProps> = ({ params }) => {
     },
   ];
 
-  // Fungsi untuk format payload create
-  const handleCreate = (data: any) => {
-    const {
-      // organization_id,
-      // warehouse_sub_id,
-      name,
-      code,
-      description,
-      capacity_pallet,
-    } = data;
+  const handleCreate = async (data: any) => {
+    const { name, code, description, capacity_pallet } = data;
 
     const payload: any = {
-      organization_id: params?.orgId,
       warehouse_sub_id: params?.zoneId,
       name,
       code,
       description,
+      locator_id: params?.locatorId || data.locator_id,
+      locator_name: params?.locatorName || data.locator_name,
     };
 
-    // Hapus capacity_pallet dari payload jika kosong string
     if (capacity_pallet != null) {
       const cp =
         typeof capacity_pallet === "string"
@@ -161,20 +125,46 @@ const DataTable: React.FC<DataTableProps> = ({ params }) => {
       }
     }
 
-    return createData(payload);
+    try {
+      await createData(payload);
+      fetchBin();
+      return { success: true };
+    } catch (error) {
+      console.error(error);
+      return { success: false };
+    }
   };
 
-  // Fungsi untuk format payload update
-  const handleUpdate = (data: any) => {
-    const { id, name, code, description, capacity_pallet } = data;
-    return updateData(id, {
-      organization_id: params?.orgId,
+  const handleUpdate = async (data: any) => {
+    const {
+      id,
+      name,
+      code,
+      description,
+      capacity_pallet,
+      locator_id,
+      locator_name,
+    } = data;
+
+    const payload = {
       warehouse_sub_id: params?.zoneId,
       name,
       code,
       description,
       capacity_pallet: Number(capacity_pallet),
-    });
+      // Mempertahankan locator data saat update
+      locator_id: locator_id || params?.locatorId,
+      locator_name: locator_name || params?.locatorName,
+    };
+
+    try {
+      await updateData(id, payload);
+      fetchBin();
+      return { success: true };
+    } catch (error) {
+      console.error(error);
+      return { success: false };
+    }
   };
 
   const handlePrintBarcode = () => {
@@ -183,15 +173,29 @@ const DataTable: React.FC<DataTableProps> = ({ params }) => {
       return;
     }
     const selected = binList.filter(
-      (p) => typeof p.id === "string" && selectedIds.includes(p.id)
+      (p) => typeof p.id === "string" && selectedIds.includes(p.id),
     );
     setSelectedBin(selected);
-    setPrintModalOpen(true); // buka modal preview
+    setPrintModalOpen(true);
   };
 
-  const handleDelete = async (id: string) => {
-    console.log("Deleting id:", id);
-    await deleteData(id);
+  const handleDelete = (id: number) => {
+    showConfirmDialog(
+      async () => {
+        try {
+          await deleteData(id);
+          fetchAll();
+        } catch (error) {
+          console.error(error);
+        }
+      },
+      {
+        title: "Confirm Delete",
+        text: "Anda yakin ingin menghapus data ini?",
+        confirmButtonText: "Yes, Delete!",
+        cancelButtonText: "No, Cancel",
+      },
+    );
   };
 
   const filteredBinList = useMemo(() => {
@@ -244,8 +248,10 @@ const DataTable: React.FC<DataTableProps> = ({ params }) => {
         formFields={formFields}
         onSubmit={handleCreate}
         onUpdate={handleUpdate}
-        onDelete={handleDelete}
-        onRefresh={fetchAll}
+        onDelete={async (id) => {
+          handleDelete(id);
+        }}
+        onRefresh={fetchBin}
         getRowId={(row) => row.id}
         title="Form UOM"
         onSelectedChange={setSelectedIds}

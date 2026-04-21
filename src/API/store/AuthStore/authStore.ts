@@ -19,6 +19,18 @@ interface User {
     name: string;
     description: string;
   };
+  userDetail: UserDetail;
+}
+
+interface UserDetail {
+  id: string;
+  userId: string;
+  employee_id: string;
+  email: string;
+  phone: string;
+  firstName: string;
+  lastName: string;
+  organizationId: number | null;
 }
 
 interface Menu {
@@ -56,6 +68,7 @@ interface AuthState {
   accessToken: string | null;
   refreshToken: string | null;
   user: User | null;
+  userDetail: UserDetail | null;
   menus: Menu[] | null;
   permissions: Permission[] | null;
   authLogin: (data: LoginPayload) => Promise<AuthLoginResponse>; // ✅ perbaikan di sini
@@ -67,6 +80,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   accessToken: null,
   refreshToken: null,
   user: null,
+  userDetail: null,
   menus: null,
   permissions: null,
 
@@ -84,6 +98,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       const accessToken = resData.accessToken;
       const refreshToken = resData.refreshToken || null;
       const user = resData.user;
+      const userDetail = user.userDetail;
       const menus = resData.menus || [];
       const permissions = resData.permissions || [];
 
@@ -99,12 +114,20 @@ export const useAuthStore = create<AuthState>((set) => ({
       localStorage.setItem("user_id", user?.id?.toString() || "");
       localStorage.setItem("username", user?.username || "");
       localStorage.setItem("menus", JSON.stringify(menus));
+      localStorage.setItem("user_detail", JSON.stringify(userDetail));
+      localStorage.setItem("email", userDetail?.email || "");
+      localStorage.setItem("phone", userDetail?.phone || "");
+      localStorage.setItem("full_name", `${userDetail?.firstName} ${userDetail?.lastName}`);
+      localStorage.setItem("organization_id", `${userDetail?.organizationId}`);
+      localStorage.setItem("organization_name", `${userDetail?.organization.organization_name}`);
+
 
       // Update state global
       set({
         accessToken,
         refreshToken,
         user,
+        userDetail,
         menus,
         permissions,
         isLoading: false,

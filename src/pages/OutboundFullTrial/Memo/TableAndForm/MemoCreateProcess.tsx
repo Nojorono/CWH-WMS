@@ -11,6 +11,7 @@ import DynamicForm, {
 } from "../../../../components/wms-components/inbound-component/form/DynamicForm";
 import { showErrorToast, showSuccessToast } from "../../../../components/toast";
 import {
+  useStoreItem,
   useStoreOutboundMemo,
   useStoreUom,
 } from "../../../../DynamicAPI/stores/Store/MasterStore";
@@ -18,9 +19,11 @@ import { useLocation, useNavigate } from "react-router";
 import { EndPoint } from "../../../../utils/EndPoint";
 import { useCustomerByOutboundType } from "./FetchCustomer";
 import Select from "../../../../components/form/Select";
-import { FaArrowLeft, FaCheck, FaUndo } from "react-icons/fa";
-import Swal from "sweetalert2";
+import { FaArrowLeft, FaCheck, FaSearch, FaUndo } from "react-icons/fa";
 import { formatDateIndo } from "../../../../helper/FormatDate";
+import { searchSO } from "../Main/SOSearchService";
+import { showConfirmDialog } from "../../../../components/swal-confirm";
+
 
 // ✅ Tambahkan selected_destination
 type MemoFormValues = {
@@ -71,6 +74,7 @@ const CreateMemo: React.FC = () => {
 
   // store
   const { fetchAll: fetchAllUom, list: uomList } = useStoreUom();
+  const { fetchAll: fetchAllItems, list: masterItemList } = useStoreItem();
   const {
     createData,
     fetchById,
@@ -81,7 +85,8 @@ const CreateMemo: React.FC = () => {
 
   useEffect(() => {
     fetchAllUom();
-  }, [fetchAllUom]);
+    fetchAllItems();
+  }, [fetchAllUom, fetchAllItems]);
 
   const methods = useForm<MemoFormValues>({
     defaultValues: {
@@ -97,6 +102,8 @@ const CreateMemo: React.FC = () => {
 
   const [items, setItems] = useState<ItemRow[]>([]);
   const [openModal, setOpenModal] = useState(false);
+  const [soSearchNumber, setSoSearchNumber] = useState("");
+  const [isLoadingSO, setIsLoadingSO] = useState(false);
 
   // ✅ Watch type_outbound
   const typeOutbound = methods.watch("type_outbound");
@@ -334,45 +341,52 @@ const CreateMemo: React.FC = () => {
       return;
     }
 
-    const username = localStorage.getItem("username");
+    // Tampilkan konfirmasi sebelum hit API
+    showConfirmDialog(
+      async () => {
+        const username = localStorage.getItem("username");
+        const payload = {
+          requestor: username,
+          origin: "CWH",
+          destination: data.ship_to,
+          ship_to: data.address,
+          delivery_date: formatDateIndo(data.delivery_date),
+          notes: data.notes,
+          status: "PENDING",
+          type: data.type_outbound?.value || "",
+          outbound_memo_items: items.map((i) => ({
+            item_id: i.item_id,
+            quantity_plan: Number(i.quantity_plan ?? 0),
+            uom: i.uom ?? i.uom_name ?? "",
+          })),
+        };
 
-    // ✅ Build only required schema
-    const payload = {
-      requestor: username,
-      origin: "CWH",
-      destination: data.ship_to,
-      ship_to: data.address,
-      delivery_date: formatDateIndo(data.delivery_date),
-      notes: data.notes,
-      status: "PENDING",
-      type: data.type_outbound?.value || "",
-      outbound_memo_items: items.map((i) => ({
-        item_id: i.item_id,
-        quantity_plan: Number(i.quantity_plan ?? 0),
-        uom: i.uom ?? i.uom_name ?? "",
-      })),
-    };
+        try {
+          let res: any = null;
+          if (isEdit && memoId) {
+            res = await updateData(memoId, payload as any);
+          } else {
+            res = await createData(payload as any);
+          }
 
-    try {
-      let res: any = null;
-      if (isEdit && memoId) {
-        res = await updateData(memoId, payload as any);
-      } else {
-        res = await createData(payload as any);
+          if (res && res.success) {
+            methods.reset();
+            setItems([]);
+            navigate("/memo");
+          } else {
+            showErrorToast(res?.message || "Operation failed");
+          }
+        } catch (err: any) {
+          console.error("Submit error:", err);
+          showErrorToast("Gagal menyimpan data.");
+        }
+      },
+      {
+        title: isEdit ? "Konfirmasi Update?" : "Simpan Memo?",
+        text: "Pastikan semua data item dan tujuan sudah benar.",
+        confirmButtonText: "Ya, Simpan",
       }
-
-      // createData/updateData dari store mengembalikan objek { success: boolean, message?: string }
-      if (res && res.success) {
-        methods.reset();
-        setItems([]);
-        navigate("/memo");
-      } else {
-        showErrorToast(res?.message || "Operation failed");
-      }
-    } catch (err: any) {
-      console.error("Submit error:", err);
-      showErrorToast("Gagal menyimpan data.");
-    }
+    );
   };
 
   const columnsTableItem = [
@@ -433,20 +447,10 @@ const CreateMemo: React.FC = () => {
   ];
 
   const handleReset = () => {
-    // SweetAlert confirmation before resetting the form
-    Swal.fire({
-      title: "Apakah Anda Yakin?",
-      text: "Jika Anda mereset, semua data yang telah Anda masukkan akan hilang!",
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonColor: "#3085d6",
-      cancelButtonColor: "#d33",
-      confirmButtonText: "Ya, reset!",
-    }).then((result) => {
-      if (result.isConfirmed) {
+    showConfirmDialog(
+      () => {
         if (isEdit && detailDataMemo) {
           const dateOnly = formatDateIndo(detailDataMemo.delivery_date);
-
           methods.reset({
             requestor: detailDataMemo.requestor || "",
             origin: detailDataMemo.origin || "",
@@ -455,7 +459,6 @@ const CreateMemo: React.FC = () => {
             delivery_date: dateOnly,
             notes: detailDataMemo.notes || "",
           });
-
           const mappedItems: ItemRow[] = (
             detailDataMemo.outbound_memo_items || []
           ).map((it: any) => ({
@@ -470,10 +473,8 @@ const CreateMemo: React.FC = () => {
               "",
             notes: it.notes ?? "",
           }));
-
           setItems(mappedItems);
         } else {
-          // Mode create → reset semua jadi kosong
           methods.reset({
             requestor: "",
             origin: "",
@@ -484,8 +485,13 @@ const CreateMemo: React.FC = () => {
           });
           setItems([]);
         }
+      },
+      {
+        title: "Reset Form?",
+        text: "Semua data yang telah diinput akan hilang.",
+        confirmButtonText: "Ya, Reset!",
       }
-    });
+    );
   };
 
   const handleApproveMemo = (memoId: string) => {
@@ -564,6 +570,43 @@ const CreateMemo: React.FC = () => {
     navigate(-1); // Ini akan membawa kembali ke /memo?page=x
   };
 
+  // ✅ SEARCH SO berdasarkan inputan user
+  const handleSearchSO = async () => {
+    if (!soSearchNumber) return showErrorToast("Masukkan nomor SO terlebih dahulu!");
+
+    setIsLoadingSO(true);
+    try {
+      // Menggunakan service searchSO yang sudah diimport
+      const { items: soItems } = await searchSO(soSearchNumber, masterItemList, uomList);
+
+      if (!soItems || soItems.length === 0) {
+        showErrorToast(`Data SO ${soSearchNumber} tidak ditemukan atau item tidak terdaftar di master data.`);
+        return;
+      }
+
+      // Mapping hasil SO ke format ItemRow table
+      const mappedItems: ItemRow[] = soItems.map((it: any) => ({
+        item_id: String(it.item_id),
+        item_name: it.item_name || it.sku || "Unknown Item",
+        quantity_plan: Number(it.qty),
+        uom: it.uom,
+        uom_name: it.uom,
+        classification_name: "",
+        notes: `Imported from SO: ${soSearchNumber}`,
+      }));
+
+      // Tambahkan ke list item yang sudah ada (user bisa mix manual & SO)
+      setItems((prev) => [...prev, ...mappedItems]);
+      setSoSearchNumber(""); // Reset field search
+      showSuccessToast(`Berhasil menarik ${mappedItems.length} item dari SO ${soSearchNumber}`);
+    } catch (err: any) {
+      console.error("SO Search Error:", err);
+      showErrorToast(err?.message || "Terjadi kesalahan saat mencari SO.");
+    } finally {
+      setIsLoadingSO(false);
+    }
+  };
+
   return (
     <div className="p-6 space-y-6">
       <div className="flex justify-between items-center">
@@ -620,6 +663,40 @@ const CreateMemo: React.FC = () => {
             </div>
           )}
       </section>
+
+      {/* SO SEARCH SECTION (Hanya muncul jika type_outbound == SUBDIST) */}
+      {typeOutbound?.value === "SUBDIST" && !isDetail && (
+        <section className="bg-blue-50 p-5 rounded-xl border border-blue-200 shadow-sm animate-in fade-in slide-in-from-top-4 duration-300">
+          <div className="flex flex-col md:flex-row items-end gap-4">
+            <div className="flex-1">
+              <label className="block text-sm font-bold text-blue-900 mb-2">
+                Import Items from Sales Order (SO)
+              </label>
+              <input
+                type="text"
+                className="w-full px-4 py-2 border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                placeholder="Contoh: SO20240001"
+                value={soSearchNumber}
+                onChange={(e) => setSoSearchNumber(e.target.value.toUpperCase())}
+                onKeyDown={(e) => e.key === "Enter" && handleSearchSO()}
+              />
+            </div>
+            <Button
+              type="button"
+              variant="primary"
+              onClick={handleSearchSO}
+              disabled={isLoadingSO}
+              startIcon={isLoadingSO ? null : <FaSearch />}
+              className="h-[42px] px-6"
+            >
+              {isLoadingSO ? "Searching..." : "Search & Add"}
+            </Button>
+          </div>
+          <p className="text-xs text-blue-600 mt-2">
+            * Masukkan nomor SO untuk mengisi daftar item secara otomatis. Anda tetap bisa menambah item manual setelahnya.
+          </p>
+        </section>
+      )}
 
       {/* ITEM DETAILS */}
       <section className="bg-white p-4 rounded-xl shadow-sm">

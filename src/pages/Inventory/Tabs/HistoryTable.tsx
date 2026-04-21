@@ -43,8 +43,6 @@ export default function MovementHistoryTable({ palletId }: { palletId?: any }) {
         );
         const inventoryArr = res.data.data as any[];
 
-        console.log("Fetched movement history:", inventoryArr);
-
         const mapped: MovementRecord[] = inventoryArr.map((item) => ({
           datetime: formatDateIndo(item.inventory_date),
           action: item.action || "-",

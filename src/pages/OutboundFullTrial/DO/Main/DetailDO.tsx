@@ -180,8 +180,6 @@ const DetailDO: React.FC = () => {
         })),
       };
 
-      console.log("Final PAYLOAD to submit:", PAYLOAD);
-
       const res = await createData(PAYLOAD);
       if (res?.success) {
         handleReset();

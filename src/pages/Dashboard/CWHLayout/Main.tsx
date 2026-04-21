@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState, useRef } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
 import { useStoreInventoryTracking } from "../../../DynamicAPI/stores/Store/MasterStore";
 import WarehouseMapView from "./LayoutWH";
 

@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from "react";
-import { FaBarcode, FaPlus, FaPrint, FaQrcode } from "react-icons/fa";
+import { FaBarcode, FaPlus, FaPrint, FaQrcode, FaRocket } from "react-icons/fa";
 import Input from "../../../../components/form/input/InputField";
 import Label from "../../../../components/form/Label";
 import Button from "../../../../components/ui/button/Button";
@@ -12,6 +12,7 @@ import {
 } from "../../../../DynamicAPI/stores/Store/MasterStore";
 import PrintBarcodeModal from "../Modal/PrintBarcodeModal";
 import { showErrorToast } from "../../../../components/toast";
+import GeneratePalletModal from "../Modal/GeneratePalletModal";
 
 const DataTable = () => {
   const {
@@ -32,6 +33,8 @@ const DataTable = () => {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [isPrintModalOpen, setPrintModalOpen] = useState(false);
   const [selectedPallets, setSelectedPallets] = useState<any[]>([]);
+  const [isGenerateModalOpen, setGenerateModalOpen] = useState(false); // 🔑 State baru
+  const [selectedOrgName, setSelectedOrgName] = useState("");
 
   useEffect(() => {
     fetchPallet();
@@ -40,9 +43,17 @@ const DataTable = () => {
   }, []);
 
   const handleCreate = async (data: any) => {
+    const selectedOrg = IoList.find(
+      (item: any) => String(item.id) === String(data.organization_id),
+    );
+    const orgName = selectedOrg ? selectedOrg.organization_name : "";
+
     const formattedData = {
-      organization_id: Number(data.organization_id),
-      pallet_code: String(data.pallet_code),
+      ...data,
+      // Format baru: ORG-PALLET (Contoh: CWH-PAL-001)
+      pallet_code: orgName
+        ? `${orgName}-${data.pallet_code}`
+        : data.pallet_code,
       capacity: Number(data.capacity),
       isActive: true,
       isFull: false,
@@ -55,9 +66,31 @@ const DataTable = () => {
 
   const handleUpdate = (data: any) => {
     const { id, ...rest } = data;
+
+    const selectedOrg = IoList.find(
+      (item: any) => String(item.id) === String(rest.organization_id),
+    );
+    const orgName = selectedOrg ? selectedOrg.organization_name : "";
+
+    let baseCode = String(rest.pallet_code);
+
+    // Logika Pembersihan: Hapus orgName lama jika ada di depan atau di belakang
+    if (orgName) {
+      // Hapus jika ada di depan (Format baru)
+      if (baseCode.startsWith(`${orgName}-`)) {
+        baseCode = baseCode.replace(`${orgName}-`, "");
+      }
+      // Hapus jika ada di belakang (Jaga-jaga data lama)
+      if (baseCode.endsWith(`-${orgName}`)) {
+        baseCode = baseCode.replace(`-${orgName}`, "");
+      }
+    }
+
+    const finalPalletCode = orgName ? `${orgName}-${baseCode}` : baseCode;
+
     return updateData(id, {
-      organization_id: Number(rest.organization_id),
-      pallet_code: String(rest.pallet_code),
+      organization_id: rest.organization_id,
+      pallet_code: finalPalletCode,
       capacity: Number(rest.capacity),
       isActive: rest.isActive === "true" || rest.isActive === true,
       isFull: rest.isFull === "true" || rest.isFull === true,
@@ -65,7 +98,6 @@ const DataTable = () => {
       currentQuantity: Number(rest.currentQuantity),
     });
   };
-  
 
   const columns = useMemo(
     () => [
@@ -79,7 +111,8 @@ const DataTable = () => {
         header: "Organization",
         cell: ({ row }: { row: { original: any } }) => {
           const org = IoList.find(
-            (item: any) => item.organization_id === row.original.organization_id
+            (item: any) =>
+              item.organization_id === row.original.organization_id,
           );
           return org ? org.organization_name : row.original.organization_id;
         },
@@ -117,49 +150,76 @@ const DataTable = () => {
         },
       },
     ],
-    [IoList, uomList]
+    [IoList, uomList],
   );
 
-  const formFields = [
-    {
-      name: "organization_id",
-      label: "Organization",
-      type: "select",
-      options: [
-        { label: "--Select--", value: "" },
-        ...IoList.map((item: any) => ({
-          label: item.organization_name,
-          value: item.organization_id,
-        })),
-      ],
-      validation: { required: "Required" },
-    },
-    {
-      name: "pallet_code",
-      label: "Pallet Code",
-      type: "text",
-      validation: { required: "Required" },
-    },
-    {
-      name: "capacity",
-      label: "Capacity",
-      type: "number",
-      validation: { required: "Required" },
-    },
-    {
-      name: "uom",
-      label: "UOM",
-      type: "select",
-      options: [
-        { label: "--Select--", value: "" },
-        ...uomList.map((item: any) => ({
-          label: item.name,
-          value: item.name,
-        })),
-      ],
-      validation: { required: "Required" },
-    },
-  ];
+  const dynamicFormFields = useMemo(() => {
+    return [
+      {
+        name: "organization_id",
+        label: "Organization",
+        type: "select",
+        options: [
+          { label: "--Select--", value: "" },
+          ...IoList.map((item: any) => ({
+            label: item.organization_name,
+            value: item.id,
+          })),
+        ],
+        validation: { required: "Required" },
+        onChange: (e: any) => {
+          const val = e?.target ? e.target.value : e;
+          const org = IoList.find(
+            (item: any) => String(item.id) === String(val),
+          );
+          if (org) {
+            setSelectedOrgName(org.organization_name);
+          } else {
+            setSelectedOrgName("");
+          }
+        },
+      },
+      {
+        name: "pallet_code",
+        label: `Pallet Code ${selectedOrgName ? `(${selectedOrgName}- ...)` : ""}`,
+        type: "text",
+        placeholder: "Masukkan kode pallet...",
+        description: selectedOrgName
+          ? `Hasil akhir: ${selectedOrgName}-[inputan_anda]`
+          : "Pilih organisasi dlu untuk melihat format prefix.",
+        validation: { required: "Required" },
+      },
+      {
+        name: "capacity",
+        label: "Capacity",
+        type: "number",
+        validation: { required: "Required" },
+      },
+      {
+        name: "uom",
+        label: "UOM",
+        type: "select",
+        options: [
+          { label: "--Select--", value: "" },
+          ...uomList.map((item: any) => ({
+            label: item.name,
+            value: item.name,
+          })),
+        ],
+        validation: { required: "Required" },
+      },
+      {
+        name: "isActive",
+        label: "Active",
+        type: "radio",
+        options: [
+          { label: "Yes", value: "true" },
+          { label: "No", value: "false" },
+        ],
+        validation: { required: "Required" },
+      },
+    ];
+  }, [IoList, selectedOrgName, uomList]);
 
   const handlePrintBarcode = () => {
     if (selectedIds.length === 0) {
@@ -167,7 +227,7 @@ const DataTable = () => {
       return;
     }
     const selected = pallet.filter(
-      (p) => typeof p.id === "string" && selectedIds.includes(p.id)
+      (p) => typeof p.id === "string" && selectedIds.includes(p.id),
     );
     setSelectedPallets(selected);
     setPrintModalOpen(true); // buka modal preview
@@ -196,6 +256,14 @@ const DataTable = () => {
             </Button>
 
             <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => setGenerateModalOpen(true)}
+            >
+              <FaRocket className="mr-2" /> Generate Pallet
+            </Button>
+
+            <Button
               variant="primary"
               size="sm"
               onClick={handlePrintBarcode}
@@ -213,7 +281,7 @@ const DataTable = () => {
         isCreateModalOpen={isCreateModalOpen}
         onCloseCreateModal={() => setCreateModalOpen(false)}
         columns={columns}
-        formFields={formFields}
+        formFields={dynamicFormFields}
         onSubmit={handleCreate}
         onUpdate={handleUpdate}
         onDelete={async (id) => {
@@ -231,6 +299,14 @@ const DataTable = () => {
         onClose={() => setPrintModalOpen(false)}
         items={selectedPallets}
         useQRCode={true} // true kalau QR, false kalau barcode
+      />
+
+      <GeneratePalletModal
+        isOpen={isGenerateModalOpen}
+        onClose={() => setGenerateModalOpen(false)}
+        onSuccess={fetchPallet}
+        organizations={IoList}
+        uoms={uomList}
       />
     </>
   );

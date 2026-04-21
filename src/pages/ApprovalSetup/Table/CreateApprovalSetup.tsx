@@ -39,7 +39,6 @@ const CreateAprrovalSetup: React.FC = () => {
   const { createData: createApproval } = useStoreApprovalSetUp();
   const { fetchRoles, roles: listRoles } = useRoleStore();
 
-  console.log("List roles:", listRoles);
   useEffect(() => {
     fetchRoles();
   }, [fetchRoles]);
@@ -103,8 +102,6 @@ const CreateAprrovalSetup: React.FC = () => {
         order: index,
       })),
     };
-
-    console.log("Payload to API:", payload);
 
     try {
       await createApproval(payload);

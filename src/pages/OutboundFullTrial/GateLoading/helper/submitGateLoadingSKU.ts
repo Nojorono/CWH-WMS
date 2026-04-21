@@ -1,5 +1,5 @@
-import axios from "axios";
 import { EndPoint } from "../../../../utils/EndPoint";
+import axiosInstance from "../../../../DynamicAPI/AxiosInstance";
 
 export interface SubmitGateSkuPayload {
   assigned_gate_id: string;
@@ -19,7 +19,7 @@ export interface SubmitGateSkuPayload {
 export const submitGateLoadingSKU = async (payload: SubmitGateSkuPayload) => {
   const token = localStorage.getItem("token");
 
-  const res = await axios.post(`${EndPoint}assigned-gate-load`, payload, {
+  const res = await axiosInstance.post(`${EndPoint}assigned-gate-load`, payload, {
     headers: {
       Authorization: `Bearer ${token}`,
     },

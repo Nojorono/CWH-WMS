@@ -6,6 +6,7 @@ import Button from "../../../../components/ui/button/Button";
 import { useDebounce } from "../../../../helper/useDebounce";
 import DynamicTable from "../../../../components/wms-components/DynamicTable";
 import { useStoreClassification } from "../../../../DynamicAPI/stores/Store/MasterStore";
+import { showConfirmDialog } from "../../../../components/swal-confirm";
 
 const DataTable = () => {
   const {
@@ -86,6 +87,25 @@ const DataTable = () => {
     });
   };
 
+    const handleDelete = (id: number) => {
+      showConfirmDialog(
+        async () => {
+          try {
+            await deleteData(id);
+            fetchAll();
+          } catch (error) {
+            console.error(error);
+          }
+        },
+        {
+          title: "Confirm Delete",
+          text: "Anda yakin ingin menghapus data ini?",
+          confirmButtonText: "Yes, Delete!",
+          cancelButtonText: "No, Cancel",
+        },
+      );
+    };
+
   return (
     <>
       <div className="p-4 bg-white shadow rounded-md mb-5">
@@ -121,7 +141,7 @@ const DataTable = () => {
         onSubmit={handleCreate}
         onUpdate={handleUpdate}
         onDelete={async (id) => {
-          await deleteData(id);
+          handleDelete(id);
         }}
         onRefresh={fetchAll}
         getRowId={(row) => row.id}

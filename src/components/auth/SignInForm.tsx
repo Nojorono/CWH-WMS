@@ -149,12 +149,6 @@ export default function SignInForm() {
               />
             </div>
             <div className="flex items-center justify-between">
-              {/* <Link
-                to="/reset-password"
-                className="text-sm text-brand-500 hover:text-brand-600 dark:text-brand-400"
-              >
-                Forgot password?
-              </Link> */}
             </div>
             {error && (
               <p className="text-md text-red-500 dark:text-red-400">Gagal Login, {error}!</p>

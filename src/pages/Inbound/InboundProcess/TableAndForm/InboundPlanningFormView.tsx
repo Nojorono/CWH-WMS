@@ -321,13 +321,6 @@ export default function InboundPlanningFormView(props: Props) {
   const { list: masterSupplierData, fetchUsingParam } =
     useStoreMasterSupplier();
 
-  // useEffect(() => {
-  //   const attribute7 = "FREIGHT (FRG)";
-  //   fetchUsingParam({
-  //     ATTRIBUTE7: attribute7,
-  //   });
-  // }, [fetchUsingParam]);
-
   const supplierOptions = masterSupplierData.map((item: any) => ({
     value: item.VENDOR_NAME, // atau item.VENDOR_ID jika database butuh ID
     label: item.VENDOR_NAME,

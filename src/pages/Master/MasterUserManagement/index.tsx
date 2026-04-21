@@ -1,3 +1,4 @@
+// import ViewMasterUser from "./Table/ViewMasterUser";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import DataTable from "./Table/DataTable";
 
@@ -9,3 +10,6 @@ export default function MasterUserManagement() {
     </div>
   );
 }
+
+
+

@@ -11,6 +11,8 @@ export type ItemForm = {
     classification?: string;
     expired_date?: string | null;
     quantity_inspection?: any;
+    line_number?: number;
+    classification_id?: string;
 };
 
 export type POSForm = {

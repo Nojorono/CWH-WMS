@@ -13,7 +13,6 @@ const PrintSuratJalan = () => {
   const navigate = useNavigate();
   const stateAny = location.state as any;
   const params = stateAny?.params ?? stateAny?.data ?? stateAny ?? undefined;
-
   const { fetchById, detail } = useStoreOutboundDeliveryOrder();
 
   // State

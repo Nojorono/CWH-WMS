@@ -9,23 +9,26 @@ import {
   useStoreWarehouse,
   useStoreIo,
   useStoreSubWarehouse,
+  useStoreZoneByWarehouse,
 } from "../../../../DynamicAPI/stores/Store/MasterStore";
 import PrintBarcodeModal from "../Modal/PrintBarcodeModal";
 import { showErrorToast } from "../../../../components/toast";
+import { showConfirmDialog } from "../../../../components/swal-confirm";
 
-const DataTable = () => {
-  const { list: Warehouse, fetchAll } = useStoreWarehouse();
+interface DataTableProps {
+  params?: {
+    WHid: any;
+    locatorId?: Number;
+    locatorName?: String;
+  };
+}
+
+const DataTable = ({ params }: DataTableProps) => {
+  // Store Hooks
+  const { list: Warehouse, fetchAll: fetchAllWarehouse } = useStoreWarehouse();
+  const { fetchById: fetchZoneByWH, detail: WHdetail } =
+    useStoreZoneByWarehouse();
   const { fetchAll: fetchAllIo, list: ioList } = useStoreIo();
-
-  const [search, setSearch] = useState("");
-  const debouncedSearch = useDebounce(search, 500);
-  const [isCreateModalOpen, setCreateModalOpen] = useState(false);
-
-  // STATE UNTUK MODAL PRINT BARCODE
-  const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const [selectedPallets, setSelectedPallets] = useState<any[]>([]);
-  const [isPrintModalOpen, setPrintModalOpen] = useState(false);
-
   const {
     fetchAll: fetchSubWH,
     list: subWHList,
@@ -34,11 +37,35 @@ const DataTable = () => {
     deleteData,
   } = useStoreSubWarehouse();
 
+  // State
+  const [search, setSearch] = useState("");
+  const debouncedSearch = useDebounce(search, 500);
+  const [isCreateModalOpen, setCreateModalOpen] = useState(false);
+
+  // State untuk Modal Print Barcode
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [selectedPallets, setSelectedPallets] = useState<any[]>([]);
+  const [isPrintModalOpen, setPrintModalOpen] = useState(false);
+
+  // LOGIKA PEMILIHAN DATA:
+  const displayData = useMemo(() => {
+    return params?.WHid ? (Array.isArray(WHdetail) ? WHdetail : []) : subWHList;
+  }, [params?.WHid, WHdetail, subWHList]);
+
+  // LOGIKA FETCHING DINAMIS
+  const handleRefresh = () => {
+    if (params?.WHid) {
+      fetchZoneByWH(params.WHid);
+    } else {
+      fetchSubWH();
+    }
+  };
+
   useEffect(() => {
-    fetchAll();
     fetchAllIo();
-    fetchSubWH();
-  }, []);
+    fetchAllWarehouse();
+    handleRefresh();
+  }, [params?.WHid]);
 
   const columns = useMemo(
     () => [
@@ -48,21 +75,11 @@ const DataTable = () => {
         selectedRow: true,
       },
       {
-        accessorKey: "organization_id",
-        header: "Organization",
-        cell: ({ row }: { row: { original: any } }) => {
-          const org = ioList.find(
-            (item: any) => item.organization_id === row.original.organization_id
-          );
-          return org ? org.organization_name : row.original.organization_id;
-        },
-      },
-      {
         accessorKey: "warehouse_id",
         header: "Warehouse",
         cell: ({ row }: { row: { original: any } }) => {
           const wh = Warehouse.find(
-            (item: any) => item.id === row.original.warehouse_id
+            (item: any) => item.id === row.original.warehouse_id,
           );
           return wh ? wh.name : row.original.warehouse_id;
         },
@@ -88,30 +105,10 @@ const DataTable = () => {
         },
       },
     ],
-    [ioList, Warehouse]
+    [ioList, Warehouse],
   );
 
   const formFields = [
-    {
-      name: "organization_id",
-      label: "Organization",
-      type: "select",
-      options: ioList.map((item: any) => ({
-        label: item.organization_name,
-        value: item.organization_id,
-      })),
-      validation: { required: "Required" },
-    },
-    {
-      name: "warehouse_id",
-      label: "Warehouse",
-      type: "select",
-      options: Warehouse.map((item: any) => ({
-        label: item.name,
-        value: item.id,
-      })),
-      validation: { required: "Required" },
-    },
     {
       name: "name",
       label: "Zone Name",
@@ -160,11 +157,8 @@ const DataTable = () => {
     },
   ];
 
-  // Fungsi untuk format payload create
-  const handleCreate = (data: any) => {
+  const handleCreate = async (data: any) => {
     const {
-      organization_id,
-      warehouse_id,
       name,
       code,
       description,
@@ -172,34 +166,45 @@ const DataTable = () => {
       barcode_image_url,
       is_staging,
       is_gate,
+      is_good_stock, // field baru
     } = data;
 
     const payload: any = {
-      organization_id: Number(organization_id),
-      warehouse_id,
+      // Mengambil dari params atau state yang tersedia
+      warehouse_id: params?.WHid || data.warehouse_id,
       name,
       code,
       description,
       barcode_image_url,
-      is_gate,
+      is_gate: !!is_gate,
+      is_good_stock: !!is_good_stock, // konversi ke boolean
+      locator_id: params?.locatorId || data.locator_id, // dari params props
+      locator_name: params?.locatorName || data.locator_name, // dari params props
     };
 
+    // Logika bisnis proses yang sudah ada (Prioritas Staging vs Capacity)
     if (is_staging === "NO") {
       payload.capacity_bin =
         capacity_bin !== undefined ? Number(capacity_bin) : undefined;
-      // is_staging tidak dibawa
+      payload.is_staging = null;
     } else {
       payload.is_staging = is_staging;
-      // capacity_bin tidak dibawa
+      payload.capacity_bin = null; // Menghindari konflik data
     }
-    return createData(payload);
+
+    try {
+      await createData(payload);
+      handleRefresh();
+      setCreateModalOpen(false);
+    } catch (error) {
+      console.error(error);
+      return { success: false };
+    }
   };
 
-  // Fungsi untuk format payload update
-  const handleUpdate = (data: any) => {
+  const handleUpdate = async (data: any) => {
     const {
       id,
-      organization_id,
       warehouse_id,
       name,
       code,
@@ -208,30 +213,44 @@ const DataTable = () => {
       barcode_image_url,
       is_staging,
       is_gate,
+      is_good_stock, // field baru
+      locator_id, // field baru
+      locator_name, // field baru
     } = data;
 
     const payload: any = {
-      organization_id: Number(organization_id),
       warehouse_id,
       name,
       code,
       description,
       barcode_image_url,
-      is_gate,
+      is_gate: !!is_gate,
+      is_good_stock: !!is_good_stock,
+      locator_id: locator_id,
+      locator_name: locator_name,
     };
 
-    if (is_staging === "NO") {
+    // Tetap mempertahankan logika prioritas bisnis proses yang lama
+    if (is_gate === true) {
+      payload.capacity_bin = null;
+      payload.is_staging = null;
+    } else if (is_staging === "NO") {
       payload.capacity_bin =
         capacity_bin !== undefined ? Number(capacity_bin) : undefined;
-        payload.is_staging = null
-      // is_staging tidak dibawa
+      payload.is_staging = null;
     } else {
       payload.is_staging = is_staging;
-      // capacity_bin tidak dibawa
+      payload.capacity_bin = null;
     }
 
-    console.log("payload", payload);
-    return updateData(id, payload);
+    try {
+      await updateData(id, payload);
+      handleRefresh();
+      return { success: true };
+    } catch (error) {
+      console.error(error);
+      return { success: false };
+    }
   };
 
   const handlePrintBarcode = () => {
@@ -239,9 +258,28 @@ const DataTable = () => {
       showErrorToast("Pilih minimal 1 data untuk dicetak!");
       return;
     }
-    const selected = subWHList.filter((p) => selectedIds.includes(p.id));
+    const selected = displayData.filter((p: any) => selectedIds.includes(p.id));
     setSelectedPallets(selected);
-    setPrintModalOpen(true); // buka modal preview
+    setPrintModalOpen(true);
+  };
+
+  const handleDelete = (id: number) => {
+    showConfirmDialog(
+      async () => {
+        try {
+          await deleteData(id);
+          handleRefresh();
+        } catch (error) {
+          console.error(error);
+        }
+      },
+      {
+        title: "Confirm Delete",
+        text: "Anda yakin ingin menghapus data ini?",
+        confirmButtonText: "Yes, Delete!",
+        cancelButtonText: "No, Cancel",
+      },
+    );
   };
 
   return (
@@ -270,7 +308,7 @@ const DataTable = () => {
               variant="primary"
               size="sm"
               onClick={handlePrintBarcode}
-              disabled={selectedIds.length === 0} // UX: disabled kalau belum pilih
+              disabled={selectedIds.length === 0}
             >
               <FaQrcode className="mr-2" /> Print Barcode
             </Button>
@@ -279,7 +317,7 @@ const DataTable = () => {
       </div>
 
       <DynamicTable
-        data={subWHList}
+        data={displayData}
         globalFilter={debouncedSearch}
         isCreateModalOpen={isCreateModalOpen}
         onCloseCreateModal={() => setCreateModalOpen(false)}
@@ -288,20 +326,19 @@ const DataTable = () => {
         onSubmit={handleCreate}
         onUpdate={handleUpdate}
         onDelete={async (id) => {
-          await deleteData(id);
+          handleDelete(id as number);
         }}
-        onRefresh={fetchAll}
+        onRefresh={handleRefresh}
         getRowId={(row) => row.id}
-        title="Form UOM"
+        title={params?.WHid ? `Warehouse Zones` : "Form Zone"}
         onSelectedChange={setSelectedIds}
       />
 
-      {/* 🔑 Modal preview + print */}
       <PrintBarcodeModal
         open={isPrintModalOpen}
         onClose={() => setPrintModalOpen(false)}
         items={selectedPallets}
-        useQRCode={true} // true kalau QR, false kalau barcode
+        useQRCode={true}
       />
     </>
   );

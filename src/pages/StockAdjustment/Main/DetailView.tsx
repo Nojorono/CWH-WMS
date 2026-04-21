@@ -218,7 +218,6 @@ const DetailView: React.FC<DetailViewProps> = ({
           return;
         }
 
-        console.log("updatePayload", updatePayload);
         await updateData(id, updatePayload);
       } else {
         await createData(payloadToSend);

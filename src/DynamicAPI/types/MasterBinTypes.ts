@@ -1,24 +1,17 @@
 export interface Bin {
-  // id?: string;
-  // organization_id: number;
-  // warehouse_sub_id: string;
-  // name: string;
-  // code: string;
-  // description: string;
-  // capacity_pallet: number;
 
   id?: string;
-  organization_id: number;
+  organization_id?: any;
   warehouse_sub_id: string;
   name: string;
   code: string;
   description: string;
   capacity_pallet: number | null;
+  locator_id?: Number;
+  locator_name?: String;
   createdAt?: string;
   updatedAt?: string;
   deletedAt?: string | null;
-  barcode_image_url?: string | null;
-  current_pallet?: number | null;
 }
 
 export type CreateBin = Omit<Bin, "id">;

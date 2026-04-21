@@ -40,7 +40,9 @@ import {
     InventoryMovementService,
     StockAdjustmentService,
     ReportInboundService,
-    MasterWeekService
+    MasterWeekService,
+    ReportOutboundService,
+    zoneByWarehouseService
 } from "../../services/Service/MasterService";
 
 import { Uom, CreateUom, UpdateUom } from "../../types/UomTypes";
@@ -80,6 +82,7 @@ import { InventoryMovementListResponse } from '../../types/InventoryMovement.ts'
 import { StockAdjustment, StockAdjustmentCreateRequest } from "../../types/StockAdjustmentTypes.ts";
 
 import { MasterWeek, CreateMasterWeek, UpdateMasterWeek } from '../../types/MasterWeekTypes.ts'
+import { OutboundPlanning, UpdateOutboundPlanning } from "../../types/OutboundGoodStock.ts";
 
 
 // Daftar semua store di sini
@@ -151,6 +154,11 @@ export const useStoreTransporter = createCrudStore<Transporter, CreateTransporte
 export const useStoreSubWarehouse = createCrudStore<SubWarehouse, CreateSubWarehouse, UpdateSubWarehouse>({
     name: "SubWarehouse",
     service: subWarehouseService,
+});
+
+export const useStoreZoneByWarehouse = createCrudStore<SubWarehouse, CreateSubWarehouse, UpdateSubWarehouse>({
+    name: "ZoneByWarehouse",
+    service: zoneByWarehouseService,
 });
 
 export const useStoreBin = createCrudStore<Bin, CreateBin, UpdateBin>({
@@ -233,10 +241,16 @@ export const useStorePickingAssignHelper = createCrudStore<PickingAssignHelper, 
     service: PickingAssignHelperService,
 });
 
-export const useStoreUserManagement = createCrudStore<UserManagement, CreateUserManagement, UpdateUserManagement>({
+// export const useStoreUserManagement = createCrudStore<UserManagement, CreateUserManagement, UpdateUserManagement>({
+//     name: "UserManagement",
+//     service: UserManagementService,
+// });
+
+export const useStoreUserManagement = createCrudStore<User, CreateUser, UpdateUser>({
     name: "UserManagement",
     service: UserManagementService,
 });
+
 
 export const useStorePickingSuggestionItem = createCrudStore<PickingSuggestionItem, CreatePickingSuggestionItem, UpdatePickingSuggestionItem>({
     name: "PickingSuggestionItem",
@@ -283,8 +297,13 @@ export const useStoreReportInbound = createCrudStore<InboundPlanning, CreateInbo
     service: ReportInboundService,
 });
 
+export const useStoreReportOutbound = createCrudStore<OutboundPlanning, UpdateOutboundPlanning, null>({
+    name: "ReportOutbound",
+    service: ReportOutboundService,
+});
+
 export const useStoreMasterWeek = createCrudStore<MasterWeek, null, null>({
-    name: "ReportInbound",
+    name: "MasterWeek",
     service: MasterWeekService,
 });
 

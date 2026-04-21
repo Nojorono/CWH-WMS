@@ -30,7 +30,10 @@ import MainTabPallet from "../pages/Master/MasterPallet/Tabs/Main";
 
 import MasterUOM from "../pages/Master/MasterUOM";
 import MasterIO from "../pages/Master/MasterIO";
+
 import MasterWarehouse from "../pages/Master/MasterWarehouse";
+import MainTabWarehouse from "../pages/Master/MasterWarehouse/Tabs/Main";
+
 import MasterItem from "../pages/Master/MasterItem";
 import MasterClassification from "../pages/Master/MasterClassification";
 import MasterVehicle from "../pages/Master/MasterVehicle";
@@ -67,8 +70,8 @@ import StockAdjustment from "../pages/StockAdjustment/index";
 
 
 //Reporting
-import Reporting from "../pages/Reporting/Main/Report";
-import Reporting1 from "../pages/Reporting/Main/Report1";
+import ReportInbound from "../pages/Reporting/Main/ReportInbound";
+import ReportOutbound from "../pages/Reporting/Main/ReportOutbound";
 import Reporting2 from "../pages/Reporting/Main/Report2";
 
 
@@ -84,7 +87,10 @@ export {
   MainTabPallet,
   MasterUOM,
   MasterIO,
+
   MasterWarehouse,
+  MainTabWarehouse,
+  
   MasterItem,
   MasterClassification,
   MasterVehicle,
@@ -136,7 +142,7 @@ export {
   CreateApproval,
   ApprovalProcess,
 
-  Reporting,
-  Reporting1,
+  ReportInbound,
+  ReportOutbound,
   Reporting2,
 };

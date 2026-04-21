@@ -64,7 +64,6 @@ const ModalSelectMemo: React.FC<ModalSelectMemoProps> = ({
             },
           }
         );
-        console.log("Attach response:", response.data);
         navigate("/picking_transaction");
       } catch (error) {
         showErrorToast(`${error}`);
