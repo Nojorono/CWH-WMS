@@ -80,7 +80,7 @@ export default defineConfig({
 
   build: {
     cssMinify: "lightningcss",
-    chunkSizeWarningLimit: 2500,
+    chunkSizeWarningLimit: 5000,
     sourcemap: false,
     rollupOptions: {
       output: {
@@ -90,7 +90,6 @@ export default defineConfig({
           "zustand": ["zustand"],
           "axios": ["axios"],
           "charts": ["apexcharts", "react-apexcharts"],
-          // react-data-table-component dihapus
         },
       },
     },
