@@ -58,6 +58,9 @@ export const useDOValidation = (
                 ? data?.data?.data_po ?? []
                 : data?.data?.data_so ?? [];
 
+                console.log("rawList", rawList);
+                
+
             // 🔥 FIX utama: parsing beda PO vs SO
             const docNumbers = extractDocNumbers(rawList, type);
 

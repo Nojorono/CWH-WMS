@@ -25,6 +25,6 @@ export const validateDOservice = async (doNo: string, inbType: any) => {
         throw new Error(errorData?.message || "Gagal validasi Surat Jalan");
     }
 
-    const data = await res.json();
+    const data = await res.json();    
     return data;
 };
