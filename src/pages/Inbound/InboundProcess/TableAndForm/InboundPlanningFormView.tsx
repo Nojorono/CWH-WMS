@@ -176,7 +176,8 @@ const DetailTabs = ({
 }: Pick<Props, "doFields" | "removeDO" | "inboundID"> & {
   methods: UseFormReturn<FormValues>;
 }) => {
-  const inboundType = methods.watch("inbound_type") || "PO"; // 👈 default PO
+
+  const inboundType = methods.watch("inbound_type") || "PO";
   const [activeTab, setActiveTab] = useState(0);
 
   return (
@@ -327,8 +328,8 @@ export default function InboundPlanningFormView(props: Props) {
   }));
 
   const defaultInboundTypeOptions = [
-    { value: "PO", label: "PO" },
-    { value: "SO", label: "SO" },
+    { value: "PO", label: "SO_INTERNAL" },
+    { value: "SO", label: "SO_SUBDIST" },
   ];
 
   const [inboundTypeOptions, setInboundTypeOptions] = useState(

@@ -16,12 +16,12 @@ function normalizeUom(raw: string, uomList: UomOption[]): string {
 
 export async function searchSO(
   soNo: string,
-  masterItems: any[], // ✅ pakai any[]
+  masterItems: any[],
   uomList: UomOption[]
 ): Promise<SOSearchResult> {
-  const res = await fetch(`${Server47}/api/v1/sales-order?order_number=${soNo}`);
+  const res = await fetch(`${Server47}/sales-order?order_number=${soNo}`);    
   const json = await res.json();
-  const data = json?.data?.data?.[0];
+  const data = json?.data?.[0];
 
   if (!data) throw new Error(`SO ${soNo} tidak ditemukan.`);
 
@@ -43,7 +43,7 @@ export async function searchSO(
         item_number: master.item_number || it.ITEM_NUMBER,
         description: master.description || it.ITEM_DESC,
         qty: Number(it.ORDERED_QUANTITY),
-        qty_plan: Number(it.ORDERED_QUANTITY), // ✅ required di ItemForm
+        qty_plan: Number(it.ORDERED_QUANTITY),
         uom: normalizeUom(it.ORDER_QUANTITY_UOM || "DUS", uomList),
         id: String(master.id),
       } satisfies ItemForm;

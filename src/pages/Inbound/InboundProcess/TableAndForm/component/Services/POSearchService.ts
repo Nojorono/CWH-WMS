@@ -1,5 +1,5 @@
 import { showErrorToast } from "../../../../../../components/toast";
-import { MetaService } from "../../../../../../utils/EndPoint";
+import { Server47 } from "../../../../../../utils/EndPoint";
 import { ItemForm } from "../formTypes";
 
 export interface UomOption {
@@ -27,11 +27,17 @@ export async function searchPO(
     masterItems: any[],
     uomList: UomOption[]
 ): Promise<POSearchResult> {
-    const res = await fetch(`${MetaService}/purchase-order?nomorPO=${poNo}`);
+    const res = await fetch(`${Server47}/purchase-order?nomorPO=${poNo}`);
+
+    if (!res.ok) throw new Error("Gagal mengambil data dari server.");
+
     const json = await res.json();
-    const data = json?.data?.data?.[0];
-    
-    if (!data) throw new Error(`PO ${poNo} tidak ditemukan.`);
+    const data = json?.data?.[0];
+
+    if (!data) {
+        console.error("Data array kosong atau struktur tidak sesuai:", json);
+        throw new Error(`PO ${poNo} tidak ditemukan.`);
+    }
 
     const vendorName = data.NAMA_VENDOR?.toUpperCase() ?? "";
     const vendorId = Number(data.ID_VENDOR);

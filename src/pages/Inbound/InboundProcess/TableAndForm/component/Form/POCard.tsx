@@ -78,6 +78,7 @@ export default function POCard({
 
   const normalizedInbType =
     typeof InbType === "object" ? (InbType as any)?.value : InbType;
+
   const resolvedMode = isDetailMode ? "detail" : isEditMode ? "edit" : "create";
 
   useEffect(() => {
@@ -97,7 +98,8 @@ export default function POCard({
     }
 
     if ((isDetailMode || isEditMode) && dataPO) {
-      setValue(`${path}.po_no` as any, dataPO);
+      const fieldName = normalizedInbType === "PO" ? "po_no" : "so_no";
+      setValue(`${path}.${fieldName}` as any, dataPO);
     }
   }, [
     isDetailMode,
@@ -124,14 +126,16 @@ export default function POCard({
   // ✅ SEARCH PO
   const handleSearchPO = async () => {
     if (!doNo) return showErrorToast("Isi Surat Jalan terlebih dahulu.");
+
     const poNo = getValues(
       `deliveryOrders.${doIndex}.pos.${posIndex}.po_no` as any,
     );
-    if (!poNo) return showErrorToast("Masukkan nomor PO!");
+
+    if (!poNo) return showErrorToast("Masukkan nomor SO_INTERNAL !");
 
     setLoading(true);
+
     try {
-      // 1. Tangkap vendorId dan poDate dari hasil search
       const { vendorName, vendorId, poDate, items } = await searchPO(
         poNo,
         list,
@@ -145,24 +149,19 @@ export default function POCard({
         setValue(`${path}.principal` as any, vendorName);
       }
 
-      // 2. Simpan vendor_id dan po_date ke form state agar Payload BE lengkap
       if (vendorId) {
         setValue(`${path}.vendor_id` as any, vendorId);
       }
 
       if (poDate) {
-        // Simpan dalam format ISO string untuk BE
         const isoDate = new Date(poDate).toISOString();
         setValue(`${path}.po_date` as any, isoDate);
       }
-
-      // 3. Masukkan total items untuk field total_line_items
       setValue(`${path}.total_line_items` as any, items.length);
-
       replaceItems(items);
     } catch (err: any) {
       replaceItems([]);
-      showErrorToast(err?.message ?? "Gagal mencari PO");
+      showErrorToast(err?.message ?? "Gagal fetch detail SO_INTERNAL");
     } finally {
       setLoading(false);
     }
@@ -173,7 +172,8 @@ export default function POCard({
     const soNo = getValues(
       `deliveryOrders.${doIndex}.pos.${posIndex}.so_no` as any,
     );
-    if (!soNo) return showErrorToast("Masukkan nomor SO!");
+
+    if (!soNo) return showErrorToast("Masukkan nomor SO_SUBDIST !");
 
     setLoading(true);
     try {
@@ -184,6 +184,7 @@ export default function POCard({
           `deliveryOrders.${doIndex}.pos.${posIndex}.vendor_name` as any,
           vendorName,
         );
+
         setValue(
           `deliveryOrders.${doIndex}.pos.${posIndex}.principal` as any,
           vendorName,
@@ -193,7 +194,7 @@ export default function POCard({
       replaceItems(items);
     } catch (err: any) {
       replaceItems([]);
-      showErrorToast(err?.message ?? "Gagal mencari SO");
+      showErrorToast(err?.message ?? "Gagal fetch detail SO_SUBDIST");
     } finally {
       setLoading(false);
     }
@@ -211,7 +212,7 @@ export default function POCard({
         {/* Input PO/SO */}
         <div>
           <label className="block text-xs text-slate-600 mb-1">
-            Nomor {normalizedInbType}
+            Nomor {normalizedInbType === "PO" ? "SO_INTERNAL" : "SO_SUBDIST"}
           </label>
           <div className="flex gap-2">
             <input
@@ -231,6 +232,7 @@ export default function POCard({
                   normalizedInbType === "PO" ? handleSearchPO : handleSearchSO
                 }
                 disabled={isPOFieldDisabled || loading}
+                title={`Search ${normalizedInbType === "PO" ? "SO_INTERNAL" : "SO_SUBDIST"}`}
               >
                 <FaSearch />
               </Button>

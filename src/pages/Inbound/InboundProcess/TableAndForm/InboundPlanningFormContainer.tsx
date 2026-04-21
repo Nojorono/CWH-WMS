@@ -91,7 +91,8 @@ export default function InboundPlanningFormContainer() {
   const [previewData, setPreviewData] = useState<FormValues | null>(null);
 
   const handlePreview = async () => {
-    const isValid = await trigger(); // validasi field basic
+    const isValid = await trigger();
+
     if (!isValid) {
       showErrorToast("Lengkapi semua data inbound planning terlebih dahulu.");
       return;

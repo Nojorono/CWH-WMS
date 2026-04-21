@@ -74,7 +74,7 @@ export default function DeliveryOrderCard({
 
   const [open, setOpen] = useState(true);
   const [uploading, setUploading] = useState(false);
-  const detailsRef = useRef<HTMLDetailsElement>(null);
+  const detailsRef = useRef<HTMLDetailsElement>(null);  
 
   const integrationStatus = watch(
     `deliveryOrders.${doIndex}.integration_status` as any,
@@ -140,10 +140,7 @@ export default function DeliveryOrderCard({
   };
 
   const isInputDisabled = !isCreateMode && !isEditMode && !isAddToReceiveMode;
-  const isValidType = inbType === "PO" || inbType === "SO";
-
-  console.log("posFields", posFields);
-  
+  const isValidType = inbType === "PO" || inbType === "SO";  
 
   return (
     <div className="bg-white rounded-lg shadow p-3 md:p-5">
