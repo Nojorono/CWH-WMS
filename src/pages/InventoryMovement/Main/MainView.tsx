@@ -6,7 +6,7 @@ import {
   createColumnHelper,
 } from "@tanstack/react-table";
 import { useStoreInventoryMovement } from "../../../DynamicAPI/stores/Store/MasterStore";
-import MovementDetailView from "./MovementDetailView";
+// import MovementDetailView from "./MovementDetailView";
 import { FaEdit, FaEye, FaPlus, FaTrash } from "react-icons/fa";
 import { useSearchParams } from "react-router-dom";
 
@@ -235,10 +235,11 @@ const InventoryMovement: React.FC = () => {
   // ================= DETAIL VIEW =================
   if (selectedMovement) {
     return (
-      <MovementDetailView
-        data={selectedMovement}
-        onBack={() => setSelectedMovement(null)}
-      />
+      // <MovementDetailView
+      //   data={selectedMovement}
+      //   onBack={() => setSelectedMovement(null)}
+      // />
+      <></>
     );
   }
 
