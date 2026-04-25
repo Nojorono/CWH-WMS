@@ -1,12 +1,14 @@
 import { useState } from "react";
 import { useFormContext } from "react-hook-form";
-import { validateDOservice } from "../Services/validateDOservice";
+import { validateDOservice } from "../../../../../../DynamicAPI/services/Service/validateDOservice";
 import { showErrorToast, showSuccessToast } from "../../../../../../components/toast";
 import { FormValues } from "../formTypes";
 
-// helper type
+// helper type - Normalisasi 3 tipe form ke 2 tipe API
 const getInboundType = (inbType: any): "PO" | "SO" => {
-    if (inbType === "PO" || inbType?.value === "PO") return "PO";
+    const type = typeof inbType === "string" ? inbType : inbType?.value || "";
+    if (type === "PO") return "PO";
+    // SO_INTERNAL dan SO_SUBDIST menggunakan API SO yang sama
     return "SO";
 };
 
@@ -39,7 +41,7 @@ export const useDOValidation = (
 
     const watchedDONo = watch(`deliveryOrders.${doIndex}.do_no`);
 
-    const handleCheckDO = async (): Promise<boolean> => {
+    const handleCheckDO = async (filterDocNo: string | null = null): Promise<boolean> => {
         if (!watchedDONo) {
             showErrorToast("No Surat Jalan wajib diisi");
             return false;
@@ -48,6 +50,8 @@ export const useDOValidation = (
         try {
             const data = await validateDOservice(watchedDONo, inbType);
 
+            console.log("data DO", data);
+            
             if (!data?.success) return false;
 
             const type = getInboundType(inbType);
@@ -58,24 +62,28 @@ export const useDOValidation = (
                 ? data?.data?.data_po ?? []
                 : data?.data?.data_so ?? [];
 
-                console.log("rawList", rawList);
-                
 
             // 🔥 FIX utama: parsing beda PO vs SO
             const docNumbers = extractDocNumbers(rawList, type);
+
+            const filteredDocNumbers = filterDocNo
+                ? docNumbers.filter(
+                    (no: string) => no.trim() === filterDocNo.trim()
+                )
+                : docNumbers;
 
             // set flag form
             setValue(`deliveryOrders.${doIndex}.flag_validated`, true);
             setValue(
                 `deliveryOrders.${doIndex}.validation_surat_jalan`,
-                docNumbers.length > 0
+                filteredDocNumbers.length > 0
             );
 
-            if (docNumbers.length > 0) {
+            if (filteredDocNumbers.length > 0) {
                 setDoStatus("success");
 
                 replacePos(
-                    docNumbers.map((no: string) => ({
+                    filteredDocNumbers.map((no: string) => ({
                         ...(isPO ? { po_no: no } : { so_no: no }),
                         items: [],
                         vendor_name: "",
@@ -84,22 +92,31 @@ export const useDOValidation = (
                 );
 
                 showSuccessToast(
-                    `Validasi berhasil: ditemukan ${docNumbers.length} Dokumen`
+                    `Validasi berhasil: ditemukan ${filteredDocNumbers.length} Dokumen`
                 );
             } else {
                 setDoStatus("failed");
-
                 replacePos([]);
-                append({
-                    ...(isPO ? { po_no: "" } : { so_no: "" }),
-                    items: [],
-                    vendor_name: "",
-                    principal: "",
-                });
 
-                showErrorToast(
-                    "Nomor dokumen tidak ditemukan, silakan isi manual."
-                );
+                if (filterDocNo) {
+                    append({
+                        ...(isPO ? { po_no: filterDocNo } : { so_no: filterDocNo }),
+                        items: [],
+                        vendor_name: "",
+                        principal: "",
+                    });
+                    showErrorToast(
+                        `Nomor ${isPO ? "PO" : "SO"} "${filterDocNo}" tidak ditemukan dalam Surat Jalan ini.`
+                    );
+                } else {
+                    append({
+                        ...(isPO ? { po_no: "" } : { so_no: "" }),
+                        items: [],
+                        vendor_name: "",
+                        principal: "",
+                    });
+                    showErrorToast("Nomor dokumen tidak ditemukan, silakan isi manual.");
+                }
             }
 
             setIsDOChecked(true);

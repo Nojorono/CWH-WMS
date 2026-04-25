@@ -897,7 +897,7 @@ const DataTable = () => {
         isCreateModalOpen={isCreateModalOpen}
         onCloseCreateModal={() => setCreateModalOpen(false)}
         columns={[
-          { accessorKey: "organizationId", header: "Org/Io" },
+          { accessorKey: "organizationId", header: "Organization" },
           { accessorKey: "username", header: "Username" },
           { accessorKey: "firstName", header: "First Name" },
           { accessorKey: "lastName", header: "Last Name" },

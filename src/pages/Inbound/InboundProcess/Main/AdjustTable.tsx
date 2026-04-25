@@ -8,6 +8,7 @@ import { STATUS_MAP_INBOUND } from "../../../../constants/statusMaps";
 import { useStoreInboundGoodStock } from "../../../../DynamicAPI/stores/Store/MasterStore";
 import TableComponent from "../TableAndForm/component/Table/TableComponent";
 import { usePagePermissions } from "../../../../utils/UserPermission/UserPagePermissions";
+import Button from "../../../../components/ui/button/Button";
 
 type MenuTableProps = {
   globalFilter?: string;
@@ -26,7 +27,7 @@ const AdjustTable = ({
   const { canCreate, canManage } = usePagePermissions();
 
   const { fetchUsingPagination, deleteData, list, pagination, isLoading } =
-    useStoreInboundGoodStock();    
+    useStoreInboundGoodStock();
 
   // 🔹 local state pagination
   const [pageIndex, setPageIndex] = useState(0);
@@ -132,15 +133,6 @@ const AdjustTable = ({
                   />
                 </>
               )}
-
-              {(!item.inbound_id_reference ||
-                item.inbound_id_reference === "") && (
-                <FaPlus
-                  className="size-5 cursor-pointer text-purple-600"
-                  onClick={() => handleAddToReceive(item)}
-                  title="Add to Receive"
-                />
-              )}
             </div>
           );
         },
@@ -163,12 +155,6 @@ const AdjustTable = ({
 
   const handleDelete = (id: any) => {
     deleteData(id);
-  };
-
-  const handleAddToReceive = (data: any) => {
-    navigate("/inbound_planning/process", {
-      state: { data, mode: "add", title: "Add Inbound Planning" },
-    });
   };
 
   return (

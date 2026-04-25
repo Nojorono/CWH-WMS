@@ -24,13 +24,12 @@ const emptyFormValues: FormValues = {
       do_no: "",
       date: "",
       attachment: "",
-      // JANGAN taruh principal di sini
       pos: [
         {
           po_no: "",
-          so_no: "", // Tambahkan agar konsisten
-          vendor_name: "", // Untuk UI
-          principal: "", // Untuk Payload API
+          so_no: "",
+          vendor_name: "",
+          principal: "",
           items: [],
         },
       ],
@@ -71,12 +70,43 @@ export default function InboundPlanningFormContainer() {
     }
   }, [isEditMode, dataInbound?.id, fetchById]);
 
-  // Reset sesuai mode
+  // // Reset sesuai mode
   useEffect(() => {
-    if (isEditMode && detail) reset(mapDetailToFormValues(detail));
-    else if (isDetailMode && dataInbound)
+    if (isEditMode && detail) {
+      reset(mapDetailToFormValues(detail));
+    } else if (isDetailMode && dataInbound) {
       reset(mapDetailToFormValues(dataInbound));
-    else if (isCreateMode) reset(emptyFormValues);
+    } else if (isCreateMode) {
+      reset(emptyFormValues);
+    } else if (isAddToReceiveMode && dataInbound) {
+      const inbType = dataInbound.inboundType || "";
+      // ✅ Format sebagai object agar cocok dengan select field
+      const inboundTypeValue = inbType
+        ? { value: inbType, label: inbType }
+        : "";
+
+      reset({
+        ...emptyFormValues,
+        inbound_plan_no: dataInbound.inbound_number || "AUTO GENERATED",
+        inbound_type: inboundTypeValue as any, // ✅ Object format untuk select
+        deliveryOrders: [
+          {
+            do_no: dataInbound.do_no || "",
+            date: "",
+            attachment: "",
+            pos: [
+              {
+                po_no: dataInbound.activePOno || "",
+                so_no: dataInbound.activeSOno || "",
+                vendor_name: "",
+                principal: "",
+                items: [],
+              },
+            ],
+          },
+        ],
+      });
+    }
   }, [
     isEditMode,
     isDetailMode,
@@ -151,7 +181,7 @@ export default function InboundPlanningFormContainer() {
   const onFinalSubmit = async (data: FormValues) => {
     let payload = mapToPayload(data);
 
-    const expeditionField = payload.expedition as any; // Pakai any sementara untuk bypass pengecekan ketat
+    const expeditionField = payload.expedition as any;
     if (
       expeditionField &&
       typeof expeditionField === "object" &&
@@ -241,7 +271,12 @@ export default function InboundPlanningFormContainer() {
         emptyFormValues={emptyFormValues}
         inboundID={dataInbound.id}
         inboundNumber={dataInbound.inbound_number}
-        inboundType={dataInbound.inbound_type}
+        // inboundType={dataInbound.inbound_type}
+        inboundType={
+          isAddToReceiveMode
+            ? dataInbound?.inboundType 
+            : dataInbound?.inbound_type 
+        }
       />
     </FormProvider>
   );

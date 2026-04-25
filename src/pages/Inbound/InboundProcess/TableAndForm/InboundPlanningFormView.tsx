@@ -42,6 +42,8 @@ const buildFieldsConfig = (
   supplierOptions: { value: string; label: string }[],
   inboundTypeOptions: { value: string; label: string }[],
 ): FieldConfig[] => {
+
+
   const baseFields: FieldConfig[] = [
     {
       name: "inbound_plan_no",
@@ -161,7 +163,7 @@ const DOSection = ({
           isDetailMode={isDetailMode}
           isEditMode={isEditMode}
           isAddToReceiveMode={isAddToReceiveMode}
-          inbType={inboundType as "PO" | "SO" | "RETUR"}
+          inbType={inboundType as "PO" | "SO_INTERNAL" | "SO_SUBDIST"}
         />
       ))}
     </section>
@@ -176,7 +178,6 @@ const DetailTabs = ({
 }: Pick<Props, "doFields" | "removeDO" | "inboundID"> & {
   methods: UseFormReturn<FormValues>;
 }) => {
-
   const inboundType = methods.watch("inbound_type") || "PO";
   const [activeTab, setActiveTab] = useState(0);
 
@@ -195,7 +196,7 @@ const DetailTabs = ({
                   totalDO={doFields.length}
                   isEditMode={false}
                   isDetailMode={true}
-                  inbType={inboundType as "PO" | "SO" | "RETUR"}
+                  inbType={inboundType as "PO" | "SO_INTERNAL" | "SO_SUBDIST"}
                 />
               ))}
             </>
@@ -328,8 +329,9 @@ export default function InboundPlanningFormView(props: Props) {
   }));
 
   const defaultInboundTypeOptions = [
-    { value: "PO", label: "SO_INTERNAL" },
-    { value: "SO", label: "SO_SUBDIST" },
+    { value: "PO", label: "PO" },
+    { value: "SO_INTERNAL", label: "SO Internal" },
+    { value: "RETUR", label: "Retur" },
   ];
 
   const [inboundTypeOptions, setInboundTypeOptions] = useState(
@@ -341,15 +343,14 @@ export default function InboundPlanningFormView(props: Props) {
   useEffect(() => {
     if (!inboundType) return;
 
-    // jalankan hanya sekali saat inboundType berubah
     if (inboundTypeInitRef.current === inboundType) return;
     inboundTypeInitRef.current = inboundType;
 
     const opt = { value: inboundType, label: inboundType };
-    // set options hanya berisi nilai inboundType (mengeliminasi opsi lain)
     setInboundTypeOptions([opt]);
 
-    // set nilai form ke object option agar Select menampilkan labelnya
+    methods.setValue("inbound_type", opt, { shouldValidate: true });
+
     try {
       const current = methods.getValues?.("inbound_type");
       const needSet =
@@ -365,7 +366,7 @@ export default function InboundPlanningFormView(props: Props) {
         });
       }
     } catch {
-      // ignore
+      console.log("error");
     }
   }, [inboundType, methods]);
 
@@ -374,7 +375,6 @@ export default function InboundPlanningFormView(props: Props) {
     supplierOptions,
     inboundTypeOptions,
   );
-
 
   return (
     <div className="p-6 bg-slate-50 min-h-screen">

@@ -4,6 +4,7 @@ import TableComponent from "../../components/tables/MasterDataTable/TableCompone
 import { FaEdit, FaKey, FaPlus, FaTrash } from "react-icons/fa";
 import DynamicFormModal from "./DynamicFormModal";
 import { useNavigate } from "react-router-dom";
+import { usePagePermissions } from "../../utils/UserPermission/UserPagePermissions";
 
 interface Props {
   data: any[];
@@ -48,8 +49,11 @@ const DynamicTable = ({
   updateFormFields,
   onResetPassword,
 }: Props) => {
+  const { canManage, canCreate, canUpdate, canDelete, canView } =
+    usePagePermissions();
+
   const [selectedItem, setSelectedItem] = useState<any | null>(null);
-  const [, setSelectedIds] = useState<any[]>([]); // state internal jika perlu
+  const [, setSelectedIds] = useState<any[]>([]);
   const roleName = localStorage.getItem("role_name");
   const navigate = useNavigate();
 
@@ -85,12 +89,11 @@ const DynamicTable = ({
         header: () => <div className="text-center">Actions</div>,
         cell: ({ row }) => {
           const id = getRowId(row.original);
-          const isSuperAdmin = roleName === "superadmin";
 
           return (
             <div className="flex items-center justify-center gap-1">
               {/* Add Zone / View Button - Compact Version */}
-              {isView && (
+              {isView && canView && (
                 <button
                   onClick={() => handleView(row.original)}
                   className="flex items-center gap-1 px-2 py-1 text-xs font-medium text-blue-600 transition-colors border border-blue-200 rounded-md hover:bg-blue-50"
@@ -101,18 +104,18 @@ const DynamicTable = ({
               )}
 
               {/* Edit Action */}
-              {isEdited && isSuperAdmin && (
+              {isEdited && canUpdate && canManage && (
                 <button
                   className="p-2 text-emerald-600 transition-colors rounded-md hover:bg-emerald-50"
                   onClick={() => setSelectedItem(row.original)}
-                  title="Edit Item"
+                  title="Edit"
                 >
                   <FaEdit size={14} />
                 </button>
               )}
 
               {/* Reset Password Action */}
-              {onResetPassword && isSuperAdmin && (
+              {onResetPassword && canCreate && canManage && (
                 <button
                   className="p-2 text-amber-500 transition-colors rounded-md hover:bg-amber-50"
                   onClick={() => onResetPassword(id)}
@@ -123,11 +126,11 @@ const DynamicTable = ({
               )}
 
               {/* Delete Action */}
-              {isDeleted && isSuperAdmin && (
+              {isDeleted && canDelete && canManage && (
                 <button
                   onClick={() => handleDelete(id)}
                   className="p-2 text-rose-500 transition-colors rounded-md hover:bg-rose-50"
-                  title="Delete Item"
+                  title=""
                 >
                   <FaTrash size={14} />
                 </button>

@@ -3,14 +3,13 @@ import { showErrorToast } from "../../../../../../components/toast";
 
 /**
  * Helper: Normalisasi Inbound Type untuk API dan Pengecekan
+ * PO tetap PO, SO_INTERNAL dan SO_SUBDIST tetap dengan nama aslinya
  */
 const getNormalizedInboundType = (type: any) => {
     const rawType = typeof type === "string" ? type : type?.value || "";
 
-    // Mapping label untuk API
-    let apiType = rawType;
-    if (rawType === "PO") apiType = "SO_INTERNAL";
-    else if (rawType === "SO") apiType = "SO_SUBDIST";
+    // API type sama dengan rawType untuk ketiga tipe yang baru
+    const apiType = rawType;
 
     return { rawType, apiType };
 };
@@ -87,7 +86,7 @@ export function mapToPayload(data: FormValues): any {
                     inbound_do_date: doItem.date ? new Date(doItem.date).toISOString().split('T')[0] : "",
                     attachment: doItem.attachment ?? "",
 
-                    inbound_po_number: (rawType === "PO" || apiType === "SO_INTERNAL")
+                    inbound_po_number: (rawType === "PO")
                         ? (po.po_no ?? null)
                         : (po.so_no ?? null),
 
