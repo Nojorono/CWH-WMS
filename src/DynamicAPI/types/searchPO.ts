@@ -35,10 +35,10 @@ export type DOForm = {
     do_no: string;
     date?: string;
     attachment?: string;
-    pos: POSForm[];  // ✅ ganti dari POForm ke POSForm
+    pos: POSForm[];  
     validation_surat_jalan?: boolean;
     flag_validated?: boolean;
-    po_type?: string; // "PO", "SO_INTERNAL", atau "SO_SUBDIST"
+    po_type?: string; 
 };
 
 export type FormValues = {

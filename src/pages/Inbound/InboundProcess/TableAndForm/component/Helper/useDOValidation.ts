@@ -42,16 +42,14 @@ export const useDOValidation = (
     const watchedDONo = watch(`deliveryOrders.${doIndex}.do_no`);
 
     const handleCheckDO = async (filterDocNo: string | null = null): Promise<boolean> => {
+        
         if (!watchedDONo) {
             showErrorToast("No Surat Jalan wajib diisi");
             return false;
         }
 
         try {
-            const data = await validateDOservice(watchedDONo, inbType);
-
-            console.log("data DO", data);
-            
+            const data = await validateDOservice(watchedDONo, inbType);            
             if (!data?.success) return false;
 
             const type = getInboundType(inbType);

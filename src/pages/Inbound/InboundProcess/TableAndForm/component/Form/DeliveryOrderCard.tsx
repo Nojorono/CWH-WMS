@@ -248,7 +248,6 @@ export default function DeliveryOrderCard({
                 <Controller
                   control={control}
                   name={`deliveryOrders.${doIndex}.po_type`}
-                  rules={{ required: "Wajib dipilih" }}
                   render={({ field }) => (
                     <select
                       {...field}
@@ -259,6 +258,7 @@ export default function DeliveryOrderCard({
                         if (e.target.value === "PO_NON_GROUP") {
                           setIsDOChecked(true);
                         } else {
+                          setIsDOChecked(false);
                           setDoStatus(null);
                         }
                       }}
@@ -309,53 +309,6 @@ export default function DeliveryOrderCard({
               </div>
             </div>
 
-            {/* Attachment */}
-            <div className="flex flex-col">
-              <label className="text-xs text-slate-600 mb-1">
-                Attachment (Maks 2MB)
-              </label>
-              {fileUrl ? (
-                <div className="flex items-center gap-2 text-sm">
-                  <a
-                    href={fileUrl}
-                    target="_blank"
-                    className="text-blue-600 underline"
-                    rel="noreferrer"
-                  >
-                    Lihat file
-                  </a>
-                  {!isDetailMode && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        deleteFileFromS3(fileUrl);
-                        setValue(`deliveryOrders.${doIndex}.attachment`, "");
-                      }}
-                      className="text-red-600"
-                    >
-                      <FaTrash size={12} />
-                    </button>
-                  )}
-                </div>
-              ) : (
-                <div className="relative">
-                  <input
-                    type="file"
-                    className={`${inputCls} text-xs w-full`}
-                    disabled={isDetailMode || uploading || !isDOChecked}
-                    onChange={(e) =>
-                      e.target.files?.[0] && handleUploadFile(e.target.files[0])
-                    }
-                  />
-                  {!isDOChecked && !isDetailMode && (
-                    <div className="absolute inset-0 bg-gray-100/70 flex items-center justify-center text-[10px] text-gray-500 pointer-events-none">
-                      🔒 Validasi SJ dahulu
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-
             {/* Date */}
             <div className="flex flex-col">
               <label className="text-xs text-slate-600 mb-1">
@@ -381,6 +334,53 @@ export default function DeliveryOrderCard({
                 )}
               />
             </div>
+          </div>
+
+          {/* Attachment */}
+          <div className="flex flex-col">
+            <label className="text-xs text-slate-600 mb-1">
+              Attachment (Maks 2MB)
+            </label>
+            {fileUrl ? (
+              <div className="flex items-center gap-2 text-sm">
+                <a
+                  href={fileUrl}
+                  target="_blank"
+                  className="text-blue-600 underline"
+                  rel="noreferrer"
+                >
+                  Lihat file
+                </a>
+                {!isDetailMode && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      deleteFileFromS3(fileUrl);
+                      setValue(`deliveryOrders.${doIndex}.attachment`, "");
+                    }}
+                    className="text-red-600"
+                  >
+                    <FaTrash size={12} />
+                  </button>
+                )}
+              </div>
+            ) : (
+              <div className="relative">
+                <input
+                  type="file"
+                  className={`${inputCls} text-xs w-full`}
+                  disabled={isDetailMode || uploading || !isDOChecked}
+                  onChange={(e) =>
+                    e.target.files?.[0] && handleUploadFile(e.target.files[0])
+                  }
+                />
+                {!isDOChecked && !isDetailMode && (
+                  <div className="absolute inset-0 bg-gray-100/70 flex items-center justify-center text-[10px] text-gray-500 pointer-events-none">
+                    🔒 Validasi SJ dahulu
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           <div className="space-y-4">

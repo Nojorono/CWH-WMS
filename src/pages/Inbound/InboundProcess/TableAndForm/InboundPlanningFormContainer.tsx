@@ -122,8 +122,12 @@ export default function InboundPlanningFormContainer() {
 
   const handlePreview = async () => {
     const isValid = await trigger();
+    const errors = methods.formState.errors;
 
     if (!isValid) {
+      console.log("Field yang bermasalah (Raw Object):", errors);
+      const errorFieldNames = Object.keys(errors);
+      console.warn("Daftar Field Error:", errorFieldNames);
       showErrorToast("Lengkapi semua data inbound planning terlebih dahulu.");
       return;
     }
@@ -182,6 +186,14 @@ export default function InboundPlanningFormContainer() {
     let payload = mapToPayload(data);
 
     const expeditionField = payload.expedition as any;
+
+    if (payload.inbound_dos) {
+      payload.inbound_dos = payload.inbound_dos.map((doItem: any) => {
+        const { po_type, ...rest } = doItem;
+        return rest;
+      });
+    }
+
     if (
       expeditionField &&
       typeof expeditionField === "object" &&
@@ -244,6 +256,7 @@ export default function InboundPlanningFormContainer() {
           append({
             do_no: "",
             date: "",
+            po_type: "PO_GROUP",
             attachment: "",
             pos: [
               {
@@ -274,8 +287,8 @@ export default function InboundPlanningFormContainer() {
         // inboundType={dataInbound.inbound_type}
         inboundType={
           isAddToReceiveMode
-            ? dataInbound?.inboundType 
-            : dataInbound?.inbound_type 
+            ? dataInbound?.inboundType
+            : dataInbound?.inbound_type
         }
       />
     </FormProvider>
