@@ -57,6 +57,7 @@ const PutAwayDetail: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { data: detailDataPutaway, mode } = location.state || {};
+  const orgId = localStorage.getItem("organization_id");
 
   const isDetail = mode === "detail";
   const isEdit = mode === "edit";
@@ -341,6 +342,7 @@ const PutAwayDetail: React.FC = () => {
           data: mappedData
             .filter((r) => selectedIds.includes(r.stagingPalletId))
             .map((r) => ({
+              organization_id: orgId,
               inventory_tracking_id: r.stagingPalletId,
               destination_bin_id: r.suggestBinId,
               forklift_driver_id: data.forkliftDriverId,

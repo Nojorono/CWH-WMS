@@ -462,7 +462,7 @@ const DataTable = () => {
           {
             accessorKey: "isActive",
             header: "Active",
-            cell: (info: any) => (info.getValue() ? "Active" : "Inactive"),
+            cell: (info: any) => (info.getValue() ?  "✅ Active" : "❌ Inactive"),
           },
         ]}
         formFields={formFields.filter((f) => f.name !== "isActive")}

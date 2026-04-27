@@ -4,7 +4,7 @@ import AdjustTable from "./AdjustMainTable";
 import Label from "../../../../components/form/Label";
 import { useDebounce } from "../../../../helper/useDebounce";
 import Select from "../../../../components/form/Select";
-import TabsSection from "../../../../components/wms-components/inbound-component/tabs/TabsSection";
+// import TabsSection from "../../../../components/wms-components/inbound-component/tabs/TabsSection";
 
 const MainTable = () => {
   const navigate = useNavigate();
@@ -39,17 +39,19 @@ const MainTable = () => {
         </div>
       </div>
 
-      <TabsSection
+      <AdjustTable
+        globalFilter={debouncedFilter}
+        setGlobalFilter={setGlobalFilter}
+        filteredStatus={selectedStatus}
+      />
+
+      {/* <TabsSection
         tabs={[
           {
             label: "DO Transaction",
             content: (
               <>
-                {/* === DO TRANSACTION === */}
                 <section className="bg-white rounded-xl shadow-sm border border-gray-200">
-                  <div className="bg-orange-500 text-white rounded-t-xl px-5 py-3 font-semibold">
-                    List Transaction Picking
-                  </div>
                   <div className="p-4">
                     <AdjustTable
                       globalFilter={debouncedFilter}
@@ -64,7 +66,7 @@ const MainTable = () => {
         ]}
         activeTab={activeTab}
         onTabChange={setActiveTab}
-      />
+      /> */}
     </>
   );
 };

@@ -3,12 +3,13 @@
 import { useEffect, useMemo, useState } from "react";
 import { FaEye, FaEdit, FaTrash } from "react-icons/fa";
 import { ColumnDef } from "@tanstack/react-table";
-import TableComponent from "../Table/TableComponent";
 import { useNavigate } from "react-router-dom";
 import { useStorePutAway } from "../../../DynamicAPI/stores/Store/MasterStore";
 import { MappedData } from "../constant/MappedData";
 import StatusBadge from "../../../common/statusBadge";
 import { STATUS_MAP_PUTAWAY } from "../../../constants/statusMaps";
+import ActIndicator from "../../../components/ui/activityIndicator";
+import TableComponent from "../../../components/tables/ActionTable/TableComponent";
 
 type AdjustTableProps = {
   globalFilter?: string;
@@ -25,7 +26,7 @@ const AdjustTable = ({
 }: AdjustTableProps) => {
   const navigate = useNavigate();
 
-  const { fetchUsingPagination, deleteData, list, pagination } =
+  const { fetchUsingPagination, deleteData, list, pagination, isLoading } =
     useStorePutAway();
 
   // 🔹 local state pagination
@@ -61,8 +62,6 @@ const AdjustTable = ({
 
   // ✅ Updated columns to reflect full mapped structure
   const columns: ColumnDef<MappedData>[] = useMemo(() => {
-    if (!list || list.length === 0) return []; // fallback
-
     const baseColumns: ColumnDef<MappedData>[] = [
       { accessorKey: "palletCode", header: "Pallet Code" },
 
@@ -128,7 +127,7 @@ const AdjustTable = ({
     ];
 
     return baseColumns;
-  }, [list]);
+  }, []);
 
   // Mapping API data to table-friendly shape
   const mappedList = (list || []).map((item: any) => {
@@ -152,7 +151,7 @@ const AdjustTable = ({
     const totalSku = palletItems.length;
     const totalQty = palletItems.reduce(
       (sum: number, pi: any) => sum + (Number(pi.currentQuantity) || 0),
-      0
+      0,
     );
 
     return {
@@ -221,19 +220,23 @@ const AdjustTable = ({
   });
 
   return (
-    <TableComponent
-      data={mappedList}
-      columns={columns}
-      globalFilter={globalFilter}
-      setGlobalFilter={setGlobalFilter}
-      pageSize={pageSize}
-      pageIndex={pageIndex}
-      totalPages={pagination.totalPages}
-      onPageChange={(page, size) => {
-        setPageIndex(page);
-        setPageSize(size);
-      }}
-    />
+    <>
+      {isLoading && <ActIndicator />}
+
+      <TableComponent
+        data={mappedList}
+        columns={columns}
+        globalFilter={globalFilter}
+        setGlobalFilter={setGlobalFilter}
+        pageSize={pageSize}
+        pageIndex={pageIndex}
+        totalPages={pagination.totalPages}
+        onPageChange={(page, size) => {
+          setPageIndex(page);
+          setPageSize(size);
+        }}
+      />
+    </>
   );
 };
 

@@ -4,7 +4,6 @@ import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import Button from "../../../../components/ui/button/Button";
 import PageBreadcrumb from "../../../../components/common/PageBreadCrumb";
-import TableComponent from "../TableAndForm/TableComponent";
 import ModalAddItem from "../Modal/ModalAddItem";
 import DynamicForm, {
   FieldConfig,
@@ -23,6 +22,8 @@ import { FaArrowLeft, FaCheck, FaSearch, FaUndo } from "react-icons/fa";
 import { formatDateIndo } from "../../../../helper/FormatDate";
 import { searchSO } from "../Main/SOSearchService";
 import { showConfirmDialog } from "../../../../components/swal-confirm";
+import TableComponent from "../../../../components/tables/ActionTable/TableComponent";
+
 
 
 // ✅ Tambahkan selected_destination

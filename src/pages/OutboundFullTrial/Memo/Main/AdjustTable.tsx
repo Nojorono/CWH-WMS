@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState, useRef } from "react";
 import { FaEye, FaEdit, FaRegTimesCircle } from "react-icons/fa";
 import { ColumnDef } from "@tanstack/react-table";
-import TableComponent from "../TableAndForm/TableComponent";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import StatusBadge from "../../../../common/statusBadge";
 import { STATUS_MAP_MEMO } from "../../../../constants/statusMaps";
@@ -11,6 +10,9 @@ import { formatDateIndo } from "../../../../helper/FormatDate";
 import { EndPoint } from "../../../../utils/EndPoint";
 import { getCurrentRole } from "../../../../utils/rolePermissions";
 import { showConfirmDialog } from "../../../../components/swal-confirm";
+import TableComponent from "../../../../components/tables/ActionTable/TableComponent";
+
+
 
 type MemoData = {
   outbound_do: any;
