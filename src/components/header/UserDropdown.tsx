@@ -60,12 +60,9 @@ export default function UserDropdown() {
           <p className="text-sm font-bold text-gray-800 dark:text-gray-100 leading-tight">
             {isSuperAdmin ? "Superadmin" : roleName || "Guest"}
           </p>
-          <p className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.1em]">
-            {orgName}
+          <p className="text-[10px] font-black text-blue-400 dark:text-gray-500 uppercase tracking-[0.2em]">
+            {isSuperAdmin ? "System Master" : orgName}
           </p>
-          {/* <p className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.1em]">
-            {isSuperAdmin ? "System Master" : "Active User"}
-          </p> */}
         </div>
 
         <HiChevronDown

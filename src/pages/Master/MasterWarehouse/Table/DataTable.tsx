@@ -16,13 +16,7 @@ import { Controller } from "react-hook-form";
 import Select from "../../../../components/form/Select";
 
 const DataTable = () => {
-  const {
-    list: Warehouse,
-    createData,
-    updateData,
-    deleteData,
-    fetchAll,
-  } = useStoreWarehouse();
+  const orgIdFromStorage = localStorage.getItem("organization_id");
 
   const { fetchAll: fetchAllIo, list: ioList } = useStoreIo();
   const [search, setSearch] = useState("");
@@ -33,6 +27,27 @@ const DataTable = () => {
   const roleName = localStorage.getItem("role_name");
   const [selectedOrgCode, setSelectedOrgCode] = useState("");
 
+  const {
+    list: Warehouse,
+    createData,
+    updateData,
+    deleteData,
+    fetchAll,
+  } = useStoreWarehouse();
+
+
+  const filteredWarehouse = useMemo(() => {
+    if (!Warehouse) return [];
+
+    // Jika superadmin, mungkin ingin melihat semua data
+    if (roleName === "superadmin") return Warehouse;
+
+    // Filter berdasarkan organization_id
+    return Warehouse.filter(
+      (item: any) => item.organization_id === orgIdFromStorage,
+    );
+  }, [Warehouse, orgIdFromStorage, roleName]);
+
   const fetchLocators = async (orgCode: string) => {
     if (!orgCode) return;
     try {
@@ -42,8 +57,6 @@ const DataTable = () => {
 
       if (response.data.success) {
         const rawData = response.data.data;
-
-        // Grouping data berdasarkan Subinventory
         const groupedData = rawData.reduce((acc: any, curr: any) => {
           const subName = curr.Subinventory;
 
@@ -143,7 +156,6 @@ const DataTable = () => {
       name: "locator_id",
       label: "Locator",
       type: "custom",
-      // 1. Tambahkan tipe 'any' atau tipe spesifik pada destructured props
       renderCustom: ({
         control,
         setValue,
@@ -159,7 +171,7 @@ const DataTable = () => {
             // 2. Buat options terlebih dahulu agar lebih rapi
             const options = locatorList.flatMap((group: any) =>
               group.locators.map((loc: any) => ({
-                label: `${group.subinventory} - ${loc.name}`,
+                label: `Sub ${group.subinventory} - Locator ${loc.name}`,
                 value: loc.id.toString(),
                 subName: group.subinventory,
               })),
@@ -171,12 +183,8 @@ const DataTable = () => {
                 value={controllerField.value}
                 placeholder="Select Locator..."
                 width="100%"
-                // 3. Perbaikan: Sesuaikan dengan signature onChange di Select.tsx
-                // Karena error menyatakan Select hanya menerima 1 argumen (value: any)
                 onChange={(val: any) => {
                   controllerField.onChange(val);
-
-                  // Cari option secara manual berdasarkan value yang dipilih
                   const selectedOption = options.find(
                     (opt: any) => opt.value === val,
                   );
@@ -314,7 +322,7 @@ const DataTable = () => {
       </div>
 
       <DynamicTable
-        data={Warehouse}
+        data={filteredWarehouse}
         globalFilter={debouncedSearch}
         isCreateModalOpen={isCreateModalOpen}
         onCloseCreateModal={() => setCreateModalOpen(false)}

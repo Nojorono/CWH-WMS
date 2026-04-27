@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { loginService } from "../../services/AuthServices/AuthService";
 
+
 interface LoginPayload {
   username?: string;
   password?: string;
@@ -73,6 +74,8 @@ interface AuthState {
   permissions: Permission[] | null;
   authLogin: (data: LoginPayload) => Promise<AuthLoginResponse>; // ✅ perbaikan di sini
 }
+
+
 
 export const useAuthStore = create<AuthState>((set) => ({
   isLoading: false,

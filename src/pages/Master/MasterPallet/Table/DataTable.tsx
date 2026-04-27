@@ -7,7 +7,6 @@ import { useDebounce } from "../../../../helper/useDebounce";
 import DynamicTable from "../Table/TableComponent";
 import {
   useStorePallet,
-  useStoreIo,
   useStoreUom,
 } from "../../../../DynamicAPI/stores/Store/MasterStore";
 import PrintBarcodeModal from "../Modal/PrintBarcodeModal";
@@ -24,22 +23,28 @@ const DataTable = () => {
   } = useStorePallet();
 
   const { list: uomList, fetchAll: fetchUom } = useStoreUom();
-  const { list: IoList, fetchAll: fetchIO } = useStoreIo();
-
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounce(search, 500);
   const [isCreateModalOpen, setCreateModalOpen] = useState(false);
-  // 🔑 tambahan state untuk modal preview
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [isPrintModalOpen, setPrintModalOpen] = useState(false);
   const [selectedPallets, setSelectedPallets] = useState<any[]>([]);
-  const [isGenerateModalOpen, setGenerateModalOpen] = useState(false); // 🔑 State baru
+  const [isGenerateModalOpen, setGenerateModalOpen] = useState(false);
   const [selectedOrgName, setSelectedOrgName] = useState("");
+  const [IoList, setIoList] = useState<any[]>([]);
 
   useEffect(() => {
     fetchPallet();
-    fetchIO();
     fetchUom();
+
+    const storedIo = localStorage.getItem("io_list");
+    if (storedIo) {
+      try {
+        setIoList(JSON.parse(storedIo));
+      } catch (error) {
+        console.error("Gagal parsing io_list dari localStorage", error);
+      }
+    }
   }, []);
 
   const handleCreate = async (data: any) => {
@@ -110,11 +115,17 @@ const DataTable = () => {
         accessorKey: "organization_id",
         header: "Organization",
         cell: ({ row }: { row: { original: any } }) => {
+          const rowOrgId = row.original.organization_id;
+
           const org = IoList.find(
-            (item: any) =>
-              item.organization_id === row.original.organization_id,
+            (item: any) => String(item.id) === String(rowOrgId),
           );
-          return org ? org.organization_name : row.original.organization_id;
+
+          return (
+            <span className="">
+              {org ? org.organization_name : `ID Not Found: ${rowOrgId}`}
+            </span>
+          );
         },
       },
       {
