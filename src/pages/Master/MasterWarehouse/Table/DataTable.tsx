@@ -39,8 +39,36 @@ const DataTable = () => {
       const response = await axiosInstance.get(
         `${EndPoint}master-warehouse/locator?organization_code=${orgCode}`,
       );
+
       if (response.data.success) {
-        setLocatorList(response.data.data);
+        const rawData = response.data.data;
+
+        // Grouping data berdasarkan Subinventory
+        const groupedData = rawData.reduce((acc: any, curr: any) => {
+          const subName = curr.Subinventory;
+
+          if (!acc[subName]) {
+            acc[subName] = {
+              subinventory: subName,
+              description: curr["Subinventory Description"],
+              locators: [],
+            };
+          }
+
+          // Hanya tambahkan ke array jika locator_id tidak null
+          if (curr.locator_id) {
+            acc[subName].locators.push({
+              id: curr.locator_id,
+              name: curr.Locator,
+              type: curr["Locator Control Type"],
+            });
+          }
+
+          return acc;
+        }, {});
+
+        // Ubah kembali menjadi Array untuk memudahkan mapping di UI
+        setLocatorList(Object.values(groupedData));
       }
     } catch (error) {
       console.error("Error fetching locators:", error);
@@ -115,32 +143,50 @@ const DataTable = () => {
       name: "locator_id",
       label: "Locator",
       type: "custom",
-      renderCustom: ({ control, setValue, errors }: any) => (
+      // 1. Tambahkan tipe 'any' atau tipe spesifik pada destructured props
+      renderCustom: ({
+        control,
+        setValue,
+      }: {
+        control: any;
+        setValue: any;
+      }) => (
         <Controller
           name="locator_id"
           control={control}
           rules={{ required: "Required" }}
-          render={({ field: controllerField }) => (
-            <Select
-              options={locatorList.map((item: any) => ({
-                label: item.LOCATOR,
-                value: item.LOCATOR_ID.toString(),
-              }))}
-              value={controllerField.value}
-              placeholder="Select Locator..."
-              width="100%"
-              onChange={(val: any) => {
-                controllerField.onChange(val);
-                const selectedLoc = locatorList.find(
-                  (l) => l.LOCATOR_ID.toString() === val.toString(),
-                );
+          render={({ field: controllerField }) => {
+            // 2. Buat options terlebih dahulu agar lebih rapi
+            const options = locatorList.flatMap((group: any) =>
+              group.locators.map((loc: any) => ({
+                label: `${group.subinventory} - ${loc.name}`,
+                value: loc.id.toString(),
+                subName: group.subinventory,
+              })),
+            );
 
-                if (selectedLoc) {
-                  setValue("name", selectedLoc.SUBINVENTORY_CODE);
-                }
-              }}
-            />
-          )}
+            return (
+              <Select
+                options={options}
+                value={controllerField.value}
+                placeholder="Select Locator..."
+                width="100%"
+                // 3. Perbaikan: Sesuaikan dengan signature onChange di Select.tsx
+                // Karena error menyatakan Select hanya menerima 1 argumen (value: any)
+                onChange={(val: any) => {
+                  controllerField.onChange(val);
+
+                  // Cari option secara manual berdasarkan value yang dipilih
+                  const selectedOption = options.find(
+                    (opt: any) => opt.value === val,
+                  );
+                  if (selectedOption) {
+                    setValue("name", selectedOption.subName);
+                  }
+                }}
+              />
+            );
+          }}
         />
       ),
     },
@@ -166,18 +212,26 @@ const DataTable = () => {
     },
   ];
 
+  const findSelectedLocator = (id: string) => {
+    for (const group of locatorList) {
+      const found = group.locators.find(
+        (l: any) => l.id.toString() === id.toString(),
+      );
+      if (found) return { ...found, subinventory: group.subinventory };
+    }
+    return null;
+  };
+
   const handleCreate = async (data: any) => {
     try {
-      const selectedLoc = locatorList.find(
-        (l) => l.LOCATOR_ID.toString() === data.locator_id.toString(),
-      );
+      const selectedLoc = findSelectedLocator(data.locator_id);
 
       const payload = {
         organization_id: data.organization_id,
-        name: data.name,
+        name: data.name, // Ini akan berisi subinventory
         description: data.description,
         locator_id: Number(data.locator_id),
-        locator_name: selectedLoc ? selectedLoc.LOCATOR : "",
+        locator_name: selectedLoc ? selectedLoc.name : "",
       };
 
       await createData(payload);
@@ -193,7 +247,7 @@ const DataTable = () => {
       const id = data.id;
 
       const selectedLoc = locatorList.find(
-        (l) => l.LOCATOR_ID.toString() === data.locator_id.toString(),
+        (l) => l.locator_id.toString() === data.locator_id.toString(),
       );
 
       const payload = {

@@ -146,17 +146,18 @@ const TableComponent = <T extends { [key: string]: any }>({
         pageIndex={table.getState().pagination.pageIndex}
         pageSize={table.getState().pagination.pageSize}
         pageCount={table.getPageCount()}
-        setPageSize={(size) =>
-          setPagination((prev) => ({ ...prev, pageSize: size }))
-        }
+        setPageSize={(size) => {
+          table.setPageSize(size);
+          setPagination((prev) => ({ ...prev, pageSize: size, pageIndex: 0 })); 
+        }}
         previousPage={table.previousPage}
         nextPage={table.nextPage}
         canPreviousPage={table.getCanPreviousPage()}
         canNextPage={table.getCanNextPage()}
         selectedRowCount={table.getSelectedRowModel().rows.length}
         totalDataCount={data.length}
-        gotoPage={(page: number) =>
-          setPagination((prev) => ({ ...prev, pageIndex: page }))
+        gotoPage={
+          (page: number) => table.setPageIndex(page)
         }
       />
     </>
