@@ -125,9 +125,8 @@ export default function InboundPlanningFormContainer() {
     const errors = methods.formState.errors;
 
     if (!isValid) {
-      console.log("Field yang bermasalah (Raw Object):", errors);
       const errorFieldNames = Object.keys(errors);
-      console.warn("Daftar Field Error:", errorFieldNames);
+      console.warn("Field Error:", errorFieldNames);
       showErrorToast("Lengkapi semua data inbound planning terlebih dahulu.");
       return;
     }
