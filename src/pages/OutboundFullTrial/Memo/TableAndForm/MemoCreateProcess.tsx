@@ -20,11 +20,9 @@ import { useCustomerByOutboundType } from "./FetchCustomer";
 import Select from "../../../../components/form/Select";
 import { FaArrowLeft, FaCheck, FaSearch, FaUndo } from "react-icons/fa";
 import { formatDateIndo } from "../../../../helper/FormatDate";
-import { searchSO } from "../Main/SOSearchService";
 import { showConfirmDialog } from "../../../../components/swal-confirm";
 import TableComponent from "../../../../components/tables/ActionTable/TableComponent";
-
-
+import { SOsearchService } from "../../../../DynamicAPI/services/Service/SOsearchService";
 
 // ✅ Tambahkan selected_destination
 type MemoFormValues = {
@@ -71,6 +69,8 @@ const CreateMemo: React.FC = () => {
   const isDetail = mode === "detail";
   const isEdit = mode === "edit";
   const userID = localStorage.getItem("user_id");
+  const orgId = localStorage.getItem("organization_id");
+
   const [isLoading, setIsLoading] = useState(false);
 
   // store
@@ -347,6 +347,7 @@ const CreateMemo: React.FC = () => {
       async () => {
         const username = localStorage.getItem("username");
         const payload = {
+          organization_id: orgId,
           requestor: username,
           origin: "CWH",
           destination: data.ship_to,
@@ -386,7 +387,7 @@ const CreateMemo: React.FC = () => {
         title: isEdit ? "Konfirmasi Update?" : "Simpan Memo?",
         text: "Pastikan semua data item dan tujuan sudah benar.",
         confirmButtonText: "Ya, Simpan",
-      }
+      },
     );
   };
 
@@ -491,7 +492,7 @@ const CreateMemo: React.FC = () => {
         title: "Reset Form?",
         text: "Semua data yang telah diinput akan hilang.",
         confirmButtonText: "Ya, Reset!",
-      }
+      },
     );
   };
 
@@ -573,15 +574,22 @@ const CreateMemo: React.FC = () => {
 
   // ✅ SEARCH SO berdasarkan inputan user
   const handleSearchSO = async () => {
-    if (!soSearchNumber) return showErrorToast("Masukkan nomor SO terlebih dahulu!");
+    if (!soSearchNumber)
+      return showErrorToast("Masukkan nomor SO terlebih dahulu!");
 
     setIsLoadingSO(true);
     try {
       // Menggunakan service searchSO yang sudah diimport
-      const { items: soItems } = await searchSO(soSearchNumber, masterItemList, uomList);
+      const { items: soItems } = await SOsearchService(
+        soSearchNumber,
+        masterItemList,
+        uomList,
+      );
 
       if (!soItems || soItems.length === 0) {
-        showErrorToast(`Data SO ${soSearchNumber} tidak ditemukan atau item tidak terdaftar di master data.`);
+        showErrorToast(
+          `Data SO ${soSearchNumber} tidak ditemukan atau item tidak terdaftar di master data.`,
+        );
         return;
       }
 
@@ -599,7 +607,9 @@ const CreateMemo: React.FC = () => {
       // Tambahkan ke list item yang sudah ada (user bisa mix manual & SO)
       setItems((prev) => [...prev, ...mappedItems]);
       setSoSearchNumber(""); // Reset field search
-      showSuccessToast(`Berhasil menarik ${mappedItems.length} item dari SO ${soSearchNumber}`);
+      showSuccessToast(
+        `Berhasil menarik ${mappedItems.length} item dari SO ${soSearchNumber}`,
+      );
     } catch (err: any) {
       console.error("SO Search Error:", err);
       showErrorToast(err?.message || "Terjadi kesalahan saat mencari SO.");
@@ -678,7 +688,9 @@ const CreateMemo: React.FC = () => {
                 className="w-full px-4 py-2 border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition-all"
                 placeholder="Contoh: SO20240001"
                 value={soSearchNumber}
-                onChange={(e) => setSoSearchNumber(e.target.value.toUpperCase())}
+                onChange={(e) =>
+                  setSoSearchNumber(e.target.value.toUpperCase())
+                }
                 onKeyDown={(e) => e.key === "Enter" && handleSearchSO()}
               />
             </div>
@@ -694,7 +706,8 @@ const CreateMemo: React.FC = () => {
             </Button>
           </div>
           <p className="text-xs text-blue-600 mt-2">
-            * Masukkan nomor SO untuk mengisi daftar item secara otomatis. Anda tetap bisa menambah item manual setelahnya.
+            * Masukkan nomor SO untuk mengisi daftar item secara otomatis. Anda
+            tetap bisa menambah item manual setelahnya.
           </p>
         </section>
       )}

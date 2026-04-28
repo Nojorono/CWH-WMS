@@ -39,10 +39,8 @@ const DataTable = () => {
   const filteredWarehouse = useMemo(() => {
     if (!Warehouse) return [];
 
-    // Jika superadmin, mungkin ingin melihat semua data
     if (roleName === "superadmin") return Warehouse;
 
-    // Filter berdasarkan organization_id
     return Warehouse.filter(
       (item: any) => item.organization_id === orgIdFromStorage,
     );

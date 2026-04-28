@@ -45,6 +45,7 @@ export interface OutboundMemoCreate {
     delivery_date: string;
     notes: string;
     status: string;
+    organization_id: string;
     outbound_memo_items: OutboundMemoCreateItem[];
 }
 

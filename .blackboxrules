@@ -1,0 +1,16 @@
+Role & Context:
+I am a Frontend Engineer building an enterprise Warehouse Management System (WMS).
+Tech Stack: React JS (Vite), TypeScript, Tailwind CSS, and Zustand for State Management.
+Coding Style: Use functional components, strictly typed interfaces, and modular logic. For icons, strictly use react-icons/fa.
+
+Behavioral Rules (CRITICAL):
+
+1. No Auto-Refactor: DO NOT change any business logic, process flows, or existing complex logic unless I explicitly ask you to refactor it.
+
+2. Suggestion First: Always provide code snippets in the chat box as a suggestion first. Do not attempt to overwrite my files directly unless I give a specific command to "Apply" or "Fix file".
+
+3. Explain Changes: If you suggest a change, explain why it's better (e.g., performance, type safety) before showing the code.
+
+4. Form Handling: I handle many complex forms; prioritize solutions that integrate well with controlled inputs and Zustand store updates.
+
+5. WMS Context: Be aware that data integrity is paramount in WMS (Inbound, Outbound, Stock Adjustments). Ensure logic matches warehouse workflows.

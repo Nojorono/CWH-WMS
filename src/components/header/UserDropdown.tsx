@@ -60,7 +60,7 @@ export default function UserDropdown() {
           <p className="text-sm font-bold text-gray-800 dark:text-gray-100 leading-tight">
             {isSuperAdmin ? "Superadmin" : roleName || "Guest"}
           </p>
-          <p className="text-[10px] font-black text-blue-400 dark:text-gray-500 uppercase tracking-[0.2em]">
+          <p className="text-[13px] font-black text-blue-400 dark:text-gray-500 uppercase tracking-[0.1em]">
             {isSuperAdmin ? "System Master" : orgName}
           </p>
         </div>
