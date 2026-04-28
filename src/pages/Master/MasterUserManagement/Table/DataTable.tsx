@@ -18,7 +18,6 @@ const DataTable = () => {
   const { list: subWarehouseList, fetchAll: fetchSubWarehouses } =
     useStoreSubWarehouse();
   const { fetchRoles, roles } = useRoleStore();
-  // const { list: IoList, fetchAll: fetchIO } = useStoreIo();
 
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounce(search, 500);

@@ -152,7 +152,7 @@ export function AppRoutes() {
   const getElementByPath = (path: string): JSX.Element => {
     const map: Record<string, JSX.Element> = {
       "/dashboard": <Dashboard />,
-      "/master_user": <MasterUser />,
+      "/master_user": <MasterUserManagement />,
       "/master_user_management": <MasterUserManagement />,
       "/master_menu": <MasterMenu />,
       "/master_role": <MasterRole />,
