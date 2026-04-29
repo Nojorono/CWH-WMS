@@ -16,8 +16,7 @@ export async function fetchAssignedGate(): Promise<AssignedGateResponse> {
             throw new Error("Token not found in localStorage");
         }
 
-        // Ambil gate_id dari localStorage
-        const rawGateId = localStorage.getItem("warehouse_sub_id"); // atau "gate_id" jika key Anda memang itu
+        const rawGateId = localStorage.getItem("warehouse_sub_id");
         const gateId =
             rawGateId &&
                 rawGateId !== "undefined" &&

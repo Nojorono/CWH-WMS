@@ -10,7 +10,7 @@ export interface OutboundDeliveryCreateUpdate {
   status?: string;
   outbound_type?: string;
   delivery_date?: string;
-  organization_id: string;
+  organization_id?: string;
   outbound_memo_ids?: OutboundMemoId[];
 }
 
