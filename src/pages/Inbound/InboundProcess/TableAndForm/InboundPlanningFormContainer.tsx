@@ -88,7 +88,7 @@ export default function InboundPlanningFormContainer() {
       reset({
         ...emptyFormValues,
         inbound_plan_no: dataInbound.inbound_number || "AUTO GENERATED",
-        inbound_type: inboundTypeValue as any, // ✅ Object format untuk select
+        inbound_type: inboundTypeValue as any,
         deliveryOrders: [
           {
             do_no: dataInbound.do_no || "",
@@ -121,48 +121,79 @@ export default function InboundPlanningFormContainer() {
   const [previewData, setPreviewData] = useState<FormValues | null>(null);
 
   const handlePreview = async () => {
+    // Jalankan validasi bawaan RHF dulu
     const isValid = await trigger();
-    const errors = methods.formState.errors;
 
     if (!isValid) {
-      const errorFieldNames = Object.keys(errors);
-      console.warn("Field Error:", errorFieldNames);
+      const errors = methods.formState.errors;
+      console.warn("Field Error:", Object.keys(errors));
       showErrorToast("Lengkapi semua data inbound planning terlebih dahulu.");
       return;
     }
 
     const values = getValues();
+    const deliveryOrders = values.deliveryOrders || [];
 
-    // --- Validasi tambahan untuk DO, PO, Item ---
-    if (!values.deliveryOrders || values.deliveryOrders.length === 0) {
+    // =========================
+    // 1) VALIDASI: minimal 1 SJ
+    // =========================
+    if (deliveryOrders.length === 0) {
       showErrorToast("Minimal 1 Nomor SJ harus diisi.");
       return;
     }
 
-    for (const [i, doItem] of values.deliveryOrders.entries()) {
-      if (!doItem.do_no || !doItem.date) {
+    // ======================================================
+    // 2) VALIDASI DUPLIKASI SJ/DO DALAM 1 INBOUND PLAN (NEW)
+    // ======================================================
+    // Normalisasi: trim + uppercase agar "sj001" dan " SJ001 " dianggap sama
+    const doNoMap = new Map<string, number[]>();
+
+    deliveryOrders.forEach((doItem, index) => {
+      const key = (doItem?.do_no || "").trim().toUpperCase();
+      if (!key) return;
+      if (!doNoMap.has(key)) doNoMap.set(key, []);
+      doNoMap.get(key)!.push(index);
+    });
+
+    const duplicateGroups = [...doNoMap.entries()].filter(
+      ([, indexes]) => indexes.length > 1,
+    );
+
+    if (duplicateGroups.length > 0) {
+      const dupList = duplicateGroups.map(([no]) => no).join(", ");      
+      showErrorToast(
+        `Nomor SJ/DO duplikat ditemukan: ${dupList}. Setiap SJ harus unik dalam 1 Inbound Plan.`,
+      );
+      return;
+    }
+
+    // ============================================
+    // 3) VALIDASI existing DO -> PO -> Item (tetap)
+    // ============================================
+    for (const [i, doItem] of deliveryOrders.entries()) {
+      const doNo = (doItem.do_no || "").trim();
+
+      if (!doNo || !doItem.date) {
         showErrorToast(`Nomor SJ ke-${i + 1} wajib punya DO No & Date.`);
         return;
       }
 
       if (!doItem.pos || doItem.pos.length === 0) {
-        showErrorToast(`Nomor SJ ${doItem.do_no} belum punya PO.`);
+        showErrorToast(`Nomor SJ ${doNo} belum punya PO.`);
         return;
       }
 
-      // ✅ Validasi baru: dalam 1 DO hanya boleh 1 PO
+      // dalam 1 DO hanya boleh 1 PO
       if (doItem.pos.length > 1) {
-        showErrorToast(`Nomor SJ ${doItem.do_no} hanya boleh memiliki 1 PO.`);
+        showErrorToast(`Nomor SJ ${doNo} hanya boleh memiliki 1 PO.`);
         return;
       }
 
       for (const [j, poItem] of doItem.pos.entries()) {
-        // validasi baru: minimal salah satu dari po_no atau so_no harus terisi
+        // minimal salah satu po_no / so_no terisi
         if (!poItem.po_no && !poItem.so_no) {
           showErrorToast(
-            `Nomor SJ ${doItem.do_no} → PO ke-${
-              j + 1
-            } wajib punya PO No atau SO No.`,
+            `Nomor SJ ${doNo} → PO ke-${j + 1} wajib punya PO No atau SO No.`,
           );
           return;
         }
@@ -175,12 +206,14 @@ export default function InboundPlanningFormContainer() {
       }
     }
 
-    // --- Kalau semua valid ---
+    // ============================================
+    // 4) Kalau semua valid -> lanjut preview
+    // ============================================
     setPreviewData(values);
     setIsConfirmOpen(true);
   };
 
-  // SUBMIT CREATE OR UPDATE
+  // SUBMIT CREATE OR UPDATE INBOUND PLANING
   const onFinalSubmit = async (data: FormValues) => {
     let payload = mapToPayload(data);
 

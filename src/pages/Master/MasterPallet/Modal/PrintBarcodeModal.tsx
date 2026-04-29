@@ -831,6 +831,7 @@ import Barcode from "react-barcode";
 import { QRCodeSVG } from "qrcode.react";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
+import { showErrorToast } from "../../../../components/toast";
 
 type Item = {
   id: string | number;
@@ -945,7 +946,7 @@ const PrintBarcodeModal: React.FC<Props> = ({
 
   const handleExportPDF = async () => {
     if (totalPages > MAX_PAGES_LIMIT) {
-      alert(
+      showErrorToast(
         `Limitasi: Maksimal ekspor adalah ${MAX_PAGES_LIMIT} halaman. Saat ini: ${totalPages}.`,
       );
       return;
@@ -982,7 +983,7 @@ const PrintBarcodeModal: React.FC<Props> = ({
       }
       pdf.save(`pallet-labels-${Date.now()}.pdf`);
     } catch (err) {
-      alert("Ekspor gagal.");
+      showErrorToast("Ekspor gagal.");
     } finally {
       setIsExporting(false);
     }

@@ -14,7 +14,6 @@ export const INBOUND_TYPE_OPTIONS = [
     { value: "PO_GROUP", label: "PO Group" },
     { value: "PO_NON_GROUP", label: "PO Non Group" },
     { value: "SO_INTERNAL", label: "SO Internal" },
-    { value: "RETUR", label: "Retur" },
 ]
 
 export const inputCls = "w-full rounded-lg border border-slate-300 px-3 py-2 text-sm";

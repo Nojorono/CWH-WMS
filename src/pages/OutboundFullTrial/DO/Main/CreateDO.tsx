@@ -4,7 +4,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import Button from "../../../../components/ui/button/Button";
 import PageBreadcrumb from "../../../../components/common/PageBreadCrumb";
-import TableComponent from "../Table/TableComponent";
+// import TableComponent from "../Table/TableComponent";
 import DynamicForm, {
   FieldConfig,
 } from "../../../../components/wms-components/inbound-component/form/DynamicForm";
@@ -20,6 +20,7 @@ import Label from "../../../../components/form/Label";
 import Select from "../../../../components/form/Select";
 import ActIndicator from "../../../../components/ui/activityIndicator";
 import { FaCheck } from "react-icons/fa";
+import TableComponent from "../../../../components/tables/ActionTable/TableComponent";
 
 type MemoFormValues = {
   requestor: string;
@@ -43,6 +44,8 @@ const CreateDO: React.FC = () => {
   const { mode } = location.state || {};
   const isDetail = mode === "detail";
   const username = localStorage.getItem("username");
+  const orgId = localStorage.getItem("organization_id");
+  const orgName = localStorage.getItem("organization_name");
 
   const methods = useForm<MemoFormValues>({
     defaultValues: {
@@ -89,11 +92,6 @@ const CreateDO: React.FC = () => {
       accessorKey: "type",
       header: "Type Outbound",
     },
-    // {
-    //   accessorKey: "delivery_date",
-    //   header: "Delivery Date",
-    //   cell: ({ row }: any) => formatDateIndo(row.original.delivery_date),
-    // },
     { accessorKey: "origin", header: "Origin" },
     { accessorKey: "destination", header: "Destination" },
     { accessorKey: "ship_to", header: "Ship To" },
@@ -118,7 +116,7 @@ const CreateDO: React.FC = () => {
   const handleSelectionChange = (selectedIds: string[]) => {
     if (JSON.stringify(selectedIds) !== JSON.stringify(selectedMemoIds)) {
       const filtered = approvedMemos.filter(
-        (m) => typeof m.id === "string" && selectedIds.includes(m.id)
+        (m) => typeof m.id === "string" && selectedIds.includes(m.id),
       );
       setSelectedMemoIds(selectedIds);
       setSelectedMemos(filtered);
@@ -136,8 +134,9 @@ const CreateDO: React.FC = () => {
     const payload = {
       ...formData,
       type_outbound: formData.type_outbound?.value || "",
-      origin: "CWH",
+      origin: orgName,
       created_by: username,
+      organization_id: orgId,
       memo_list: selectedMemos.map((m) => ({
         id: m.id,
         memo_id: m.memo_id,
@@ -148,7 +147,6 @@ const CreateDO: React.FC = () => {
       })),
     };
 
-    // 👇 tampilkan dulu di modal sebelum API call
     setFormDataPreview(payload);
     setIsConfirmOpen(true);
   };
@@ -156,6 +154,7 @@ const CreateDO: React.FC = () => {
   const handleConfirmSubmit = async (reorderedList: any[]) => {
     try {
       const PAYLOAD = {
+        organization_id: orgId,
         outbound_do_number: "",
         expedition: "",
         license_plate: "",
@@ -163,7 +162,7 @@ const CreateDO: React.FC = () => {
         driver_phone: "",
         container_number: "",
         seal_number: "",
-        origin: "CWH",
+        origin: orgName,
         outbound_type: selectedTypeOutbound,
         delivery_date: formatDateIndo(formDataPreview?.delivery_date),
         status: "PENDING",
@@ -222,7 +221,7 @@ const CreateDO: React.FC = () => {
               htmlFor="type-outbound"
               className="mb-1 text-sm font-medium text-gray-600"
             >
-             Filter Type Outbound
+              Filter Type Outbound
             </Label>
             <Select
               options={options}
@@ -249,33 +248,28 @@ const CreateDO: React.FC = () => {
       </section>
 
       {/* === MEMO List === */}
-      <section className="bg-white rounded-xl shadow-sm border border-gray-200">
-        <div className="bg-orange-500 text-white rounded-t-xl px-5 py-3 font-semibold">
-          Available Memo
-        </div>
-        <div className="p-4">
-          {isLoading ? (
-            <>
-              <ActIndicator />
-            </>
-          ) : (
-            <>
-              <TableComponent
-                data={selectedTypeOutbound ? approvedMemos : []}
-                columns={columnsTableItem}
-                pageSize={pageSize}
-                pageIndex={pageIndex}
-                totalPages={pagination.totalPages}
-                onPageChange={(page, size) => {
-                  setPageIndex(page);
-                  setPageSize(size);
-                }}
-                onSelectionChange={handleSelectionChange}
-              />
-            </>
-          )}
-        </div>
-      </section>
+      <div className="p-4">
+        {isLoading ? (
+          <>
+            <ActIndicator />
+          </>
+        ) : (
+          <>
+            <TableComponent
+              data={selectedTypeOutbound ? approvedMemos : []}
+              columns={columnsTableItem}
+              pageSize={pageSize}
+              pageIndex={pageIndex}
+              totalPages={pagination.totalPages}
+              onPageChange={(page, size) => {
+                setPageIndex(page);
+                setPageSize(size);
+              }}
+              onSelectionChange={handleSelectionChange}
+            />
+          </>
+        )}
+      </div>
 
       {/* === Buttons === */}
       <div className="flex justify-end gap-3 mt-4">

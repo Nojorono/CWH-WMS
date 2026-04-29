@@ -26,6 +26,13 @@ interface Props {
   onSelectedChange?: (ids: any[]) => void;
   updateFormFields?: any[];
   onResetPassword?: (id: any) => void;
+  actionPermissionOverride?: {
+    canDelete?: boolean;
+    canUpdate?: boolean;
+    canCreate?: boolean;
+    canManage?: boolean;
+    canView?: boolean;
+  };
 }
 
 const DynamicTable = ({
@@ -48,6 +55,7 @@ const DynamicTable = ({
   onSelectedChange,
   updateFormFields,
   onResetPassword,
+  actionPermissionOverride,
 }: Props) => {
   const { canManage, canCreate, canUpdate, canDelete, canView } =
     usePagePermissions();
@@ -126,11 +134,11 @@ const DynamicTable = ({
               )}
 
               {/* Delete Action */}
-              {isDeleted && canDelete && canManage && (
+              {canShowDelete && (
                 <button
                   onClick={() => handleDelete(id)}
                   className="p-2 text-rose-500 transition-colors rounded-md hover:bg-rose-50"
-                  title=""
+                  title="Delete"
                 >
                   <FaTrash size={14} />
                 </button>
@@ -138,7 +146,7 @@ const DynamicTable = ({
             </div>
           );
         },
-        size: 150, // Memberikan lebar tetap agar tidak berantakan
+        size: 150,
       },
     ];
   }, [
@@ -161,6 +169,19 @@ const DynamicTable = ({
     },
     [onSelectedChange],
   );
+
+  const pagePerm = usePagePermissions();
+
+  const effectivePerm = {
+    canDelete: actionPermissionOverride?.canDelete ?? pagePerm.canDelete,
+    canUpdate: actionPermissionOverride?.canUpdate ?? pagePerm.canUpdate,
+    canCreate: actionPermissionOverride?.canCreate ?? pagePerm.canCreate,
+    canManage: actionPermissionOverride?.canManage ?? pagePerm.canManage,
+    canView: actionPermissionOverride?.canView ?? pagePerm.canView,
+  };
+
+  const canShowDelete =
+    !isDeleted && (effectivePerm.canDelete || effectivePerm.canManage);
 
   return (
     <div className="w-full space-y-4">

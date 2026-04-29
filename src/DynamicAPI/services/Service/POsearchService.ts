@@ -32,7 +32,7 @@ export async function POsearchService(
     if (!res.ok) throw new Error("Gagal mengambil data dari server.");
     const json = await res.json();    
     if (!json?.data || json.data.length === 0) {
-        throw new Error(`Detail PO ${poNo} tidak ditemukan.`);
+        throw new Error(`Detail PO ${poNo} tidak ditemukan atau sudah Closed`);
     }
     
     const data = json.data[0];

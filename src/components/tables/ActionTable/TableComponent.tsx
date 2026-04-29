@@ -40,14 +40,12 @@ const TableComponent = <T extends { [key: string]: any }>({
   totalPages = 1,
   isLoading = false,
 }: TableComponentProps<T>) => {
-  // 🧭 Sinkronisasi local state
   const [pagination, setPagination] = useState({ pageIndex, pageSize });
 
   useEffect(() => {
     setPagination({ pageIndex, pageSize });
   }, [pageIndex, pageSize]);
 
-  // 🔥 Logika kolom seleksi (Checkbox)
   const selectionColumn = columns.find((col: any) => col.selectedRow);
 
   const enhancedColumns = useMemo<ColumnDef<T>[]>(() => {
@@ -57,8 +55,10 @@ const TableComponent = <T extends { [key: string]: any }>({
     return [
       {
         id: "select",
+        // Mengunci lebar kolom checkbox agar tidak bergeser
+        size: 50,
         header: ({ table }) => (
-          <div className="flex items-center justify-center">
+          <div className="flex items-center justify-center w-full">
             <input
               type="checkbox"
               className="w-4 h-4 rounded border-gray-300 text-orange-500 focus:ring-orange-500 cursor-pointer"
@@ -68,7 +68,7 @@ const TableComponent = <T extends { [key: string]: any }>({
           </div>
         ),
         cell: ({ row }) => (
-          <div className="flex items-center justify-center">
+          <div className="flex items-center justify-center w-full">
             <input
               type="checkbox"
               className="w-4 h-4 rounded border-gray-300 text-orange-500 focus:ring-orange-500 cursor-pointer"
@@ -94,7 +94,6 @@ const TableComponent = <T extends { [key: string]: any }>({
     enableRowSelection: !!selectionColumn,
   });
 
-  // 🔄 Callback seleksi
   useEffect(() => {
     if (onSelectionChange && selectionColumn) {
       const accessorKey = (selectionColumn as any).accessorKey;
@@ -105,7 +104,6 @@ const TableComponent = <T extends { [key: string]: any }>({
     }
   }, [table.getSelectedRowModel().rows, selectionColumn, onSelectionChange]);
 
-  // 🧠 Logika Pagination Truncation
   const getPageNumbers = (): (number | string)[] => {
     const pages: (number | string)[] = [];
     const showMax = 5;
@@ -131,33 +129,49 @@ const TableComponent = <T extends { [key: string]: any }>({
 
   return (
     <div className="flex flex-col bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden w-full">
-      {/* 🧱 Table Area */}
       <div className="overflow-x-auto relative">
         {isLoading && (
           <div className="absolute inset-0 z-20 bg-white/60 backdrop-blur-[1px] flex items-center justify-center">
             <div className="flex flex-col items-center">
               <div className="w-10 h-10 border-4 border-orange-500/20 border-t-orange-500 rounded-full animate-spin"></div>
-              <span className="mt-2 text-sm font-semibold text-gray-600">Loading data...</span>
+              <span className="mt-2 text-sm font-semibold text-gray-600">
+                Loading data...
+              </span>
             </div>
           </div>
         )}
 
-        <div className="max-h-[650px] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-200">
-          <table className="min-w-full divide-y divide-gray-200">
+        <div className="max-h-[650px] overflow-y-auto">
+          <table className="min-w-full table-fixed divide-y divide-gray-200">
             <thead className="sticky top-0 z-10 bg-orange-500 text-white">
               {table.getHeaderGroups().map((headerGroup) => (
                 <tr key={headerGroup.id}>
                   {headerGroup.headers.map((header) => (
                     <th
                       key={header.id}
-                      className="px-4 py-3 text-left text-[11px] font-bold uppercase tracking-wider cursor-pointer hover:bg-orange-600 transition-colors whitespace-nowrap"
+                      // Menambahkan width dinamis dari konfigurasi kolom
+                      style={{
+                        width: header.id === "select" ? "50px" : "auto",
+                      }}
+                      className={`px-4 py-4 text-left text-[11px] font-bold uppercase tracking-wider transition-colors whitespace-nowrap ${
+                        header.column.getCanSort()
+                          ? "cursor-pointer hover:bg-orange-600"
+                          : ""
+                      }`}
                       onClick={header.column.getToggleSortingHandler()}
                     >
                       <div className="flex items-center gap-1">
-                        {flexRender(header.column.columnDef.header, header.getContext())}
-                        <span className="text-[10px]">
-                          {{ asc: " 🔼", desc: " 🔽" }[header.column.getIsSorted() as string] ?? ""}
-                        </span>
+                        {flexRender(
+                          header.column.columnDef.header,
+                          header.getContext(),
+                        )}
+                        {header.column.getCanSort() && (
+                          <span className="text-[10px] w-4">
+                            {{ asc: " 🔼", desc: " 🔽" }[
+                              header.column.getIsSorted() as string
+                            ] ?? ""}
+                          </span>
+                        )}
                       </div>
                     </th>
                   ))}
@@ -167,19 +181,31 @@ const TableComponent = <T extends { [key: string]: any }>({
             <tbody className="bg-white divide-y divide-gray-100">
               {table.getRowModel().rows.length === 0 && !isLoading ? (
                 <tr>
-                  <td colSpan={enhancedColumns.length} className="px-6 py-20 text-center text-gray-400 italic font-medium">
+                  <td
+                    colSpan={enhancedColumns.length}
+                    className="px-6 py-20 text-center text-gray-400 italic font-medium"
+                  >
                     No data available.
                   </td>
                 </tr>
               ) : (
                 table.getRowModel().rows.map((row) => (
-                  <tr key={row.id} className="hover:bg-orange-50/50 transition-colors group">
+                  <tr
+                    key={row.id}
+                    className="hover:bg-orange-50/50 transition-colors group"
+                  >
                     {row.getVisibleCells().map((cell) => (
                       <td
                         key={cell.id}
-                        className="px-4 py-3 text-[13px] text-gray-700 leading-relaxed min-w-[100px] max-w-[250px] whitespace-normal break-words overflow-wrap-anywhere border-b border-gray-50"
+                        // Pastikan padding dan alignment SAMA dengan header
+                        className="px-4 py-4 text-[13px] text-gray-700 border-b border-gray-50 align-middle"
                       >
-                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                        <div className="w-full">
+                          {flexRender(
+                            cell.column.columnDef.cell,
+                            cell.getContext(),
+                          )}
+                        </div>
                       </td>
                     ))}
                   </tr>
@@ -190,29 +216,34 @@ const TableComponent = <T extends { [key: string]: any }>({
         </div>
       </div>
 
-      {/* 🧭 Pagination Controls */}
+      {/* Pagination (Tetap Sama) */}
       <div className="px-6 py-3 bg-gray-50 border-t border-gray-200 flex flex-col sm:flex-row items-center justify-between gap-4">
-        {/* Left: Metadata */}
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
-            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Show</span>
+            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+              Show
+            </span>
             <select
               value={pagination.pageSize}
               onChange={(e) => onPageChange?.(0, Number(e.target.value))}
               className="bg-white border border-gray-300 text-gray-700 text-xs rounded-md focus:ring-orange-500 focus:border-orange-500 block p-1 shadow-sm outline-none cursor-pointer"
             >
               {[10, 25, 50, 100].map((size) => (
-                <option key={size} value={size}>{size}</option>
+                <option key={size} value={size}>
+                  {size}
+                </option>
               ))}
             </select>
           </div>
           <p className="text-xs text-gray-500">
-            Page <span className="font-bold text-gray-900">{pagination.pageIndex + 1}</span> of{" "}
-            <span className="font-bold text-gray-900">{totalPages}</span>
+            Page{" "}
+            <span className="font-bold text-gray-900">
+              {pagination.pageIndex + 1}
+            </span>{" "}
+            of <span className="font-bold text-gray-900">{totalPages}</span>
           </p>
         </div>
 
-        {/* Right: Buttons */}
         <div className="flex items-center gap-1">
           <button
             onClick={() => handleGotoPage(0)}
@@ -239,8 +270,8 @@ const TableComponent = <T extends { [key: string]: any }>({
                   pagination.pageIndex === num
                     ? "bg-orange-500 text-white shadow-md shadow-orange-200"
                     : num === "..."
-                    ? "text-gray-400 cursor-default"
-                    : "text-gray-600 hover:bg-orange-100 hover:text-orange-600"
+                      ? "text-gray-400 cursor-default"
+                      : "text-gray-600 hover:bg-orange-100 hover:text-orange-600"
                 }`}
               >
                 {typeof num === "number" ? num + 1 : num}

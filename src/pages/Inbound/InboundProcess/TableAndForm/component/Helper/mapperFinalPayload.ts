@@ -29,9 +29,13 @@ const mergeInboundItems = (items: any[]) => {
                 item_id: item.item_id ?? "",
                 quantity: qty,
                 uom: item.uom ?? "",
-                line_number: item.line_number ?? null,
-                // classification_id: item.classification_id ?? null
+                ...(item.line_number !== null &&
+                    item.line_number !== undefined &&
+                    String(item.line_number).trim() !== ""
+                    ? { line_number: item.line_number }
+                    : {}),
             };
+
         } else {
             mergedItems[key].quantity += qty;
         }

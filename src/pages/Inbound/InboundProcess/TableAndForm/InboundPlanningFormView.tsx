@@ -42,8 +42,6 @@ const buildFieldsConfig = (
   supplierOptions: { value: string; label: string }[],
   inboundTypeOptions: { value: string; label: string }[],
 ): FieldConfig[] => {
-
-
   const baseFields: FieldConfig[] = [
     {
       name: "inbound_plan_no",
@@ -229,6 +227,13 @@ const SubmitSection = ({
   const values = methods.watch();
   const deliveryOrders = values.deliveryOrders || [];
 
+  const normalizedDONumbers = deliveryOrders
+    .map((doItem: any) => (doItem?.do_no || "").trim().toUpperCase())
+    .filter(Boolean);
+
+  const hasDuplicateDO =
+    new Set(normalizedDONumbers).size !== normalizedDONumbers.length;
+
   // --- VALIDASI UTAMA ---
   const hasNoDO = deliveryOrders.every((doItem: any) => !doItem.do_no?.trim());
 
@@ -260,6 +265,7 @@ const SubmitSection = ({
   // --- Disable button jika ada kondisi tidak valid ---
   const isDisabled =
     hasNoDO ||
+    hasDuplicateDO ||
     hasMultiplePO ||
     hasDOWithoutPO ||
     hasPOWithoutItem ||
@@ -267,9 +273,11 @@ const SubmitSection = ({
 
   // --- Pesan agar user tahu penyebab disable ---
   let validateMsg = "";
-
   if (hasEmptyMainFields) validateMsg = "Isi field utama terlebih dahulu.";
   else if (hasNoDO) validateMsg = "Minimal harus ada 1 nomor Surat Jalan.";
+  else if (hasDuplicateDO)
+    validateMsg =
+      "Dalam 1 Inbound Plan tidak boleh ada nomor SJ/DO yang sama. Gunakan nomor SJ yang lain.";
   else if (hasMultiplePO)
     validateMsg = "Setiap Surat Jalan hanya boleh memiliki 1 nomor PO.";
   else if (hasPOWithoutItem)
@@ -320,6 +328,59 @@ export default function InboundPlanningFormView(props: Props) {
     inboundType,
   } = props;
 
+  const resetDOOnly = () => {
+    const current = methods.getValues();
+
+    methods.reset({
+      ...current,
+      flag_validated: undefined,
+      deliveryOrders: [
+        {
+          do_no: "",
+          date: "",
+          attachment: "",
+          po_type: "",
+          validation_surat_jalan: undefined as any,
+          pos: [
+            {
+              po_no: "",
+              so_no: "",
+              vendor_name: "",
+              principal: "",
+              items: [],
+            },
+          ],
+        },
+      ],
+    });
+  };
+
+  const inboundTypeValue = methods.watch("inbound_type");
+  const prevInboundTypeRef = useRef<any>(null);
+
+  useEffect(() => {
+    const currentType =
+      typeof inboundTypeValue === "string"
+        ? inboundTypeValue
+        : inboundTypeValue?.value || "";
+
+    const prevType =
+      typeof prevInboundTypeRef.current === "string"
+        ? prevInboundTypeRef.current
+        : prevInboundTypeRef.current?.value || "";
+
+    if (!prevType) {
+      prevInboundTypeRef.current = inboundTypeValue;
+      return;
+    }
+
+    if (currentType && prevType !== currentType) {
+      resetDOOnly(); // hanya reset isi DO/PO
+    }
+
+    prevInboundTypeRef.current = inboundTypeValue;
+  }, [inboundTypeValue]);
+
   const { list: masterSupplierData, fetchUsingParam } =
     useStoreMasterSupplier();
 
@@ -331,14 +392,12 @@ export default function InboundPlanningFormView(props: Props) {
   const defaultInboundTypeOptions = [
     { value: "PO", label: "PO" },
     { value: "SO_INTERNAL", label: "SO Internal" },
-    { value: "RETUR", label: "Retur" },
   ];
 
   const [inboundTypeOptions, setInboundTypeOptions] = useState(
     defaultInboundTypeOptions,
   );
 
-  // jika props.inboundType diberikan, eliminasi opsi lain dan pilih nilai itu di form
   const inboundTypeInitRef = useRef<string | null>(null);
   useEffect(() => {
     if (!inboundType) return;

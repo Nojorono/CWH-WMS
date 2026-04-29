@@ -413,7 +413,7 @@ const PutAwayDetail: React.FC = () => {
         onSubmit={handleSubmit(onSubmit)}
         className="border rounded-lg p-4 shadow-md space-y-4"
       >
-        <h2 className="font-semibold text-lg">Driver Details</h2>
+        <h2 className="font-semibold text-lg">Forklift Driver</h2>
         <div className="grid grid-cols-2 gap-4">
           {/* Driver Device (Username) */}
           <div>

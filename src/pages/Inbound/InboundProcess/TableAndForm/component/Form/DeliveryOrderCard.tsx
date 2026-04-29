@@ -98,11 +98,11 @@ export default function DeliveryOrderCard({
     defaultValue: [],
   });
 
+  const normalizedThisDONo = (watchedDONo || "").trim().toUpperCase();
   const isDuplicateDO = allDeliveryOrders.some((doItem: any, index: number) => {
-    if (index === doIndex) return false; // Skip diri sendiri
-    const currentDONo = doItem?.do_no?.trim();
-    const thisDONo = watchedDONo?.trim();
-    return currentDONo && thisDONo && currentDONo === thisDONo;
+    if (index === doIndex) return false; // skip diri sendiri
+    const currentDONo = (doItem?.do_no || "").trim().toUpperCase();
+    return normalizedThisDONo !== "" && currentDONo === normalizedThisDONo;
   });
 
   // ✅ Auto-unlock jika mode Detail/Edit data sudah ada
@@ -113,20 +113,25 @@ export default function DeliveryOrderCard({
     }
   }, [isDetailMode, isEditMode, watchedDONo, setIsDOChecked]);
 
-  // ✅ Wrapper Handle Check DO
   const onCheckDO = async () => {
-    if (
-      inbType !== "PO" &&
-      inbType !== "SO_INTERNAL"
-      // inbType !== "RETUR"
-    ) {
+    if (isDuplicateDO) {
       showErrorToast(
-        "Hanya PO, SO Internal, atau SO SubDist yang bisa divalidasi!",
+        `Nomor SJ/DO "${watchedDONo}" sudah dipakai pada SJ lain. Gunakan nomor yang berbeda.`,
       );
       return;
     }
+
+    if (inbType !== "PO" && inbType !== "SO_INTERNAL") {
+      showErrorToast("Hanya PO, SO Internal yang bisa divalidasi!");
+      return;
+    }
+
+    setDoStatus(null);
+    setIsDOChecked(false);
+    lastValidatedDONo.current = "";
+
     lastValidatedDONo.current = watchedDONo || "";
-    await handleCheckDO(existingPONo || existingSONo || null);
+    await handleCheckDO(null);
   };
 
   useEffect(() => {
@@ -277,20 +282,30 @@ export default function DeliveryOrderCard({
                 No Surat Jalan *{" "}
                 {doStatus && (
                   <span
-                    className={
-                      doStatus === "success" ? "text-green-600" : "text-red-600"
-                    }
+                    className={`ml-2 inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold
+                      ${
+                        doStatus === "success"
+                          ? "bg-green-100 text-green-700"
+                          : "bg-red-100 text-red-700"
+                      }`}
                   >
-                    ({doStatus === "success" ? "Valid" : "Invalid"})
+                    {doStatus === "success" &&
+                      "DO/SJ tervalidasi • Dokumen ditemukan di Meta"}
+                    {doStatus === "failed" &&
+                      "Nomor SJ/DO tak ditemukan di Meta"}
                   </span>
                 )}
               </label>
               <div className="flex gap-2">
                 <input
                   {...register(`deliveryOrders.${doIndex}.do_no`, {
-                    required: "Wajib diisi",
+                    required: "No Surat Jalan wajib diisi",
                   })}
-                  className={`${inputCls} flex-1 ${errors.deliveryOrders?.[doIndex]?.do_no ? "border-red-500" : ""}`}
+                  className={`${inputCls} flex-1 ${
+                    errors.deliveryOrders?.[doIndex]?.do_no || isDuplicateDO
+                      ? "border-red-500"
+                      : ""
+                  }`}
                   disabled={isInputDisabled}
                 />
                 {!isDetailMode && (
@@ -300,13 +315,20 @@ export default function DeliveryOrderCard({
                     variant="primary"
                     onClick={onCheckDO} // Gunakan wrapper onCheckDO
                     disabled={
-                      !isValidType || (isDOChecked && doStatus === "success")
+                      !isValidType ||
+                      (isDOChecked && doStatus === "success") ||
+                      isDuplicateDO
                     }
                   >
                     <FaSearch />
                   </Button>
                 )}
               </div>
+              {isDuplicateDO && (
+                <p className="mt-1 text-xs text-red-600">
+                  Nomor SJ/DO ini sudah ada, gunakan nomor SJ/DO lain !
+                </p>
+              )}
             </div>
 
             {/* Attachment */}

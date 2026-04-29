@@ -35,18 +35,44 @@ const DataTable = () => {
   const [passwordError, setPasswordError] = useState("");
   const [IoList, setIoList] = useState<any[]>([]);
 
+  const normalizeStorageValue = (val: string | null) => {
+    if (!val) return "";
+    const cleaned = String(val).trim();
+    if (!cleaned || cleaned === "undefined" || cleaned === "null") return "";
+    return cleaned;
+  };
+
   useEffect(() => {
     fetchAll();
     fetchRoles();
     fetchSubWarehouses();
 
     const storedIo = localStorage.getItem("io_list");
+    const rawOrgId = localStorage.getItem("organization_id");
+    const organizationId = normalizeStorageValue(rawOrgId);
+
     if (storedIo) {
       try {
-        setIoList(JSON.parse(storedIo));
+        const parsedIo = JSON.parse(storedIo);
+
+        if (!Array.isArray(parsedIo)) {
+          setIoList([]);
+          return;
+        }
+
+        const filteredIo = organizationId
+          ? parsedIo.filter(
+              (io: any) => String(io?.id) === String(organizationId),
+            )
+          : parsedIo;
+
+        setIoList(filteredIo);
       } catch (error) {
         console.error("Gagal parsing io_list dari localStorage", error);
+        setIoList([]);
       }
+    } else {
+      setIoList([]);
     }
   }, []);
 
@@ -331,7 +357,7 @@ const DataTable = () => {
       warehouseSubId:
         String(data.roleId) === String(gateRoleId) ? data.zoneId : null,
     };
-
+    
     return createData(payload);
   };
 
@@ -352,6 +378,10 @@ const DataTable = () => {
       firstName: rest.firstName,
       lastName: rest.lastName,
     };
+
+    // console.log("Payload Update", payload);
+    // return;
+    
 
     // Filter undefined saja, nilai null (warehouseSubId) atau "" tetap dikirim jika memang kontrak API-nya string/null
     const cleanPayload = Object.fromEntries(
@@ -461,7 +491,8 @@ const DataTable = () => {
           {
             accessorKey: "isActive",
             header: "Active",
-            cell: (info: any) => (info.getValue() ?  "✅ Active" : "❌ Inactive"),
+            cell: (info: any) =>
+              info.getValue() ? "✅ Active" : "❌ Inactive",
           },
         ]}
         formFields={formFields.filter((f) => f.name !== "isActive")}

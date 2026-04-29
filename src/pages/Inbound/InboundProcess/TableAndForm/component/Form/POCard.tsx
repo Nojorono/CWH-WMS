@@ -118,8 +118,7 @@ export default function POCard({
     (isCreateMode && !isDOChecked);
 
   const canAddItem = !isDetailMode && isDOChecked;
-  const cantAddManualAddItem =
-    !isDOChecked || isSuratJalanValidated || isPOValidated;
+  // const cantAddManualAddItem = !isDOChecked || isSuratJalanValidated || isPOValidated;
 
   const getDisabledCls = (disabled: boolean) =>
     disabled ? "bg-gray-100 text-gray-500 cursor-not-allowed" : "bg-white";
@@ -282,21 +281,6 @@ export default function POCard({
           />
         </div>
 
-        {/* <div>
-          <label className="block text-xs text-slate-600 mb-1">
-            Tanggal Dokumen
-            {!isDetailMode && <span className="text-red-500">*</span>}
-          </label>
-          <input
-            className={`${inputCls} w-full ${getDisabledCls(isDetailMode ?? false)}`}
-            {...register(
-              `deliveryOrders.${doIndex}.pos.${posIndex}.create_date` as any,
-            )}
-            value={getValues(`deliveryOrders.${doIndex}.pos.${posIndex}.create_date` as any) || ""}
-            readOnly={true}
-          />
-        </div> */}
-
         {/* Actions */}
         {!isDetailMode && (
           <div className="flex gap-2 justify-end">
@@ -306,7 +290,7 @@ export default function POCard({
                 variant="secondary"
                 size="xsm"
                 onClick={() => setIsOpen(true)}
-                disabled={cantAddManualAddItem}
+                // disabled={cantAddManualAddItem}
               >
                 + Add Item
               </Button>

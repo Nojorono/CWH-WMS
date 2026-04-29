@@ -333,11 +333,11 @@ const AdjustTable = ({
         header: "Location",
         cell: ({ row }) => (
           <div className="flex flex-col gap-1">
-            <span className="text-[14px] font-semibold text-orange-700 bg-orange-50 px-2 py-0.5 rounded border border-orange-100 w-fit">
+            <span className="text-[16px] font-semibold text-orange-700 bg-orange-50 px-2 py-0.5 rounded border border-orange-100 w-fit">
               {row.original.warehouse_sub_name}
             </span>
-            <span className="text-[12px] text-gray-500 font-medium italic">
-              Bin: {row.original.warehouse_bin_name || "-"}
+            <span className="text-[14px] text-gray-500 font-medium italic">
+              Bin {row.original.warehouse_bin_name || "-"}
             </span>
           </div>
         ),

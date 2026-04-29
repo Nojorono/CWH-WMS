@@ -37,6 +37,7 @@ export const SuggestionItemHeader: React.FC<MemoHeaderProps> = ({
   setSortMethod,
   handleFetchSuggestions,
 }) => {
+  
   const sortOptions = [
     { value: "", label: "select method.." },
     { value: "FIFO", label: "FEFO" },

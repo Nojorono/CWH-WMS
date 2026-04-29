@@ -255,9 +255,12 @@ const DataTable: React.FC<DataTableProps> = ({ params }) => {
         getRowId={(row) => row.id}
         title="Form UOM"
         onSelectedChange={setSelectedIds}
+        actionPermissionOverride={{
+          canDelete: true,
+          canManage: true,
+        }}
       />
 
-      {/* 🔑 Modal preview + print */}
       <PrintBarcodeModal
         open={isPrintModalOpen}
         onClose={() => setPrintModalOpen(false)}

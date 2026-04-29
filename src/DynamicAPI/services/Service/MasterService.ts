@@ -55,7 +55,6 @@ export const ClassificationService = createCrudService<Classification, CreateCla
 export const VehicleService = createCrudService<Vehicle, CreateVehicle, UpdateVehicle>("/master-vehicle");
 export const TransporterService = createCrudService<Transporter, CreateTransporter, UpdateTransporter>("/inbound-transporter");
 export const subWarehouseService = createCrudService<SubWarehouse, CreateSubWarehouse, UpdateSubWarehouse>("/master-warehouse-sub");
-
 export const zoneByWarehouseService = createCrudService<SubWarehouse, CreateSubWarehouse, UpdateSubWarehouse>("/master-warehouse-sub/warehouse");
 
 export const binService = createCrudService<Bin, CreateBin, UpdateBin>("/master-warehouse-bin");

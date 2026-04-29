@@ -467,7 +467,7 @@ const ModalForm: React.FC<ModalFormProps> = ({
               variant="primary"
               onClick={() => setIsEditing(true)}
             >
-              Edit Profile
+              Edit
             </Button>
           )}
           <Button type="button" variant="danger" onClick={onClose}>

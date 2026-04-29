@@ -68,8 +68,10 @@ const CreateMemo: React.FC = () => {
   const { data: memoId, mode, title } = location.state || {};
   const isDetail = mode === "detail";
   const isEdit = mode === "edit";
-  const userID = localStorage.getItem("user_id");
+  const full_name = localStorage.getItem("full_name");
   const orgId = localStorage.getItem("organization_id");
+  const orgName = localStorage.getItem("organization_name");
+
 
   const [isLoading, setIsLoading] = useState(false);
 
@@ -349,11 +351,11 @@ const CreateMemo: React.FC = () => {
         const payload = {
           organization_id: orgId,
           requestor: username,
-          origin: "CWH",
+          origin: orgName,
           destination: data.ship_to,
           ship_to: data.address,
           delivery_date: formatDateIndo(data.delivery_date),
-          notes: data.notes,
+          notes: data.notes || full_name,
           status: "PENDING",
           type: data.type_outbound?.value || "",
           outbound_memo_items: items.map((i) => ({
@@ -497,7 +499,6 @@ const CreateMemo: React.FC = () => {
   };
 
   const handleApproveMemo = (memoId: string) => {
-    // Implementasi logika untuk menyetujui memo
     const approveMemo = async (memoId: string) => {
       const token = localStorage.getItem("token");
       try {
@@ -524,8 +525,6 @@ const CreateMemo: React.FC = () => {
   };
 
   const handleRejectedMemo = (memoId: string) => {
-    // Implementasi logika untuk menolak memo
-
     const rejectMemo = async (memoId: string) => {
       const token = localStorage.getItem("token");
       try {

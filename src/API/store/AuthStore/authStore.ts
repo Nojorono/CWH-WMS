@@ -123,6 +123,8 @@ export const useAuthStore = create<AuthState>((set) => ({
       localStorage.setItem("full_name", `${userDetail?.firstName} ${userDetail?.lastName}`);
       localStorage.setItem("organization_id", `${userDetail?.organizationId}`);
       localStorage.setItem("organization_name", `${userDetail?.organization.organization_name}`);
+      localStorage.setItem("warehouse_sub_id", `${userDetail?.warehouse_sub_id}`);
+
 
 
       // Update state global
