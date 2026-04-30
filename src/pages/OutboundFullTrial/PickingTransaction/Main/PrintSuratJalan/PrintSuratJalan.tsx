@@ -52,8 +52,36 @@ const PrintSuratJalan = () => {
     documentTitle: `Surat-Jalan-${selectedMemo?.outbound_memo_number}`,
   });
 
+  const buildDoHeader = (detail: any) => ({
+    id: detail?.id ?? "",
+    createdAt: detail?.createdAt ?? "",
+    updatedAt: detail?.updatedAt ?? "",
+    deletedAt: detail?.deletedAt ?? null,
+    organization_id: detail?.organization_id ?? "",
+    outbound_do_number: detail?.outbound_do_number ?? "",
+    expedition: detail?.expedition ?? "",
+    origin: detail?.origin ?? "",
+    license_plate: detail?.license_plate ?? "",
+    container_number: detail?.container_number ?? "",
+    seal_number: detail?.seal_number ?? "",
+    driver_name: detail?.driver_name ?? "",
+    driver_phone: detail?.driver_phone ?? "",
+    vendor_id: detail?.vendor_id ?? "",
+    vendor_po_number: detail?.vendor_po_number ?? null,
+    status: detail?.status ?? "",
+    outbound_type: detail?.outbound_type ?? "",
+    delivery_date: detail?.delivery_date ?? "",
+  });
+
   const openModal = (memo: any) => {
-    setSelectedMemo(memo);
+    const doHeader = buildDoHeader(detail);
+
+    const payloadForPrint = {
+      do_header: doHeader,
+      ...memo,
+    };
+
+    setSelectedMemo(payloadForPrint);
     setShowModal(true);
   };
 
@@ -172,14 +200,7 @@ const PrintSuratJalan = () => {
             <div className="flex-1 overflow-y-auto p-8 bg-slate-200/50 flex justify-center">
               <div className="bg-white shadow-[0_0_50px_rgba(0,0,0,0.1)] origin-top">
                 <div ref={printRef} className="print-area">
-                  <PrintTemplate
-                    memo={selectedMemo}
-                    doNumber={detail?.outbound_do_number ?? ""}
-                    expedition={detail?.expedition ?? ""}
-                    licensePlate={detail?.license_plate ?? ""}
-                    sealNumber={detail?.seal_number ?? ""} // Mengambil seal yang sudah diinput sebelumnya
-                    containerNumber={detail?.container_number ?? ""}
-                  />
+                  <PrintTemplate memo={selectedMemo} />
                 </div>
               </div>
             </div>
