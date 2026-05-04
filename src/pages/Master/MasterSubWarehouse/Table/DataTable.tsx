@@ -134,8 +134,16 @@ const DataTable = ({ params }: DataTableProps) => {
     },
     {
       name: "is_gate",
-      label: "Is Gate?",
-      type: "checkbox",
+      label: "Is Gate Area?",
+      type: "select",
+      options: [
+        { label: "YES", value: true },
+        { label: "NO", value: false },
+      ],
+      validation: {
+        validate: (v: boolean | null | undefined) =>
+          v === true || v === false || "Required",
+      },
     },
     {
       name: "description",
@@ -213,9 +221,9 @@ const DataTable = ({ params }: DataTableProps) => {
       barcode_image_url,
       is_staging,
       is_gate,
-      is_good_stock, // field baru
-      locator_id, // field baru
-      locator_name, // field baru
+      is_good_stock,
+      locator_id,
+      locator_name,
     } = data;
 
     const payload: any = {
@@ -232,7 +240,7 @@ const DataTable = ({ params }: DataTableProps) => {
 
     // Tetap mempertahankan logika prioritas bisnis proses yang lama
     if (is_gate === true) {
-      payload.capacity_bin = null;
+      payload.capacity_bin = 0;
       payload.is_staging = null;
     } else if (is_staging === "NO") {
       payload.capacity_bin =
