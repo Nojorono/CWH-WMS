@@ -300,7 +300,7 @@ const AdjustTableDO = ({
                         </div>
                       ) : (
                         <span className="text-[10px] font-bold text-red-500 bg-red-50 px-2 py-0.5 rounded-md border border-red-100 italic">
-                          ⚠️ Belum ada petugas ditugaskan
+                          ⚠️ Belum ada Helper ditugaskan
                         </span>
                       )}
                     </div>
@@ -331,8 +331,8 @@ const AdjustTableDO = ({
                 {isOpen && (
                   <div className="bg-slate-50/50 p-3 flex flex-col gap-3 border-t-2 border-slate-100">
                     {pickings.length === 0 ? (
-                      <div className="p-6 text-center text-slate-400 text-xs italic bg-white rounded-xl border border-dashed border-slate-200">
-                        Instruksi pengambilan belum dibuat
+                      <div className="p-6 text-center text-red-400 text-xs italic bg-white rounded-xl border border-dashed border-slate-200">
+                        Belum ada Picking Suggestion dibuat!
                       </div>
                     ) : (
                       pickings.map((tp: any) => {

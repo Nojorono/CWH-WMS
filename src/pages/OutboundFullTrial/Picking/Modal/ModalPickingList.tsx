@@ -35,7 +35,6 @@ function ModalPickingList({ open, onClose, memoId }: Props) {
   }, [open, memoId, fetchById]);
 
   const apiResponse = detail as unknown as PickingListResponse | undefined;
-  console.log("Detail DO", apiResponse);
 
   // 🧠 Transform data API → table (including transactionScanPicking)
   const data = useMemo(() => {

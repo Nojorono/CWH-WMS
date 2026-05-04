@@ -14,13 +14,7 @@ import {
   useStorePickingAssignHelper,
 } from "../../../../DynamicAPI/stores/Store/MasterStore";
 import { useLocation, useNavigate } from "react-router";
-import {
-  FaArrowLeft,
-  FaClipboardList,
-  FaEye,
-  FaTasks,
-  FaUsers,
-} from "react-icons/fa";
+import { FaArrowLeft, FaClipboardList, FaEye, FaUsers } from "react-icons/fa";
 import ModalPickingList from "../Modal/ModalPickingList";
 import ModalAssignHelper from "../Modal/ModalAssignHelper";
 import TabsSection from "../../../../components/wms-components/inbound-component/tabs/TabsSection";
@@ -165,7 +159,6 @@ const PickingSuggestion: React.FC = () => {
             type="button"
             variant="action"
             onClick={() => handleAssignHelper(row.original.id)}
-            // disabled={isSuggestionLoading}
             size="xsm"
             startIcon={<FaUsers className="size-5" />}
           >
@@ -197,6 +190,7 @@ const PickingSuggestion: React.FC = () => {
   // callback when AssignHelper submits
   const handleAssignHelperSubmit = async (payload: any) => {
     const res = await createData(payload);
+
     if (res?.success) {
       setAssignHelperOpen(false);
       setAssignHelperMemoId(null);
