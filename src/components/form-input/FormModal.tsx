@@ -9,6 +9,7 @@ import Radio from "../form/input/Radio";
 type OptionType = { value: string | boolean; label: string };
 
 export type FormField = {
+  readOnly: boolean;
   name: string;
   label: string;
   type:
@@ -183,7 +184,7 @@ const ModalForm: React.FC<ModalFormProps> = ({
     formState: { errors },
     reset,
     watch,
-    setValue
+    setValue,
   } = useForm<FormValues>({ defaultValues });
 
   const [isEditing, setIsEditing] = useState(false);
@@ -401,8 +402,8 @@ const ModalForm: React.FC<ModalFormProps> = ({
             <input
               type={field.type}
               {...register(field.name, field.validation)}
-              className={isDisabled ? disabledCls : inputCls}
-              disabled={isDisabled}
+              className={isDisabled || field.readOnly ? disabledCls : inputCls}
+              disabled={isDisabled || field.readOnly}
               placeholder={field.placeholder}
             />
             {field.description && (
@@ -466,7 +467,7 @@ const ModalForm: React.FC<ModalFormProps> = ({
               variant="primary"
               onClick={() => setIsEditing(true)}
             >
-              Edit Profile
+              Edit
             </Button>
           )}
           <Button type="button" variant="danger" onClick={onClose}>

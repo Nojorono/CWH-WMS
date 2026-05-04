@@ -63,6 +63,7 @@ import {
   ReportInbound,
   ReportOutbound,
   Reporting2,
+  MasterBin,
 } from "./utils/PagesComponent";
 
 const DefaultPage = () => <> </>;
@@ -152,7 +153,7 @@ export function AppRoutes() {
   const getElementByPath = (path: string): JSX.Element => {
     const map: Record<string, JSX.Element> = {
       "/dashboard": <Dashboard />,
-      "/master_user": <MasterUser />,
+      "/master_user": <MasterUserManagement />,
       "/master_user_management": <MasterUserManagement />,
       "/master_menu": <MasterMenu />,
       "/master_role": <MasterRole />,
@@ -167,6 +168,7 @@ export function AppRoutes() {
       "/master_classification": <MasterClassification />,
       "/master_vehicle": <MasterVehicle />,
       "/master_zone": <MasterZone />,
+      "/master_bin": <MasterBin />,
       "/master_source": <MasterSource />,
       "/master_week": <MasterWeek />,
       "/main_inventory": <Inventory />,

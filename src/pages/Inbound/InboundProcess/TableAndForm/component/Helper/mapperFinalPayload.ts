@@ -3,14 +3,13 @@ import { showErrorToast } from "../../../../../../components/toast";
 
 /**
  * Helper: Normalisasi Inbound Type untuk API dan Pengecekan
+ * PO tetap PO, SO_INTERNAL dan SO_SUBDIST tetap dengan nama aslinya
  */
 const getNormalizedInboundType = (type: any) => {
     const rawType = typeof type === "string" ? type : type?.value || "";
 
-    // Mapping label untuk API
-    let apiType = rawType;
-    if (rawType === "PO") apiType = "SO_INTERNAL";
-    else if (rawType === "SO") apiType = "SO_SUBDIST";
+    // API type sama dengan rawType untuk ketiga tipe yang baru
+    const apiType = rawType;
 
     return { rawType, apiType };
 };
@@ -30,9 +29,13 @@ const mergeInboundItems = (items: any[]) => {
                 item_id: item.item_id ?? "",
                 quantity: qty,
                 uom: item.uom ?? "",
-                line_number: item.line_number ?? null,
-                // classification_id: item.classification_id ?? null
+                ...(item.line_number !== null &&
+                    item.line_number !== undefined &&
+                    String(item.line_number).trim() !== ""
+                    ? { line_number: item.line_number }
+                    : {}),
             };
+
         } else {
             mergedItems[key].quantity += qty;
         }
@@ -87,15 +90,13 @@ export function mapToPayload(data: FormValues): any {
                     inbound_do_date: doItem.date ? new Date(doItem.date).toISOString().split('T')[0] : "",
                     attachment: doItem.attachment ?? "",
 
-                    // Gunakan rawType (PO) atau apiType (SO_INTERNAL) untuk keamanan pengecekan
-                    inbound_po_number: (rawType === "PO" || apiType === "SO_INTERNAL")
+                    inbound_po_number: (rawType === "PO")
                         ? (po.po_no ?? null)
                         : (po.so_no ?? null),
 
                     inbound_po_date: po.po_date ? new Date(po.po_date).toISOString() : null,
                     flag_validated: (po as any).flag_validated ?? true,
 
-                    // 3. ITEM LEVEL
                     inbound_items: finalItems
                 };
             })

@@ -16,13 +16,7 @@ import { Controller } from "react-hook-form";
 import Select from "../../../../components/form/Select";
 
 const DataTable = () => {
-  const {
-    list: Warehouse,
-    createData,
-    updateData,
-    deleteData,
-    fetchAll,
-  } = useStoreWarehouse();
+  const orgIdFromStorage = localStorage.getItem("organization_id");
 
   const { fetchAll: fetchAllIo, list: ioList } = useStoreIo();
   const [search, setSearch] = useState("");
@@ -33,14 +27,59 @@ const DataTable = () => {
   const roleName = localStorage.getItem("role_name");
   const [selectedOrgCode, setSelectedOrgCode] = useState("");
 
+  const {
+    list: Warehouse,
+    createData,
+    updateData,
+    deleteData,
+    fetchAll,
+  } = useStoreWarehouse();
+
+
+  const filteredWarehouse = useMemo(() => {
+    if (!Warehouse) return [];
+
+    if (roleName === "superadmin") return Warehouse;
+
+    return Warehouse.filter(
+      (item: any) => item.organization_id === orgIdFromStorage,
+    );
+  }, [Warehouse, orgIdFromStorage, roleName]);
+
   const fetchLocators = async (orgCode: string) => {
     if (!orgCode) return;
     try {
       const response = await axiosInstance.get(
         `${EndPoint}master-warehouse/locator?organization_code=${orgCode}`,
       );
+
       if (response.data.success) {
-        setLocatorList(response.data.data);
+        const rawData = response.data.data;
+        const groupedData = rawData.reduce((acc: any, curr: any) => {
+          const subName = curr.Subinventory;
+
+          if (!acc[subName]) {
+            acc[subName] = {
+              subinventory: subName,
+              description: curr["Subinventory Description"],
+              locators: [],
+            };
+          }
+
+          // Hanya tambahkan ke array jika locator_id tidak null
+          if (curr.locator_id) {
+            acc[subName].locators.push({
+              id: curr.locator_id,
+              name: curr.Locator,
+              type: curr["Locator Control Type"],
+            });
+          }
+
+          return acc;
+        }, {});
+
+        // Ubah kembali menjadi Array untuk memudahkan mapping di UI
+        setLocatorList(Object.values(groupedData));
       }
     } catch (error) {
       console.error("Error fetching locators:", error);
@@ -115,32 +154,45 @@ const DataTable = () => {
       name: "locator_id",
       label: "Locator",
       type: "custom",
-      renderCustom: ({ control, setValue, errors }: any) => (
+      renderCustom: ({
+        control,
+        setValue,
+      }: {
+        control: any;
+        setValue: any;
+      }) => (
         <Controller
           name="locator_id"
           control={control}
           rules={{ required: "Required" }}
-          render={({ field: controllerField }) => (
-            <Select
-              options={locatorList.map((item: any) => ({
-                label: item.LOCATOR,
-                value: item.LOCATOR_ID.toString(),
-              }))}
-              value={controllerField.value}
-              placeholder="Select Locator..."
-              width="100%"
-              onChange={(val: any) => {
-                controllerField.onChange(val);
-                const selectedLoc = locatorList.find(
-                  (l) => l.LOCATOR_ID.toString() === val.toString(),
-                );
+          render={({ field: controllerField }) => {
+            // 2. Buat options terlebih dahulu agar lebih rapi
+            const options = locatorList.flatMap((group: any) =>
+              group.locators.map((loc: any) => ({
+                label: `Sub ${group.subinventory} - Locator ${loc.name}`,
+                value: loc.id.toString(),
+                subName: group.subinventory,
+              })),
+            );
 
-                if (selectedLoc) {
-                  setValue("name", selectedLoc.SUBINVENTORY_CODE);
-                }
-              }}
-            />
-          )}
+            return (
+              <Select
+                options={options}
+                value={controllerField.value}
+                placeholder="Select Locator..."
+                width="100%"
+                onChange={(val: any) => {
+                  controllerField.onChange(val);
+                  const selectedOption = options.find(
+                    (opt: any) => opt.value === val,
+                  );
+                  if (selectedOption) {
+                    setValue("name", selectedOption.subName);
+                  }
+                }}
+              />
+            );
+          }}
         />
       ),
     },
@@ -166,18 +218,26 @@ const DataTable = () => {
     },
   ];
 
+  const findSelectedLocator = (id: string) => {
+    for (const group of locatorList) {
+      const found = group.locators.find(
+        (l: any) => l.id.toString() === id.toString(),
+      );
+      if (found) return { ...found, subinventory: group.subinventory };
+    }
+    return null;
+  };
+
   const handleCreate = async (data: any) => {
     try {
-      const selectedLoc = locatorList.find(
-        (l) => l.LOCATOR_ID.toString() === data.locator_id.toString(),
-      );
+      const selectedLoc = findSelectedLocator(data.locator_id);
 
       const payload = {
         organization_id: data.organization_id,
-        name: data.name,
+        name: data.name, // Ini akan berisi subinventory
         description: data.description,
         locator_id: Number(data.locator_id),
-        locator_name: selectedLoc ? selectedLoc.LOCATOR : "",
+        locator_name: selectedLoc ? selectedLoc.name : "",
       };
 
       await createData(payload);
@@ -193,7 +253,7 @@ const DataTable = () => {
       const id = data.id;
 
       const selectedLoc = locatorList.find(
-        (l) => l.LOCATOR_ID.toString() === data.locator_id.toString(),
+        (l) => l.locator_id.toString() === data.locator_id.toString(),
       );
 
       const payload = {
@@ -260,7 +320,7 @@ const DataTable = () => {
       </div>
 
       <DynamicTable
-        data={Warehouse}
+        data={filteredWarehouse}
         globalFilter={debouncedSearch}
         isCreateModalOpen={isCreateModalOpen}
         onCloseCreateModal={() => setCreateModalOpen(false)}

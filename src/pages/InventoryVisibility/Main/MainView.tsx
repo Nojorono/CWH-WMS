@@ -52,12 +52,14 @@ const InventoryVisibility: React.FC = () => {
           </button>
         ),
       },
+
       columnHelper.accessor("sku", {
         header: "SKU",
         cell: (info) => (
           <span className="font-bold text-slate-800">{info.getValue()}</span>
         ),
       }),
+
       columnHelper.accessor("item_name", {
         header: "Product Name",
         cell: (info) => (
@@ -71,6 +73,7 @@ const InventoryVisibility: React.FC = () => {
           </div>
         ),
       }),
+
       columnHelper.accessor("total_quantity", {
         header: "Total Stock",
         cell: (info) => (
@@ -81,6 +84,7 @@ const InventoryVisibility: React.FC = () => {
           </div>
         ),
       }),
+
       columnHelper.accessor("booked_quantity", {
         header: "Booked",
         cell: (info) => (
@@ -95,6 +99,7 @@ const InventoryVisibility: React.FC = () => {
           </div>
         ),
       }),
+
       columnHelper.accessor("available_quantity", {
         header: "Available",
         cell: (info) => (
@@ -120,14 +125,11 @@ const InventoryVisibility: React.FC = () => {
           </div>
         ),
       }),
+
       columnHelper.accessor("booking_count", {
         header: "Booked By DO",
         cell: (info) => {
-          // Ambil array booking_details dari baris data asli
           const bookings = info.row.original.booking_details || [];
-
-          // Logika untuk menghitung Unique DO Number
-          // Menggunakan Set untuk menyimpan do_number yang unik, lalu ambil ukurannya (size)
           const uniqueDOCount = new Set(bookings.map((book) => book.do_number))
             .size;
 
@@ -145,6 +147,7 @@ const InventoryVisibility: React.FC = () => {
           );
         },
       }),
+
       columnHelper.accessor("pallet_count", {
         header: "Pallets",
         cell: (info) => (
@@ -162,19 +165,19 @@ const InventoryVisibility: React.FC = () => {
     columns,
     state: {
       expanded,
-      globalFilter, // Masukkan state filter
+      globalFilter, 
     },
     onExpandedChange: setExpanded,
-    onGlobalFilterChange: setGlobalFilter, // Handler filter
+    onGlobalFilterChange: setGlobalFilter,
     getCoreRowModel: getCoreRowModel(),
     getExpandedRowModel: getExpandedRowModel(),
-    getFilteredRowModel: getFilteredRowModel(), // Engine untuk filter
-    getPaginationRowModel: getPaginationRowModel(), // Engine untuk pagination
-    getSortedRowModel: getSortedRowModel(), // Engine untuk sorting
+    getFilteredRowModel: getFilteredRowModel(), 
+    getPaginationRowModel: getPaginationRowModel(), 
+    getSortedRowModel: getSortedRowModel(),
     getRowCanExpand: () => true,
     initialState: {
       pagination: {
-        pageSize: 10, // Default jumlah data per halaman
+        pageSize: 10,
       },
     },
   });
@@ -274,7 +277,7 @@ const InventoryVisibility: React.FC = () => {
                     {row.getVisibleCells().map((cell) => (
                       <td
                         key={cell.id}
-                        className="px-6 py-4 text-sm align-middle"
+                        className="px-6 py-4 align-middle text-[16px]"
                       >
                         {flexRender(
                           cell.column.columnDef.cell,
@@ -304,10 +307,10 @@ const InventoryVisibility: React.FC = () => {
                                   className="bg-white p-3 rounded-lg border border-slate-200 flex justify-between items-center shadow-sm hover:border-blue-300 transition-colors"
                                 >
                                   <div>
-                                    <p className="font-bold text-slate-800 text-xs">
+                                    <p className="text-[13px] font-bold text-slate-800 text-xs">
                                       {plt.pallet_code}
                                     </p>
-                                    <p className="text-[10px] text-slate-500 font-medium uppercase tracking-tighter">
+                                    <p className="text-[12px] text-slate-500 font-medium uppercase tracking-tighter">
                                       {plt.warehouse_sub_name}{" "}
                                       <span className="text-slate-300 mx-1">
                                         |
@@ -318,11 +321,11 @@ const InventoryVisibility: React.FC = () => {
                                   <div className="text-right">
                                     <p className="text-sm font-black text-blue-600">
                                       {plt.quantity}{" "}
-                                      <small className="text-[9px] text-slate-400">
+                                      <small className="text-[12px] text-slate-400">
                                         {row.original.uom}
                                       </small>
                                     </p>
-                                    <p className="text-[9px] bg-slate-100 text-slate-500 px-1 rounded font-mono">
+                                    <p className="text-[11px] bg-slate-100 text-slate-500 px-1 rounded font-mono">
                                       Week {plt.week_number}
                                     </p>
                                   </div>

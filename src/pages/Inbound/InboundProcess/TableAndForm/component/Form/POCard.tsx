@@ -12,7 +12,8 @@ import {
   useStoreUom,
 } from "../../../../../../DynamicAPI/stores/Store/MasterStore";
 import { showErrorToast } from "../../../../../../components/toast";
-import { searchPO, searchSO } from "../Services"; // ✅ ganti import
+import { POsearchService, SOsearchService } from "../../../../../../DynamicAPI/services/Service/";
+
 
 export default function POCard({
   doIndex,
@@ -117,8 +118,7 @@ export default function POCard({
     (isCreateMode && !isDOChecked);
 
   const canAddItem = !isDetailMode && isDOChecked;
-  const cantAddManualAddItem =
-    !isDOChecked || isSuratJalanValidated || isPOValidated;
+  // const cantAddManualAddItem = !isDOChecked || isSuratJalanValidated || isPOValidated;
 
   const getDisabledCls = (disabled: boolean) =>
     disabled ? "bg-gray-100 text-gray-500 cursor-not-allowed" : "bg-white";
@@ -131,12 +131,12 @@ export default function POCard({
       `deliveryOrders.${doIndex}.pos.${posIndex}.po_no` as any,
     );
 
-    if (!poNo) return showErrorToast("Masukkan nomor SO_INTERNAL !");
+    if (!poNo) return showErrorToast("Masukkan nomor PO !");
 
     setLoading(true);
 
     try {
-      const { vendorName, vendorId, poDate, items } = await searchPO(
+      const { vendorName, vendorId, poDate, items } = await POsearchService(
         poNo,
         list,
         uomList,
@@ -161,7 +161,7 @@ export default function POCard({
       replaceItems(items);
     } catch (err: any) {
       replaceItems([]);
-      showErrorToast(err?.message ?? "Gagal fetch detail SO_INTERNAL");
+      showErrorToast(err?.message ?? "Gagal fetch detail PO");
     } finally {
       setLoading(false);
     }
@@ -173,11 +173,14 @@ export default function POCard({
       `deliveryOrders.${doIndex}.pos.${posIndex}.so_no` as any,
     );
 
-    if (!soNo) return showErrorToast("Masukkan nomor SO_SUBDIST !");
+    if (!soNo)
+      return showErrorToast(
+        `Masukkan nomor ${normalizedInbType === "SO_INTERNAL" ? "SO Internal" : "SO SubDist"} !`,
+      );
 
     setLoading(true);
     try {
-      const { vendorName, items } = await searchSO(soNo, list, uomList);
+      const { vendorName, items } = await SOsearchService(soNo, list, uomList);
 
       if (vendorName) {
         setValue(
@@ -194,7 +197,10 @@ export default function POCard({
       replaceItems(items);
     } catch (err: any) {
       replaceItems([]);
-      showErrorToast(err?.message ?? "Gagal fetch detail SO_SUBDIST");
+      showErrorToast(
+        err?.message ??
+          `Gagal fetch detail ${normalizedInbType === "SO_INTERNAL" ? "SO Internal" : "SO SubDist"}`,
+      );
     } finally {
       setLoading(false);
     }
@@ -212,7 +218,12 @@ export default function POCard({
         {/* Input PO/SO */}
         <div>
           <label className="block text-xs text-slate-600 mb-1">
-            Nomor {normalizedInbType === "PO" ? "SO_INTERNAL" : "SO_SUBDIST"}
+            Nomor{" "}
+            {normalizedInbType === "PO"
+              ? "PO"
+              : normalizedInbType === "SO_INTERNAL"
+                ? "SO Internal"
+                : "SO SubDist"}
           </label>
           <div className="flex gap-2">
             <input
@@ -232,7 +243,7 @@ export default function POCard({
                   normalizedInbType === "PO" ? handleSearchPO : handleSearchSO
                 }
                 disabled={isPOFieldDisabled || loading}
-                title={`Search ${normalizedInbType === "PO" ? "SO_INTERNAL" : "SO_SUBDIST"}`}
+                title={`Search ${normalizedInbType === "PO" ? "PO" : normalizedInbType === "SO_INTERNAL" ? "SO Internal" : "SO SubDist"}`}
               >
                 <FaSearch />
               </Button>
@@ -279,7 +290,7 @@ export default function POCard({
                 variant="secondary"
                 size="xsm"
                 onClick={() => setIsOpen(true)}
-                disabled={cantAddManualAddItem}
+                // disabled={cantAddManualAddItem}
               >
                 + Add Item
               </Button>
@@ -308,6 +319,7 @@ export default function POCard({
           removeItem={removeItem}
           isEditMode={canAddItem}
           uomList={uomList}
+          inbType={normalizedInbType}
         />
       </div>
 

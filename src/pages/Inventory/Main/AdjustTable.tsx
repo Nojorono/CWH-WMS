@@ -109,18 +109,18 @@ const InventoryContentCell = ({
               className="flex items-center justify-between bg-white p-2 rounded border border-gray-100 shadow-sm"
             >
               <div className="flex flex-col">
-                <span className="text-[12px] font-semibold text-gray-800 leading-tight">
+                <span className="text-[15px] font-semibold text-gray-800 leading-tight">
                   {item.item_name}
                 </span>
-                <span className="text-[10px] text-gray-500 font-mono">
+                <span className="text-[12px] text-gray-500 font-mono">
                   Week {item.week_number}
                 </span>
               </div>
               <div className="text-right">
-                <span className="text-[12px] font-bold text-blue-600">
+                <span className="text-[13px] font-bold text-blue-600">
                   {item.current_quantity}
                 </span>
-                <span className="text-[10px] ml-1 text-gray-400 font-medium uppercase">
+                <span className="text-[12px] ml-1 text-gray-400 font-medium uppercase">
                   {item.uom}
                 </span>
               </div>
@@ -333,11 +333,11 @@ const AdjustTable = ({
         header: "Location",
         cell: ({ row }) => (
           <div className="flex flex-col gap-1">
-            <span className="text-[14px] font-semibold text-orange-700 bg-orange-50 px-2 py-0.5 rounded border border-orange-100 w-fit">
+            <span className="text-[16px] font-semibold text-orange-700 bg-orange-50 px-2 py-0.5 rounded border border-orange-100 w-fit">
               {row.original.warehouse_sub_name}
             </span>
-            <span className="text-[12px] text-gray-500 font-medium italic">
-              Bin: {row.original.warehouse_bin_name || "-"}
+            <span className="text-[14px] text-gray-500 font-medium italic">
+              Bin {row.original.warehouse_bin_name || "-"}
             </span>
           </div>
         ),

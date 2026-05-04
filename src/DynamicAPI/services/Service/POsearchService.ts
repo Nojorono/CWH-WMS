@@ -1,6 +1,6 @@
-import { showErrorToast } from "../../../../../../components/toast";
-import { Server47 } from "../../../../../../utils/EndPoint";
-import { ItemForm } from "../formTypes";
+import { showErrorToast } from "../../../components/toast";
+import { Server47 } from "../../../utils/EndPoint";
+import { ItemForm } from "../../types/searchPO";
 
 export interface UomOption {
     id: number | string;
@@ -22,7 +22,7 @@ function normalizeUom(raw: string, uomList: UomOption[]): string {
     return match?.code ?? raw.toUpperCase();
 }
 
-export async function searchPO(
+export async function POsearchService(
     poNo: string,
     masterItems: any[],
     uomList: UomOption[]
@@ -30,9 +30,12 @@ export async function searchPO(
     const res = await fetch(`${Server47}/purchase-order?nomorPO=${poNo}`);
 
     if (!res.ok) throw new Error("Gagal mengambil data dari server.");
-
-    const json = await res.json();
-    const data = json?.data?.[0];
+    const json = await res.json();    
+    if (!json?.data || json.data.length === 0) {
+        throw new Error(`Detail PO ${poNo} tidak ditemukan atau sudah Closed`);
+    }
+    
+    const data = json.data[0];
 
     if (!data) {
         console.error("Data array kosong atau struktur tidak sesuai:", json);

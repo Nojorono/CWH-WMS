@@ -1,14 +1,15 @@
 import { useEffect, useMemo, useState, useRef } from "react";
 import { FaEye, FaTasks, FaTrash } from "react-icons/fa";
 import { ColumnDef } from "@tanstack/react-table";
-import TableComponent from "../Table/TableComponent";
-import { useNavigate, useSearchParams } from "react-router-dom"; // Tambahkan useSearchParams
+import { useNavigate, useSearchParams } from "react-router-dom"; 
 import StatusBadge from "../../../../common/statusBadge";
 import { STATUS_MAP_DO } from "../../../../constants/statusMaps";
 import { useStoreOutboundDeliveryOrder } from "../../../../DynamicAPI/stores/Store/MasterStore";
 import Swal from "sweetalert2";
 import { showErrorToast } from "../../../../components/toast";
 import { EndPoint } from "../../../../utils/EndPoint";
+import TableComponent from "../../../../components/tables/ActionTable/TableComponent";
+
 
 type OutboundMemo = {
   id: string;

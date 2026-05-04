@@ -1,5 +1,10 @@
 // NEW CODE
-import { useFormContext, useFieldArray, Controller } from "react-hook-form";
+import {
+  useFormContext,
+  useFieldArray,
+  Controller,
+  useWatch,
+} from "react-hook-form";
 import { FormValues } from "../formTypes";
 import { inputCls } from "../constants";
 import POCard from "./POCard";
@@ -10,6 +15,7 @@ import {
   FaChevronDown,
   FaChevronRight,
   FaSearch,
+  FaPlus,
 } from "react-icons/fa";
 import { useEffect, useRef, useState } from "react";
 import { formatDateIndo } from "../../../../../../helper/FormatDate";
@@ -22,6 +28,7 @@ import {
 import StatusBadge from "../../../../../../common/statusBadge";
 import { STATUS_MAP_INTEGRATION_INBOUND } from "../../../../../../constants/statusMaps";
 import { useDOValidation } from "../Helper/useDOValidation";
+import { useNavigate } from "react-router-dom";
 
 export default function DeliveryOrderCard({
   doIndex,
@@ -40,8 +47,10 @@ export default function DeliveryOrderCard({
   isDetailMode?: boolean;
   isCreateMode?: boolean;
   isAddToReceiveMode?: boolean;
-  inbType: "PO" | "SO" | "RETUR";
+  inbType: "PO" | "SO_INTERNAL" | "SO_SUBDIST";
 }) {
+  const navigate = useNavigate();
+
   const {
     control,
     register,
@@ -74,12 +83,27 @@ export default function DeliveryOrderCard({
 
   const [open, setOpen] = useState(true);
   const [uploading, setUploading] = useState(false);
-  const detailsRef = useRef<HTMLDetailsElement>(null);  
+  const detailsRef = useRef<HTMLDetailsElement>(null);
+  const existingPONo = watch(`deliveryOrders.${doIndex}.pos.0.po_no` as any);
+  const existingSONo = watch(`deliveryOrders.${doIndex}.pos.0.so_no` as any);
 
   const integrationStatus = watch(
     `deliveryOrders.${doIndex}.integration_status` as any,
   );
   const fileUrl = watch(`deliveryOrders.${doIndex}.attachment`);
+
+  // ✅ DETEKSI DUPLIKASI DO NUMBER SECARA REAL-TIME
+  const allDeliveryOrders = useWatch({
+    name: "deliveryOrders",
+    defaultValue: [],
+  });
+
+  const normalizedThisDONo = (watchedDONo || "").trim().toUpperCase();
+  const isDuplicateDO = allDeliveryOrders.some((doItem: any, index: number) => {
+    if (index === doIndex) return false; // skip diri sendiri
+    const currentDONo = (doItem?.do_no || "").trim().toUpperCase();
+    return normalizedThisDONo !== "" && currentDONo === normalizedThisDONo;
+  });
 
   // ✅ Auto-unlock jika mode Detail/Edit data sudah ada
   useEffect(() => {
@@ -89,14 +113,25 @@ export default function DeliveryOrderCard({
     }
   }, [isDetailMode, isEditMode, watchedDONo, setIsDOChecked]);
 
-  // ✅ Wrapper Handle Check DO
   const onCheckDO = async () => {
-    if (inbType !== "PO" && inbType !== "SO") {
-      showErrorToast("Hanya PO atau SO yang bisa divalidasi!");
+    if (isDuplicateDO) {
+      showErrorToast(
+        `Nomor SJ/DO "${watchedDONo}" sudah dipakai pada SJ lain. Gunakan nomor yang berbeda.`,
+      );
       return;
     }
+
+    if (inbType !== "PO" && inbType !== "SO_INTERNAL") {
+      showErrorToast("Hanya PO, SO Internal yang bisa divalidasi!");
+      return;
+    }
+
+    setDoStatus(null);
+    setIsDOChecked(false);
+    lastValidatedDONo.current = "";
+
     lastValidatedDONo.current = watchedDONo || "";
-    await handleCheckDO();
+    await handleCheckDO(null);
   };
 
   useEffect(() => {
@@ -140,7 +175,39 @@ export default function DeliveryOrderCard({
   };
 
   const isInputDisabled = !isCreateMode && !isEditMode && !isAddToReceiveMode;
-  const isValidType = inbType === "PO" || inbType === "SO";  
+  const isValidType =
+    inbType === "PO" || inbType === "SO_INTERNAL" || inbType === "SO_SUBDIST";
+
+  const currentDO = watch(`deliveryOrders.${doIndex}`);
+
+  const addToReceive = (data: any) => {
+    const firstPO = data.pos?.[0];
+    const activePOno = firstPO?.po_no;
+    const activeSOno = firstPO?.so_no;
+    const inboundNo = watch("inbound_plan_no" as any);
+    // ✅ Ambil inbound_type dari form (bisa berupa string atau object {value, label})
+    const inboundTypeRaw = watch("inbound_type" as any);
+    const inboundType =
+      typeof inboundTypeRaw === "object"
+        ? inboundTypeRaw?.value
+        : inboundTypeRaw;
+
+    const payload = {
+      do_no: data.do_no,
+      activePOno: activePOno,
+      activeSOno: activeSOno,
+      inbound_number: inboundNo,
+      inboundType: inboundType, // ✅ Pass inboundType
+    };
+
+    navigate("/inbound_planning/process", {
+      state: {
+        data: payload,
+        mode: "add",
+        title: "Add to Receive",
+      },
+    });
+  };
 
   return (
     <div className="bg-white rounded-lg shadow p-3 md:p-5">
@@ -165,30 +232,80 @@ export default function DeliveryOrderCard({
               <FaTrash className="mr-1" /> Discard
             </Button>
           )}
+
+          {isDetailMode && totalDO > 1 && (
+            <Button
+              size="xsm"
+              variant="action"
+              onClick={() => addToReceive(currentDO)}
+            >
+              <FaPlus className="mr-1" /> Add to Receive
+            </Button>
+          )}
         </summary>
 
         <div className="p-3 space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {/* PO Group Selection - Only for PO Inbound Type */}
+            {inbType === "PO" && (
+              <div className="flex flex-col">
+                <label className="text-xs text-slate-600 mb-1">PO Type *</label>
+                <Controller
+                  control={control}
+                  name={`deliveryOrders.${doIndex}.po_type`}
+                  render={({ field }) => (
+                    <select
+                      {...field}
+                      className={`${inputCls} ${errors.deliveryOrders?.[doIndex]?.po_type ? "border-red-500" : ""}`}
+                      disabled={isInputDisabled}
+                      onChange={(e) => {
+                        field.onChange(e.target.value);
+                        if (e.target.value === "PO_NON_GROUP") {
+                          setIsDOChecked(true);
+                        } else {
+                          setIsDOChecked(false);
+                          setDoStatus(null);
+                        }
+                      }}
+                    >
+                      <option value="PO_GROUP">PO Group</option>
+                      <option value="PO_NON_GROUP">PO Non Group</option>
+                    </select>
+                  )}
+                />
+              </div>
+            )}
+
             {/* No Surat Jalan */}
             <div className="flex flex-col">
               <label className="text-xs text-slate-600 mb-1">
                 No Surat Jalan *{" "}
                 {doStatus && (
                   <span
-                    className={
-                      doStatus === "success" ? "text-green-600" : "text-red-600"
-                    }
+                    className={`ml-2 inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold
+                      ${
+                        doStatus === "success"
+                          ? "bg-green-100 text-green-700"
+                          : "bg-red-100 text-red-700"
+                      }`}
                   >
-                    ({doStatus === "success" ? "Valid" : "Invalid"})
+                    {doStatus === "success" &&
+                      "DO/SJ tervalidasi • Dokumen ditemukan di Meta"}
+                    {doStatus === "failed" &&
+                      "Nomor SJ/DO tak ditemukan di Meta"}
                   </span>
                 )}
               </label>
               <div className="flex gap-2">
                 <input
                   {...register(`deliveryOrders.${doIndex}.do_no`, {
-                    required: "Wajib diisi",
+                    required: "No Surat Jalan wajib diisi",
                   })}
-                  className={`${inputCls} flex-1 ${errors.deliveryOrders?.[doIndex]?.do_no ? "border-red-500" : ""}`}
+                  className={`${inputCls} flex-1 ${
+                    errors.deliveryOrders?.[doIndex]?.do_no || isDuplicateDO
+                      ? "border-red-500"
+                      : ""
+                  }`}
                   disabled={isInputDisabled}
                 />
                 {!isDetailMode && (
@@ -198,13 +315,20 @@ export default function DeliveryOrderCard({
                     variant="primary"
                     onClick={onCheckDO} // Gunakan wrapper onCheckDO
                     disabled={
-                      !isValidType || (isDOChecked && doStatus === "success")
+                      !isValidType ||
+                      (isDOChecked && doStatus === "success") ||
+                      isDuplicateDO
                     }
                   >
                     <FaSearch />
                   </Button>
                 )}
               </div>
+              {isDuplicateDO && (
+                <p className="mt-1 text-xs text-red-600">
+                  Nomor SJ/DO ini sudah ada, gunakan nomor SJ/DO lain !
+                </p>
+              )}
             </div>
 
             {/* Attachment */}
@@ -212,6 +336,7 @@ export default function DeliveryOrderCard({
               <label className="text-xs text-slate-600 mb-1">
                 Attachment (Maks 2MB)
               </label>
+
               {fileUrl ? (
                 <div className="flex items-center gap-2 text-sm">
                   <a

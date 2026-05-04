@@ -1,0 +1,3 @@
+- [x] Add helper to clear DO state before running handleCheckDO
+- [x] Wire helper into onCheckDO flow
+- [x] Update TODO progress

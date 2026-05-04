@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { loginService } from "../../services/AuthServices/AuthService";
 
+
 interface LoginPayload {
   username?: string;
   password?: string;
@@ -74,6 +75,8 @@ interface AuthState {
   authLogin: (data: LoginPayload) => Promise<AuthLoginResponse>; // ✅ perbaikan di sini
 }
 
+
+
 export const useAuthStore = create<AuthState>((set) => ({
   isLoading: false,
   error: null,
@@ -120,6 +123,8 @@ export const useAuthStore = create<AuthState>((set) => ({
       localStorage.setItem("full_name", `${userDetail?.firstName} ${userDetail?.lastName}`);
       localStorage.setItem("organization_id", `${userDetail?.organizationId}`);
       localStorage.setItem("organization_name", `${userDetail?.organization.organization_name}`);
+      localStorage.setItem("warehouse_sub_id", `${userDetail?.warehouse_sub_id}`);
+
 
 
       // Update state global

@@ -166,6 +166,7 @@ const DynamicForm: React.FC<DynamicFormProps> = ({
                     options={field.options}
                     classNamePrefix="react-select"
                     isDisabled={isDisabled}
+                    menuPortalTarget={document.body}
                     styles={{
                       control: (base, state) => ({
                         ...base,
@@ -183,6 +184,14 @@ const DynamicForm: React.FC<DynamicFormProps> = ({
                       singleValue: (base) => ({
                         ...base,
                         color: isDisabled ? "#9ca3af" : base.color,
+                      }),
+                      menuPortal: (base) => ({
+                        ...base,
+                        zIndex: 9999,
+                      }),
+                      menu: (base) => ({
+                        ...base,
+                        zIndex: 9999,
                       }),
                     }}
                   />

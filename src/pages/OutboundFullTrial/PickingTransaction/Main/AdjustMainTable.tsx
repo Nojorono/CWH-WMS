@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, useRef } from "react";
 import { FaPrint, FaTasks } from "react-icons/fa";
 import { ColumnDef } from "@tanstack/react-table";
-import TableComponent from "../Table/TableComponent";
+// import TableComponent from "../Table/TableComponent";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import StatusBadge from "../../../../common/statusBadge";
 import { STATUS_MAP_DO } from "../../../../constants/statusMaps";
@@ -9,8 +9,10 @@ import { OutboundDo } from "../Helper/doTypes";
 import { useStoreOutboundDeliveryOrder } from "../../../../DynamicAPI/stores/Store/MasterStore";
 import { mapPickingTransactions } from "../Helper/mappedList";
 import { formatDateIndo } from "../../../../helper/FormatDate";
-import Swal from "sweetalert2"; // Pastikan sweetalert2 terinstall
+import Swal from "sweetalert2"; 
 import Button from "../../../../components/ui/button/Button";
+import TableComponent from "../../../../components/tables/ActionTable/TableComponent";
+
 
 type Props = {
   globalFilter?: string;

@@ -161,7 +161,7 @@ const DOSection = ({
           isDetailMode={isDetailMode}
           isEditMode={isEditMode}
           isAddToReceiveMode={isAddToReceiveMode}
-          inbType={inboundType as "PO" | "SO" | "RETUR"}
+          inbType={inboundType as "PO" | "SO_INTERNAL" | "SO_SUBDIST"}
         />
       ))}
     </section>
@@ -176,7 +176,6 @@ const DetailTabs = ({
 }: Pick<Props, "doFields" | "removeDO" | "inboundID"> & {
   methods: UseFormReturn<FormValues>;
 }) => {
-
   const inboundType = methods.watch("inbound_type") || "PO";
   const [activeTab, setActiveTab] = useState(0);
 
@@ -195,7 +194,7 @@ const DetailTabs = ({
                   totalDO={doFields.length}
                   isEditMode={false}
                   isDetailMode={true}
-                  inbType={inboundType as "PO" | "SO" | "RETUR"}
+                  inbType={inboundType as "PO" | "SO_INTERNAL" | "SO_SUBDIST"}
                 />
               ))}
             </>
@@ -228,6 +227,13 @@ const SubmitSection = ({
   const values = methods.watch();
   const deliveryOrders = values.deliveryOrders || [];
 
+  const normalizedDONumbers = deliveryOrders
+    .map((doItem: any) => (doItem?.do_no || "").trim().toUpperCase())
+    .filter(Boolean);
+
+  const hasDuplicateDO =
+    new Set(normalizedDONumbers).size !== normalizedDONumbers.length;
+
   // --- VALIDASI UTAMA ---
   const hasNoDO = deliveryOrders.every((doItem: any) => !doItem.do_no?.trim());
 
@@ -259,6 +265,7 @@ const SubmitSection = ({
   // --- Disable button jika ada kondisi tidak valid ---
   const isDisabled =
     hasNoDO ||
+    hasDuplicateDO ||
     hasMultiplePO ||
     hasDOWithoutPO ||
     hasPOWithoutItem ||
@@ -266,9 +273,11 @@ const SubmitSection = ({
 
   // --- Pesan agar user tahu penyebab disable ---
   let validateMsg = "";
-
   if (hasEmptyMainFields) validateMsg = "Isi field utama terlebih dahulu.";
   else if (hasNoDO) validateMsg = "Minimal harus ada 1 nomor Surat Jalan.";
+  else if (hasDuplicateDO)
+    validateMsg =
+      "Dalam 1 Inbound Plan tidak boleh ada nomor SJ/DO yang sama. Gunakan nomor SJ yang lain.";
   else if (hasMultiplePO)
     validateMsg = "Setiap Surat Jalan hanya boleh memiliki 1 nomor PO.";
   else if (hasPOWithoutItem)
@@ -319,6 +328,59 @@ export default function InboundPlanningFormView(props: Props) {
     inboundType,
   } = props;
 
+  const resetDOOnly = () => {
+    const current = methods.getValues();
+
+    methods.reset({
+      ...current,
+      flag_validated: undefined,
+      deliveryOrders: [
+        {
+          do_no: "",
+          date: "",
+          attachment: "",
+          po_type: "",
+          validation_surat_jalan: undefined as any,
+          pos: [
+            {
+              po_no: "",
+              so_no: "",
+              vendor_name: "",
+              principal: "",
+              items: [],
+            },
+          ],
+        },
+      ],
+    });
+  };
+
+  const inboundTypeValue = methods.watch("inbound_type");
+  const prevInboundTypeRef = useRef<any>(null);
+
+  useEffect(() => {
+    const currentType =
+      typeof inboundTypeValue === "string"
+        ? inboundTypeValue
+        : inboundTypeValue?.value || "";
+
+    const prevType =
+      typeof prevInboundTypeRef.current === "string"
+        ? prevInboundTypeRef.current
+        : prevInboundTypeRef.current?.value || "";
+
+    if (!prevType) {
+      prevInboundTypeRef.current = inboundTypeValue;
+      return;
+    }
+
+    if (currentType && prevType !== currentType) {
+      resetDOOnly(); // hanya reset isi DO/PO
+    }
+
+    prevInboundTypeRef.current = inboundTypeValue;
+  }, [inboundTypeValue]);
+
   const { list: masterSupplierData, fetchUsingParam } =
     useStoreMasterSupplier();
 
@@ -328,28 +390,26 @@ export default function InboundPlanningFormView(props: Props) {
   }));
 
   const defaultInboundTypeOptions = [
-    { value: "PO", label: "SO_INTERNAL" },
-    { value: "SO", label: "SO_SUBDIST" },
+    { value: "PO", label: "PO" },
+    { value: "SO_INTERNAL", label: "SO Internal" },
   ];
 
   const [inboundTypeOptions, setInboundTypeOptions] = useState(
     defaultInboundTypeOptions,
   );
 
-  // jika props.inboundType diberikan, eliminasi opsi lain dan pilih nilai itu di form
   const inboundTypeInitRef = useRef<string | null>(null);
   useEffect(() => {
     if (!inboundType) return;
 
-    // jalankan hanya sekali saat inboundType berubah
     if (inboundTypeInitRef.current === inboundType) return;
     inboundTypeInitRef.current = inboundType;
 
     const opt = { value: inboundType, label: inboundType };
-    // set options hanya berisi nilai inboundType (mengeliminasi opsi lain)
     setInboundTypeOptions([opt]);
 
-    // set nilai form ke object option agar Select menampilkan labelnya
+    methods.setValue("inbound_type", opt, { shouldValidate: true });
+
     try {
       const current = methods.getValues?.("inbound_type");
       const needSet =
@@ -365,7 +425,7 @@ export default function InboundPlanningFormView(props: Props) {
         });
       }
     } catch {
-      // ignore
+      console.log("error");
     }
   }, [inboundType, methods]);
 
@@ -374,7 +434,6 @@ export default function InboundPlanningFormView(props: Props) {
     supplierOptions,
     inboundTypeOptions,
   );
-
 
   return (
     <div className="p-6 bg-slate-50 min-h-screen">

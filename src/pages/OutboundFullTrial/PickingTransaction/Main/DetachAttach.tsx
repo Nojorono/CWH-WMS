@@ -2,7 +2,6 @@
 import React, { useMemo, useState } from "react";
 import Button from "../../../../components/ui/button/Button";
 import PageBreadcrumb from "../../../../components/common/PageBreadCrumb";
-import TableComponent from "../Table/TableComponent";
 import { useStoreOutboundDeliveryOrder } from "../../../../DynamicAPI/stores/Store/MasterStore";
 import { useLocation, useNavigate } from "react-router";
 import { formatDateIndo } from "../../../../helper/FormatDate";
@@ -21,6 +20,7 @@ import Swal from "sweetalert2";
 import DetailMemoModal from "../Modal/DetailMemoModal";
 import KeyValueCard from "../../Picking/Helper/KeyValueCard";
 import { showErrorToast } from "../../../../components/toast";
+import TableComponent from "../../../../components/tables/ActionTable/TableComponent";
 
 const DetachAttach: React.FC = () => {
   const location = useLocation();
@@ -309,40 +309,34 @@ const DetachAttach: React.FC = () => {
       </section>
 
       {/* === MEMO List === */}
-      <section className="bg-white rounded-xl shadow-sm border border-gray-200">
-        <div className="bg-orange-500 text-white rounded-t-xl px-5 py-3 font-semibold">
-          Memo Transaction List
-        </div>
-        <div className="p-4">
-          <>
-            <div className="flex justify-end mb-4">
-              {statusDO === "APPROVED" ||
-              statusDO === "APPROVED_LOAD" ? null : (
-                <Button
-                  size="sm"
-                  type="button"
-                  variant="action"
-                  startIcon={<FaPlus className="size-5" />}
-                  onClick={() => setIsAttachModalOpen(true)}
-                >
-                  Attach Memo
-                </Button>
-              )}
-            </div>
+      <div className="p-2">
+        <>
+          <div className="flex justify-end mb-4">
+            {statusDO === "APPROVED" || statusDO === "APPROVED_LOAD" ? null : (
+              <Button
+                size="sm"
+                type="button"
+                variant="action"
+                startIcon={<FaPlus className="size-5" />}
+                onClick={() => setIsAttachModalOpen(true)}
+              >
+                Attach Memo
+              </Button>
+            )}
+          </div>
 
-            <TableComponent
-              data={outboundMemos}
-              columns={columnsTableItem}
-              pageSize={pageSize}
-              pageIndex={pageIndex}
-              onPageChange={(page, size) => {
-                setPageIndex(page);
-                setPageSize(size);
-              }}
-            />
-          </>
-        </div>
-      </section>
+          <TableComponent
+            data={outboundMemos}
+            columns={columnsTableItem}
+            pageSize={pageSize}
+            pageIndex={pageIndex}
+            onPageChange={(page, size) => {
+              setPageIndex(page);
+              setPageSize(size);
+            }}
+          />
+        </>
+      </div>
 
       {/* === Modal Attach Memo === */}
       <AttachMemoModal

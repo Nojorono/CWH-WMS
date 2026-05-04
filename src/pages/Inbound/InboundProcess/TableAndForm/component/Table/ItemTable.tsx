@@ -23,6 +23,7 @@ interface ItemTableProps {
   removeItem: (rowIndex: number) => void;
   isEditMode?: boolean;
   uomList: UomOption[];
+  inbType?: string;
 }
 
 export default function ItemTable({
@@ -32,6 +33,7 @@ export default function ItemTable({
   removeItem,
   isEditMode,
   uomList,
+  inbType,
 }: ItemTableProps) {
   const { register } = useFormContext<FormValues>();
 
@@ -253,7 +255,7 @@ export default function ItemTable({
                 colSpan={columns.length}
                 className="px-4 py-8 text-center text-slate-400 italic"
               >
-                No items added yet. Please searching by SO_INTERNAL or SO_SUBDIST or adding items manually.
+                No items added yet. Please search by {inbType === "PO" ? "PO" : inbType === "SO_INTERNAL" ? "SO Internal" : "SO SubDist"} or add items manually.
               </td>
             </tr>
           )}

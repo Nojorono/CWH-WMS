@@ -110,35 +110,7 @@ const TableComponent = <T extends { [key: string]: any }>({
   };
 
   return (
-    <div className="flex flex-col w-full bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
-      {/* 🚀 Top Bar: Page Size Selector (Fixed & Sticky) */}
-      <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-white/80 backdrop-blur-md z-30 sticky top-0">
-        {/* <div className="flex items-center gap-3">
-          <div className="relative">
-            <select
-              value={pagination.pageSize}
-              onChange={(e) => handlePageSizeChange(Number(e.target.value))}
-              className="appearance-none bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 block px-4 py-2 pr-8 transition-all outline-none font-bold cursor-pointer hover:bg-gray-100"
-            >
-              {[5, 10, 20, 50].map((size) => (
-                <option key={size} value={size}>
-                  {size}
-                </option>
-              ))}
-            </select>
-            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-400">
-              <svg
-                className="fill-current h-4 w-4"
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 20 20"
-              >
-                <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
-              </svg>
-            </div>
-          </div>
-        </div> */}
-      </div>
-
+    <div className="flex flex-col w-full bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
       {/* 🧱 Table Container */}
       <div className="overflow-x-auto relative custom-scrollbar">
         <div className="max-h-[550px] overflow-y-auto">

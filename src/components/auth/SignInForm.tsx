@@ -1,13 +1,16 @@
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
-import { Link, useNavigate } from "react-router-dom";
-import { FaEye, FaEyeSlash } from "react-icons/fa";
+import { useNavigate } from "react-router-dom";
+import { EyeCloseIcon, EyeIcon } from "../../icons";
 import Label from "../form/Label";
 import SignInInput from "../form/input/SignInInput";
 import Button from "../ui/button/Button";
-import CustomToast, { showErrorToast, showSuccessToast } from "../../components/toast";
+import CustomToast from "../../components/toast";
 import { useAuthStore } from "../../API/store/AuthStore/authStore";
-import { useStoreMenu } from "../../DynamicAPI/stores/Store/MasterStore";
+import {
+  useStoreMenu,
+  useStoreIo,
+} from "../../DynamicAPI/stores/Store/MasterStore";
 
 interface SignInFormValues {
   username: string;
@@ -22,6 +25,7 @@ export default function SignInForm() {
   const navigate = useNavigate();
   const { authLogin } = useAuthStore();
   const { fetchAll: fetchMenus } = useStoreMenu();
+  const { fetchAll: fetchIO } = useStoreIo();
 
   const [showPassword, setShowPassword] = useState(false);
   const toggleShowPassword = () => setShowPassword((prev) => !prev);
@@ -51,42 +55,26 @@ export default function SignInForm() {
 
   const handleLogin = async (data: SignInFormValues) => {
     setIsLoading(true);
-    setError(null);
-
     try {
-      // 🔹 Panggil API login dari Zustand
-      const resData = await authLogin({
-        ...data,
-      });
+      const resData = await authLogin({ ...data });
 
-      // 🔹 Validasi hasil login
-      if (!resData) {
-        throw new Error("Invalid response from server");
+      if (resData) {
+        await fetchIO();
+        const currentIoList = useStoreIo.getState().list;
+
+        if (currentIoList && currentIoList.length > 0) {
+          localStorage.setItem("io_list", JSON.stringify(currentIoList));
+        }
+
+        // Navigasi
+        const { menus } = resData;
+        const navigatePath =
+          menus?.find((m: any) => m.parentId !== null && m.path)?.path || "/";
+
+        setTimeout(() => navigate(navigatePath), 800);
       }
-      const { user, menus } = resData; // ✅ langsung ambil dari return authLogin
-
-      if (!user) {
-        throw new Error("User data missing from response");
-      }
-
-      if (!menus || menus.length === 0) {
-        throw new Error("No menu available for this user!");
-      }
-
-      // Cari menu pertama yang memiliki parentId (bukan root menu)
-      const firstChildMenu = menus.find(
-        (m: any) => m.parentId !== null && m.path
-      );
-      const navigatePath = firstChildMenu?.path || "/";
-      fetchMenus();
-
-      setTimeout(() => {
-        navigate(navigatePath);
-      }, 800);
-
     } catch (err: any) {
       console.error("Login failed:", err);
-      setError(err.message || "Login failed!");
     } finally {
       setIsLoading(false);
     }
@@ -148,10 +136,11 @@ export default function SignInForm() {
                 }
               />
             </div>
-            <div className="flex items-center justify-between">
-            </div>
+            <div className="flex items-center justify-between"></div>
             {error && (
-              <p className="text-md text-red-500 dark:text-red-400">Gagal Login, {error}!</p>
+              <p className="text-md text-red-500 dark:text-red-400">
+                Gagal Login, {error}!
+              </p>
             )}
             <Button
               className="w-full"

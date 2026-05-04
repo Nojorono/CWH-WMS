@@ -1,13 +1,14 @@
 import { useEffect, useMemo, useState } from "react";
-import { FaEye, FaEdit, FaTrash, FaPlus } from "react-icons/fa";
+import { FaEye, FaEdit, FaTrash } from "react-icons/fa";
 import { ColumnDef } from "@tanstack/react-table";
 import { useNavigate } from "react-router-dom";
 import { formatDateIndo } from "../../../../helper/FormatDate";
 import StatusBadge from "../../../../common/statusBadge";
 import { STATUS_MAP_INBOUND } from "../../../../constants/statusMaps";
 import { useStoreInboundGoodStock } from "../../../../DynamicAPI/stores/Store/MasterStore";
-import TableComponent from "../TableAndForm/component/Table/TableComponent";
 import { usePagePermissions } from "../../../../utils/UserPermission/UserPagePermissions";
+import ActIndicator from "../../../../components/ui/activityIndicator";
+import TableComponent from "../../../../components/tables/ActionTable/TableComponent";
 
 type MenuTableProps = {
   globalFilter?: string;
@@ -26,7 +27,7 @@ const AdjustTable = ({
   const { canCreate, canManage } = usePagePermissions();
 
   const { fetchUsingPagination, deleteData, list, pagination, isLoading } =
-    useStoreInboundGoodStock();    
+    useStoreInboundGoodStock();
 
   // 🔹 local state pagination
   const [pageIndex, setPageIndex] = useState(0);
@@ -60,12 +61,10 @@ const AdjustTable = ({
       },
       {
         header: "Principal",
-        id: "principal", // Gunakan id karena kita pakai accessorFn/cell
+        id: "principal",
         cell: ({ row }) => {
           const dos = row.original.inbound_dos;
-          // Cek jika ada data di inbound_dos
           if (dos && dos.length > 0) {
-            // Jika Anda hanya ingin mengambil principal dari DO pertama:
             return dos[0].principal || "-";
           }
           return "-";
@@ -132,15 +131,6 @@ const AdjustTable = ({
                   />
                 </>
               )}
-
-              {(!item.inbound_id_reference ||
-                item.inbound_id_reference === "") && (
-                <FaPlus
-                  className="size-5 cursor-pointer text-purple-600"
-                  onClick={() => handleAddToReceive(item)}
-                  title="Add to Receive"
-                />
-              )}
             </div>
           );
         },
@@ -165,22 +155,14 @@ const AdjustTable = ({
     deleteData(id);
   };
 
-  const handleAddToReceive = (data: any) => {
-    navigate("/inbound_planning/process", {
-      state: { data, mode: "add", title: "Add Inbound Planning" },
-    });
-  };
+  const mappedList = list || [];
 
   return (
     <div className="relative">
-      {isLoading && (
-        <div className="absolute inset-0 bg-white/70 flex items-center justify-center z-10">
-          <span className="text-gray-600 font-medium">Loading...</span>
-        </div>
-      )}
+      {isLoading && <ActIndicator />}
 
       <TableComponent
-        data={list}
+        data={mappedList}
         columns={columns}
         globalFilter={globalFilter}
         setGlobalFilter={setGlobalFilter}
