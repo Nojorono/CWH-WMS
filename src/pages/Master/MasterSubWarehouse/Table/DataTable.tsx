@@ -190,14 +190,13 @@ const DataTable = ({ params }: DataTableProps) => {
       locator_name: params?.locatorName || data.locator_name, 
     };
 
-    // Logika bisnis proses yang sudah ada (Prioritas Staging vs Capacity)
     if (is_staging === "NO") {
       payload.capacity_bin =
         capacity_bin !== undefined ? Number(capacity_bin) : undefined;
       payload.is_staging = null;
     } else {
       payload.is_staging = is_staging;
-      payload.capacity_bin = null; // Menghindari konflik data
+      payload.capacity_bin = null; 
     }
 
     try {
