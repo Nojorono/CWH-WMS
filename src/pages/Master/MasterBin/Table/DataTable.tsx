@@ -4,7 +4,7 @@ import Input from "../../../../components/form/input/InputField";
 import Label from "../../../../components/form/Label";
 import Button from "../../../../components/ui/button/Button";
 import { useDebounce } from "../../../../helper/useDebounce";
-import DynamicTable from "../../../../components/wms-components/DynamicTable";
+
 import {
   useStoreWarehouse,
   useStoreIo,
@@ -14,6 +14,7 @@ import {
 import PrintBarcodeModal from "../Modal/PrintBarcodeModal";
 import { showErrorToast } from "../../../../components/toast";
 import { showConfirmDialog } from "../../../../components/swal-confirm";
+import DynamicTable from "./CustomTable";
 
 interface DataTableProps {
   params?: {
@@ -98,7 +99,6 @@ const DataTable: React.FC<DataTableProps> = ({ params }) => {
       name: "capacity_pallet",
       label: "Kapasitas Pallet",
       type: "number",
-      // sembunyikan ketika params.zoneCode memiliki nilai "PRELOAD"
       hiddenWhen: () => params?.zoneCode === "PRELOAD",
     },
   ];
