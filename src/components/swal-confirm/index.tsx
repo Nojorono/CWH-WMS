@@ -29,7 +29,7 @@ export const showConfirmDialog = (
     confirmButtonColor = "#3085d6",
     cancelButtonColor = "#d33",
     reverseButtons = true,
-  } = options;
+} = options;
 
   Swal.fire({
     title,
@@ -41,6 +41,11 @@ export const showConfirmDialog = (
     confirmButtonText,
     cancelButtonText,
     reverseButtons,
+    didOpen: () => {
+      // Raise z-index above modal's z-[99999]
+      const container = Swal.getContainer();
+      if (container) container.style.zIndex = "100000";
+    },
   }).then((result) => {
     if (result.isConfirmed) {
       onConfirm();
