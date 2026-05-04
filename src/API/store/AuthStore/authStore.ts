@@ -101,7 +101,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       const accessToken = resData.accessToken;
       const refreshToken = resData.refreshToken || null;
       const user = resData.user;
-      const userDetail = user.userDetail;
+      const userDetail = user?.userDetail ?? null;
       const menus = resData.menus || [];
       const permissions = resData.permissions || [];
 
@@ -118,13 +118,22 @@ export const useAuthStore = create<AuthState>((set) => ({
       localStorage.setItem("username", user?.username || "");
       localStorage.setItem("menus", JSON.stringify(menus));
       localStorage.setItem("user_detail", JSON.stringify(userDetail));
-      localStorage.setItem("email", userDetail?.email || "");
-      localStorage.setItem("phone", userDetail?.phone || "");
-      localStorage.setItem("full_name", `${userDetail?.firstName} ${userDetail?.lastName}`);
-      localStorage.setItem("organization_id", `${userDetail?.organizationId}`);
-      localStorage.setItem("organization_name", `${userDetail?.organization.organization_name}`);
-      localStorage.setItem("warehouse_sub_id", `${userDetail?.warehouse_sub_id}`);
 
+      localStorage.setItem("email", userDetail?.email ?? "");
+      localStorage.setItem("phone", userDetail?.phone ?? "");
+      localStorage.setItem(
+        "full_name",
+        `${userDetail?.firstName ?? ""} ${userDetail?.lastName ?? ""}`.trim(),
+      );
+      localStorage.setItem("organization_id", String(userDetail?.organizationId ?? ""));
+      localStorage.setItem(
+        "organization_name",
+        userDetail?.organization?.organization_name ?? "",
+      );
+      localStorage.setItem(
+        "warehouse_sub_id",
+        String((userDetail as any)?.warehouse_sub_id ?? ""),
+      );
 
 
       // Update state global

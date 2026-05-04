@@ -46,7 +46,7 @@ const DataTable = ({ params }: DataTableProps) => {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [selectedPallets, setSelectedPallets] = useState<any[]>([]);
   const [isPrintModalOpen, setPrintModalOpen] = useState(false);
-
+  
   // LOGIKA PEMILIHAN DATA:
   const displayData = useMemo(() => {
     return params?.WHid ? (Array.isArray(WHdetail) ? WHdetail : []) : subWHList;

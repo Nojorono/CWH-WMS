@@ -18,7 +18,6 @@ import {
   Dashboard,
   MasterMenu,
   MasterPallet,
-  MasterUser,
   MasterUserManagement,
   MasterRole,
   CreateRole,
