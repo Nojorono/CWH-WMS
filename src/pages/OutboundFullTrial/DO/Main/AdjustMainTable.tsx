@@ -344,6 +344,17 @@ const AdjustTableDO = ({
               (p: any) => p.status !== "CANCELLED",
             );
 
+            const totalSKU = pickings.length;
+            const scannedSKUCount = pickings.filter((tp: any) => {
+              const activeScans = (tp.transactionScanPicking || []).filter(
+                (s: any) => s.status !== "CANCELLED",
+              );
+              return activeScans.length > 0;
+            }).length;
+
+            const remainingSKU = totalSKU - scannedSKUCount;
+            const isAllScanned = totalSKU > 0 && remainingSKU === 0;
+
             return (
               <div
                 key={memo.id}
@@ -376,11 +387,25 @@ const AdjustTableDO = ({
                       <span className="text-sm font-black text-slate-800 tracking-tight">
                         {memo.outbound_memo_number}
                       </span>
+
+                      {/* INFO STATUS SKU DI SEBELAH MEMO ID */}
+                      <div className="flex items-center gap-1.5 ml-2">
+                        {remainingSKU > 0 ? (
+                          <span className="text-[10px] font-black bg-amber-100 text-amber-700 border border-amber-200 px-2 py-0.5 rounded-full shadow-sm">
+                            {remainingSKU} SKU Belum Scan
+                          </span>
+                        ) : isAllScanned ? (
+                          <span className="text-[10px] font-black bg-emerald-100 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-full shadow-sm">
+                            Semua SKU sudah di-Scan
+                          </span>
+                        ) : null}
+                      </div>
                     </div>
+
                     <div className="flex items-center gap-2 mt-1">
                       {isAssigned ? (
                         <span className="text-[10px] font-bold text-blue-700 bg-blue-100 px-2 py-0.5 rounded-md flex items-center gap-1">
-                          👤 Helper {assignedUsers[0].picking_name}
+                          👤 Helper - {assignedUsers[0].picking_name}
                         </span>
                       ) : (
                         <span className="text-[10px] font-bold text-red-600 bg-red-50 px-2 py-0.5 rounded-md">
@@ -392,7 +417,7 @@ const AdjustTableDO = ({
 
                   <div className="flex flex-col items-end gap-2">
                     <span className="text-[11px] font-bold text-slate-500 bg-white border px-2 py-1 rounded-lg shadow-sm">
-                      {pickings.length} SKU
+                      {totalSKU} SKU
                     </span>
                     <svg
                       className={`w-5 h-5 text-slate-400 transition-transform ${isOpen ? "rotate-180" : ""}`}
@@ -412,9 +437,9 @@ const AdjustTableDO = ({
 
                 {/* --- DAFTAR BARANG (BODY) --- */}
                 {isOpen && (
-                  <div className="bg-white p-2 divide-y divide-slate-100 border-t-2 border-slate-100">
+                  <div className="bg-slate-50/50 p-3 flex flex-col gap-3 border-t-2 border-slate-100">
                     {pickings.length === 0 ? (
-                      <div className="p-6 text-center text-slate-400 text-xs italic">
+                      <div className="p-6 text-center text-slate-400 text-xs italic bg-white rounded-xl border border-dashed border-slate-200">
                         Instruksi pengambilan belum dibuat
                       </div>
                     ) : (
@@ -427,12 +452,16 @@ const AdjustTableDO = ({
                         return (
                           <div
                             key={tp.id}
-                            className="py-4 px-2 first:pt-2 last:pb-2"
+                            className={`p-4 rounded-xl border transition-all duration-200 ${
+                              isDone
+                                ? "bg-white border-emerald-100 shadow-sm"
+                                : "bg-white border-slate-200 shadow-sm hover:border-blue-200"
+                            }`}
                           >
                             {/* Info Utama Barang */}
-                            <div className="flex justify-between items-start mb-3">
+                            <div className="flex justify-between items-start mb-4">
                               <div className="flex flex-col gap-0.5 max-w-[65%]">
-                                <span className="text-xs font-black text-slate-900 uppercase tracking-wide">
+                                <span className="text-sm font-black text-slate-900 uppercase tracking-wide">
                                   {tp.item?.sku}
                                 </span>
                                 <p className="text-[11px] text-slate-500 font-medium leading-relaxed">
@@ -440,64 +469,70 @@ const AdjustTableDO = ({
                                 </p>
                               </div>
 
-                              {/* Label Status yang Sangat Jelas */}
+                              {/* Label Status */}
                               {isDone ? (
                                 <div className="flex flex-col items-end">
-                                  <span className="bg-emerald-500 text-white text-[10px] px-2.5 py-1 rounded-lg font-black flex items-center gap-1 shadow-md shadow-emerald-100">
+                                  <span className="bg-emerald-500 text-white text-[10px] px-2.5 py-1 rounded-lg font-black flex items-center gap-1 shadow-sm shadow-emerald-100">
                                     ✅ SELESAI SCAN
                                   </span>
-                                  <span className="text-[9px] text-emerald-600 font-bold mt-1">
+                                  <span className="text-[9px] text-emerald-600 font-bold mt-1.5 px-1">
                                     Oleh:{" "}
                                     {activeScans[0].user_name?.split(" ")[0]}
                                   </span>
                                 </div>
                               ) : (
                                 <div className="flex flex-col items-end">
-                                  <span className="bg-amber-100 text-amber-700 border-2 border-amber-200 text-[10px] px-2.5 py-1 rounded-lg font-black animate-pulse">
+                                  <span className="bg-amber-100 text-amber-700 border border-amber-200 text-[10px] px-2.5 py-1 rounded-lg font-black animate-pulse">
                                     ⏳ BELUM DI-SCAN
                                   </span>
                                 </div>
                               )}
                             </div>
 
-                            {/* Detail Lokasi & Jumlah */}
-                            <div className="grid grid-cols-2 gap-3 bg-slate-50 p-3 rounded-xl border border-slate-100">
+                            {/* Detail Lokasi & Jumlah (Section Box Samar) */}
+                            <div
+                              className={`grid grid-cols-2 gap-4 p-3 rounded-xl border ${
+                                isDone
+                                  ? "bg-emerald-50/30 border-emerald-100/50"
+                                  : "bg-slate-50 border-slate-100"
+                              }`}
+                            >
                               {/* Lokasi Gudang */}
-                              <div className="flex flex-col">
-                                <span className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">
+                              <div className="flex flex-col justify-center">
+                                <span className="text-[9px] text-slate-400 font-bold uppercase tracking-widest mb-1">
                                   Zone/ Bin
                                 </span>
-                                <div className="flex items-center gap-1 mt-0.5">
-                                  <span className="text-xs font-black text-slate-700">
+                                <div className="flex items-center gap-1.5">
+                                  <span className="text-sm font-black text-slate-700">
                                     {tp.sourceWarehouseSub?.name || "-"}
                                   </span>
-                                  <span className="text-xs text-slate-400">
+                                  <span className="text-slate-300 text-xs">
                                     /
                                   </span>
-                                  <span className="text-xs font-black text-blue-600">
+                                  <span className="text-sm font-black text-blue-600">
                                     {tp.sourceBin?.name || "Area Umum"}
                                   </span>
                                 </div>
                               </div>
 
-                              {/* Jumlah Barang */}
-                              <div className="flex flex-col items-end gap-2">
+                              {/* Jumlah Barang (Vertical Mode) */}
+                              <div className="flex flex-col items-end gap-2 border-l border-slate-200/50 pl-4">
                                 <div className="flex flex-col items-end">
-                                  <span className="text-[9px] text-slate-400 font-bold uppercase tracking-widest leading-none">
+                                  <span className="text-[9px] text-slate-400 font-bold uppercase tracking-widest leading-none mb-1">
                                     Suggestion
                                   </span>
                                   <span className="text-sm font-black text-slate-800">
                                     {tp.quantity}{" "}
-                                    <span className="text-[10px] text-slate-500">
+                                    <span className="text-[10px] text-slate-500 font-bold uppercase">
                                       {tp.uom}
                                     </span>
                                   </span>
                                 </div>
 
-                                <div className="w-8 h-[1px] bg-slate-200"></div>
+                                <div className="w-full h-[1px] bg-slate-200/50"></div>
 
                                 <div className="flex flex-col items-end">
-                                  <span className="text-[9px] text-slate-400 font-bold uppercase tracking-widest leading-none">
+                                  <span className="text-[9px] text-slate-400 font-bold uppercase tracking-widest leading-none mb-1">
                                     Telah Di-Scan
                                   </span>
                                   <span
@@ -510,13 +545,7 @@ const AdjustTableDO = ({
                                     {isDone
                                       ? activeScans[0].quantity_picked
                                       : "0"}{" "}
-                                    <span
-                                      className={
-                                        isDone
-                                          ? "text-emerald-500/70 text-[10px]"
-                                          : "text-slate-400 text-[10px]"
-                                      }
-                                    >
+                                    <span className="text-[10px] font-bold uppercase opacity-70">
                                       {tp.uom}
                                     </span>
                                   </span>
@@ -524,13 +553,13 @@ const AdjustTableDO = ({
                               </div>
                             </div>
 
-                            {/* Catatan Waktu (Opsional) */}
+                            {/* Catatan Waktu (Audit Trail) */}
                             {isDone && (
-                              <div className="mt-2 flex items-center gap-1.5 text-[10px] text-slate-400 px-1">
-                                <div className="w-1.5 h-1.5 bg-emerald-400 rounded-full"></div>
-                                <span className="flex items-center gap-1">
+                              <div className="mt-3 flex items-center gap-2 text-[10px] text-slate-400 bg-emerald-50/50 py-1.5 px-3 rounded-lg w-fit border border-emerald-100/50">
+                                <div className="w-1.5 h-1.5 bg-emerald-400 rounded-full shadow-sm shadow-emerald-200"></div>
+                                <span>
                                   Berhasil di-scan pada{" "}
-                                  <strong>
+                                  <strong className="text-slate-600">
                                     {new Date(
                                       activeScans[0].createdAt,
                                     ).toLocaleDateString("id-ID", {
@@ -544,9 +573,9 @@ const AdjustTableDO = ({
                                     ).toLocaleTimeString("id-ID", {
                                       hour: "2-digit",
                                       minute: "2-digit",
-                                    })}
+                                    })}{" "}
+                                    WIB
                                   </strong>
-                                  WIB
                                 </span>
                               </div>
                             )}
