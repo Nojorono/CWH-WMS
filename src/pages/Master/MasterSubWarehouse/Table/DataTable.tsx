@@ -110,23 +110,11 @@ const DataTable = ({ params }: DataTableProps) => {
 
   const formFields = [
     {
-      name: "name",
-      label: "Zone Name",
-      type: "text",
-      validation: { required: "Required" },
-    },
-    {
-      name: "code",
-      label: "Kode",
-      type: "text",
-      validation: { required: "Required" },
-    },
-    {
       name: "is_staging",
       label: "Is Staging Area?",
       type: "select",
       options: [
-        { label: "NO", value: "NO" },
+        { label: "NO", value: null },
         { label: "INBOUND", value: "INBOUND" },
         { label: "OUTBOUND", value: "OUTBOUND" },
       ],
@@ -145,6 +133,19 @@ const DataTable = ({ params }: DataTableProps) => {
           v === true || v === false || "Required",
       },
     },
+    {
+      name: "name",
+      label: "Zone Name",
+      type: "text",
+      validation: { required: "Required" },
+    },
+    {
+      name: "code",
+      label: "Kode",
+      type: "text",
+      validation: { required: "Required" },
+    },
+
     {
       name: "description",
       label: "Description",
@@ -178,16 +179,15 @@ const DataTable = ({ params }: DataTableProps) => {
     } = data;
 
     const payload: any = {
-      // Mengambil dari params atau state yang tersedia
       warehouse_id: params?.WHid || data.warehouse_id,
       name,
       code,
       description,
       barcode_image_url,
       is_gate: !!is_gate,
-      is_good_stock: !!is_good_stock, // konversi ke boolean
-      locator_id: params?.locatorId || data.locator_id, // dari params props
-      locator_name: params?.locatorName || data.locator_name, // dari params props
+      is_good_stock: !!is_good_stock, 
+      locator_id: params?.locatorId || data.locator_id, 
+      locator_name: params?.locatorName || data.locator_name, 
     };
 
     // Logika bisnis proses yang sudah ada (Prioritas Staging vs Capacity)
