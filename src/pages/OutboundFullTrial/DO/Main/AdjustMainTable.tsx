@@ -237,11 +237,14 @@ const AdjustTableDO = ({
                 {/* --- HEADER MEMO --- */}
                 <div
                   onClick={() => setOpenMemoId(isOpen ? null : memo.id)}
-                  className={`p-4 cursor-pointer flex justify-between items-center ${isOpen ? "bg-blue-50/50" : "bg-white hover:bg-slate-50"}`}
+                  className={`p-4 cursor-pointer flex items-start justify-between gap-4 ${
+                    isOpen ? "bg-blue-50/50" : "bg-white hover:bg-slate-50"
+                  }`}
                 >
-                  <div className="flex flex-col gap-1">
-                    <div className="flex items-center gap-2">
-                      <div className="p-1.5 bg-blue-100 rounded-lg">
+                  {/* SISI KIRI: Memo Info & Helpers (Gunakan flex-grow agar mengambil ruang yang tersedia) */}
+                  <div className="flex-grow flex flex-col gap-1 overflow-hidden">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <div className="p-1.5 bg-blue-100 rounded-lg flex-shrink-0">
                         <svg
                           width="16"
                           height="16"
@@ -258,43 +261,58 @@ const AdjustTableDO = ({
                           <path d="M10 9H8" />
                         </svg>
                       </div>
-                      <span className="text-sm font-black text-slate-800 tracking-tight">
+                      <span className="text-sm font-black text-slate-800 tracking-tight flex-shrink-0">
                         {memo.outbound_memo_number}
                       </span>
 
-                      {/* INFO STATUS SKU DI SEBELAH MEMO ID */}
-                      <div className="flex items-center gap-1.5 ml-2">
+                      {/* INFO STATUS SKU */}
+                      <div className="flex items-center gap-1.5">
                         {remainingSKU > 0 ? (
-                          <span className="text-[10px] font-black bg-amber-100 text-amber-700 border border-amber-200 px-2 py-0.5 rounded-full shadow-sm">
+                          <span className="text-[10px] font-black bg-amber-100 text-amber-700 border border-amber-200 px-2 py-0.5 rounded-full shadow-sm whitespace-nowrap">
                             {remainingSKU} SKU Belum Scan
                           </span>
                         ) : isAllScanned ? (
-                          <span className="text-[10px] font-black bg-emerald-100 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-full shadow-sm">
+                          <span className="text-[10px] font-black bg-emerald-100 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-full shadow-sm whitespace-nowrap">
                             Semua SKU sudah di-Scan
                           </span>
                         ) : null}
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-2 mt-1">
-                      {isAssigned ? (
-                        <span className="text-[10px] font-bold text-blue-700 bg-blue-100 px-2 py-0.5 rounded-md flex items-center gap-1">
-                          👤 Helper - {assignedUsers[0].picking_name}
+                    {/* HELPER LIST */}
+                    <div className="flex flex-wrap items-center gap-y-2 gap-x-1.5 mt-2">
+                      <div className="flex items-center gap-1 flex-shrink-0">
+                        <span className="text-[9px] font-black uppercase tracking-widest text-purple-600 bg-purple-50 px-1.5 py-0.5 rounded border border-purple-100">
+                          Helper
                         </span>
+                      </div>
+
+                      {isAssigned ? (
+                        <div className="flex flex-wrap gap-1.5">
+                          {assignedUsers.map((user: any, idx: number) => (
+                            <span
+                              key={user.id || idx}
+                              className="text-[10px] font-bold text-blue-700 bg-white border border-blue-200 px-2 py-0.5 rounded-md flex items-center gap-1 shadow-sm whitespace-nowrap"
+                            >
+                              👤 {user.picking_name}
+                            </span>
+                          ))}
+                        </div>
                       ) : (
-                        <span className="text-[10px] font-bold text-red-600 bg-red-50 px-2 py-0.5 rounded-md">
-                          ⚠️ Belum ada Helper ditugaskan
+                        <span className="text-[10px] font-bold text-red-500 bg-red-50 px-2 py-0.5 rounded-md border border-red-100 italic">
+                          ⚠️ Belum ada petugas ditugaskan
                         </span>
                       )}
                     </div>
                   </div>
 
-                  <div className="flex flex-col items-end gap-2">
-                    <span className="text-[11px] font-bold text-slate-500 bg-white border px-2 py-1 rounded-lg shadow-sm">
+                  {/* SISI KANAN: Total SKU & Arrow (Gunakan flex-shrink-0 agar ukuran tetap) */}
+                  <div className="flex flex-col items-end justify-start gap-3 flex-shrink-0 pt-1">
+                    <span className="text-[11px] font-bold text-slate-500 bg-white border px-2.5 py-1.5 rounded-lg shadow-sm whitespace-nowrap">
                       {totalSKU} SKU
                     </span>
                     <svg
-                      className={`w-5 h-5 text-slate-400 transition-transform ${isOpen ? "rotate-180" : ""}`}
+                      className={`w-5 h-5 text-slate-400 transition-transform duration-300 ${isOpen ? "rotate-180" : ""}`}
                       fill="none"
                       viewBox="0 0 24 24"
                       stroke="currentColor"
@@ -350,8 +368,7 @@ const AdjustTableDO = ({
                                     ✅ SELESAI SCAN
                                   </span>
                                   <span className="text-[9px] text-emerald-600 font-bold mt-1.5 px-1">
-                                    Oleh:{" "}
-                                    {activeScans[0].user_name?.split(" ")[0]}
+                                    Oleh: {activeScans[0].user_name}
                                   </span>
                                 </div>
                               ) : (
