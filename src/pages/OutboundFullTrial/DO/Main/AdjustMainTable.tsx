@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, useRef } from "react";
 import { FaEye, FaTasks, FaTrash } from "react-icons/fa";
 import { ColumnDef } from "@tanstack/react-table";
-import { useNavigate, useSearchParams } from "react-router-dom"; 
+import { useNavigate, useSearchParams } from "react-router-dom";
 import StatusBadge from "../../../../common/statusBadge";
 import { STATUS_MAP_DO } from "../../../../constants/statusMaps";
 import { useStoreOutboundDeliveryOrder } from "../../../../DynamicAPI/stores/Store/MasterStore";
@@ -9,7 +9,6 @@ import Swal from "sweetalert2";
 import { showErrorToast } from "../../../../components/toast";
 import { EndPoint } from "../../../../utils/EndPoint";
 import TableComponent from "../../../../components/tables/ActionTable/TableComponent";
-
 
 type OutboundMemo = {
   id: string;
@@ -194,121 +193,367 @@ const AdjustTableDO = ({
     }
   };
 
+  // const MemoCell = ({ memos }: { memos: any[] }) => {
+
+  //   console.log("memos", memos);
+
+  //   const [openMemoId, setOpenMemoId] = useState<string | null>(null);
+  //   if (!memos || memos.length === 0)
+  //     return (
+  //       <span className="text-slate-400 italic text-xs">
+  //         No memos available
+  //       </span>
+  //     );
+
+  //   return (
+  //     <div className="flex flex-col gap-2 min-w-[280px]">
+  //       {memos
+  //         .filter((memo) => memo.status !== "CANCELLED")
+  //         .map((memo) => {
+  //           const isOpen = openMemoId === memo.id;
+  //           const pickingsRaw = Array.isArray(memo.transaction_pickings)
+  //             ? memo.transaction_pickings
+  //             : memo.transaction_pickings
+  //               ? [memo.transaction_pickings]
+  //               : [];
+
+  //           const pickings = pickingsRaw.filter(
+  //             (p: any) => p.status !== "CANCELLED",
+  //           );
+
+  //           return (
+  //             <div
+  //               key={memo.id}
+  //               className={`group transition-all duration-200 border rounded-lg overflow-hidden ${isOpen ? "border-blue-400 shadow-md ring-1 ring-blue-100" : "border-slate-200 hover:border-slate-300 shadow-sm"}`}
+  //             >
+  //               <div
+  //                 onClick={() => setOpenMemoId(isOpen ? null : memo.id)}
+  //                 className={`flex items-center justify-between p-2.5 cursor-pointer transition-colors ${isOpen ? "bg-blue-50" : "bg-white hover:bg-slate-50"}`}
+  //               >
+  //                 <div className="flex flex-col">
+  //                   <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">
+  //                     Memo No
+  //                   </span>
+  //                   <span className="text-xs font-bold text-slate-700">
+  //                     {memo.outbound_memo_number || "N/A"}
+  //                   </span>
+  //                 </div>
+  //                 <div className="flex items-center gap-3">
+  //                   <span
+  //                     className={`text-[10px] px-2 py-0.5 rounded-full font-semibold border ${pickings.length > 0 ? "bg-blue-100 text-blue-700 border-blue-200" : "bg-slate-100 text-slate-500 border-slate-200"}`}
+  //                   >
+  //                     {pickings.length} Items
+  //                   </span>
+  //                   <div
+  //                     className={`transition-transform duration-300 ${isOpen ? "rotate-180 text-blue-600" : "text-slate-400"}`}
+  //                   >
+  //                     <svg
+  //                       width="14"
+  //                       height="14"
+  //                       viewBox="0 0 24 24"
+  //                       fill="none"
+  //                       stroke="currentColor"
+  //                       strokeWidth="3"
+  //                       strokeLinecap="round"
+  //                       strokeLinejoin="round"
+  //                     >
+  //                       <path d="m6 9 6 6 6-6" />
+  //                     </svg>
+  //                   </div>
+  //                 </div>
+  //               </div>
+  //               {isOpen && (
+  //                 <div className="bg-white border-t border-blue-100 animate-in fade-in slide-in-from-top-1 duration-200">
+  //                   <div className="max-h-[200px] overflow-y-auto divide-y divide-slate-100">
+  //                     {pickings.length === 0 ? (
+  //                       <div className="p-4 text-center text-xs text-red-400 italic">
+  //                         No Suggestion Items yet in this memo
+  //                       </div>
+  //                     ) : (
+  //                       pickings.map((tp: any) => (
+  //                         <div
+  //                           key={tp.id}
+  //                           className="p-2.5 hover:bg-blue-50/30 transition-colors"
+  //                         >
+  //                           <div className="flex items-center gap-2 ml-2">
+  //                             <span className="text-blue-600 truncate">
+  //                               {tp.item?.sku}
+  //                             </span>
+  //                           </div>
+  //                           <div className="flex flex-wrap gap-1.5">
+  //                             <div className="bg-slate-100 border border-slate-200 rounded px-2 py-0.5 flex items-center">
+  //                               <span className="text-[9px] text-slate-500 mr-1 font-medium uppercase">
+  //                                 Qty
+  //                               </span>
+  //                               <span className="text-xs font-bold text-slate-700">
+  //                                 {tp.quantity}
+  //                               </span>
+  //                             </div>
+  //                             <div className="bg-slate-100 border border-slate-200 rounded px-2 py-0.5 flex items-center">
+  //                               <span className="text-[9px] text-slate-500 mr-1 font-medium uppercase">
+  //                                 UOM
+  //                               </span>
+  //                               <span className="text-xs font-bold text-slate-700">
+  //                                 {tp.uom}
+  //                               </span>
+  //                             </div>
+  //                             <div className="bg-slate-100 border border-slate-200 rounded px-2 py-0.5 flex items-center">
+  //                               <span className="text-[9px] text-slate-500 mr-1 font-medium uppercase">
+  //                                 Week
+  //                               </span>
+  //                               <span className="text-xs font-bold text-slate-700">
+  //                                 {tp.week_number}
+  //                               </span>
+  //                             </div>
+  //                           </div>
+  //                         </div>
+  //                       ))
+  //                     )}
+  //                   </div>
+  //                 </div>
+  //               )}
+  //             </div>
+  //           );
+  //         })}
+  //     </div>
+  //   );
+  // };
 
   const MemoCell = ({ memos }: { memos: any[] }) => {
     const [openMemoId, setOpenMemoId] = useState<string | null>(null);
-    if (!memos || memos.length === 0)
+
+    if (!memos || memos.length === 0) {
       return (
-        <span className="text-slate-400 italic text-xs">
-          No memos available
-        </span>
+        <div className="p-4 border-2 border-dashed border-slate-200 rounded-lg text-center">
+          <span className="text-slate-400 italic text-xs font-medium">
+            Belum ada data memo
+          </span>
+        </div>
       );
+    }
 
     return (
-      <div className="flex flex-col gap-2 min-w-[280px]">
+      <div className="flex flex-col gap-3 min-w-[350px]">
         {memos
           .filter((memo) => memo.status !== "CANCELLED")
           .map((memo) => {
             const isOpen = openMemoId === memo.id;
-            const pickingsRaw = Array.isArray(memo.transaction_pickings)
-              ? memo.transaction_pickings
-              : memo.transaction_pickings
-                ? [memo.transaction_pickings]
-                : [];
-
-            const pickings = pickingsRaw.filter(
+            const assignedUsers = memo.assigned_pickings || [];
+            const isAssigned = assignedUsers.length > 0;
+            const pickings = (memo.transaction_pickings || []).filter(
               (p: any) => p.status !== "CANCELLED",
             );
 
             return (
               <div
                 key={memo.id}
-                className={`group transition-all duration-200 border rounded-lg overflow-hidden ${isOpen ? "border-blue-400 shadow-md ring-1 ring-blue-100" : "border-slate-200 hover:border-slate-300 shadow-sm"}`}
+                className={`rounded-xl transition-all duration-300 border-2 ${isOpen ? "border-blue-500 shadow-lg" : "border-slate-200 hover:border-slate-300"}`}
               >
+                {/* --- HEADER MEMO --- */}
                 <div
                   onClick={() => setOpenMemoId(isOpen ? null : memo.id)}
-                  className={`flex items-center justify-between p-2.5 cursor-pointer transition-colors ${isOpen ? "bg-blue-50" : "bg-white hover:bg-slate-50"}`}
+                  className={`p-4 cursor-pointer flex justify-between items-center ${isOpen ? "bg-blue-50/50" : "bg-white hover:bg-slate-50"}`}
                 >
-                  <div className="flex flex-col">
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">
-                      Memo No
-                    </span>
-                    <span className="text-xs font-bold text-slate-700">
-                      {memo.outbound_memo_number || "N/A"}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <span
-                      className={`text-[10px] px-2 py-0.5 rounded-full font-semibold border ${pickings.length > 0 ? "bg-blue-100 text-blue-700 border-blue-200" : "bg-slate-100 text-slate-500 border-slate-200"}`}
-                    >
-                      {pickings.length} Items
-                    </span>
-                    <div
-                      className={`transition-transform duration-300 ${isOpen ? "rotate-180 text-blue-600" : "text-slate-400"}`}
-                    >
-                      <svg
-                        width="14"
-                        height="14"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="3"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
-                        <path d="m6 9 6 6 6-6" />
-                      </svg>
+                  <div className="flex flex-col gap-1">
+                    <div className="flex items-center gap-2">
+                      <div className="p-1.5 bg-blue-100 rounded-lg">
+                        <svg
+                          width="16"
+                          height="16"
+                          className="text-blue-600"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2.5"
+                        >
+                          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                          <path d="M14 2v6h6" />
+                          <path d="M16 13H8" />
+                          <path d="M16 17H8" />
+                          <path d="M10 9H8" />
+                        </svg>
+                      </div>
+                      <span className="text-sm font-black text-slate-800 tracking-tight">
+                        {memo.outbound_memo_number}
+                      </span>
                     </div>
-                  </div>
-                </div>
-                {isOpen && (
-                  <div className="bg-white border-t border-blue-100 animate-in fade-in slide-in-from-top-1 duration-200">
-                    <div className="max-h-[200px] overflow-y-auto divide-y divide-slate-100">
-                      {pickings.length === 0 ? (
-                        <div className="p-4 text-center text-xs text-red-400 italic">
-                          No Suggestion Items yet in this memo
-                        </div>
+                    <div className="flex items-center gap-2 mt-1">
+                      {isAssigned ? (
+                        <span className="text-[10px] font-bold text-blue-700 bg-blue-100 px-2 py-0.5 rounded-md flex items-center gap-1">
+                          👤 Helper {assignedUsers[0].picking_name}
+                        </span>
                       ) : (
-                        pickings.map((tp: any) => (
-                          <div
-                            key={tp.id}
-                            className="p-2.5 hover:bg-blue-50/30 transition-colors"
-                          >
-                            <div className="flex items-center gap-2 ml-2">
-                              <span className="text-blue-600 truncate">
-                                {tp.item?.sku}
-                              </span>
-                            </div>
-                            <div className="flex flex-wrap gap-1.5">
-                              <div className="bg-slate-100 border border-slate-200 rounded px-2 py-0.5 flex items-center">
-                                <span className="text-[9px] text-slate-500 mr-1 font-medium uppercase">
-                                  Qty
-                                </span>
-                                <span className="text-xs font-bold text-slate-700">
-                                  {tp.quantity}
-                                </span>
-                              </div>
-                              <div className="bg-slate-100 border border-slate-200 rounded px-2 py-0.5 flex items-center">
-                                <span className="text-[9px] text-slate-500 mr-1 font-medium uppercase">
-                                  UOM
-                                </span>
-                                <span className="text-xs font-bold text-slate-700">
-                                  {tp.uom}
-                                </span>
-                              </div>
-                              <div className="bg-slate-100 border border-slate-200 rounded px-2 py-0.5 flex items-center">
-                                <span className="text-[9px] text-slate-500 mr-1 font-medium uppercase">
-                                  Week
-                                </span>
-                                <span className="text-xs font-bold text-slate-700">
-                                  {tp.week_number}
-                                </span>
-                              </div>
-                            </div>
-                          </div>
-                        ))
+                        <span className="text-[10px] font-bold text-red-600 bg-red-50 px-2 py-0.5 rounded-md">
+                          ⚠️ Belum ada Helper ditugaskan
+                        </span>
                       )}
                     </div>
+                  </div>
+
+                  <div className="flex flex-col items-end gap-2">
+                    <span className="text-[11px] font-bold text-slate-500 bg-white border px-2 py-1 rounded-lg shadow-sm">
+                      {pickings.length} SKU
+                    </span>
+                    <svg
+                      className={`w-5 h-5 text-slate-400 transition-transform ${isOpen ? "rotate-180" : ""}`}
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M19 9l-7 7-7-7"
+                      />
+                    </svg>
+                  </div>
+                </div>
+
+                {/* --- DAFTAR BARANG (BODY) --- */}
+                {isOpen && (
+                  <div className="bg-white p-2 divide-y divide-slate-100 border-t-2 border-slate-100">
+                    {pickings.length === 0 ? (
+                      <div className="p-6 text-center text-slate-400 text-xs italic">
+                        Instruksi pengambilan belum dibuat
+                      </div>
+                    ) : (
+                      pickings.map((tp: any) => {
+                        const activeScans = (
+                          tp.transactionScanPicking || []
+                        ).filter((s: any) => s.status !== "CANCELLED");
+                        const isDone = activeScans.length > 0;
+
+                        return (
+                          <div
+                            key={tp.id}
+                            className="py-4 px-2 first:pt-2 last:pb-2"
+                          >
+                            {/* Info Utama Barang */}
+                            <div className="flex justify-between items-start mb-3">
+                              <div className="flex flex-col gap-0.5 max-w-[65%]">
+                                <span className="text-xs font-black text-slate-900 uppercase tracking-wide">
+                                  {tp.item?.sku}
+                                </span>
+                                <p className="text-[11px] text-slate-500 font-medium leading-relaxed">
+                                  {tp.item?.description}
+                                </p>
+                              </div>
+
+                              {/* Label Status yang Sangat Jelas */}
+                              {isDone ? (
+                                <div className="flex flex-col items-end">
+                                  <span className="bg-emerald-500 text-white text-[10px] px-2.5 py-1 rounded-lg font-black flex items-center gap-1 shadow-md shadow-emerald-100">
+                                    ✅ SELESAI SCAN
+                                  </span>
+                                  <span className="text-[9px] text-emerald-600 font-bold mt-1">
+                                    Oleh:{" "}
+                                    {activeScans[0].user_name?.split(" ")[0]}
+                                  </span>
+                                </div>
+                              ) : (
+                                <div className="flex flex-col items-end">
+                                  <span className="bg-amber-100 text-amber-700 border-2 border-amber-200 text-[10px] px-2.5 py-1 rounded-lg font-black animate-pulse">
+                                    ⏳ BELUM DI-SCAN
+                                  </span>
+                                </div>
+                              )}
+                            </div>
+
+                            {/* Detail Lokasi & Jumlah */}
+                            <div className="grid grid-cols-2 gap-3 bg-slate-50 p-3 rounded-xl border border-slate-100">
+                              {/* Lokasi Gudang */}
+                              <div className="flex flex-col">
+                                <span className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">
+                                  Zone/ Bin
+                                </span>
+                                <div className="flex items-center gap-1 mt-0.5">
+                                  <span className="text-xs font-black text-slate-700">
+                                    {tp.sourceWarehouseSub?.name || "-"}
+                                  </span>
+                                  <span className="text-xs text-slate-400">
+                                    /
+                                  </span>
+                                  <span className="text-xs font-black text-blue-600">
+                                    {tp.sourceBin?.name || "Area Umum"}
+                                  </span>
+                                </div>
+                              </div>
+
+                              {/* Jumlah Barang */}
+                              <div className="flex flex-col items-end gap-2">
+                                <div className="flex flex-col items-end">
+                                  <span className="text-[9px] text-slate-400 font-bold uppercase tracking-widest leading-none">
+                                    Suggestion
+                                  </span>
+                                  <span className="text-sm font-black text-slate-800">
+                                    {tp.quantity}{" "}
+                                    <span className="text-[10px] text-slate-500">
+                                      {tp.uom}
+                                    </span>
+                                  </span>
+                                </div>
+
+                                <div className="w-8 h-[1px] bg-slate-200"></div>
+
+                                <div className="flex flex-col items-end">
+                                  <span className="text-[9px] text-slate-400 font-bold uppercase tracking-widest leading-none">
+                                    Telah Di-Scan
+                                  </span>
+                                  <span
+                                    className={`text-sm font-black ${
+                                      isDone
+                                        ? "text-emerald-600"
+                                        : "text-slate-400"
+                                    }`}
+                                  >
+                                    {isDone
+                                      ? activeScans[0].quantity_picked
+                                      : "0"}{" "}
+                                    <span
+                                      className={
+                                        isDone
+                                          ? "text-emerald-500/70 text-[10px]"
+                                          : "text-slate-400 text-[10px]"
+                                      }
+                                    >
+                                      {tp.uom}
+                                    </span>
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Catatan Waktu (Opsional) */}
+                            {isDone && (
+                              <div className="mt-2 flex items-center gap-1.5 text-[10px] text-slate-400 px-1">
+                                <div className="w-1.5 h-1.5 bg-emerald-400 rounded-full"></div>
+                                <span className="flex items-center gap-1">
+                                  Berhasil di-scan pada{" "}
+                                  <strong>
+                                    {new Date(
+                                      activeScans[0].createdAt,
+                                    ).toLocaleDateString("id-ID", {
+                                      day: "2-digit",
+                                      month: "short",
+                                      year: "numeric",
+                                    })}
+                                    ,{" "}
+                                    {new Date(
+                                      activeScans[0].createdAt,
+                                    ).toLocaleTimeString("id-ID", {
+                                      hour: "2-digit",
+                                      minute: "2-digit",
+                                    })}
+                                  </strong>
+                                  WIB
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })
+                    )}
                   </div>
                 )}
               </div>
