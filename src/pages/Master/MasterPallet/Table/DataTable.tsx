@@ -33,17 +33,43 @@ const DataTable = () => {
   const [selectedOrgName, setSelectedOrgName] = useState("");
   const [IoList, setIoList] = useState<any[]>([]);
 
+  const normalizeStorageValue = (val: string | null) => {
+    if (!val) return "";
+    const cleaned = String(val).trim();
+    if (!cleaned || cleaned === "undefined" || cleaned === "null") return "";
+    return cleaned;
+  };
+
   useEffect(() => {
     fetchPallet();
     fetchUom();
 
     const storedIo = localStorage.getItem("io_list");
+    const rawOrgId = localStorage.getItem("organization_id");
+    const organizationId = normalizeStorageValue(rawOrgId);
+
     if (storedIo) {
       try {
-        setIoList(JSON.parse(storedIo));
+        const parsedIo = JSON.parse(storedIo);
+
+        if (!Array.isArray(parsedIo)) {
+          setIoList([]);
+          return;
+        }
+
+        const filteredIo = organizationId
+          ? parsedIo.filter(
+              (io: any) => String(io?.id) === String(organizationId),
+            )
+          : parsedIo;
+
+        setIoList(filteredIo);
       } catch (error) {
         console.error("Gagal parsing io_list dari localStorage", error);
+        setIoList([]);
       }
+    } else {
+      setIoList([]);
     }
   }, []);
 

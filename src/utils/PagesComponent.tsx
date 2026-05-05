@@ -1,7 +1,6 @@
 import Dashboard from "../pages/Dashboard/Home";
 
 // PAGE MASTER
-import MasterUser from "../pages/Master/MasterUser";
 import MasterMenu from "../pages/Master/MasterMenu";
 import MasterUserManagement from "../pages/Master/MasterUserManagement";
 
@@ -82,7 +81,6 @@ export {
   Dashboard,
 
   // PAGE MASTER
-  MasterUser,
   MasterUserManagement,
   MasterMenu,
   MasterPallet,

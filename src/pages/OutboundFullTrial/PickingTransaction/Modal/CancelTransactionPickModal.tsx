@@ -6,6 +6,8 @@ import { mapTransactionToUI } from "../Helper/mapTransactionToUI";
 import { FaChevronDown, FaChevronRight, FaWindowClose } from "react-icons/fa";
 import { EndPoint } from "../../../../utils/EndPoint";
 import { useNavigate } from "react-router-dom";
+import axiosInstance from "../../../../DynamicAPI/AxiosInstance";
+import { showConfirmDialog } from "../../../../components/swal-confirm";
 
 type CancelTransactionPickModalProps = {
   isOpen: boolean;
@@ -21,36 +23,59 @@ const CancelTransactionPickModal: React.FC<CancelTransactionPickModalProps> = ({
   const navigate = useNavigate();
   const [expandedItemId, setExpandedItemId] = useState<string | null>(null);
 
+  // const handleCancelPicking = async (pickingId: string) => {
+  //   if (!pickingId) return;
+
+  //   const transactionId = pickingId;
+  //   try {
+  //     const token = localStorage.getItem("token");
+  //     const response = await fetch(
+  //       `${EndPoint}transaction-picking/${transactionId}/cancel`,
+  //       {
+  //         method: "PATCH",
+  //         headers: {
+  //           Authorization: `Bearer ${token}`,
+  //         },
+  //       }
+  //     );
+
+  //     if (!response.ok) {
+  //       throw new Error("Network response was not ok");
+  //     }
+  //     onRequestClose();
+  //     navigate("/picking_transaction");
+  //   } catch (error) {
+  //     console.error("Error detaching transaction:", error);
+  //   }
+  // };
+
   const handleCancelPicking = async (pickingId: string) => {
     if (!pickingId) return;
 
-    // const confirm = window.confirm(
-    //   "Are you sure you want to cancel this Picking Transaction?"
-    // );
+    showConfirmDialog(
+      async () => {
+        const transactionId = pickingId;
+        try {
+          const response = await axiosInstance(
+            `${EndPoint}transaction-picking/${transactionId}/cancel`,
+            { method: "PATCH" },
+          );
 
-    // if (!confirm) return;
-
-    const transactionId = pickingId;
-    try {
-      const token = localStorage.getItem("token");
-      const response = await fetch(
-        `${EndPoint}transaction-picking/${transactionId}/cancel`,
-        {
-          method: "PATCH",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          if (response.status === 200 || response.status === 201) {
+            onRequestClose();
+            navigate("/picking_transaction");
+          }
+        } catch (error) {
+          console.error("Error detaching transaction:", error);
         }
-      );
-
-      if (!response.ok) {
-        throw new Error("Network response was not ok");
-      }
-      onRequestClose();
-      navigate("/picking_transaction");
-    } catch (error) {
-      console.error("Error detaching transaction:", error);
-    }
+      },
+      {
+        title: "Cancel Suggestion",
+        text: "Anda yakin ingin Cancel Suggestion Picking ini?",
+        confirmButtonText: "Yes",
+        cancelButtonText: "No",
+      },
+    );
   };
 
   if (!isOpen || !transactionData) return null;

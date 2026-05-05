@@ -1,191 +1,3 @@
-// import React from "react";
-// import { OutboundMemo } from "../../../../../DynamicAPI/types/DeliverOrderTypes";
-// import { formatDateIndo } from "../../../../../helper/FormatDate";
-
-// type PrintTemplateProps = {
-//   memo: OutboundMemo;
-//   doNumber: string;
-//   expedition: string;
-//   licensePlate: string;
-//   sealNumber: string;
-//   containerNumber?: string;
-//   detailDO?: [],
-// };
-
-// const PrintTemplate = React.forwardRef<
-//   HTMLDivElement,
-//   React.PropsWithChildren<PrintTemplateProps>
-// >((props, ref) => {
-//   const {
-//     memo,
-//     doNumber,
-//     expedition,
-//     licensePlate,
-//     sealNumber,
-//     containerNumber,
-//   } = props;
-
-//   const items: { nama: string; qtyValue: number; uom: string }[] = [];
-
-//   // 1. Kumpulkan data dan hitung Total per UoM
-//   const totalsByUom: { [uom: string]: number } = {};
-
-//   memo.outbound_memo_items.forEach((item) => {
-//     item.assigned_gate_load?.forEach((agl) => {
-//       const qty = agl.quantity_loaded || 0;
-//       const uom = agl.uom || "";
-
-//       items.push({
-//         nama: agl.item.description,
-//         qtyValue: qty,
-//         uom: uom,
-//       });
-
-//       // Penjumlahan berdasarkan key UoM
-//       if (uom) {
-//         totalsByUom[uom] = (totalsByUom[uom] || 0) + qty;
-//       }
-//     });
-//   });
-
-//   const FIXED_UOMS = ["DUS", "BAL", "PRESS", "BKS"];
-//   const totalQtyString = FIXED_UOMS.map(
-//     (uom) => `${totalsByUom[uom] ?? 0} ${uom}`,
-//   ).join(", ");
-
-//   // Minimal 15 baris agar layout konsisten
-//   const MIN_ROWS = items.length;
-//   const paddedItems = [...items];
-//   while (paddedItems.length < MIN_ROWS) {
-//     paddedItems.push({ nama: "", qtyValue: 0, uom: "" });
-//   }
-//   const storedFullName = localStorage.getItem("full_name");
-
-//   return (
-//     <div
-//       ref={ref}
-//       className="p-8 bg-white text-black font-sans w-[210mm] min-h-[297mm] mx-auto print:m-0"
-//     >
-//       {/* Header Atas */}
-//       <div className="flex justify-between text-[11px] leading-tight mb-6 gap-8">
-//         <div className="flex-1 min-w-0 space-y-1">
-//           <p className="font-bold text-[16px]">PT. Niaga Nusa Abadi</p>
-//           <p className="truncate">{memo.origin}</p>
-//           <div className="mt-4 space-y-0.5">
-//             <p>
-//               <span className="inline-block w-20">VENDOR</span>: {expedition}
-//             </p>
-//             <p>
-//               <span className="inline-block w-20">No.Pol</span>: {licensePlate}
-//             </p>
-//             <p>
-//               <span className="inline-block w-20">No. Seal</span>: {sealNumber}
-//             </p>
-//             <p>
-//               <span className="inline-block w-20">No. Container</span>:{" "}
-//               {containerNumber}
-//             </p>
-//           </div>
-//         </div>
-//         <div className="flex-1 min-w-0 text-left space-y-1">
-//           <p>
-//             <span className="inline-block w-40">Nomor Surat Jalan</span>:{" "}
-//             {doNumber}
-//           </p>
-//           <p>
-//             <span className="inline-block w-40">Nomor Sales Order</span>:{" "}
-//             {memo.outbound_memo_number}
-//           </p>
-//           <div className="flex items-start">
-//             <span className="inline-block w-40 flex-shrink-0">Customer</span>:
-//             <span className="ml-1 break-words whitespace-pre-line max-w-xs">
-//               {memo.destination}
-//             </span>
-//           </div>
-//           <div className="flex items-start">
-//             <span className="inline-block w-40 flex-shrink-0">
-//               Alamat Pengiriman
-//             </span>
-//             :
-//             <span className="ml-1 break-words whitespace-pre-line max-w-xs">
-//               {memo.ship_to}
-//             </span>
-//           </div>
-//         </div>
-//       </div>
-
-//       <h1 className="text-center font-bold text-xl uppercase tracking-widest mb-4">
-//         SURAT JALAN
-//       </h1>
-
-//       {/* Tabel */}
-//       <table className="w-full border-collapse border border-black text-[11px]">
-//         <thead>
-//           <tr className="bg-gray-50">
-//             <th className="border border-black px-1 py-1 w-[40px]">NO</th>
-//             <th className="border border-black px-2 py-1 w-[120px]">QTY</th>
-//             <th className="border border-black px-2 py-1 uppercase">
-//               Nama Barang
-//             </th>
-//             <th className="border border-black px-2 py-1 w-[150px]">
-//               KETERANGAN
-//             </th>
-//           </tr>
-//         </thead>
-//         <tbody>
-//           {paddedItems.map((item, index) => (
-//             <tr key={index} className="h-7">
-//               <td className="border border-black text-center">{index + 1}</td>
-//               <td className="border border-black px-2 text-center">
-//                 {item.nama ? `${item.qtyValue} ${item.uom}` : ""}
-//               </td>
-//               <td className="border border-black px-2 font-medium uppercase">
-//                 {item.nama}
-//               </td>
-//               <td className="border border-black px-2"></td>
-//             </tr>
-//           ))}
-//         </tbody>
-//         {/* FOOTER TABEL UNTUK TOTAL QTY */}
-//         <tfoot>
-//           <tr className="h-8 font-bold italic">
-//             <td colSpan={1} className="border border-black text-center">
-//               Total Qty
-//             </td>
-//             <td colSpan={3} className="border border-black px-2 bg-gray-50">
-//               {totalQtyString}
-//             </td>
-//           </tr>
-//         </tfoot>
-//       </table>
-
-//       {/* Footer Tanda Tangan */}
-//       <div className="text-[11px] mt-10">
-//         <div className="flex justify-between items-center mb-1">
-//           <p className="">Diterima Tgl :</p>
-//           <p className="">{formatDateIndo(memo.delivery_date)}</p>
-//         </div>
-//         <div className="grid grid-cols-3 border border-black">
-//           <div className="border-r border-black h-24 flex flex-col justify-between p-1">
-//             <p className="text-center">Gudang Penerima,</p>
-//             <div className="w-full border-t border-black/20 mt-auto"></div>
-//           </div>
-//           <div className="border-r border-black h-24 flex flex-col justify-between p-1">
-//             <p className="text-center font-medium">Ekspedisi</p>
-//             <div className="w-full border-t border-black/20 mt-auto"></div>
-//           </div>
-//           <div className="h-24 flex flex-col justify-between p-1">
-//             <p className="text-center">Gudang Pengirim,</p>
-//             <div className="w-full border-t border-black/20 mt-auto">{storedFullName}</div>
-//           </div>
-//         </div>
-//       </div>
-//     </div>
-//   );
-// });
-
-// export default PrintTemplate;
-
 import React from "react";
 import { OutboundMemo } from "../../../../../DynamicAPI/types/DeliverOrderTypes";
 import { formatDateIndo } from "../../../../../helper/FormatDate";
@@ -231,7 +43,7 @@ const PrintTemplate = React.forwardRef<
 
   memo?.outbound_memo_items?.forEach((item: any) => {
     item?.assigned_gate_load?.forEach((agl: any) => {
-      const qty = agl?.quantity_loaded || 0;
+      const qty = Number(agl?.quantity_loaded || 0);
       const uom = agl?.uom || "";
 
       items.push({
@@ -251,33 +63,36 @@ const PrintTemplate = React.forwardRef<
     (uom) => `${totalsByUom[uom] ?? 0} ${uom}`,
   ).join(", ");
 
-  // Kalau mau minimal row fix, ubah ke angka tetap (mis. 15)
-  const MIN_ROWS = items.length;
+  // layout tetap rapi seperti contoh
+  const MIN_ROWS = Math.max(items.length, 4);
   const paddedItems = [...items];
   while (paddedItems.length < MIN_ROWS) {
     paddedItems.push({ nama: "", qtyValue: 0, uom: "" });
   }
 
-  const storedFullName = localStorage.getItem("full_name") ?? "-";
+  const storedFullName = localStorage.getItem("full_name") ?? "IT";
+  const printDate = new Date();
 
   return (
     <div
       ref={ref}
-      className="p-8 bg-white text-black font-sans w-[210mm] min-h-[297mm] mx-auto print:m-0"
+      className="bg-white text-black font-sans w-[210mm] min-h-[297mm] mx-auto px-9 py-7 text-[11px] leading-tight"
     >
-      {/* Header Atas */}
-      <div className="flex justify-between text-[11px] leading-tight mb-6 gap-8">
-        <div className="flex-1 min-w-0 space-y-1">
-          <p className="font-bold text-[16px]">PT. Niaga Nusa Abadi</p>
-          <p className="truncate">{memo?.origin ?? doHeader?.origin ?? "-"}</p>
+      {/* HEADER */}
+      <div className="flex justify-between items-start gap-8 mb-3">
+        <div className="flex-1">
+          <p className="font-semibold text-[15px]">PT. Niaga Nusa Abadi</p>
+          <p className="text-[15px] mb-3">
+            {memo?.origin ?? doHeader?.origin ?? "-"}
+          </p>
 
-          <div className="mt-4 space-y-0.5">
+          <div className="space-y-0.5">
             <p>
-              <span className="inline-block w-20">VENDOR</span>:{" "}
+              <span className="inline-block w-20">Vendor</span>:{" "}
               {doHeader?.expedition ?? "-"}
             </p>
             <p>
-              <span className="inline-block w-20">Driver Name</span>:{" "}
+              <span className="inline-block w-20">Driver</span>:{" "}
               {doHeader?.driver_name ?? "-"}
             </p>
             <p>
@@ -285,127 +100,146 @@ const PrintTemplate = React.forwardRef<
               {doHeader?.driver_phone ?? "-"}
             </p>
             <p>
-              <span className="inline-block w-20">No.Pol</span>:{" "}
-              {doHeader?.license_plate ?? "-"}
+              <span className="inline-block w-20">No. Pol</span>:{" "}
+              {doHeader?.license_plate}
             </p>
             <p>
-              <span className="inline-block w-20">No. Seal</span>:{" "}
+              <span className="inline-block w-20">Segel</span>:{" "}
               {doHeader?.seal_number ?? "-"}
-            </p>
-            <p>
-              <span className="inline-block w-20">No. Container</span>:{" "}
-              {doHeader?.container_number ?? "-"}
             </p>
           </div>
         </div>
 
-        <div className="flex-1 min-w-0 text-left space-y-1 mt-4">
+        <div className="flex-1">
           <p>
-            <span className="inline-block w-40">Nomor Surat Jalan</span>:{" "}
+            <span className="inline-block w-36">Nomor Surat Jalan</span>:{" "}
             {doHeader?.outbound_do_number ?? "-"}
           </p>
           <p>
-            <span className="inline-block w-40">Nomor Sales Order</span>:{" "}
+            <span className="inline-block w-36">Nomor Sales Order</span>:{" "}
             {memo?.outbound_memo_number ?? "-"}
           </p>
-
-          <div className="flex items-start">
-            <span className="inline-block w-40 flex-shrink-0">Customer</span>:
-            <span className="ml-1 break-words whitespace-pre-line max-w-xs">
-              {memo?.destination ?? "-"}
-            </span>
-          </div>
-
-          <div className="flex items-start">
-            <span className="inline-block w-40 flex-shrink-0">
+          <p className="flex items-start">
+            <span className="inline-block w-36 shrink-0">Customer</span>:
+            <span className="ml-1 break-words">{memo?.destination ?? "-"}</span>
+          </p>
+          <p className="flex items-start">
+            <span className="inline-block w-36 shrink-0">
               Alamat Pengiriman
             </span>
-            :
-            <span className="ml-1 break-words whitespace-pre-line max-w-xs">
-              {memo?.ship_to ?? "-"}
-            </span>
-          </div>
+            :<span className="ml-1 break-words">{memo?.ship_to ?? "-"}</span>
+          </p>
         </div>
       </div>
 
-      <h1 className="text-center font-bold text-xl uppercase tracking-widest mb-4">
-        SURAT JALAN
-      </h1>
+      <h1 className="text-center font-bold text-[17px] mb-2">Surat Jalan</h1>
+      <p className="mb-1">
+        Harap diterima dengan baik barang sebagai berikut :
+      </p>
 
-      {/* Tabel */}
+      {/* TABLE */}
       <table className="w-full border-collapse border border-black text-[11px]">
         <thead>
-          <tr className="bg-gray-50">
-            <th className="border border-black px-1 py-1 w-[40px]">NO</th>
-            <th className="border border-black px-2 py-1 w-[120px]">QTY</th>
-            <th className="border border-black px-2 py-1 uppercase">
+          <tr>
+            <th className="border border-black px-2 py-1 w-[50px] text-center">
+              No
+            </th>
+            <th className="border border-black px-2 py-1 w-[180px] text-center">
+              Banyaknya
+            </th>
+            <th className="border border-black px-2 py-1 text-center">
               Nama Barang
             </th>
-            <th className="border border-black px-2 py-1 w-[150px]">
-              KETERANGAN
+            <th className="border border-black px-2 py-1 w-[220px] text-center">
+              Keterangan
             </th>
           </tr>
         </thead>
-
         <tbody>
           {paddedItems.map((item, index) => (
             <tr key={index} className="h-7">
-              <td className="border border-black text-center">{index + 1}</td>
               <td className="border border-black px-2 text-center">
+                {index + 1}
+              </td>
+              <td className="border border-black px-2">
                 {item.nama ? `${item.qtyValue} ${item.uom}` : ""}
               </td>
-              <td className="border border-black px-2 font-medium uppercase">
+              <td className="border border-black px-2 uppercase">
                 {item.nama}
               </td>
               <td className="border border-black px-2" />
             </tr>
           ))}
         </tbody>
-
         <tfoot>
-          <tr className="h-8 font-bold italic">
-            <td colSpan={1} className="border border-black text-center">
-              Total Qty
-            </td>
-            <td colSpan={3} className="border border-black px-2 bg-gray-50">
-              {totalQtyString}
+          <tr className="h-10 align-top">
+            <td colSpan={4} className="border border-black px-2 py-1">
+              <div className="flex justify-between items-start w-full">
+                <div className="font-semibold">{totalQtyString}</div>
+                <div className="text-right italic max-w-[60%] break-words">
+                  {/* {totalQtyTerbilang} */}
+                </div>
+              </div>
             </td>
           </tr>
         </tfoot>
       </table>
 
-      {/* Footer Tanda Tangan */}
-      <div className="text-[11px] mt-10">
-        <div className="flex justify-between items-center mb-1">
-          <p>Diterima Tgl :</p>
-          <p>
-            {formatDateIndo(
-              memo?.delivery_date ?? doHeader?.delivery_date ?? new Date(),
-            )}
-          </p>
+      {/* DATE RECEIVED */}
+      <div className="mt-6 mb-1 flex justify-between items-center">
+        <p>Diterima Tgl :</p>
+        <p>
+          {formatDateIndo(
+            memo?.delivery_date ?? doHeader?.delivery_date ?? printDate,
+          )}
+        </p>
+      </div>
+
+      {/* SIGNATURE GRID */}
+      <div className="border border-black grid grid-cols-3">
+        <div className="h-24 border-r border-black flex flex-col justify-between p-1">
+          <p className="text-center">Gudang Penerima,</p>
+          <div className="w-full border-t border-black mt-auto text-center">
+            (.............................)
+          </div>
         </div>
 
-        <div className="grid grid-cols-3 border border-black">
-          <div className="border-r border-black h-24 flex flex-col justify-between p-1">
-            <p className="text-center font-medium">Gudang Penerima,</p>
-            <div className="w-full border-t border-black/20 mt-auto text-center text-[10px] leading-tight pt-1">
-              <div className="font-semibold break-words">&nbsp;</div>
-            </div>
+        <div className="h-24 border-r border-black flex flex-col justify-between p-1">
+          <p className="text-center">Ekspedisi,</p>
+          <div className="w-full border-t border-black mt-auto text-center">
+            ( {doHeader?.expedition ?? "-"})
           </div>
+        </div>
 
-          <div className="border-r border-black h-24 flex flex-col justify-between p-1">
-            <p className="text-center font-medium">Ekspedisi</p>
-            <div className="w-full border-t border-black/20 mt-auto text-center text-[10px] leading-tight pt-1">
-              <div className="break-words">{doHeader?.expedition ?? "-"}</div>
-            </div>
+        <div className="h-24 flex flex-col justify-between p-1">
+          <p className="text-center">Gudang Pengirim,</p>
+          <div className="w-full border-t border-black mt-auto text-center">
+            ({storedFullName})
           </div>
+        </div>
+      </div>
 
-          <div className="border-r border-black h-24 flex flex-col justify-between p-1">
-            <p className="text-center font-medium">Gudang Pengirim,</p>
-            <div className="w-full border-t border-black/20 mt-auto text-center text-[10px] leading-tight pt-1">
-              <div className="break-words">{storedFullName}</div>
-            </div>
-          </div>
+      {/* BOTTOM FOOTER - tambahan PO Ekspedisi + print meta */}
+      <div className="mt-1 flex justify-between items-start">
+        <p className="text-[13px]">
+          Po Ekspedisi : {doHeader?.vendor_po_number ?? "-"}
+        </p>
+
+        <div className="text-right leading-tight">
+          <p>
+            Print Date :{" "}
+            {new Intl.DateTimeFormat("en-GB", {
+              day: "2-digit",
+              month: "short",
+              year: "numeric",
+              hour: "2-digit",
+              minute: "2-digit",
+              hour12: false,
+            })
+              .format(printDate)
+              .replace(",", "")}
+          </p>
+          <p>Print By : {storedFullName}</p>
         </div>
       </div>
     </div>

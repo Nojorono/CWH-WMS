@@ -7,10 +7,7 @@ import SignInInput from "../form/input/SignInInput";
 import Button from "../ui/button/Button";
 import CustomToast from "../../components/toast";
 import { useAuthStore } from "../../API/store/AuthStore/authStore";
-import {
-  useStoreMenu,
-  useStoreIo,
-} from "../../DynamicAPI/stores/Store/MasterStore";
+import { useStoreIo } from "../../DynamicAPI/stores/Store/MasterStore";
 
 interface SignInFormValues {
   username: string;
@@ -24,7 +21,6 @@ interface SignInFormValues {
 export default function SignInForm() {
   const navigate = useNavigate();
   const { authLogin } = useAuthStore();
-  const { fetchAll: fetchMenus } = useStoreMenu();
   const { fetchAll: fetchIO } = useStoreIo();
 
   const [showPassword, setShowPassword] = useState(false);

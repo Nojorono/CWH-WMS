@@ -124,7 +124,7 @@ const PrintSuratJalan = () => {
                   No. Memo
                 </th>
                 <th className="p-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                  Customer
+                  Requestor
                 </th>
                 <th className="p-4 text-xs font-semibold text-slate-500 uppercase tracking-wider w-1/3">
                   Address

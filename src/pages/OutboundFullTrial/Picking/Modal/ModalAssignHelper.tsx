@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { useStoreUserManagement } from "../../../../DynamicAPI/stores/Store/MasterStore";
 import Button from "../../../../components/ui/button/Button";
 import { useForm, Controller } from "react-hook-form";
@@ -159,7 +159,7 @@ export default function ModalAssignHelper({
         {!isDetail && (
           <div className="flex justify-end">
             <Button type="submit" variant="primary">
-              Assign Helper
+              Submit
             </Button>
           </div>
         )}

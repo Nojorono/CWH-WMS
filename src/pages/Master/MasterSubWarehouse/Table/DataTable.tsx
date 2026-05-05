@@ -46,7 +46,7 @@ const DataTable = ({ params }: DataTableProps) => {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [selectedPallets, setSelectedPallets] = useState<any[]>([]);
   const [isPrintModalOpen, setPrintModalOpen] = useState(false);
-
+  
   // LOGIKA PEMILIHAN DATA:
   const displayData = useMemo(() => {
     return params?.WHid ? (Array.isArray(WHdetail) ? WHdetail : []) : subWHList;
@@ -110,6 +110,30 @@ const DataTable = ({ params }: DataTableProps) => {
 
   const formFields = [
     {
+      name: "is_staging",
+      label: "Is Staging Area?",
+      type: "select",
+      options: [
+        { label: "NO", value: null },
+        { label: "INBOUND", value: "INBOUND" },
+        { label: "OUTBOUND", value: "OUTBOUND" },
+      ],
+      validation: { required: "Required" },
+    },
+    {
+      name: "is_gate",
+      label: "Is Gate Area?",
+      type: "select",
+      options: [
+        { label: "YES", value: true },
+        { label: "NO", value: false },
+      ],
+      validation: {
+        validate: (v: boolean | null | undefined) =>
+          v === true || v === false || "Required",
+      },
+    },
+    {
       name: "name",
       label: "Zone Name",
       type: "text",
@@ -121,22 +145,7 @@ const DataTable = ({ params }: DataTableProps) => {
       type: "text",
       validation: { required: "Required" },
     },
-    {
-      name: "is_staging",
-      label: "Is Staging Area?",
-      type: "select",
-      options: [
-        { label: "NO", value: "NO" },
-        { label: "INBOUND", value: "INBOUND" },
-        { label: "OUTBOUND", value: "OUTBOUND" },
-      ],
-      validation: { required: "Required" },
-    },
-    {
-      name: "is_gate",
-      label: "Is Gate?",
-      type: "checkbox",
-    },
+
     {
       name: "description",
       label: "Description",
@@ -170,26 +179,24 @@ const DataTable = ({ params }: DataTableProps) => {
     } = data;
 
     const payload: any = {
-      // Mengambil dari params atau state yang tersedia
       warehouse_id: params?.WHid || data.warehouse_id,
       name,
       code,
       description,
       barcode_image_url,
       is_gate: !!is_gate,
-      is_good_stock: !!is_good_stock, // konversi ke boolean
-      locator_id: params?.locatorId || data.locator_id, // dari params props
-      locator_name: params?.locatorName || data.locator_name, // dari params props
+      is_good_stock: !!is_good_stock, 
+      locator_id: params?.locatorId || data.locator_id, 
+      locator_name: params?.locatorName || data.locator_name, 
     };
 
-    // Logika bisnis proses yang sudah ada (Prioritas Staging vs Capacity)
     if (is_staging === "NO") {
       payload.capacity_bin =
         capacity_bin !== undefined ? Number(capacity_bin) : undefined;
       payload.is_staging = null;
     } else {
       payload.is_staging = is_staging;
-      payload.capacity_bin = null; // Menghindari konflik data
+      payload.capacity_bin = null; 
     }
 
     try {
@@ -213,9 +220,9 @@ const DataTable = ({ params }: DataTableProps) => {
       barcode_image_url,
       is_staging,
       is_gate,
-      is_good_stock, // field baru
-      locator_id, // field baru
-      locator_name, // field baru
+      is_good_stock,
+      locator_id,
+      locator_name,
     } = data;
 
     const payload: any = {
@@ -232,7 +239,7 @@ const DataTable = ({ params }: DataTableProps) => {
 
     // Tetap mempertahankan logika prioritas bisnis proses yang lama
     if (is_gate === true) {
-      payload.capacity_bin = null;
+      payload.capacity_bin = 0;
       payload.is_staging = null;
     } else if (is_staging === "NO") {
       payload.capacity_bin =

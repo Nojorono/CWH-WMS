@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import {
   useReactTable,
   getCoreRowModel,
@@ -11,15 +11,17 @@ import {
 import { useStorePickingList } from "../../../../DynamicAPI/stores/Store/MasterStore";
 import { formatDateIndo } from "../../../../helper/FormatDate";
 import ActIndicator from "../../../../components/ui/activityIndicator";
-import {
-  PickingListItem,
-  PickingListResponse,
-} from "../Helper/detailPickingList";
+import { PickingListResponse } from "../Helper/detailPickingList";
+import { FaRegTimesCircle } from "react-icons/fa";
+import { showSuccessToast } from "../../../../components/toast";
+import { showConfirmDialog } from "../../../../components/swal-confirm";
+import axiosInstance from "../../../../DynamicAPI/AxiosInstance";
+import { EndPoint } from "../../../../utils/EndPoint";
 
 type Props = {
   open: boolean;
   onClose: () => void;
-  memoId?: string; // ✅ kirim memoID langsung dari parent
+  memoId?: string;
 };
 
 function ModalPickingList({ open, onClose, memoId }: Props) {
@@ -34,7 +36,7 @@ function ModalPickingList({ open, onClose, memoId }: Props) {
 
   const apiResponse = detail as unknown as PickingListResponse | undefined;
 
-  // 🧠 Transform data API → table
+  // 🧠 Transform data API → table (including transactionScanPicking)
   const data = useMemo(() => {
     if (!apiResponse) return [];
     return apiResponse.map((d) => ({
@@ -58,10 +60,38 @@ function ModalPickingList({ open, onClose, memoId }: Props) {
       destinationZone: d.destinationWarehouseSub?.name || "-",
       destinationBinName: d.destinationBin?.name || "-",
       memoNumber: d.memo?.outbound_memo_number || "-",
+      transactionScanPicking: d.transactionScanPicking || [],
     }));
   }, [apiResponse]);
 
   const headerInfo = data[0] || {};
+
+  const handleDelete = async (id: string) => {
+    showConfirmDialog(
+      async () => {
+        const transactionId = id;
+        try {
+          const response = await axiosInstance(
+            `${EndPoint}transaction-picking/${transactionId}/cancel`,
+            { method: "PATCH" },
+          );
+
+          if (response.status === 200 || response.status === 201) {
+            onClose();
+          }
+          showSuccessToast("Cancel Suggestion Picking berhasil");
+        } catch (error) {
+          console.error("Error detaching transaction:", error);
+        }
+      },
+      {
+        title: "Cancel Suggestion",
+        text: "Anda yakin ingin Cancel Suggestion Picking ini?",
+        confirmButtonText: "Yes",
+        cancelButtonText: "No",
+      },
+    );
+  };
 
   const columns = useMemo<ColumnDef<any>[]>(
     () => [
@@ -105,12 +135,12 @@ function ModalPickingList({ open, onClose, memoId }: Props) {
         header: "Status",
         cell: (info) => {
           const status = info.row.original.status;
-          const color =
-            status === "COMPLETED"
-              ? "bg-green-100 text-green-700"
-              : status === "PENDING"
-              ? "bg-yellow-100 text-yellow-700"
-              : "bg-gray-100 text-gray-700";
+          const colorMap: Record<string, string> = {
+            COMPLETED: "bg-green-100 text-green-700",
+            PENDING: "bg-yellow-100 text-yellow-700",
+            CANCELLED: "bg-red-100 text-red-700",
+          };
+          const color = colorMap[status] || "bg-gray-100 text-gray-700";
           return (
             <span className={`px-2 py-1 rounded text-xs font-medium ${color}`}>
               {status}
@@ -118,8 +148,31 @@ function ModalPickingList({ open, onClose, memoId }: Props) {
           );
         },
       },
+      {
+        header: "Action",
+        cell: (info) => {
+          const status = info.row.original.status;
+          const transactionScanPicking =
+            info.row.original.transactionScanPicking || [];
+          const isCanDelete =
+            status !== "CANCELLED" && transactionScanPicking.length === 0;
+
+          if (isCanDelete) {
+            return (
+              <button
+                onClick={() => handleDelete(info.row.original.id)}
+                className="p-2 text-red-600 bg-red-50 hover:bg-red-100 border border-red-200 rounded-md transition-all duration-200 active:scale-95"
+                title="Cancel Suggestion"
+              >
+                <FaRegTimesCircle className="text-sm" />
+              </button>
+            );
+          }
+          return null;
+        },
+      },
     ],
-    []
+    [],
   );
 
   const table = useReactTable({
@@ -212,7 +265,7 @@ function ModalPickingList({ open, onClose, memoId }: Props) {
                           >
                             {flexRender(
                               header.column.columnDef.header,
-                              header.getContext()
+                              header.getContext(),
                             )}
                           </th>
                         ))}
@@ -233,7 +286,7 @@ function ModalPickingList({ open, onClose, memoId }: Props) {
                             >
                               {flexRender(
                                 cell.column.columnDef.cell,
-                                cell.getContext()
+                                cell.getContext(),
                               )}
                             </td>
                           ))}
