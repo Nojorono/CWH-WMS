@@ -299,7 +299,7 @@ const AdjustTableDO = ({
                           ))}
                         </div>
                       ) : (
-                        <span className="text-[10px] font-bold text-red-500 bg-red-50 px-2 py-0.5 rounded-md border border-red-100 italic">
+                        <span className="text-[10px] font-bold text-red-500 bg-grey-50 px-2 py-0.5 rounded-md border border-red-100 italic">
                           ⚠️ Belum ada Helper ditugaskan
                         </span>
                       )}
