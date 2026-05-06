@@ -233,7 +233,7 @@ export default function DeliveryOrderCard({
             </Button>
           )}
 
-          {isDetailMode && totalDO > 1 && (
+          {isDetailMode  && (
             <Button
               size="xsm"
               variant="action"

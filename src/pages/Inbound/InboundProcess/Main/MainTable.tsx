@@ -1,10 +1,10 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Input from "../../../../components/form/input/InputField";
 import AdjustTable from "./AdjustTable";
 import Label from "../../../../components/form/Label";
 import Button from "../../../../components/ui/button/Button";
-import { FaPlus, FaUndo } from "react-icons/fa";
+import { FaPlus } from "react-icons/fa";
 import { useDebounce } from "../../../../helper/useDebounce";
 import Select from "../../../../components/form/Select";
 import { usePagePermissions } from "../../../../utils/UserPermission/UserPagePermissions";

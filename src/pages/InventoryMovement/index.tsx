@@ -4,7 +4,7 @@ import MainView from "./Main/MainView";
 export default function InventoryMovement() {
   return (
     <div>
-      <PageBreadcrumb breadcrumbs={[{ title: "Inventory Movement" }]} />
+      <PageBreadcrumb breadcrumbs={[{ title: "Movement Location" }]} />
       <MainView />
     </div>
   );
