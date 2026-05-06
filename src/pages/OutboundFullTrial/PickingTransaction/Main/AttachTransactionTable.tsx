@@ -12,7 +12,7 @@ import {
   useStorePickingTransactionList,
   useStoreOutboundMemo,
 } from "../../../../DynamicAPI/stores/Store/MasterStore";
-import TableComponent from "../Table/TableComponent";
+import TableComponent from "../../../../components/tables/ActionTable/TableComponent";
 import { FaParachuteBox, FaPlus } from "react-icons/fa";
 import ModalSelectMemo from "../Modal/ModalSelectMemo";
 import Select from "../../../../components/form/Select";
@@ -218,7 +218,6 @@ const AttachTransactionTable: React.FC<AttachTransactionTableProps> = ({
         totalPages={Math.max(1, Math.ceil(tableData.length / pageSize))}
         onPageChange={handlePageChange}
         onSelectionChange={handleSelectionChange}
-        selectColumn={false}
       />
 
       {/* Modal Select Memo */}

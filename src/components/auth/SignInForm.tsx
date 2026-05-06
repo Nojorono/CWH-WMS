@@ -124,9 +124,9 @@ export default function SignInForm() {
                 rightIcon={
                   <button type="button" onClick={toggleShowPassword}>
                     {showPassword ? (
-                      <FaEye className="fill-gray-500 dark:fill-gray-400 size-5" />
+                      <EyeCloseIcon className="fill-gray-500 dark:fill-gray-400 size-5" />
                     ) : (
-                      <FaEyeSlash className="fill-gray-500 dark:fill-gray-400 size-5" />
+                      <EyeIcon className="fill-gray-500 dark:fill-gray-400 size-5" />
                     )}
                   </button>
                 }
