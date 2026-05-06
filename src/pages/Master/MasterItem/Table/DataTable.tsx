@@ -36,7 +36,7 @@ const DataTable = () => {
   const handleCreate = (data: any) => {
     const formattedData = {
       ...data,
-      organization_id: Number(data.organization_id),
+      // organization_id: Number(data.organization_id),
       inventory_item_id: Number(data.inventory_item_id),
       dus_per_stack: Number(data.dus_per_stack),
       bal_per_dus: Number(data.bal_per_dus),
@@ -54,7 +54,7 @@ const DataTable = () => {
       sku: String(rest.sku),
       item_number: String(rest.item_number),
       description: String(rest.description),
-      organization_id: Number(rest.organization_id),
+      // organization_id: Number(rest.organization_id),
       inventory_item_id: Number(rest.inventory_item_id),
       dus_per_stack: Number(rest.dus_per_stack),
       bal_per_dus: Number(rest.bal_per_dus),
@@ -100,19 +100,18 @@ const DataTable = () => {
       { accessorKey: "sku", header: "SKU" },
       { accessorKey: "item_number", header: "Item Number" },
       { accessorKey: "description", header: "Description" },
-      {
-        accessorKey: "organization_id",
-        header: "Organization",
-        cell: ({ row }: any) => {
-          const org = ioList.find(
-            (item: any) =>
-              item.organization_id === row.original.organization_id,
-          );
-          return org ? org.organization_name : row.original.organization_id;
-        },
-      },
+      // {
+      //   accessorKey: "organization_id",
+      //   header: "Organization",
+      //   cell: ({ row }: any) => {
+      //     const org = ioList.find(
+      //       (item: any) =>
+      //         item.organization_id === row.original.organization_id,
+      //     );
+      //     return org ? org.organization_name : row.original.organization_id;
+      //   },
+      // },
       { accessorKey: "inventory_item_id", header: "Inventory Item ID" },
-      { accessorKey: "dus_per_stack", header: "Dus/Stack" },
       { accessorKey: "bal_per_dus", header: "Bal/Dus" },
       { accessorKey: "press_per_bal", header: "Press/Bal" },
       { accessorKey: "bks_per_press", header: "Bks/Press" },
@@ -140,16 +139,16 @@ const DataTable = () => {
       type: "text",
       validation: { required: "Required" },
     },
-    {
-      name: "organization_id",
-      label: "Organization",
-      type: "select",
-      options: ioList.map((item: any) => ({
-        label: item.organization_name,
-        value: item.organization_id,
-      })),
-      validation: { required: "Required" },
-    },
+    // {
+    //   name: "organization_id",
+    //   label: "Organization",
+    //   type: "select",
+    //   options: ioList.map((item: any) => ({
+    //     label: item.organization_name,
+    //     value: item.organization_id,
+    //   })),
+    //   validation: { required: "Required" },
+    // },
     {
       name: "inventory_item_id",
       label: "Inventory Item ID",

@@ -184,11 +184,10 @@ const DataTable = () => {
       },
       {
         name: "manualEmployeeId",
-        label: "ID Non-Employee",
+        label: "Id Non-Employee",
         type: "text",
-        placeholder: "Masukkan ID (Akan jadi NON-ID)",
+        placeholder: "Masukkan ID (Akan jadi prefix NON-ID)",
         validation: { required: "ID wajib diisi untuk tipe Non-Employee" },
-        // Hanya muncul saat CREATE dan tipe NON
         hiddenWhen: (values: any) => !!values.id || values.userType !== "NON",
       },
       {

@@ -116,7 +116,9 @@ const AdjustTable = ({
                 title="View"
               />
 
-              {["CREATED", "WAITING FOR REVISION"].includes(item.status) && (
+              {["CREATED", "WAITING FOR REVISION", "UNLOADING"].includes(
+                item.status,
+              ) && (
                 <>
                   <FaEdit
                     className="size-5 cursor-pointer text-blue-600"

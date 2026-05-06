@@ -29,11 +29,11 @@ const mergeInboundItems = (items: any[]) => {
                 item_id: item.item_id ?? "",
                 quantity: qty,
                 uom: item.uom ?? "",
-                ...(item.line_number !== null &&
-                    item.line_number !== undefined &&
-                    String(item.line_number).trim() !== ""
-                    ? { line_number: item.line_number }
-                    : {}),
+                // ...(item.line_number !== null &&
+                //     item.line_number !== undefined &&
+                //     String(item.line_number).trim() !== ""
+                //     ? { line_number: item.line_number }
+                //     : {}),
             };
 
         } else {

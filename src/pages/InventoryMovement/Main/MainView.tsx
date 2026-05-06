@@ -9,6 +9,7 @@ import { useStoreInventoryMovement } from "../../../DynamicAPI/stores/Store/Mast
 // import MovementDetailView from "./MovementDetailView";
 import { FaEdit, FaEye, FaPlus, FaTrash } from "react-icons/fa";
 import { useSearchParams } from "react-router-dom";
+import MovementDetailView from "./MovementDetailView";
 
 const InventoryMovement: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -55,24 +56,18 @@ const InventoryMovement: React.FC = () => {
       header: "Create Date",
       cell: (info) => new Date(info.getValue()).toLocaleDateString("id-ID"),
     }),
-    columnHelper.accessor(
-      (row) => row?.sourceWarehouseSub?.name ?? "",
-      {
-        id: "sourceWarehouseSub.name",
-        header: "Source Zone",
-      },
-    ),
+    columnHelper.accessor((row) => row?.sourceWarehouseSub?.name ?? "", {
+      id: "sourceWarehouseSub.name",
+      header: "Source Zone",
+    }),
     columnHelper.accessor((row) => row?.sourceBin?.name ?? "", {
       id: "sourceBin.name",
       header: "Source Bin",
     }),
-    columnHelper.accessor(
-      (row) => row?.destinationWarehouseSub?.name ?? "",
-      {
-        id: "destinationWarehouseSub.name",
-        header: "Destination Zone",
-      },
-    ),
+    columnHelper.accessor((row) => row?.destinationWarehouseSub?.name ?? "", {
+      id: "destinationWarehouseSub.name",
+      header: "Destination Zone",
+    }),
     columnHelper.accessor((row) => row?.destinationBin?.name ?? "", {
       id: "destinationBin.name",
       header: "Destination Bin",
@@ -235,11 +230,12 @@ const InventoryMovement: React.FC = () => {
   // ================= DETAIL VIEW =================
   if (selectedMovement) {
     return (
-      // <MovementDetailView
-      //   data={selectedMovement}
-      //   onBack={() => setSelectedMovement(null)}
-      // />
-      <></>
+      <>
+        <MovementDetailView
+          data={selectedMovement}
+          onBack={() => setSelectedMovement(null)}
+        />
+      </>
     );
   }
 

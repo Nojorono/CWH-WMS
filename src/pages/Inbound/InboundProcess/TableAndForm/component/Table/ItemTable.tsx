@@ -51,23 +51,23 @@ export default function ItemTable({
 
   const columns = useMemo<ColumnDef<ItemForm>[]>(
     () => [
-      {
-        accessorKey: "line_number",
-        header: "Line Number",
-        cell: ({ row }) => {
-          // Kita cek apakah line_number memang ada nilainya (dari API)
-          const hasLineNumber =
-            row.original.line_number !== undefined &&
-            row.original.line_number !== null &&
-            row.original.line_number !== 0;
+      // {
+      //   accessorKey: "line_number",
+      //   header: "Line Number",
+      //   cell: ({ row }) => {
+      //     // Kita cek apakah line_number memang ada nilainya (dari API)
+      //     const hasLineNumber =
+      //       row.original.line_number !== undefined &&
+      //       row.original.line_number !== null &&
+      //       row.original.line_number !== 0;
 
-          return (
-            <div className="text-slate-500 font-mono text-xs text-center">
-              {hasLineNumber ? row.original.line_number : ""}
-            </div>
-          );
-        },
-      },
+      //     return (
+      //       <div className="text-slate-500 font-mono text-xs text-center">
+      //         {hasLineNumber ? row.original.line_number : ""}
+      //       </div>
+      //     );
+      //   },
+      // },
       {
         accessorKey: "sku",
         header: "SKU",
