@@ -84,13 +84,15 @@ export default function DeliveryOrderCard({
   const [open, setOpen] = useState(true);
   const [uploading, setUploading] = useState(false);
   const detailsRef = useRef<HTMLDetailsElement>(null);
-  const existingPONo = watch(`deliveryOrders.${doIndex}.pos.0.po_no` as any);
-  const existingSONo = watch(`deliveryOrders.${doIndex}.pos.0.so_no` as any);
 
   const integrationStatus = watch(
     `deliveryOrders.${doIndex}.integration_status` as any,
   );
   const fileUrl = watch(`deliveryOrders.${doIndex}.attachment`);
+
+  const receiptNumber = watch(
+    `deliveryOrders.${doIndex}.inbound_integration.receipt_number` as any,
+  );
 
   // ✅ DETEKSI DUPLIKASI DO NUMBER SECARA REAL-TIME
   const allDeliveryOrders = useWatch({
@@ -212,12 +214,13 @@ export default function DeliveryOrderCard({
   return (
     <div className="bg-white rounded-lg shadow p-3 md:p-5">
       <details ref={detailsRef} open={open}>
-        <summary className="flex justify-between items-center cursor-pointer px-3 py-2 bg-orange-100 rounded-md">
+        <summary className="flex justify-between items-center cursor-pointer px-3 py-6 bg-orange-100 rounded-md">
           <div className="flex items-center gap-3">
             {open ? <FaChevronDown /> : <FaChevronRight />}
             <span className="text-sm font-semibold">
               Surat Jalan #{doIndex + 1}
             </span>
+            Meta Integration Status
             {integrationStatus && (
               <StatusBadge
                 status={integrationStatus}
@@ -233,7 +236,7 @@ export default function DeliveryOrderCard({
             </Button>
           )}
 
-          {isDetailMode  && (
+          {isDetailMode && (
             <Button
               size="xsm"
               variant="action"

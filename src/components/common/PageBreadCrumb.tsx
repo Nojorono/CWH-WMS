@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 
 interface BreadcrumbItem {
   title: string;
-  path?: string; // optional, current page doesn't need path
+  path?: string;
 }
 
 interface PageBreadcrumbProps {

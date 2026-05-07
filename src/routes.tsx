@@ -63,6 +63,7 @@ import {
   ReportOutbound,
   Reporting2,
   MasterBin,
+  InboundIntegration,
 } from "./utils/PagesComponent";
 
 const DefaultPage = () => <> </>;
@@ -185,6 +186,7 @@ export function AppRoutes() {
       "/report_outbound": <ReportOutbound />,
       "/reporting3": <Reporting2 />,
       "/setup_master_warehouse": <MasterWarehouse />,
+      "/inbound_integration_log": <InboundIntegration/>
     };
     return map[path] || <DefaultPage />;
   };

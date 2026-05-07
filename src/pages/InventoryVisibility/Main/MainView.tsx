@@ -246,7 +246,7 @@ const InventoryVisibility: React.FC = () => {
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
-            <thead className="bg-orange-500 text-white text-sm">
+            <thead className="bg-orange-500 text-white text-lg">
               {table.getHeaderGroups().map((hg) => (
                 <tr
                   key={hg.id}
@@ -254,7 +254,7 @@ const InventoryVisibility: React.FC = () => {
                   {hg.headers.map((header) => (
                     <th
                       key={header.id}
-                      className="px-6 py-4 text-[10px] font-black text-white-400 uppercase tracking-widest"
+                      className="px-6 py-4 text-[14px] font-black text-white-400 uppercase tracking-widest"
                       onClick={header.column.getToggleSortingHandler()}
                     >
                       {flexRender(
@@ -277,7 +277,7 @@ const InventoryVisibility: React.FC = () => {
                     {row.getVisibleCells().map((cell) => (
                       <td
                         key={cell.id}
-                        className="px-6 py-4 align-middle text-[16px]"
+                        className="px-6 py-4 align-middle text-[15px]"
                       >
                         {flexRender(
                           cell.column.columnDef.cell,

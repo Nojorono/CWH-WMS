@@ -47,7 +47,7 @@ const DynamicTable = ({
       await onDelete(id);
       await onRefresh();
     },
-    [onDelete, onRefresh]
+    [onDelete, onRefresh],
   );
 
   const handleCloseModal = () => {
@@ -55,40 +55,46 @@ const DynamicTable = ({
     onCloseCreateModal();
   };
 
+  console.log("data Pallet selectedItem", selectedItem);
+
   const enhancedColumns = useMemo(() => {
     if (noActions) return columns;
+
     return [
       ...columns,
       {
         id: "actions",
         header: "Action",
-        cell: ({ row }) => (
-          <div className="flex gap-2">
-            <button
-              className="text-green-600"
-              onClick={() => setSelectedItem(row.original)}
-            >
-              <FaEdit />
-            </button>
-            
-            {/* <button
-              onClick={() => handleDelete(getRowId(row.original))}
-              className="text-red-500"
-            >
-              <FaTrash />
-            </button> */}
+        cell: ({ row }) => {
+          const isDisableEdit = row.original.currentQuantity !== 0;
 
-            <button
-              onClick={() => goToDetailPage(getRowId(row.original))}
-              className="text-blue-500"
-            >
-              <FaEye />
-            </button>
-          </div>
-        ),
+          return (
+            <div className="flex gap-2">
+              <button
+                className={`text-green-600 ${isDisableEdit ? "opacity-30 cursor-not-allowed" : "hover:text-green-800"}`}
+                onClick={() => setSelectedItem(row.original)}
+                disabled={isDisableEdit} // Mencegah klik jika quantity bukan 0
+                title={
+                  isDisableEdit
+                    ? "Hanya bisa edit jika stok kosong"
+                    : "Edit Item"
+                }
+              >
+                <FaEdit />
+              </button>
+
+              <button
+                onClick={() => goToDetailPage(getRowId(row.original))}
+                className="text-blue-500 hover:text-blue-700"
+              >
+                <FaEye />
+              </button>
+            </div>
+          );
+        },
       },
     ];
-  }, [columns, getRowId, handleDelete]);
+  }, [columns, getRowId, noActions]); // Pastikan dependensi useMemo sudah lengkap
 
   // ✅ hanya update saat ada event, bukan di render
   const handleSelectionChange = useCallback(
@@ -98,7 +104,7 @@ const DynamicTable = ({
         onSelectedChange(ids); // kirim ke parent
       }
     },
-    [onSelectedChange]
+    [onSelectedChange],
   );
 
   const goToDetailPage = (idPallet: string) => {

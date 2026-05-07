@@ -15,7 +15,7 @@ export interface MasterItem {
     press_per_bal: number | null;
     bks_per_press: number | null;
     btg_per_bks: number | null;
-    organization_id: string | null;
+    organization_id: string | number | null;
 }
 
 // =============================
@@ -29,9 +29,11 @@ export interface InboundDOItemRead {
     inbound_id: string;
     inbound_do_id: string;
     item_id: string;
-    item: MasterItem; // Detail dari join table
+    item: MasterItem;
     quantity: number;
-    quantity_inspection: number | null;
+    quantity_inspection: string | number | null;
+    quantity_difference: number;
+    sub_inventory_difference: string | null;
     inspection_status: "PENDING" | "COMPLETED" | string;
     classification_id: string | null;
     uom: string;
@@ -68,6 +70,8 @@ export interface InboundDORead {
     validation_surat_jalan: boolean;
     integration_status: string | null;
     inbound_items: InboundDOItemRead[];
+    add_to_receipt_number: string | null;
+    inbound_integration: InboundIntegration;
 }
 
 export interface InboundDOCreate {
@@ -109,8 +113,8 @@ export interface InboundPlanning {
     photo_seal: string | null;
     photo_condition: string | null;
     inbound_dos: InboundDORead[];
-    assigned_helpers: any[];
-    transaction_scan_inbounds: any[];
+    assigned_helpers: AssignedHelper[];
+    transaction_scan_inbounds: TransactionScanInbound[];
 }
 
 export interface CreateInboundPlanning {
@@ -127,101 +131,55 @@ export interface CreateInboundPlanning {
     inbound_dos: InboundDOCreate[];
 }
 
+// INTEGRATION DO/SJ
+export interface InboundIntegration {
+    id: string;
+    createdAt: string;
+    updatedAt: string;
+    deletedAt: string | null;
+    organization_id: string;
+    inbound_id: string;
+    inbound_do_id: string;
+    iface_header_id: string;
+    transaction_type: string;
+    source_system: string;
+    receipt_source_code: string;
+    source_header_id: string;
+    do_number: string | null;
+    vendor_id: string | null;
+    vendor_site_id: string | null;
+    receipt_number: string;
+    group_id: string;
+    status: "S" | "E" | string; 
+    message: string | null;
+    creation_date: string;
+    last_updated_date: string;
+}
+
+export interface AssignedHelper {
+    id: string;
+    inbound_id: string;
+    helper_user_id: string;
+    helper_name: string;
+    helper_phone: string;
+}
+
+export interface TransactionScanInbound {
+    id: string;
+    createdAt: string;
+    production_date: string;
+    week_number: number;
+    item_id: string;
+    quantity: number;
+    uom: string;
+    user_name: string;
+    pallet_id: string;
+    m_warehouse_sub_id: string;
+    status: string;
+    inspection_by: string;
+}
+
 // =============================
 // 5. UPDATE Payload (Partial)
 // =============================
 export type UpdateInboundPlanning = Partial<CreateInboundPlanning>;
-
-
-
-
-// // =============================
-// // SHARED TYPES
-// // =============================
-
-// export interface InboundDOItemCreate {
-//     item_id?: string;
-//     quantity: number;
-//     uom: string;
-// }
-
-// export interface InboundDOCreate {
-//     inbound_do_number: string;
-//     inbound_do_date: string;
-//     attachment: string | null;
-//     inbound_po_number: string;
-//     inbound_po_date: string;
-//     flag_validated: boolean;
-//     inbound_items: InboundDOItemCreate[];
-// }
-
-// export interface CreateInboundPlanning {
-//     expedition: string;
-//     origin: string;
-//     license_plate: string;
-//     driver_name: string;
-//     driver_phone: string;
-//     status: string;
-//     inbound_type: string;
-//     arrival_date: string;
-//     inbound_dos: InboundDOCreate[];
-// }
-
-// // =============================
-// // UPDATE Payload (Partial Create)
-// // =============================
-
-// export type UpdateInboundPlanning = Partial<CreateInboundPlanning>;
-
-// // =============================
-// // GET ALL / GET BY ID (Read)
-// // =============================
-
-// export interface InboundDOItemRead {
-//     item: any;
-//     id: string;
-//     createdAt: string;
-//     updatedAt: string;
-//     deletedAt: string | null;
-//     inbound_id: string;
-//     inbound_do_id: string;
-//     item_id?: string;
-//     quantity: number;
-//     classification_id: string | null;
-//     uom: string;
-// }
-
-// export interface InboundDORead {
-//     id: string;
-//     createdAt: string;
-//     updatedAt: string;
-//     deletedAt: string | null;
-//     inbound_id: string;
-//     inbound_do_number: string;
-//     inbound_do_date: string;
-//     attachment: string | null;
-//     inbound_po_number: string;
-//     inbound_po_date: string;
-//     flag_validated: boolean;
-//     inbound_items: InboundDOItemRead[];
-// }
-
-// export interface InboundPlanning {
-//     id: string;
-//     createdAt: string;
-//     updatedAt: string;
-//     deletedAt: string | null;
-//     inbound_number: string;
-//     expedition: string;
-//     origin: string;
-//     license_plate: string;
-//     driver_name: string;
-//     driver_phone: string;
-//     status: string;
-//     inbound_type: string;
-//     arrival_date: string;
-//     inbound_dos: InboundDORead[];
-//     assigned_helpers: any[];
-// }
-
-

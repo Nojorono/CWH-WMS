@@ -39,6 +39,9 @@ import { StockAdjustment, StockAdjustmentCreateRequest } from '../../types/Stock
 import { MasterWeek, CreateMasterWeek, UpdateMasterWeek } from '../../types/MasterWeekTypes.ts'
 import { OutboundPlanning, UpdateOutboundPlanning } from "../../types/OutboundGoodStock.ts";
 
+import { InboundIntegration } from "../../types/InboundIntegration.ts";
+
+
 
 // Daftar semua entitas service di sini
 export const uomService = createCrudService<Uom, CreateUom, UpdateUom>("/master-uom");
@@ -85,7 +88,8 @@ export const InventoryMovementService = createCrudService<InventoryMovementListR
 export const StockAdjustmentService = createCrudService<StockAdjustment, StockAdjustmentCreateRequest, StockAdjustmentCreateRequest>("/adjustment-stock");
 export const ReportInboundService = createCrudService<InboundPlanning, CreateInboundPlanning, UpdateInboundPlanning>("/report/inbound");
 export const ReportOutboundService = createCrudService<OutboundPlanning, UpdateOutboundPlanning, null>("/report/outbound");
-
-
 export const MasterWeekService = createCrudService<MasterWeek, null, null>("/master-week");
+
+export const InboundIntegrationService = createCrudService<InboundIntegration, null, null>("/inbound-integration");
+
 
