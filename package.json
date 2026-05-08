@@ -7,8 +7,7 @@
     "dev":     "vite --host --mode dev",
     "build":   "tsc -b && vite build --mode prod",
     "lint":    "eslint .",
-    "preview": "vite preview",
-    "start": "vite --host --mode prod"
+    "preview": "vite preview"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
