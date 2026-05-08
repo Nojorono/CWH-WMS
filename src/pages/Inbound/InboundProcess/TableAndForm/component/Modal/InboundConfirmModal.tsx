@@ -9,6 +9,7 @@ interface ConfirmationModalProps {
   onClose: () => void;
   onSubmit: () => void;
   formData: FormValues;
+  inbAddToReceiveNo?: any;
 }
 
 export default function InboundConfirmModal({
@@ -16,6 +17,7 @@ export default function InboundConfirmModal({
   onClose,
   onSubmit,
   formData,
+  inbAddToReceiveNo,
 }: ConfirmationModalProps) {
   const [expandedDO, setExpandedDO] = useState<string | null>(null);
 
@@ -26,11 +28,6 @@ export default function InboundConfirmModal({
 
   const allItems = formData.deliveryOrders.flatMap((do_) =>
     do_.pos.flatMap((po) => po.items),
-  );
-
-  const totalQty = allItems.reduce(
-    (sum, i) => sum + (typeof i.qty === "number" ? i.qty : 0),
-    0,
   );
 
   const skuSummaryWithDifferentUOM = formData.deliveryOrders.reduce(
@@ -137,9 +134,9 @@ export default function InboundConfirmModal({
     {},
   );
 
-  const toggleExpand = (do_no: string) => {
-    setExpandedDO(expandedDO === do_no ? null : do_no);
-  };
+  // const toggleExpand = (do_no: string) => {
+  //   setExpandedDO(expandedDO === do_no ? null : do_no);
+  // };
 
   return (
     <Dialog open={isOpen} onClose={onClose} className="fixed inset-0 z-[9999]">
@@ -151,16 +148,20 @@ export default function InboundConfirmModal({
       <div className="flex items-center justify-center min-h-screen p-4 fixed inset-0 z-[9999]">
         <DialogPanel className="bg-white rounded-2xl shadow-2xl max-w-[60vw] w-full max-h-[98vh] overflow-y-auto">
           {/* Header */}
-          <div className="sticky top-0 bg-white border-b px-6 py-4 z-10">
+          <div className="sticky top-0 bg-white border-b px-6 py-4 z-10 text-center">
             <DialogTitle className="text-2xl font-semibold text-gray-800">
-              Confirmation Inbound Plan
+              {inbAddToReceiveNo
+                ? "Confirmation Add to Receive Inbound"
+                : " Confirmation Inbound Plan"}
             </DialogTitle>
           </div>
 
           <div className="px-6 py-6 space-y-8">
             <section>
               <h2 className="text-lg font-semibold text-gray-700 mb-3">
-                Inbound Planning Details
+                {inbAddToReceiveNo
+                  ? "Add to Receive Inbound"
+                  : "Inbound Planning Details"}
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
@@ -174,6 +175,20 @@ export default function InboundConfirmModal({
                     className="w-full rounded-md border-gray-300 bg-gray-200 text-gray-700 text-sm px-3 py-2 focus:outline-none"
                   />
                 </div>
+
+                {inbAddToReceiveNo && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-600 mb-1">
+                      Receipt No
+                    </label>
+                    <input
+                      type="text"
+                      value={inbAddToReceiveNo}
+                      disabled
+                      className="w-full rounded-md border-gray-300 bg-blue-50 text-blue-700 font-bold font-mono text-sm px-3 py-2 focus:outline-none border"
+                    />
+                  </div>
+                )}
 
                 <div>
                   <label className="block text-sm font-medium text-gray-600 mb-1">

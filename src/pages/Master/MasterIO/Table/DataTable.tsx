@@ -142,6 +142,9 @@ const DataTable = () => {
     const operatingUnitFromDescription =
       selected?.locationDescription ?? data.operating_unit ?? "";
 
+      console.log("organization_id", data.organization_id);
+      
+
     return createData({
       organization_id: Number(data.organization_id),
       organization_name: organizationNameFromConcat, // => CWH

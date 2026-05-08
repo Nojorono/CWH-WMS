@@ -44,6 +44,8 @@ const AdjustTable = ({
     });
   }, [fetchUsingPagination, pageIndex, pageSize, globalFilter, filteredStatus]);
 
+  console.log("list", list);
+
   // 🔹 Kolom Table
   const columns: ColumnDef<any>[] = useMemo(
     () => [
@@ -58,6 +60,30 @@ const AdjustTable = ({
       {
         accessorKey: "inbound_reference_number",
         header: "Inbound Reference No",
+      },
+      {
+        id: "add_to_receipt_number",
+        header: "Receipt No",
+        // Karena data berada di dalam inbound_dos, kita ambil dari indeks pertama
+        cell: ({ row }) => {
+          const dos = row.original.inbound_dos;
+          const receiptNo =
+            dos && dos.length > 0 ? dos[0].add_to_receipt_number : null;
+
+          return (
+            <div className="font-medium text-slate-700">
+              {receiptNo ? (
+                <span className="bg-blue-50 text-blue-700 px-2 py-1 rounded text-xs border border-blue-100">
+                  {receiptNo}
+                </span>
+              ) : (
+                <span className="text-slate-400 italic text-xs">
+                  Not Available
+                </span>
+              )}
+            </div>
+          );
+        },
       },
       {
         header: "Principal",

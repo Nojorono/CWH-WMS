@@ -70,7 +70,7 @@ export default function InboundPlanningFormContainer() {
     }
   }, [isEditMode, dataInbound?.id, fetchById]);
 
-  // // Reset sesuai mode
+  //Reset sesuai mode
   useEffect(() => {
     if (isEditMode && detail) {
       reset(mapDetailToFormValues(detail));
@@ -80,7 +80,6 @@ export default function InboundPlanningFormContainer() {
       reset(emptyFormValues);
     } else if (isAddToReceiveMode && dataInbound) {
       const inbType = dataInbound.inboundType || "";
-      // ✅ Format sebagai object agar cocok dengan select field
       const inboundTypeValue = inbType
         ? { value: inbType, label: inbType }
         : "";
@@ -160,7 +159,7 @@ export default function InboundPlanningFormContainer() {
     );
 
     if (duplicateGroups.length > 0) {
-      const dupList = duplicateGroups.map(([no]) => no).join(", ");      
+      const dupList = duplicateGroups.map(([no]) => no).join(", ");
       showErrorToast(
         `Nomor SJ/DO duplikat ditemukan: ${dupList}. Setiap SJ harus unik dalam 1 Inbound Plan.`,
       );
@@ -217,15 +216,8 @@ export default function InboundPlanningFormContainer() {
   const onFinalSubmit = async (data: FormValues) => {
     let payload = mapToPayload(data);
 
+    // 1. Pembersihan umum untuk semua mode (Root Fields)
     const expeditionField = payload.expedition as any;
-
-    if (payload.inbound_dos) {
-      payload.inbound_dos = payload.inbound_dos.map((doItem: any) => {
-        const { po_type, ...rest } = doItem;
-        return rest;
-      });
-    }
-
     if (
       expeditionField &&
       typeof expeditionField === "object" &&
@@ -239,14 +231,25 @@ export default function InboundPlanningFormContainer() {
       payload.inbound_type = typeField.value;
     }
 
+    // 2. Pembersihan & Injeksi Data untuk Inbound DOs
     if (payload.inbound_dos && Array.isArray(payload.inbound_dos)) {
       payload.inbound_dos = payload.inbound_dos.map((doItem: any) => {
-        const cleanedDo = { ...doItem };
+        // Hilangkan po_type jika terbawa dari mapper
+        const { po_type, ...rest } = doItem;
+        const cleanedDo = { ...rest };
+
+        // Hapus po_date jika kosong agar tidak error saat format ISO
         if (
           !cleanedDo.inbound_po_date ||
-          cleanedDo.inbound_po_date.trim() === ""
+          String(cleanedDo.inbound_po_date).trim() === ""
         ) {
           delete cleanedDo.inbound_po_date;
+        }
+
+        // ✅ KONDISI KHUSUS MODE ADD TO RECEIVE
+        // Injeksi add_to_receipt_number ke dalam setiap objek DO sesuai gambar
+        if (isAddToReceiveMode) {
+          cleanedDo.add_to_receipt_number = dataInbound?.receipt_number || "";
         }
 
         return cleanedDo;
@@ -261,16 +264,17 @@ export default function InboundPlanningFormContainer() {
     } else if (isEditMode && id) {
       apiAction = () => updateData(id, payload);
     } else if (isAddToReceiveMode && id) {
+      // ✅ Root level tetap membawa inbound_id_reference
       const addToReceivePayload = {
         ...payload,
         inbound_id_reference: id,
       };
+
       apiAction = () => createData(addToReceivePayload);
     }
 
     if (apiAction) {
       const res = await apiAction();
-
       if (res?.success) {
         reset(emptyFormValues);
         setIsConfirmOpen(false);
@@ -316,12 +320,12 @@ export default function InboundPlanningFormContainer() {
         emptyFormValues={emptyFormValues}
         inboundID={dataInbound.id}
         inboundNumber={dataInbound.inbound_number}
-        // inboundType={dataInbound.inbound_type}
         inboundType={
           isAddToReceiveMode
             ? dataInbound?.inboundType
             : dataInbound?.inbound_type
         }
+        inbAddToReceiveNo={dataInbound.receipt_number}
       />
     </FormProvider>
   );

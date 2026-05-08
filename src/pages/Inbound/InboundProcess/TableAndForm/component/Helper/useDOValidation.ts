@@ -8,12 +8,12 @@ import { FormValues } from "../formTypes";
 const getInboundType = (inbType: any): "PO" | "SO" => {
     const type = typeof inbType === "string" ? inbType : inbType?.value || "";
     if (type === "PO") return "PO";
-    // SO_INTERNAL dan SO_SUBDIST menggunakan API SO yang sama
     return "SO";
 };
 
 // helper extract doc number (🔥 inti fix ada disini)
 const extractDocNumbers = (rawList: any[], type: "PO" | "SO"): string[] => {
+
     if (type === "PO") {
         return rawList.flatMap((item: any) => {
             const raw = item.DAFTAR_NO_PO;

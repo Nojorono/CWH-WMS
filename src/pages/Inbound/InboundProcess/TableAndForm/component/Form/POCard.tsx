@@ -12,8 +12,10 @@ import {
   useStoreUom,
 } from "../../../../../../DynamicAPI/stores/Store/MasterStore";
 import { showErrorToast } from "../../../../../../components/toast";
-import { POsearchService, SOsearchService } from "../../../../../../DynamicAPI/services/Service/";
-
+import {
+  POsearchService,
+  SOsearchService,
+} from "../../../../../../DynamicAPI/services/Service/";
 
 export default function POCard({
   doIndex,
@@ -87,7 +89,31 @@ export default function POCard({
     fetchAllUom();
   }, []);
 
-  // Sync Data Existing (Goal: Menampilkan Principal di Nama Pengirim)
+  // // Sync Data Existing (Goal: Menampilkan Principal di Nama Pengirim)
+  // useEffect(() => {
+  //   const path = `deliveryOrders.${doIndex}.pos.${posIndex}`;
+
+  //   const currentPrincipal = getValues(`${path}.principal` as any);
+  //   const currentVendorName = getValues(`${path}.vendor_name` as any);
+
+  //   if (currentPrincipal && !currentVendorName) {
+  //     setValue(`${path}.vendor_name` as any, currentPrincipal);
+  //   }
+
+  //   if ((isDetailMode || isEditMode) && dataPO) {
+  //     const fieldName = normalizedInbType === "PO" ? "po_no" : "so_no";
+  //     setValue(`${path}.${fieldName}` as any, dataPO);
+  //   }
+  // }, [
+  //   isDetailMode,
+  //   isEditMode,
+  //   dataPO,
+  //   setValue,
+  //   getValues,
+  //   doIndex,
+  //   posIndex,
+  // ]);
+
   useEffect(() => {
     const path = `deliveryOrders.${doIndex}.pos.${posIndex}`;
 
@@ -99,7 +125,7 @@ export default function POCard({
     }
 
     if ((isDetailMode || isEditMode) && dataPO) {
-      const fieldName = normalizedInbType === "PO" ? "po_no" : "so_no";
+      const fieldName = "po_no"; // always po_no
       setValue(`${path}.${fieldName}` as any, dataPO);
     }
   }, [
@@ -218,7 +244,7 @@ export default function POCard({
         {/* Input PO/SO */}
         <div>
           <label className="block text-xs text-slate-600 mb-1">
-            Nomor{" "}
+            Nomor
             {normalizedInbType === "PO"
               ? "PO"
               : normalizedInbType === "SO_INTERNAL"
