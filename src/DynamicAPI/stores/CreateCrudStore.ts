@@ -30,7 +30,6 @@ interface CrudStoreOptions<TData, TCreate, TUpdate> {
     pagination?: PaginationState;
 }
 
-
 export const createCrudStore = <TData, TCreate, TUpdate>({
     name,
     service,
@@ -67,6 +66,22 @@ export const createCrudStore = <TData, TCreate, TUpdate>({
         currentId: null,
         pagination,
 
+        // fetchAll: async () => {
+        //     set({ isLoading: true, error: null });
+        //     try {
+        //         const data = await service.fetchAll();
+        //         set({ list: data });
+        //         return { success: true };
+        //     } catch (err: any) {
+        //         const msg = err.message || `Failed to fetch ${name}`;
+        //         showErrorToast(msg);
+        //         set({ error: msg });
+        //         return { success: false, message: msg };
+        //     } finally {
+        //         set({ isLoading: false });
+        //     }
+        // },
+
         fetchAll: async () => {
             set({ isLoading: true, error: null });
             try {
@@ -75,6 +90,15 @@ export const createCrudStore = <TData, TCreate, TUpdate>({
                 return { success: true };
             } catch (err: any) {
                 const msg = err.message || `Failed to fetch ${name}`;
+
+                // Cek pesan error persis "Organization ID is required"
+                if (msg === "Organization ID is required") {
+                    console.warn(`[fetchAll] Silent error: ${msg}`);
+                    set({ error: msg });
+                    return { success: false, message: msg };
+                }
+
+                // Error lain tampilkan toast
                 showErrorToast(msg);
                 set({ error: msg });
                 return { success: false, message: msg };
@@ -103,7 +127,7 @@ export const createCrudStore = <TData, TCreate, TUpdate>({
             set({ isLoading: true, error: null });
 
             try {
-                const result = await service.fetchUsingPagination(params);                
+                const result = await service.fetchUsingPagination(params);
 
                 // 🧠 Defensive handling untuk nilai undefined/null
                 const data = Array.isArray(result?.data) ? result.data : [];

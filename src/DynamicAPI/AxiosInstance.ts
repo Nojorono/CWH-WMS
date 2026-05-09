@@ -1,7 +1,5 @@
 import axios from "axios";
 import { EndPoint } from "../utils/EndPoint"
-import { showErrorToast } from "../components/toast";
-
 
 const axiosInstance = axios.create({
   baseURL: EndPoint,
