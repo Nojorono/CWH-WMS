@@ -19,7 +19,7 @@ interface Props {
   getRowId?: (row: any) => any;
   title?: string;
   noActions?: boolean;
-  onSelectedChange?: (ids: any[]) => void; // ✅ callback ke parent
+  onSelectedChange?: (ids: any[]) => void;
 }
 
 const DynamicTable = ({
@@ -54,8 +54,6 @@ const DynamicTable = ({
     setSelectedItem(null);
     onCloseCreateModal();
   };
-
-  console.log("data Pallet selectedItem", selectedItem);
 
   const enhancedColumns = useMemo(() => {
     if (noActions) return columns;
@@ -131,7 +129,7 @@ const DynamicTable = ({
         data={data}
         columns={enhancedColumns}
         globalFilter={globalFilter}
-        onSelectionChange={handleSelectionChange} // ✅ trigger saat user checklist
+        onSelectionChange={handleSelectionChange}
       />
     </>
   );

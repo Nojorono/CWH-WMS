@@ -126,7 +126,6 @@ export const createCrudStore = <TData, TCreate, TUpdate>({
                 console.error(`[${name}] Pagination Error:`, err);
                 showErrorToast(msg);
                 set({ error: msg, list: [] });
-                // Do not return any value to match the expected signature
             } finally {
                 set({ isLoading: false });
             }

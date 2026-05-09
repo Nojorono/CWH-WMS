@@ -16,6 +16,7 @@ import {
 } from "../../../constants/statusMaps";
 import { useStoreInventoryTracking } from "../../../DynamicAPI/stores/Store/MasterStore";
 import TabsSection from "../../../components/wms-components/inbound-component/tabs/TabsSection";
+import ActIndicator from "../../../components/ui/activityIndicator";
 
 // --- Sub-Component untuk Menangani Detail SKU (Dipisahkan Logicnya) ---
 const InventoryContentCell = ({
@@ -140,6 +141,8 @@ type MenuTableProps = {
   filteredBin?: any;
   filteredItem?: any;
   filteredPallet?: any;
+  filteredWarehouse?: any;
+  filteredIO?: any;
 };
 
 const AdjustTable = ({
@@ -150,12 +153,17 @@ const AdjustTable = ({
   filteredBin,
   filteredItem,
   filteredPallet,
+  filteredWarehouse,
+  filteredIO,
 }: MenuTableProps) => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState(0);
   const [searchParams, setSearchParams] = useSearchParams();
-  const { fetchUsingPagination, list, pagination } =
+
+  const { fetchUsingPagination, list, pagination, isLoading } =
     useStoreInventoryTracking();
+
+  console.log("list Data", list);
 
   const currentPage = parseInt(searchParams.get("page") || "1");
   const pageIndex = currentPage - 1;
@@ -168,7 +176,9 @@ const AdjustTable = ({
     filteredZone,
     filteredBin,
     filteredItem,
-    filteredPallet
+    filteredPallet,
+    filteredWarehouse,
+    filteredIO,
   });
 
   const handlePageChange = (newPageIndex: number, newSize: number) => {
@@ -185,25 +195,38 @@ const AdjustTable = ({
     }
     const hasFilterChanged =
       prevFiltersRef.current.globalFilter !== globalFilter ||
+      prevFiltersRef.current.filteredIO !== filteredIO ||
+      prevFiltersRef.current.filteredWarehouse !== filteredWarehouse ||
       prevFiltersRef.current.filteredStatus !== filteredStatus ||
       prevFiltersRef.current.filteredZone !== filteredZone ||
       prevFiltersRef.current.filteredBin !== filteredBin ||
       prevFiltersRef.current.filteredItem !== filteredItem ||
       prevFiltersRef.current.filteredPallet !== filteredPallet;
+
     if (hasFilterChanged) {
       prevFiltersRef.current = {
         globalFilter,
+        filteredIO,
+        filteredWarehouse,
         filteredStatus,
         filteredZone,
         filteredBin,
         filteredItem,
-        filteredPallet
+        filteredPallet,
       };
       const newParams = new URLSearchParams(searchParams);
       newParams.set("page", "1");
       setSearchParams(newParams, { replace: true });
     }
-  }, [globalFilter, filteredStatus, filteredZone, filteredBin, filteredItem, filteredPallet]);
+  }, [
+    globalFilter,
+    filteredStatus,
+    filteredZone,
+    filteredBin,
+    filteredItem,
+    filteredPallet,
+    filteredWarehouse,
+  ]);
 
   useEffect(() => {
     if (!fetchUsingPagination) return;
@@ -212,6 +235,7 @@ const AdjustTable = ({
       limit: pageSize,
       search: globalFilter,
       inventory_status: filteredStatus || "",
+      warehouse_id: filteredWarehouse || "",
       warehouse_sub_id: filteredZone || "",
       warehouse_bin_id: filteredBin || "",
       item_id: filteredItem || "",
@@ -229,8 +253,7 @@ const AdjustTable = ({
     filteredBin,
     filteredItem,
     filteredPallet,
-  
-
+    filteredWarehouse,
   ]);
 
   // Transformasi Data
@@ -247,10 +270,6 @@ const AdjustTable = ({
       ),
       inventory_status: item.inventory_status || "",
       progression_status: item.progression_status || "",
-      // Filter items yang qty > 0 saja
-      // current_items: (item.pallet?.currentItems || []).filter(
-      //   (i: any) => i.current_quantity > 0,
-      // ),
       current_items: item.pallet?.currentItems || [],
       bad_inventory: (item.inventoryTrackingBad || [])
         .filter((b: any) => b.quantity > 0)
@@ -266,7 +285,7 @@ const AdjustTable = ({
     () => mappedList.filter((item) => item.current_items.length > 0),
     // () => mappedList,
     [mappedList],
-  );  
+  );
 
   const badStockData = useMemo(
     () => mappedList.filter((item) => item.bad_inventory.length > 0),
@@ -275,8 +294,6 @@ const AdjustTable = ({
 
   const createColumns = (type: "good" | "bad"): ColumnDef<any>[] => {
     const columns: ColumnDef<any>[] = [];
-
-    // Hanya tampilkan kolom Pallet ID jika type === "good"
     if (type === "good") {
       columns.push(
         {
@@ -363,7 +380,36 @@ const AdjustTable = ({
     return columns;
   };
 
-  
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center p-20 bg-white rounded-lg shadow-sm border border-gray-100">
+        <ActIndicator />
+        <p className="mt-4 text-gray-500 animate-pulse font-medium">
+          Memuat data inventory...
+        </p>
+      </div>
+    );
+  }
+
+  const isDataEmpty = !list || list.length === 0;
+
+  if (isDataEmpty) {
+    return (
+      <div className="flex flex-col items-center justify-center p-20 bg-gray-50 border-2 border-dashed border-gray-200 rounded-xl">
+        <div className="bg-gray-100 p-4 rounded-full mb-4">
+          <FaLayerGroup className="text-gray-400" size={40} />
+        </div>
+        <h3 className="text-gray-700 font-bold text-lg">
+          Data Tidak Ditemukan
+        </h3>
+        <p className="text-gray-500 text-sm max-w-xs text-center mt-1">
+          Belum ada data inventory yang sesuai dengan filter atau pencarian
+          Anda.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col gap-4">
       <TabsSection

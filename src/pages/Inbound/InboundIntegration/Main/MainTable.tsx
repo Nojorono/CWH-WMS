@@ -17,13 +17,10 @@ const MainTable = () => {
 
     try {
       const parsedIO = JSON.parse(listIO);
-      // Map data ke format { value, label }
       const options = parsedIO.map((item: any) => ({
         value: item.id, // atau item.organization_id sesuai kebutuhan backend
         label: `${item.organization_name} - ${item.operating_unit}`,
       }));
-
-      // Tambahkan opsi All di paling atas
       return [{ value: "", label: "All Organization" }, ...options];
     } catch (error) {
       console.error("Error parsing io_list:", error);

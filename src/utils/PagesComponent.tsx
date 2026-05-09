@@ -63,9 +63,9 @@ import DetachAttachProcess from "../pages/OutboundFullTrial/PickingTransaction/M
 import GateLoading from "../pages/OutboundFullTrial/GateLoading";
 
 // Approval Set Up
-import ApprovalSetup from "../pages/ApprovalSetup/index";
-import CreateApproval from "../pages/ApprovalSetup/Table/CreateApprovalSetup";
-import ApprovalProcess from "../pages/ApprovalSetup/Table/ApprovalProcess";
+// import ApprovalSetup from "../pages/ApprovalSetup/index";
+// import CreateApproval from "../pages/ApprovalSetup/Table/CreateApprovalSetup";
+// import ApprovalProcess from "../pages/ApprovalSetup/Table/ApprovalProcess";
 import PrintSuratJalan from "../pages/OutboundFullTrial/PickingTransaction/Main/PrintSuratJalan/PrintSuratJalan";
 import StockAdjustment from "../pages/StockAdjustment/index";
 
@@ -135,9 +135,9 @@ export {
   PrintSuratJalan,
 
   // Approval Set Up
-  ApprovalSetup,
-  CreateApproval,
-  ApprovalProcess,
+  // ApprovalSetup,
+  // CreateApproval,
+  // ApprovalProcess,
   ReportInbound,
   ReportOutbound,
   Reporting2,

@@ -41,7 +41,6 @@ const DynamicFormModal = ({
     }
     if (res?.success) {
       onRefresh();
-      ``;
       onClose();
     }
   };

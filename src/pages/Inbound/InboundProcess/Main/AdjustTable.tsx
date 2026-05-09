@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
-import { FaEye, FaEdit, FaTrash } from "react-icons/fa";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { FaEye, FaEdit, FaTrash, FaEllipsisV } from "react-icons/fa";
 import { ColumnDef } from "@tanstack/react-table";
 import { useNavigate } from "react-router-dom";
 import { formatDateIndo } from "../../../../helper/FormatDate";
@@ -9,6 +9,7 @@ import { useStoreInboundGoodStock } from "../../../../DynamicAPI/stores/Store/Ma
 import { usePagePermissions } from "../../../../utils/UserPermission/UserPagePermissions";
 import ActIndicator from "../../../../components/ui/activityIndicator";
 import TableComponent from "../../../../components/tables/ActionTable/TableComponent";
+import { showConfirmDialog } from "../../../../components/swal-confirm";
 
 type MenuTableProps = {
   globalFilter?: string;
@@ -180,7 +181,22 @@ const AdjustTable = ({
   };
 
   const handleDelete = (id: any) => {
-    deleteData(id);
+    showConfirmDialog(
+      async () => {
+        try {
+          await deleteData(id);
+          // fetchAll();  
+        } catch (error) {
+          console.error(error);
+        }
+      },
+      {
+        title: "Confirm Delete",
+        text: "Anda yakin ingin menghapus data ini?",
+        confirmButtonText: "Yes, Delete!",
+        cancelButtonText: "No, Cancel",
+      },
+    );
   };
 
   const mappedList = list || [];

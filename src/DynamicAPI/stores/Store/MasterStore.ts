@@ -43,7 +43,8 @@ import {
     MasterWeekService,
     ReportOutboundService,
     zoneByWarehouseService,
-    InboundIntegrationService
+    InboundIntegrationService,
+    IOfromMeta
 } from "../../services/Service/MasterService";
 
 import { Uom, CreateUom, UpdateUom } from "../../types/UomTypes";
@@ -110,6 +111,11 @@ export const useStorePallet = createCrudStore<Pallet, CreatePallet, UpdatePallet
 export const useStoreIo = createCrudStore<Io, CreateIo, UpdateIo>({
     name: "Io",
     service: IoService,
+});
+
+export const useStoreIoFromMeta = createCrudStore<Io, null, null>({
+    name: "Io",
+    service: IOfromMeta,
 });
 
 export const useStoreWarehouse = createCrudStore<Warehouse, CreateWarehouse, UpdateWarehouse>({
