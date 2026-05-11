@@ -66,7 +66,7 @@ export default function AddItemModal({
       description: selectedMaster?.description ?? "",
       qty: Number(tempQty),
       uom: tempUom,
-      classification: tempClassification,
+      // classification: tempClassification,
       expired_date: null,
       qty_plan: Number(tempQty),
       item_name: selectedMaster?.description ?? "",

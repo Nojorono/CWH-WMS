@@ -66,22 +66,6 @@ export const createCrudStore = <TData, TCreate, TUpdate>({
         currentId: null,
         pagination,
 
-        // fetchAll: async () => {
-        //     set({ isLoading: true, error: null });
-        //     try {
-        //         const data = await service.fetchAll();
-        //         set({ list: data });
-        //         return { success: true };
-        //     } catch (err: any) {
-        //         const msg = err.message || `Failed to fetch ${name}`;
-        //         showErrorToast(msg);
-        //         set({ error: msg });
-        //         return { success: false, message: msg };
-        //     } finally {
-        //         set({ isLoading: false });
-        //     }
-        // },
-
         fetchAll: async () => {
             set({ isLoading: true, error: null });
             try {
