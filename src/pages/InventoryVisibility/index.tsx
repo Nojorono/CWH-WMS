@@ -4,7 +4,7 @@ import MainView from "./Main/MainView";
 export default function InventoryVisibility() {
   return (
     <div>
-      <PageBreadcrumb breadcrumbs={[{ title: "Inventory Visibility" }]} />
+      <PageBreadcrumb breadcrumbs={[{ title: "Stock Allocation Visibilty" }]} />
       <MainView />
     </div>
   );

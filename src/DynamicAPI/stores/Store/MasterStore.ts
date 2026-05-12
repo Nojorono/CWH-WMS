@@ -42,7 +42,9 @@ import {
     ReportInboundService,
     MasterWeekService,
     ReportOutboundService,
-    zoneByWarehouseService
+    zoneByWarehouseService,
+    InboundIntegrationService,
+    IOfromMeta
 } from "../../services/Service/MasterService";
 
 import { Uom, CreateUom, UpdateUom } from "../../types/UomTypes";
@@ -84,8 +86,18 @@ import { StockAdjustment, StockAdjustmentCreateRequest } from "../../types/Stock
 import { MasterWeek, CreateMasterWeek, UpdateMasterWeek } from '../../types/MasterWeekTypes.ts'
 import { OutboundPlanning, UpdateOutboundPlanning } from "../../types/OutboundGoodStock.ts";
 
+import { InboundIntegration } from "../../types/InboundIntegration.ts";
+
+
 
 // Daftar semua store di sini
+
+export const useStoreInboundIntegration = createCrudStore<InboundIntegration, null, null>({
+    name: "UOM",
+    service: InboundIntegrationService,
+});
+
+
 export const useStoreUom = createCrudStore<Uom, CreateUom, UpdateUom>({
     name: "UOM",
     service: uomService,
@@ -99,6 +111,11 @@ export const useStorePallet = createCrudStore<Pallet, CreatePallet, UpdatePallet
 export const useStoreIo = createCrudStore<Io, CreateIo, UpdateIo>({
     name: "Io",
     service: IoService,
+});
+
+export const useStoreIoFromMeta = createCrudStore<Io, null, null>({
+    name: "Io",
+    service: IOfromMeta,
 });
 
 export const useStoreWarehouse = createCrudStore<Warehouse, CreateWarehouse, UpdateWarehouse>({

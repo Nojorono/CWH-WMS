@@ -27,7 +27,6 @@ import { TransactionPicking, CreateTransactionPicking, UpdateTransactionPicking 
 import { PickingList, CreatePickingList, UpdatePickingList } from '../../types/PickingList.tsx'
 import { PickingAssignHelper, CreatePickingAssignHelper, UpdatePickingAssignHelper } from "../../types/PickingAssignHelper.tsx";
 import { PickingSuggestionItem, UpdatePickingSuggestionItem, CreatePickingSuggestionItem } from "../../types/PickingSuggestionItem.tsx";
-import { UserManagement, CreateUserManagement, UpdateUserManagement } from "../../types/UserManagement.tsx";
 import { CreateMasterAMO, UpdateMasterAMO, MasterAMO } from "../../types/MasterAMOtypes.ts";
 import { MasterSubdist, CreateMasterSubdist, UpdateMasterSubdist } from "../../types/MasterSubdistTypes.ts";
 import { ApprovalSetUp, CreateApprovalSetUp, UpdateApprovalSetUp } from "../../types/ApprovalSetUpTypes";
@@ -35,9 +34,10 @@ import { InventoryVisibilityResponse } from '../../types/InventoryVisibilty.ts'
 import { MasterSupplier, CreateMasterSupplier, UpdateMasterSupplier } from '../../types/MasterSupplier.ts'
 import { InventoryMovementListResponse } from '../../types/InventoryMovement.ts'
 import { StockAdjustment, StockAdjustmentCreateRequest } from '../../types/StockAdjustmentTypes.ts'
-
 import { MasterWeek, CreateMasterWeek, UpdateMasterWeek } from '../../types/MasterWeekTypes.ts'
 import { OutboundPlanning, UpdateOutboundPlanning } from "../../types/OutboundGoodStock.ts";
+import { InboundIntegration } from "../../types/InboundIntegration.ts";
+
 
 
 // Daftar semua entitas service di sini
@@ -45,6 +45,7 @@ export const uomService = createCrudService<Uom, CreateUom, UpdateUom>("/master-
 export const palletService = createCrudService<Pallet, CreatePallet, UpdatePallet>("/master-pallet");
 export const supplierService = createCrudService<Supplier, CreateSupplier, UpdateSupplier>("/master-supplier");
 export const IoService = createCrudService<Io, CreateIo, UpdateIo>("/master-io");
+export const IOfromMeta = createCrudService<Io, null, null>("/master-io/sync");
 export const warehouseService = createCrudService<Warehouse, CreateWarehouse, UpdateWarehouse>("/master-warehouse");
 export const MenuService = createCrudService<Menu, CreateMenu, UpdateMenu>("/menu");
 export const ParentMenuService = createCrudService<Menu, CreateMenu, UpdateMenu>("/menu/parent");
@@ -85,7 +86,8 @@ export const InventoryMovementService = createCrudService<InventoryMovementListR
 export const StockAdjustmentService = createCrudService<StockAdjustment, StockAdjustmentCreateRequest, StockAdjustmentCreateRequest>("/adjustment-stock");
 export const ReportInboundService = createCrudService<InboundPlanning, CreateInboundPlanning, UpdateInboundPlanning>("/report/inbound");
 export const ReportOutboundService = createCrudService<OutboundPlanning, UpdateOutboundPlanning, null>("/report/outbound");
-
-
 export const MasterWeekService = createCrudService<MasterWeek, null, null>("/master-week");
+
+export const InboundIntegrationService = createCrudService<InboundIntegration, null, null>("/inbound-integration");
+
 

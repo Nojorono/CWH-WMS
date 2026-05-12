@@ -103,7 +103,7 @@ export default function ItemTable({
         accessorKey: "description",
         header: "Description",
         cell: ({ row }) => (
-          <div className="max-w-[200px] truncate md:whitespace-normal">
+          <div className="max-w-[150px] truncate md:whitespace-normal">
             {row.original.description || row.original.item_name || "-"}
           </div>
         ),
@@ -133,11 +133,11 @@ export default function ItemTable({
         ? [
             {
               accessorKey: "quantity_inspection",
-              header: "Qty Inspect",
+              header: () => <div className="text-right">Qty Inspection</div>,
               cell: ({ row }: CellContext<ItemForm, unknown>) => {
                 const val = row.original.quantity_inspection;
                 return (
-                  <div className="text-center font-medium text-amber-600">
+                  <div className="text-right font-medium text-amber-600">
                     {val !== undefined && val !== null && val !== ""
                       ? val
                       : "-"}
@@ -255,7 +255,13 @@ export default function ItemTable({
                 colSpan={columns.length}
                 className="px-4 py-8 text-center text-slate-400 italic"
               >
-                No items added yet. Please search by {inbType === "PO" ? "PO" : inbType === "SO_INTERNAL" ? "SO Internal" : "SO SubDist"} or add items manually.
+                No items added yet. Please search by{" "}
+                {inbType === "PO"
+                  ? "PO"
+                  : inbType === "SO_INTERNAL"
+                    ? "SO Internal"
+                    : "SO SubDist"}{" "}
+                or add items manually.
               </td>
             </tr>
           )}

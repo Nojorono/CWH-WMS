@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
-import { FaEye, FaEdit, FaTrash } from "react-icons/fa";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { FaEye, FaEdit, FaTrash, FaEllipsisV } from "react-icons/fa";
 import { ColumnDef } from "@tanstack/react-table";
 import { useNavigate } from "react-router-dom";
 import { formatDateIndo } from "../../../../helper/FormatDate";
@@ -9,6 +9,7 @@ import { useStoreInboundGoodStock } from "../../../../DynamicAPI/stores/Store/Ma
 import { usePagePermissions } from "../../../../utils/UserPermission/UserPagePermissions";
 import ActIndicator from "../../../../components/ui/activityIndicator";
 import TableComponent from "../../../../components/tables/ActionTable/TableComponent";
+import { showConfirmDialog } from "../../../../components/swal-confirm";
 
 type MenuTableProps = {
   globalFilter?: string;
@@ -44,6 +45,8 @@ const AdjustTable = ({
     });
   }, [fetchUsingPagination, pageIndex, pageSize, globalFilter, filteredStatus]);
 
+  console.log("list", list);
+
   // 🔹 Kolom Table
   const columns: ColumnDef<any>[] = useMemo(
     () => [
@@ -58,6 +61,30 @@ const AdjustTable = ({
       {
         accessorKey: "inbound_reference_number",
         header: "Inbound Reference No",
+      },
+      {
+        id: "add_to_receipt_number",
+        header: "Receipt No",
+        // Karena data berada di dalam inbound_dos, kita ambil dari indeks pertama
+        cell: ({ row }) => {
+          const dos = row.original.inbound_dos;
+          const receiptNo =
+            dos && dos.length > 0 ? dos[0].add_to_receipt_number : null;
+
+          return (
+            <div className="font-medium text-slate-700">
+              {receiptNo ? (
+                <span className="bg-blue-50 text-blue-700 px-2 py-1 rounded text-xs border border-blue-100">
+                  {receiptNo}
+                </span>
+              ) : (
+                <span className="text-slate-400 italic text-xs">
+                  Not Available
+                </span>
+              )}
+            </div>
+          );
+        },
       },
       {
         header: "Principal",
@@ -154,7 +181,22 @@ const AdjustTable = ({
   };
 
   const handleDelete = (id: any) => {
-    deleteData(id);
+    showConfirmDialog(
+      async () => {
+        try {
+          await deleteData(id);
+          // fetchAll();  
+        } catch (error) {
+          console.error(error);
+        }
+      },
+      {
+        title: "Confirm Delete",
+        text: "Anda yakin ingin menghapus data ini?",
+        confirmButtonText: "Yes, Delete!",
+        cancelButtonText: "No, Cancel",
+      },
+    );
   };
 
   const mappedList = list || [];

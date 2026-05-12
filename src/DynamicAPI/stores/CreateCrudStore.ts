@@ -30,7 +30,6 @@ interface CrudStoreOptions<TData, TCreate, TUpdate> {
     pagination?: PaginationState;
 }
 
-
 export const createCrudStore = <TData, TCreate, TUpdate>({
     name,
     service,
@@ -75,6 +74,15 @@ export const createCrudStore = <TData, TCreate, TUpdate>({
                 return { success: true };
             } catch (err: any) {
                 const msg = err.message || `Failed to fetch ${name}`;
+
+                // Cek pesan error persis "Organization ID is required"
+                if (msg === "Organization ID is required") {
+                    console.warn(`[fetchAll] Silent error: ${msg}`);
+                    set({ error: msg });
+                    return { success: false, message: msg };
+                }
+
+                // Error lain tampilkan toast
                 showErrorToast(msg);
                 set({ error: msg });
                 return { success: false, message: msg };
@@ -103,7 +111,7 @@ export const createCrudStore = <TData, TCreate, TUpdate>({
             set({ isLoading: true, error: null });
 
             try {
-                const result = await service.fetchUsingPagination(params);                
+                const result = await service.fetchUsingPagination(params);
 
                 // 🧠 Defensive handling untuk nilai undefined/null
                 const data = Array.isArray(result?.data) ? result.data : [];
@@ -126,7 +134,6 @@ export const createCrudStore = <TData, TCreate, TUpdate>({
                 console.error(`[${name}] Pagination Error:`, err);
                 showErrorToast(msg);
                 set({ error: msg, list: [] });
-                // Do not return any value to match the expected signature
             } finally {
                 set({ isLoading: false });
             }

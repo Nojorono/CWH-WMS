@@ -3,7 +3,6 @@ import MainTable from "./Main/MainTable";
 
 export default function Inventory() {
   const rawOrgName = localStorage.getItem("organization_name");
-
   const orgName =
     rawOrgName &&
     rawOrgName.trim() !== "" &&

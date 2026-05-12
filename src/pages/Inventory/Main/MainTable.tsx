@@ -1,41 +1,143 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Input from "../../../components/form/input/InputField";
 import AdjustTable from "./AdjustTable";
 import Label from "../../../components/form/Label";
 import { useDebounce } from "../../../helper/useDebounce";
 import {
-  useStoreSubWarehouse,
   useStoreBinByZone,
   useStoreItem,
   useStorePallet,
+  useStoreZoneByWarehouse,
+  useStoreSubWarehouse,
 } from "../../../DynamicAPI/stores/Store/MasterStore";
 import Select from "../../../components/form/Select";
+import axiosInstance from "../../../DynamicAPI/AxiosInstance";
 
 const MainTable = () => {
+  const userDetail = localStorage.getItem("user_detail");
+  const isGlobalUser = userDetail === "null";
+
   const [globalFilter, setGlobalFilter] = useState<string>("");
   const debouncedFilter = useDebounce(globalFilter, 500);
-  const [selectedStatus, setSelectedStatus] = useState<any>("");
+
+  // States
+  const [selectedIO, setSelectedIO] = useState<any>("");
+  const [selectedWH, setSelectedWH] = useState<any>("");
   const [selectedZone, setSelectedZone] = useState<any>("");
   const [selectedBin, setSelectedBin] = useState<any>("");
+  const [selectedStatus, setSelectedStatus] = useState<any>("");
   const [selectedItem, setSelectedItem] = useState<any>("");
   const [selectedPallet, setSelectedPallet] = useState<any>("");
 
-  const { fetchAll, list: listZone } = useStoreSubWarehouse();
+  const [listWarehouse, setListWarehouse] = useState<any[]>([]);
+
+  // Stores
+  const { fetchAll: fetchAllZone, list: listZone } = useStoreSubWarehouse();
+  const { fetchById: fetchZoneByWH, detail: WHdetail } =
+    useStoreZoneByWarehouse();
   const { fetchAll: fetchAllItem, list: listItems } = useStoreItem();
   const { fetchById: fetchBinById, detail: listBins } = useStoreBinByZone();
   const { fetchAll: fetchAllPallet, list: listPallets } = useStorePallet();
 
   useEffect(() => {
-    fetchAll();
+    if (!isGlobalUser) {
+      fetchAllZone();
+    }
     fetchAllItem();
     fetchAllPallet();
-  }, []);
+  }, [isGlobalUser]);
 
+  // Fetch Warehouse by IO
+  useEffect(() => {
+    const getWarehouseByIO = async () => {
+      if (isGlobalUser && selectedIO !== "") {
+        try {
+          const response = await axiosInstance.get(
+            `/master-warehouse/organization/${selectedIO}`,
+          );
+          if (response.data.success) {
+            setListWarehouse(response.data.data);
+          }
+        } catch (error) {
+          console.error("Error fetching warehouse:", error);
+        }
+      }
+    };
+    getWarehouseByIO();
+    setSelectedWH("");
+    setSelectedZone("");
+    setSelectedBin("");
+  }, [selectedIO, isGlobalUser]);
+
+  // Fetch Zone by WH
+  useEffect(() => {
+    if (selectedWH !== "") {
+      fetchZoneByWH(selectedWH);
+      setSelectedZone("");
+      setSelectedBin("");
+    }
+  }, [selectedWH]);
+
+  // Fetch Bin by Zone
   useEffect(() => {
     if (selectedZone !== "") {
       fetchBinById(selectedZone);
     }
-  }, [fetchBinById, selectedZone]);
+  }, [selectedZone]);
+
+  // Options Mapping
+  const ioOptions = useMemo(() => {
+    const listIO = localStorage.getItem("io_list");
+    if (!listIO) return [{ value: "", label: "No Organization Found" }];
+    try {
+      const parsedIO = JSON.parse(listIO);
+      return [
+        { value: "", label: "Select Organization" },
+        ...parsedIO.map((item: any) => ({
+          value: item.id,
+          label: `${item.organization_name} - ${item.organization_code}`,
+        })),
+      ];
+    } catch {
+      return [{ value: "", label: "Error Loading IO" }];
+    }
+  }, []);
+
+  const optWarehouse = [
+    { value: "", label: "Select Warehouse" },
+    ...listWarehouse.map((wh) => ({ value: wh.id, label: wh.name })),
+  ];
+
+  const zoneDataSource = isGlobalUser
+    ? Array.isArray(WHdetail)
+      ? WHdetail
+      : []
+    : listZone;
+  const optZone = [
+    { value: "", label: "All Zone" },
+    ...zoneDataSource.map((zone: any) => ({
+      value: zone.id,
+      label: zone.code,
+    })),
+  ];
+
+  const optBin = [
+    { value: "", label: "All Bin" },
+    ...(Array.isArray(listBins) ? listBins : []).map((bin: any) => ({
+      value: bin.id,
+      label: bin.code,
+    })),
+  ];
+
+  const optPallet = [
+    { value: "", label: "All Pallet" },
+    ...listPallets.map((p) => ({ value: String(p.id), label: p.pallet_code })),
+  ];
+
+  const optItems = [
+    { value: "", label: "All Item" },
+    ...listItems.map((item) => ({ value: String(item.id), label: item.sku })),
+  ];
 
   const optStatus = [
     { value: "", label: "All Status" },
@@ -43,121 +145,121 @@ const MainTable = () => {
     { value: "IN_INVENTORY", label: "IN_INVENTORY" },
   ];
 
-  const optZone = [
-    { value: "", label: "All Zone" },
-    ...listZone.map((zone) => ({
-      value: zone.id,
-      label: zone.code,
-    })),
-  ];
-
-  const optPallet = [
-    { value: "", label: "All Pallet" },
-    ...listPallets
-      .filter((pallet) => pallet.id !== undefined && pallet.id !== null)
-      .map((pallet) => ({
-        value: String(pallet.id),
-        label: pallet.pallet_code,
-      }))
-      .sort((a, b) => a.label.localeCompare(b.label)),
-  ];
-
-  const itemsOnly = listItems.map(({ id, sku }) => ({ id: String(id), sku }));
-  const optItems = [
-    { value: "", label: "All Item" },
-    ...itemsOnly.map((item) => ({ value: item.id, label: item.sku })),
-  ];
-
-  const safeBins = Array.isArray(listBins) ? listBins : [];
-  const optBin = [
-    { value: "", label: "All Bin" },
-    ...safeBins.map((bin) => ({ value: bin.id, label: bin.code })),
-  ];
+  const canShowTable = !isGlobalUser || (selectedIO && selectedWH);
 
   return (
     <>
       <div className="p-4 bg-white shadow rounded-md mb-5">
-        <div className="flex justify-between items-center">
-          <div className="mb-4">
-            <Label htmlFor="search">Search</Label>
-            <Input
-              onChange={(e) => setGlobalFilter(e.target.value)}
-              type="text"
-              id="search"
-              placeholder="🔍 Masukan data.."
-              value={globalFilter}
-              width={"100px"}
-            />
-          </div>
+        <div className="mb-4 w-full md:w-1/4">
+          <Label htmlFor="search">Search</Label>
+          <Input
+            onChange={(e) => setGlobalFilter(e.target.value)}
+            type="text"
+            id="search"
+            placeholder="🔍 Masukan data.."
+            value={globalFilter}
+          />
         </div>
 
-        <div className="flex justify-between items-center">
-          <div className="space-x-3">
-            <Label htmlFor="status">Status</Label>
+        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-7 gap-4 items-end">
+          {isGlobalUser && (
+            <>
+              <div className="flex flex-col space-y-1">
+                <Label>Organization/IO</Label>
+                <Select
+                  options={ioOptions}
+                  onChange={setSelectedIO}
+                  value={selectedIO}
+                  width="100%"
+                />
+              </div>
+              <div className="flex flex-col space-y-1">
+                <Label>Warehouse</Label>
+                <Select
+                  options={optWarehouse}
+                  onChange={setSelectedWH}
+                  value={selectedWH}
+                  width="100%"
+                  disabled={!selectedIO}
+                />
+              </div>
+            </>
+          )}
+
+          <div className="flex flex-col space-y-1">
+            <Label>Status</Label>
             <Select
               options={optStatus}
-              placeholder="Select Status"
-              onChange={(value) => setSelectedStatus(value)}
+              onChange={setSelectedStatus}
               value={selectedStatus}
-              width={"200px"}
+              width="100%"
             />
           </div>
 
-          <div className="space-x-3">
-            <Label htmlFor="status">Zone</Label>
+          <div className="flex flex-col space-y-1">
+            <Label>Zone</Label>
             <Select
               options={optZone}
-              placeholder="Pilih Zone"
-              onChange={(value) => setSelectedZone(value)}
+              onChange={setSelectedZone}
               value={selectedZone}
-              width={"200px"}
+              width="100%"
+              disabled={isGlobalUser && !selectedWH}
             />
           </div>
 
-          <div className="space-x-3">
-            <Label htmlFor="status">BIN</Label>
+          <div className="flex flex-col space-y-1">
+            <Label>BIN</Label>
             <Select
               options={optBin}
-              placeholder="Pilih Bin"
-              onChange={(value) => setSelectedBin(value)}
+              onChange={setSelectedBin}
               value={selectedBin}
-              width={"200px"}
+              width="100%"
+              disabled={!selectedZone}
             />
           </div>
 
-          <div className="space-x-3">
-            <Label htmlFor="status">Pallet</Label>
+          <div className="flex flex-col space-y-1">
+            <Label>Pallet</Label>
             <Select
               options={optPallet}
-              placeholder="Pilih Pallet"
-              onChange={(value) => setSelectedPallet(value)}
+              onChange={setSelectedPallet}
               value={selectedPallet}
-              width={"200px"}
+              width="100%"
             />
           </div>
 
-          <div className="space-x-3">
-            <Label htmlFor="status">Item</Label>
+          <div className="flex flex-col space-y-1">
+            <Label>Item</Label>
             <Select
               options={optItems}
-              placeholder="Pilih Item"
-              onChange={(value) => setSelectedItem(value)}
+              onChange={setSelectedItem}
               value={selectedItem}
-              width={"200px"}
+              width="100%"
             />
           </div>
         </div>
       </div>
 
-      <AdjustTable
-        globalFilter={debouncedFilter}
-        setGlobalFilter={setGlobalFilter}
-        filteredStatus={selectedStatus}
-        filteredZone={selectedZone}
-        filteredBin={selectedBin}
-        filteredItem={selectedItem}
-        filteredPallet={selectedPallet}
-      />
+      {/* TAMPILKAN TABEL HANYA JIKA SYARAT TERPENUHI */}
+      {canShowTable ? (
+        <AdjustTable
+          globalFilter={debouncedFilter}
+          setGlobalFilter={setGlobalFilter}
+          filteredIO={selectedIO}
+          filteredWarehouse={selectedWH}
+          filteredStatus={selectedStatus}
+          filteredZone={selectedZone}
+          filteredBin={selectedBin}
+          filteredItem={selectedItem}
+          filteredPallet={selectedPallet}
+        />
+      ) : (
+        <div className="p-10 bg-gray-50 border-2 border-dashed border-gray-200 rounded-lg text-center text-gray-400">
+          <p className="text-lg font-medium">
+            Silahkan pilih Organization dahulu.
+          </p>
+        </div>
+      )}
     </>
   );
 };

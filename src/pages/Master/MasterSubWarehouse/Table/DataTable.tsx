@@ -28,6 +28,7 @@ const DataTable = ({ params }: DataTableProps) => {
   const { list: Warehouse, fetchAll: fetchAllWarehouse } = useStoreWarehouse();
   const { fetchById: fetchZoneByWH, detail: WHdetail } =
     useStoreZoneByWarehouse();
+    
   const { fetchAll: fetchAllIo, list: ioList } = useStoreIo();
   const {
     fetchAll: fetchSubWH,
@@ -46,7 +47,7 @@ const DataTable = ({ params }: DataTableProps) => {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [selectedPallets, setSelectedPallets] = useState<any[]>([]);
   const [isPrintModalOpen, setPrintModalOpen] = useState(false);
-  
+
   // LOGIKA PEMILIHAN DATA:
   const displayData = useMemo(() => {
     return params?.WHid ? (Array.isArray(WHdetail) ? WHdetail : []) : subWHList;
@@ -118,15 +119,15 @@ const DataTable = ({ params }: DataTableProps) => {
         { label: "INBOUND", value: "INBOUND" },
         { label: "OUTBOUND", value: "OUTBOUND" },
       ],
-      validation: { required: "Required" },
+      validation: { required: false },
     },
     {
       name: "is_gate",
       label: "Is Gate Area?",
       type: "select",
       options: [
-        { label: "YES", value: true },
         { label: "NO", value: false },
+        { label: "YES", value: true },
       ],
       validation: {
         validate: (v: boolean | null | undefined) =>
@@ -185,18 +186,18 @@ const DataTable = ({ params }: DataTableProps) => {
       description,
       barcode_image_url,
       is_gate: !!is_gate,
-      is_good_stock: !!is_good_stock, 
-      locator_id: params?.locatorId || data.locator_id, 
-      locator_name: params?.locatorName || data.locator_name, 
+      is_good_stock: !!is_good_stock,
+      locator_id: params?.locatorId || data.locator_id,
+      locator_name: params?.locatorName || data.locator_name,
     };
 
-    if (is_staging === "NO") {
+    if (is_staging === null || is_staging === "NO") {
       payload.capacity_bin =
         capacity_bin !== undefined ? Number(capacity_bin) : undefined;
       payload.is_staging = null;
     } else {
       payload.is_staging = is_staging;
-      payload.capacity_bin = null; 
+      payload.capacity_bin = null;
     }
 
     try {
@@ -241,7 +242,7 @@ const DataTable = ({ params }: DataTableProps) => {
     if (is_gate === true) {
       payload.capacity_bin = 0;
       payload.is_staging = null;
-    } else if (is_staging === "NO") {
+    } else if (is_staging === "NO" || is_staging === null) {
       payload.capacity_bin =
         capacity_bin !== undefined ? Number(capacity_bin) : undefined;
       payload.is_staging = null;

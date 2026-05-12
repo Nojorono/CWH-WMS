@@ -7,16 +7,13 @@ import "flatpickr/dist/flatpickr.css";
 import App from "./App.tsx";
 import { AppWrapper } from "./components/common/PageMeta.tsx";
 import { ThemeProvider } from "./context/ThemeContext.tsx";
-import ACTIVE_ENV from "./utils/ActiveEnv.ts";
 
-if (ACTIVE_ENV !== "dev") {
+if (import.meta.env.PROD) {
   console.log = () => {};
   console.debug = () => {};
   console.info = () => {};
   console.warn = () => {};
 }
-
-console.error(`🚀 WMS Running in ${ACTIVE_ENV.toUpperCase()} mode`);
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>

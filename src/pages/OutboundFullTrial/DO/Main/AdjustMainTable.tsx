@@ -364,7 +364,7 @@ const AdjustTableDO = ({
                               {/* Label Status */}
                               {isDone ? (
                                 <div className="flex flex-col items-end">
-                                  <span className="bg-emerald-500 text-white text-[10px] px-2.5 py-1 rounded-lg font-black flex items-center gap-1 shadow-sm shadow-emerald-100">
+                                  <span className="bg-emerald-200 text-black-200 text-[10px] px-2.5 py-1 rounded-lg font-black flex items-center gap-1 shadow-sm shadow-emerald-100">
                                     ✅ SELESAI SCAN
                                   </span>
                                   <span className="text-[9px] text-emerald-600 font-bold mt-1.5 px-1">

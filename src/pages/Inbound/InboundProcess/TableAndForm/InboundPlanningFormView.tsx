@@ -8,7 +8,7 @@ import DeliveryOrderCard from "./component/Form/DeliveryOrderCard";
 import HelperAssign from "./component/Tabs/HelperAssign";
 import ConfirmationModal from "./component/Modal/InboundConfirmModal";
 import { FaPlus, FaRedoAlt } from "react-icons/fa";
-import { UseFormReturn } from "react-hook-form";
+import { UseFormReturn, useWatch } from "react-hook-form";
 import { FormValues } from "./component/formTypes";
 import { useEffect, useState, useRef } from "react";
 import ScanHistory from "./component/Tabs/ScanHistory";
@@ -34,6 +34,7 @@ type Props = {
   inboundID?: string;
   inboundNumber?: string;
   inboundType?: string;
+  inbAddToReceiveNo?: string;
 };
 
 // ==== Helpers ==== //
@@ -115,9 +116,13 @@ const ActionButtons = ({
 
   return (
     <div className="mt-4 flex justify-end gap-1">
-      <Button type="button" variant="primary" size="sm" onClick={appendDO}>
-        <FaPlus className="inline mr-1" /> Add Surat Jalan
-      </Button>
+      
+      {!isAddToReceiveMode && (
+        <Button type="button" variant="primary" size="sm" onClick={appendDO}>
+          <FaPlus className="inline mr-1" /> Add Surat Jalan
+        </Button>
+      )}
+
       {!isEditMode && (
         <Button
           type="button"
@@ -224,8 +229,13 @@ const SubmitSection = ({
 }: Props) => {
   if (!(isCreateMode || isEditMode || isAddToReceiveMode)) return null;
 
-  const values = methods.watch();
-  const deliveryOrders = values.deliveryOrders || [];
+  const deliveryOrders =
+    useWatch({
+      control: methods.control,
+      name: "deliveryOrders",
+    }) || [];
+
+  const mainFields = methods.watch();
 
   const normalizedDONumbers = deliveryOrders
     .map((doItem: any) => (doItem?.do_no || "").trim().toUpperCase())
@@ -234,7 +244,6 @@ const SubmitSection = ({
   const hasDuplicateDO =
     new Set(normalizedDONumbers).size !== normalizedDONumbers.length;
 
-  // --- VALIDASI UTAMA ---
   const hasNoDO = deliveryOrders.every((doItem: any) => !doItem.do_no?.trim());
 
   const hasMultiplePO = deliveryOrders.some(
@@ -246,7 +255,10 @@ const SubmitSection = ({
   );
 
   const hasPOWithoutItem = deliveryOrders.some((doItem: any) =>
-    doItem.pos?.some((po: any) => !po.items || po.items.length === 0),
+    doItem.pos?.some((po: any) => {
+      // Cek apakah items ada dan panjangnya lebih dari 0
+      return !po.items || po.items.length === 0;
+    }),
   );
 
   const requiredFields: (keyof FormValues)[] = [
@@ -258,7 +270,7 @@ const SubmitSection = ({
   ];
 
   const hasEmptyMainFields = requiredFields.some((field) => {
-    const val = values[field];
+    const val = mainFields[field];
     return !val || (typeof val === "object" && !val.value);
   });
 
@@ -273,6 +285,7 @@ const SubmitSection = ({
 
   // --- Pesan agar user tahu penyebab disable ---
   let validateMsg = "";
+
   if (hasEmptyMainFields) validateMsg = "Isi field utama terlebih dahulu.";
   else if (hasNoDO) validateMsg = "Minimal harus ada 1 nomor Surat Jalan.";
   else if (hasDuplicateDO)
@@ -326,6 +339,7 @@ export default function InboundPlanningFormView(props: Props) {
     setIsConfirmOpen,
     inboundNumber,
     inboundType,
+    inbAddToReceiveNo,
   } = props;
 
   const resetDOOnly = () => {
@@ -454,9 +468,49 @@ export default function InboundPlanningFormView(props: Props) {
       />
 
       {isAddToReceiveMode && (
-        <h3 className="text-xl font-semibold text-slate-700 mb-4">
-          Reference Inbound No ({inboundNumber})
-        </h3>
+        <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 mb-6 shadow-sm">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <h3 className="text-xs uppercase font-bold text-blue-600 tracking-wider mb-1">
+                Reference Details
+              </h3>
+              <div className="flex flex-wrap items-center gap-2 md:gap-4">
+                {/* Inbound Number Section */}
+                <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-lg border border-blue-200 shadow-sm">
+                  <span className="text-[10px] font-black text-slate-400 uppercase">
+                    Inbound No
+                  </span>
+                  <span className="text-sm font-mono font-bold text-slate-700">
+                    {inboundNumber}
+                  </span>
+                </div>
+
+                <div className="hidden md:block h-6 w-px bg-blue-200"></div>
+
+                {/* Receipt Number Section */}
+                <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-lg border border-blue-200 shadow-sm">
+                  <span className="text-[10px] font-black text-slate-400 uppercase">
+                    Receipt No
+                  </span>
+                  <span className="text-sm font-mono font-bold text-blue-700">
+                    {inbAddToReceiveNo}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Badge Status Tambahan (Opsional) */}
+            <div className="flex items-center">
+              <span className="flex items-center gap-1.5 bg-blue-600 text-white px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-100 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
+                </span>
+                Mode Add to Receive
+              </span>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Header Form */}
@@ -500,6 +554,7 @@ export default function InboundPlanningFormView(props: Props) {
           onClose={() => setIsConfirmOpen(false)}
           onSubmit={methods.handleSubmit(onFinalSubmit)}
           formData={previewData}
+          inbAddToReceiveNo={inbAddToReceiveNo}
         />
       )}
     </div>

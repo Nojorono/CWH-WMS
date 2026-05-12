@@ -15,8 +15,10 @@ import { showErrorToast, showSuccessToast } from "../../../../components/toast";
 
 const DataTable = () => {
   const { list: userData, createData, updateData, fetchAll } = useStoreUser();
+
   const { list: subWarehouseList, fetchAll: fetchSubWarehouses } =
-    useStoreSubWarehouse();
+    useStoreSubWarehouse();    
+    
   const { fetchRoles, roles } = useRoleStore();
 
   const [search, setSearch] = useState("");

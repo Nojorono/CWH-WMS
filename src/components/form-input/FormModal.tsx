@@ -227,6 +227,45 @@ const ModalForm: React.FC<ModalFormProps> = ({
           />
         );
 
+      // case "select":
+      //   return (
+      //     <Controller
+      //       name={field.name}
+      //       control={control}
+      //       rules={{
+      //         ...(field.validation?.required
+      //           ? {
+      //               validate: (v) =>
+      //                 !!v || field.validation?.required || "Required",
+      //             }
+      //           : {}),
+      //         ...field.validation,
+      //       }}
+      //       render={({ field: controllerField }) => (
+      //         <Select
+      //           {...controllerField}
+      //           options={field.options}
+      //           placeholder={field.placeholder || "Select..."}
+      //           classNamePrefix="react-select"
+      //           value={field.options?.find(
+      //             (opt) => opt.value === controllerField.value,
+      //           )}
+      //           // onChange={(opt) => controllerField.onChange(opt?.value ?? "")}
+      //           isDisabled={isDisabled}
+      //           styles={{ menuPortal: (base) => ({ ...base, zIndex: 9999 }) }}
+      //           menuPortalTarget={document.body}
+      //           onChange={(opt) => {
+      //             const value = opt?.value ?? "";
+      //             controllerField.onChange(value);
+      //             if (typeof (field as any).onChange === "function") {
+      //               (field as any).onChange(value);
+      //             }
+      //           }}
+      //         />
+      //       )}
+      //     />
+      //   );
+
       case "select":
         return (
           <Controller
@@ -235,8 +274,16 @@ const ModalForm: React.FC<ModalFormProps> = ({
             rules={{
               ...(field.validation?.required
                 ? {
-                    validate: (v) =>
-                      !!v || field.validation?.required || "Required",
+                    validate: (v) => {
+                      // Modifikasi pengecekan di sini:
+                      // Izinkan null, tapi larang string kosong "" atau undefined
+                      if (v === null) return true;
+                      return (
+                        (v !== undefined && v !== "") ||
+                        field.validation?.required ||
+                        "Required"
+                      );
+                    },
                   }
                 : {}),
               ...field.validation,
@@ -247,15 +294,27 @@ const ModalForm: React.FC<ModalFormProps> = ({
                 options={field.options}
                 placeholder={field.placeholder || "Select..."}
                 classNamePrefix="react-select"
-                value={field.options?.find(
-                  (opt) => opt.value === controllerField.value,
-                )}
-                // onChange={(opt) => controllerField.onChange(opt?.value ?? "")}
+                value={
+                  field.options?.find(
+                    (opt) => opt.value === controllerField.value,
+                  ) ||
+                  (controllerField.value === null
+                    ? field.options?.find((opt) => opt.value === null)
+                    : null)
+                }
                 isDisabled={isDisabled}
-                styles={{ menuPortal: (base) => ({ ...base, zIndex: 9999 }) }}
+                styles={{
+                  menuPortal: (base) => ({ ...base, zIndex: 9999 }),
+                  control: (base) => ({
+                    ...base,
+                    borderColor: errors[field.name]
+                      ? "#ef4444"
+                      : base.borderColor,
+                  }),
+                }}
                 menuPortalTarget={document.body}
                 onChange={(opt) => {
-                  const value = opt?.value ?? "";
+                  const value = opt ? opt.value : "";
                   controllerField.onChange(value);
                   if (typeof (field as any).onChange === "function") {
                     (field as any).onChange(value);

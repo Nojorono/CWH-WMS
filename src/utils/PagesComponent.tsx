@@ -12,6 +12,7 @@ import UpdateRole from "../pages/Master/MasterRole/Screen/UpdateRole";
 // INBOUND PLANNING
 import Inbound from "../pages/Inbound/InboundProcess/index";
 import InboundProcess from "../pages/Inbound/InboundProcess/TableAndForm/InboundPlanningFormContainer";
+import InboundIntegration from "../pages/Inbound/InboundIntegration/Main/MainTable";
 
 // PUTAWAY
 import PutAway from "../pages/PutAway";
@@ -40,13 +41,12 @@ import MasterAMO from "../pages/Master/MasterAMO";
 import MasterSubdist from "../pages/Master/MasterSubdist";
 import MasterWeek from "../pages/Master/MasterWeek";
 
-
 // MASTER ZONE
 import MasterZone from "../pages/Master/MasterSubWarehouse";
 import MainTabZone from "../pages/Master/MasterSubWarehouse/Tabs/Main";
 
 // MASTER BIN
-import MasterBin from '../pages/Master/MasterBin'
+import MasterBin from "../pages/Master/MasterBin";
 
 import MasterSource from "../pages/Master/MasterSource";
 import MasterSupplier from "../pages/Master/MasterSupplier";
@@ -63,18 +63,16 @@ import DetachAttachProcess from "../pages/OutboundFullTrial/PickingTransaction/M
 import GateLoading from "../pages/OutboundFullTrial/GateLoading";
 
 // Approval Set Up
-import ApprovalSetup from "../pages/ApprovalSetup/index";
-import CreateApproval from "../pages/ApprovalSetup/Table/CreateApprovalSetup";
-import ApprovalProcess from "../pages/ApprovalSetup/Table/ApprovalProcess";
+// import ApprovalSetup from "../pages/ApprovalSetup/index";
+// import CreateApproval from "../pages/ApprovalSetup/Table/CreateApprovalSetup";
+// import ApprovalProcess from "../pages/ApprovalSetup/Table/ApprovalProcess";
 import PrintSuratJalan from "../pages/OutboundFullTrial/PickingTransaction/Main/PrintSuratJalan/PrintSuratJalan";
 import StockAdjustment from "../pages/StockAdjustment/index";
-
 
 //Reporting
 import ReportInbound from "../pages/Reporting/Main/ReportInbound";
 import ReportOutbound from "../pages/Reporting/Main/ReportOutbound";
 import Reporting2 from "../pages/Reporting/Main/Report2";
-
 
 export {
   // DASHBOARD
@@ -87,10 +85,8 @@ export {
   MainTabPallet,
   MasterUOM,
   MasterIO,
-
   MasterWarehouse,
   MainTabWarehouse,
-  
   MasterItem,
   MasterClassification,
   MasterVehicle,
@@ -113,6 +109,7 @@ export {
   // INBOUND PLANNING
   Inbound,
   InboundProcess,
+  InboundIntegration,
 
   // PUTAWAY
   PutAway,
@@ -138,10 +135,9 @@ export {
   PrintSuratJalan,
 
   // Approval Set Up
-  ApprovalSetup,
-  CreateApproval,
-  ApprovalProcess,
-
+  // ApprovalSetup,
+  // CreateApproval,
+  // ApprovalProcess,
   ReportInbound,
   ReportOutbound,
   Reporting2,

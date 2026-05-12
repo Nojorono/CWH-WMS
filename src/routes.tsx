@@ -49,9 +49,9 @@ import {
   PickingSuggestion,
   MasterAMO,
   MasterSubdist,
-  ApprovalSetup,
-  CreateApproval,
-  ApprovalProcess,
+  // ApprovalSetup,
+  // CreateApproval,
+  // ApprovalProcess,
   PickingTransaction,
   DetachAttachProcess,
   GateLoading,
@@ -63,6 +63,7 @@ import {
   ReportOutbound,
   Reporting2,
   MasterBin,
+  InboundIntegration,
 } from "./utils/PagesComponent";
 
 const DefaultPage = () => <> </>;
@@ -142,10 +143,10 @@ export function AppRoutes() {
       { path: "detach_attach", element: <DetachAttachProcess /> },
       { path: "print_surat_jalan", element: <PrintSuratJalan /> },
     ],
-    "/approval": [
-      { path: "create", element: <CreateApproval /> },
-      { path: "process", element: <ApprovalProcess /> },
-    ],
+    // "/approval": [
+    //   { path: "create", element: <CreateApproval /> },
+    //   { path: "process", element: <ApprovalProcess /> },
+    // ],
   };
 
   // Map path ke komponen
@@ -175,7 +176,7 @@ export function AppRoutes() {
       "/outbound_do": <OutboundDO />,
       "/master_amo": <MasterAMO />,
       "/master_subdist": <MasterSubdist />,
-      "/approval_setup": <ApprovalSetup />,
+      // "/approval_setup": <ApprovalSetup />,
       "/picking_transaction": <PickingTransaction />,
       "/gate_loading": <GateLoading />,
       "/inventory_visibility": <InventoryVisibility />,
@@ -185,6 +186,7 @@ export function AppRoutes() {
       "/report_outbound": <ReportOutbound />,
       "/reporting3": <Reporting2 />,
       "/setup_master_warehouse": <MasterWarehouse />,
+      "/inbound_integration_log": <InboundIntegration/>
     };
     return map[path] || <DefaultPage />;
   };

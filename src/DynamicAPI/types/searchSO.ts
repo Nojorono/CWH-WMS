@@ -21,8 +21,8 @@ export type POSForm = {
     po_date?: string;
 
     // Untuk SO
-    so_no?: string;
-    so_date?: string;
+    // so_no?: string;
+    // so_date?: string;
 
     items: ItemForm[];
     flag_validated?: boolean;
