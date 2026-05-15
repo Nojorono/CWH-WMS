@@ -30,8 +30,9 @@ import StatusBadge from "../../../../../../common/statusBadge";
 import { STATUS_MAP_INTEGRATION_INBOUND } from "../../../../../../constants/statusMaps";
 import { useDOValidation } from "../Helper/useDOValidation";
 import { useNavigate } from "react-router-dom";
-import { FaCircleXmark, FaTrashCan } from "react-icons/fa6";
+import { FaCircleXmark } from "react-icons/fa6";
 import { showConfirmDialog } from "../../../../../../components/swal-confirm";
+import { cancelSJservice } from "../Helper/cancelSJservice";
 
 export default function DeliveryOrderCard({
   doIndex,
@@ -96,6 +97,10 @@ export default function DeliveryOrderCard({
     `deliveryOrders.${doIndex}.inbound_integration.receipt_number` as any,
   );
 
+  const inbIntegrationData = watch(
+    `deliveryOrders.${doIndex}.inbound_integration` as any,
+  );
+  
   const allDeliveryOrders = useWatch({
     name: "deliveryOrders",
     defaultValue: [],
@@ -218,15 +223,21 @@ export default function DeliveryOrderCard({
     });
   };
 
-
   const cancelSJ = (currentDO: any) => {
     const idDO = currentDO.do_id;
+
     showConfirmDialog(
       async () => {
         try {
-          // await deleteData(idDO);
-          console.log("id DO", idDO);
-        } catch (error) {
+          const result = await cancelSJservice(idDO);
+          if (result?.success === true) {
+            navigate("/inbound_planning");
+          } else {
+            throw new Error(
+              result?.message || "Gagal memproses pembatalan di server.",
+            );
+          }
+        } catch (error: any) {
           console.error(error);
         }
       },

@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { mapOutboundGateToUILoading } from "./helper/mapOutboundGateToUILoading";
 import { fetchAssignedGate } from "./service/fetchData";
-import { DODetailPanel } from "./newComponents/DODetailPanel";
+import { DODetailPanel } from "./components/DODetailPanel";
 import { FaSyncAlt, FaCheckCircle, FaClock } from "react-icons/fa";
 import { isGateLoadComplete } from "./helper/isGateLoadComplete";
 

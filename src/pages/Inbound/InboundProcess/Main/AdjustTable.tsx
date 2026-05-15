@@ -142,7 +142,7 @@ const AdjustTable = ({
                 title="View"
               />
 
-              {["CREATED", "WAITING FOR REVISION", "UNLOADING"].includes(
+              {["CREATED", "WAITING FOR REVISION", "UNLOADING", "FAILED"].includes(
                 item.status,
               ) && (
                 <>

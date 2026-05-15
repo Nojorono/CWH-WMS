@@ -28,6 +28,8 @@ export const STATUS_MAP_INTEGRATION_INBOUND: StatusMap = {
   E: 'error',
   SUCCESS: 'success',
   ERROR: 'error',
+  FAILED: 'error',
+  CANCELLED: 'error'
 };
 
 // 🧾 Memo Module
