@@ -78,6 +78,9 @@ export interface AssignedGateLoad {
     quantity_unloaded: number;
     status: string;
     pallet?: Pallet; // Opsional jika ingin membawa data pallet
+    uom?: string,
+    week_number?: string,
+    production_date?: string
 }
 
 // ===== Outbound Memo Item

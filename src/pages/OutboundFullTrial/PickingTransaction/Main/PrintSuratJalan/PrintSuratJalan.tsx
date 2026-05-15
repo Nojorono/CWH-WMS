@@ -15,6 +15,8 @@ const PrintSuratJalan = () => {
   const params = stateAny?.params ?? stateAny?.data ?? stateAny ?? undefined;
   const { fetchById, detail } = useStoreOutboundDeliveryOrder();
 
+  console.log("detail data", detail);
+
   // State
   const [selectedMemo, setSelectedMemo] = useState<any | null>(null);
   const [showModal, setShowModal] = useState(false);
@@ -121,11 +123,14 @@ const PrintSuratJalan = () => {
                   No
                 </th>
                 <th className="p-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                  No. Memo
+                  Memo No
                 </th>
                 <th className="p-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                  Requestor
+                  Seal No
                 </th>
+                {/* <th className="p-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                  Requestor
+                </th> */}
                 <th className="p-4 text-xs font-semibold text-slate-500 uppercase tracking-wider w-1/3">
                   Address
                 </th>
@@ -149,9 +154,12 @@ const PrintSuratJalan = () => {
                   <td className="p-4 text-sm text-blue-600 font-bold">
                     {memo.outbound_memo_number}
                   </td>
-                  <td className="p-4 text-sm text-slate-700 font-semibold">
-                    {memo.requestor}
+                  <td className="p-4 text-sm text-blue-600 font-bold">
+                    {detail?.seal_number}
                   </td>
+                  {/* <td className="p-4 text-sm text-slate-700 font-semibold">
+                    {memo.requestor}
+                  </td> */}
                   <td className="p-4 text-sm text-slate-500 italic">
                     <div className="line-clamp-2">{memo.ship_to}</div>
                   </td>

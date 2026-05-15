@@ -5,9 +5,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import StatusBadge from "../../../../common/statusBadge";
 import { STATUS_MAP_DO } from "../../../../constants/statusMaps";
 import {
-  AssignedPicking,
   OutboundDo,
-  TransactionPicking,
 } from "../Helper/doTypes";
 import { useStoreOutboundDeliveryOrder } from "../../../../DynamicAPI/stores/Store/MasterStore";
 import { mapPickingTransactions } from "../Helper/mappedList";
@@ -530,7 +528,7 @@ const AdjustTableTransactionPicking = ({
                                   Plan Qty Pick
                                 </span>
                                 <span className="text-sm font-black text-slate-800">
-                                  {item.quantity_plan} {item.uom}
+                                  {item.quantity_plan} {item.uom} 
                                 </span>
                               </div>
                             </div>
@@ -547,8 +545,8 @@ const AdjustTableTransactionPicking = ({
                                     className="flex flex-col gap-2"
                                   >
                                     <div className="flex items-center justify-between mb-1">
-                                      <span className="text-[9px] font-black text-slate-400 uppercase tracking-tighter">
-                                        Gate ID: {gate.assigned_gate_id}
+                                      <span className="text-[9px] font-black text-black-400">
+                                        Assign Gate ID: {gate.assigned_gate_id}
                                       </span>
                                       <span
                                         className={`text-[9px] font-black px-2 py-0.5 rounded-full ${
