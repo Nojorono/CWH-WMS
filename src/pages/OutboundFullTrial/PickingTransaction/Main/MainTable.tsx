@@ -4,7 +4,6 @@ import AdjustTable from "./AdjustMainTable";
 import Label from "../../../../components/form/Label";
 import { useDebounce } from "../../../../helper/useDebounce";
 import Select from "../../../../components/form/Select";
-// import TabsSection from "../../../../components/wms-components/inbound-component/tabs/TabsSection";
 
 const MainTable = () => {
   const navigate = useNavigate();
@@ -45,28 +44,6 @@ const MainTable = () => {
         filteredStatus={selectedStatus}
       />
 
-      {/* <TabsSection
-        tabs={[
-          {
-            label: "DO Transaction",
-            content: (
-              <>
-                <section className="bg-white rounded-xl shadow-sm border border-gray-200">
-                  <div className="p-4">
-                    <AdjustTable
-                      globalFilter={debouncedFilter}
-                      setGlobalFilter={setGlobalFilter}
-                      filteredStatus={selectedStatus}
-                    />
-                  </div>
-                </section>
-              </>
-            ),
-          }
-        ]}
-        activeTab={activeTab}
-        onTabChange={setActiveTab}
-      /> */}
     </>
   );
 };

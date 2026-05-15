@@ -45,7 +45,6 @@ const AdjustTable = ({
     });
   }, [fetchUsingPagination, pageIndex, pageSize, globalFilter, filteredStatus]);
 
-  console.log("list", list);
 
   // 🔹 Kolom Table
   const columns: ColumnDef<any>[] = useMemo(

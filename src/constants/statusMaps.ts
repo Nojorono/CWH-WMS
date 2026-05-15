@@ -26,6 +26,8 @@ export const STATUS_MAP_INTEGRATION_INBOUND: StatusMap = {
   READY: 'secondary',
   S: 'success',
   E: 'error',
+  SUCCESS: 'success',
+  ERROR: 'error',
 };
 
 // 🧾 Memo Module

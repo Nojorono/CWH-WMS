@@ -87,6 +87,7 @@ export function mapDetailToFormValues(detail: any): FormValues {
         status: detail.status || "",
 
         deliveryOrders: (detail.inbound_dos || []).map((doItem: any) => ({
+            do_id: doItem.id || "",
             do_no: doItem.inbound_do_number || "",
             date: doItem.inbound_do_date || "",
             attachment: doItem.attachment || "",
