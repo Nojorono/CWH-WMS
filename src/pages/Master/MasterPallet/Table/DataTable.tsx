@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from "react";
-import { FaBarcode, FaPlus, FaPrint, FaQrcode, FaRocket } from "react-icons/fa";
+import { FaPlus, FaQrcode, FaRocket } from "react-icons/fa";
 import Input from "../../../../components/form/input/InputField";
 import Label from "../../../../components/form/Label";
 import Button from "../../../../components/ui/button/Button";
@@ -78,10 +78,8 @@ const DataTable = () => {
       (item: any) => String(item.id) === String(data.organization_id),
     );
     const orgName = selectedOrg ? selectedOrg.organization_name : "";
-
     const formattedData = {
       ...data,
-      // Format baru: ORG-PALLET (Contoh: CWH-PAL-001)
       pallet_code: orgName
         ? `${orgName}-${data.pallet_code}`
         : data.pallet_code,
@@ -107,11 +105,9 @@ const DataTable = () => {
 
     // Logika Pembersihan: Hapus orgName lama jika ada di depan atau di belakang
     if (orgName) {
-      // Hapus jika ada di depan (Format baru)
       if (baseCode.startsWith(`${orgName}-`)) {
         baseCode = baseCode.replace(`${orgName}-`, "");
       }
-      // Hapus jika ada di belakang (Jaga-jaga data lama)
       if (baseCode.endsWith(`-${orgName}`)) {
         baseCode = baseCode.replace(`-${orgName}`, "");
       }
@@ -238,9 +234,9 @@ const DataTable = () => {
         type: "select",
         options: [
           { label: "--Select--", value: "" },
-          ...uomList.map((item: any) => ({
-            label: item.name,
-            value: item.name,
+          ...uomList.map((uom: any) => ({
+            label: uom.code,
+            value: uom.code,
           })),
         ],
         validation: { required: "Required" },

@@ -131,7 +131,10 @@ export function mapDetailToFormValues(detail: any): FormValues {
                         uom: item.uom || "",
                         classification: item.classification || item.classification_id || "",
                         expired_date: item.expired_date || null,
-                        line_number: item.line_number // Tambahkan ini
+                        line_number: item.line_number,
+                        quantity_difference: item.quantity_difference || 0,
+                        sub_inventory_difference: item.sub_inventory_difference || null,
+                        inspection_status: item.inspection_status || ""
                     })),
                 },
             ],

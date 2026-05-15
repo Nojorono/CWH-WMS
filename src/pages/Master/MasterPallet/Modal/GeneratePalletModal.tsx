@@ -118,54 +118,6 @@ const GeneratePalletModal: React.FC<GeneratePalletModalProps> = ({
     );
   };
 
-  // const handleSubmit = async (e: React.FormEvent) => {
-  //   e.preventDefault();
-  //   setLoading(true);
-
-  //   if (!formData.organization_id) {
-  //     showErrorToast("Silakan pilih Organization terlebih dahulu.");
-  //     setLoading(false);
-  //     return;
-  //   }
-
-  //   const payload = {
-  //     ...formData,
-  //     organization_id: Number(formData.organization_id),
-  //     start: Number(formData.start),
-  //     end: Number(formData.end),
-  //     padding: Number(formData.padding),
-  //     capacity: Number(formData.capacity),
-  //   };
-
-  //   showConfirmDialog(
-  //     async () => {
-  //       try {
-  //         await axiosInstance.post(
-  //           `${EndPoint}master-pallet/generate-range`,
-  //           payload,
-  //         );
-  //         showSuccessToast(
-  //           `Berhasil generate pallet dari ${formData.start} sampai ${formData.end}`,
-  //         );
-  //         onSuccess();
-  //         onClose();
-  //       } catch (error: any) {
-  //         showErrorToast(
-  //           error.response?.data?.message || "Gagal generate pallet",
-  //         );
-  //       } finally {
-  //         setLoading(false);
-  //       }
-  //     },
-  //     {
-  //       title: "Confirm Generate",
-  //       text: `Apakah anda ingin generate pallet dari ${formData.prefix}${String(formData.start).padStart(formData.padding, "0")} sampai ${formData.prefix}${String(formData.end).padStart(formData.padding, "0")}?`,
-  //       confirmButtonText: "Yes, Generate!",
-  //       cancelButtonText: "No, Cancel",
-  //     },
-  //   );
-  // };
-
   const inputClass =
     "w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all text-sm";
   const labelClass =
@@ -288,8 +240,8 @@ const GeneratePalletModal: React.FC<GeneratePalletModalProps> = ({
                 required
               >
                 {uoms.map((u) => (
-                  <option key={u.id} value={u.name}>
-                    {u.name}
+                  <option key={u.id} value={u.code}>
+                    {u.code}
                   </option>
                 ))}
               </select>

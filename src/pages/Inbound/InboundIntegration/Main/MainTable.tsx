@@ -19,7 +19,7 @@ const MainTable = () => {
       const parsedIO = JSON.parse(listIO);
       const options = parsedIO.map((item: any) => ({
         value: item.id, // atau item.organization_id sesuai kebutuhan backend
-        label: `${item.organization_name} - ${item.operating_unit}`,
+        label: `${item.organization_name} - ${item.organization_code}`,
       }));
       return [{ value: "", label: "All Organization" }, ...options];
     } catch (error) {

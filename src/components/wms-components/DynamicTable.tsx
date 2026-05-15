@@ -5,6 +5,7 @@ import { FaEdit, FaKey, FaPlus, FaTrash } from "react-icons/fa";
 import DynamicFormModal from "./DynamicFormModal";
 import { useNavigate } from "react-router-dom";
 import { usePagePermissions } from "../../utils/UserPermission/UserPagePermissions";
+import { showConfirmDialog } from "../../components/swal-confirm";
 
 interface Props {
   data: any[];
@@ -72,10 +73,8 @@ const DynamicTable = ({
 
   const handleDelete = useCallback(
     async (id: any) => {
-      if (window.confirm("Are you sure you want to delete this item?")) {
-        if (onDelete) await onDelete(id);
-        await onRefresh();
-      }
+      if (onDelete) await onDelete(id);
+      await onRefresh();
     },
     [onDelete, onRefresh],
   );
@@ -134,15 +133,15 @@ const DynamicTable = ({
               )}
 
               {/* Delete Action */}
-              {canShowDelete && (
-                <button
-                  onClick={() => handleDelete(id)}
-                  className="p-2 text-rose-500 transition-colors rounded-md hover:bg-rose-50"
-                  title="Delete"
-                >
-                  <FaTrash size={14} />
-                </button>
-              )}
+              {/* {canShowDelete && ( */}
+              <button
+                onClick={() => handleDelete(id)}
+                className="p-2 text-rose-500 transition-colors rounded-md hover:bg-rose-50"
+                title="Delete"
+              >
+                <FaTrash size={14} />
+              </button>
+              {/* )} */}
             </div>
           );
         },

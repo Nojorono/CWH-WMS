@@ -22,10 +22,10 @@ export const STATUS_MAP_INBOUND: StatusMap = {
 };
 
 export const STATUS_MAP_INTEGRATION_INBOUND: StatusMap = {
-  PENDING: 'grey',
+  CREATED: 'grey',
   READY: 'secondary',
-  SUCCESS: 'success',
-  FAILED: 'error',
+  S: 'success',
+  E: 'error',
 };
 
 // 🧾 Memo Module
