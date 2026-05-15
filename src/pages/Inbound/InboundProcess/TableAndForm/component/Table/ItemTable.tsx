@@ -171,7 +171,7 @@ export default function ItemTable({
               <option value="">-- UoM --</option>
               {uomList.map((u) => (
                 <option key={u.id} value={u.code}>
-                  {u.name}
+                  {u.code}
                 </option>
               ))}
             </select>
