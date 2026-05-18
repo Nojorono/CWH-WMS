@@ -42,6 +42,7 @@ export type ItemForm = {
     quantity_inspection?: any;
     expired_date?: string | null;
     qty?: any
+    quantity_difference?: any;
 };
 
 // =============================

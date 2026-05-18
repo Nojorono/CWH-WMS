@@ -45,7 +45,6 @@ const AdjustTable = ({
     });
   }, [fetchUsingPagination, pageIndex, pageSize, globalFilter, filteredStatus]);
 
-  console.log("list", list);
 
   // 🔹 Kolom Table
   const columns: ColumnDef<any>[] = useMemo(
@@ -143,7 +142,7 @@ const AdjustTable = ({
                 title="View"
               />
 
-              {["CREATED", "WAITING FOR REVISION", "UNLOADING"].includes(
+              {["CREATED", "WAITING FOR REVISION", "UNLOADING", "FAILED"].includes(
                 item.status,
               ) && (
                 <>

@@ -70,6 +70,19 @@ export interface TransactionPicking {
     transactionScanPicking: TransactionScanPicking[];
 }
 
+export interface AssignedGateLoad {
+    id?: string;
+    assigned_gate_id: string;
+    quantity_picked: number;
+    quantity_loaded: number;
+    quantity_unloaded: number;
+    status: string;
+    pallet?: Pallet; // Opsional jika ingin membawa data pallet
+    uom?: string,
+    week_number?: string,
+    production_date?: string
+}
+
 // ===== Outbound Memo Item
 export interface OutboundMemoItem {
     id: string;
@@ -84,6 +97,8 @@ export interface OutboundMemoItem {
         item_number: string;
         description: string;
     };
+
+    assigned_gate_load?: AssignedGateLoad[];
 
     // UI Fields
     hasTask?: boolean;       // apakah sudah ada picking
@@ -134,6 +149,8 @@ export interface UIItemRow {
 
     hasTask: boolean;
     pickings: TransactionPicking[];
+
+    assignedGateLoads: AssignedGateLoad[];
 }
 
 // ===== DO

@@ -74,15 +74,24 @@ const AdjustTable = ({ globalFilter, setGlobalFilter, filteredIO }: any) => {
         header: "Receipt Info",
         accessorKey: "receipt_number",
         cell: ({ row }) => (
-          <div className="flex flex-col">
-            Receipt Number
-            <span className="font-bold text-green-700 font-mono tracking-tight text-sm">
-              {row.original.receipt_number || "PENDING"}
-            </span>
-            <span className="text-[10px] leading-tight text-slate-500 font-medium">
-              {row.original.transaction_type}
-            </span>
-          </div>
+          <>
+            <div className="flex flex-col">
+              Receipt Number
+              <span className="font-bold text-green-700 font-mono tracking-tight text-sm">
+                {row.original.receipt_number || (
+                  <span className="font-bold text-red-500 font-mono tracking-tight text-sm">
+                    no receipt number
+                  </span>
+                )}
+              </span>
+            </div>
+
+            <div className="flex flex-col">
+              <span className="text-[13px] leading-tight text-orange-400 font-medium">
+                {row.original.transaction_type}
+              </span>
+            </div>
+          </>
         ),
       },
       {
@@ -211,7 +220,7 @@ const AdjustTable = ({ globalFilter, setGlobalFilter, filteredIO }: any) => {
           <div className="md:col-span-3 bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
             <div className="bg-slate-800 px-4 py-2 flex justify-between items-center">
               <h4 className="flex items-center gap-2 text-white font-bold text-[11px] uppercase tracking-widest">
-                <FaBoxOpen /> Inbound Line Details
+                <FaBoxOpen /> Line Details
               </h4>
               <span className="bg-blue-500 text-white text-[10px] px-2 py-0.5 rounded-full font-bold">
                 {data.lines?.length} Items
@@ -281,7 +290,7 @@ const AdjustTable = ({ globalFilter, setGlobalFilter, filteredIO }: any) => {
                           </span>
                         </div>
                         {line.message && (
-                          <div className="text-[9px] text-red-500 italic mt-1">
+                          <div className="text-[10px] text-red-500 italic mt-1">
                             {line.message}
                           </div>
                         )}
@@ -295,7 +304,7 @@ const AdjustTable = ({ globalFilter, setGlobalFilter, filteredIO }: any) => {
         </div>
 
         {/* Global Error Banner */}
-        {data.message && (
+        {data.status === "E" && (
           <div className="mt-5 p-3 bg-red-50 border-l-4 border-red-500 rounded flex items-center gap-3">
             <div className="bg-red-500 p-1 rounded text-white text-[10px] font-bold">
               ERROR
@@ -347,14 +356,12 @@ const InfoItem = ({
   label,
   value,
   mono = false,
-  color = "text-slate-600",
+  color = "text-black-600",
 }: any) => (
   <div className="flex flex-col gap-0.5 border-b border-slate-50 pb-1 last:border-0">
-    <span className="text-[9px] text-slate-400 font-bold uppercase tracking-tighter">
-      {label}
-    </span>
+    <span className="text-[12px] text-slate-400 tracking-tighter">{label}</span>
     <span
-      className={`text-[11px] truncate ${mono ? "font-mono" : ""} ${color}`}
+      className={`text-[12px] truncate ${mono ? "font-mono" : ""} ${color}`}
       title={value}
     >
       {value || "-"}

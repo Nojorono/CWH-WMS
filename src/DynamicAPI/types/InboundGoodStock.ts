@@ -150,11 +150,48 @@ export interface InboundIntegration {
     vendor_site_id: string | null;
     receipt_number: string;
     group_id: string;
-    status: "S" | "E" | string; 
+    status: "S" | "E" | string;
     message: string | null;
     creation_date: string;
     last_updated_date: string;
+    lines: InboundIntegrationLine[];
 }
+
+export interface InboundIntegrationLine {
+    id: string;
+    createdAt: string;
+    updatedAt: string;
+    deletedAt: string | null;
+    inbound_integration_id: string;
+    iface_line_id: string;
+    iface_header_id: string;
+    source_line_id: string;
+    source_header_id: string;
+    po_number: string;
+    po_line_number: string | null;
+    iso_number: string | null;
+    iso_line_number: string | null;
+    inventory_item_id: string;
+    uom_code: string;
+    quantity: string; // API mengirim dalam bentuk string "5", "10"
+    subinventory: string;
+    locator_id: string;
+    quantity_selisih: string;
+    subinventory_selisih: string | null;
+    locator_id_selisih: string | null;
+    status_selisih: string | null;
+    message_selisih: string | null;
+    shipment_line_id: string | null;
+    interface_transaction_id: string;
+    status: "S" | "E" | string; // S = Success, E = Error
+    message: string | null;
+    created_by: string | null;
+    creation_date: string;
+    last_updated_by: string;
+    last_updated_date: string;
+}
+
+
 
 export interface AssignedHelper {
     id: string;

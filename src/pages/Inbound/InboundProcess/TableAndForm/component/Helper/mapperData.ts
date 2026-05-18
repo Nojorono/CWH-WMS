@@ -65,6 +65,9 @@ export type FormValues = {
 };
 
 export function mapDetailToFormValues(detail: any): FormValues {
+
+    console.log("detail mapDetailToFormValues", detail);
+    
     if (!detail) return {} as FormValues;
     const isPO = detail.inbound_type === "PO";
 
@@ -87,6 +90,7 @@ export function mapDetailToFormValues(detail: any): FormValues {
         status: detail.status || "",
 
         deliveryOrders: (detail.inbound_dos || []).map((doItem: any) => ({
+            do_id: doItem.id || "",
             do_no: doItem.inbound_do_number || "",
             date: doItem.inbound_do_date || "",
             attachment: doItem.attachment || "",
@@ -131,7 +135,10 @@ export function mapDetailToFormValues(detail: any): FormValues {
                         uom: item.uom || "",
                         classification: item.classification || item.classification_id || "",
                         expired_date: item.expired_date || null,
-                        line_number: item.line_number // Tambahkan ini
+                        line_number: item.line_number,
+                        quantity_difference: item.quantity_difference || 0,
+                        sub_inventory_difference: item.sub_inventory_difference || null,
+                        inspection_status: item.inspection_status || ""
                     })),
                 },
             ],

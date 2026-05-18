@@ -8,10 +8,10 @@ import {
 } from "./doTypes";
 
 export function mapPickingTransactions(list: any[] = []): OutboundDo[] {
+    console.log("raw data DO", list);
+
     return list.map((raw: any): OutboundDo => {
-
         const outbound_memos: OutboundMemo[] = (raw.outbound_memos || []).map((memo: any): OutboundMemo => {
-
             const memoItems: OutboundMemoItem[] = (memo.outbound_memo_items || []).map((item: any) => ({
                 id: item.id,
                 outbound_memo_id: item.outbound_memo_id,
@@ -19,6 +19,14 @@ export function mapPickingTransactions(list: any[] = []): OutboundDo[] {
                 quantity_plan: item.quantity_plan,
                 uom: item.uom,
                 item: item.item,
+                // --- Tambahkan mapping untuk assigned_gate_load di sini ---
+                assigned_gate_load: (item.assigned_gate_load || []).map((gate: any) => ({
+                    assigned_gate_id: gate.assigned_gate_id,
+                    quantity_picked: gate.quantity_picked,
+                    quantity_loaded: gate.quantity_loaded,
+                    quantity_unloaded: gate.quantity_unloaded,
+                    status: gate.status,
+                })),
             }));
 
             const transactionPickings: TransactionPicking[] = (memo.transaction_pickings || []).map((p: any) => ({
@@ -70,16 +78,17 @@ export function mapPickingTransactions(list: any[] = []): OutboundDo[] {
                     remainingQty: (mi.quantity_plan || 0) - pickedQty,
                     hasTask: relatedPickings.length > 0,
                     pickings: relatedPickings,
+                    // --- Masukkan data gate load ke UI Row ---
+                    assignedGateLoads: mi.assigned_gate_load || [], 
                 };
 
                 uiItems.push(row);
             });
         });
 
-        // ===== Sorting logic for nicer UI
         const sortedUIItems = uiItems.sort((a, b) => {
             if (a.hasTask === b.hasTask) return 0;
-            return a.hasTask ? -1 : 1; // item yang sudah punya task di atas
+            return a.hasTask ? -1 : 1;
         });
 
         return {
