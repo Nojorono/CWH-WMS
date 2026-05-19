@@ -1,3 +1,82 @@
+// // ✅ FILE: FetchCustomer.ts
+// import { useEffect, useMemo, useState } from "react";
+// import { UseFormReturn } from "react-hook-form";
+// import { EndPoint } from "../../../../utils/EndPoint";
+
+// export type OutboundSelectValue = {
+//   label: string;
+//   value: string;
+// };
+
+// export const useCustomerByOutboundType = (
+//   typeOutbound: OutboundSelectValue | null | undefined,
+//   methods: UseFormReturn<any>,
+// ) => {
+//   const [customerList, setCustomerList] = useState<any[]>([]);
+//   const [customerRaw, setCustomerRaw] = useState<any[]>([]);
+//   const [loading, setLoading] = useState(false);
+//   const listIO = localStorage.getItem("io_list");
+
+//   console.log("list IO", listIO);
+
+//   useEffect(() => {
+//     if (!typeOutbound) return;
+
+//     const fetchCustomer = async () => {
+//       try {
+//         setLoading(true);
+
+//         const url =
+//           typeOutbound.value === "AMO"
+//             ? `${EndPoint}customer/main`
+//             : `${EndPoint}customer/subdist`;
+
+//         const token = localStorage.getItem("token");
+
+//         const res = await fetch(url, {
+//           headers: {
+//             Authorization: `Bearer ${token}`,
+//           },
+//         });
+
+//         const json = await res.json();
+//         const rows = json.data || [];
+
+//         // ✅ Simpan mentah untuk mapping ship_to
+//         setCustomerRaw(rows);
+
+//         // ✅ Mapping dropdown
+//         const parsedList =
+//           typeOutbound.value === "AMO"
+//             ? rows.map((x: any) => ({
+//                 id: x.id,
+//                 label: x.orgCode,
+//                 value: x.orgCode,
+//               }))
+//             : rows.map((x: any) => ({
+//                 id: x.id,
+//                 label: `${x.shipToLocation}`,
+//                 value: x.customerNumber,
+//               }));
+
+//         setCustomerList(parsedList);
+
+//         // ✅ Reset saat ganti type
+//         methods.setValue("selected_customer", null);
+//         methods.setValue("ship_to", "");
+//       } catch (err) {
+//         console.error("Error fetching outbound customers:", err);
+//       } finally {
+//         setLoading(false);
+//       }
+//     };
+
+//     fetchCustomer();
+//   }, [typeOutbound]);
+
+//   return { customerList, customerRaw, loading };
+// };
+
 // ✅ FILE: FetchCustomer.ts
 import { useEffect, useState } from "react";
 import { UseFormReturn } from "react-hook-form";
@@ -10,7 +89,7 @@ export type OutboundSelectValue = {
 
 export const useCustomerByOutboundType = (
   typeOutbound: OutboundSelectValue | null | undefined,
-  methods: UseFormReturn<any>
+  methods: UseFormReturn<any>,
 ) => {
   const [customerList, setCustomerList] = useState<any[]>([]);
   const [customerRaw, setCustomerRaw] = useState<any[]>([]);
@@ -20,45 +99,48 @@ export const useCustomerByOutboundType = (
     if (!typeOutbound) return;
 
     const fetchCustomer = async () => {
+      setLoading(true);
       try {
-        setLoading(true);
+        if (typeOutbound.value === "AMO") {
+          // --- LOGIKA UNTUK AMO (AMBIL DARI LOCALSTORAGE) ---
+          const localData = localStorage.getItem("io_list");
+          const parsedLocal = localData ? JSON.parse(localData) : [];
 
-        const url =
-          typeOutbound.value === "AMO"
-            ? `${EndPoint}customer/main`
-            : `${EndPoint}customer/subdist`;
+          setCustomerRaw(parsedLocal);
 
-        const token = localStorage.getItem("token");
+          const mappedAMO = parsedLocal.map((x: any) => ({
+            id: x.id,
+            label: x.organization_code, // Sesuai log: organization_code
+            value: x.organization_code,
+          }));
 
-        const res = await fetch(url, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
+          setCustomerList(mappedAMO);
+        } else {
+          // --- LOGIKA UNTUK SUBDIST (FETCH API) ---
+          const url = `${EndPoint}customer/subdist`;
+          const token = localStorage.getItem("token");
 
-        const json = await res.json();
-        const rows = json.data || [];
+          const res = await fetch(url, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
 
-        // ✅ Simpan mentah untuk mapping ship_to
-        setCustomerRaw(rows);
+          const json = await res.json();
+          const rows = json.data || [];
 
-        // ✅ Mapping dropdown
-        const parsedList =
-          typeOutbound.value === "AMO"
-            ? rows.map((x: any) => ({
-                id: x.id,
-                label: x.orgCode,
-                value: x.orgCode,
-              }))
-            : rows.map((x: any) => ({
-                id: x.id,
-                label: `${x.shipToLocation}`,
-                value: x.customerNumber,
-              }));
+          setCustomerRaw(rows);
 
-        setCustomerList(parsedList);
+          const mappedSubdist = rows.map((x: any) => ({
+            id: x.id,
+            label: `${x.shipToLocation}`,
+            value: x.customerNumber,
+          }));
 
-        // ✅ Reset saat ganti type
+          setCustomerList(mappedSubdist);
+        }
+
+        // ✅ Reset field form saat ganti type
         methods.setValue("selected_customer", null);
         methods.setValue("ship_to", "");
       } catch (err) {

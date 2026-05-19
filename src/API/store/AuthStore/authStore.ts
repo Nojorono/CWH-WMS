@@ -121,6 +121,7 @@ export const useAuthStore = create<AuthState>((set) => ({
 
       localStorage.setItem("email", userDetail?.email ?? "");
       localStorage.setItem("phone", userDetail?.phone ?? "");
+      localStorage.setItem("NIK", userDetail?.employee_id ?? "")
       localStorage.setItem(
         "full_name",
         `${userDetail?.firstName ?? ""} ${userDetail?.lastName ?? ""}`.trim(),
@@ -129,6 +130,10 @@ export const useAuthStore = create<AuthState>((set) => ({
       localStorage.setItem(
         "organization_name",
         userDetail?.organization?.organization_name ?? "",
+      );
+      localStorage.setItem(
+        "organization_code",
+        userDetail?.organization?.organization_code ?? "",
       );
       localStorage.setItem(
         "warehouse_sub_id",

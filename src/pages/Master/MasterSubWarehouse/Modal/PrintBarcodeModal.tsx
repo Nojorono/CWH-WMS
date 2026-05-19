@@ -101,23 +101,9 @@ const PrintBarcodeModal: React.FC<Props> = ({
               className="barcode-item flex flex-col items-center border p-2 rounded"
             >
               {useQRCode ? (
-                <QRCodeSVG
-                  // value={JSON.stringify({
-                  //   zone_code: item.code,
-                  //   zone_name: item.name,
-                  //   id: item.id,
-                  // })}
-                  value={item.code}
-                  width={size}
-                  height={size}
-                />
+                <QRCodeSVG value={item.code} width={size} height={size} />
               ) : (
                 <Barcode
-                  // value={JSON.stringify({
-                  //   zone_code: item.code,
-                  //   zone_name: item.name,
-                  //   id: item.id,
-                  // })}
                   value={item.code.toString()}
                   width={2}
                   height={size / 2}

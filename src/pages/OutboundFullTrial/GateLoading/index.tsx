@@ -13,8 +13,11 @@ const GateLoadingPage = () => {
   const refreshData = async () => {
     setLoading(true);
     const res = await fetchAssignedGate();
+    console.log("res fetch gate", res.data);
+    
     if (res.success) {
       let uiData = mapOutboundGateToUILoading(res.data);
+      
       setAssignedGateList(uiData);
       if (uiData.length > 0 && !selectedDOId) setSelectedDOId(uiData[0].do_id);
     }
@@ -28,7 +31,7 @@ const GateLoadingPage = () => {
   const activeDO = useMemo(
     () => assignedGateList.find((doItem) => doItem.do_id === selectedDOId),
     [assignedGateList, selectedDOId],
-  );
+  );  
 
   const sortedGateList = useMemo(() => {
     return [...assignedGateList].sort((a, b) => {

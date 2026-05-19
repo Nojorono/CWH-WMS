@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import Button from "../../../../components/ui/button/Button";
 import PageBreadcrumb from "../../../../components/common/PageBreadCrumb";
@@ -42,6 +42,7 @@ type MemoFormValues = {
   selected_destination?: {
     label: string;
     value: string;
+    id?: string;
   } | null;
 };
 
@@ -68,10 +69,11 @@ const CreateMemo: React.FC = () => {
   const { data: memoId, mode, title } = location.state || {};
   const isDetail = mode === "detail";
   const isEdit = mode === "edit";
+  const NIK = localStorage.getItem("NIK");
   const full_name = localStorage.getItem("full_name");
   const orgId = localStorage.getItem("organization_id");
+  const orgCode = localStorage.getItem("organization_code");
   const orgName = localStorage.getItem("organization_name");
-
 
   const [isLoading, setIsLoading] = useState(false);
 
@@ -127,20 +129,32 @@ const CreateMemo: React.FC = () => {
 
     const found = customerRaw.find((x: any) => {
       if (typeOutbound.value === "AMO") {
-        return x.orgCode === selectedCustomer.value;
+        return x.organization_code === selectedCustomer.value;
       }
       return x.shipToLocation === selectedCustomer.label;
     });
 
     if (!found) return;
 
-    if (typeOutbound.value === "AMO") {
-      // 🔥 SHIP TO dari address
-      methods.setValue("ship_to", found.orgCode || "");
-      methods.setValue("address", found.address || "");
-    } else {
-      methods.setValue("ship_to", found.shipToLocation || "");
-      methods.setValue("address", found.address1 || "");
+    const isAMO = typeOutbound.value === "AMO";
+    const newShipTo = isAMO ? found.organization_code : found.shipToLocation;
+    const newAddress = isAMO ? found.address : found.address1;
+
+    // ✅ HANYA setValue jika datanya memang berubah
+    if (methods.getValues("ship_to") !== newShipTo) {
+      methods.setValue("ship_to", newShipTo || "");
+    }
+
+    if (methods.getValues("address") !== newAddress) {
+      methods.setValue("address", newAddress || "");
+    }
+
+    // ✅ KHUSUS AMO: Update ID tanpa memicu loop pada object selected_destination
+    if (isAMO && selectedCustomer.id !== found.id) {
+      methods.setValue("selected_destination", {
+        ...selectedCustomer,
+        id: found.id,
+      });
     }
   }, [selectedCustomer, typeOutbound, customerRaw]);
 
@@ -248,7 +262,6 @@ const CreateMemo: React.FC = () => {
   useEffect(() => {
     // jika tidak ada detail atau sedang create, stop
     if (!detailDataMemo || (!isDetail && !isEdit)) return;
-
     const dateOnly = formatDateIndo(detailDataMemo.delivery_date);
 
     methods.reset({
@@ -347,15 +360,15 @@ const CreateMemo: React.FC = () => {
     // Tampilkan konfirmasi sebelum hit API
     showConfirmDialog(
       async () => {
-        const username = localStorage.getItem("username");
         const payload = {
           organization_id: orgId,
-          requestor: username,
-          origin: orgName,
+          requestor: NIK,
+          origin: orgCode,
           destination: data.ship_to,
+          destination_io_id: data.selected_destination?.id,
           ship_to: data.address,
           delivery_date: formatDateIndo(data.delivery_date),
-          notes: data.notes || full_name,
+          notes: data.notes,
           status: "PENDING",
           type: data.type_outbound?.value || "",
           outbound_memo_items: items.map((i) => ({
@@ -364,6 +377,8 @@ const CreateMemo: React.FC = () => {
             uom: i.uom ?? i.uom_name ?? "",
           })),
         };
+
+        console.log("Memo Paylod", payload);
 
         try {
           let res: any = null;
