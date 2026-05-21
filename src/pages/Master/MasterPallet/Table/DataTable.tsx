@@ -310,7 +310,7 @@ const DataTable = () => {
               <FaQrcode className="mr-2" /> Print Barcode
             </Button>
 
-            <Button variant="primary" size="sm" onClick={handleRefresh}>
+            <Button variant="action" size="sm" onClick={handleRefresh}>
               <FaSync className="mr-2" /> Refresh
             </Button>
           </div>
