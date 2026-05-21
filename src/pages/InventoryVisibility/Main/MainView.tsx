@@ -17,6 +17,7 @@ import {
 } from "../../../DynamicAPI/types/InventoryVisibilty";
 import Button from "../../../components/ui/button/Button";
 import { FaSync } from "react-icons/fa";
+import ActIndicator from "../../../components/ui/activityIndicator";
 
 const InventoryVisibility: React.FC = () => {
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -203,7 +204,6 @@ const InventoryVisibility: React.FC = () => {
     } catch (error) {
       console.error("Gagal memuat ulang data:", error);
     } finally {
-      // Tunggu sebentar agar animasi terlihat halus meskipun API sangat cepat (opsional)
       setTimeout(() => setIsRefreshing(false), 500);
     }
   };
@@ -251,6 +251,8 @@ const InventoryVisibility: React.FC = () => {
           </Button>
         </div>
       </div>
+
+      {isRefreshing && <ActIndicator />}
 
       {/* FILTER SEARCH */}
       <div className="mb-4 flex flex-col md:flex-row md:items-center justify-between gap-4">

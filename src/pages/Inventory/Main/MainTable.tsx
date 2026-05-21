@@ -185,7 +185,7 @@ const MainTable = () => {
               value={globalFilter}
             />
 
-            <Button variant="primary" size="sm" onClick={handleRefresh}>
+            <Button variant="action" size="sm" onClick={handleRefresh}>
               <FaSync className="mr-2" /> Refresh
             </Button>
           </div>
