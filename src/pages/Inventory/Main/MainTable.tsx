@@ -174,15 +174,21 @@ const MainTable = () => {
   return (
     <>
       <div className="p-4 bg-white shadow rounded-md mb-5">
-        <div className="mb-4 w-full md:w-1/4">
-          <Label htmlFor="search">Search</Label>
-          <Input
-            onChange={(e) => setGlobalFilter(e.target.value)}
-            type="text"
-            id="search"
-            placeholder="🔍 Masukan data.."
-            value={globalFilter}
-          />
+        <div className="mb-4 w-full md:w-1/3">
+          <div className="flex items-center gap-2">
+            {/* <Label htmlFor="search">Search</Label> */}
+            <Input
+              onChange={(e) => setGlobalFilter(e.target.value)}
+              type="text"
+              id="search"
+              placeholder="🔍 Masukan data.."
+              value={globalFilter}
+            />
+
+            <Button variant="primary" size="sm" onClick={handleRefresh}>
+              <FaSync className="mr-2" /> Refresh
+            </Button>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-7 gap-4 items-end">
@@ -262,11 +268,6 @@ const MainTable = () => {
             />
           </div>
 
-          <div className="flex flex-col space-y-1">
-            <Button variant="primary" size="sm" onClick={handleRefresh}>
-              <FaSync className="mr-2" /> Refresh
-            </Button>
-          </div>
         </div>
       </div>
 

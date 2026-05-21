@@ -77,7 +77,7 @@ const MainTable = () => {
           {/* Placeholder untuk button atau filter tambahan jika nanti diperlukan */}
           <div className="flex items-center gap-2">
             <Button
-              variant="action"
+              variant="primary"
               size="sm"
               onClick={() => {
                 setGlobalFilter("");
@@ -90,7 +90,7 @@ const MainTable = () => {
           </div>
 
           <Button
-            variant="primary"
+            variant="action"
             size="sm"
             onClick={handleRefresh}
             startIcon={<FaSync className="size-5" />}

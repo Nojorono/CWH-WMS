@@ -240,7 +240,7 @@ const InventoryVisibility: React.FC = () => {
 
         <div className="flex justify-end items-center md:col-span-5">
           <Button
-            variant="primary"
+            variant="action"
             size="sm"
             onClick={handleRefresh}
             disabled={isRefreshing}
