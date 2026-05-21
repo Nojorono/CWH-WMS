@@ -3,9 +3,10 @@ import { useNavigate } from "react-router-dom";
 import AdjustTable from "./AdjustMainTable";
 import Label from "../../../../components/form/Label";
 import Button from "../../../../components/ui/button/Button";
-import { FaPlus, FaUndo } from "react-icons/fa";
+import { FaPlus, FaSync, FaUndo } from "react-icons/fa";
 import { useDebounce } from "../../../../helper/useDebounce";
 import Select from "../../../../components/form/Select";
+import { useStoreOutboundDeliveryOrder } from "../../../../DynamicAPI/stores/Store/MasterStore";
 
 const MainTable = () => {
   const navigate = useNavigate();
@@ -13,6 +14,7 @@ const MainTable = () => {
   const debouncedFilter = useDebounce(globalFilter, 500);
   const [selectedStatus, setSelectedStatus] = useState<any>(null);
   const [selectedTypeOutbound, setSelectedTypeOutbound] = useState<any>(null);
+  const { fetchUsingPagination } = useStoreOutboundDeliveryOrder();
 
   const handleCreate = () => {
     navigate("/outbound_do/process", {
@@ -42,8 +44,15 @@ const MainTable = () => {
 
   const roleName = localStorage.getItem("role_name");
   const canCreateDO =
-    roleName === "TRANSPORT_SUPERVISOR" ||
-    roleName === "superadmin";
+    roleName === "TRANSPORT_SUPERVISOR" || roleName === "superadmin";
+
+  const handleRefresh = () => {
+    if (!fetchUsingPagination) return;
+    fetchUsingPagination({
+      page: 1,
+      limit: 30,
+    });
+  };
 
   return (
     <>
@@ -81,6 +90,15 @@ const MainTable = () => {
               </Button>
             )}
           </div>
+
+          <Button
+            variant="action"
+            size="sm"
+            onClick={handleRefresh}
+            startIcon={<FaSync className="size-5" />}
+          >
+            Refresh
+          </Button>
         </div>
       </div>
 

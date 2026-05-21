@@ -4,15 +4,14 @@ import { ColumnDef } from "@tanstack/react-table";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import StatusBadge from "../../../../common/statusBadge";
 import { STATUS_MAP_DO } from "../../../../constants/statusMaps";
-import {
-  OutboundDo,
-} from "../Helper/doTypes";
+import { OutboundDo } from "../Helper/doTypes";
 import { useStoreOutboundDeliveryOrder } from "../../../../DynamicAPI/stores/Store/MasterStore";
 import { mapPickingTransactions } from "../Helper/mappedList";
 import { formatDateIndo } from "../../../../helper/FormatDate";
 import Swal from "sweetalert2";
 import Button from "../../../../components/ui/button/Button";
 import TableComponent from "../../../../components/tables/ActionTable/TableComponent";
+import ActIndicator from "../../../../components/ui/activityIndicator";
 
 type Props = {
   globalFilter?: string;
@@ -28,7 +27,7 @@ const AdjustTableTransactionPicking = ({
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const { fetchUsingPagination, list, pagination, updateData } =
+  const { fetchUsingPagination, list, pagination, updateData, isLoading } =
     useStoreOutboundDeliveryOrder();
 
   // 🔹 State untuk Seal Number
@@ -528,7 +527,7 @@ const AdjustTableTransactionPicking = ({
                                   Plan Qty Pick
                                 </span>
                                 <span className="text-sm font-black text-slate-800">
-                                  {item.quantity_plan} {item.uom} 
+                                  {item.quantity_plan} {item.uom}
                                 </span>
                               </div>
                             </div>
@@ -743,6 +742,8 @@ const AdjustTableTransactionPicking = ({
 
   return (
     <div className="flex flex-col gap-4">
+      {isLoading && <ActIndicator />}
+
       <TableComponent
         data={mappedList}
         columns={columns}
@@ -770,7 +771,8 @@ const AdjustTableTransactionPicking = ({
             <div className="p-6">
               <p className="text-sm text-slate-500 mb-4">
                 Silahkan masukkan nomor seal untuk DO{" "}
-                <b>{selectedDO?.outbound_do_number}</b> sebelum mencetak.
+                <b>{selectedDO?.outbound_do_number}</b> sebelum mencetak Surat
+                Jalan.
               </p>
               <input
                 autoFocus

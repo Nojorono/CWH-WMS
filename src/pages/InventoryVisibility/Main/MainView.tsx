@@ -15,13 +15,17 @@ import {
   InventoryVisibilityResponse,
   InventoryVisibilityItem,
 } from "../../../DynamicAPI/types/InventoryVisibilty";
+import Button from "../../../components/ui/button/Button";
+import { FaSync } from "react-icons/fa";
 
 const InventoryVisibility: React.FC = () => {
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
   const store = useStoreInventoryVisibility() as any;
   const { fetchAll, list } = store;
 
   const [expanded, setExpanded] = useState({});
-  const [globalFilter, setGlobalFilter] = useState(""); // State untuk pencarian
+  const [globalFilter, setGlobalFilter] = useState("");
 
   useEffect(() => {
     fetchAll();
@@ -165,14 +169,14 @@ const InventoryVisibility: React.FC = () => {
     columns,
     state: {
       expanded,
-      globalFilter, 
+      globalFilter,
     },
     onExpandedChange: setExpanded,
     onGlobalFilterChange: setGlobalFilter,
     getCoreRowModel: getCoreRowModel(),
     getExpandedRowModel: getExpandedRowModel(),
-    getFilteredRowModel: getFilteredRowModel(), 
-    getPaginationRowModel: getPaginationRowModel(), 
+    getFilteredRowModel: getFilteredRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getRowCanExpand: () => true,
     initialState: {
@@ -191,6 +195,18 @@ const InventoryVisibility: React.FC = () => {
         </p>
       </div>
     );
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    try {
+      await fetchAll();
+    } catch (error) {
+      console.error("Gagal memuat ulang data:", error);
+    } finally {
+      // Tunggu sebentar agar animasi terlihat halus meskipun API sangat cepat (opsional)
+      setTimeout(() => setIsRefreshing(false), 500);
+    }
+  };
 
   return (
     <div className="p-6 bg-slate-50 min-h-screen">
@@ -221,6 +237,19 @@ const InventoryVisibility: React.FC = () => {
           value={currentData.summary.items_with_pending_bookings}
           color="rose"
         />
+
+        <div className="flex justify-end items-center md:col-span-5">
+          <Button
+            variant="primary"
+            size="sm"
+            onClick={handleRefresh}
+            disabled={isRefreshing}
+            className={isRefreshing ? "opacity-75 cursor-not-allowed" : ""}
+          >
+            <FaSync className={`mr-2 ${isRefreshing ? "animate-spin" : ""}`} />
+            {isRefreshing ? "Refreshing..." : "Refresh"}
+          </Button>
+        </div>
       </div>
 
       {/* FILTER SEARCH */}
@@ -248,9 +277,7 @@ const InventoryVisibility: React.FC = () => {
           <table className="w-full text-left border-collapse">
             <thead className="bg-orange-500 text-white text-lg">
               {table.getHeaderGroups().map((hg) => (
-                <tr
-                  key={hg.id}
-                >
+                <tr key={hg.id}>
                   {hg.headers.map((header) => (
                     <th
                       key={header.id}

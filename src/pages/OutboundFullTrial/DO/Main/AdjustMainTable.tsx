@@ -9,6 +9,7 @@ import Swal from "sweetalert2";
 import { showErrorToast } from "../../../../components/toast";
 import { EndPoint } from "../../../../utils/EndPoint";
 import TableComponent from "../../../../components/tables/ActionTable/TableComponent";
+import ActIndicator from "../../../../components/ui/activityIndicator";
 
 type OutboundMemo = {
   id: string;
@@ -59,7 +60,7 @@ const AdjustTableDO = ({
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const { fetchUsingPagination, list, pagination } =
+  const { fetchUsingPagination, list, pagination, isLoading } =
     useStoreOutboundDeliveryOrder();
 
   // 🔹 Inisialisasi dari URL (agar saat Back, nilai ini tetap ada)
@@ -598,6 +599,10 @@ const AdjustTableDO = ({
 
   return (
     <div className="flex flex-col gap-4">
+
+      {isLoading && <ActIndicator />}
+
+
       <TableComponent
         data={mappedList}
         columns={columns}
