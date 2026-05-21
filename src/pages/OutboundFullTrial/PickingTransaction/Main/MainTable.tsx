@@ -4,13 +4,17 @@ import AdjustTable from "./AdjustMainTable";
 import Label from "../../../../components/form/Label";
 import { useDebounce } from "../../../../helper/useDebounce";
 import Select from "../../../../components/form/Select";
+import Button from "../../../../components/ui/button/Button";
+import { FaSync } from "react-icons/fa";
+import { useStoreOutboundDeliveryOrder } from "../../../../DynamicAPI/stores/Store/MasterStore";
 
 const MainTable = () => {
   const navigate = useNavigate();
   const [globalFilter, setGlobalFilter] = useState<string>("");
   const debouncedFilter = useDebounce(globalFilter, 500);
   const [selectedStatus, setSelectedStatus] = useState<any>(null);
-  const [activeTab, setActiveTab] = useState(0);
+
+  const { fetchUsingPagination } = useStoreOutboundDeliveryOrder();
 
   const options = [
     { value: "", label: "All Status" },
@@ -20,6 +24,14 @@ const MainTable = () => {
     { value: "APPROVED", label: "APPROVED" },
     { value: "APPROVED_LOAD", label: "APPROVED_LOAD" },
   ];
+
+  const handleRefresh = () => {
+    if (!fetchUsingPagination) return;
+    fetchUsingPagination({
+      page: 1,
+      limit: 30,
+    });
+  };
 
   return (
     <>
@@ -34,7 +46,16 @@ const MainTable = () => {
               value={selectedStatus}
             />
           </div>
-          <div className="space-x-4"></div>
+          <div className="space-x-4">
+            <Button
+              variant="action"
+              size="sm"
+              onClick={handleRefresh}
+              startIcon={<FaSync className="size-5" />}
+            >
+              Refresh
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -43,7 +64,6 @@ const MainTable = () => {
         setGlobalFilter={setGlobalFilter}
         filteredStatus={selectedStatus}
       />
-
     </>
   );
 };

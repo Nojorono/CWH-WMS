@@ -4,11 +4,16 @@ import AdjustTable from "./AdjustTable";
 import Label from "../../../../components/form/Label";
 import { useDebounce } from "../../../../helper/useDebounce";
 import Select from "../../../../components/form/Select";
+import Button from "../../../../components/ui/button/Button";
+import { FaRecycle, FaSync } from "react-icons/fa";
+import { useStoreInboundIntegration } from "../../../../DynamicAPI/stores/Store/MasterStore";
 
 const MainTable = () => {
   const [selectedIO, setSelectedIO] = useState<any>(null);
   const [globalFilter, setGlobalFilter] = useState<string>("");
   const debouncedFilter = useDebounce(globalFilter, 500);
+
+  const { fetchAll } = useStoreInboundIntegration();
 
   // 1. Ambil data dari localStorage dan format menjadi Options untuk Select
   const ioOptions = useMemo(() => {
@@ -27,6 +32,10 @@ const MainTable = () => {
       return [{ value: "", label: "Error Loading IO" }];
     }
   }, []);
+
+  const handleRefresh = () => {
+    fetchAll();
+  };
 
   return (
     <>
@@ -67,16 +76,27 @@ const MainTable = () => {
 
           {/* Placeholder untuk button atau filter tambahan jika nanti diperlukan */}
           <div className="flex items-center gap-2">
-            <button
+            <Button
+              variant="primary"
+              size="sm"
               onClick={() => {
                 setGlobalFilter("");
                 setSelectedIO(null);
               }}
-              className="text-xs text-blue-600 font-bold hover:underline py-2 px-4"
+              startIcon={<FaRecycle className="size-5" />}
             >
               Reset Filter
-            </button>
+            </Button>
           </div>
+
+          <Button
+            variant="action"
+            size="sm"
+            onClick={handleRefresh}
+            startIcon={<FaSync className="size-5" />}
+          >
+            Refresh
+          </Button>
         </div>
       </div>
 
@@ -84,7 +104,7 @@ const MainTable = () => {
       <AdjustTable
         globalFilter={debouncedFilter}
         setGlobalFilter={setGlobalFilter}
-        filteredIO={selectedIO} 
+        filteredIO={selectedIO}
       />
     </>
   );

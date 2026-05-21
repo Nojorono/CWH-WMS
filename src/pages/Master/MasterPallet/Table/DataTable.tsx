@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from "react";
-import { FaPlus, FaQrcode, FaRocket } from "react-icons/fa";
+import { FaPlus, FaQrcode, FaRocket, FaSync } from "react-icons/fa";
 import Input from "../../../../components/form/input/InputField";
 import Label from "../../../../components/form/Label";
 import Button from "../../../../components/ui/button/Button";
@@ -20,6 +20,7 @@ const DataTable = () => {
     updateData,
     deleteData,
     fetchAll: fetchPallet,
+    isLoading,
   } = useStorePallet();
 
   const { list: uomList, fetchAll: fetchUom } = useStoreUom();
@@ -266,6 +267,10 @@ const DataTable = () => {
     setPrintModalOpen(true); // buka modal preview
   };
 
+  const handleRefresh = () => {
+    fetchPallet();
+  };
+
   return (
     <>
       <div className="p-4 bg-white shadow rounded-md mb-5">
@@ -300,31 +305,39 @@ const DataTable = () => {
               variant="primary"
               size="sm"
               onClick={handlePrintBarcode}
-              disabled={selectedIds.length === 0} // UX: disabled kalau belum pilih
+              disabled={selectedIds.length === 0}
             >
               <FaQrcode className="mr-2" /> Print Barcode
+            </Button>
+
+            <Button variant="action" size="sm" onClick={handleRefresh}>
+              <FaSync className="mr-2" /> Refresh
             </Button>
           </div>
         </div>
       </div>
 
-      <DynamicTable
-        data={pallet}
-        globalFilter={debouncedSearch}
-        isCreateModalOpen={isCreateModalOpen}
-        onCloseCreateModal={() => setCreateModalOpen(false)}
-        columns={columns}
-        formFields={dynamicFormFields}
-        onSubmit={handleCreate}
-        onUpdate={handleUpdate}
-        onDelete={async (id) => {
-          await deleteData(id);
-        }}
-        onRefresh={fetchPallet}
-        getRowId={(row) => row.id}
-        title="Form Data"
-        onSelectedChange={setSelectedIds}
-      />
+      {isLoading ? (
+        <p className="text-sm text-gray-500">Loading data...</p>
+      ) : (
+        <DynamicTable
+          data={pallet}
+          globalFilter={debouncedSearch}
+          isCreateModalOpen={isCreateModalOpen}
+          onCloseCreateModal={() => setCreateModalOpen(false)}
+          columns={columns}
+          formFields={dynamicFormFields}
+          onSubmit={handleCreate}
+          onUpdate={handleUpdate}
+          onDelete={async (id) => {
+            await deleteData(id);
+          }}
+          onRefresh={fetchPallet}
+          getRowId={(row) => row.id}
+          title="Form Data"
+          onSelectedChange={setSelectedIds}
+        />
+      )}
 
       {/* 🔑 Modal preview + print */}
       <PrintBarcodeModal

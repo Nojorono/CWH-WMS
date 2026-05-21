@@ -160,7 +160,7 @@ export function mapOutboundGateToUILoading(
       destination_date: doData?.delivery_date ?? null,
       outboundType: doData?.outbound_type ?? "-",
 
-      main_status: gateItem?.status ?? "", 
+      main_status: gateItem?.status ?? "",
       main_createdAt: gateItem?.createdAt ?? "",
       main_updatedAt: gateItem?.updatedAt ?? "",
 
@@ -268,23 +268,13 @@ export function mapOutboundGateToUILoading(
               if (!sku) {
                 sku = {
                   item_id: scan?.item_id ?? "",
-                  item_name:
-                    picking?.item_name ??
-                    assignedPallet?.pallet?.currentItems?.find(
-                      (i: any) => i?.item_id === scan?.item_id,
-                    )?.item_name ??
-                    "-",
+                  // PERBAIKAN DI SINI: Ambil dari scan.item.description
+                  item_name: scan?.item?.code ?? scan?.item?.sku ?? "-",
                   uom: scan?.uom ?? picking?.uom ?? "-",
                   week_number:
                     scan?.week_number ?? picking?.week_number ?? null,
                   production_date:
-                    scan?.production_date ??
-                    picking?.production_date ??
-                    assignedPallet?.pallet?.currentItems?.find(
-                      (i: any) => i?.item_id === scan?.item_id,
-                    )?.production_date ??
-                    null,
-
+                    scan?.production_date ?? picking?.production_date ?? null,
                   pickings: [],
                 };
                 pallet.skus.push(sku);

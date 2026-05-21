@@ -3,12 +3,15 @@ import { useNavigate } from "react-router-dom";
 import AdjustTable from "./AdjustTable";
 import Label from "../../../../components/form/Label";
 import Button from "../../../../components/ui/button/Button";
-import { FaPlus } from "react-icons/fa";
+import { FaPlus, FaSync } from "react-icons/fa";
 import { useDebounce } from "../../../../helper/useDebounce";
 import Select from "../../../../components/form/Select";
+import { useStoreOutboundMemo } from "../../../../DynamicAPI/stores/Store/MasterStore";
 
 const MainTable = () => {
   const navigate = useNavigate();
+  const { fetchUsingPagination } = useStoreOutboundMemo();
+
   const [globalFilter, setGlobalFilter] = useState<string>("");
   const debouncedFilter = useDebounce(globalFilter, 500);
   const [selectedStatus, setSelectedStatus] = useState<any>(null);
@@ -46,6 +49,14 @@ const MainTable = () => {
   ];
 
   const roleName = localStorage.getItem("role_name");
+
+  const handleRefresh = () => {
+    if (!fetchUsingPagination) return;
+    fetchUsingPagination({
+      page: 1,
+      limit: 30,
+    });
+  };
 
   return (
     <>
@@ -93,6 +104,15 @@ const MainTable = () => {
               </Button>
             ) : null}
           </div>
+
+          <Button
+            variant="action"
+            size="sm"
+            onClick={handleRefresh}
+            startIcon={<FaSync className="size-5" />}
+          >
+            Refresh
+          </Button>
         </div>
       </div>
 

@@ -11,6 +11,7 @@ import { EndPoint } from "../../../../utils/EndPoint";
 import { getCurrentRole } from "../../../../utils/rolePermissions";
 import { showConfirmDialog } from "../../../../components/swal-confirm";
 import TableComponent from "../../../../components/tables/ActionTable/TableComponent";
+import ActIndicator from "../../../../components/ui/activityIndicator";
 
 
 
@@ -60,7 +61,7 @@ const AdjustTable = ({
 }: MenuTableProps) => {
   const navigate = useNavigate();
   const roleName = getCurrentRole() || "";
-  const { fetchUsingPagination, list, pagination } = useStoreOutboundMemo();
+  const { fetchUsingPagination, list, pagination, isLoading } = useStoreOutboundMemo();
 
   // 🔹 Sinkronisasi dengan URL Search Params
   const [searchParams, setSearchParams] = useSearchParams();
@@ -313,6 +314,9 @@ const AdjustTable = ({
 
   return (
     <div className="flex flex-col gap-4">
+
+      {isLoading && <ActIndicator />}
+
       <TableComponent
         data={mappedList}
         columns={columns}

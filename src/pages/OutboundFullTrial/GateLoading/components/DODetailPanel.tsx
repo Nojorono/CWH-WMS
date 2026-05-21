@@ -22,6 +22,9 @@ export const DODetailPanel: React.FC<{
 
   const deviceId = useMemo(() => localStorage.getItem("device_id"), []);
 
+  console.log("doData", doData);
+  
+
   const assignedPalletIds = useMemo(
     () => new Set(doData.assigned_pallets.map((p) => p.pallet_id)),
     [doData],

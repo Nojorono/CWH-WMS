@@ -14,11 +14,17 @@ import { UserVerifyService } from "../../../../DynamicAPI/services/Service/UserV
 import { showErrorToast, showSuccessToast } from "../../../../components/toast";
 
 const DataTable = () => {
-  const { list: userData, createData, updateData, fetchAll } = useStoreUser();
+  const {
+    list: userData,
+    createData,
+    updateData,
+    fetchAll,
+    deleteData,
+  } = useStoreUser();
 
   const { list: subWarehouseList, fetchAll: fetchSubWarehouses } =
-    useStoreSubWarehouse();    
-    
+    useStoreSubWarehouse();
+
   const { fetchRoles, roles } = useRoleStore();
 
   const [search, setSearch] = useState("");
@@ -36,6 +42,10 @@ const DataTable = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [passwordError, setPasswordError] = useState("");
   const [IoList, setIoList] = useState<any[]>([]);
+
+  const [editNikInput, setEditNikInput] = useState("");
+  const [isEditNikVerified, setIsEditNikVerified] = useState(false);
+  const [editNikLoading, setEditNikLoading] = useState(false);
 
   const normalizeStorageValue = (val: string | null) => {
     if (!val) return "";
@@ -183,6 +193,92 @@ const DataTable = () => {
             </div>
           );
         },
+      },
+      // {
+      //   name: "nik_verify_section_edit",
+      //   label: "Verifikasi NIK (Edit)",
+      //   type: "custom",
+      //   hiddenWhen: (values: any) => {
+      //     // Hanya tampil saat EDIT dan bukan NON-Employee
+      //     if (!values.id) return true;
+      //     return values.employeeId?.startsWith("NON-");
+      //   },
+      //   renderCustom: ({ setValue }: { setValue: any }) => {
+      //     const handleVerifyEdit = async () => {
+      //       if (!editNikInput)
+      //         return showErrorToast("Masukkan NIK terlebih dahulu");
+      //       setEditNikLoading(true);
+      //       try {
+      //         const res = await UserVerifyService.verifyEmployee(editNikInput);
+      //         if (res.valid) {
+      //           setIsEditNikVerified(true);
+      //           setValue("employeeId", res.data.employee_number);
+      //           setValue(
+      //             "firstName",
+      //             res.data.employee_name?.split(" ")[0] || "",
+      //           );
+      //           setValue(
+      //             "lastName",
+      //             res.data.employee_name?.split(" ").slice(1).join(" ") || "-",
+      //           );
+      //           if (res.data.organization_id) {
+      //             setValue("organizationId", String(res.data.organization_id));
+      //           }
+      //           showSuccessToast(
+      //             `Karyawan Ditemukan: ${res.data.employee_name}`,
+      //           );
+      //         } else {
+      //           showErrorToast("NIK tidak terdaftar!");
+      //           setIsEditNikVerified(false);
+      //         }
+      //       } catch (err) {
+      //         showErrorToast("Gagal verifikasi server");
+      //       } finally {
+      //         setEditNikLoading(false);
+      //       }
+      //     };
+
+      //     return (
+      //       <div className="space-y-2 border-l-4 border-orange-400 pl-3 py-1 bg-orange-50/50 rounded-r-md">
+      //         <p className="text-[11px] text-orange-600 font-semibold">
+      //           Verifikasi NIK baru jika ingin mengganti Employee ID
+      //         </p>
+      //         <div className="flex gap-2">
+      //           <input
+      //             type="text"
+      //             placeholder="Masukkan NIK Karyawan..."
+      //             className="flex-1 px-3 py-2 border rounded-md text-sm outline-none"
+      //             value={editNikInput}
+      //             onChange={(e) => {
+      //               setEditNikInput(e.target.value);
+      //               setIsEditNikVerified(false);
+      //             }}
+      //           />
+      //           <Button
+      //             type="button"
+      //             variant="primary"
+      //             size="sm"
+      //             onClick={handleVerifyEdit}
+      //             disabled={editNikLoading || !editNikInput}
+      //           >
+      //             {editNikLoading ? "..." : "Verify"}
+      //           </Button>
+      //         </div>
+      //         {isEditNikVerified && (
+      //           <p className="text-[11px] text-green-600 font-bold flex items-center gap-1">
+      //             <FaCheckCircle /> NIK Terverifikasi. Data akan diperbarui.
+      //           </p>
+      //         )}
+      //       </div>
+      //     );
+      //   },
+      // },
+      {
+        name: "employeeId",
+        label: "Employee ID / NIK",
+        type: "text",
+        validation: { required: "Employee ID wajib diisi" },
+        hiddenWhen: (values: any) => !values.id, // Hanya tampil saat EDIT
       },
       {
         name: "manualEmployeeId",
@@ -334,6 +430,9 @@ const DataTable = () => {
       isNikVerified,
       nikLoading,
       nikInput,
+      editNikInput, // ← tambah
+      isEditNikVerified, // ← tambah
+      editNikLoading, // ← tambah
     ],
   );
 
@@ -358,7 +457,7 @@ const DataTable = () => {
       warehouseSubId:
         String(data.roleId) === String(gateRoleId) ? data.zoneId : null,
     };
-    
+
     return createData(payload);
   };
 
@@ -379,10 +478,6 @@ const DataTable = () => {
       firstName: rest.firstName,
       lastName: rest.lastName,
     };
-
-    // console.log("Payload Update", payload);
-    // return;
-    
 
     // Filter undefined saja, nilai null (warehouseSubId) atau "" tetap dikirim jika memang kontrak API-nya string/null
     const cleanPayload = Object.fromEntries(
@@ -424,10 +519,16 @@ const DataTable = () => {
           zoneId: user.warehouseSubId ?? "",
           // userType untuk logika internal form
           userType: user.employeeId?.startsWith("NON-") ? "NON" : "EMPLOYEE",
+          employeeId: user.userDetail?.employee_id ?? user.employeeId ?? "",
         }))
         .filter((user: any) => user.role?.name !== "superadmin"),
     [userData],
   );
+
+  const handleDelete = async (id: any) => {
+    // await updateData(id, { isActive: false });
+    await deleteData(id);
+  };
 
   return (
     <>
@@ -483,6 +584,8 @@ const DataTable = () => {
           { accessorKey: "username", header: "Username" },
           { accessorKey: "firstName", header: "First Name" },
           { accessorKey: "lastName", header: "Last Name" },
+          { accessorKey: "employeeId", header: "Employee Id" },
+
           {
             accessorKey: "roleId",
             header: "Role",
@@ -508,8 +611,9 @@ const DataTable = () => {
         )}
         onSubmit={handleCreate}
         onUpdate={handleUpdate}
+        // onDelete={async (id) => { await updateData(id, { isActive: false }) }}
         onDelete={async (id) => {
-          await updateData(id, { isActive: false });
+          await handleDelete(id);
         }}
         onRefresh={fetchAll}
         getRowId={(row) => row.id}

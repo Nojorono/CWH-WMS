@@ -9,9 +9,12 @@ import {
   useStorePallet,
   useStoreZoneByWarehouse,
   useStoreSubWarehouse,
+  useStoreInventoryTracking,
 } from "../../../DynamicAPI/stores/Store/MasterStore";
 import Select from "../../../components/form/Select";
 import axiosInstance from "../../../DynamicAPI/AxiosInstance";
+import Button from "../../../components/ui/button/Button";
+import { FaSync } from "react-icons/fa";
 
 const MainTable = () => {
   const userDetail = localStorage.getItem("user_detail");
@@ -38,6 +41,7 @@ const MainTable = () => {
   const { fetchAll: fetchAllItem, list: listItems } = useStoreItem();
   const { fetchById: fetchBinById, detail: listBins } = useStoreBinByZone();
   const { fetchAll: fetchAllPallet, list: listPallets } = useStorePallet();
+  const { fetchUsingPagination } = useStoreInventoryTracking();
 
   useEffect(() => {
     if (!isGlobalUser) {
@@ -147,18 +151,44 @@ const MainTable = () => {
 
   const canShowTable = !isGlobalUser || (selectedIO && selectedWH);
 
+  // Buat fungsi refresh handler
+  const handleRefresh = () => {
+    if (!fetchUsingPagination) return;
+
+    // Panggil kembali dengan parameter state saat ini yang ada di komponen induk
+    fetchUsingPagination({
+      page: 1, // atau sesuaikan dengan state page saat ini
+      limit: 20,
+      search: globalFilter,
+      inventory_status: selectedStatus || "",
+      warehouse_id: selectedWH || "",
+      warehouse_sub_id: selectedZone || "",
+      warehouse_bin_id: selectedBin || "",
+      item_id: selectedItem || "",
+      sortOrder: "DESC",
+      sortBy: "progression_status",
+      pallet_id: selectedPallet || "",
+    });
+  };
+
   return (
     <>
       <div className="p-4 bg-white shadow rounded-md mb-5">
-        <div className="mb-4 w-full md:w-1/4">
-          <Label htmlFor="search">Search</Label>
-          <Input
-            onChange={(e) => setGlobalFilter(e.target.value)}
-            type="text"
-            id="search"
-            placeholder="🔍 Masukan data.."
-            value={globalFilter}
-          />
+        <div className="mb-4 w-full md:w-1/3">
+          <div className="flex items-center gap-2">
+            {/* <Label htmlFor="search">Search</Label> */}
+            <Input
+              onChange={(e) => setGlobalFilter(e.target.value)}
+              type="text"
+              id="search"
+              placeholder="🔍 Masukan data.."
+              value={globalFilter}
+            />
+
+            <Button variant="action" size="sm" onClick={handleRefresh}>
+              <FaSync className="mr-2" /> Refresh
+            </Button>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-7 gap-4 items-end">
@@ -237,6 +267,7 @@ const MainTable = () => {
               width="100%"
             />
           </div>
+
         </div>
       </div>
 

@@ -162,9 +162,6 @@ const AdjustTable = ({
 
   const { fetchUsingPagination, list, pagination, isLoading } =
     useStoreInventoryTracking();
-
-  console.log("list Data", list);
-
   const currentPage = parseInt(searchParams.get("page") || "1");
   const pageIndex = currentPage - 1;
   const [pageSize, setPageSize] = useState<number>(20);
@@ -409,6 +406,8 @@ const AdjustTable = ({
       </div>
     );
   }
+
+  
 
   return (
     <div className="flex flex-col gap-4">
