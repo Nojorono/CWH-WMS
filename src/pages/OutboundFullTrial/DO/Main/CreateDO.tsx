@@ -198,6 +198,7 @@ const CreateDO: React.FC = () => {
       limit: pageSize,
       status: "APPROVED",
       type: value,
+      has_do: false
     });
   };  
 
