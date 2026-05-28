@@ -733,6 +733,8 @@ const AdjustTableTransactionPicking = ({
   };
 
   const handleShipConfirm = async (data: OutboundDo) => {
+    console.log("data ship-confirm", data);
+    
     Swal.fire({
       title: "Confirm Ship",
       text: `Are you sure you want to confirm shipment for DO ${data.outbound_do_number}?`,

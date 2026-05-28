@@ -1,19 +1,19 @@
 import { useState, useMemo } from "react";
-import Input from "../../../../components/form/input/InputField";
+import Input from "../../../../../components/form/input/InputField";
 import AdjustTable from "./AdjustTable";
-import Label from "../../../../components/form/Label";
-import { useDebounce } from "../../../../helper/useDebounce";
-import Select from "../../../../components/form/Select";
-import Button from "../../../../components/ui/button/Button";
+import Label from "../../../../../components/form/Label";
+import { useDebounce } from "../../../../../helper/useDebounce";
+import Select from "../../../../../components/form/Select";
+import Button from "../../../../../components/ui/button/Button";
 import { FaExchangeAlt, FaRecycle, FaSync } from "react-icons/fa";
-import { useStoreInboundIntegration } from "../../../../DynamicAPI/stores/Store/MasterStore";
+import { useStoreIRIntegration } from "../../../../../DynamicAPI/stores/Store/MasterStore";
 
 const MainTable = () => {
   const [selectedIO, setSelectedIO] = useState<any>(null);
   const [globalFilter, setGlobalFilter] = useState<string>("");
   const debouncedFilter = useDebounce(globalFilter, 500);
 
-  const { fetchAll } = useStoreInboundIntegration();
+  const { fetchAll } = useStoreIRIntegration();
 
   // 1. Ambil data dari localStorage dan format menjadi Options untuk Select
   const ioOptions = useMemo(() => {
@@ -46,14 +46,14 @@ const MainTable = () => {
           </div>
           <div>
             <h3 className="text-base font-bold text-slate-800 tracking-tight">
-              Inbound Integration Log
+              IR/SO Integration Log
             </h3>
             <p className="text-[11px] text-slate-500 font-medium mt-0.5">
-              Monitor status Integration Inbound to META
+              Monitor status Integartion dokumen Internal Requisition & Sales
+              Order
             </p>
           </div>
         </div>
-
         <div className="flex flex-col md:flex-row md:items-end gap-6">
           {/* Filter Search */}
           <div className="flex-1 space-y-2">

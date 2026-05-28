@@ -23,6 +23,8 @@ import Inventory from "../pages/Inventory";
 import InventoryDetail from "../pages/Inventory/Form/Detail";
 import InventoryVisibility from "../pages/InventoryVisibility";
 import InventoryMovement from "../pages/InventoryMovement";
+import InventoryOnHand from "../pages/InventoryOnHand";
+
 
 // MASTER PALLET
 import MasterPallet from "../pages/Master/MasterPallet";
@@ -61,11 +63,8 @@ import PickingSuggestion from "../pages/OutboundFullTrial/Picking/Main/PickingSu
 import PickingTransaction from "../pages/OutboundFullTrial/PickingTransaction";
 import DetachAttachProcess from "../pages/OutboundFullTrial/PickingTransaction/Main/DetachAttach";
 import GateLoading from "../pages/OutboundFullTrial/GateLoading";
+import IRintegrationLog from "../pages/OutboundFullTrial/OutboundIntegration/IRintegration/Main/MainTable"
 
-// Approval Set Up
-// import ApprovalSetup from "../pages/ApprovalSetup/index";
-// import CreateApproval from "../pages/ApprovalSetup/Table/CreateApprovalSetup";
-// import ApprovalProcess from "../pages/ApprovalSetup/Table/ApprovalProcess";
 import PrintSuratJalan from "../pages/OutboundFullTrial/PickingTransaction/Main/PrintSuratJalan/PrintSuratJalan";
 import StockAdjustment from "../pages/StockAdjustment/index";
 
@@ -110,6 +109,7 @@ export {
   Inbound,
   InboundProcess,
   InboundIntegration,
+  InventoryOnHand,
 
   // PUTAWAY
   PutAway,
@@ -133,6 +133,7 @@ export {
   DetachAttachProcess,
   GateLoading,
   PrintSuratJalan,
+  IRintegrationLog,
 
   // Approval Set Up
   // ApprovalSetup,

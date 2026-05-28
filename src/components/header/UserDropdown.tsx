@@ -28,6 +28,8 @@ export default function UserDropdown() {
   const emailUser = localStorage.getItem("email");
   const storedFullName = localStorage.getItem("full_name");
   const orgName = localStorage.getItem("organization_name");
+  const NIK = localStorage.getItem("NIK");
+
 
   // --- Logika Penamaan ---
   // Jika role adalah superadmin (case-insensitive), tampilkan "Superadmin"
@@ -94,6 +96,9 @@ export default function UserDropdown() {
               </span>
               <span className="text-xs font-medium text-gray-500 dark:text-gray-400 truncate">
                 {emailUser || "No email assigned"}
+              </span>
+              <span className="text-xs font-medium text-gray-500 dark:text-gray-400 truncate">
+                {NIK || "No NIK exist"}
               </span>
             </div>
           </div>

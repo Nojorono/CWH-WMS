@@ -8,8 +8,6 @@ import {
 } from "./doTypes";
 
 export function mapPickingTransactions(list: any[] = []): OutboundDo[] {
-    console.log("raw data DO", list);
-
     return list.map((raw: any): OutboundDo => {
         const outbound_memos: OutboundMemo[] = (raw.outbound_memos || []).map((memo: any): OutboundMemo => {
             const memoItems: OutboundMemoItem[] = (memo.outbound_memo_items || []).map((item: any) => ({

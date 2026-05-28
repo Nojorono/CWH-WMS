@@ -49,6 +49,7 @@ const MainTable = () => {
   ];
 
   const roleName = localStorage.getItem("role_name");
+  const NIK = localStorage.getItem("NIK");
 
   const handleRefresh = () => {
     if (!fetchUsingPagination) return;
@@ -92,27 +93,37 @@ const MainTable = () => {
             />
           </div>
 
-          <div className="space-x-4">
-            {roleName === "TRANSPORT_STAFF" || roleName === "superadmin" ? (
+          {roleName === "TRANSPORT_STAFF" && (
+            <div
+              className="mt-3"
+              title={
+                NIK && NIK.includes("NON")
+                  ? "User dengan NIK NON Employee tidak bisa create Memo"
+                  : ""
+              }
+            >
               <Button
                 size="sm"
                 variant="primary"
                 startIcon={<FaPlus className="size-5" />}
                 onClick={handleCreate}
+                disabled={!!(NIK && NIK.includes("NON"))}
               >
                 Create Memo
               </Button>
-            ) : null}
-          </div>
+            </div>
+          )}
 
-          <Button
-            variant="action"
-            size="sm"
-            onClick={handleRefresh}
-            startIcon={<FaSync className="size-5" />}
-          >
-            Refresh
-          </Button>
+          <div className="mt-3">
+            <Button
+              variant="action"
+              size="sm"
+              onClick={handleRefresh}
+              startIcon={<FaSync className="size-5" />}
+            >
+              Refresh
+            </Button>
+          </div>
         </div>
       </div>
 

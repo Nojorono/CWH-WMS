@@ -37,6 +37,9 @@ import { StockAdjustment, StockAdjustmentCreateRequest } from '../../types/Stock
 import { MasterWeek, CreateMasterWeek, UpdateMasterWeek } from '../../types/MasterWeekTypes.ts'
 import { OutboundPlanning, UpdateOutboundPlanning } from "../../types/OutboundGoodStock.ts";
 import { InboundIntegration } from "../../types/InboundIntegration.ts";
+import { InventorySelisihItem } from '../../types/InventorySelisih.ts'
+import { IRintegration } from "../../types/IRintegrationType.ts";
+
 
 
 
@@ -87,7 +90,11 @@ export const StockAdjustmentService = createCrudService<StockAdjustment, StockAd
 export const ReportInboundService = createCrudService<InboundPlanning, CreateInboundPlanning, UpdateInboundPlanning>("/report/inbound");
 export const ReportOutboundService = createCrudService<OutboundPlanning, UpdateOutboundPlanning, null>("/report/outbound");
 export const MasterWeekService = createCrudService<MasterWeek, null, null>("/master-week");
-
 export const InboundIntegrationService = createCrudService<InboundIntegration, null, null>("/inbound-integration");
+export const InventorySelisihService = createCrudService<InventorySelisihItem, null, null>("/inventory-tracking/on-hand-mapping-detail");
+
+export const IRIntegrationService = createCrudService<IRintegration, null, null>("/outbound-integration-ir-req");
+
+
 
 

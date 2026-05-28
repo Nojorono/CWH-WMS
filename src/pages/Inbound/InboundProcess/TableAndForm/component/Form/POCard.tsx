@@ -89,31 +89,6 @@ export default function POCard({
     fetchAllUom();
   }, []);
 
-  // // Sync Data Existing (Goal: Menampilkan Principal di Nama Pengirim)
-  // useEffect(() => {
-  //   const path = `deliveryOrders.${doIndex}.pos.${posIndex}`;
-
-  //   const currentPrincipal = getValues(`${path}.principal` as any);
-  //   const currentVendorName = getValues(`${path}.vendor_name` as any);
-
-  //   if (currentPrincipal && !currentVendorName) {
-  //     setValue(`${path}.vendor_name` as any, currentPrincipal);
-  //   }
-
-  //   if ((isDetailMode || isEditMode) && dataPO) {
-  //     const fieldName = normalizedInbType === "PO" ? "po_no" : "so_no";
-  //     setValue(`${path}.${fieldName}` as any, dataPO);
-  //   }
-  // }, [
-  //   isDetailMode,
-  //   isEditMode,
-  //   dataPO,
-  //   setValue,
-  //   getValues,
-  //   doIndex,
-  //   posIndex,
-  // ]);
-
   useEffect(() => {
     const path = `deliveryOrders.${doIndex}.pos.${posIndex}`;
 
@@ -152,13 +127,11 @@ export default function POCard({
   // ✅ SEARCH PO
   const handleSearchPO = async () => {
     if (!doNo) return showErrorToast("Isi Surat Jalan terlebih dahulu.");
-
     const poNo = getValues(
       `deliveryOrders.${doIndex}.pos.${posIndex}.po_no` as any,
     );
-
+    
     if (!poNo) return showErrorToast("Masukkan nomor PO !");
-
     setLoading(true);
 
     try {

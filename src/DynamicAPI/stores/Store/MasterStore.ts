@@ -44,7 +44,9 @@ import {
     ReportOutboundService,
     zoneByWarehouseService,
     InboundIntegrationService,
-    IOfromMeta
+    IOfromMeta,
+    InventorySelisihService,
+    IRIntegrationService
 } from "../../services/Service/MasterService";
 
 import { Uom, CreateUom, UpdateUom } from "../../types/UomTypes";
@@ -87,16 +89,23 @@ import { MasterWeek, CreateMasterWeek, UpdateMasterWeek } from '../../types/Mast
 import { OutboundPlanning, UpdateOutboundPlanning } from "../../types/OutboundGoodStock.ts";
 
 import { InboundIntegration } from "../../types/InboundIntegration.ts";
+import { IRintegration } from "../../types/IRintegrationType.ts";
+
+import { InventorySelisihItem } from "../../types/InventorySelisih.ts";
 
 
 
 // Daftar semua store di sini
 
+export const useStoreIRIntegration = createCrudStore<IRintegration, null, null>({
+    name: "UOM",
+    service: IRIntegrationService,
+});
+
 export const useStoreInboundIntegration = createCrudStore<InboundIntegration, null, null>({
     name: "UOM",
     service: InboundIntegrationService,
 });
-
 
 export const useStoreUom = createCrudStore<Uom, CreateUom, UpdateUom>({
     name: "UOM",
@@ -268,7 +277,6 @@ export const useStoreUserManagement = createCrudStore<User, CreateUser, UpdateUs
     service: UserManagementService,
 });
 
-
 export const useStorePickingSuggestionItem = createCrudStore<PickingSuggestionItem, CreatePickingSuggestionItem, UpdatePickingSuggestionItem>({
     name: "PickingSuggestionItem",
     service: PickingSuggestionItemService,
@@ -322,5 +330,10 @@ export const useStoreReportOutbound = createCrudStore<OutboundPlanning, UpdateOu
 export const useStoreMasterWeek = createCrudStore<MasterWeek, null, null>({
     name: "MasterWeek",
     service: MasterWeekService,
+});
+
+export const useStoreInventorySelisih = createCrudStore<InventorySelisihItem, null, null>({
+    name: "MasterWeek",
+    service: InventorySelisihService,
 });
 

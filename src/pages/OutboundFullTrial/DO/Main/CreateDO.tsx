@@ -4,7 +4,6 @@ import React, { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import Button from "../../../../components/ui/button/Button";
 import PageBreadcrumb from "../../../../components/common/PageBreadCrumb";
-// import TableComponent from "../Table/TableComponent";
 import DynamicForm, {
   FieldConfig,
 } from "../../../../components/wms-components/inbound-component/form/DynamicForm";
@@ -200,7 +199,7 @@ const CreateDO: React.FC = () => {
       status: "APPROVED",
       type: value,
     });
-  };
+  };  
 
   return (
     <div className="p-6 space-y-6">

@@ -41,6 +41,7 @@ import {
   MainTabPallet,
   MainTabZone,
   InventoryDetail,
+  InventoryOnHand,
   Memo,
   MemoProcess,
   OutboundDO,
@@ -49,9 +50,6 @@ import {
   PickingSuggestion,
   MasterAMO,
   MasterSubdist,
-  // ApprovalSetup,
-  // CreateApproval,
-  // ApprovalProcess,
   PickingTransaction,
   DetachAttachProcess,
   GateLoading,
@@ -64,7 +62,9 @@ import {
   Reporting2,
   MasterBin,
   InboundIntegration,
+  IRintegrationLog,
 } from "./utils/PagesComponent";
+import { IRIntegrationService } from "./DynamicAPI/services/Service/MasterService";
 
 const DefaultPage = () => <> </>;
 
@@ -143,10 +143,6 @@ export function AppRoutes() {
       { path: "detach_attach", element: <DetachAttachProcess /> },
       { path: "print_surat_jalan", element: <PrintSuratJalan /> },
     ],
-    // "/approval": [
-    //   { path: "create", element: <CreateApproval /> },
-    //   { path: "process", element: <ApprovalProcess /> },
-    // ],
   };
 
   // Map path ke komponen
@@ -176,17 +172,19 @@ export function AppRoutes() {
       "/outbound_do": <OutboundDO />,
       "/master_amo": <MasterAMO />,
       "/master_subdist": <MasterSubdist />,
-      // "/approval_setup": <ApprovalSetup />,
       "/picking_transaction": <PickingTransaction />,
       "/gate_loading": <GateLoading />,
       "/inventory_visibility": <InventoryVisibility />,
       "/inventory_movement": <InventoryMovement />,
+      "/inventory_on_hand": <InventoryOnHand />,
+
       "/stock_adjustment": <StockAdjustment />,
       "/report_inbound": <ReportInbound />,
       "/report_outbound": <ReportOutbound />,
       "/reporting3": <Reporting2 />,
       "/setup_master_warehouse": <MasterWarehouse />,
-      "/inbound_integration_log": <InboundIntegration/>
+      "/inbound_integration_log": <InboundIntegration/>,
+      "/ir_integration_log" : <IRintegrationLog/>
     };
     return map[path] || <DefaultPage />;
   };
