@@ -12,13 +12,17 @@ import {
 import { ColumnDef } from "@tanstack/react-table";
 import { formatDateIndo } from "../../../../../helper/FormatDate";
 // Pastikan kamu punya map status untuk outbound, atau gunakan yang umum
-import StatusBadge from "../../../../../common/statusBadge"; 
-import { STATUS_MAP_INTEGRATION_OUTBOUND } from "../../../../../constants/statusMaps"; 
+import StatusBadge from "../../../../../common/statusBadge";
+import { STATUS_MAP_INTEGRATION_OUTBOUND } from "../../../../../constants/statusMaps";
 import { useStoreIRIntegration } from "../../../../../DynamicAPI/stores/Store/MasterStore";
 import ActIndicator from "../../../../../components/ui/activityIndicator";
 import ExpandableTableComponent from "../component/Table";
 
-const OutboundAdjustTable = ({ globalFilter, setGlobalFilter, filteredIO }: any) => {
+const OutboundAdjustTable = ({
+  globalFilter,
+  setGlobalFilter,
+  filteredIO,
+}: any) => {
   const { fetchAll, list, pagination, isLoading } = useStoreIRIntegration();
   const [pageIndex, setPageIndex] = useState(0);
   const [pageSize, setPageSize] = useState(25);
@@ -39,7 +43,7 @@ const OutboundAdjustTable = ({ globalFilter, setGlobalFilter, filteredIO }: any)
       );
     }
 
-    // 2. Filter berdasarkan Global Search 
+    // 2. Filter berdasarkan Global Search
     if (globalFilter) {
       const lowerFilter = globalFilter.toLowerCase();
       result = result.filter(
@@ -47,7 +51,7 @@ const OutboundAdjustTable = ({ globalFilter, setGlobalFilter, filteredIO }: any)
           item.ir_number?.toLowerCase().includes(lowerFilter) ||
           item.so_number?.toLowerCase().includes(lowerFilter) ||
           item.transaction_type?.toLowerCase().includes(lowerFilter) ||
-          item.batch_number?.toLowerCase().includes(lowerFilter)
+          item.batch_number?.toLowerCase().includes(lowerFilter),
       );
     }
 
@@ -77,7 +81,9 @@ const OutboundAdjustTable = ({ globalFilter, setGlobalFilter, filteredIO }: any)
         cell: ({ row }) => (
           <>
             <div className="flex flex-col">
-              <span className="text-[10px] text-slate-400 uppercase tracking-wider">IR Number</span>
+              <span className="text-[10px] text-slate-400 uppercase tracking-wider">
+                IR Number
+              </span>
               <span className="font-bold text-blue-700 font-mono tracking-tight text-sm">
                 {row.original.ir_number || "-"}
               </span>
@@ -99,11 +105,17 @@ const OutboundAdjustTable = ({ globalFilter, setGlobalFilter, filteredIO }: any)
               {row.original.transaction_type}
             </span>
             <div className="flex items-center gap-1.5 text-[10px] text-slate-500 font-medium">
-              <span className="truncate max-w-[80px]" title={row.original.io_source_name}>
+              <span
+                className="truncate max-w-[80px]"
+                title={row.original.io_source_name}
+              >
                 {row.original.io_source_name}
               </span>
               <FaChevronRight className="text-slate-300 w-2 h-2 flex-shrink-0" />
-              <span className="truncate max-w-[80px]" title={row.original.io_dest_name}>
+              <span
+                className="truncate max-w-[80px]"
+                title={row.original.io_dest_name}
+              >
                 {row.original.io_dest_name}
               </span>
             </div>
@@ -156,7 +168,6 @@ const OutboundAdjustTable = ({ globalFilter, setGlobalFilter, filteredIO }: any)
     return (
       <div className="p-6 bg-[#f8fafc] border-x-4 border-l-blue-500">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-          
           {/* Card 1: Technical & System IDs */}
           <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm relative overflow-hidden group">
             <div className="absolute top-0 right-0 p-3 text-slate-100 group-hover:text-blue-50 transition-colors">
@@ -166,9 +177,23 @@ const OutboundAdjustTable = ({ globalFilter, setGlobalFilter, filteredIO }: any)
               <FaDatabase /> System Identifiers
             </h4>
             <div className="space-y-3">
-              <InfoItem label="Data ID" value={data.id} mono color="text-slate-800" />
-              <InfoItem label="Outbound DO ID" value={data.outbound_do_id} mono />
-              <InfoItem label="Iface Header ID" value={data.iface_header_id} mono color="text-blue-600 font-bold" />
+              <InfoItem
+                label="Data ID"
+                value={data.id}
+                mono
+                color="text-slate-800"
+              />
+              <InfoItem
+                label="Outbound DO ID"
+                value={data.outbound_do_id}
+                mono
+              />
+              <InfoItem
+                label="Iface Header ID"
+                value={data.iface_header_id}
+                mono
+                color="text-blue-600 font-bold"
+              />
               <div className="grid grid-cols-3 gap-2 pt-2 border-t border-slate-50">
                 <InfoItem label="Req IR" value={data.request_id_ir} mono />
                 <InfoItem label="Req IO" value={data.request_id_io} mono />
@@ -186,18 +211,24 @@ const OutboundAdjustTable = ({ globalFilter, setGlobalFilter, filteredIO }: any)
               <FaInfoCircle /> Routing Details
             </h4>
             <div className="space-y-3">
-              <InfoItem 
-                label="Source (IO)" 
-                value={`${data.io_source_name} (ID: ${data.io_source_id})`} 
-                color="text-orange-700 font-bold" 
+              <InfoItem
+                label="Source (IO)"
+                value={`${data.io_source_name} (ID: ${data.io_source_id})`}
+                color="text-orange-700 font-bold"
               />
-              <InfoItem 
-                label="Destination (IO)" 
-                value={`${data.io_dest_name} (ID: ${data.io_dest_id})`} 
-                color="text-emerald-700 font-bold" 
+              <InfoItem
+                label="Destination (IO)"
+                value={`${data.io_dest_name} (ID: ${data.io_dest_id})`}
+                color="text-emerald-700 font-bold"
               />
-              <InfoItem label="Preparer" value={`${data.preparer_number} (ID: ${data.preparer_id})`} />
-              <InfoItem label="Requestor" value={`${data.requestor_number} (ID: ${data.requestor_id})`} />
+              <InfoItem
+                label="Preparer"
+                value={`${data.preparer_number} (ID: ${data.preparer_id})`}
+              />
+              <InfoItem
+                label="Requestor"
+                value={`${data.requestor_number} (ID: ${data.requestor_id})`}
+              />
             </div>
           </div>
 
@@ -210,16 +241,25 @@ const OutboundAdjustTable = ({ globalFilter, setGlobalFilter, filteredIO }: any)
               <FaCalendarAlt /> History & Sync
             </h4>
             <div className="space-y-3">
-              <InfoItem label="Need By Date" value={formatDateIndo(data.need_by_date)} color="text-emerald-700 font-medium" />
-              <InfoItem label="Process Date" value={formatDateIndo(data.last_updated_date)} />
-              
+              <InfoItem
+                label="Need By Date"
+                value={formatDateIndo(data.need_by_date)}
+                color="text-emerald-700 font-medium"
+              />
+              <InfoItem
+                label="Process Date"
+                value={formatDateIndo(data.last_updated_date)}
+              />
+
               {/* Detailed Sync Statuses */}
               <div className="pt-2 mt-2 border-t border-slate-100">
-                <span className="text-[10px] text-slate-400 uppercase tracking-tighter mb-1.5 block">Interface Statuses</span>
+                <span className="text-[10px] text-slate-400 uppercase tracking-tighter mb-1.5 block">
+                  Interface Statuses
+                </span>
                 <div className="flex gap-2">
-                   <MiniStatus label="IR" status={data.iface_status_ir} />
-                   <MiniStatus label="IO" status={data.iface_status_io} />
-                   <MiniStatus label="OI" status={data.iface_status_oi} />
+                  <MiniStatus label="IR" status={data.iface_status_ir} />
+                  <MiniStatus label="IO" status={data.iface_status_io} />
+                  <MiniStatus label="OI" status={data.iface_status_oi} />
                 </div>
               </div>
             </div>
@@ -239,41 +279,77 @@ const OutboundAdjustTable = ({ globalFilter, setGlobalFilter, filteredIO }: any)
               <table className="w-full text-[11px]">
                 <thead className="bg-slate-50 text-slate-500 border-b">
                   <tr>
-                    <th className="px-4 py-2 text-left font-bold uppercase tracking-tighter">Line Ref (IR/SO)</th>
-                    <th className="px-4 py-2 text-left font-bold uppercase tracking-tighter">Item Code</th>
-                    <th className="px-4 py-2 text-center font-bold uppercase tracking-tighter">Quantity</th>
-                    <th className="px-4 py-2 text-left font-bold uppercase tracking-tighter">Source IDs</th>
-                    <th className="px-4 py-2 text-left font-bold uppercase tracking-tighter">Sync Status (IR)</th>
+                    <th className="px-4 py-2 text-left font-bold uppercase tracking-tighter">
+                      Line Ref (IR/SO)
+                    </th>
+                    <th className="px-4 py-2 text-left font-bold uppercase tracking-tighter">
+                      Item Code
+                    </th>
+                    <th className="px-4 py-2 text-center font-bold uppercase tracking-tighter">
+                      Quantity
+                    </th>
+                    <th className="px-4 py-2 text-left font-bold uppercase tracking-tighter">
+                      Source IDs
+                    </th>
+                    <th className="px-4 py-2 text-left font-bold uppercase tracking-tighter">
+                      Sync Status (IR)
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {data.lines?.map((line: any) => (
-                    <tr key={line.id} className="hover:bg-slate-50 transition-colors">
+                    <tr
+                      key={line.id}
+                      className="hover:bg-slate-50 transition-colors"
+                    >
                       <td className="px-4 py-3">
-                        <div className="font-bold text-slate-700">IR Line: {line.ir_line_number}</div>
-                        <div className="text-[10px] text-slate-500">SO Line: {line.so_line_number}</div>
+                        <div className="font-bold text-slate-700">
+                          IR Line: {line.ir_line_number}
+                        </div>
+                        <div className="text-[10px] text-slate-500">
+                          SO Line: {line.so_line_number}
+                        </div>
                       </td>
                       <td className="px-4 py-3">
-                        <div className="font-bold text-blue-700">{line.item}</div>
-                        <div className="text-[9px] text-slate-400 font-mono">Inv ID: {line.inventory_item_id}</div>
+                        <div className="font-bold text-blue-700">
+                          {line.item}
+                        </div>
+                        <div className="text-[9px] text-slate-400 font-mono">
+                          Inv ID: {line.inventory_item_id}
+                        </div>
                       </td>
                       <td className="px-4 py-3 text-center">
-                        <span className="font-bold text-slate-800 text-xs">{line.quantity}</span>
-                        <span className="ml-1 text-slate-400 font-medium uppercase">{line.transaction_uom}</span>
+                        <span className="font-bold text-slate-800 text-xs">
+                          {line.quantity}
+                        </span>
+                        <span className="ml-1 text-slate-400 font-medium uppercase">
+                          {line.transaction_uom}
+                        </span>
                       </td>
                       <td className="px-4 py-3">
-                        <div className="text-[10px] text-slate-600 font-mono">Iface: {line.iface_line_id}</div>
-                        <div className="text-[10px] text-slate-400 font-mono">Src: {line.source_line_id?.split('-')[0]}...</div>
+                        <div className="text-[10px] text-slate-600 font-mono">
+                          Iface: {line.iface_line_id}
+                        </div>
+                        <div className="text-[10px] text-slate-400 font-mono">
+                          Src: {line.source_line_id?.split("-")[0]}...
+                        </div>
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-1.5">
-                          <div className={`w-2 h-2 rounded-full ${line.iface_line_status_ir === "S" ? "bg-green-500" : "bg-red-500"}`}></div>
+                          <div
+                            className={`w-2 h-2 rounded-full ${line.iface_line_status_ir === "S" ? "bg-green-500" : "bg-red-500"}`}
+                          ></div>
                           <span className="text-[10px] font-bold text-slate-500 uppercase">
-                            {line.iface_line_status_ir === "S" ? "Success" : "Error"}
+                            {line.iface_line_status_ir === "S"
+                              ? "Success"
+                              : "Error"}
                           </span>
                         </div>
                         {line.iface_line_message_ir && (
-                          <div className="text-[10px] text-red-500 italic mt-1 line-clamp-1" title={line.iface_line_message_ir}>
+                          <div
+                            className="text-[10px] text-red-500 italic mt-1 line-clamp-1"
+                            title={line.iface_line_message_ir}
+                          >
                             {line.iface_line_message_ir}
                           </div>
                         )}
@@ -287,17 +363,35 @@ const OutboundAdjustTable = ({ globalFilter, setGlobalFilter, filteredIO }: any)
         </div>
 
         {/* Global Warning/Error Banners for Header Interfaces */}
-        {(data.iface_message_ir || data.iface_message_io || data.iface_message_oi) && (
-          <div className="mt-5 p-3 bg-amber-50 border-l-4 border-amber-500 rounded flex flex-col gap-2">
+        {/* Global Warning/Error Banners for Header Interfaces */}
+        {((data.iface_message_ir && data.iface_status_ir !== "S") ||
+          (data.iface_message_io && data.iface_status_io !== "S") ||
+          (data.iface_message_oi && data.iface_status_oi !== "S")) && (
+          <div className="mt-5 p-3 bg-red-50 border-l-4 border-red-500 rounded flex flex-col gap-2">
             <div className="flex items-center gap-2">
-              <div className="bg-amber-500 px-1.5 py-0.5 rounded text-white text-[10px] font-bold">
-                INTERFACE MESSAGES
+              <div className="bg-red-500 px-1.5 py-0.5 rounded text-white text-[10px] font-bold">
+                INTERFACE ERRORS
               </div>
             </div>
-            <div className="text-xs text-amber-800 font-medium flex flex-col gap-1">
-              {data.iface_message_ir && <span><strong className="text-amber-900">IR:</strong> {data.iface_message_ir}</span>}
-              {data.iface_message_io && <span><strong className="text-amber-900">IO:</strong> {data.iface_message_io}</span>}
-              {data.iface_message_oi && <span><strong className="text-amber-900">OI:</strong> {data.iface_message_oi}</span>}
+            <div className="text-xs text-red-800 font-medium flex flex-col gap-1">
+              {data.iface_message_ir && data.iface_status_ir !== "S" && (
+                <span>
+                  <strong className="text-red-900">IR:</strong>{" "}
+                  {data.iface_message_ir}
+                </span>
+              )}
+              {data.iface_message_io && data.iface_status_io !== "S" && (
+                <span>
+                  <strong className="text-red-900">IO:</strong>{" "}
+                  {data.iface_message_io}
+                </span>
+              )}
+              {data.iface_message_oi && data.iface_status_oi !== "S" && (
+                <span>
+                  <strong className="text-red-900">OI:</strong>{" "}
+                  {data.iface_message_oi}
+                </span>
+              )}
             </div>
           </div>
         )}
@@ -340,20 +434,32 @@ const OutboundAdjustTable = ({ globalFilter, setGlobalFilter, filteredIO }: any)
 
 // --- Helper Components ---
 
-const InfoItem = ({ label, value, mono = false, color = "text-slate-600" }: any) => (
+const InfoItem = ({
+  label,
+  value,
+  mono = false,
+  color = "text-slate-600",
+}: any) => (
   <div className="flex flex-col gap-0.5 border-b border-slate-50 pb-1 last:border-0">
-    <span className="text-[10px] text-slate-400 font-medium uppercase tracking-wider">{label}</span>
-    <span className={`text-[12px] truncate ${mono ? "font-mono text-[11px]" : ""} ${color}`} title={value}>
+    <span className="text-[10px] text-slate-400 font-medium uppercase tracking-wider">
+      {label}
+    </span>
+    <span
+      className={`text-[12px] truncate ${mono ? "font-mono text-[11px]" : ""} ${color}`}
+      title={value}
+    >
       {value || "-"}
     </span>
   </div>
 );
 
-const MiniStatus = ({ label, status }: { label: string, status: string }) => (
+const MiniStatus = ({ label, status }: { label: string; status: string }) => (
   <div className="flex items-center gap-1 bg-slate-50 border border-slate-200 px-1.5 py-0.5 rounded">
     <span className="text-[9px] font-bold text-slate-500">{label}:</span>
-    <span className={`text-[10px] font-extrabold ${status === 'S' ? 'text-green-600' : status === 'E' ? 'text-red-600' : 'text-slate-400'}`}>
-      {status || '-'}
+    <span
+      className={`text-[10px] font-extrabold ${status === "S" ? "text-green-600" : status === "E" ? "text-red-600" : "text-slate-400"}`}
+    >
+      {status || "-"}
     </span>
   </div>
 );
