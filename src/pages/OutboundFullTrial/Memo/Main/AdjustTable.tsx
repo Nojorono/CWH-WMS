@@ -13,8 +13,6 @@ import { showConfirmDialog } from "../../../../components/swal-confirm";
 import TableComponent from "../../../../components/tables/ActionTable/TableComponent";
 import ActIndicator from "../../../../components/ui/activityIndicator";
 
-
-
 type MemoData = {
   outbound_do: any;
   no: number;

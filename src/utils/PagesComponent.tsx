@@ -75,7 +75,9 @@ import ReportOutbound from "../pages/Reporting/Main/ReportOutbound";
 import Reporting2 from "../pages/Reporting/Main/Report2";
 
 // DO SUGGESTION
-import DOsuggestionMain from '../pages/DOsuggestion/index'
+import DOsuggestionMain from '../pages/DOsuggestion/Suggestion/Main/MainTable'
+import GenerateDO from '../pages/DOsuggestion/Suggestion/Main/Generate'
+
 
 export {
   // DASHBOARD
@@ -148,5 +150,6 @@ export {
   ReportOutbound,
   Reporting2,
 
-  DOsuggestionMain
+  DOsuggestionMain,
+  GenerateDO
 };

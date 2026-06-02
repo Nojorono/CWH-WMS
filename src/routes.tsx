@@ -64,7 +64,8 @@ import {
   InboundIntegration,
   IRintegrationLog,
   DOsuggestionMain,
-  ShipConfirmLog
+  ShipConfirmLog,
+  GenerateDO
 } from "./utils/PagesComponent";
 import { IRIntegrationService } from "./DynamicAPI/services/Service/MasterService";
 
@@ -189,7 +190,8 @@ export function AppRoutes() {
       "/ir_integration_log" : <IRintegrationLog/>,
       "/ship_confirm_log" : <ShipConfirmLog/>,
 
-      "/do_suggestion" : <DOsuggestionMain/>
+      "/do_suggestion" : <DOsuggestionMain/>,
+      "/generate_do" : <GenerateDO/>
     };
     return map[path] || <DefaultPage />;
   };
