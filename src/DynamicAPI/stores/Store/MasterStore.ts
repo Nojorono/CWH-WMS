@@ -46,7 +46,8 @@ import {
     InboundIntegrationService,
     IOfromMeta,
     InventorySelisihService,
-    IRIntegrationService
+    IRIntegrationService,
+    ShipConfirmService
 } from "../../services/Service/MasterService";
 
 import { Uom, CreateUom, UpdateUom } from "../../types/UomTypes";
@@ -90,12 +91,18 @@ import { OutboundPlanning, UpdateOutboundPlanning } from "../../types/OutboundGo
 
 import { InboundIntegration } from "../../types/InboundIntegration.ts";
 import { IRintegration } from "../../types/IRintegrationType.ts";
+import { ShipConfirmOutboundDO, Memo, MemoItem } from "../../types/ShipConfirmType.ts";
 
 import { InventorySelisihItem } from "../../types/InventorySelisih.ts";
 
 
 
 // Daftar semua store di sini
+
+export const useStoreShipConfirm = createCrudStore<ShipConfirmOutboundDO, Memo, MemoItem>({
+    name: "UOM",
+    service: ShipConfirmService,
+});
 
 export const useStoreIRIntegration = createCrudStore<IRintegration, null, null>({
     name: "UOM",

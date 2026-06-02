@@ -39,8 +39,7 @@ import { OutboundPlanning, UpdateOutboundPlanning } from "../../types/OutboundGo
 import { InboundIntegration } from "../../types/InboundIntegration.ts";
 import { InventorySelisihItem } from '../../types/InventorySelisih.ts'
 import { IRintegration } from "../../types/IRintegrationType.ts";
-
-
+import { ShipConfirmOutboundDO, Memo, MemoItem } from "../../types/ShipConfirmType.ts";
 
 
 // Daftar semua entitas service di sini
@@ -94,6 +93,8 @@ export const InboundIntegrationService = createCrudService<InboundIntegration, n
 export const InventorySelisihService = createCrudService<InventorySelisihItem, null, null>("/inventory-tracking/on-hand-mapping-detail");
 
 export const IRIntegrationService = createCrudService<IRintegration, null, null>("/outbound-integration-ir-req");
+export const ShipConfirmService = createCrudService<ShipConfirmOutboundDO, Memo, MemoItem >("/outbound-integration-deliveries");
+
 
 
 

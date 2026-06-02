@@ -64,6 +64,7 @@ import PickingTransaction from "../pages/OutboundFullTrial/PickingTransaction";
 import DetachAttachProcess from "../pages/OutboundFullTrial/PickingTransaction/Main/DetachAttach";
 import GateLoading from "../pages/OutboundFullTrial/GateLoading";
 import IRintegrationLog from "../pages/OutboundFullTrial/OutboundIntegration/IRintegration/Main/MainTable"
+import ShipConfirmLog from "../pages/OutboundFullTrial/OutboundIntegration/ShipConfirm/Main/MainTable"
 
 import PrintSuratJalan from "../pages/OutboundFullTrial/PickingTransaction/Main/PrintSuratJalan/PrintSuratJalan";
 import StockAdjustment from "../pages/StockAdjustment/index";
@@ -72,6 +73,9 @@ import StockAdjustment from "../pages/StockAdjustment/index";
 import ReportInbound from "../pages/Reporting/Main/ReportInbound";
 import ReportOutbound from "../pages/Reporting/Main/ReportOutbound";
 import Reporting2 from "../pages/Reporting/Main/Report2";
+
+// DO SUGGESTION
+import DOsuggestionMain from '../pages/DOsuggestion/index'
 
 export {
   // DASHBOARD
@@ -134,6 +138,7 @@ export {
   GateLoading,
   PrintSuratJalan,
   IRintegrationLog,
+  ShipConfirmLog,
 
   // Approval Set Up
   // ApprovalSetup,
@@ -142,4 +147,6 @@ export {
   ReportInbound,
   ReportOutbound,
   Reporting2,
+
+  DOsuggestionMain
 };

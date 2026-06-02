@@ -47,7 +47,7 @@ export const fetchGeotree = async (
     const response = await axiosInstance.get(
       `/geotree/all?${queryParams.toString()}`,
       {
-        signal: abortController.signal, // ← penting
+        signal: abortController.signal, 
       }
     );
 

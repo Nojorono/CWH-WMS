@@ -63,6 +63,8 @@ import {
   MasterBin,
   InboundIntegration,
   IRintegrationLog,
+  DOsuggestionMain,
+  ShipConfirmLog
 } from "./utils/PagesComponent";
 import { IRIntegrationService } from "./DynamicAPI/services/Service/MasterService";
 
@@ -184,7 +186,10 @@ export function AppRoutes() {
       "/reporting3": <Reporting2 />,
       "/setup_master_warehouse": <MasterWarehouse />,
       "/inbound_integration_log": <InboundIntegration/>,
-      "/ir_integration_log" : <IRintegrationLog/>
+      "/ir_integration_log" : <IRintegrationLog/>,
+      "/ship_confirm_log" : <ShipConfirmLog/>,
+
+      "/do_suggestion" : <DOsuggestionMain/>
     };
     return map[path] || <DefaultPage />;
   };

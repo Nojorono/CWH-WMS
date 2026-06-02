@@ -12,6 +12,10 @@ import Swal from "sweetalert2";
 import Button from "../../../../components/ui/button/Button";
 import TableComponent from "../../../../components/tables/ActionTable/TableComponent";
 import ActIndicator from "../../../../components/ui/activityIndicator";
+import axiosInstance from "../../../../DynamicAPI/AxiosInstance";
+import { showConfirmDialog } from "../../../../components/swal-confirm";
+import { EndPoint } from "../../../../utils/EndPoint";
+import { showErrorToast, showSuccessToast } from "../../../../components/toast";
 
 type Props = {
   globalFilter?: string;
@@ -733,13 +737,27 @@ const AdjustTableTransactionPicking = ({
   };
 
   const handleShipConfirm = async (data: OutboundDo) => {
-    console.log("data ship-confirm", data);
-    
-    Swal.fire({
-      title: "Confirm Ship",
-      text: `Are you sure you want to confirm shipment for DO ${data.outbound_do_number}?`,
-      icon: "warning",
-    });
+    const DOid = data.id;
+
+    showConfirmDialog(
+      async () => {
+        try {
+          await axiosInstance.post(
+            `${EndPoint}outbound-do/ship-confirm-internal/${DOid}`,
+          );
+        } catch (error: any) {
+          showErrorToast(error.response?.data?.message || "Gagal Ship-confirm");
+        } finally {
+          console.log("finally submit ship-confirm");
+        }
+      },
+      {
+        title: "Confirm Submit",
+        text: `Apakah anda ingin yakin?`,
+        confirmButtonText: "Ya!",
+        cancelButtonText: "Tidak",
+      },
+    );
   };
 
   return (
