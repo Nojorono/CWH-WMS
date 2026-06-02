@@ -5,8 +5,9 @@ import {
   MdPlace,
   MdAssignment,
   MdCardTravel,
-  MdLocalShipping,
   MdArrowForward,
+  MdPerson,
+  MdExpandMore,
 } from "react-icons/md";
 
 // ==========================================
@@ -73,8 +74,21 @@ export default function SuggestionDraftSummary() {
   const [customerData] = useState<CustomerSummaryItem[]>(INITIAL_CUSTOMER_DATA);
   const [selectedDate, setSelectedDate] = useState<string>("2026-04-29");
 
+  // State untuk mengontrol ID customer mana saja yang sedang terbuka
+  // Default: Mengambil semua ID dari customerData agar otomatis OPEN
+  const [expandedIds, setExpandedIds] = useState<string[]>(
+    INITIAL_CUSTOMER_DATA.map((c) => c.id),
+  );
+
+  // Fungsi toggle buka-tutup
+  const toggleExpand = (id: string) => {
+    setExpandedIds((prev) =>
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id],
+    );
+  };
+
   return (
-    <div className="w-full max-w-5xl mx-auto p-6 bg-[#f8fafc] rounded-2xl shadow-sm font-sans text-slate-800 antialiased">
+    <div className="w-full max-w-7xl mx-auto p-6 bg-[#f8fafc] rounded-2xl shadow-sm font-sans text-slate-800 antialiased">
       {/* Header Section */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
         <div>
@@ -179,7 +193,7 @@ export default function SuggestionDraftSummary() {
         {/* Customer Section Header */}
         <div className="flex justify-between items-center mb-5 border-b border-slate-100 pb-4">
           <div className="flex items-center gap-2 text-[#f26522] font-bold text-sm tracking-wide uppercase">
-            <MdLocalShipping size={18} />
+            <MdPerson size={18} />
             <span>Customer Summary</span>
           </div>
 
@@ -201,61 +215,89 @@ export default function SuggestionDraftSummary() {
 
         {/* Customer Cards Container dengan Scrollbar Premium */}
         <div className="space-y-4 max-h-[450px] overflow-y-auto pr-2 custom-scrollbar">
-          {customerData.map((customer) => (
-            <div
-              key={customer.id}
-              className="bg-white rounded-xl border border-slate-200/70 p-4 shadow-sm hover:shadow-md transition-shadow"
-            >
-              {/* Card Meta Info */}
-              <div className="flex justify-between items-start mb-2">
-                <div className="flex items-center gap-2">
-                  <div className="p-1.5 bg-orange-50 text-[#f26522] rounded-lg border border-orange-100">
-                    <MdPlace size={14} />
-                  </div>
-                  <h3 className="text-sm font-bold text-slate-800">
-                    {customer.customerName}
-                  </h3>
-                </div>
-                <div className="flex items-center gap-1.5 text-xs font-medium text-slate-400 bg-slate-50 px-2 py-0.5 rounded-md border border-slate-100">
-                  <MdCalendarToday size={12} />
-                  <span>{customer.date}</span>
-                </div>
-              </div>
+          {customerData.map((customer) => {
+            const isExpanded = expandedIds.includes(customer.id);
 
-              {/* SKU Target Info */}
-              <div className="text-[11px] font-medium text-slate-400 mb-3 pl-8 flex items-center gap-1">
-                <span>SKU</span>
-                <span className="text-slate-600 font-semibold">
-                  {customer.skuTarget}
-                </span>
-              </div>
-
-              {/* Sub-table Inside Card */}
-              <div className="pl-8">
-                <div className="overflow-hidden rounded-lg border border-slate-100 shadow-2xs">
-                  <div className="grid grid-cols-2 bg-slate-50 border-b border-slate-100 px-4 py-2 text-[11px] font-bold text-slate-500">
-                    <div>Nama Produk</div>
-                    <div className="text-right sm:text-left sm:pl-8">Qty</div>
+            return (
+              <div
+                key={customer.id}
+                className="bg-white rounded-xl border border-slate-200/70 shadow-sm hover:shadow-md transition-shadow overflow-hidden"
+              >
+                {/* Header Card (Clickable Area) */}
+                <div
+                  onClick={() => toggleExpand(customer.id)}
+                  className="p-4 flex justify-between items-start cursor-pointer hover:bg-slate-50/50 transition-colors select-none"
+                >
+                  <div className="flex items-center gap-2">
+                    <div className="p-1.5 bg-orange-50 text-[#f26522] rounded-lg border border-orange-100">
+                      <MdPlace size={14} />
+                    </div>
+                    <h3 className="text-sm font-bold text-slate-800">
+                      {customer.customerName}
+                    </h3>
                   </div>
-                  <div className="divide-y divide-slate-100 bg-white">
-                    {customer.products.map((prod, pIdx) => (
-                      <div
-                        key={pIdx}
-                        className="grid grid-cols-2 px-4 py-2.5 text-xs"
-                      >
-                        <div className="font-bold text-slate-700">
-                          {prod.name}
-                        </div>
-                        <div className="text-slate-600 text-right sm:text-left sm:pl-8">
-                          {prod.qty}
+
+                  <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-1.5 text-xs font-medium text-slate-400 bg-slate-50 px-2 py-0.5 rounded-md border border-slate-100">
+                      <MdCalendarToday size={12} />
+                      <span>{customer.date}</span>
+                    </div>
+                    {/* Icon Expand More dengan Animasi Rotasi */}
+                    <MdExpandMore
+                      size={20}
+                      className={`text-slate-400 transition-transform duration-200 ${
+                        isExpanded ? "rotate-180 text-[#f26522]" : "rotate-0"
+                      }`}
+                    />
+                  </div>
+                </div>
+
+                {/* Body Card dengan Transisi Expand */}
+                <div
+                  className={`transition-all duration-300 ease-in-out ${
+                    isExpanded
+                      ? "max-h-[1000px] opacity-100 pb-4"
+                      : "max-h-0 opacity-0 pointer-events-none"
+                  }`}
+                >
+                  {/* SKU Target Info */}
+                  <div className="text-[11px] font-medium text-slate-400 mb-3 pl-12 flex items-center gap-1">
+                    <span>SKU</span>
+                    <span className="text-slate-600 font-semibold">
+                      {customer.skuTarget}
+                    </span>
+                  </div>
+
+                  {/* Sub-table Inside Card */}
+                  <div className="pl-12 pr-4">
+                    <div className="overflow-hidden rounded-lg border border-slate-100 shadow-2xs">
+                      <div className="grid grid-cols-2 bg-slate-50 border-b border-slate-100 px-4 py-2 text-[11px] font-bold text-slate-500">
+                        <div>Nama Produk</div>
+                        <div className="text-right sm:text-left sm:pl-8">
+                          Qty
                         </div>
                       </div>
-                    ))}
+                      <div className="divide-y divide-slate-100 bg-white">
+                        {customer.products.map((prod, pIdx) => (
+                          <div
+                            key={pIdx}
+                            className="grid grid-cols-2 px-4 py-2.5 text-xs"
+                          >
+                            <div className="font-bold text-slate-700">
+                              {prod.name}
+                            </div>
+                            <div className="text-slate-600 text-right sm:text-left sm:pl-8">
+                              {prod.qty}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
 

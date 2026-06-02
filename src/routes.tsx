@@ -65,7 +65,7 @@ import {
   IRintegrationLog,
   DOsuggestionMain,
   ShipConfirmLog,
-  GenerateDO
+  GenerateDO,
 } from "./utils/PagesComponent";
 import { IRIntegrationService } from "./DynamicAPI/services/Service/MasterService";
 
@@ -146,6 +146,7 @@ export function AppRoutes() {
       { path: "detach_attach", element: <DetachAttachProcess /> },
       { path: "print_surat_jalan", element: <PrintSuratJalan /> },
     ],
+    "/do_suggestion": [{ path: "generate_do", element: <GenerateDO /> }],
   };
 
   // Map path ke komponen
@@ -186,12 +187,11 @@ export function AppRoutes() {
       "/report_outbound": <ReportOutbound />,
       "/reporting3": <Reporting2 />,
       "/setup_master_warehouse": <MasterWarehouse />,
-      "/inbound_integration_log": <InboundIntegration/>,
-      "/ir_integration_log" : <IRintegrationLog/>,
-      "/ship_confirm_log" : <ShipConfirmLog/>,
+      "/inbound_integration_log": <InboundIntegration />,
+      "/ir_integration_log": <IRintegrationLog />,
+      "/ship_confirm_log": <ShipConfirmLog />,
 
-      "/do_suggestion" : <DOsuggestionMain/>,
-      "/generate_do" : <GenerateDO/>
+      "/do_suggestion": <DOsuggestionMain />,
     };
     return map[path] || <DefaultPage />;
   };

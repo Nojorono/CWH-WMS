@@ -360,7 +360,8 @@ const CreateMemo: React.FC = () => {
     // Tampilkan konfirmasi sebelum hit API
     showConfirmDialog(
       async () => {
-        const payload = {
+        // 1. Buat base payload awal seperti biasa
+        const basePayload = {
           organization_id: orgId,
           requestor: NIK,
           origin: orgCode,
@@ -378,14 +379,16 @@ const CreateMemo: React.FC = () => {
           })),
         };
 
-        console.log("Memo Paylod", payload);
-
         try {
           let res: any = null;
+
           if (isEdit && memoId) {
-            res = await updateData(memoId, payload as any);
+            // 2. Destructuring untuk memisahkan 'requestor' dan mengambil sisanya (...updatePayload)
+            const { requestor, ...updatePayload } = basePayload;
+            res = await updateData(memoId, updatePayload as any);
           } else {
-            res = await createData(payload as any);
+            // Jika Create baru, kirim seluruh data termasuk requestor
+            res = await createData(basePayload as any);
           }
 
           if (res && res.success) {

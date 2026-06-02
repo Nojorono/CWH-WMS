@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
 import { ColumnDef } from "@tanstack/react-table";
-import TableComponent from "../component/Table"; // Pastikan path ini benar
+import TableComponent from "./Table"; // Pastikan path ini benar
+import { useNavigate } from "react-router-dom";
 
 // --- DUMMY DATA (15 Items) ---
 const DUMMY_DATA = Array.from({ length: 15 }).map((_, index) => {
@@ -29,6 +30,7 @@ const AdjustTable = ({ globalFilter, setGlobalFilter }: any) => {
   // Setup pagination lokal untuk dummy data
   const [pageIndex, setPageIndex] = useState(0);
   const [pageSize, setPageSize] = useState(10);
+  const navigate = useNavigate();
 
   // Filter dummy data berdasarkan globalFilter (Search)
   const filteredData = useMemo(() => {
@@ -131,13 +133,23 @@ const AdjustTable = ({ globalFilter, setGlobalFilter }: any) => {
         header: () => <div className="text-center">ACTION</div>,
         cell: ({ row }) => {
           const isGenerate = row.original.actionType === "Generate";
+
+          // Fungsi handler ketika tombol diklik
+          const handleNavigate = () => {
+            if (isGenerate) {
+              navigate("generate_do");
+            }
+          };
+
           return (
             <div className="flex justify-center">
               <button
+                type="button"
                 disabled={!isGenerate}
+                onClick={handleNavigate}
                 className={`px-4 py-1.5 rounded-full text-xs font-semibold w-36 text-center transition-all duration-200 ${
                   isGenerate
-                    ? "bg-[#F97316] hover:bg-orange-600 text-white shadow-sm"
+                    ? "bg-[#F97316] hover:bg-orange-600 text-white shadow-sm cursor-pointer"
                     : "bg-[#E2E8F0] text-slate-500 cursor-not-allowed opacity-80"
                 }`}
               >

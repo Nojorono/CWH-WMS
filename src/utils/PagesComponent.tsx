@@ -76,7 +76,7 @@ import Reporting2 from "../pages/Reporting/Main/Report2";
 
 // DO SUGGESTION
 import DOsuggestionMain from '../pages/DOsuggestion/Suggestion/Main/MainTable'
-import GenerateDO from '../pages/DOsuggestion/Suggestion/Main/Generate'
+import GenerateDO from '../pages/DOsuggestion/Suggestion/Main/GenerateDO'
 
 
 export {

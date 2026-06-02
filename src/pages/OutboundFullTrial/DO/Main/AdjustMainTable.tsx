@@ -402,7 +402,7 @@ const AdjustTableDO = ({
                                     /
                                   </span>
                                   <span className="text-sm font-black text-blue-600">
-                                    {tp.sourceBin?.name || "Area Umum"}
+                                    {tp.sourceBin?.name || "-"}
                                   </span>
                                 </div>
                               </div>
@@ -601,7 +601,6 @@ const AdjustTableDO = ({
     <div className="flex flex-col gap-4">
 
       {isLoading && <ActIndicator />}
-
 
       <TableComponent
         data={mappedList}
