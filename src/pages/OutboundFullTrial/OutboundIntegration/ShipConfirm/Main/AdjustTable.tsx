@@ -14,12 +14,12 @@ import {
   FaClipboardList,
 } from "react-icons/fa";
 import { ColumnDef } from "@tanstack/react-table";
-import { formatDateIndo } from "../../../../../helper/FormatDate";
 import StatusBadge from "../../../../../common/statusBadge";
 import { STATUS_MAP_INTEGRATION_OUTBOUND } from "../../../../../constants/statusMaps";
 import { useStoreShipConfirm } from "../../../../../DynamicAPI/stores/Store/MasterStore";
 import ActIndicator from "../../../../../components/ui/activityIndicator";
 import ExpandableTableComponent from "../component/Table";
+import { formatDateTimeIndo } from "../../../../../helper/FormatDateTime";
 
 const OutboundShipConfirmTable = ({
   globalFilter,
@@ -142,7 +142,7 @@ const OutboundShipConfirmTable = ({
         cell: ({ row }) => (
           <div className="flex flex-col">
             <span className="text-[11px] text-slate-700 font-semibold">
-              {formatDateIndo(row.original.createdAt)}
+              {formatDateTimeIndo(row.original.createdAt)}
             </span>
             <span className="text-[10px] text-slate-400 font-mono">
               ISO ID: {row.original.iso_header_id}
@@ -236,7 +236,7 @@ const OutboundShipConfirmTable = ({
             <div className="space-y-2">
               <InfoItem label="Category" value={data.delivery_attribute_category} />
               <InfoItem label="Vendor PO" value={data.outbound_do?.vendor_po_number} />
-              <InfoItem label="Delivery Date" value={formatDateIndo(data.outbound_do?.delivery_date)} />
+              <InfoItem label="Delivery Date" value={formatDateTimeIndo(data.outbound_do?.delivery_date)} />
               <InfoItem label="System ID" value={data.id} mono />
             </div>
           </div>

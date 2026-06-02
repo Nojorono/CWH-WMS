@@ -10,12 +10,12 @@ import {
   FaFingerprint,
 } from "react-icons/fa";
 import { ColumnDef } from "@tanstack/react-table";
-import { formatDateIndo } from "../../../../helper/FormatDate";
 import StatusBadge from "../../../../common/statusBadge";
 import { STATUS_MAP_INTEGRATION_INBOUND } from "../../../../constants/statusMaps";
 import { useStoreInboundIntegration } from "../../../../DynamicAPI/stores/Store/MasterStore";
 import ActIndicator from "../../../../components/ui/activityIndicator";
 import ExpandableTableComponent from "../component/Table";
+import { formatDateTimeIndo } from "../../../../helper/FormatDateTime";
 
 const AdjustTable = ({ globalFilter, setGlobalFilter, filteredIO }: any) => {
   const { fetchAll, list, pagination, isLoading } =
@@ -135,8 +135,8 @@ const AdjustTable = ({ globalFilter, setGlobalFilter, filteredIO }: any) => {
         header: "Integration Date",
         accessorKey: "creation_date",
         cell: ({ row }) => (
-          <div className="text-[11px] text-slate-600 font-semibold italic">
-            {formatDateIndo(row.original.creation_date)}
+          <div className="text-[11px] text-slate-600 font-semibold">
+            {formatDateTimeIndo(row.original.creation_date)}
           </div>
         ),
       },
@@ -204,15 +204,15 @@ const AdjustTable = ({ globalFilter, setGlobalFilter, filteredIO }: any) => {
             <div className="space-y-3">
               <InfoItem
                 label="Created At"
-                value={data.createdAt}
+                value={formatDateTimeIndo(data.createdAt)}
                 color="text-emerald-700 font-medium"
               />
-              <InfoItem label="Last Updated" value={data.updatedAt} />
+              <InfoItem label="Last Updated" value={formatDateTimeIndo(data.updatedAt)} />
               <InfoItem
                 label="Last Sync By"
                 value={`User ID: ${data.last_updated_by}`}
               />
-              <InfoItem label="Process Date" value={data.last_updated_date} />
+              <InfoItem label="Process Date" value={formatDateTimeIndo(data.last_updated_date)} />
             </div>
           </div>
 
