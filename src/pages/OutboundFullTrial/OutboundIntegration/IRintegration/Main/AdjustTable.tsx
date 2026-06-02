@@ -363,7 +363,6 @@ const OutboundAdjustTable = ({
         </div>
 
         {/* Global Warning/Error Banners for Header Interfaces */}
-        {/* Global Warning/Error Banners for Header Interfaces */}
         {((data.iface_message_ir && data.iface_status_ir !== "S") ||
           (data.iface_message_io && data.iface_status_io !== "S") ||
           (data.iface_message_oi && data.iface_status_oi !== "S")) && (
