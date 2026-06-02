@@ -10,13 +10,12 @@ import {
   FaFingerprint,
 } from "react-icons/fa";
 import { ColumnDef } from "@tanstack/react-table";
-import { formatDateIndo } from "../../../../../helper/FormatDate";
-// Pastikan kamu punya map status untuk outbound, atau gunakan yang umum
 import StatusBadge from "../../../../../common/statusBadge";
 import { STATUS_MAP_INTEGRATION_OUTBOUND } from "../../../../../constants/statusMaps";
 import { useStoreIRIntegration } from "../../../../../DynamicAPI/stores/Store/MasterStore";
 import ActIndicator from "../../../../../components/ui/activityIndicator";
 import ExpandableTableComponent from "../component/Table";
+import { formatDateTimeIndo } from "../../../../../helper/FormatDateTime";
 
 const OutboundAdjustTable = ({
   globalFilter,
@@ -151,7 +150,7 @@ const OutboundAdjustTable = ({
         cell: ({ row }) => (
           <div className="flex flex-col">
             <span className="text-[11px] text-slate-700 font-semibold">
-              {formatDateIndo(row.original.creation_date)}
+              {formatDateTimeIndo(row.original.creation_date)}
             </span>
             <span className="text-[10px] text-slate-400 font-mono mt-0.5">
               Batch: {row.original.batch_number}
@@ -243,12 +242,12 @@ const OutboundAdjustTable = ({
             <div className="space-y-3">
               <InfoItem
                 label="Need By Date"
-                value={formatDateIndo(data.need_by_date)}
+                value={formatDateTimeIndo(data.need_by_date)}
                 color="text-emerald-700 font-medium"
               />
               <InfoItem
                 label="Process Date"
-                value={formatDateIndo(data.last_updated_date)}
+                value={formatDateTimeIndo(data.last_updated_date)}
               />
 
               {/* Detailed Sync Statuses */}
