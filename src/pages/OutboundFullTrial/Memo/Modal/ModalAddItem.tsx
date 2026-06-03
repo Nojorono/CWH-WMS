@@ -12,6 +12,7 @@ interface ItemData {
   sku: string;
   item_number: string;
   item_name: string;
+  item_description: string;
   quantity_plan: number;
   uom_id: string;
   uom_name: string;
@@ -78,7 +79,8 @@ const ModalAddItem: React.FC<Props> = ({ open, onClose, onSubmit }) => {
       item_id: selectedItem?.id ?? "",
       sku: selectedItem?.sku ?? "",
       item_number: selectedItem?.item_number ?? "",
-      item_name: selectedItem?.description ?? "",
+      item_name: selectedItem?.sku ?? "",
+      item_description: selectedItem?.description ?? "",
       quantity_plan: Number(qty),
       uom_id: selectedUom,
       uom_name: uomList.find((u: any) => u.id === selectedUom)?.code || "",
@@ -134,10 +136,10 @@ const ModalAddItem: React.FC<Props> = ({ open, onClose, onSubmit }) => {
               <p className="text-xs text-red-500 mt-1">{errors.sku}</p>
             )}
           </div>
-
-          {/* Item Name */}
+          
+          {/* Item Description */}
           <div>
-            <label className="block text-sm font-medium">Item Name</label>
+            <label className="block text-sm font-medium">Item Description</label>
             <input
               className="border rounded p-2 w-full bg-gray-100"
               value={selectedItem?.description ?? ""}
@@ -190,7 +192,6 @@ const ModalAddItem: React.FC<Props> = ({ open, onClose, onSubmit }) => {
               <p className="text-xs text-red-500 mt-1">{errors.qty}</p>
             )}
           </div>
-
         </div>
 
         {/* ACTION BUTTONS */}

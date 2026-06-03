@@ -23,6 +23,7 @@ import { formatDateIndo } from "../../../../helper/FormatDate";
 import { showConfirmDialog } from "../../../../components/swal-confirm";
 import TableComponent from "../../../../components/tables/ActionTable/TableComponent";
 import { SOsearchService } from "../../../../DynamicAPI/services/Service/SOsearchService";
+import { SOHeaderInfo } from "../../../../DynamicAPI/types/searchSO";
 
 // ✅ Tambahkan selected_destination
 type MemoFormValues = {
@@ -63,6 +64,34 @@ const LoadingIndicator = () => (
   </div>
 );
 
+const TableCellInput = ({
+  initialValue,
+  onUpdate,
+}: {
+  initialValue: any;
+  onUpdate: (val: any) => void;
+}) => {
+  // State lokal: menahan ketikan secara instan tanpa menunggu parent render
+  const [value, setValue] = useState(initialValue);
+
+  // Tetap sinkron jika data tiba-tiba berubah dari luar (misal hasil Search SO)
+  useEffect(() => {
+    setValue(initialValue);
+  }, [initialValue]);
+
+  return (
+    <input
+      type="number"
+      className="w-28 px-2 py-1 border rounded focus:ring-2 focus:ring-orange-500 outline-none transition-all"
+      value={value ?? ""}
+      onChange={(e) => {
+        setValue(e.target.value);
+        onUpdate(e.target.value);
+      }}
+    />
+  );
+};
+
 const CreateMemo: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -70,12 +99,12 @@ const CreateMemo: React.FC = () => {
   const isDetail = mode === "detail";
   const isEdit = mode === "edit";
   const NIK = localStorage.getItem("NIK");
-  const full_name = localStorage.getItem("full_name");
   const orgId = localStorage.getItem("organization_id");
   const orgCode = localStorage.getItem("organization_code");
-  const orgName = localStorage.getItem("organization_name");
 
   const [isLoading, setIsLoading] = useState(false);
+  const [soHeaderData, setSoHeaderData] = useState<SOHeaderInfo | null>(null);
+  const prevTypeOutbound = React.useRef<string | undefined>(undefined);
 
   // store
   const { fetchAll: fetchAllUom, list: uomList } = useStoreUom();
@@ -125,7 +154,12 @@ const CreateMemo: React.FC = () => {
 
   // ✅ Auto set ship_to setelah pilih customer
   useEffect(() => {
-    if (!selectedCustomer || !typeOutbound || customerRaw.length === 0) return;
+    if (
+      !selectedCustomer ||
+      typeOutbound?.value !== "AMO" ||
+      customerRaw.length === 0
+    )
+      return;
 
     const found = customerRaw.find((x: any) => {
       if (typeOutbound.value === "AMO") {
@@ -158,6 +192,34 @@ const CreateMemo: React.FC = () => {
     }
   }, [selectedCustomer, typeOutbound, customerRaw]);
 
+  // useEffect(() => {
+  //   setSoHeaderData(null);
+  //   setSoSearchNumber("");
+  //   setItems([]);
+
+  //   methods.setValue("ship_to", "");
+  //   methods.setValue("address", "");
+  //   methods.setValue("selected_destination", null);
+  // }, [typeOutbound?.value, methods]);
+
+  useEffect(() => {
+    const currentType = typeOutbound?.value;
+
+    if (
+      prevTypeOutbound.current !== undefined &&
+      currentType !== prevTypeOutbound.current
+    ) {
+      setSoHeaderData(null);
+      setSoSearchNumber("");
+      setItems([]);
+      methods.setValue("ship_to", "");
+      methods.setValue("address", "");
+      methods.setValue("selected_destination", null);
+    }
+
+    prevTypeOutbound.current = currentType;
+  }, [typeOutbound?.value, methods]);
+
   // konfigurasi fields dynamic form
   const fieldsConfig: FieldConfig[] = [
     {
@@ -183,7 +245,6 @@ const CreateMemo: React.FC = () => {
         ]
       : []),
 
-    // ✅ HIDE type_outbound jika isDetail = true
     ...(!isDetail
       ? [
           {
@@ -198,14 +259,14 @@ const CreateMemo: React.FC = () => {
         ]
       : []),
 
-    // ✅ HIDE customer select jika isDetail = true
-    ...(!isDetail
+    ...(!isDetail && typeOutbound?.value === "AMO"
       ? [
           {
             name: "selected_destination",
-            label: loadingCustomer ? "Loading..." : "Select AMO/Subdist",
+            label: loadingCustomer ? "Loading..." : "Select AMO Destination",
             type: "select",
             options: customerList,
+            validation: { required: "Destination is required" },
           } as FieldConfig,
         ]
       : []),
@@ -267,19 +328,13 @@ const CreateMemo: React.FC = () => {
     methods.reset({
       requestor: detailDataMemo.requestor || "",
       origin: detailDataMemo.origin || "",
-
-      // 🔥 ship_to = DESTINATION
       ship_to: detailDataMemo.destination || "",
-
-      // 🔥 address = SHIP_TO (alamat)
       address: detailDataMemo.ship_to || "",
-
       delivery_date: dateOnly,
       notes: detailDataMemo.notes || "",
       type_outbound: detailDataMemo.type
         ? { label: detailDataMemo.type, value: detailDataMemo.type }
         : null,
-
       selected_destination: detailDataMemo.destination
         ? {
             label: detailDataMemo.destination,
@@ -288,11 +343,36 @@ const CreateMemo: React.FC = () => {
         : null,
     });
 
+    if (detailDataMemo.type === "SUBDIST" && detailDataMemo.so_number) {
+      const fetchExistingSO = async () => {
+        try {
+          const { headerInfo } = await SOsearchService(
+            String(detailDataMemo.so_number),
+            masterItemList,
+            uomList,
+          );
+          if (headerInfo) {
+            setSoHeaderData(headerInfo);
+            setSoSearchNumber(String(detailDataMemo.so_number));
+            methods.setValue("ship_to", headerInfo.locationShip || "", {
+              shouldValidate: true,
+            });
+            methods.setValue("address", headerInfo.invoiceToAddress || "", {
+              shouldValidate: true,
+            });
+          }
+        } catch (error) {
+          console.error("Gagal menarik ulang data SO existing:", error);
+        }
+      };
+      fetchExistingSO();
+    }
+
     const mappedItems: ItemRow[] = (
       detailDataMemo.outbound_memo_items || []
     ).map((it: any) => ({
       item_id: it.item_id || it.item?.id || "",
-      item_name: it.item?.description || it.item?.sku || "",
+      item_name: it.item?.sku || "",
       quantity_plan: Number(it.quantity_plan ?? 0),
       uom: typeof it.uom === "string" ? it.uom : (it.uom_name ?? ""),
       uom_name: it.uom_name ?? (typeof it.uom === "string" ? it.uom : ""),
@@ -302,7 +382,7 @@ const CreateMemo: React.FC = () => {
     }));
 
     setItems(mappedItems);
-  }, [detailDataMemo, isDetail, isEdit, methods]);
+  }, [detailDataMemo, isDetail, isEdit, methods, masterItemList, uomList]);
 
   // add / delete item handlers
   const handleAddItem = (item: ItemRow) => {
@@ -321,7 +401,6 @@ const CreateMemo: React.FC = () => {
   ) => {
     setItems((prev) => {
       const copy = [...prev];
-      // jika update uom, simpan kode ke `uom` dan label ke `uom_name`
       if (field === "uom") {
         copy[index] = {
           ...copy[index],
@@ -331,14 +410,19 @@ const CreateMemo: React.FC = () => {
       } else {
         copy[index] = {
           ...copy[index],
-          [field]: field === "quantity_plan" ? Number(value) : value,
+          [field]:
+            field === "quantity_plan"
+              ? value === ""
+                ? ""
+                : Number(value)
+              : value,
         };
       }
       return copy;
     });
   };
 
-  // submit handler (create or update)
+  // SUBMIT HANDLER (CREATE & UPDATE)
   const onFinalSubmit = async (data: MemoFormValues) => {
     if (items.length === 0) {
       showErrorToast("Item tak boleh kosong! Pilih minimal 1 item.");
@@ -360,7 +444,8 @@ const CreateMemo: React.FC = () => {
     // Tampilkan konfirmasi sebelum hit API
     showConfirmDialog(
       async () => {
-        // 1. Buat base payload awal seperti biasa
+        const isSubdist = data.type_outbound?.value === "SUBDIST";
+
         const basePayload = {
           organization_id: orgId,
           requestor: NIK,
@@ -377,7 +462,21 @@ const CreateMemo: React.FC = () => {
             quantity_plan: Number(i.quantity_plan ?? 0),
             uom: i.uom ?? i.uom_name ?? "",
           })),
+
+          ...(!isSubdist && {
+            destination_io_id: data.selected_destination?.id || null,
+          }),
+
+          ...(isSubdist && soHeaderData
+            ? {
+                so_organization_id: String(soHeaderData.orgId),
+                so_number: String(soHeaderData.orderNumber),
+                header_id: Number(soHeaderData.headerId),
+              }
+            : {}),
         };
+
+        console.log("Base Payload", basePayload);
 
         try {
           let res: any = null;
@@ -411,51 +510,56 @@ const CreateMemo: React.FC = () => {
     );
   };
 
-  const columnsTableItem = [
-    { accessorKey: "item_name", header: "Item Name" },
-    {
-      accessorKey: "quantity_plan",
-      header: "Qty Plan",
-      cell: ({ row }: any) =>
-        !isDetail ? (
-          <input
-            type="number"
-            className="w-28 px-2 py-1 border rounded"
-            value={items[row.index]?.quantity_plan ?? ""}
-            onChange={(e) =>
-              handleUpdateItemField(row.index, "quantity_plan", e.target.value)
-            }
-          />
-        ) : (
-          <span>{items[row.index]?.quantity_plan}</span>
-        ),
-    },
-    {
-      accessorKey: "uom_name",
-      header: "UOM",
-      cell: ({ row }: { row: any }) =>
-        !isDetail ? (
-          <Select
-            options={uomList.map((u) => ({
-              value: u.code,
-              label: u.code,
-            }))}
-            value={items[row.index]?.uom_name ?? ""}
-            onChange={(val) => handleUpdateItemField(row.index, "uom", val)}
-            placeholder="-- Select UOM --"
-            className="w-40"
-          />
-        ) : (
-          <span>{items[row.index]?.uom ?? ""}</span>
-        ),
-    },
-    ...(!isDetail
-      ? [
-          {
-            accessorKey: "action",
-            header: "Action",
-            cell: ({ row }: any) =>
-              !isDetail && (
+  const columnsTableItem = useMemo(
+    () => [
+      { accessorKey: "item_name", header: "Item Name" },
+      {
+        accessorKey: "quantity_plan",
+        header: "Qty Plan",
+        cell: ({ row, getValue }: any) => {
+          const val = getValue() ?? row.original?.quantity_plan ?? "";
+
+          return !isDetail ? (
+            <TableCellInput
+              initialValue={val}
+              onUpdate={(newValue) =>
+                handleUpdateItemField(row.index, "quantity_plan", newValue)
+              }
+            />
+          ) : (
+            <span>{val}</span>
+          );
+        },
+      },
+      {
+        accessorKey: "uom_name",
+        header: "UOM",
+        cell: ({ row, getValue }: any) => {
+          // ✅ 2. BACA DARI row.original, BUKAN DARI state items[] global
+          const val = getValue() ?? row.original?.uom_name ?? "";
+
+          return !isDetail ? (
+            <Select
+              options={uomList.map((u) => ({
+                value: u.code,
+                label: u.code,
+              }))}
+              value={val}
+              onChange={(val) => handleUpdateItemField(row.index, "uom", val)}
+              placeholder="-- Select UOM --"
+              className="w-40"
+            />
+          ) : (
+            <span>{row.original?.uom ?? ""}</span>
+          );
+        },
+      },
+      ...(!isDetail
+        ? [
+            {
+              accessorKey: "action",
+              header: "Action",
+              cell: ({ row }: any) => (
                 <button
                   className="text-red-600 hover:text-red-800 font-semibold"
                   onClick={() => handleDeleteItem(row.index)}
@@ -463,10 +567,12 @@ const CreateMemo: React.FC = () => {
                   Delete
                 </button>
               ),
-          },
-        ]
-      : []),
-  ];
+            },
+          ]
+        : []),
+    ],
+    [isDetail, uomList],
+  );
 
   const handleReset = () => {
     showConfirmDialog(
@@ -485,7 +591,7 @@ const CreateMemo: React.FC = () => {
             detailDataMemo.outbound_memo_items || []
           ).map((it: any) => ({
             item_id: it.item_id || it.item?.id || "",
-            item_name: it.item?.description || it.item?.sku || "",
+            item_name: it.item?.sku || "",
             quantity_plan: Number(it.quantity_plan ?? 0),
             uom: typeof it.uom === "string" ? it.uom : (it.uom_name ?? ""),
             uom_name: it.uom_name ?? (typeof it.uom === "string" ? it.uom : ""),
@@ -597,7 +703,7 @@ const CreateMemo: React.FC = () => {
     setIsLoadingSO(true);
     try {
       // Menggunakan service searchSO yang sudah diimport
-      const { items: soItems } = await SOsearchService(
+      const { items: soItems, headerInfo } = await SOsearchService(
         soSearchNumber,
         masterItemList,
         uomList,
@@ -610,10 +716,20 @@ const CreateMemo: React.FC = () => {
         return;
       }
 
+      if (headerInfo) {
+        setSoHeaderData(headerInfo);
+        methods.setValue("ship_to", headerInfo.locationShip || "", {
+          shouldValidate: true,
+        });
+        methods.setValue("address", headerInfo.invoiceToAddress || "", {
+          shouldValidate: true,
+        });
+      }
+
       // Mapping hasil SO ke format ItemRow table
       const mappedItems: ItemRow[] = soItems.map((it: any) => ({
         item_id: String(it.item_id),
-        item_name: it.item_name || it.sku || "Unknown Item",
+        item_name: it.sku || "Unknown Item",
         quantity_plan: Number(it.qty),
         uom: it.uom,
         uom_name: it.uom,
@@ -621,9 +737,7 @@ const CreateMemo: React.FC = () => {
         notes: `Imported from SO: ${soSearchNumber}`,
       }));
 
-      // Tambahkan ke list item yang sudah ada (user bisa mix manual & SO)
-      setItems((prev) => [...prev, ...mappedItems]);
-      setSoSearchNumber(""); // Reset field search
+      setItems(mappedItems);
       showSuccessToast(
         `Berhasil menarik ${mappedItems.length} item dari SO ${soSearchNumber}`,
       );
@@ -634,6 +748,29 @@ const CreateMemo: React.FC = () => {
       setIsLoadingSO(false);
     }
   };
+
+  const soDetails = soHeaderData
+    ? [
+        { label: "Header Id", value: soHeaderData.headerId },
+        { label: "SO Number", value: soHeaderData.orderNumber },
+        {
+          label: "Ordered Date",
+          value: soHeaderData.orderedDate
+            ? formatDateIndo(soHeaderData.orderedDate)
+            : "-",
+        },
+        { label: "Subinventory From", value: soHeaderData.subinventoryFrom },
+        { label: "Subinventory To", value: soHeaderData.subinventoryTo },
+        { label: "Location Bill", value: soHeaderData.locationBill },
+        { label: "Location Ship", value: soHeaderData.locationShip },
+        { label: "Organization", value: soHeaderData.orgName },
+        {
+          label: "Invoice Address",
+          value: soHeaderData.invoiceToAddress,
+          isTruncated: true,
+        },
+      ]
+    : [];
 
   return (
     <div className="p-6 space-y-6">
@@ -698,7 +835,7 @@ const CreateMemo: React.FC = () => {
           <div className="flex flex-col md:flex-row items-end gap-4">
             <div className="flex-1">
               <label className="block text-sm font-bold text-blue-900 mb-2">
-                Import Items from Sales Order (SO)
+                Import from Sales Order (SO)
               </label>
               <input
                 type="text"
@@ -726,6 +863,38 @@ const CreateMemo: React.FC = () => {
             * Masukkan nomor SO untuk mengisi daftar item secara otomatis. Anda
             tetap bisa menambah item manual setelahnya.
           </p>
+        </section>
+      )}
+
+      {/* SO HEADER INFO (Muncul setelah pencarian SO berhasil) */}
+      {soHeaderData && typeOutbound?.value === "SUBDIST" && !isDetail && (
+        <section className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm animate-in fade-in slide-in-from-top-4 duration-300">
+          <div className="flex justify-between items-center mb-4 border-b border-gray-100 pb-3">
+            <h3 className="font-semibold text-lg text-gray-800">
+              Sales Order Information
+            </h3>
+            <span className="px-3 py-1 bg-blue-100 text-blue-700 text-xs font-bold rounded-full">
+              {soHeaderData.status}
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-5 px-1">
+            {soDetails.map((detail, index) => (
+              <div key={index}>
+                <p className="text-xs text-gray-500 font-medium mb-1">
+                  {detail.label}
+                </p>
+                <p
+                  className={`text-sm font-semibold text-gray-900 ${
+                    detail.isTruncated ? "truncate" : ""
+                  }`}
+                  title={detail.isTruncated ? String(detail.value) : undefined}
+                >
+                  {detail.value || "-"}
+                </p>
+              </div>
+            ))}
+          </div>
         </section>
       )}
 

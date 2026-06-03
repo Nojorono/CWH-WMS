@@ -132,7 +132,7 @@ const AdjustTable = ({ globalFilter, setGlobalFilter, filteredIO }: any) => {
         ),
       },
       {
-        header: "Integration Date",
+        header: "Inbound Integration Date",
         accessorKey: "creation_date",
         cell: ({ row }) => (
           <div className="text-[11px] text-slate-600 font-semibold">
