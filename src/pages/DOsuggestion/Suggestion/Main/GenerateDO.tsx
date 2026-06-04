@@ -88,7 +88,7 @@ export default function SuggestionDraftSummary() {
   };
 
   return (
-    <div className="w-full max-w-7xl mx-auto p-6 bg-[#f8fafc] rounded-2xl shadow-sm font-sans text-slate-800 antialiased">
+    <div className="w-full min-h-screen p-4 md:p-6 bg-[#f8fafc] font-sans text-slate-800 antialiased">
       {/* Header Section */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
         <div>
@@ -214,7 +214,7 @@ export default function SuggestionDraftSummary() {
         </div>
 
         {/* Customer Cards Container dengan Scrollbar Premium */}
-        <div className="space-y-4 max-h-[450px] overflow-y-auto pr-2 custom-scrollbar">
+        <div className="space-y-4 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
           {customerData.map((customer) => {
             const isExpanded = expandedIds.includes(customer.id);
 

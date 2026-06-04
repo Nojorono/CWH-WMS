@@ -104,19 +104,6 @@ export default function UserDropdown() {
           </div>
         </div>
 
-        {/* Menu Section */}
-        {/* <div className="p-2">
-           <div className="px-3 py-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest">
-              Account Overview
-           </div>
-           <button className="flex w-full items-center gap-3 px-3 py-2 text-sm font-semibold text-gray-600 transition-all rounded-xl hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-white">
-              <div className="p-1.5 rounded-lg bg-gray-100 dark:bg-gray-800">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
-              </div>
-              View Profile
-           </button>
-        </div> */}
-
         {/* Logout Section */}
         <div className="p-2">
           <button
