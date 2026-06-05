@@ -5,6 +5,7 @@ import Select from "../../../../components/form/Select";
 import KeyValueCard from "../Helper/KeyValueCard";
 import { EndPoint } from "../../../../utils/EndPoint";
 import { formatDateIndo } from "../../../../helper/FormatDate";
+import axiosInstance from "../../../../DynamicAPI/AxiosInstance";
 
 type Props = {
   open: boolean;
@@ -31,30 +32,53 @@ export default function ModalInventoryItemModal({
 
   const [itemList, setItemList] = React.useState<any>(null);
 
+  // useEffect(() => {
+  //   const fetchItem = async () => {
+  //     try {
+
+  //       // Default to empty string if any param is missing
+  //       const id = itemID ?? "";
+  //       const uom = uomID ?? "";
+  //       const sortMethod = metodeSuggestion ?? "";
+
+  //       const response = await fetch(
+  //         `${EndPoint}picking-suggestion/item/${id}?uom=${uom}&sortMethod=${sortMethod}`,
+  //         {
+  //           headers: {
+  //             Authorization: `Bearer ${token}`, // Set the Authorization header
+  //           },
+  //         }
+  //       );
+  //       const data = await response.json();
+
+  //       // Handle the fetched data as needed
+  //       setItemList(data.data);
+  //     } catch (error) {
+  //       console.error("Error fetching item:", error);
+  //     }
+  //   };
+
+  //   if (open) {
+  //     fetchItem();
+  //   }
+  // }, [open, itemID, uomID, metodeSuggestion]);
+
   useEffect(() => {
     const fetchItem = async () => {
       try {
-        const token = localStorage.getItem("token"); // Get the bearer token from localStorage
-
-        // Default to empty string if any param is missing
-        const id = itemID ?? "";
-        const uom = uomID ?? "";
-        const sortMethod = metodeSuggestion ?? "";
-
-        const response = await fetch(
-          `${EndPoint}picking-suggestion/item/${id}?uom=${uom}&sortMethod=${sortMethod}`,
+        const res = await axiosInstance.get(
+          `picking-suggestion/item/${itemID ?? ""}`,
           {
-            headers: {
-              Authorization: `Bearer ${token}`, // Set the Authorization header
+            params: {
+              uom: uomID ?? "",
+              sortMethod: metodeSuggestion ?? "",
             },
-          }
+          },
         );
-        const data = await response.json();
-        
-        // Handle the fetched data as needed
-        setItemList(data.data);
+
+        setItemList(res.data.data);
       } catch (error) {
-        console.error("Error fetching item:", error);
+        console.error("Error fetching item via axiosInstance:", error);
       }
     };
 
@@ -104,7 +128,7 @@ export default function ModalInventoryItemModal({
   /** WEEK OPTIONS */
   const weekOptions = useMemo(() => {
     const uniq = Array.from(
-      new Map((locations || []).map((l: any) => [l.week_number, l])).values()
+      new Map((locations || []).map((l: any) => [l.week_number, l])).values(),
     );
 
     return uniq
@@ -135,7 +159,7 @@ export default function ModalInventoryItemModal({
     return locations.find(
       (l: any) =>
         String(l.week_number) === selectedWeek &&
-        String(l.bin_id) === selectedLocationId
+        String(l.bin_id) === selectedLocationId,
     );
   }, [locations, selectedWeek, selectedLocationId]);
 
@@ -237,14 +261,13 @@ export default function ModalInventoryItemModal({
             />
           </div>
 
-          
-        {/* DUPLICATE LOCATION INFO */}
-        {isDuplicateLocationInAdd && (
-          <div className="mt-3 p-3 rounded-md bg-red-50 border border-red-200 text-sm text-black-800">
-            Selected location sudah ada untuk item ini pada week yang sama.
-            Mohon pilih week dan lokasi lain!
-          </div>
-        )}
+          {/* DUPLICATE LOCATION INFO */}
+          {isDuplicateLocationInAdd && (
+            <div className="mt-3 p-3 rounded-md bg-red-50 border border-red-200 text-sm text-black-800">
+              Selected location sudah ada untuk item ini pada week yang sama.
+              Mohon pilih week dan lokasi lain!
+            </div>
+          )}
 
           {/* LOCATION */}
           <div>
@@ -284,7 +307,7 @@ export default function ModalInventoryItemModal({
                     : null,
                 planned_qty: existingItemData.required_quantity,
                 production_date: formatDateIndo(
-                  existingItemData.suggested_locations[0]?.production_date
+                  existingItemData.suggested_locations[0]?.production_date,
                 ),
                 week: existingItemData.suggested_locations[0]?.week_number,
                 uom: existingItemData.suggested_locations[0]?.uom,
@@ -311,7 +334,7 @@ export default function ModalInventoryItemModal({
                     : null,
                 available_quantity: selectedLocation.available_quantity,
                 production_date: formatDateIndo(
-                  selectedLocation.production_date
+                  selectedLocation.production_date,
                 ),
                 week: selectedLocation.week_number,
                 uom: selectedLocation.uom,
@@ -328,7 +351,6 @@ export default function ModalInventoryItemModal({
           )}
         </div>
 
-
         {/* QTY PICK */}
         <div>
           <label className="font-semibold text-gray-700 text-sm">
@@ -343,9 +365,9 @@ export default function ModalInventoryItemModal({
               validate: (v: any) => {
                 const max = isEditMode
                   ? existingItemData.required_quantity // Ambil dari existingItemData saat edit
-                  : selectedLocation?.quantity_ready_to_pick ??
+                  : (selectedLocation?.quantity_ready_to_pick ??
                     defaultLocation?.quantity_ready_to_pick ??
-                    ""; // Ambil dari selectedLocation saat add
+                    ""); // Ambil dari selectedLocation saat add
                 if (Number(v) > max)
                   return `Tidak boleh lebih dari Qty Pick ${max}`;
                 return true;

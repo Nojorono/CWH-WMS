@@ -18,10 +18,7 @@ const SKUCard = ({
   // =========================
   const [qty, setQty] = useState<string | number>("");
   const [submitting, setSubmitting] = useState(false);
-  const [isEditing, setIsEditing] = useState(false); // State baru untuk kontrol update
-
-  console.log("SKU", sku);
-  
+  const [isEditing, setIsEditing] = useState(false); // State baru untuk kontrol update  
 
   const qtyPicking = useMemo(() => {
     return sku.pickings.reduce(

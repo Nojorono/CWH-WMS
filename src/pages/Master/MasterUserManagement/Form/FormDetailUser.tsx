@@ -5,6 +5,7 @@ import DatePicker from "../../../../components/form/date-picker";
 import { useUserStore } from "../../../../API/store/MasterStore/MasterUserStore";
 import { showErrorToast, showSuccessToast } from "../../../../components/toast";
 import { usePagePermissions } from "../../../../utils/UserPermission/UserPagePermissions";
+import { usePersistAuthStore } from "../../../../API/store/AuthStore/PersistAuthStore";
 
 interface Option<T = string | number> {
   label: string;
@@ -57,14 +58,8 @@ const FormDetailUser: React.FC<FormDetailUserProps> = ({
   const { updateUser } = useUserStore();
   const [isEditable, setIsEditable] = useState(false);
   const { canUpdate, canManage } = usePagePermissions();
-
-  const user_login = (() => {
-    const storedUserLogin = localStorage.getItem("user_login_data");
-    return storedUserLogin && storedUserLogin !== "undefined"
-      ? JSON.parse(storedUserLogin).user
-      : null;
-  })();
-
+  const user = usePersistAuthStore((state) => state.user);
+  const NIK = user?.userDetail?.employee_id;
 
   const processedValues = {
     ...defaultValues,
@@ -121,8 +116,8 @@ const FormDetailUser: React.FC<FormDetailUserProps> = ({
         0,
         0,
         0,
-        0
-      )
+        0,
+      ),
     ).toISOString();
 
   const watchedRole = watch("roles", processedValues.roles);
@@ -180,10 +175,7 @@ const FormDetailUser: React.FC<FormDetailUserProps> = ({
       valid_from: new Date().toISOString(),
       valid_to: validToIso,
       name: data.name ?? null,
-      updated_by:
-        user_login.employee_id === "superuser"
-          ? "superuser"
-          : user_login.employee_id,
+      updated_by: NIK,
     };
 
     const employeeId = defaultValues.employee_id;

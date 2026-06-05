@@ -14,29 +14,30 @@ import {
 import { useStoreShipConfirm } from "../../../../DynamicAPI/stores/Store/MasterStore";
 import PageBreadcrumb from "../../../../components/common/PageBreadCrumb";
 
+// KUNCI PERBAIKAN: Hubungkan ke Store Persistent baru Anda
+import { usePersistAuthStore } from "../../../../API/store/AuthStore/PersistAuthStore";
+
 const MainTable = () => {
   const [selectedIO, setSelectedIO] = useState<any>(null);
   const [globalFilter, setGlobalFilter] = useState<string>("");
   const debouncedFilter = useDebounce(globalFilter, 500);
   const { fetchAll } = useStoreShipConfirm();
 
-  // Memasukkan logic IO options tetap sama
+  const ioList = usePersistAuthStore((state) => state.ioList);
+
   const ioOptions = useMemo(() => {
-    const listIO = localStorage.getItem("io_list");
-    if (!listIO) return [{ value: "", label: "All Organization" }];
-    try {
-      const parsedIO = JSON.parse(listIO);
-      return [
-        { value: "", label: "All Organization" },
-        ...parsedIO.map((item: any) => ({
-          value: item.id,
-          label: `${item.organization_name} - ${item.organization_code}`,
-        })),
-      ];
-    } catch {
-      return [{ value: "", label: "Error Loading" }];
+    if (!ioList || ioList.length === 0) {
+      return [{ value: "", label: "All Organization" }];
     }
-  }, []);
+
+    return [
+      { value: "", label: "All Organization" },
+      ...ioList.map((item: any) => ({
+        value: item.id,
+        label: `${item.organization_name} - ${item.organization_code}`,
+      })),
+    ];
+  }, [ioList]);
 
   return (
     <div className="w-full space-y-4 p-4 bg-[#F8FAFC] min-h-screen">

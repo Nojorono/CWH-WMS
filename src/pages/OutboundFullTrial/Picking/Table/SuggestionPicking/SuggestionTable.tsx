@@ -13,8 +13,9 @@ import { useNavigate } from "react-router";
 import { showErrorToast } from "../../../../../components/toast";
 import { FaArrowLeft, FaCheck, FaUndo } from "react-icons/fa";
 import { EndPoint } from "../../../../../utils/EndPoint";
-import formatDate  from "../../../Memo/TableAndForm/MemoCreateProcess";
+import formatDate from "../../../Memo/TableAndForm/MemoCreateProcess";
 import ActIndicator from "../../../../../components/ui/activityIndicator";
+import axiosInstance from "../../../../../DynamicAPI/AxiosInstance";
 
 interface SuggestionTableProps {
   memoDetail: any;
@@ -50,37 +51,33 @@ const SuggestionTable: React.FC<SuggestionTableProps> = ({
 
   const compactRows = useCompactRows(suggestions);
   const { quantities, updateQty } = usePickingQuantities(compactRows);
-
   const selectedBin = bins.find((b) => b.id === selectedDestination);
 
   const fetchPickingSuggestionById = async () => {
     const memoId = memoDetail.id; // Ambil memo_id dari memoDetail.id
     if (!memoId) return; // Pastikan memoId ada sebelum fetch
 
-    const token = localStorage.getItem("token");
-    const API = `${EndPoint}picking-suggestion/memo/${memoId}?sortMethod=${sortMethod}`;
-
     setLoadingFetch(true);
 
     try {
-      const response = await fetch(API, {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
+      // KUNCI REFAKTOR: Menggunakan axiosInstance.get dengan path relatif.
+      // Query string 'sortMethod' dikirim dengan rapi melalui objek 'params' bawaan Axios.
+      const res = await axiosInstance.get(`picking-suggestion/memo/${memoId}`, {
+        params: {
+          sortMethod: sortMethod,
         },
       });
 
-      if (!response.ok) {
-        throw new Error("Network response was not ok");
-      }
-
-      const data = await response.json();
-      setSuggestions(data.data);
-      setLoadingFetch(false);
+      // Pada Axios, response body murni berada di dalam 'res.data'
+      // Sehingga data.data di fetch lama sekarang diakses melalui res.data.data
+      setSuggestions(res.data.data);
     } catch (error) {
-      console.error("Error fetching picking suggestion:", error);
+      console.error(
+        "Error fetching picking suggestion via axiosInstance:",
+        error,
+      );
     } finally {
+      // Menjamin loading spinner pasti mati (false) baik saat proses sukses maupun gagal
       setLoadingFetch(false);
     }
   };
@@ -135,10 +132,10 @@ const SuggestionTable: React.FC<SuggestionTableProps> = ({
     () =>
       bins
         .filter(
-          (bin: Bin) => bin.id !== undefined && typeof bin.code === "string"
+          (bin: Bin) => bin.id !== undefined && typeof bin.code === "string",
         )
         .map((bin: Bin) => ({ id: bin.id!, code: bin.code as string })),
-    [bins]
+    [bins],
   );
 
   const allRowsEmpty = compactRows.every(
@@ -146,7 +143,7 @@ const SuggestionTable: React.FC<SuggestionTableProps> = ({
       row.uom === "-" &&
       row.zone === "-" &&
       row.bin === "-" &&
-      row.production_date === "-"
+      row.production_date === "-",
   );
 
   return (

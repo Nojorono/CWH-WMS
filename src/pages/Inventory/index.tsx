@@ -1,15 +1,12 @@
 import PageBreadcrumb from "../../components/common/PageBreadCrumb";
 import MainTable from "./Main/MainTable";
 
+import { usePersistAuthStore } from "../../API/store/AuthStore/PersistAuthStore";
+
 export default function Inventory() {
-  const rawOrgName = localStorage.getItem("organization_name");
+  const user = usePersistAuthStore((state) => state.user);
   const orgName =
-    rawOrgName &&
-    rawOrgName.trim() !== "" &&
-    rawOrgName.trim().toLowerCase() !== "undefined" &&
-    rawOrgName.trim().toLowerCase() !== "null"
-      ? rawOrgName.trim()
-      : "Main";
+    user?.userDetail?.organization?.organization_name?.trim() || "Main";
 
   return (
     <div>

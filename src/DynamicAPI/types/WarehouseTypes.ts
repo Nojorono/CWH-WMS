@@ -1,10 +1,10 @@
 export interface Warehouse {
   id: any;
-  organization_id: number;
+  organization_id: string | number; 
   name: string;
   description: string;
-  locator_id?: number;
-  locator_name?: string;
+  locator_id?: number | string | null; 
+  locator_name?: string | null;
 }
 
 export type CreateWarehouse = Omit<Warehouse, "id">;

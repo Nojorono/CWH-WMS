@@ -168,34 +168,57 @@ const StockAdjustment: React.FC = () => {
   };
 
   const handleDelete = async (id: string) => {
-    const token = localStorage.getItem("token");
     try {
-      const response = await axiosInstance(
-        `${EndPoint}adjustment-stock/${id}`,
-        {
-          method: "DELETE",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        },
-      );
+      await axiosInstance.delete(`adjustment-stock/${id}`);
+      showSuccessToast("Stock adjustment deleted successfully");
 
-      if (response.status === 204) {
-        showSuccessToast("Stock adjustment deleted successfully");
-        if (!fetchUsingPagination) return;
+      // Jalankan re-fetch data dengan pagination eksisting Anda jika tersedia
+      if (fetchUsingPagination) {
         fetchUsingPagination({
           page: currentPage,
           limit: pageSize,
           sortOrder: "DESC",
         });
-      } else {
-        showErrorToast("Failed to delete stock adjustment");
       }
-    } catch (error) {
-      console.error("Error deleting stock adjustment:", error);
-      showErrorToast("Error deleting stock adjustment");
+    } catch (error: any) {
+      console.error(
+        "Error deleting stock adjustment via axiosInstance:",
+        error,
+      );
+      const errorMsg =
+        error.response?.data?.message || "Error deleting stock adjustment";
+      showErrorToast(errorMsg);
     }
   };
+
+  // const handleDelete = async (id: string) => {
+  //   try {
+  //     const response = await axiosInstance(
+  //       `${EndPoint}adjustment-stock/${id}`,
+  //       {
+  //         method: "DELETE",
+  //         headers: {
+  //           Authorization: `Bearer ${token}`,
+  //         },
+  //       },
+  //     );
+
+  //     if (response.status === 204) {
+  //       showSuccessToast("Stock adjustment deleted successfully");
+  //       if (!fetchUsingPagination) return;
+  //       fetchUsingPagination({
+  //         page: currentPage,
+  //         limit: pageSize,
+  //         sortOrder: "DESC",
+  //       });
+  //     } else {
+  //       showErrorToast("Failed to delete stock adjustment");
+  //     }
+  //   } catch (error) {
+  //     console.error("Error deleting stock adjustment:", error);
+  //     showErrorToast("Error deleting stock adjustment");
+  //   }
+  // };
 
   if (showDetail) {
     return (

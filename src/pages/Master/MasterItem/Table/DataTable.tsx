@@ -12,6 +12,7 @@ import {
 import { showErrorToast, showSuccessToast } from "../../../../components/toast";
 import { EndPoint } from "../../../../utils/EndPoint";
 import { showConfirmDialog } from "../../../../components/swal-confirm";
+import axiosInstance from "../../../../DynamicAPI/AxiosInstance";
 
 const DataTable = () => {
   const {
@@ -66,30 +67,22 @@ const DataTable = () => {
   const [isLoadingFetch, setIsLoadingFetch] = useState(false);
 
   const handleFetchItem = async () => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      showErrorToast("Token not found");
-      return;
-    }
     setIsLoadingFetch(true);
+
     try {
-      const response = await fetch(
-        `${EndPoint}master-item/sync-from-meta-oracle`,
-        {
-          method: "POST",
-          headers: {
-            accept: "*/*",
-            Authorization: `Bearer ${token}`,
-          },
+      await axiosInstance.post("master-item/sync-from-meta-oracle", null, {
+        headers: {
+          accept: "*/*",
         },
-      );
-      if (!response.ok) {
-        throw new Error("Failed to fetch item from Meta Oracle");
-      }
+      });
       showSuccessToast("Sync from Meta Oracle successful");
       fetchAll();
     } catch (error: any) {
-      showErrorToast(error.message || "Error syncing from Meta Oracle");
+      const errorMsg =
+        error.response?.data?.message ||
+        error.message ||
+        "Error syncing from Meta Oracle";
+      showErrorToast(errorMsg);
     } finally {
       setIsLoadingFetch(false);
     }

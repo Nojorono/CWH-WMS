@@ -5,9 +5,22 @@ import { signOut } from "../../utils/SignOut";
 import { FaRegUserCircle } from "react-icons/fa";
 import { HiOutlineLogout, HiChevronDown } from "react-icons/hi";
 
+// IMPORT: Ambil store baru Anda
+import { usePersistAuthStore } from "../../API/store/AuthStore/PersistAuthStore";
+
 export default function UserDropdown() {
   const [isOpen, setIsOpen] = useState(false);
   const navigate = useNavigate();
+
+  // 1. AMBIL DATA LANGSUNG DARI ZUSTAND STORE
+  const user = usePersistAuthStore((state) => state.user);
+  
+  // Ambil detail dari sub-properti user sesuai data JSON API asli Anda
+  const roleName = user?.role?.name;
+  const orgName = user?.userDetail?.organization?.organization_name;
+  const emailUser = user?.userDetail?.email;
+  const NIK = user?.userDetail?.employee_id;
+  const fullName = `${user?.userDetail?.firstName ?? ""} ${user?.userDetail?.lastName ?? ""}`.trim();
 
   function toggleDropdown() {
     setIsOpen(!isOpen);
@@ -20,23 +33,12 @@ export default function UserDropdown() {
     closeDropdown();
     setTimeout(() => {
       signOut(navigate);
-    }, 1000);
+    }, 300); // Persingkat delay agar terasa responsif
   };
 
-  // --- Ambil Data ---
-  const roleName = localStorage.getItem("role_name");
-  const emailUser = localStorage.getItem("email");
-  const storedFullName = localStorage.getItem("full_name");
-  const orgName = localStorage.getItem("organization_name");
-  const NIK = localStorage.getItem("NIK");
-
-
   // --- Logika Penamaan ---
-  // Jika role adalah superadmin (case-insensitive), tampilkan "Superadmin"
   const isSuperAdmin = roleName?.toLowerCase() === "superadmin";
-  const displayName = isSuperAdmin
-    ? "Superadmin"
-    : storedFullName || "Guest User";
+  const displayName = isSuperAdmin ? "Superadmin" : fullName || "User WMS";
 
   return (
     <div className="relative inline-block text-left">
@@ -60,10 +62,10 @@ export default function UserDropdown() {
 
         <div className="hidden text-left md:block">
           <p className="text-sm font-bold text-gray-800 dark:text-gray-100 leading-tight">
-            {isSuperAdmin ? "Superadmin" : roleName || "Guest"}
+            {isSuperAdmin ? "Superadmin" : roleName || "WMS Staff"}
           </p>
-          <p className="text-[13px] font-black text-blue-400 dark:text-gray-500 uppercase tracking-[0.1em]">
-            {isSuperAdmin ? "System Master" : orgName}
+          <p className="text-[13px] font-black text-blue-400 dark:text-gray-500 uppercase tracking-[0.1em] truncate max-w-[120px]">
+            {isSuperAdmin ? "System Master" : orgName || "No Plant"}
           </p>
         </div>
 
@@ -98,7 +100,7 @@ export default function UserDropdown() {
                 {emailUser || "No email assigned"}
               </span>
               <span className="text-xs font-medium text-gray-500 dark:text-gray-400 truncate">
-                {NIK || "No NIK exist"}
+                NIK: {NIK || "No NIK exist"}
               </span>
             </div>
           </div>

@@ -28,7 +28,6 @@ const CancelTransactionPickModal: React.FC<CancelTransactionPickModalProps> = ({
 
   //   const transactionId = pickingId;
   //   try {
-  //     const token = localStorage.getItem("token");
   //     const response = await fetch(
   //       `${EndPoint}transaction-picking/${transactionId}/cancel`,
   //       {

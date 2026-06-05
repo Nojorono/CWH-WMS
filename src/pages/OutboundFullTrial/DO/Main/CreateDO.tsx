@@ -20,6 +20,7 @@ import Select from "../../../../components/form/Select";
 import ActIndicator from "../../../../components/ui/activityIndicator";
 import { FaCheck } from "react-icons/fa";
 import TableComponent from "../../../../components/tables/ActionTable/TableComponent";
+import { usePersistAuthStore } from "../../../../API/store/AuthStore/PersistAuthStore";
 
 type MemoFormValues = {
   requestor: string;
@@ -42,9 +43,11 @@ const CreateDO: React.FC = () => {
   const navigate = useNavigate();
   const { mode } = location.state || {};
   const isDetail = mode === "detail";
-  const username = localStorage.getItem("username");
-  const orgId = localStorage.getItem("organization_id");
-  const orgName = localStorage.getItem("organization_name");
+  
+  const user = usePersistAuthStore((state) => state.user);
+  const username = user?.username;
+  const orgId = user?.userDetail?.organizationId || user?.userDetail?.organization?.id;
+  const orgName = user?.userDetail?.organization?.organization_name;
 
   const methods = useForm<MemoFormValues>({
     defaultValues: {

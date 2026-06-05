@@ -7,6 +7,7 @@ import { FaPlus, FaSync, FaUndo } from "react-icons/fa";
 import { useDebounce } from "../../../../helper/useDebounce";
 import Select from "../../../../components/form/Select";
 import { useStoreOutboundDeliveryOrder } from "../../../../DynamicAPI/stores/Store/MasterStore";
+import { usePersistAuthStore } from "../../../../API/store/AuthStore/PersistAuthStore";
 
 const MainTable = () => {
   const navigate = useNavigate();
@@ -42,7 +43,9 @@ const MainTable = () => {
     { value: "SUBDIST", label: "SUBDIST" },
   ];
 
-  const roleName = localStorage.getItem("role_name");
+  const user = usePersistAuthStore((state) => state.user);
+  const roleName = user?.role?.name;
+  
   const canCreateDO =
     roleName === "TRANSPORT_SUPERVISOR" || roleName === "superadmin";
 

@@ -10,6 +10,7 @@ import {
 import axios from "axios";
 import { EndPoint } from "../../../utils/EndPoint";
 import { formatDateIndo } from "../../../helper/FormatDate";
+import axiosInstance from "../../../DynamicAPI/AxiosInstance";
 
 type MovementRecord = {
   datetime: string;
@@ -27,20 +28,52 @@ export default function MovementHistoryTable({ palletId }: { palletId?: any }) {
   const [isLoading, setIsLoading] = useState(false);
 
   // 🟢 Fetch data from API
+  // useEffect(() => {
+  //   const fetchData = async () => {
+  //     if (!palletId) return;
+  //     setIsLoading(true);
+  //     try {
+  //     
+  //       const res = await axios.get(
+  //         `${EndPoint}inventory-tracking/history/${palletId}`,
+  //         {
+  //           headers: {
+  //             Authorization: token ? `Bearer ${token}` : "",
+  //           },
+  //         }
+  //       );
+  //       const inventoryArr = res.data.data as any[];
+
+  //       const mapped: MovementRecord[] = inventoryArr.map((item) => ({
+  //         datetime: formatDateIndo(item.inventory_date),
+  //         action: item.action || "-",
+  //         warehouse: item.warehouse?.name || "-",
+  //         zone: item.warehouseSub?.code || "-",
+  //         bin: item.warehouseBin?.code || "-",
+  //         inventory_status: item.inventory_status || "-",
+  //         inventory_note: item.inventory_note || "-",
+  //         progression_status: item.progression_status || "-",
+  //       }));
+
+  //       setData(mapped);
+  //     } catch (err) {
+  //       console.error("Error fetching movement history:", err);
+  //     } finally {
+  //       setIsLoading(false);
+  //     }
+  //   };
+  //   fetchData();
+  // }, [palletId]);
+
   useEffect(() => {
     const fetchData = async () => {
       if (!palletId) return;
       setIsLoading(true);
       try {
-        const token = localStorage.getItem("token");
-        const res = await axios.get(
-          `${EndPoint}inventory-tracking/history/${palletId}`,
-          {
-            headers: {
-              Authorization: token ? `Bearer ${token}` : "",
-            },
-          }
+        const res = await axiosInstance.get(
+          `inventory-tracking/history/${palletId}`,
         );
+
         const inventoryArr = res.data.data as any[];
 
         const mapped: MovementRecord[] = inventoryArr.map((item) => ({
@@ -56,11 +89,15 @@ export default function MovementHistoryTable({ palletId }: { palletId?: any }) {
 
         setData(mapped);
       } catch (err) {
-        console.error("Error fetching movement history:", err);
+        console.error(
+          "Error fetching movement history via axiosInstance:",
+          err,
+        );
       } finally {
         setIsLoading(false);
       }
     };
+
     fetchData();
   }, [palletId]);
 
@@ -96,7 +133,7 @@ export default function MovementHistoryTable({ palletId }: { palletId?: any }) {
         accessorKey: "progression_status",
       },
     ],
-    []
+    [],
   );
 
   const table = useReactTable({
@@ -122,7 +159,7 @@ export default function MovementHistoryTable({ palletId }: { palletId?: any }) {
                   <th key={header.id} className="px-3 py-2 text-left">
                     {flexRender(
                       header.column.columnDef.header,
-                      header.getContext()
+                      header.getContext(),
                     )}
                   </th>
                 ))}
@@ -146,7 +183,7 @@ export default function MovementHistoryTable({ palletId }: { palletId?: any }) {
                     <td key={cell.id} className="px-3 py-2">
                       {flexRender(
                         cell.column.columnDef.cell,
-                        cell.getContext()
+                        cell.getContext(),
                       )}
                     </td>
                   ))}

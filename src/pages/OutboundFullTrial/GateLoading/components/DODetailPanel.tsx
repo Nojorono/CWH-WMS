@@ -11,6 +11,7 @@ import { showErrorToast, showSuccessToast } from "../../../../components/toast";
 import Button from "../../../../components/ui/button/Button";
 import SKUCard from "./SKUcard";
 import { showConfirmDialog } from "../../../../components/swal-confirm";
+import axiosInstance from "../../../../DynamicAPI/AxiosInstance";
 
 export const DODetailPanel: React.FC<{
   doData: UIGateLoadingDO;
@@ -19,11 +20,6 @@ export const DODetailPanel: React.FC<{
   const [openMemoId, setOpenMemoId] = useState<string | null>(
     doData.memos.length > 0 ? doData.memos[0].memo_id : null,
   );
-
-  const deviceId = useMemo(() => localStorage.getItem("device_id"), []);
-
-  console.log("doData", doData);
-  
 
   const assignedPalletIds = useMemo(
     () => new Set(doData.assigned_pallets.map((p) => p.pallet_id)),
@@ -57,24 +53,53 @@ export const DODetailPanel: React.FC<{
       .join(", ");
   };
 
+  // async function handleCompleteLoadGate(id: string) {
+  //   showConfirmDialog(
+  //     async () => {
+  //       try {
+  //         const res = await fetch(`${EndPoint}assigned-gate/${id}/status`, {
+  //           method: "PATCH",
+  //           headers: {
+  //             "Content-Type": "application/json",
+  //             Authorization: `Bearer ${token}`,
+  //           },
+  //           body: JSON.stringify({ status: "DONE" }),
+  //         });
+  //         if (!res.ok) throw new Error("Failed to approve");
+  //         showSuccessToast("Gate loading completed successfully");
+  //         onRefresh();
+  //       } catch (err) {
+  //         showErrorToast("Gagal melakukan approve gate loading");
+  //       }
+  //     },
+  //     {
+  //       title: "Complete Load Gate",
+  //       text: "Apakah Anda yakin ingin menyelesaikan proses load gate ini? Pastikan semua pallet sudah ter-load dengan benar sebelum melanjutkan.",
+  //       icon: "warning",
+  //       confirmButtonText: "Yes, Complete!",
+  //       cancelButtonText: "No, Cancel",
+  //     },
+  //   );
+  // }
+
   async function handleCompleteLoadGate(id: string) {
     showConfirmDialog(
       async () => {
         try {
-          const token = localStorage.getItem("token");
-          const res = await fetch(`${EndPoint}assigned-gate/${id}/status`, {
-            method: "PATCH",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify({ status: "DONE" }),
+          await axiosInstance.patch(`assigned-gate/${id}/status`, {
+            status: "DONE",
           });
-          if (!res.ok) throw new Error("Failed to approve");
+
           showSuccessToast("Gate loading completed successfully");
           onRefresh();
-        } catch (err) {
-          showErrorToast("Gagal melakukan approve gate loading");
+        } catch (err: any) {
+          console.error("Error completing load gate via axiosInstance:", err);
+
+          // OPTIMASI ERROR: Mengambil pesan error spesifik dari response body backend (jika ada)
+          const errorMsg =
+            err.response?.data?.message ||
+            "Gagal melakukan approve gate loading";
+          showErrorToast(errorMsg);
         }
       },
       {
@@ -139,10 +164,7 @@ export const DODetailPanel: React.FC<{
         </div>
         <div className="border-l pl-3 overflow-hidden">
           <p className="text-[8px] font-black text-slate-400 uppercase">Team</p>
-          <AssignedHelpersInline
-            helpers={doData.assigned_helpers}
-            currentDeviceId={deviceId}
-          />
+          <AssignedHelpersInline helpers={doData.assigned_helpers} />
         </div>
         <div className="flex justify-end">
           {isCompleteLoadGate && (
@@ -262,38 +284,26 @@ export const DODetailPanel: React.FC<{
   );
 };
 
-const AssignedHelpersInline = ({
-  helpers,
-  currentDeviceId,
-}: {
-  helpers: UIGateUser[];
-  currentDeviceId: string | null;
-}) => {
-  if (!helpers.length)
+const AssignedHelpersInline = ({ helpers }: { helpers: UIGateUser[] }) => {
+  if (!helpers.length) {
     return (
       <p className="text-[10px] italic text-slate-400">No helper assigned</p>
     );
+  }
+
   return (
     <div className="flex flex-wrap gap-2">
-      {helpers.map((h) => {
-        const isCurrent = h.username === currentDeviceId;
-        return (
-          <div
-            key={h.user_id}
-            className={`flex items-center gap-1.5 px-2 py-1 rounded-lg border text-[10px] font-bold transition-all ${isCurrent ? "bg-emerald-50 border-emerald-300 text-emerald-700 ring-2 ring-emerald-100" : "bg-white border-slate-200 text-slate-500"}`}
-          >
-            <span>
-              {h.name}{" "}
-              <span className="opacity-50 font-mono">[{h.username}]</span>
-            </span>
-            {isCurrent && (
-              <span className="bg-emerald-600 text-white text-[8px] px-1 rounded animate-pulse">
-                THIS
-              </span>
-            )}
-          </div>
-        );
-      })}
+      {helpers.map((h) => (
+        <div
+          key={h.user_id}
+          className="flex items-center gap-1.5 px-2 py-1 rounded-lg border text-[10px] font-bold bg-white border-slate-200 text-slate-500 shadow-sm"
+        >
+          <span>
+            {h.name}{" "}
+            <span className="opacity-50 font-mono">[{h.username}]</span>
+          </span>
+        </div>
+      ))}
     </div>
   );
 };

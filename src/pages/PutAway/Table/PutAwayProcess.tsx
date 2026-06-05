@@ -19,6 +19,7 @@ import { showErrorToast } from "../../../components/toast";
 import { useForm, Controller } from "react-hook-form";
 import { useLocation, useNavigate } from "react-router";
 import { formatDateIndo } from "../../../helper/FormatDate";
+import { usePersistAuthStore } from "../../../API/store/AuthStore/PersistAuthStore";
 
 type PutAwayRow = {
   stagingPalletId: string;
@@ -57,7 +58,9 @@ const PutAwayDetail: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { data: detailDataPutaway, mode } = location.state || {};
-  const orgId = localStorage.getItem("organization_id");
+  const user = usePersistAuthStore((state) => state.user);
+  const orgId =
+    user?.userDetail?.organizationId || user?.userDetail?.organization?.id;
 
   const isDetail = mode === "detail";
   const isEdit = mode === "edit";

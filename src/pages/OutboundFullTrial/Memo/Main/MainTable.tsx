@@ -7,6 +7,7 @@ import { FaPlus, FaSync } from "react-icons/fa";
 import { useDebounce } from "../../../../helper/useDebounce";
 import Select from "../../../../components/form/Select";
 import { useStoreOutboundMemo } from "../../../../DynamicAPI/stores/Store/MasterStore";
+import { usePersistAuthStore } from "../../../../API/store/AuthStore/PersistAuthStore";
 
 const MainTable = () => {
   const navigate = useNavigate();
@@ -48,8 +49,9 @@ const MainTable = () => {
     { value: "false", label: "No" },
   ];
 
-  const roleName = localStorage.getItem("role_name");
-  const NIK = localStorage.getItem("NIK");
+  const user = usePersistAuthStore((state) => state.user);
+  const roleName = user?.role?.name;
+  const NIK = user?.userDetail?.employee_id
 
   const handleRefresh = () => {
     if (!fetchUsingPagination) return;

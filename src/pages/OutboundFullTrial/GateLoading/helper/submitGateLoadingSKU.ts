@@ -17,12 +17,17 @@ export interface SubmitGateSkuPayload {
 }
 
 export const submitGateLoadingSKU = async (payload: SubmitGateSkuPayload) => {
-  const token = localStorage.getItem("token");
-
-  const res = await axiosInstance.post(`${EndPoint}assigned-gate-load`, payload, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
+  const res = await axiosInstance.post("assigned-gate-load", payload);
   return res.data;
 };
+
+// export const submitGateLoadingSKU = async (payload: SubmitGateSkuPayload) => {
+
+//   const res = await axiosInstance.post(`${EndPoint}assigned-gate-load`, payload, {
+//     headers: {
+//       Authorization: `Bearer ${token}`,
+//     },
+//   });
+//   return res.data;
+// };
+

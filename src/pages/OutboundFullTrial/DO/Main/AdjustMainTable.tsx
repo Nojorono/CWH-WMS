@@ -6,10 +6,12 @@ import StatusBadge from "../../../../common/statusBadge";
 import { STATUS_MAP_DO } from "../../../../constants/statusMaps";
 import { useStoreOutboundDeliveryOrder } from "../../../../DynamicAPI/stores/Store/MasterStore";
 import Swal from "sweetalert2";
-import { showErrorToast } from "../../../../components/toast";
+import { showErrorToast, showSuccessToast } from "../../../../components/toast";
 import { EndPoint } from "../../../../utils/EndPoint";
 import TableComponent from "../../../../components/tables/ActionTable/TableComponent";
 import ActIndicator from "../../../../components/ui/activityIndicator";
+import { usePersistAuthStore } from "../../../../API/store/AuthStore/PersistAuthStore";
+import axiosInstance from "../../../../DynamicAPI/AxiosInstance";
 
 type OutboundMemo = {
   id: string;
@@ -59,7 +61,7 @@ const AdjustTableDO = ({
 }: MenuTableProps) => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-
+  const user = usePersistAuthStore((state) => state.user);
   const { fetchUsingPagination, list, pagination, isLoading } =
     useStoreOutboundDeliveryOrder();
 
@@ -151,48 +153,35 @@ const AdjustTableDO = ({
   };
 
   const handleDeleteDO = async (id: string) => {
-    const confirm = await Swal.fire({
-      icon: "warning",
-      title: "Cancel DO",
-      text: `Yakin cancel DO ini ?`,
-      showCancelButton: true,
-      confirmButtonText: "Ya, batalkan",
-      cancelButtonText: "Batal",
-    });
+  const confirm = await Swal.fire({
+    icon: "warning",
+    title: "Cancel DO",
+    text: `Yakin cancel DO ini ?`,
+    showCancelButton: true,
+    confirmButtonText: "Ya, batalkan",
+    cancelButtonText: "Batal",
+  });
 
-    if (!confirm.isConfirmed) return;
+  if (!confirm.isConfirmed) return;
 
-    try {
-      const token = localStorage.getItem("token");
-      const headers: Record<string, string> = {
-        "Content-Type": "application/json",
-      };
-      if (token) headers["Authorization"] = `Bearer ${token}`;
+  try {
+    await axiosInstance.patch(`outbound-do/${id}/cancel`);
+    showSuccessToast("Delivery Order berhasil dibatalkan");
 
-      const res = await fetch(`${EndPoint}outbound-do/${id}/cancel`, {
-        method: "PATCH",
-        headers,
+    if (fetchUsingPagination) {
+      fetchUsingPagination({
+        page: currentPage,
+        limit: pageSize,
+        search: globalFilter || "",
+        status: filteredStatus || "",
       });
-
-      if (!res.ok) {
-        const txt = await res.text();
-        showErrorToast(`Gagal cancel DO: ${res.status} ${txt}`);
-        return;
-      }
-
-      if (fetchUsingPagination) {
-        fetchUsingPagination({
-          page: currentPage,
-          limit: pageSize,
-          search: globalFilter || "",
-          status: filteredStatus || "",
-        });
-      }
-    } catch (err) {
-      console.error(err);
-      showErrorToast("Terjadi kesalahan saat membatalkan DO");
     }
-  };
+  } catch (err: any) {
+    console.error("Error canceling DO via axiosInstance:", err);
+    const errorMsg = err.response?.data?.message || err.message || "Terjadi kesalahan saat membatalkan DO";
+    showErrorToast(`Gagal cancel DO: ${errorMsg}`);
+  }
+};
 
   const MemoCell = ({ memos }: { memos: any[] }) => {
     const [openMemoId, setOpenMemoId] = useState<string | null>(null);
@@ -484,7 +473,7 @@ const AdjustTableDO = ({
     );
   };
 
-  const roleName = localStorage.getItem("role_name");
+  const roleName = user?.role?.name;
   const canActionDO =
     roleName === "SUPERVISOR" ||
     roleName === "MANAGER" ||
@@ -599,7 +588,6 @@ const AdjustTableDO = ({
 
   return (
     <div className="flex flex-col gap-4">
-
       {isLoading && <ActIndicator />}
 
       <TableComponent

@@ -12,7 +12,6 @@ export async function uploadFileToS3(file: File): Promise<string | null> {
     }
 
     try {
-        const token = localStorage.getItem("token");
         const formData = new FormData();
 
         formData.append("bucket", "wms-cwh");
@@ -24,7 +23,6 @@ export async function uploadFileToS3(file: File): Promise<string | null> {
         const res = await axiosInstance.post(`${S3EndPoint}/upload`, formData, {
             headers: {
                 "Content-Type": "multipart/form-data",
-                ...(token ? { Authorization: `Bearer ${token}` } : {}),
             },
         });
 

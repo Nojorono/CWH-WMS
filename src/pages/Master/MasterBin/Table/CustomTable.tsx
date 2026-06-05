@@ -5,6 +5,7 @@ import { FaEdit, FaKey, FaPlus, FaTrash } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import { usePagePermissions } from "../../../../utils/UserPermission/UserPagePermissions";
 import DynamicFormModal from "../../../../components/wms-components/DynamicFormModal";
+import { usePersistAuthStore } from "../../../../API/store/AuthStore/PersistAuthStore";
 
 interface Props {
   data: any[];
@@ -62,7 +63,10 @@ const DynamicTable = ({
 
   const [selectedItem, setSelectedItem] = useState<any | null>(null);
   const [, setSelectedIds] = useState<any[]>([]);
-  const roleName = localStorage.getItem("role_name");
+
+  const user = usePersistAuthStore((state) => state.user);
+  const roleName = user?.role?.name;
+
   const navigate = useNavigate();
 
   const handleCloseModal = () => {

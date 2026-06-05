@@ -34,7 +34,7 @@ import { InventoryVisibilityResponse } from '../../types/InventoryVisibilty.ts'
 import { MasterSupplier, CreateMasterSupplier, UpdateMasterSupplier } from '../../types/MasterSupplier.ts'
 import { InventoryMovementListResponse } from '../../types/InventoryMovement.ts'
 import { StockAdjustment, StockAdjustmentCreateRequest } from '../../types/StockAdjustmentTypes.ts'
-import { MasterWeek, CreateMasterWeek, UpdateMasterWeek } from '../../types/MasterWeekTypes.ts'
+import { MasterWeek } from '../../types/MasterWeekTypes.ts'
 import { OutboundPlanning, UpdateOutboundPlanning } from "../../types/OutboundGoodStock.ts";
 import { InboundIntegration } from "../../types/InboundIntegration.ts";
 import { InventorySelisihItem } from '../../types/InventorySelisih.ts'

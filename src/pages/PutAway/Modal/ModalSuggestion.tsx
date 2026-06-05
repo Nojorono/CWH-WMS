@@ -4,11 +4,10 @@ import React, { useEffect, useState, useCallback, useMemo } from "react";
 import { FaTimes } from "react-icons/fa";
 import Button from "../../../components/ui/button/Button";
 import Select from "../../../components/form/Select";
-import {
-  useStoreBinByZone,
-} from "../../../DynamicAPI/stores/Store/MasterStore";
+import { useStoreBinByZone } from "../../../DynamicAPI/stores/Store/MasterStore";
 import { EndPoint } from "../../../utils/EndPoint";
 import { showErrorToast } from "../../../components/toast";
+import axiosInstance from "../../../DynamicAPI/AxiosInstance";
 
 type AdjustmentForm = {
   destinationWarehouseSubName: string | undefined;
@@ -61,7 +60,7 @@ const AdjustmentModal: React.FC<AdjustmentModalProps> = ({
   } = useStoreBinByZone();
 
   const [formValues, setFormValues] = useState<AdjustmentForm>(
-    data ?? defaultFormValues
+    data ?? defaultFormValues,
   );
 
   // local state untuk sub-warehouse (zone) dan loading
@@ -69,31 +68,53 @@ const AdjustmentModal: React.FC<AdjustmentModalProps> = ({
   const [zoneLoading, setZoneLoading] = useState(false);
 
   // Fetch Sub Warehouse (Zone)
+  // const fetchSubWarehouseList = useCallback(async () => {
+  //   setZoneLoading(true);
+  //   try {
+  //     const headers: Record<string, string> = {
+  //       Accept: "application/json",
+  //     };
+  //     if (token) {
+  //       headers["Authorization"] = `Bearer ${token}`;
+  //     }
+
+  //     const res = await fetch(
+  //       `${EndPoint}master-warehouse-sub/is-staging?is_staging=null`,
+  //       {
+  //         method: "GET",
+  //         headers,
+  //       }
+  //     );
+  //     if (!res.ok) throw new Error(`Failed to fetch: ${res.status}`);
+  //     const json = await res.json();
+
+  //     const list = Array.isArray(json) ? json : json.data ?? json;
+  //     setSubWarehouseList(list);
+  //   } catch (error) {
+  //     console.error("Error fetching sub warehouses:", error);
+  //     setSubWarehouseList([]);
+  //   } finally {
+  //     setZoneLoading(false);
+  //   }
+  // }, []);
+
   const fetchSubWarehouseList = useCallback(async () => {
     setZoneLoading(true);
     try {
-      const token = localStorage.getItem("token");
-      const headers: Record<string, string> = {
-        Accept: "application/json",
-      };
-      if (token) {
-        headers["Authorization"] = `Bearer ${token}`;
-      }
+      const res = await axiosInstance.get("master-warehouse-sub/is-staging", {
+        params: {
+          is_staging: "null",
+        },
+      });
 
-      const res = await fetch(
-        `${EndPoint}master-warehouse-sub/is-staging?is_staging=null`,
-        {
-          method: "GET",
-          headers,
-        }
-      );
-      if (!res.ok) throw new Error(`Failed to fetch: ${res.status}`);
-      const json = await res.json();
+      const responseData = res.data;
+      const list = Array.isArray(responseData)
+        ? responseData
+        : (responseData?.data ?? responseData);
 
-      const list = Array.isArray(json) ? json : json.data ?? json;
       setSubWarehouseList(list);
     } catch (error) {
-      console.error("Error fetching sub warehouses:", error);
+      console.error("Error fetching sub warehouses via axiosInstance:", error);
       setSubWarehouseList([]);
     } finally {
       setZoneLoading(false);
@@ -174,7 +195,7 @@ const AdjustmentModal: React.FC<AdjustmentModalProps> = ({
         bin_id: "",
       }));
     },
-    [availableZones]
+    [availableZones],
   );
 
   // ⚙️ Handle Bin Change
@@ -189,7 +210,7 @@ const AdjustmentModal: React.FC<AdjustmentModalProps> = ({
         bin_id: selectedBin.value,
       }));
     },
-    [availableBins]
+    [availableBins],
   );
 
   // 🧩 Handle Submit
@@ -288,8 +309,8 @@ const AdjustmentModal: React.FC<AdjustmentModalProps> = ({
                   label: binLoading
                     ? "Loading Bins..."
                     : formValues.zone_id
-                    ? "-- Select Bin --"
-                    : "Select Zone first",
+                      ? "-- Select Bin --"
+                      : "Select Zone first",
                 },
                 ...(formValues.zone_id ? availableBins : []),
               ]}

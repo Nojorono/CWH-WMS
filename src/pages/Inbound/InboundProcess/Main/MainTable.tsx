@@ -70,7 +70,7 @@ const MainTable = () => {
           </div>
 
           <div className="space-x-4">
-            {canCreate && canManage && (
+            {/* {canCreate && canManage && ( */}
               <Button
                 size="sm"
                 variant="primary"
@@ -79,7 +79,7 @@ const MainTable = () => {
               >
                 Add Inbound Planning
               </Button>
-            )}
+            {/* )} */}
 
             <Button
               variant="action"

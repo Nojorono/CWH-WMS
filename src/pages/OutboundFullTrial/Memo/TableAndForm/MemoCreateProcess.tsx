@@ -24,6 +24,8 @@ import { showConfirmDialog } from "../../../../components/swal-confirm";
 import TableComponent from "../../../../components/tables/ActionTable/TableComponent";
 import { SOsearchService } from "../../../../DynamicAPI/services/Service/SOsearchService";
 import { SOHeaderInfo } from "../../../../DynamicAPI/types/searchSO";
+import { usePersistAuthStore } from "../../../../API/store/AuthStore/PersistAuthStore";
+import axiosInstance from "../../../../DynamicAPI/AxiosInstance";
 
 // ✅ Tambahkan selected_destination
 type MemoFormValues = {
@@ -95,12 +97,16 @@ const TableCellInput = ({
 const CreateMemo: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const user = usePersistAuthStore((state) => state.user);
+  const roleName = user?.role?.name;
+  const NIK = user?.userDetail?.employee_id;
+  const orgId =
+    user?.userDetail?.organizationId || user?.userDetail?.organization?.id;
+  const orgCode = user?.userDetail?.organization?.organization_code;
+
   const { data: memoId, mode, title } = location.state || {};
   const isDetail = mode === "detail";
   const isEdit = mode === "edit";
-  const NIK = localStorage.getItem("NIK");
-  const orgId = localStorage.getItem("organization_id");
-  const orgCode = localStorage.getItem("organization_code");
 
   const [isLoading, setIsLoading] = useState(false);
   const [soHeaderData, setSoHeaderData] = useState<SOHeaderInfo | null>(null);
@@ -476,8 +482,6 @@ const CreateMemo: React.FC = () => {
             : {}),
         };
 
-        console.log("Base Payload", basePayload);
-
         try {
           let res: any = null;
 
@@ -622,59 +626,83 @@ const CreateMemo: React.FC = () => {
     );
   };
 
-  const handleApproveMemo = (memoId: string) => {
-    const approveMemo = async (memoId: string) => {
-      const token = localStorage.getItem("token");
-      try {
-        const res = await fetch(`${EndPoint}outbound-memo/${memoId}/approved`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        const data = await res.json();
-        if (res.ok) {
-          showSuccessToast("Memo approved successfully");
-          navigate("/memo");
-        } else {
-          showErrorToast(data?.message || "Failed to approve memo");
-        }
-      } catch (err) {
-        showErrorToast("Network error approving memo");
-      }
-    };
+  // const handleApproveMemo = (memoId: string) => {
+  //   const approveMemo = async (memoId: string) => {
+  //     try {
+  //       const res = await fetch(`${EndPoint}outbound-memo/${memoId}/approved`, {
+  //         method: "POST",
+  //         headers: {
+  //           "Content-Type": "application/json",
+  //           Authorization: `Bearer ${token}`,
+  //         },
+  //       });
+  //       const data = await res.json();
+  //       if (res.ok) {
+  //         showSuccessToast("Memo approved successfully");
+  //         navigate("/memo");
+  //       } else {
+  //         showErrorToast(data?.message || "Failed to approve memo");
+  //       }
+  //     } catch (err) {
+  //       showErrorToast("Network error approving memo");
+  //     }
+  //   };
 
-    approveMemo(memoId);
+  //   approveMemo(memoId);
+  // };
+
+  const handleApproveMemo = async (memoId: string) => {
+    try {
+      await axiosInstance.post(`outbound-memo/${memoId}/approved`);
+      showSuccessToast("Memo approved successfully");
+      navigate("/memo");
+    } catch (error: any) {
+      console.error("Error approving memo via axiosInstance:", error);
+      const errorMsg =
+        error.response?.data?.message || "Failed to approve memo";
+      showErrorToast(errorMsg);
+    }
   };
 
-  const handleRejectedMemo = (memoId: string) => {
-    const rejectMemo = async (memoId: string) => {
-      const token = localStorage.getItem("token");
-      try {
-        const res = await fetch(
-          `${EndPoint}outbound-memo/${memoId}/cancelled`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-          },
-        );
-        const data = await res.json();
-        if (res.ok) {
-          showErrorToast("Memo rejected successfully");
-          navigate("/memo");
-        } else {
-          showErrorToast(data?.message || "Failed to reject memo");
-        }
-      } catch (err) {
-        showErrorToast("Network error rejecting memo");
-      }
-    };
+  // const handleRejectedMemo = (memoId: string) => {
+  //   const rejectMemo = async (memoId: string) => {
+  //     try {
+  //       const res = await fetch(
+  //         `${EndPoint}outbound-memo/${memoId}/cancelled`,
+  //         {
+  //           method: "POST",
+  //           headers: {
+  //             "Content-Type": "application/json",
+  //             Authorization: `Bearer ${token}`,
+  //           },
+  //         },
+  //       );
+  //       const data = await res.json();
+  //       if (res.ok) {
+  //         showErrorToast("Memo rejected successfully");
+  //         navigate("/memo");
+  //       } else {
+  //         showErrorToast(data?.message || "Failed to reject memo");
+  //       }
+  //     } catch (err) {
+  //       showErrorToast("Network error rejecting memo");
+  //     }
+  //   };
 
-    rejectMemo(memoId);
+  //   rejectMemo(memoId);
+  // };
+
+  const handleRejectedMemo = async (memoId: string) => {
+    try {
+      await axiosInstance.post(`outbound-memo/${memoId}/cancelled`);
+
+      showSuccessToast("Memo rejected successfully");
+      navigate("/memo");
+    } catch (error: any) {
+      console.error("Error rejecting memo via axiosInstance:", error);
+      const errorMsg = error.response?.data?.message || "Failed to reject memo";
+      showErrorToast(errorMsg);
+    }
   };
 
   if (isLoading && (isEdit || isDetail)) {
@@ -807,7 +835,7 @@ const CreateMemo: React.FC = () => {
         />
 
         {isDetail &&
-          localStorage.getItem("role_name") === "TRANSPORT_SUPERVISOR" &&
+          roleName === "TRANSPORT_SUPERVISOR" &&
           detailDataMemo?.status !== "APPROVED" && (
             <div className="flex justify-end mt-4 gap-3">
               <Button

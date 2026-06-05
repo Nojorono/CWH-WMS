@@ -1,13 +1,12 @@
-export const getMenuIdByPath = (path: string): number | null => {
-  const userLoginData = localStorage.getItem("user_login_data");
-  if (!userLoginData) return null;
+import { usePersistAuthStore } from "../../API/store/AuthStore/PersistAuthStore";
 
-  try {
-    const { menus } = JSON.parse(userLoginData);
-    const menu = menus.find((menu: any) => menu.path === path);
-    return menu ? menu.id : null;
-  } catch (error) {
-    console.error("Failed to parse user_login_data:", error);
-    return null;
-  }
+export const getMenuIdByPath = (path: string): number | null => {
+  const menus = usePersistAuthStore.getState().menus;
+
+  if (!Array.isArray(menus)) return null;
+
+  // Lakukan pencarian menu berdasarkan path URL
+  const menu = menus.find((m: any) => m.path === path);
+  
+  return menu ? menu.id : null;
 };

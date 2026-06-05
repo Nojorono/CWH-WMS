@@ -65,8 +65,6 @@ export type FormValues = {
 };
 
 export function mapDetailToFormValues(detail: any): FormValues {
-
-    console.log("detail mapDetailToFormValues", detail);
     
     if (!detail) return {} as FormValues;
     const isPO = detail.inbound_type === "PO";

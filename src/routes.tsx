@@ -6,14 +6,18 @@ import {
   useNavigate,
   useLocation,
 } from "react-router-dom";
+
+// Layout & Auth
 import AppLayout from "./layout/AppLayout";
 import SignIn from "./pages/AuthPages/SignIn";
 import { signOut } from "./utils/SignOut";
 import { ScrollToTop } from "./components/common/ScrollToTop";
-import { useAuthStore } from "./API/store/AuthStore/authStore";
 import { ProtectedRoute } from "./utils/ProtectedRoute";
 
-// Pages...
+// Store Baru
+import { usePersistAuthStore } from "./API/store/AuthStore/PersistAuthStore";
+
+// Pages
 import {
   Dashboard,
   MasterMenu,
@@ -67,90 +71,59 @@ import {
   ShipConfirmLog,
   GenerateDO,
 } from "./utils/PagesComponent";
-import { IRIntegrationService } from "./DynamicAPI/services/Service/MasterService";
 
-const DefaultPage = () => <> </>;
+const DefaultPage = () => (
+  <div className="flex items-center justify-center h-full">
+    <p className="text-gray-500">
+      Halaman tidak ditemukan atau Anda tidak memiliki akses.
+    </p>
+  </div>
+);
 
 export function AppRoutes() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Ambil token dari store atau localStorage
-  const token =
-    useAuthStore((state) => state.accessToken) ||
-    localStorage.getItem("accessToken");
+  // Ambil state dari PersistAuthStore
+  const _hasHydrated = usePersistAuthStore((state) => state._hasHydrated);
+  const accessToken = usePersistAuthStore((state) => state.accessToken);
+  const userMenus = usePersistAuthStore((state) => state.menus) || [];
 
-  // Ambil user menus dari store atau localStorage
-  const localUserMenus = useMemo(() => {
-    const stored = localStorage.getItem("user_login_data");
-    try {
-      return stored && stored !== "undefined"
-        ? (JSON.parse(stored).menus ?? [])
-        : [];
-    } catch {
-      console.warn("Failed to parse user_login_data");
-      return [];
-    }
-  }, []);
+  const isAuthenticated = !!accessToken;
 
-  const userMenus = useAuthStore((state) => state.menus) || localUserMenus;
-
-  // Cek authenticated
-  const isAuthenticated = () => {
-    if (token) {
-      localStorage.setItem("accessToken", token); // Keep token sync
-      return true;
-    }
-    return false;
-  };
-
-  // **Redirect jika user sudah login dan buka halaman /signin secara manual**
-  useEffect(() => {
-    if (isAuthenticated() && location.pathname === "/signin") {
-      // Redirect ke halaman pertama menu yang bisa diakses
-      navigate(getFirstAccessiblePath(userMenus), { replace: true });
-    }
-  }, [location.pathname, isAuthenticated, navigate, userMenus]);
-
-  // Jika tidak authenticated, langsung sign out
-  useEffect(() => {
-    // Jangan auto-signout kalau user sedang di halaman login
-    if (!isAuthenticated() && location.pathname !== "/signin") {
-      signOut(navigate);
-    }
-  }, [navigate, location.pathname]);
-
-  // Manual routes untuk child routes yang tidak otomatis dari userMenus
   const manualChildRoutes: Record<
     string,
     { path: string; element: JSX.Element }[]
-  > = {
-    "/master_role": [
-      { path: "create", element: <CreateRole /> },
-      { path: "update", element: <UpdateRole /> },
-    ],
-    "/master_pallet": [{ path: "detail", element: <MainTabPallet /> }],
-    "/master_zone": [{ path: "detail", element: <MainTabZone /> }],
-    "/master_warehouse": [
-      { path: "detail", element: <MainTabWarehouse /> },
-      { path: "zone", element: <MainTabZone /> },
-    ],
-    "/inbound_planning": [{ path: "process", element: <InboundProcess /> }],
-    "/putaway": [{ path: "process", element: <PutAwayProcess /> }],
-    "/inventory": [{ path: "detail", element: <InventoryDetail /> }],
-    "/memo": [{ path: "process", element: <MemoProcess /> }],
-    "/outbound_do": [
-      { path: "process", element: <CreateDO /> },
-      { path: "detail", element: <DetailDO /> },
-      { path: "picking_suggestion", element: <PickingSuggestion /> },
-      { path: "detach_attach", element: <DetachAttachProcess /> },
-      { path: "print_surat_jalan", element: <PrintSuratJalan /> },
-    ],
-    "/do_suggestion": [{ path: "generate_do", element: <GenerateDO /> }],
-  };
+  > = useMemo(
+    () => ({
+      "/master_role": [
+        { path: "create", element: <CreateRole /> },
+        { path: "update", element: <UpdateRole /> },
+      ],
+      "/master_pallet": [{ path: "detail", element: <MainTabPallet /> }],
+      "/master_zone": [{ path: "detail", element: <MainTabZone /> }],
+      "/master_warehouse": [
+        { path: "detail", element: <MainTabWarehouse /> },
+        { path: "zone", element: <MainTabZone /> },
+      ],
+      "/inbound_planning": [{ path: "process", element: <InboundProcess /> }],
+      "/putaway": [{ path: "process", element: <PutAwayProcess /> }],
+      "/inventory": [{ path: "detail", element: <InventoryDetail /> }],
+      "/memo": [{ path: "process", element: <MemoProcess /> }],
+      "/outbound_do": [
+        { path: "process", element: <CreateDO /> },
+        { path: "detail", element: <DetailDO /> },
+        { path: "picking_suggestion", element: <PickingSuggestion /> },
+        { path: "detach_attach", element: <DetachAttachProcess /> },
+        { path: "print_surat_jalan", element: <PrintSuratJalan /> },
+      ],
+      "/do_suggestion": [{ path: "generate_do", element: <GenerateDO /> }],
+    }),
+    [],
+  );
 
-  // Map path ke komponen
-  const getElementByPath = (path: string): JSX.Element => {
+  // 2. Route Element Mapper (Gunakan function standar agar aman dari hoisted reference)
+  function getElementByPath(path: string): JSX.Element {
     const map: Record<string, JSX.Element> = {
       "/dashboard": <Dashboard />,
       "/master_user": <MasterUserManagement />,
@@ -181,7 +154,6 @@ export function AppRoutes() {
       "/inventory_visibility": <InventoryVisibility />,
       "/inventory_movement": <InventoryMovement />,
       "/inventory_on_hand": <InventoryOnHand />,
-
       "/stock_adjustment": <StockAdjustment />,
       "/report_inbound": <ReportInbound />,
       "/report_outbound": <ReportOutbound />,
@@ -190,84 +162,106 @@ export function AppRoutes() {
       "/inbound_integration_log": <InboundIntegration />,
       "/ir_integration_log": <IRintegrationLog />,
       "/ship_confirm_log": <ShipConfirmLog />,
-
       "/do_suggestion": <DOsuggestionMain />,
     };
     return map[path] || <DefaultPage />;
-  };
+  }
 
-  // Buat array route dari userMenus dan manual child routes
+  const getFirstAccessiblePath = useMemo(() => {
+    const findPath = (menus: any[]): string | null => {
+      for (const item of menus) {
+        if (item.children?.length) {
+          const childPath = findPath(item.children);
+          if (childPath) return childPath;
+        }
+        if (item.path) {
+          const element = getElementByPath(item.path);
+          if (element.type !== DefaultPage) {
+            return item.path;
+          }
+        }
+      }
+      return null;
+    };
+    return findPath(userMenus) || "/dashboard";
+  }, [userMenus]);
+
   const userRoutes = useMemo(() => {
     const routes: { id: string; path: string; element: JSX.Element }[] = [];
-
     const traverse = (items: any[]) => {
       items.forEach((item) => {
         if (item.path) {
           const element = getElementByPath(item.path);
           if (element) {
             routes.push({
-              id: item.id || item.path,
+              id: `route-${item.id || item.path}`,
               path: item.path,
               element,
             });
           }
-
-          // Tambah child routes jika ada
           const childRoutes = manualChildRoutes[item.path];
           if (childRoutes) {
             childRoutes.forEach((child) => {
               routes.push({
-                id: `${item.path}-${child.path}`,
+                id: `child-${item.path}-${child.path}`,
                 path: `${item.path}/${child.path}`,
                 element: child.element,
               });
             });
           }
-
-          // Rekursif ke anak-anak menu
-          if (item.children?.length) {
-            traverse(item.children);
-          }
+          if (item.children?.length) traverse(item.children);
         }
       });
     };
-
     traverse(userMenus);
     return routes;
-  }, [userMenus]);
+  }, [userMenus, manualChildRoutes]);
 
-  // Ambil path pertama yang accessible untuk redirect default setelah login
-  const getFirstAccessiblePath = (menus: any[]): string => {
-    const findChildPath = (list: any[]): string | null => {
-      for (const item of list) {
-        if (item.children && item.children.length > 0) {
-          const childPath = findChildPath(item.children);
-          if (childPath) return childPath;
-        }
-        if (!item.children?.length && item.path) {
-          return item.path;
-        }
-      }
-      return null;
-    };
+  // ==========================================
+  // SIDE EFFECTS & ROUTING LIFE CYCLE
+  // ==========================================
 
-    return findChildPath(menus) || "/";
-  };
+  // Effect: Redirect jika sudah login tapi coba akses manual halaman /signin
+  useEffect(() => {
+    if (_hasHydrated && isAuthenticated && location.pathname === "/signin") {
+      navigate(getFirstAccessiblePath, { replace: true });
+    }
+  }, [
+    _hasHydrated,
+    isAuthenticated,
+    location.pathname,
+    navigate,
+    getFirstAccessiblePath,
+  ]);
+
+  // Effect: Auto Sign Out jika token hilang dari storage
+  useEffect(() => {
+    if (_hasHydrated && !isAuthenticated && location.pathname !== "/signin") {
+      signOut(navigate);
+    }
+  }, [_hasHydrated, isAuthenticated, location.pathname, navigate]);
+
+  // GUARD: Tunggu sinkronisasi enkripsi data local storage selesai
+  if (!_hasHydrated) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-white dark:bg-gray-900">
+        <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
 
   return (
     <>
       <ScrollToTop />
       <Routes>
-        {/* Routes untuk guest (belum login) */}
-        {!isAuthenticated() && (
+        {/* Guest Routes */}
+        {!isAuthenticated ? (
           <>
             <Route path="/signin" element={<SignIn />} />
             <Route path="*" element={<Navigate to="/signin" replace />} />
           </>
-        )}
-
-        {/* Routes untuk user sudah login */}
-        {isAuthenticated() && (
+        ) : (
+          /* Authenticated Routes */
           <Route
             element={
               <ProtectedRoute>
@@ -277,9 +271,7 @@ export function AppRoutes() {
           >
             <Route
               path="/"
-              element={
-                <Navigate to={getFirstAccessiblePath(userMenus)} replace />
-              }
+              element={<Navigate to={getFirstAccessiblePath} replace />}
             />
             {userRoutes.map((route) => (
               <Route
@@ -288,7 +280,7 @@ export function AppRoutes() {
                 element={<ProtectedRoute>{route.element}</ProtectedRoute>}
               />
             ))}
-            <Route path="*" element={<></>} />
+            <Route path="*" element={<Navigate to="/" replace />} />
           </Route>
         )}
       </Routes>

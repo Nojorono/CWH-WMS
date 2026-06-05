@@ -16,20 +16,28 @@ export interface SubmitGateSkuPayload {
     week_number?: number;
 }
 
+// export const updateSubmitLoadingGate = async (
+//     assgnGateId: string,
+//     payload: SubmitGateSkuPayload
+// ) => {
+//     const res = await axiosInstance.patch(
+//         `${EndPoint}assigned-gate-load/${assgnGateId}`, // ✅ pakai ID di URL
+//         payload,
+//         {
+//             headers: {
+//                 Authorization: `Bearer ${token}`,
+//             },
+//         }
+//     );
+
+//     return res.data;
+// };
+
+
 export const updateSubmitLoadingGate = async (
     assgnGateId: string,
     payload: SubmitGateSkuPayload
 ) => {
-    const token = localStorage.getItem("token")
-    const res = await axiosInstance.patch(
-        `${EndPoint}assigned-gate-load/${assgnGateId}`, // ✅ pakai ID di URL
-        payload,
-        {
-            headers: {
-                Authorization: `Bearer ${token}`,
-            },
-        }
-    );
-
+    const res = await axiosInstance.patch(`assigned-gate-load/${assgnGateId}`, payload);
     return res.data;
 };
