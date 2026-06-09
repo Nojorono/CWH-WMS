@@ -1,8 +1,9 @@
 import axios from 'axios';
 import { CallPlanBindings, SupervisorData, SnowflakeApiResponse } from '../../types/callPlan';
+import { DWHCallplanAPI, DWHCallplanAPItoken } from '../../../utils/EndPoint'
 
-const SNOWFLAKE_API = "https://A8518400981671-WY39536.snowflakecomputing.com/api/v2/statements";
-const TOKEN = "eyJraWQiOiIxMTg0NDIzMTU4NzAyMTgiLCJhbGciOiJFUzI1NiJ9.eyJwIjoiMTgwNzI4Nzc2MToxODA3Mjg5MjIxIiwiaXNzIjoiU0Y6MTA1MCIsImV4cCI6MTgxMjA5ODQzOX0.be7v-M0MiipzPs3mew-eJ-bYjIIoSNyIqomQeNYUpDc4sIwqDyWJqL-oZ3hJfXEFMWuRgEX36c6GMEOkPq3DZw"
+const SNOWFLAKE_API = DWHCallplanAPI;
+const TOKEN = DWHCallplanAPItoken;
 
 // Perhatikan return type sekarang adalah SupervisorData[]
 export const getCallPlan = async (params: CallPlanBindings): Promise<SupervisorData[]> => {
