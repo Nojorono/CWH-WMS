@@ -49,9 +49,11 @@ import MainTabZone from "../pages/Master/MasterSubWarehouse/Tabs/Main";
 
 // MASTER BIN
 import MasterBin from "../pages/Master/MasterBin";
-
 import MasterSource from "../pages/Master/MasterSource";
 import MasterSupplier from "../pages/Master/MasterSupplier";
+
+// MASTER DEPARTEMENT
+import MasterDepartement from '../pages/Master/MasterDepartement'
 
 //OUTBOUND
 import Memo from "../pages/OutboundFullTrial/Memo";
@@ -105,6 +107,9 @@ export {
   MasterBin,
   MasterSource,
   MasterSupplier,
+
+  //MASTER DEPT
+  MasterDepartement,
 
   // MASTER ROLES PAGE
   MasterRole,

@@ -58,6 +58,7 @@ export interface CreateUser {
   warehouseSubId: string;
   firstName: string;
   lastName: string;
+  departementId: string
 }
 
 // ============================================================

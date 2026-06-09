@@ -1,49 +1,36 @@
 import { useState, useMemo } from "react";
-import Input from "../../../../components/form/input/InputField";
+import { FaSync, FaSearch, FaRecycle } from "react-icons/fa";
+import { useCallPlan } from "../hook/useCallPlan";
 import AdjustTable from "../component/AdjustTable";
-import { useDebounce } from "../../../../helper/useDebounce";
+import PageBreadcrumb from "../../../../components/common/PageBreadCrumb";
 import Select from "../../../../components/form/Select";
 import Button from "../../../../components/ui/button/Button";
-import {
-  FaSync,
-  FaFilter,
-  FaSearch,
-  FaResearchgate,
-  FaRecycle,
-} from "react-icons/fa";
-import { useStoreShipConfirm } from "../../../../DynamicAPI/stores/Store/MasterStore";
-import PageBreadcrumb from "../../../../components/common/PageBreadCrumb";
-
-// KUNCI PERBAIKAN: Hubungkan ke Store Persistent baru Anda
-import { usePersistAuthStore } from "../../../../API/store/AuthStore/PersistAuthStore";
 
 const MainTable = () => {
   const [selectedIO, setSelectedIO] = useState<any>(null);
   const [globalFilter, setGlobalFilter] = useState<string>("");
-  const debouncedFilter = useDebounce(globalFilter, 500);
-  const { fetchAll } = useStoreShipConfirm();
+  
+  const params = {
+    CABANG: "KDI",
+    SALES_SUPERVISOR_NIK: "160210.00205T0",
+    CALL_PLAN_START_DATE: "2026-06-02",
+  };
 
-  const ioList = usePersistAuthStore((state) => state.ioList);
+  const { data, isLoading, error } = useCallPlan(params);
 
-  const ioOptions = useMemo(() => {
-    if (!ioList || ioList.length === 0) {
-      return [{ value: "", label: "All Organization" }];
-    }
+  // Flatten data dari struktur DETAIL per supervisor menjadi satu list sales
+  const flattenedSales = useMemo(() => {
+    if (!data) return [];
+    return data.flatMap((group) => group.DETAIL || []);
+  }, [data]);
 
-    return [
-      { value: "", label: "All Organization" },
-      ...ioList.map((item: any) => ({
-        value: item.id,
-        label: `${item.organization_name} - ${item.organization_code}`,
-      })),
-    ];
-  }, [ioList]);
+  if (isLoading) return <div className="p-10 text-center">Loading Data...</div>;
+  if (error) return <div className="p-10 text-red-500 text-center">{error}</div>;
 
   return (
     <div className="w-full space-y-4 p-4 bg-[#F8FAFC] min-h-screen">
       <PageBreadcrumb breadcrumbs={[{ title: "DO Suggestion" }]} />
 
-      {/* Header & Action Bar */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
         <div className="flex flex-1 items-center gap-3">
           <div className="relative w-full max-w-md">
@@ -52,58 +39,25 @@ const MainTable = () => {
             </span>
             <input
               type="text"
-              placeholder="Search data..."
-              className="w-full pl-10 pr-4 py-2 text-sm bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+              placeholder="Search sales name..."
+              className="w-full pl-10 pr-4 py-2 text-sm bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20"
               onChange={(e) => setGlobalFilter(e.target.value)}
-            />
-          </div>
-
-          <div className="w-64">
-            <Select
-              options={ioOptions}
-              placeholder="Filter Organization"
-              onChange={(value) => setSelectedIO(value)}
-              value={selectedIO}
             />
           </div>
         </div>
 
         <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            className="flex items-center gap-2 text-slate-600 border-slate-200"
-            onClick={() => {
-              setGlobalFilter("");
-              setSelectedIO(null);
-            }}
-          >
-            <FaRecycle className="size-3" />
-            <span className="text-xs font-semibold uppercase tracking-wider">
-              Reset
-            </span>
-          </Button>
-
-          <Button
-            variant="primary"
-            size="sm"
-            className="bg-blue-600 hover:bg-blue-700 shadow-sm"
-            onClick={fetchAll}
-          >
-            <FaSync className="mr-2 size-3" />
-            <span className="text-xs font-semibold uppercase tracking-wider">
-              Refresh
-            </span>
+          <Button variant="primary" size="sm" className="bg-blue-600" onClick={() => window.location.reload()}>
+            <FaSync className="mr-2 size-3" /> Refresh
           </Button>
         </div>
       </div>
 
-      {/* Table Section */}
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
         <AdjustTable
-          globalFilter={debouncedFilter}
+          data={flattenedSales} 
+          globalFilter={globalFilter}
           setGlobalFilter={setGlobalFilter}
-          filteredIO={selectedIO}
         />
       </div>
     </div>

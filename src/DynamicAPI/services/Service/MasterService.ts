@@ -41,6 +41,9 @@ import { InventorySelisihItem } from '../../types/InventorySelisih.ts'
 import { IRintegration } from "../../types/IRintegrationType.ts";
 import { ShipConfirmOutboundDO, Memo, MemoItem } from "../../types/ShipConfirmType.ts";
 
+import {Department, CreateDepartment, UpdateDepartment } from '../../types/DepartementType.ts'
+
+
 
 // Daftar semua entitas service di sini
 export const uomService = createCrudService<Uom, CreateUom, UpdateUom>("/master-uom");
@@ -94,6 +97,11 @@ export const InventorySelisihService = createCrudService<InventorySelisihItem, n
 
 export const IRIntegrationService = createCrudService<IRintegration, null, null>("/outbound-integration-ir-req");
 export const ShipConfirmService = createCrudService<ShipConfirmOutboundDO, Memo, MemoItem >("/outbound-integration-deliveries");
+export const ShipConfirmServiceByDO = createCrudService<ShipConfirmOutboundDO, Memo, MemoItem >("/outbound-integration-deliveries/outbound-do");
+
+
+export const DepartementService = createCrudService<Department, CreateDepartment, UpdateDepartment >("/master-departement");
+
 
 
 

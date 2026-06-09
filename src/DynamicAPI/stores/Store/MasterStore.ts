@@ -47,7 +47,9 @@ import {
     IOfromMeta,
     InventorySelisihService,
     IRIntegrationService,
-    ShipConfirmService
+    ShipConfirmService,
+    DepartementService,
+    ShipConfirmServiceByDO
 } from "../../services/Service/MasterService";
 
 import { Uom, CreateUom, UpdateUom } from "../../types/UomTypes";
@@ -85,32 +87,39 @@ import { InventoryVisibilityResponse } from '../../types/InventoryVisibilty.ts'
 import { MasterSupplier, CreateMasterSupplier, UpdateMasterSupplier } from '../../types/MasterSupplier.ts'
 import { InventoryMovementListResponse } from '../../types/InventoryMovement.ts'
 import { StockAdjustment, StockAdjustmentCreateRequest } from "../../types/StockAdjustmentTypes.ts";
-
-import { MasterWeek, CreateMasterWeek, UpdateMasterWeek } from '../../types/MasterWeekTypes.ts'
+import { MasterWeek } from '../../types/MasterWeekTypes.ts'
 import { OutboundPlanning, UpdateOutboundPlanning } from "../../types/OutboundGoodStock.ts";
-
 import { InboundIntegration } from "../../types/InboundIntegration.ts";
 import { IRintegration } from "../../types/IRintegrationType.ts";
 import { ShipConfirmOutboundDO, Memo, MemoItem } from "../../types/ShipConfirmType.ts";
-
 import { InventorySelisihItem } from "../../types/InventorySelisih.ts";
 
+import {Department, CreateDepartment, UpdateDepartment } from '../../types/DepartementType.ts'
 
 
 // Daftar semua store di sini
+export const useStoreDepartement = createCrudStore<Department, CreateDepartment, UpdateDepartment>({
+    name: "Departement",
+    service: DepartementService,
+});
 
 export const useStoreShipConfirm = createCrudStore<ShipConfirmOutboundDO, Memo, MemoItem>({
-    name: "UOM",
+    name: "Ship Confirm",
     service: ShipConfirmService,
 });
 
+export const useStoreShipConfirmByDO = createCrudStore<ShipConfirmOutboundDO, Memo, MemoItem>({
+    name: "Ship Confirm",
+    service: ShipConfirmServiceByDO,
+});
+
 export const useStoreIRIntegration = createCrudStore<IRintegration, null, null>({
-    name: "UOM",
+    name: "IR/SO Integration",
     service: IRIntegrationService,
 });
 
 export const useStoreInboundIntegration = createCrudStore<InboundIntegration, null, null>({
-    name: "UOM",
+    name: "Inbound Integration",
     service: InboundIntegrationService,
 });
 
@@ -273,11 +282,6 @@ export const useStorePickingAssignHelper = createCrudStore<PickingAssignHelper, 
     name: "PickingAssignHelper",
     service: PickingAssignHelperService,
 });
-
-// export const useStoreUserManagement = createCrudStore<UserManagement, CreateUserManagement, UpdateUserManagement>({
-//     name: "UserManagement",
-//     service: UserManagementService,
-// });
 
 export const useStoreUserManagement = createCrudStore<User, CreateUser, UpdateUser>({
     name: "UserManagement",

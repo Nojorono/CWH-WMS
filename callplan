@@ -1,0 +1,62 @@
+{
+  "info": {
+    "_postman_id": "c1bb700d-f0fe-434e-b7a2-f0c4d921fc50",
+    "name": "New Collection",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "48271781"
+  },
+  "item": [
+    {
+      "name": "https://A8518400981671-WY39536.snowflakecomputing.com/api/v2/statements",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer eyJraWQiOiIxMTg0NDIzMTU4NzAyMTgiLCJhbGciOiJFUzI1NiJ9.eyJwIjoiMTgwNzI4Nzc2MToxODA3Mjg5MjIxIiwiaXNzIjoiU0Y6MTA1MCIsImV4cCI6MTgxMjA5ODQzOX0.be7v-M0MiipzPs3mew-eJ-bYjIIoSNyIqomQeNYUpDc4sIwqDyWJqL-oZ3hJfXEFMWuRgEX36c6GMEOkPq3DZw",
+            "type": "text"
+          },
+          {
+            "key": "X-Snowflake-Authorization-Token-Type",
+            "value": "PROGRAMMATIC_ACCESS_TOKEN",
+            "type": "text"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          },
+          {
+            "key": "Accept",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"statement\": \"SELECT OBJECT_CONSTRUCT(*) AS DATA FROM DEV_SFA_OUTSYSTEMS.SFA.V_API_CALL_PLAN WHERE CABANG = ? AND SALES_SUPERVISOR_NIK = ? AND CALL_PLAN_START_DATE = ?\",\r\n  \"database\": \"DEV_SFA_OUTSYSTEMS\",\r\n  \"schema\": \"SFA\",\r\n  \"warehouse\": \"TASK_SFA\",\r\n  \"role\": \"ROLE_API\",\r\n  \"bindings\": {\r\n    \"1\": { \"type\": \"TEXT\", \"value\": \"KDI\" },\r\n    \"2\": { \"type\": \"TEXT\", \"value\": \"160210.00205T0\" },\r\n    \"3\": { \"type\": \"TEXT\", \"value\": \"2026-06-02\" }\r\n  }\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "https://A8518400981671-WY39536.snowflakecomputing.com/api/v2/statements",
+          "protocol": "https",
+          "host": [
+            "A8518400981671-WY39536",
+            "snowflakecomputing",
+            "com"
+          ],
+          "path": [
+            "api",
+            "v2",
+            "statements"
+          ]
+        }
+      },
+      "response": []
+    }
+  ]
+}

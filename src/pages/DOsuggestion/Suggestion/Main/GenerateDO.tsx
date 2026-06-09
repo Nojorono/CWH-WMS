@@ -9,6 +9,7 @@ import {
   MdPerson,
   MdExpandMore,
 } from "react-icons/md";
+import { useCallPlan } from "../hook/useCallPlan";
 
 // ==========================================
 // INTERFACES & DUMMY DATA
@@ -73,6 +74,8 @@ export default function SuggestionDraftSummary() {
   const [skuData] = useState<SkuItem[]>(INITIAL_SKU_DATA);
   const [customerData] = useState<CustomerSummaryItem[]>(INITIAL_CUSTOMER_DATA);
   const [selectedDate, setSelectedDate] = useState<string>("2026-04-29");
+
+
 
   // State untuk mengontrol ID customer mana saja yang sedang terbuka
   // Default: Mengambil semua ID dari customerData agar otomatis OPEN

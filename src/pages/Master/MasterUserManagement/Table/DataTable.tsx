@@ -8,6 +8,7 @@ import DynamicTable from "../../../../components/wms-components/DynamicTable";
 import {
   useStoreUser,
   useStoreSubWarehouse,
+  useStoreDepartement,
 } from "../../../../DynamicAPI/stores/Store/MasterStore";
 import { useRoleStore } from "../../../../API/store/MasterStore";
 import { UserVerifyService } from "../../../../DynamicAPI/services/Service/UserVerifyService";
@@ -27,6 +28,7 @@ const DataTable = () => {
     useStoreSubWarehouse();
 
   const { fetchRoles, roles } = useRoleStore();
+  const { fetchAll: fetchDepartement, list: deptList } = useStoreDepartement();
 
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounce(search, 500);
@@ -61,6 +63,7 @@ const DataTable = () => {
     fetchAll();
     fetchRoles();
     fetchSubWarehouses();
+    fetchDepartement();
   }, []);
 
   const IoList = useMemo(() => {
@@ -83,6 +86,15 @@ const DataTable = () => {
         ?.map((zone: any) => ({ label: zone.name, value: zone.id })) || []
     );
   }, [subWarehouseList]);
+
+  const deptOptions = useMemo(() => {
+    return (
+      deptList?.map((dept: any) => ({
+        label: dept.departement_name,
+        value: dept.id,
+      })) || []
+    );
+  }, [deptList]);
 
   const PWD_REGEX = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/;
 
@@ -182,7 +194,7 @@ const DataTable = () => {
         label: "Employee ID / NIK",
         type: "text",
         validation: { required: "Employee ID wajib diisi" },
-        hiddenWhen: (values: any) => !values.id, // Hanya tampil saat EDIT
+        hiddenWhen: (values: any) => !values.id,
       },
       {
         name: "manualEmployeeId",
@@ -191,6 +203,19 @@ const DataTable = () => {
         placeholder: "Masukkan ID (Akan jadi prefix NON-ID)",
         validation: { required: "ID wajib diisi untuk tipe Non-Employee" },
         hiddenWhen: (values: any) => !!values.id || values.userType !== "NON",
+      },
+      {
+        name: "departementId",
+        label: "Departement Id",
+        type: "select",
+        options: deptOptions,
+        hiddenWhen: (values: any) => {
+          if (values.id) return false;
+          return (
+            !values.userType ||
+            (values.userType === "EMPLOYEE" && !isNikVerified)
+          );
+        },
       },
       {
         name: "roleId",
@@ -316,7 +341,6 @@ const DataTable = () => {
         options: gateZoneOptions,
         validation: { required: "Required" },
         hiddenWhen: (values: any) => {
-          // Tampil hanya jika role-nya GATE
           return String(values.roleId) !== String(gateRoleId);
         },
       },
@@ -360,6 +384,7 @@ const DataTable = () => {
       organizationId: String(organizationId),
       warehouseSubId:
         String(data.roleId) === String(gateRoleId) ? data.zoneId : null,
+      departementId: data.departementId,
     };
 
     return createData(payload);
@@ -381,9 +406,9 @@ const DataTable = () => {
         String(rest.roleId) === String(gateRoleId) ? String(zoneId) : null,
       firstName: rest.firstName,
       lastName: rest.lastName,
+      departementId: rest.departementId,
     };
 
-    // Filter undefined saja, nilai null (warehouseSubId) atau "" tetap dikirim jika memang kontrak API-nya string/null
     const cleanPayload = Object.fromEntries(
       Object.entries(payload).filter(([_, v]) => v !== undefined),
     );

@@ -1,3 +1,6 @@
+// ==========================================
+// 1. BASE TYPES (DTO Mentah)
+// ==========================================
 export interface ShipConfirmOutboundDO {
   id: string;
   createdAt: string;
@@ -55,4 +58,41 @@ export interface MemoItem {
   quantity_delivered: number | null;
   uom: string;
   status: string;
+}
+
+// ==========================================
+// 2. EXTENDED UI TYPES (Kaya Data)
+// ==========================================
+
+// Tipe baru untuk menampung semua data root ekstra (Integration Detail)
+export interface IntegrationData {
+  integration_id: string;
+  iface_id: string;
+  transaction_type: string;
+  source_system: string;
+  delivery_id: string;
+  delivery_name: string;
+  shipped_quantity: number | null;
+  pick_release_status: string;
+  ship_confirm_status: string;
+  iso_header_id: string;
+  iso_organization_id: string;
+  [key: string]: any;
+}
+
+// Menggabungkan Item dengan data Integrasi-nya
+export interface MemoItemUI extends MemoItem {
+  integration_data: IntegrationData;
+}
+
+export interface MemoUI extends Memo {
+  outbound_memo_items: MemoItemUI[];
+  is_success_pick_release: boolean;
+  is_ready_ship_confirm: boolean;
+}
+
+export interface OutboundDoUI extends ShipConfirmOutboundDO {
+  outbound_memos: MemoUI[];
+  is_success_pick_release: boolean;
+  is_ready_ship_confirm: boolean;
 }

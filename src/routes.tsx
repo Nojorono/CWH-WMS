@@ -39,6 +39,7 @@ import {
   MasterWeek,
   MasterSource,
   MasterSupplier,
+  MasterDepartement,
   Inventory,
   PutAway,
   PutAwayProcess,
@@ -143,6 +144,8 @@ export function AppRoutes() {
       "/master_zone": <MasterZone />,
       "/master_bin": <MasterBin />,
       "/master_source": <MasterSource />,
+      "/master_departement": <MasterDepartement />,
+
       "/master_week": <MasterWeek />,
       "/main_inventory": <Inventory />,
       "/memo": <Memo />,
@@ -161,7 +164,7 @@ export function AppRoutes() {
       "/setup_master_warehouse": <MasterWarehouse />,
       "/inbound_integration_log": <InboundIntegration />,
       "/ir_integration_log": <IRintegrationLog />,
-      "/ship_confirm_log": <ShipConfirmLog />,
+      "/outbound_integration_log": <ShipConfirmLog />,
       "/do_suggestion": <DOsuggestionMain />,
     };
     return map[path] || <DefaultPage />;

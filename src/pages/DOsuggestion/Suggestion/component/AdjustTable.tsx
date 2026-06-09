@@ -1,185 +1,109 @@
-import { useState, useMemo } from "react";
+import { useMemo } from "react";
 import { ColumnDef } from "@tanstack/react-table";
-import TableComponent from "./Table"; // Pastikan path ini benar
+import TableComponent from "./Table";
 import { useNavigate } from "react-router-dom";
+import {
+  CallPlanDetail,
+  CallPlanBindings,
+} from "../../../../API/types/callPlan";
 
-// --- DUMMY DATA (15 Items) ---
-const DUMMY_DATA = Array.from({ length: 15 }).map((_, index) => {
-  const statuses = ["Not Created", "Created", "Created", "Created"];
-  const spbStatuses = ["-", "In Progress", "Final", "Submitted"];
-  const names = [
-    "Agus Setiawan",
-    "Dedi Kurnia",
-    "Rina Marliana",
-    "Budi Firmansyah",
-  ];
-  const selectTexts = ["Selected", "Locked", "Locked", "Choose"];
+interface AdjustTableProps {
+  data: CallPlanDetail[];
+  globalFilter: string;
+  setGlobalFilter: (val: string) => void;
+}
 
-  return {
-    id: index + 1,
-    selectText: selectTexts[index % selectTexts.length],
-    nik: `100${2451 + index * 111}`,
-    statusCallPlan: statuses[index % statuses.length],
-    namaSales: names[index % names.length],
-    spbStatus: spbStatuses[index % spbStatuses.length],
-    actionType: index === 0 ? "Generate" : "Unavailable",
-  };
-});
-
-const AdjustTable = ({ globalFilter, setGlobalFilter }: any) => {
-  // Setup pagination lokal untuk dummy data
-  const [pageIndex, setPageIndex] = useState(0);
-  const [pageSize, setPageSize] = useState(10);
+const AdjustTable = ({
+  data,
+  globalFilter,
+  setGlobalFilter,
+}: AdjustTableProps) => {
   const navigate = useNavigate();
 
-  // Filter dummy data berdasarkan globalFilter (Search)
+  // Filter data berdasarkan globalFilter (Search)
   const filteredData = useMemo(() => {
-    let result = DUMMY_DATA;
-    if (globalFilter) {
-      const lowerFilter = globalFilter.toLowerCase();
-      result = result.filter(
-        (item) =>
-          item.nik.toLowerCase().includes(lowerFilter) ||
-          item.namaSales.toLowerCase().includes(lowerFilter),
-      );
-    }
-    return result;
-  }, [globalFilter]);
+    if (!globalFilter) return data;
+    const lowerFilter = globalFilter.toLowerCase();
+    return data.filter(
+      (item) =>
+        item.SALES_NIK.toLowerCase().includes(lowerFilter) ||
+        item.SALES_NAME.toLowerCase().includes(lowerFilter) ||
+        item.ROUTE_NUMBER.toLowerCase().includes(lowerFilter),
+    );
+  }, [data, globalFilter]);
 
-  // --- DEFINISI KOLOM SESUAI GAMBAR ---
-  const columns: ColumnDef<any>[] = useMemo(
+  const columns: ColumnDef<CallPlanDetail>[] = useMemo(
     () => [
       {
-        id: "select",
-        header: () => <div className="text-left pl-4">SELECT</div>,
-        cell: ({ row }) => (
-          <div className="flex items-center gap-4 pl-4">
-            <input
-              type="checkbox"
-              className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
-              defaultChecked={row.original.selectText === "Selected"}
-              disabled={row.original.selectText === "Locked"}
-            />
-            <span className="text-sm font-medium text-slate-600 w-16">
-              {row.original.selectText}
-            </span>
-          </div>
-        ),
-      },
-      {
-        accessorKey: "nik",
+        accessorKey: "SALES_NIK",
         header: () => <div className="text-left">NIK</div>,
         cell: ({ row }) => (
           <span className="text-sm font-semibold text-slate-700">
-            {row.original.nik}
+            {row.original.SALES_NIK}
           </span>
         ),
       },
       {
-        accessorKey: "statusCallPlan",
-        header: () => <div className="text-center">STATUS CALL PLAN</div>,
-        cell: ({ row }) => {
-          const status = row.original.statusCallPlan;
-          const isCreated = status === "Created";
-          return (
-            <div className="flex justify-center">
-              <span
-                className={`px-4 py-1.5 rounded-full text-xs font-semibold w-28 text-center transition-colors ${
-                  isCreated
-                    ? "bg-orange-50 text-orange-500"
-                    : "bg-slate-100 text-slate-500"
-                }`}
-              >
-                {status}
-              </span>
-            </div>
-          );
-        },
-      },
-      {
-        accessorKey: "namaSales",
+        accessorKey: "SALES_NAME",
         header: () => <div className="text-left">NAMA SALES</div>,
         cell: ({ row }) => (
           <span className="text-sm font-medium text-slate-600">
-            {row.original.namaSales}
+            {row.original.SALES_NAME}
           </span>
         ),
       },
       {
-        accessorKey: "spbStatus",
-        header: () => <div className="text-center">SPB STATUS</div>,
-        cell: ({ row }) => {
-          const status = row.original.spbStatus;
-          let style = "bg-slate-100 text-slate-500"; // default (-)
-
-          if (status === "In Progress") style = "bg-amber-50 text-amber-600";
-          else if (status === "Final") style = "bg-green-50 text-green-500";
-          else if (status === "Submitted")
-            style = "bg-indigo-50 text-indigo-600";
-
-          return (
-            <div className="flex justify-center">
-              <span
-                className={`px-4 py-1.5 rounded-full text-xs font-semibold w-28 text-center transition-colors ${style}`}
-              >
-                {status}
-              </span>
-            </div>
-          );
-        },
+        accessorKey: "ROUTE_NUMBER",
+        header: () => <div className="text-center">ROUTE</div>,
+        cell: ({ row }) => (
+          <span className="text-sm text-center block text-slate-600">
+            {row.original.ROUTE_NUMBER}
+          </span>
+        ),
       },
+      {
+        accessorKey: "CALL_PLAN_NUMBER",
+        header: () => <div className="text-left">CALLPLAN NO</div>,
+        cell: ({ row }) => (
+          <span className="text-sm text-slate-600">
+            {row.original.CALL_PLAN_NUMBER}
+          </span>
+        ),
+      },
+      //  {
+      //   accessorKey: "CALL_PLAN_START_DATE",
+      //   header: () => <div className="text-left">CALLPLAN START DATE</div>,
+      //   cell: ({ row }) => (
+      //     <span className="text-sm text-slate-600">{row.original.CALL_PLAN_START_DATE}</span>
+      //   ),
+      // },
       {
         id: "action",
         header: () => <div className="text-center">ACTION</div>,
-        cell: ({ row }) => {
-          const isGenerate = row.original.actionType === "Generate";
-
-          // Fungsi handler ketika tombol diklik
-          const handleNavigate = () => {
-            if (isGenerate) {
-              navigate("generate_do");
-            }
-          };
-
-          return (
-            <div className="flex justify-center">
-              <button
-                type="button"
-                disabled={!isGenerate}
-                onClick={handleNavigate}
-                className={`px-4 py-1.5 rounded-full text-xs font-semibold w-36 text-center transition-all duration-200 ${
-                  isGenerate
-                    ? "bg-[#F97316] hover:bg-orange-600 text-white shadow-sm cursor-pointer"
-                    : "bg-[#E2E8F0] text-slate-500 cursor-not-allowed opacity-80"
-                }`}
-              >
-                {isGenerate ? "Generate Suggestion" : "Unavailable"}
-              </button>
-            </div>
-          );
-        },
+        cell: () => (
+          <div className="flex justify-center">
+            <button
+              onClick={() => navigate("generate_do")}
+              className="px-4 py-1.5 rounded-full text-xs font-semibold bg-[#F97316] hover:bg-orange-600 text-white shadow-sm transition-all"
+            >
+              Generate Suggestion
+            </button>
+          </div>
+        ),
       },
     ],
-    [],
+    [navigate],
   );
 
   return (
     <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-        <TableComponent
-          data={filteredData}
-          columns={columns}
-          globalFilter={globalFilter}
-          setGlobalFilter={setGlobalFilter}
-          pageSize={pageSize}
-          pageIndex={pageIndex}
-          totalPages={Math.ceil(filteredData.length / pageSize)}
-          onPageChange={(page: number, size: number) => {
-            setPageIndex(page);
-            setPageSize(size);
-          }}
-        />
-      </div>
+      <TableComponent
+        data={filteredData}
+        columns={columns}
+        globalFilter={globalFilter}
+        setGlobalFilter={setGlobalFilter}
+        // Pagination props sesuaikan dengan implementasi TableComponent Anda
+      />
     </div>
   );
 };

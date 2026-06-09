@@ -48,10 +48,10 @@ const MainTable = () => {
           </div>
           <div>
             <h3 className="text-base font-bold text-slate-800 tracking-tight">
-              Ship Confirm Log
+              Log Outbound Integration
             </h3>
             <p className="text-[11px] text-slate-500 font-medium mt-0.5">
-              Monitor status Ship Confirm
+              Monitor status Outbound Delivery Integration
             </p>
           </div>
         </div>
