@@ -24,10 +24,10 @@ const ShipConfirmQtyModal = ({
   isProcessing,
   onConfirm,
 }: ShipConfirmQtyModalProps) => {
-  // State untuk menampung input shipped_quantity secara key-value { [item_id]: quantity }
+  // State menampung input shipped_quantity secara key-value { [item_id]: quantity }
   const [quantities, setQuantities] = useState<Record<string, number>>({});
 
-  // Efek untuk pre-fill kuantitas otomatis disamakan dengan quantity_plan saat modal dibuka
+  // Pre-fill kuantitas disamakan dengan quantity_plan saat modal dibuka
   useEffect(() => {
     if (isOpen && doDetail) {
       const initialQuantities: Record<string, number> = {};
@@ -87,7 +87,7 @@ const ShipConfirmQtyModal = ({
               Subdist Ship Confirm Adjustment
             </h3>
             <p className="text-xs text-orange-500 font-mono mt-0.5 font-bold">
-                {doDetail.outbound_do_number}
+              {doDetail.outbound_do_number}
             </p>
           </div>
           <button
@@ -117,21 +117,25 @@ const ShipConfirmQtyModal = ({
                     MEMO ~ {memo.outbound_memo_number}
                   </span>
                   <span className="text-[12px] font-bold bg-orange-50 text-orange-600 px-2 py-0.5 rounded ml-auto">
-                    {memo.destination}
+                    {memo.destination || "No Destination"}
                   </span>
                 </div>
 
                 {/* List Items di dalam Memo */}
                 <div className="divide-y divide-slate-100">
-                  {memo.outbound_memo_items?.map((item) => {
+                  {memo.outbound_memo_items?.map((item: any) => {
                     const currentShippedQty =
                       quantities[item.id] ?? item.quantity_plan;
                     const isInvalid =
                       currentShippedQty < 0 ||
                       currentShippedQty > item.quantity_plan;
 
-                    const productInfo = (item as any).item;
-                    
+                    // 🔹 STRATEGI FALLBACK: Ambil teks langsung dari item root atau dari objek nested `.item`
+                    const itemSku = item.sku || item.item?.sku || "N/A";
+                    const itemDescription =
+                      item.description ||
+                      item.item?.description ||
+                      "No item description available";
 
                     return (
                       <div
@@ -143,21 +147,25 @@ const ShipConfirmQtyModal = ({
                             <FaDolly size={14} />
                           </div>
                           <div className="flex flex-col min-w-0">
+                            {/* Render Nama SKU */}
                             <span className="text-xs font-black text-blue-600 uppercase tracking-wide truncate">
-                              {productInfo?.sku || item.id}
+                              {itemSku}
                             </span>
-                            <span className="text-[11px] font-bold text-slate-600 line-clamp-1">
-                              {productInfo?.description ||
-                                "No description"}
+                            {/* Render Deskripsi Barang */}
+                            <span className="text-[11px] font-bold text-slate-600 line-clamp-2 mt-0.5">
+                              {itemDescription}
+                            </span>
+                             <span className="text-[11px] font-bold text-slate-600 line-clamp-2 mt-0.5">
+                              {item.id}
                             </span>
                           </div>
                         </div>
 
-                        {/* 🔹 FIX: Blok Pengatur Kuantitas & Validasi Di-Restore Utuh */}
+                        {/* Pengatur Kuantitas & Validasi Angka */}
                         <div className="flex items-center gap-4 self-end sm:self-auto">
                           <div className="text-right flex flex-col">
                             <span className="text-[10px] font-bold text-slate-400 uppercase">
-                              Qty
+                              Qty Plan
                             </span>
                             <span className="text-xs font-bold text-slate-700 font-mono whitespace-nowrap">
                               {item.quantity_plan} {item.uom}
@@ -187,7 +195,7 @@ const ShipConfirmQtyModal = ({
                               </span>
                             </div>
 
-                            {/* Error Tipis jika input melampaui Plan Qty */}
+                            {/* Alert teks validasi batas pengiriman */}
                             {isInvalid && (
                               <span className="text-[9px] text-rose-600 font-bold flex items-center gap-1 animate-pulse">
                                 <FaExclamationCircle size={10} /> Maks{" "}
@@ -196,7 +204,6 @@ const ShipConfirmQtyModal = ({
                             )}
                           </div>
                         </div>
-                        {/* 🔹 Akhir dari Blok Perbaikan */}
                       </div>
                     );
                   })}
