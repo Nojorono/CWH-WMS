@@ -8,18 +8,19 @@ export const mapShipConfirmLogList = (flatData: any[]): OutboundDoUI[] => {
   flatData.forEach((row) => {
     const doId = row.outbound_do_id;
     const txType = row.transaction_type || "UNKNOWN_TYPE";
-
-    // 🔹 KUNCI UTAMA: Gabungkan DO ID dengan Transaction Type agar pecah jadi baris terpisah di tabel utama!
     const logDoKey = `${doId}_${txType}`;
 
     // 1. GROUPING LEVEL 1: Outbound DO + Tipe Transaksi
     if (!doMap.has(logDoKey)) {
       doMap.set(logDoKey, {
         ...row.outbound_do,
-        // Kita timpa id-nya menggunakan logDoKey agar row tanstack table memiliki unique key yang valid
         id: logDoKey,
-        real_do_id: doId, // Tetap simpan ID asli jika sewaktu-waktu butuh fetch detail
-        log_transaction_type: txType, // Simpan tipe transaksi untuk dibaca langsung di kolom tabel utama
+        real_do_id: doId,
+        log_transaction_type: txType,
+        // Properti default yang akan dihitung di akhir loop
+        computed_status: "U",
+        computed_req_id: "N/A",
+        computed_error_message: null,
         tempMemoMap: new Map<string, any>(),
       });
     }
@@ -62,7 +63,7 @@ export const mapShipConfirmLogList = (flatData: any[]): OutboundDoUI[] => {
     }
   });
 
-  // Konversi struktur Map kembali menjadi Array
+  // Konversi struktur Map kembali menjadi Array + Jalankan Pre-computation Status
   return Array.from(doMap.values()).map((doItem) => {
     const memosArray = Array.from(doItem.tempMemoMap.values()).map(
       (memo: any) => {
@@ -78,9 +79,70 @@ export const mapShipConfirmLogList = (flatData: any[]): OutboundDoUI[] => {
 
     delete doItem.tempMemoMap;
 
+    // =========================================================================
+    // 🔹 ENGINE PARSER STATUS: SINKRONISASI DI LEVEL DATA (UI TERIMA BERSIH)
+    // =========================================================================
+    const firstItem = memosArray?.[0]?.outbound_memo_items?.[0];
+    const intg = firstItem?.integration_data;
+    const txType = doItem.log_transaction_type;
+
+    let finalStatus = "U";
+    let finalReqId = "N/A";
+    let errorMessage = null;
+
+    if (txType === "Outbound GS SO Subdist Pick Release") {
+      // Cek Eror Berantai dari pilar Pick Release
+      if (
+        intg?.create_delivery_status === "E" ||
+        intg?.update_delivery_status === "E" ||
+        intg?.pick_release_status === "E"
+      ) {
+        finalStatus = "E";
+        errorMessage =
+          intg?.create_delivery_message ||
+          intg?.update_delivery_message ||
+          intg?.pick_release_message ||
+          "Error Oracle Pick";
+      } else {
+        finalStatus = intg?.pick_release_status || "U";
+      }
+      finalReqId = intg?.pick_release_request_id || "N/A";
+    } else if (txType === "Outbound GS SO Subdist Ship Confirm") {
+      // Cek Eror Fase Akhir Pengiriman
+      if (intg?.ship_confirm_status === "E") {
+        finalStatus = "E";
+        errorMessage =
+          intg?.ship_confirm_message || "Error Oracle Ship Confirm";
+      } else {
+        finalStatus = intg?.ship_confirm_status || "U";
+      }
+      finalReqId = intg?.ship_confirm_request_id || "N/A";
+    } else if (txType === "Outbound GS Mutasi SO Internal") {
+      // Mutasi Internal terpadu: Utamakan status pengiriman, jika kosong fallback ke pick release
+      if (
+        intg?.ship_confirm_status === "E" ||
+        intg?.pick_release_status === "E"
+      ) {
+        finalStatus = "E";
+        errorMessage =
+          intg?.ship_confirm_message ||
+          intg?.pick_release_message ||
+          "Error Internal Mutasi";
+      } else {
+        finalStatus =
+          intg?.ship_confirm_status || intg?.pick_release_status || "U";
+      }
+      finalReqId =
+        intg?.ship_confirm_request_id || intg?.pick_release_request_id || "N/A";
+    }
+
     return {
       ...doItem,
       outbound_memos: memosArray,
-    } as OutboundDoUI;
+      // Pasang hasil kalkulasi ke root object DO
+      computed_status: finalStatus,
+      computed_req_id: finalReqId,
+      computed_error_message: errorMessage,
+    } as any; // Cast ke any atau perluas Interface OutboundDoUI Anda
   });
 };
