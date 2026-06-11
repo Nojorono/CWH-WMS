@@ -464,7 +464,6 @@ const OutboundShipConfirmTable = ({
           let currentStatus = "U";
           let reqId = "N/A";
 
-          // 🔹 PARSING STATUS BERDASARKAN PROPERTI LOG ASLI API
           if (txType === "Outbound GS SO Subdist Pick Release") {
             currentStatus = intg?.pick_release_status || "U";
             reqId = intg?.pick_release_request_id || "N/A";
@@ -472,7 +471,6 @@ const OutboundShipConfirmTable = ({
             currentStatus = intg?.ship_confirm_status || "U";
             reqId = intg?.ship_confirm_request_id || "N/A";
           } else if (txType === "Outbound GS Mutasi SO Internal") {
-            // Karena internal mencakup Create, Update, Pick, & Ship, ambil konklusi akhir dari Ship Confirm Status
             currentStatus =
               intg?.ship_confirm_status || intg?.pick_release_status || "U";
             reqId = intg?.pick_release_request_id || "N/A";
@@ -487,12 +485,6 @@ const OutboundShipConfirmTable = ({
                   variant="solid"
                   size="sm"
                 />
-                {currentStatus === "E" && (
-                  <span className="text-[10px] text-rose-600 flex items-center gap-0.5 font-bold bg-rose-50 px-1.5 py-0.2 rounded border border-rose-100">
-                    <FaExclamationTriangle size={10} />{" "}
-                    {intg?.create_delivery_message || "Error Oracle"}
-                  </span>
-                )}
               </div>
               <span className="text-[9px] text-slate-400 font-mono tracking-tight bg-slate-100 px-1.5 rounded mt-0.5">
                 REQ ID: {reqId}
