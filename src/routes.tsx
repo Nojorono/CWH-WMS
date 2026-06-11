@@ -71,6 +71,7 @@ import {
   DOsuggestionMain,
   ShipConfirmLog,
   GenerateDO,
+  OutboundSales,
 } from "./utils/PagesComponent";
 
 const DefaultPage = () => (
@@ -166,6 +167,7 @@ export function AppRoutes() {
       "/ir_integration_log": <IRintegrationLog />,
       "/outbound_integration_log": <ShipConfirmLog />,
       "/do_suggestion": <DOsuggestionMain />,
+      "/outbound_sales": <OutboundSales />,
     };
     return map[path] || <DefaultPage />;
   }
