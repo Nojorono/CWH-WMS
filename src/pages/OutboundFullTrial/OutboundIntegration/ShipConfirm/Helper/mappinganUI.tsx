@@ -17,7 +17,6 @@ export const mapShipConfirmLogList = (flatData: any[]): OutboundDoUI[] => {
         id: logDoKey,
         real_do_id: doId,
         log_transaction_type: txType,
-        // Properti default yang akan dihitung di akhir loop
         computed_status: "U",
         computed_req_id: "N/A",
         computed_error_message: null,
