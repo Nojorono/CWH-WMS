@@ -6,6 +6,7 @@ import {
   CallPlanDetail,
   CallPlanBindings,
 } from "../../../../API/types/callPlan";
+import { IsAny } from "react-hook-form";
 
 interface AdjustTableProps {
   data: CallPlanDetail[];
@@ -70,20 +71,13 @@ const AdjustTable = ({
           </span>
         ),
       },
-      //  {
-      //   accessorKey: "CALL_PLAN_START_DATE",
-      //   header: () => <div className="text-left">CALLPLAN START DATE</div>,
-      //   cell: ({ row }) => (
-      //     <span className="text-sm text-slate-600">{row.original.CALL_PLAN_START_DATE}</span>
-      //   ),
-      // },
       {
         id: "action",
         header: () => <div className="text-center">ACTION</div>,
-        cell: () => (
+        cell: ({ row }) => (
           <div className="flex justify-center">
             <button
-              onClick={() => navigate("generate_do")}
+              onClick={() => handleGenerateDO(row.original)}
               className="px-4 py-1.5 rounded-full text-xs font-semibold bg-[#F97316] hover:bg-orange-600 text-white shadow-sm transition-all"
             >
               Generate Suggestion
@@ -95,6 +89,11 @@ const AdjustTable = ({
     [navigate],
   );
 
+  const handleGenerateDO = (rowData: any) => {
+    console.log("Data yang dipilih:", rowData);
+    navigate("generate_do", { state: { selectedSales: rowData } });
+  };
+
   return (
     <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
       <TableComponent
@@ -102,7 +101,6 @@ const AdjustTable = ({
         columns={columns}
         globalFilter={globalFilter}
         setGlobalFilter={setGlobalFilter}
-        // Pagination props sesuaikan dengan implementasi TableComponent Anda
       />
     </div>
   );

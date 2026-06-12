@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { CallPlanBindings, SupervisorData } from '../../../../API/types/callPlan';
-import { getCallPlan } from '../../../../API/store/DOsuggestionServices/callPlanService';
+import { generateCallPlan } from '../../../../API/store/DOsuggestionServices/genrateCallPlanService';
 
-export const useCallPlan = (params: CallPlanBindings) => {
+export const useGenerateCallPlan = (params: CallPlanBindings) => {
     const [data, setData] = useState<SupervisorData[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -11,7 +11,7 @@ export const useCallPlan = (params: CallPlanBindings) => {
         setIsLoading(true);
         setError(null);
         try {
-            const result = await getCallPlan(params);
+            const result = await generateCallPlan(params);
             setData(result);
         } catch (err) {
             setError('Gagal memuat data call plan');

@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
-import { CallPlanBindings, SupervisorData } from '../../../../API/types/callPlan';
-import { getCallPlan } from '../../../../API/store/DOsuggestionServices/callPlanService';
+import { CallPlanBindings, BTBResponse } from '../../../../API/types/callPlan'; // Pastikan import interface yang benar
+import { getBTB } from '../../../../API/store/DOsuggestionServices/getBTBservice';
 
-export const useCallPlan = (params: CallPlanBindings) => {
-    const [data, setData] = useState<SupervisorData[]>([]);
+
+export const useGetBTB = (params: CallPlanBindings) => {
+    const [data, setData] = useState<BTBResponse[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
@@ -11,10 +12,10 @@ export const useCallPlan = (params: CallPlanBindings) => {
         setIsLoading(true);
         setError(null);
         try {
-            const result = await getCallPlan(params);
+            const result = await getBTB(params);
             setData(result);
         } catch (err) {
-            setError('Gagal memuat data call plan');
+            setError('Gagal memuat data BTB');
             console.error(err);
         } finally {
             setIsLoading(false);
