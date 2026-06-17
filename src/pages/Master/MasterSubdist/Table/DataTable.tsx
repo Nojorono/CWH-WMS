@@ -8,6 +8,7 @@ import DynamicTable from "../../../../components/wms-components/DynamicTable";
 import { useStoreMasterSubdist } from "../../../../DynamicAPI/stores/Store/MasterStore";
 import ActIndicator from "../../../../components/ui/activityIndicator";
 import { EndPoint } from "../../../../utils/EndPoint";
+import axiosInstance from "../../../../DynamicAPI/AxiosInstance";
 
 const DataTable = () => {
   const { list: listSubdist, fetchAll } = useStoreMasterSubdist();
@@ -31,7 +32,7 @@ const DataTable = () => {
       { accessorKey: "kecamatan", header: "District" },
       { accessorKey: "status", header: "Status" },
     ],
-    []
+    [],
   );
 
   const formFields = [
@@ -105,25 +106,17 @@ const DataTable = () => {
 
   const sycnDataAMOfromMeta = async () => {
     setLoadingSycn(true);
+
     try {
-      const token = localStorage.getItem("token");
-      if (!token) throw new Error("No token found");
-      const response = await fetch(
-        `${EndPoint}customer/subdist/sync-from-meta-oracle`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-      if (!response.ok) {
-        throw new Error("Network response was not ok");
-      }
-      setLoadingSycn(false);
+      await axiosInstance.post("customer/subdist/sync-from-meta-oracle");
       fetchAll();
     } catch (error) {
-      console.error("Error fetching data:", error);
+      console.error(
+        "Error syncing subdist data from Meta Oracle via axiosInstance:",
+        error,
+      );
+    } finally {
+      setLoadingSycn(false);
     }
   };
 

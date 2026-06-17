@@ -23,6 +23,8 @@ import Inventory from "../pages/Inventory";
 import InventoryDetail from "../pages/Inventory/Form/Detail";
 import InventoryVisibility from "../pages/InventoryVisibility";
 import InventoryMovement from "../pages/InventoryMovement";
+import InventoryOnHand from "../pages/InventoryOnHand";
+
 
 // MASTER PALLET
 import MasterPallet from "../pages/Master/MasterPallet";
@@ -47,9 +49,11 @@ import MainTabZone from "../pages/Master/MasterSubWarehouse/Tabs/Main";
 
 // MASTER BIN
 import MasterBin from "../pages/Master/MasterBin";
-
 import MasterSource from "../pages/Master/MasterSource";
 import MasterSupplier from "../pages/Master/MasterSupplier";
+
+// MASTER DEPARTEMENT
+import MasterDepartement from '../pages/Master/MasterDepartement'
 
 //OUTBOUND
 import Memo from "../pages/OutboundFullTrial/Memo";
@@ -61,11 +65,9 @@ import PickingSuggestion from "../pages/OutboundFullTrial/Picking/Main/PickingSu
 import PickingTransaction from "../pages/OutboundFullTrial/PickingTransaction";
 import DetachAttachProcess from "../pages/OutboundFullTrial/PickingTransaction/Main/DetachAttach";
 import GateLoading from "../pages/OutboundFullTrial/GateLoading";
+import IRintegrationLog from "../pages/OutboundFullTrial/OutboundIntegration/IRintegration/Main/MainTable"
+import ShipConfirmLog from "../pages/OutboundFullTrial/OutboundIntegration/ShipConfirm/Main/MainTable"
 
-// Approval Set Up
-// import ApprovalSetup from "../pages/ApprovalSetup/index";
-// import CreateApproval from "../pages/ApprovalSetup/Table/CreateApprovalSetup";
-// import ApprovalProcess from "../pages/ApprovalSetup/Table/ApprovalProcess";
 import PrintSuratJalan from "../pages/OutboundFullTrial/PickingTransaction/Main/PrintSuratJalan/PrintSuratJalan";
 import StockAdjustment from "../pages/StockAdjustment/index";
 
@@ -73,6 +75,12 @@ import StockAdjustment from "../pages/StockAdjustment/index";
 import ReportInbound from "../pages/Reporting/Main/ReportInbound";
 import ReportOutbound from "../pages/Reporting/Main/ReportOutbound";
 import Reporting2 from "../pages/Reporting/Main/Report2";
+
+// DO SUGGESTION
+import DOsuggestionMain from '../pages/DOsuggestion/Suggestion/Main/MainTable'
+import GenerateDO from '../pages/DOsuggestion/Suggestion/Main/GenerateDO'
+import OutboundSales from '../pages/DOsuggestion/OutboundSales/Main/MainTable'
+
 
 export {
   // DASHBOARD
@@ -101,6 +109,9 @@ export {
   MasterSource,
   MasterSupplier,
 
+  //MASTER DEPT
+  MasterDepartement,
+
   // MASTER ROLES PAGE
   MasterRole,
   CreateRole,
@@ -110,6 +121,7 @@ export {
   Inbound,
   InboundProcess,
   InboundIntegration,
+  InventoryOnHand,
 
   // PUTAWAY
   PutAway,
@@ -133,6 +145,8 @@ export {
   DetachAttachProcess,
   GateLoading,
   PrintSuratJalan,
+  IRintegrationLog,
+  ShipConfirmLog,
 
   // Approval Set Up
   // ApprovalSetup,
@@ -141,4 +155,9 @@ export {
   ReportInbound,
   ReportOutbound,
   Reporting2,
+
+  DOsuggestionMain,
+  GenerateDO,
+
+  OutboundSales,
 };

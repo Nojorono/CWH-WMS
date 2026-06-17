@@ -12,8 +12,10 @@ import {
 import PrintBarcodeModal from "../Modal/PrintBarcodeModal";
 import { showErrorToast } from "../../../../components/toast";
 import GeneratePalletModal from "../Modal/GeneratePalletModal";
+import { usePersistAuthStore } from "../../../../API/store/AuthStore/PersistAuthStore";
 
 const DataTable = () => {
+  // Store Master Data Pallet & UOM
   const {
     list: pallet,
     createData,
@@ -24,6 +26,8 @@ const DataTable = () => {
   } = useStorePallet();
 
   const { list: uomList, fetchAll: fetchUom } = useStoreUom();
+
+  // Local State UI Controls
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounce(search, 500);
   const [isCreateModalOpen, setCreateModalOpen] = useState(false);
@@ -32,53 +36,37 @@ const DataTable = () => {
   const [selectedPallets, setSelectedPallets] = useState<any[]>([]);
   const [isGenerateModalOpen, setGenerateModalOpen] = useState(false);
   const [selectedOrgName, setSelectedOrgName] = useState("");
-  const [IoList, setIoList] = useState<any[]>([]);
 
-  const normalizeStorageValue = (val: string | null) => {
-    if (!val) return "";
-    const cleaned = String(val).trim();
-    if (!cleaned || cleaned === "undefined" || cleaned === "null") return "";
-    return cleaned;
-  };
+  // Ambil Data Gudang Organisasi & Info User dari Zustand Store Persistent baru
+  const globalIoList = usePersistAuthStore((state) => state.ioList) || [];
+  const user = usePersistAuthStore((state) => state.user);
 
+  // Ambil data dari backend saat komponen pertama kali dirender
   useEffect(() => {
     fetchPallet();
     fetchUom();
-
-    const storedIo = localStorage.getItem("io_list");
-    const rawOrgId = localStorage.getItem("organization_id");
-    const organizationId = normalizeStorageValue(rawOrgId);
-
-    if (storedIo) {
-      try {
-        const parsedIo = JSON.parse(storedIo);
-
-        if (!Array.isArray(parsedIo)) {
-          setIoList([]);
-          return;
-        }
-
-        const filteredIo = organizationId
-          ? parsedIo.filter(
-              (io: any) => String(io?.id) === String(organizationId),
-            )
-          : parsedIo;
-
-        setIoList(filteredIo);
-      } catch (error) {
-        console.error("Gagal parsing io_list dari localStorage", error);
-        setIoList([]);
-      }
-    } else {
-      setIoList([]);
-    }
   }, []);
 
+  // Filter List IO berdasarkan hak akses Organisasi User (HO vs Cabang)
+  const IoList = useMemo(() => {
+    const organizationId = user?.userDetail?.organization?.id || null;
+
+    // Jika user HO / Superadmin (tidak memiliki organizationId spesifik), tampilkan semua IO
+    if (!organizationId) return globalIoList;
+
+    // Jika user Cabang, filter hanya organisasi milik dia saja
+    return globalIoList.filter(
+      (io: any) => String(io?.id) === String(organizationId),
+    );
+  }, [globalIoList, user]);
+
+  // Handler: Membuat Pallet Baru (Otomatis Append Prefix Nama Organisasi)
   const handleCreate = async (data: any) => {
     const selectedOrg = IoList.find(
       (item: any) => String(item.id) === String(data.organization_id),
     );
     const orgName = selectedOrg ? selectedOrg.organization_name : "";
+
     const formattedData = {
       ...data,
       pallet_code: orgName
@@ -94,6 +82,7 @@ const DataTable = () => {
     return await createData(formattedData);
   };
 
+  // Handler: Update Data Pallet (Pembersihan & Penyusunan Ulang Prefix Code)
   const handleUpdate = (data: any) => {
     const { id, ...rest } = data;
 
@@ -104,7 +93,7 @@ const DataTable = () => {
 
     let baseCode = String(rest.pallet_code);
 
-    // Logika Pembersihan: Hapus orgName lama jika ada di depan atau di belakang
+    // Bersihkan prefix/suffix duplikat kode organisasi lama jika ada
     if (orgName) {
       if (baseCode.startsWith(`${orgName}-`)) {
         baseCode = baseCode.replace(`${orgName}-`, "");
@@ -127,6 +116,7 @@ const DataTable = () => {
     });
   };
 
+  // Definisikan Struktur Kolom Tabel Dinamis
   const columns = useMemo(
     () => [
       {
@@ -139,13 +129,12 @@ const DataTable = () => {
         header: "Organization",
         cell: ({ row }: { row: { original: any } }) => {
           const rowOrgId = row.original.organization_id;
-
           const org = IoList.find(
             (item: any) => String(item.id) === String(rowOrgId),
           );
 
           return (
-            <span className="">
+            <span className="font-medium text-gray-700 dark:text-gray-300">
               {org ? org.organization_name : `ID Not Found: ${rowOrgId}`}
             </span>
           );
@@ -167,19 +156,31 @@ const DataTable = () => {
         accessorKey: "isActive",
         header: "Active",
         cell: ({ row }: { row: { original: any } }) =>
-          row.original.isActive ? "Active" : "Inactive",
+          row.original.isActive ? (
+            <span className="text-green-600 font-semibold">Active</span>
+          ) : (
+            <span className="text-gray-400">Inactive</span>
+          ),
       },
       {
         accessorKey: "isFull",
         header: "Is Full",
         cell: ({ row }: { row: { original: any } }) =>
-          row.original.isFull ? "Full" : "Not Full",
+          row.original.isFull ? (
+            <span className="text-amber-600 font-semibold">Full</span>
+          ) : (
+            <span className="text-blue-600">Not Full</span>
+          ),
       },
       {
         accessorKey: "uom",
         header: "UOM",
         cell: ({ row }: { row: { original: any } }) => {
-          const uom = uomList.find((item: any) => item.id === row.original.uom);
+          const uom = uomList.find(
+            (item: any) =>
+              item.code === row.original.uom ||
+              String(item.id) === String(row.original.uom),
+          );
           return uom ? uom.name : row.original.uom;
         },
       },
@@ -187,6 +188,7 @@ const DataTable = () => {
     [IoList, uomList],
   );
 
+  // Definisikan Field Form Input Dinamis untuk Modal CRUD
   const dynamicFormFields = useMemo(() => {
     return [
       {
@@ -206,11 +208,7 @@ const DataTable = () => {
           const org = IoList.find(
             (item: any) => String(item.id) === String(val),
           );
-          if (org) {
-            setSelectedOrgName(org.organization_name);
-          } else {
-            setSelectedOrgName("");
-          }
+          setSelectedOrgName(org ? org.organization_name : "");
         },
       },
       {
@@ -220,7 +218,7 @@ const DataTable = () => {
         placeholder: "Masukkan kode pallet...",
         description: selectedOrgName
           ? `Hasil akhir: ${selectedOrgName}-[inputan_anda]`
-          : "Pilih organisasi dlu untuk melihat format prefix.",
+          : "Pilih organisasi dulu untuk melihat format prefix.",
         validation: { required: "Required" },
       },
       {
@@ -255,16 +253,18 @@ const DataTable = () => {
     ];
   }, [IoList, selectedOrgName, uomList]);
 
+  // Handler: Mengumpulkan Pallet Yang Dipilih untuk Print Barcode/QR
   const handlePrintBarcode = () => {
     if (selectedIds.length === 0) {
       showErrorToast("Pilih minimal 1 data untuk dicetak!");
       return;
     }
-    const selected = pallet.filter(
-      (p) => typeof p.id === "string" && selectedIds.includes(p.id),
-    );
+
+    // KUNCI PERBAIKAN BUG: Gunakan String(p.id) agar pencocokan ID bertipe number tetap sukses bekerja
+    const selected = pallet.filter((p) => selectedIds.includes(String(p.id)));
+
     setSelectedPallets(selected);
-    setPrintModalOpen(true); // buka modal preview
+    setPrintModalOpen(true);
   };
 
   const handleRefresh = () => {
@@ -273,18 +273,26 @@ const DataTable = () => {
 
   return (
     <>
-      <div className="p-4 bg-white shadow rounded-md mb-5">
+      {/* Search and Action Toolbar Bar */}
+      <div className="p-4 bg-white shadow rounded-xl mb-5 border border-gray-100">
         <div className="flex justify-between items-center">
-          <div className="space-x-4">
-            <Label htmlFor="search">Search</Label>
+          <div className="flex items-center space-x-4">
+            <Label
+              htmlFor="search"
+              className="text-sm font-semibold text-gray-600"
+            >
+              Search
+            </Label>
             <Input
               onChange={(e) => setSearch(e.target.value)}
               type="text"
               id="search"
               placeholder="🔍 Masukan data.."
+              className="max-w-xs"
             />
           </div>
-          <div className="space-x-4">
+
+          <div className="flex items-center space-x-3">
             <Button
               variant="primary"
               size="sm"
@@ -317,8 +325,14 @@ const DataTable = () => {
         </div>
       </div>
 
+      {/* Main Content Area (Table Component) */}
       {isLoading ? (
-        <p className="text-sm text-gray-500">Loading data...</p>
+        <div className="flex p-8 justify-center items-center">
+          <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+          <p className="ml-3 text-sm text-gray-500 font-medium">
+            Loading pallet master data...
+          </p>
+        </div>
       ) : (
         <DynamicTable
           data={pallet}
@@ -333,18 +347,18 @@ const DataTable = () => {
             await deleteData(id);
           }}
           onRefresh={fetchPallet}
-          getRowId={(row) => row.id}
-          title="Form Data"
+          getRowId={(row) => String(row.id)}
+          title="Master Pallet Management"
           onSelectedChange={setSelectedIds}
         />
       )}
 
-      {/* 🔑 Modal preview + print */}
+      {/* Modal Popup Component Viewports */}
       <PrintBarcodeModal
         open={isPrintModalOpen}
         onClose={() => setPrintModalOpen(false)}
         items={selectedPallets}
-        useQRCode={true} // true kalau QR, false kalau barcode
+        useQRCode={true}
       />
 
       <GeneratePalletModal

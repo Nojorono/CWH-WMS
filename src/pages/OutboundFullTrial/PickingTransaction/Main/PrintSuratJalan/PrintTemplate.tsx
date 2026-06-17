@@ -1,6 +1,7 @@
 import React from "react";
 import { OutboundMemo } from "../../../../../DynamicAPI/types/DeliverOrderTypes";
 import { formatDateIndo } from "../../../../../helper/FormatDate";
+import { usePersistAuthStore } from "../../../../../API/store/AuthStore/PersistAuthStore";
 
 type DoHeader = {
   id?: string;
@@ -69,8 +70,13 @@ const PrintTemplate = React.forwardRef<
   while (paddedItems.length < MIN_ROWS) {
     paddedItems.push({ nama: "", qtyValue: 0, uom: "" });
   }
+  
+  // Ambil snapshot data langsung dari memory state Zustand tanpa memicu siklus render
+  const userState = usePersistAuthStore.getState().user;
+  const storedFullName =
+    `${userState?.userDetail?.firstName ?? ""} ${userState?.userDetail?.lastName ?? ""}`.trim() ||
+    "IT";
 
-  const storedFullName = localStorage.getItem("full_name") ?? "IT";
   const printDate = new Date();
 
   return (

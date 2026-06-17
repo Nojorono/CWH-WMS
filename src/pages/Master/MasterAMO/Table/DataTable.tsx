@@ -8,6 +8,7 @@ import DynamicTable from "../../../../components/wms-components/DynamicTable";
 import { useStoreMasterAMO } from "../../../../DynamicAPI/stores/Store/MasterStore";
 import ActIndicator from "../../../../components/ui/activityIndicator";
 import { EndPoint } from "../../../../utils/EndPoint";
+import axiosInstance from "../../../../DynamicAPI/AxiosInstance";
 
 const DataTable = () => {
   const {
@@ -32,7 +33,7 @@ const DataTable = () => {
       { accessorKey: "name", header: "Name" },
       { accessorKey: "locationDescription", header: "Location Description" },
     ],
-    []
+    [],
   );
 
   const formFields = [
@@ -80,25 +81,16 @@ const DataTable = () => {
 
   const sycnDataAMOfromMeta = async () => {
     setLoadingSycn(true);
-
     try {
-      const token = localStorage.getItem("token"); // Replace with your actual token key
-      const response = await fetch(
-        `${EndPoint}customer/main/sync-from-meta-oracle`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-      if (!response.ok) {
-        throw new Error("Network response was not ok");
-      }
-      setLoadingSycn(false);
+      await axiosInstance.post("customer/main/sync-from-meta-oracle");
       fetchAll();
     } catch (error) {
-      console.error("Error fetching data:", error);
+      console.error(
+        "Error syncing data from Meta Oracle via axiosInstance:",
+        error,
+      );
+    } finally {
+      setLoadingSycn(false);
     }
   };
 

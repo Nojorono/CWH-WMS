@@ -32,6 +32,17 @@ export const STATUS_MAP_INTEGRATION_INBOUND: StatusMap = {
   CANCELLED: 'error'
 };
 
+export const STATUS_MAP_INTEGRATION_OUTBOUND: StatusMap = {
+  CREATED: 'grey',
+  READY: 'secondary',
+  S: 'success',
+  E: 'error',
+  SUCCESS: 'success',
+  ERROR: 'error',
+  FAILED: 'error',
+  CANCELLED: 'error'
+};
+
 // 🧾 Memo Module
 export const STATUS_MAP_MEMO: StatusMap = {
   PENDING: "grey",
@@ -87,3 +98,5 @@ export const STATUS_MAPS = {
   inventory_progress: STATUS_PROGRESSION_INVENTORY,
   putaway: STATUS_MAP_PUTAWAY,
 } as const;
+
+

@@ -1,10 +1,11 @@
 import React, { useState, useMemo } from "react";
 import Button from "../../../../components/ui/button/Button";
 import Select from "../../../../components/form/Select"; // pastikan path sesuai
-import { showErrorToast } from "../../../../components/toast";
+import { showErrorToast, showSuccessToast } from "../../../../components/toast";
 import { EndPoint } from "../../../../utils/EndPoint";
 import axios from "axios"; // pastikan axios di-import
 import { useNavigate } from "react-router-dom";
+import axiosInstance from "../../../../DynamicAPI/AxiosInstance";
 
 type ModalSelectMemoProps = {
   isOpen?: boolean;
@@ -44,34 +45,69 @@ const ModalSelectMemo: React.FC<ModalSelectMemoProps> = ({
 
   const handleSubmit = async () => {
     if (!selectedMemo) return;
+
     if (selectedTransactions.length === 0) {
       showErrorToast("Please select at least one transaction to attach.");
       return;
     }
 
-    // Implement the API call
-    if (selectedTransactions.length > 0) {
-      try {
-        const token = localStorage.getItem("token"); // Get token from localStorage
-        const response = await axios.patch(
-          `${EndPoint}transaction-picking/memo/${selectedMemo}/attach`, // Ganti transactionData.id dengan selectedMemo
-          { transactionIds: selectedTransactions }, // Kirim transactionIds
-          {
-            headers: {
-              Authorization: `Bearer ${token}`, // Use the token from localStorage
-              "Content-Type": "application/json",
-              accept: "*/*",
-            },
-          }
-        );
-        navigate("/picking_transaction");
-      } catch (error) {
-        showErrorToast(`${error}`);
-        console.error("Error attaching transactions:", error);
-      }
+    try {
+      await axiosInstance.patch(
+        `transaction-picking/memo/${selectedMemo}/attach`,
+        {
+          transactionIds: selectedTransactions,
+        },
+        {
+          headers: {
+            accept: "*/*",
+          },
+        },
+      );
+
+      showSuccessToast("Transactions attached successfully");
+      navigate("/picking_transaction");
+    } catch (error: any) {
+      console.error("Error attaching transactions via axiosInstance:", error);
+
+      const errorMsg =
+        error.response?.data?.message ||
+        error.message ||
+        "Failed to attach transactions";
+      showErrorToast(errorMsg);
+    } finally {
+      onClose?.();
     }
-    onClose?.();
   };
+
+  // const handleSubmit = async () => {
+  //   if (!selectedMemo) return;
+  //   if (selectedTransactions.length === 0) {
+  //     showErrorToast("Please select at least one transaction to attach.");
+  //     return;
+  //   }
+
+  //   // Implement the API call
+  //   if (selectedTransactions.length > 0) {
+  //     try {
+  //       const response = await axios.patch(
+  //         `${EndPoint}transaction-picking/memo/${selectedMemo}/attach`, // Ganti transactionData.id dengan selectedMemo
+  //         { transactionIds: selectedTransactions }, // Kirim transactionIds
+  //         {
+  //           headers: {
+  //             Authorization: `Bearer ${token}`, // Use the token from localStorage
+  //             "Content-Type": "application/json",
+  //             accept: "*/*",
+  //           },
+  //         }
+  //       );
+  //       navigate("/picking_transaction");
+  //     } catch (error) {
+  //       showErrorToast(`${error}`);
+  //       console.error("Error attaching transactions:", error);
+  //     }
+  //   }
+  //   onClose?.();
+  // };
 
   const handleCancel = () => {
     setSelectedMemo("");
@@ -87,7 +123,7 @@ const ModalSelectMemo: React.FC<ModalSelectMemoProps> = ({
         <label className="text-lg font-medium text-gray-700 mb-2 block">
           List Memo sesuai dengan Item pada Transaction Picking yang dipilih
         </label>
-        
+
         <Select
           options={mappedMemos}
           value={selectedMemo}

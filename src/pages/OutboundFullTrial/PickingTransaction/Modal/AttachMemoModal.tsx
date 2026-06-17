@@ -6,6 +6,8 @@ import { EndPoint } from "../../../../utils/EndPoint";
 import KeyValueCard from "../../Picking/Helper/KeyValueCard";
 import { formatDateIndo } from "../../../../helper/FormatDate";
 import { FaChevronRight } from "react-icons/fa";
+import axiosInstance from "../../../../DynamicAPI/AxiosInstance";
+import { showErrorToast, showSuccessToast } from "../../../../components/toast";
 
 type AttachMemoModalProps = {
   isOpen: boolean;
@@ -39,31 +41,57 @@ const AttachMemoModal: React.FC<AttachMemoModalProps> = ({
     onRequestClose();
   };
 
-  const handleSubmit = async () => {
-    const attachedMemoData = {
-      memoId: memoData.id,
-      do_id: detailDO.outbound_do_number,
-      sequence: "",
-    };
+  // const handleSubmit = async () => {
+  //   const attachedMemoData = {
+  //     memoId: memoData.id,
+  //     do_id: detailDO.outbound_do_number,
+  //     sequence: "",
+  //   };
 
+  //   try {
+  //     const response = await fetch(
+  //       `${EndPoint}outbound-do/${detailDO.id}/attach-memo?memoId=${memoData.id}&sequence=${attachedMemoData.sequence}`,
+  //       {
+  //         method: "PATCH",
+  //         headers: {
+  //           Authorization: `Bearer ${token}`,
+  //         },
+  //       }
+  //     );
+
+  //     if (!response.ok) throw new Error("Network response was not ok");
+
+  //     handleClose();
+  //     navigate("/picking_transaction");
+  //   } catch (error) {
+  //     console.error("Error Attaching Memo:", error);
+  //   }
+  // };
+
+  const handleSubmit = async () => {
     try {
-      const token = localStorage.getItem("token");
-      const response = await fetch(
-        `${EndPoint}outbound-do/${detailDO.id}/attach-memo?memoId=${memoData.id}&sequence=${attachedMemoData.sequence}`,
+      await axiosInstance.patch(
+        `outbound-do/${detailDO.id}/attach-memo`,
+        null,
         {
-          method: "PATCH",
-          headers: {
-            Authorization: `Bearer ${token}`,
+          params: {
+            memoId: memoData.id,
+            sequence: "",
           },
-        }
+        },
       );
 
-      if (!response.ok) throw new Error("Network response was not ok");
+      showSuccessToast("Memo berhasil dikaitkan ke Delivery Order");
 
       handleClose();
       navigate("/picking_transaction");
-    } catch (error) {
-      console.error("Error Attaching Memo:", error);
+    } catch (error: any) {
+      console.error("Error Attaching Memo via axiosInstance:", error);
+
+      const errorMsg =
+        error.response?.data?.message ||
+        "Gagal mengaitkan memo ke Delivery Order";
+      showErrorToast(errorMsg);
     }
   };
 
@@ -71,7 +99,7 @@ const AttachMemoModal: React.FC<AttachMemoModalProps> = ({
   const selectedMemo = list.find((memo: any) => memo.id === memoData.id);
 
   const selectedMemoFromDO = detailDO?.outbound_memos?.find(
-    (memo: any) => memo.id === memoData.id
+    (memo: any) => memo.id === memoData.id,
   );
 
   const mergedSelectedMemo = selectedMemo
@@ -146,7 +174,7 @@ const AttachMemoModal: React.FC<AttachMemoModalProps> = ({
               {mergedSelectedMemo.outbound_memo_items?.map((item: any) => {
                 const relatedTransactions =
                   mergedSelectedMemo.transaction_pickings?.filter(
-                    (trx: any) => trx.item_id === item.item_id
+                    (trx: any) => trx.item_id === item.item_id,
                   ) || [];
 
                 return (
@@ -230,7 +258,7 @@ const AttachMemoModal: React.FC<AttachMemoModalProps> = ({
                         </h4>
 
                         {relatedTransactions.flatMap(
-                          (trx: any) => trx.transactionScanPicking || []
+                          (trx: any) => trx.transactionScanPicking || [],
                         ).length === 0 ? (
                           <p className="text-sm text-gray-400 italic">
                             No scan data
@@ -257,7 +285,7 @@ const AttachMemoModal: React.FC<AttachMemoModalProps> = ({
                                     inspection_by: "Inspection By",
                                   }}
                                 />
-                              ))
+                              )),
                             )}
                           </div>
                         )}

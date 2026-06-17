@@ -12,8 +12,8 @@ import { getCurrentRole } from "../../../../utils/rolePermissions";
 import { showConfirmDialog } from "../../../../components/swal-confirm";
 import TableComponent from "../../../../components/tables/ActionTable/TableComponent";
 import ActIndicator from "../../../../components/ui/activityIndicator";
-
-
+import axiosInstance from "../../../../DynamicAPI/AxiosInstance";
+import { showErrorToast, showSuccessToast } from "../../../../components/toast";
 
 type MemoData = {
   outbound_do: any;
@@ -159,44 +159,75 @@ const AdjustTable = ({
     });
   };
 
+  // const handleDelete = async (id: string) => {
+  //   showConfirmDialog(
+  //     async () => {
+  //       try {
+  //         if (!token) return;
+
+  //         const url = `${EndPoint}outbound-memo/${id}/cancelled`;
+  //         const res = await fetch(url, {
+  //           method: "POST",
+  //           headers: {
+  //             Authorization: `Bearer ${token}`,
+  //             "Content-Type": "application/json",
+  //           },
+  //         });
+
+  //         if (res.ok && fetchUsingPagination) {
+  //           fetchUsingPagination({
+  //             page: currentPage,
+  //             limit: pageSize,
+  //             search: globalFilter || "",
+  //             status: filteredStatus || "",
+  //             sortOrder: "DESC",
+  //           });
+  //         }
+  //       } catch (error) {
+  //         console.error("Error cancelling memo:", error);
+  //       }
+  //     },
+  //     {
+  //       title: "Cancel Memo",
+  //       text: "Apakah Anda yakin ingin membatalkan memo ini?",
+  //       icon: "warning",
+  //       confirmButtonText: "Ya, Cancel Memo!",
+  //       cancelButtonText: "Tidak, Batalkan",
+  //     },
+  //   );
+  // };
+
   const handleDelete = async (id: string) => {
-    showConfirmDialog(
-      async () => {
-        try {
-          const token = localStorage.getItem("token");
-          if (!token) return;
+  showConfirmDialog(
+    async () => {
+      try {
+        await axiosInstance.post(`outbound-memo/${id}/cancelled`);
+        showSuccessToast("Outbound memo berhasil dibatalkan");
 
-          const url = `${EndPoint}outbound-memo/${id}/cancelled`;
-          const res = await fetch(url, {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
+        if (fetchUsingPagination) {
+          fetchUsingPagination({
+            page: currentPage,
+            limit: pageSize,
+            search: globalFilter || "",
+            status: filteredStatus || "",
+            sortOrder: "DESC",
           });
-
-          if (res.ok && fetchUsingPagination) {
-            fetchUsingPagination({
-              page: currentPage,
-              limit: pageSize,
-              search: globalFilter || "",
-              status: filteredStatus || "",
-              sortOrder: "DESC",
-            });
-          }
-        } catch (error) {
-          console.error("Error cancelling memo:", error);
         }
-      },
-      {
-        title: "Cancel Memo",
-        text: "Apakah Anda yakin ingin membatalkan memo ini?",
-        icon: "warning",
-        confirmButtonText: "Ya, Cancel Memo!",
-        cancelButtonText: "Tidak, Batalkan",
-      },
-    );
-  };
+      } catch (error: any) {
+        console.error("Error cancelling memo via axiosInstance:", error);
+        const errorMsg = error.response?.data?.message || "Gagal membatalkan outbound memo";
+        showErrorToast(errorMsg);
+      }
+    },
+    {
+      title: "Cancel Memo",
+      text: "Apakah Anda yakin ingin membatalkan memo ini?",
+      icon: "warning",
+      confirmButtonText: "Ya, Cancel Memo!",
+      cancelButtonText: "Tidak, Batalkan",
+    },
+  );
+};
 
   const canEditMemo = (memo: MemoData, roleName: string) => {
     if (roleName === "SUPERVISOR") return false;

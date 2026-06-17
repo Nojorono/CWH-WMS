@@ -1,9 +1,10 @@
 import { Server47 } from "../../../utils/EndPoint";
-import { ItemForm } from "../../types/searchSO";
+import { ItemForm, SOHeaderInfo } from "../../types/searchSO";
 
 export interface SOSearchResult {
     vendorName: string;
     items: ItemForm[];
+    headerInfo?: SOHeaderInfo;
 }
 
 export interface UomOption {
@@ -24,14 +25,13 @@ export async function SOsearchService(
     masterItems: any[],
     uomList: UomOption[]
 ): Promise<SOSearchResult> {
+
     const res = await fetch(`${Server47}/sales-order?order_number=${soNo}`);
     const json = await res.json();
     const data = json?.data?.[0];
-
     if (!data) throw new Error(`SO ${soNo} tidak ditemukan.`);
 
     const vendorName = data.ORG_NAME?.toUpperCase() ?? "";
-
     const items: ItemForm[] = (data.ITEM ?? [])
         .map((it: any) => {
             const master = masterItems.find(
@@ -39,11 +39,12 @@ export async function SOsearchService(
                     m.item_number === it.ITEM_NUMBER ||
                     String(m.id) === String(it.INVENTORY_ITEM_ID)
             );
+            
             if (!master) return null;
 
             return {
                 item_id: String(master.id),
-                item_name: master.description || it.ITEM_DESC,
+                item_name: master.sku || it.ITEM_CODE,
                 sku: master.sku || it.ITEM_CODE,
                 item_number: master.item_number || it.ITEM_NUMBER,
                 description: master.description || it.ITEM_DESC,
@@ -56,5 +57,20 @@ export async function SOsearchService(
         })
         .filter(Boolean) as ItemForm[];
 
-    return { vendorName, items };
+    const headerInfo: SOHeaderInfo = {
+        headerId: data.HEADER_ID,
+        soType: data.SO_TYPE,
+        orgId: data.ORG_ID,
+        orgName: data.ORG_NAME,
+        status: data.STATUS,
+        orderNumber: data.ORDER_NUMBER,
+        subinventoryFrom: data.SUBINVENTORY_FROM,
+        subinventoryTo: data.SUBINVENTORY_TO,
+        locationBill: data.LOCATION_BILL,
+        locationShip: data.LOCATON_SHIP,
+        invoiceToAddress: data.INVOICE_TO_ADDRESS1,
+        orderedDate: data.ORDERED_DATE,
+    };
+
+    return { vendorName, items, headerInfo };
 }

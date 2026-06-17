@@ -8,6 +8,7 @@ import { useDocumentUpload } from "./hooks/useDocumentUpload";
 import { usePalletData } from "./hooks/usePalletData";
 import DocumentUploadSection from "./components/DocumentUploadSection";
 import PalletItemsTable from "./components/PalletItemsTable";
+import { usePersistAuthStore } from "../../../API/store/AuthStore/PersistAuthStore";
 
 interface DetailViewProps {
   onBack: () => void;
@@ -43,6 +44,8 @@ const DetailView: React.FC<DetailViewProps> = ({
   const { createData, updateData } = useStoreStockAdjustment();
   const [reviewOpen, setReviewOpen] = useState(false);
   const [reviewPayload, setReviewPayload] = useState<any>(null);
+  const user = usePersistAuthStore((state) => state.user);
+  const roleName = user?.role?.name;
 
   const {
     isDetailMode,
@@ -229,47 +232,6 @@ const DetailView: React.FC<DetailViewProps> = ({
     }
   };
 
-  // const handleFinalSubmit = async () => {
-  //   try {
-  //     if (!reviewPayload) return;
-
-  //     const payloadToSend = {
-  //       ...reviewPayload,
-  //       document: normalizeDocument(reviewPayload.document),
-  //       items: reviewPayload.items.map(
-  //         ({ pallet_code, item_name, current_quantity, ...rest }: any) => rest,
-  //       ),
-  //     };
-
-  //     if (isUpdateMode) {
-  //       const updatePayload = buildUpdatePayload();
-
-  //       if (!updatePayload || Object.keys(updatePayload).length === 1) {
-  //         showErrorToast("Tidak ada perubahan data");
-  //         return;
-  //       }
-
-  //       if (hasDocumentChanged(initialData?.document || "")) {
-  //         updatePayload.document = normalizeDocument(documentUrls);
-  //       }
-
-  //       const id = initialData?.id;
-  //       if (!id) {
-  //         showErrorToast("ID tidak ditemukan untuk update");
-  //         return;
-  //       }
-
-  //       // await updateData(id, updatePayload);
-  //     } else {
-  //       await createData(payloadToSend);
-  //     }
-
-  //     handleBack();
-  //   } catch (error) {
-  //     showErrorToast("Gagal submit adjustment");
-  //   }
-  // };
-
   const handleStatusUpdate = async (newStatus: string) => {
     try {
       const id = initialData?.id;
@@ -290,8 +252,6 @@ const DetailView: React.FC<DetailViewProps> = ({
     cleanupUploadedFiles();
     onBack();
   };
-
-  const roleName = localStorage.getItem("role_name");
 
   return (
     <div className="min-h-screen bg-gray-50 p-8 text-sm">

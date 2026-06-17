@@ -44,7 +44,12 @@ import {
     ReportOutboundService,
     zoneByWarehouseService,
     InboundIntegrationService,
-    IOfromMeta
+    IOfromMeta,
+    InventorySelisihService,
+    IRIntegrationService,
+    ShipConfirmService,
+    DepartementService,
+    ShipConfirmServiceByDO
 } from "../../services/Service/MasterService";
 
 import { Uom, CreateUom, UpdateUom } from "../../types/UomTypes";
@@ -82,21 +87,41 @@ import { InventoryVisibilityResponse } from '../../types/InventoryVisibilty.ts'
 import { MasterSupplier, CreateMasterSupplier, UpdateMasterSupplier } from '../../types/MasterSupplier.ts'
 import { InventoryMovementListResponse } from '../../types/InventoryMovement.ts'
 import { StockAdjustment, StockAdjustmentCreateRequest } from "../../types/StockAdjustmentTypes.ts";
-
-import { MasterWeek, CreateMasterWeek, UpdateMasterWeek } from '../../types/MasterWeekTypes.ts'
+import { MasterWeek } from '../../types/MasterWeekTypes.ts'
 import { OutboundPlanning, UpdateOutboundPlanning } from "../../types/OutboundGoodStock.ts";
-
 import { InboundIntegration } from "../../types/InboundIntegration.ts";
+import { IRintegration } from "../../types/IRintegrationType.ts";
+import { ShipConfirmOutboundDO, Memo, MemoItem } from "../../types/ShipConfirmType.ts";
+import { InventorySelisihItem } from "../../types/InventorySelisih.ts";
 
+import {Department, CreateDepartment, UpdateDepartment } from '../../types/DepartementType.ts'
 
 
 // Daftar semua store di sini
-
-export const useStoreInboundIntegration = createCrudStore<InboundIntegration, null, null>({
-    name: "UOM",
-    service: InboundIntegrationService,
+export const useStoreDepartement = createCrudStore<Department, CreateDepartment, UpdateDepartment>({
+    name: "Departement",
+    service: DepartementService,
 });
 
+export const useStoreShipConfirm = createCrudStore<ShipConfirmOutboundDO, Memo, MemoItem>({
+    name: "Ship Confirm",
+    service: ShipConfirmService,
+});
+
+export const useStoreShipConfirmByDO = createCrudStore<ShipConfirmOutboundDO, Memo, MemoItem>({
+    name: "Ship Confirm",
+    service: ShipConfirmServiceByDO,
+});
+
+export const useStoreIRIntegration = createCrudStore<IRintegration, null, null>({
+    name: "IR/SO Integration",
+    service: IRIntegrationService,
+});
+
+export const useStoreInboundIntegration = createCrudStore<InboundIntegration, null, null>({
+    name: "Inbound Integration",
+    service: InboundIntegrationService,
+});
 
 export const useStoreUom = createCrudStore<Uom, CreateUom, UpdateUom>({
     name: "UOM",
@@ -258,16 +283,10 @@ export const useStorePickingAssignHelper = createCrudStore<PickingAssignHelper, 
     service: PickingAssignHelperService,
 });
 
-// export const useStoreUserManagement = createCrudStore<UserManagement, CreateUserManagement, UpdateUserManagement>({
-//     name: "UserManagement",
-//     service: UserManagementService,
-// });
-
 export const useStoreUserManagement = createCrudStore<User, CreateUser, UpdateUser>({
     name: "UserManagement",
     service: UserManagementService,
 });
-
 
 export const useStorePickingSuggestionItem = createCrudStore<PickingSuggestionItem, CreatePickingSuggestionItem, UpdatePickingSuggestionItem>({
     name: "PickingSuggestionItem",
@@ -322,5 +341,10 @@ export const useStoreReportOutbound = createCrudStore<OutboundPlanning, UpdateOu
 export const useStoreMasterWeek = createCrudStore<MasterWeek, null, null>({
     name: "MasterWeek",
     service: MasterWeekService,
+});
+
+export const useStoreInventorySelisih = createCrudStore<InventorySelisihItem, null, null>({
+    name: "MasterWeek",
+    service: InventorySelisihService,
 });
 

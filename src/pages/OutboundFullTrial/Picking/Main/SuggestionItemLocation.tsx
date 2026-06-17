@@ -4,6 +4,7 @@ import { SuggestionItemsTable } from "../SuggestionItems/SuggestionItemsTable";
 import { EndPoint } from "../../../../utils/EndPoint";
 import Button from "../../../../components/ui/button/Button";
 import { FaArrowLeft } from "react-icons/fa";
+import axiosInstance from "../../../../DynamicAPI/AxiosInstance";
 
 interface SuggestionTableProps {
   memoDetail: any;
@@ -27,32 +28,24 @@ export const SuggestionItemLocation: React.FC<SuggestionTableProps> = ({
   const handleAddItem = (item: any) => {};
 
   const fetchPickingSuggestionById = async () => {
-    const memoId = memoDetail.id; // Ambil memo_id dari memoDetail.id
-    if (!memoId) return; // Pastikan memoId ada sebelum fetch
-
-    const token = localStorage.getItem("token");
-    const API = `${EndPoint}picking-suggestion/memo/${memoId}?sortMethod=${metodeSuggestion}`;
+    const memoId = memoDetail.id;
+    if (!memoId) return;
 
     setLoadingFetch(true);
 
     try {
-      const response = await fetch(API, {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
+      const res = await axiosInstance.get(`picking-suggestion/memo/${memoId}`, {
+        params: {
+          sortMethod: metodeSuggestion,
         },
       });
 
-      if (!response.ok) {
-        throw new Error("Network response was not ok");
-      }
-
-      const data = await response.json();
-      setDataSuggestion(data.data);
-      setLoadingFetch(false);
+      setDataSuggestion(res.data.data);
     } catch (error) {
-      console.error("Error fetching picking suggestion:", error);
+      console.error(
+        "Error fetching picking suggestion via axiosInstance:",
+        error,
+      );
     } finally {
       setLoadingFetch(false);
     }

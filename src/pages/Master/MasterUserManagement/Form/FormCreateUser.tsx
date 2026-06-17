@@ -7,6 +7,9 @@ import Checkbox from "../../../../components/form/input/Checkbox";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { showErrorToast } from "../../../../components/toast";
 import { useDebounce } from "../../../../helper/useDebounce";
+import { usePersistAuthStore } from "../../../../API/store/AuthStore/PersistAuthStore";
+import axiosInstance from "../../../../DynamicAPI/AxiosInstance";
+import { EndPoint } from "../../../../utils/EndPoint";
 // import { useEmployeeStore } from "../../../../API/store/MasterStore/MasterEmployeeStore";
 
 /* -------------------------------------------------------------------------- */
@@ -102,8 +105,8 @@ const PasswordField: React.FC<{
             matched
               ? "border-green-500 focus:ring-green-300"
               : error
-              ? "border-red-500 focus:ring-red-300"
-              : "focus:ring-blue-300"
+                ? "border-red-500 focus:ring-red-300"
+                : "focus:ring-blue-300"
           }`}
         />
         <button
@@ -144,6 +147,8 @@ const FormCreateUser: React.FC<UserFormInputProps> = ({
   } = useForm<FormValues>({ defaultValues, mode: "onChange" });
 
   // const { checkingEmployee, employeeData } = useEmployeeStore();
+  const user = usePersistAuthStore((state) => state.user);
+  const NIK = user?.userDetail?.employee_id;
 
   /* ---------------------- cek nilai role “TSF” ---------------------- */
   const rolesValue = useWatch({ control, name: "roles" }) as {
@@ -170,12 +175,12 @@ const FormCreateUser: React.FC<UserFormInputProps> = ({
   const toggleShowPassword = useCallback(
     (name: string) =>
       setShowPwdMap((prev) => ({ ...prev, [name]: !prev[name] })),
-    []
+    [],
   );
 
   /* -------------------- fungsi checkNik -------------------- */
   const [nikData, setNikData] = useState<any>(null);
-  const [nik, setNik] = useState(""); // ➊ simpan input NIK
+  const [nik, setNik] = useState("");
 
   const checkNik = useCallback(
     async (nik: string) => {
@@ -187,27 +192,11 @@ const FormCreateUser: React.FC<UserFormInputProps> = ({
       }
       setNikStatus("checking");
 
-      const url = `http://10.0.29.47:9003/api/v1/employee/meta-find-employee-number/${nik}`;
+      const url = `${EndPoint}employee/meta-find-employee-number/${nik}`;
 
       try {
-        const token = localStorage.getItem("token");
-        if (!token) {
-          setNikStatus("invalid");
-          setNikData(null);
-          setError("nik", { type: "manual", message: "Token tidak ditemukan" });
-          return;
-        }
-
-        const res = await fetch(url, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-
-        if (!res.ok) {
-          throw new Error(`HTTP error! status: ${res.status}`);
-        }
-
-        const data = await res.json();
-        const employeeData = data?.data?.data;
+        const res = await axiosInstance.get(url);
+        const employeeData = res.data?.data?.data;
 
         if (Array.isArray(employeeData) && employeeData.length > 0) {
           const processedData = {
@@ -224,23 +213,18 @@ const FormCreateUser: React.FC<UserFormInputProps> = ({
           setNikData(null);
           setError("nik", { type: "manual", message: "NIK tidak ditemukan" });
         }
-      } catch (e) {
-        console.error("Error checking NIK:", e);
+      } catch (e: any) {
+        console.error("Error checking NIK via axiosInstance:", e);
         setNikStatus("invalid");
         setNikData(null);
-        setError("nik", { type: "manual", message: "Gagal cek NIK" });
+
+        // OPTIMASI ERROR: Tangkap pesan error spesifik dari backend jika ada
+        const errorMsg = e.response?.data?.message || "Gagal cek NIK";
+        setError("nik", { type: "manual", message: errorMsg });
       }
     },
-    [clearErrors, setError]
+    [clearErrors, setError],
   );
-
-  const user_login = (() => {
-    const storedUserLogin = localStorage.getItem("user_login_data");
-    return storedUserLogin && storedUserLogin !== "undefined"
-      ? JSON.parse(storedUserLogin).user
-      : null;
-  })();
-  
 
   /* ------------------------------ submit handler ------------------------------ */
   const onSubmitInternal: SubmitHandler<FormValues> = (data) => {
@@ -248,7 +232,7 @@ const FormCreateUser: React.FC<UserFormInputProps> = ({
       showErrorToast("NIK Karyawan tidak valid. Harap periksa kembali.");
       return; // Hentikan proses submit
     }
-    
+
     const tipeTSF = isTSF ? (data.tsf_type as { value: string }).value : null;
 
     const payload: any = {
@@ -256,7 +240,9 @@ const FormCreateUser: React.FC<UserFormInputProps> = ({
       email: data.email || null,
       name: data.name || null,
       employee_id: data.nik || null,
-      non_employee: isTSF ? tipeTSF === "external" : data.is_employee ?? false,
+      non_employee: isTSF
+        ? tipeTSF === "external"
+        : (data.is_employee ?? false),
       password: data.password || null,
       is_active: true,
       join_date: new Date().toISOString(),
@@ -269,7 +255,7 @@ const FormCreateUser: React.FC<UserFormInputProps> = ({
         : null,
       region_code: (data.region as { value: string })?.value || null,
       phone: data.phone_number || null,
-      created_by: user_login.employee_id,
+      created_by: NIK,
       updated_by: null,
     };
 
@@ -549,7 +535,7 @@ const FormCreateUser: React.FC<UserFormInputProps> = ({
                     </div>
                   ))}
                 </div>
-              )
+              ),
           )}
         </div>
 

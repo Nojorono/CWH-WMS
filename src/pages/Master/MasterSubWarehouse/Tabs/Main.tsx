@@ -5,6 +5,7 @@ import DetailCard from "../Card/Detail";
 import { useStoreSubWarehouse } from "../../../../DynamicAPI/stores/Store/MasterStore";
 import BINDataTable from "../../MasterBin/Table/DataTable";
 import { FaArrowLeft } from "react-icons/fa";
+import { usePersistAuthStore } from "../../../../API/store/AuthStore/PersistAuthStore";
 
 export default function MainScreen() {
   const location = useLocation();
@@ -12,12 +13,13 @@ export default function MainScreen() {
   const { idZone, locatorId, locatorName } = location.state || {};
   const [activeTab, setActiveTab] = useState(0);
   const { fetchById, detail: zoneDetail } = useStoreSubWarehouse();
+  const user = usePersistAuthStore((state) => state.user);
 
   useEffect(() => {
     fetchById(idZone);
   }, [fetchById, idZone]);
 
-  const OrgName = localStorage.getItem("organization_name");
+  const OrgName = user?.userDetail?.organization?.organization_name;
 
   const zoneDetails = [
     { label: "Zone Name", value: zoneDetail?.name || "-" },

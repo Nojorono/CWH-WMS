@@ -1,13 +1,26 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  useMemo,
+} from "react";
 import { Link, useLocation } from "react-router";
 import { ChevronDownIcon, HorizontaLDots } from "../icons";
 import { useSidebar } from "../context/SidebarContext";
 import { useDynamicSidebarItems } from "./useDynamicSidebarItems";
 
+// IMPORT: Gunakan store persistent baru Anda
+import { usePersistAuthStore } from "../API/store/AuthStore/PersistAuthStore";
+
 const AppSidebar: React.FC = () => {
   const { isExpanded, isMobileOpen, isHovered, setIsHovered } = useSidebar();
   const location = useLocation();
   const { menuItems, settingsItems } = useDynamicSidebarItems();
+
+  // 1. AMBIL USER ROLE LANGSUNG DARI STORE ZUSTAND
+  const user = usePersistAuthStore((state) => state.user);
+  const userRole = user?.role?.name;
 
   const [openMainSubmenu, setOpenMainSubmenu] = useState<number | null>(null);
   const [openSettingsSubmenu, setOpenSettingsSubmenu] = useState<number | null>(
@@ -23,31 +36,33 @@ const AppSidebar: React.FC = () => {
     [location.pathname],
   );
 
-  const userRole = localStorage.getItem("role_name");
+  // 2. OPTIMASI: Bungkus sort dengan useMemo agar tidak memicu infinite render loop
+  const sortedMenuItems = useMemo(() => {
+    return [...menuItems].sort((a, b) => {
+      const isReportingA = a.path === "/reporting";
+      const isReportingB = b.path === "/reporting";
 
-  const sortedMenuItems = [...menuItems].sort((a, b) => {
-    const isReportingA = a.path === "/reporting";
-    const isReportingB = b.path === "/reporting";
+      if (isReportingA && !isReportingB) return 1;
+      if (!isReportingA && isReportingB) return -1;
 
-    // Reporting selalu paling bawah
-    if (isReportingA && !isReportingB) return 1;
-    if (!isReportingA && isReportingB) return -1;
+      if (!a.subItems && b.subItems) return -1;
+      if (a.subItems && !b.subItems) return 1;
 
-    // Sorting lama
-    if (!a.subItems && b.subItems) return -1;
-    if (a.subItems && !b.subItems) return 1;
+      return 0;
+    });
+  }, [menuItems]);
 
-    return 0;
-  });
-
-  const sortedSettingsItems = [...settingsItems].sort((a, b) => {
-    if (!a.subItems && b.subItems) return -1;
-    if (a.subItems && !b.subItems) return 1;
-    return 0;
-  });
+  const sortedSettingsItems = useMemo(() => {
+    return [...settingsItems].sort((a, b) => {
+      if (!a.subItems && b.subItems) return -1;
+      if (a.subItems && !b.subItems) return 1;
+      return 0;
+    });
+  }, [settingsItems]);
 
   const lastPathname = useRef(location.pathname);
 
+  // 3. EFFECT: Jalankan sinkronisasi path menu secara aman
   useEffect(() => {
     if (lastPathname.current !== location.pathname) {
       sortedMenuItems.forEach((nav, index) => {
@@ -66,7 +81,6 @@ const AppSidebar: React.FC = () => {
         });
       });
 
-      // Update path terakhir
       lastPathname.current = location.pathname;
     }
   }, [location.pathname, isActive, sortedMenuItems, sortedSettingsItems]);
@@ -127,20 +141,14 @@ const AppSidebar: React.FC = () => {
               {nav.subItems ? (
                 <button
                   onClick={() => handleSubmenuToggle(type, index)}
-                  className={`menu-item group ${
-                    isOpen ? "menu-item-active" : "menu-item-inactive"
-                  } ${
+                  className={`menu-item group ${isOpen ? "menu-item-active" : "menu-item-inactive"} ${
                     !isExpanded && !isHovered
                       ? "lg:justify-center"
                       : "lg:justify-start"
                   }`}
                 >
                   <span
-                    className={`menu-item-icon-size ${
-                      isOpen
-                        ? "menu-item-icon-active"
-                        : "menu-item-icon-inactive"
-                    }`}
+                    className={`menu-item-icon-size ${isOpen ? "menu-item-icon-active" : "menu-item-icon-inactive"}`}
                   >
                     {nav.icon}
                   </span>
@@ -149,9 +157,7 @@ const AppSidebar: React.FC = () => {
                   )}
                   {(isExpanded || isHovered || isMobileOpen) && (
                     <ChevronDownIcon
-                      className={`ml-auto w-5 h-5 transition-transform duration-200 ${
-                        isOpen ? "rotate-180 text-brand-500" : ""
-                      }`}
+                      className={`ml-auto w-5 h-5 transition-transform duration-200 ${isOpen ? "rotate-180 text-brand-500" : ""}`}
                     />
                   )}
                 </button>
@@ -159,18 +165,10 @@ const AppSidebar: React.FC = () => {
                 nav.path && (
                   <Link
                     to={nav.path}
-                    className={`menu-item group ${
-                      isActive(nav.path)
-                        ? "menu-item-active"
-                        : "menu-item-inactive"
-                    }`}
+                    className={`menu-item group ${isActive(nav.path) ? "menu-item-active" : "menu-item-inactive"}`}
                   >
                     <span
-                      className={`menu-item-icon-size ${
-                        isActive(nav.path)
-                          ? "menu-item-icon-active"
-                          : "menu-item-icon-inactive"
-                      }`}
+                      className={`menu-item-icon-size ${isActive(nav.path) ? "menu-item-icon-active" : "menu-item-icon-inactive"}`}
                     >
                       {nav.icon}
                     </span>
@@ -195,11 +193,7 @@ const AppSidebar: React.FC = () => {
                       <li key={sub.name}>
                         <Link
                           to={sub.path}
-                          className={`menu-dropdown-item ${
-                            isActive(sub.path)
-                              ? "menu-dropdown-item-active"
-                              : "menu-dropdown-item-inactive"
-                          }`}
+                          className={`menu-dropdown-item ${isActive(sub.path) ? "menu-dropdown-item-active" : "menu-dropdown-item-inactive"}`}
                         >
                           {sub.name}
                         </Link>
@@ -216,31 +210,18 @@ const AppSidebar: React.FC = () => {
   );
 
   return (
-    // <aside
-    //   className={`fixed mt-16 flex flex-col lg:mt-0 top-0 px-5 left-0 bg-white dark:bg-gray-900 dark:border-gray-800 text-gray-900 h-screen transition-all duration-300 ease-in-out z-50 border-r border-gray-200 ${
-    //     isExpanded || isMobileOpen || isHovered ? "w-[290px]" : "w-[90px]"
-    //   } ${
-    //     isMobileOpen ? "translate-x-0" : "-translate-x-full"
-    //   } lg:translate-x-0`}
-    //   onMouseEnter={() => !isExpanded && setIsHovered(true)}
-    //   onMouseLeave={() => setIsHovered(false)}
-    // >
     <aside
-  className={`${
-    userRole === "GATE" ? "hidden" : "fixed"
-  } mt-16 flex flex-col lg:mt-0 top-0 px-5 left-0 bg-white dark:bg-gray-900 dark:border-gray-800 text-gray-900 h-screen transition-all duration-300 ease-in-out z-50 border-r border-gray-200 ${
-    isExpanded || isMobileOpen || isHovered ? "w-[290px]" : "w-[90px]"
-  } ${
-    isMobileOpen ? "translate-x-0" : "-translate-x-full"
-  } lg:translate-x-0`}
-  onMouseEnter={() => !isExpanded && setIsHovered(true)}
-  onMouseLeave={() => setIsHovered(false)}
->
+      className={`${
+        userRole === "GATE" ? "hidden" : "fixed"
+      } mt-16 flex flex-col lg:mt-0 top-0 px-5 left-0 bg-white dark:bg-gray-900 dark:border-gray-800 text-gray-900 h-screen transition-all duration-300 ease-in-out z-50 border-r border-gray-200 ${
+        isExpanded || isMobileOpen || isHovered ? "w-[290px]" : "w-[90px]"
+      } ${isMobileOpen ? "translate-x-0" : "-translate-x-full"} lg:translate-x-0`}
+      onMouseEnter={() => !isExpanded && setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
       {/* Logo Section */}
       <div
-        className={`py-8 flex ${
-          !isExpanded && !isHovered ? "lg:justify-center" : "justify-start"
-        }`}
+        className={`py-8 flex ${!isExpanded && !isHovered ? "lg:justify-center" : "justify-start"}`}
       >
         <Link to="">
           {isExpanded || isHovered || isMobileOpen ? (
@@ -275,12 +256,10 @@ const AppSidebar: React.FC = () => {
       <div className="flex flex-col justify-between flex-1 overflow-y-auto duration-300 ease-linear no-scrollbar">
         <nav className="mb-6 flex flex-col flex-grow">
           <div className="flex flex-col gap-8 flex-grow">
-            {/* Gunakan sortedMenuItems di sini */}
             {renderSection(sortedMenuItems, "main", "Menu")}
           </div>
           {settingsItems.length > 0 && (
             <div className="mt-auto pt-6 border-t border-gray-200 dark:border-gray-800">
-              {/* Gunakan sortedSettingsItems di sini */}
               {renderSection(sortedSettingsItems, "settings", "Settings")}
             </div>
           )}

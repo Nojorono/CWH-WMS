@@ -5,9 +5,22 @@ import { signOut } from "../../utils/SignOut";
 import { FaRegUserCircle } from "react-icons/fa";
 import { HiOutlineLogout, HiChevronDown } from "react-icons/hi";
 
+// IMPORT: Ambil store baru Anda
+import { usePersistAuthStore } from "../../API/store/AuthStore/PersistAuthStore";
+
 export default function UserDropdown() {
   const [isOpen, setIsOpen] = useState(false);
   const navigate = useNavigate();
+
+  // 1. AMBIL DATA LANGSUNG DARI ZUSTAND STORE
+  const user = usePersistAuthStore((state) => state.user);
+  
+  // Ambil detail dari sub-properti user sesuai data JSON API asli Anda
+  const roleName = user?.role?.name;
+  const orgName = user?.userDetail?.organization?.organization_name;
+  const emailUser = user?.userDetail?.email;
+  const NIK = user?.userDetail?.employee_id;
+  const fullName = `${user?.userDetail?.firstName ?? ""} ${user?.userDetail?.lastName ?? ""}`.trim();
 
   function toggleDropdown() {
     setIsOpen(!isOpen);
@@ -20,21 +33,12 @@ export default function UserDropdown() {
     closeDropdown();
     setTimeout(() => {
       signOut(navigate);
-    }, 1000);
+    }, 300); // Persingkat delay agar terasa responsif
   };
 
-  // --- Ambil Data ---
-  const roleName = localStorage.getItem("role_name");
-  const emailUser = localStorage.getItem("email");
-  const storedFullName = localStorage.getItem("full_name");
-  const orgName = localStorage.getItem("organization_name");
-
   // --- Logika Penamaan ---
-  // Jika role adalah superadmin (case-insensitive), tampilkan "Superadmin"
   const isSuperAdmin = roleName?.toLowerCase() === "superadmin";
-  const displayName = isSuperAdmin
-    ? "Superadmin"
-    : storedFullName || "Guest User";
+  const displayName = isSuperAdmin ? "Superadmin" : fullName || "User WMS";
 
   return (
     <div className="relative inline-block text-left">
@@ -58,10 +62,10 @@ export default function UserDropdown() {
 
         <div className="hidden text-left md:block">
           <p className="text-sm font-bold text-gray-800 dark:text-gray-100 leading-tight">
-            {isSuperAdmin ? "Superadmin" : roleName || "Guest"}
+            {isSuperAdmin ? "Superadmin" : roleName || "WMS Staff"}
           </p>
-          <p className="text-[13px] font-black text-blue-400 dark:text-gray-500 uppercase tracking-[0.1em]">
-            {isSuperAdmin ? "System Master" : orgName}
+          <p className="text-[13px] font-black text-blue-400 dark:text-gray-500 uppercase tracking-[0.1em] truncate max-w-[120px]">
+            {isSuperAdmin ? "System Master" : orgName || "No Plant"}
           </p>
         </div>
 
@@ -95,22 +99,12 @@ export default function UserDropdown() {
               <span className="text-xs font-medium text-gray-500 dark:text-gray-400 truncate">
                 {emailUser || "No email assigned"}
               </span>
+              <span className="text-xs font-medium text-gray-500 dark:text-gray-400 truncate">
+                NIK: {NIK || "No NIK exist"}
+              </span>
             </div>
           </div>
         </div>
-
-        {/* Menu Section */}
-        {/* <div className="p-2">
-           <div className="px-3 py-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest">
-              Account Overview
-           </div>
-           <button className="flex w-full items-center gap-3 px-3 py-2 text-sm font-semibold text-gray-600 transition-all rounded-xl hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-white">
-              <div className="p-1.5 rounded-lg bg-gray-100 dark:bg-gray-800">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
-              </div>
-              View Profile
-           </button>
-        </div> */}
 
         {/* Logout Section */}
         <div className="p-2">

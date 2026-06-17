@@ -177,7 +177,6 @@ const PickingSuggestion: React.FC = () => {
 
   const handleAssignSuggestion = (memo: any) => {
     const memoIdToFetch = memo.id || memo.memo_id;
-    // fetchPickingSuggestionById(memoIdToFetch);
     setSelectedMemoForSuggestion(memo);
   };
 

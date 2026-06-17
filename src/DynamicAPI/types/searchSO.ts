@@ -20,10 +20,6 @@ export type POSForm = {
     po_no?: string;
     po_date?: string;
 
-    // Untuk SO
-    // so_no?: string;
-    // so_date?: string;
-
     items: ItemForm[];
     flag_validated?: boolean;
 
@@ -57,3 +53,18 @@ export type FormValues = {
     integration_status?: string;
 
 };
+
+export interface SOHeaderInfo {
+    headerId: number;
+    soType: string;
+    orgId: number;
+    orgName: string;
+    status: string;
+    orderNumber: number;
+    subinventoryFrom: string;
+    subinventoryTo: string;
+    locationBill: string;
+    locationShip: string;
+    invoiceToAddress: string;
+    orderedDate: string;
+}

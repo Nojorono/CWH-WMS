@@ -234,11 +234,8 @@ export default function InboundPlanningFormContainer() {
     // 2. Pembersihan & Injeksi Data untuk Inbound DOs
     if (payload.inbound_dos && Array.isArray(payload.inbound_dos)) {
       payload.inbound_dos = payload.inbound_dos.map((doItem: any) => {
-        // Hilangkan po_type jika terbawa dari mapper
         const { po_type, ...rest } = doItem;
         const cleanedDo = { ...rest };
-
-        // Hapus po_date jika kosong agar tidak error saat format ISO
         if (
           !cleanedDo.inbound_po_date ||
           String(cleanedDo.inbound_po_date).trim() === ""
@@ -246,8 +243,6 @@ export default function InboundPlanningFormContainer() {
           delete cleanedDo.inbound_po_date;
         }
 
-        // ✅ KONDISI KHUSUS MODE ADD TO RECEIVE
-        // Injeksi add_to_receipt_number ke dalam setiap objek DO sesuai gambar
         if (isAddToReceiveMode) {
           cleanedDo.add_to_receipt_number = dataInbound?.receipt_number || "";
         }
@@ -259,7 +254,7 @@ export default function InboundPlanningFormContainer() {
     const id = dataInbound?.id;
     let apiAction = null;
 
-    if (isCreateMode) {
+    if (isCreateMode) {      
       apiAction = () => createData(payload);
     } else if (isEditMode && id) {
       apiAction = () => updateData(id, payload);

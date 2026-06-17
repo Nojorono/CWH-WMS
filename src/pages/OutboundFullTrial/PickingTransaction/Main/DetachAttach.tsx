@@ -19,15 +19,18 @@ import AttachMemoModal from "../Modal/AttachMemoModal"; //
 import Swal from "sweetalert2";
 import DetailMemoModal from "../Modal/DetailMemoModal";
 import KeyValueCard from "../../Picking/Helper/KeyValueCard";
-import { showErrorToast } from "../../../../components/toast";
+import { showErrorToast, showSuccessToast } from "../../../../components/toast";
 import TableComponent from "../../../../components/tables/ActionTable/TableComponent";
+import { usePersistAuthStore } from "../../../../API/store/AuthStore/PersistAuthStore";
+import axiosInstance from "../../../../DynamicAPI/AxiosInstance";
 
 const DetachAttach: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { params } = location.state || {};
   const statusDO = params.status;
-  const roleName = localStorage.getItem("role_name");
+  const user = usePersistAuthStore((state) => state.user);
+  const roleName = user?.role?.name;
 
   // 🔹 local state pagination
   const [pageIndex, setPageIndex] = useState(0);
@@ -146,6 +149,64 @@ const DetachAttach: React.FC = () => {
     },
   ];
 
+  // const handleDetachMemo = async (memoData: any) => {
+  //   const memoId = memoData.id;
+  //   const memoNumber = memoData.outbound_memo_number;
+  //   const doNumber = params?.outbound_do_number;
+
+  //   const result = await Swal.fire({
+  //     title: "Apakah Anda yakin?",
+  //     text: `Anda akan lepas Memo ${memoNumber} dari DO ${doNumber}`,
+  //     icon: "warning",
+  //     showCancelButton: true,
+  //     confirmButtonText: "Ya, lepas Memo ini!",
+  //     cancelButtonText: "Batal",
+  //   });
+
+  //   if (result.isConfirmed) {
+  //     try {
+  //       const response = await fetch(
+  //         `${EndPoint}outbound-do/${params.id}/detach-memo?memoId=${memoId}`,
+  //         {
+  //           method: "PATCH",
+  //           headers: {
+  //             Authorization: `Bearer ${token}`,
+  //           },
+  //         },
+  //       );
+
+  //       if (!response.ok) {
+  //         throw new Error("Network response was not ok");
+  //       }
+
+  //       // Setelah memo berhasil dilepas, update status outbound DO menjadi PENDING
+  //       try {
+  //         const patchRes = await fetch(`${EndPoint}outbound-do/${params.id}`, {
+  //           method: "PATCH",
+  //           headers: {
+  //             Authorization: `Bearer ${token}`,
+  //             "Content-Type": "application/json",
+  //           },
+  //           body: JSON.stringify({ status: "PENDING" }),
+  //         });
+
+  //         if (!patchRes.ok) {
+  //           console.error("Failed to update DO status to PENDING");
+  //           ``;
+  //           showErrorToast("Gagal mengubah status DO menjadi PENDING");
+  //         }
+  //       } catch (err) {
+  //         console.error("Error updating DO status:", err);
+  //         showErrorToast("Gagal mengubah status DO menjadi PENDING");
+  //       }
+
+  //       navigate("/picking_transaction");
+  //     } catch (error) {
+  //       console.error("Error detaching memo:", error);
+  //     }
+  //   }
+  // };
+
   const handleDetachMemo = async (memoData: any) => {
     const memoId = memoData.id;
     const memoNumber = memoData.outbound_memo_number;
@@ -160,48 +221,34 @@ const DetachAttach: React.FC = () => {
       cancelButtonText: "Batal",
     });
 
-    if (result.isConfirmed) {
+    if (!result.isConfirmed) return;
+
+    try {
+      await axiosInstance.patch(`outbound-do/${params.id}/detach-memo`, null, {
+        params: { memoId },
+      });
+
       try {
-        const token = localStorage.getItem("token");
-        const response = await fetch(
-          `${EndPoint}outbound-do/${params.id}/detach-memo?memoId=${memoId}`,
-          {
-            method: "PATCH",
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          },
+        await axiosInstance.patch(`outbound-do/${params.id}`, {
+          status: "PENDING",
+        });
+      } catch (err) {
+        console.error(
+          "Failed to update DO status to PENDING via axiosInstance:",
+          err,
         );
-
-        if (!response.ok) {
-          throw new Error("Network response was not ok");
-        }
-
-        // Setelah memo berhasil dilepas, update status outbound DO menjadi PENDING
-        try {
-          const patchRes = await fetch(`${EndPoint}outbound-do/${params.id}`, {
-            method: "PATCH",
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ status: "PENDING" }),
-          });
-
-          if (!patchRes.ok) {
-            console.error("Failed to update DO status to PENDING");
-            ``;
-            showErrorToast("Gagal mengubah status DO menjadi PENDING");
-          }
-        } catch (err) {
-          console.error("Error updating DO status:", err);
-          showErrorToast("Gagal mengubah status DO menjadi PENDING");
-        }
-
-        navigate("/picking_transaction");
-      } catch (error) {
-        console.error("Error detaching memo:", error);
+        showErrorToast("Gagal mengubah status DO menjadi PENDING");
       }
+
+      showSuccessToast(`Memo ${memoNumber} berhasil dilepas dari DO`);
+
+      navigate("/picking_transaction");
+    } catch (error: any) {
+      console.error("Error detaching memo via axiosInstance:", error);
+
+      const errorMsg =
+        error.response?.data?.message || "Gagal melepas memo dari DO";
+      showErrorToast(errorMsg);
     }
   };
 

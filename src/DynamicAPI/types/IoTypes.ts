@@ -1,10 +1,3 @@
-// export interface Io {
-//   id: any;
-//   organization_id: number;
-//   organization_name: string;
-//   operating_unit: string;
-// }
-
 export interface Io {
   // Identitas Utama
   id: string;

@@ -8,10 +8,12 @@ import DynamicTable from "../../../../components/wms-components/DynamicTable";
 import {
   useStoreUser,
   useStoreSubWarehouse,
+  useStoreDepartement,
 } from "../../../../DynamicAPI/stores/Store/MasterStore";
 import { useRoleStore } from "../../../../API/store/MasterStore";
 import { UserVerifyService } from "../../../../DynamicAPI/services/Service/UserVerifyService";
 import { showErrorToast, showSuccessToast } from "../../../../components/toast";
+import { usePersistAuthStore } from "../../../../API/store/AuthStore/PersistAuthStore";
 
 const DataTable = () => {
   const {
@@ -26,6 +28,7 @@ const DataTable = () => {
     useStoreSubWarehouse();
 
   const { fetchRoles, roles } = useRoleStore();
+  const { fetchAll: fetchDepartement, list: deptList } = useStoreDepartement();
 
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounce(search, 500);
@@ -41,7 +44,6 @@ const DataTable = () => {
   const [newPassword, setNewPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [passwordError, setPasswordError] = useState("");
-  const [IoList, setIoList] = useState<any[]>([]);
 
   const [editNikInput, setEditNikInput] = useState("");
   const [isEditNikVerified, setIsEditNikVerified] = useState(false);
@@ -54,39 +56,23 @@ const DataTable = () => {
     return cleaned;
   };
 
+  const globalIoList = usePersistAuthStore((state) => state.ioList) || [];
+  const user = usePersistAuthStore((state) => state.user);
+
   useEffect(() => {
     fetchAll();
     fetchRoles();
     fetchSubWarehouses();
-
-    const storedIo = localStorage.getItem("io_list");
-    const rawOrgId = localStorage.getItem("organization_id");
-    const organizationId = normalizeStorageValue(rawOrgId);
-
-    if (storedIo) {
-      try {
-        const parsedIo = JSON.parse(storedIo);
-
-        if (!Array.isArray(parsedIo)) {
-          setIoList([]);
-          return;
-        }
-
-        const filteredIo = organizationId
-          ? parsedIo.filter(
-              (io: any) => String(io?.id) === String(organizationId),
-            )
-          : parsedIo;
-
-        setIoList(filteredIo);
-      } catch (error) {
-        console.error("Gagal parsing io_list dari localStorage", error);
-        setIoList([]);
-      }
-    } else {
-      setIoList([]);
-    }
+    fetchDepartement();
   }, []);
+
+  const IoList = useMemo(() => {
+    const organizationId = user?.userDetail?.organization?.id || null;
+    if (!organizationId) return globalIoList;
+    return globalIoList.filter(
+      (io: any) => String(io?.id) === String(organizationId),
+    );
+  }, [globalIoList, user]);
 
   const gateRoleId = useMemo(
     () => roles?.find((r: any) => r.name === "GATE")?.id,
@@ -100,6 +86,15 @@ const DataTable = () => {
         ?.map((zone: any) => ({ label: zone.name, value: zone.id })) || []
     );
   }, [subWarehouseList]);
+
+  const deptOptions = useMemo(() => {
+    return (
+      deptList?.map((dept: any) => ({
+        label: dept.departement_name,
+        value: dept.id,
+      })) || []
+    );
+  }, [deptList]);
 
   const PWD_REGEX = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/;
 
@@ -194,91 +189,12 @@ const DataTable = () => {
           );
         },
       },
-      // {
-      //   name: "nik_verify_section_edit",
-      //   label: "Verifikasi NIK (Edit)",
-      //   type: "custom",
-      //   hiddenWhen: (values: any) => {
-      //     // Hanya tampil saat EDIT dan bukan NON-Employee
-      //     if (!values.id) return true;
-      //     return values.employeeId?.startsWith("NON-");
-      //   },
-      //   renderCustom: ({ setValue }: { setValue: any }) => {
-      //     const handleVerifyEdit = async () => {
-      //       if (!editNikInput)
-      //         return showErrorToast("Masukkan NIK terlebih dahulu");
-      //       setEditNikLoading(true);
-      //       try {
-      //         const res = await UserVerifyService.verifyEmployee(editNikInput);
-      //         if (res.valid) {
-      //           setIsEditNikVerified(true);
-      //           setValue("employeeId", res.data.employee_number);
-      //           setValue(
-      //             "firstName",
-      //             res.data.employee_name?.split(" ")[0] || "",
-      //           );
-      //           setValue(
-      //             "lastName",
-      //             res.data.employee_name?.split(" ").slice(1).join(" ") || "-",
-      //           );
-      //           if (res.data.organization_id) {
-      //             setValue("organizationId", String(res.data.organization_id));
-      //           }
-      //           showSuccessToast(
-      //             `Karyawan Ditemukan: ${res.data.employee_name}`,
-      //           );
-      //         } else {
-      //           showErrorToast("NIK tidak terdaftar!");
-      //           setIsEditNikVerified(false);
-      //         }
-      //       } catch (err) {
-      //         showErrorToast("Gagal verifikasi server");
-      //       } finally {
-      //         setEditNikLoading(false);
-      //       }
-      //     };
-
-      //     return (
-      //       <div className="space-y-2 border-l-4 border-orange-400 pl-3 py-1 bg-orange-50/50 rounded-r-md">
-      //         <p className="text-[11px] text-orange-600 font-semibold">
-      //           Verifikasi NIK baru jika ingin mengganti Employee ID
-      //         </p>
-      //         <div className="flex gap-2">
-      //           <input
-      //             type="text"
-      //             placeholder="Masukkan NIK Karyawan..."
-      //             className="flex-1 px-3 py-2 border rounded-md text-sm outline-none"
-      //             value={editNikInput}
-      //             onChange={(e) => {
-      //               setEditNikInput(e.target.value);
-      //               setIsEditNikVerified(false);
-      //             }}
-      //           />
-      //           <Button
-      //             type="button"
-      //             variant="primary"
-      //             size="sm"
-      //             onClick={handleVerifyEdit}
-      //             disabled={editNikLoading || !editNikInput}
-      //           >
-      //             {editNikLoading ? "..." : "Verify"}
-      //           </Button>
-      //         </div>
-      //         {isEditNikVerified && (
-      //           <p className="text-[11px] text-green-600 font-bold flex items-center gap-1">
-      //             <FaCheckCircle /> NIK Terverifikasi. Data akan diperbarui.
-      //           </p>
-      //         )}
-      //       </div>
-      //     );
-      //   },
-      // },
       {
         name: "employeeId",
         label: "Employee ID / NIK",
         type: "text",
         validation: { required: "Employee ID wajib diisi" },
-        hiddenWhen: (values: any) => !values.id, // Hanya tampil saat EDIT
+        hiddenWhen: (values: any) => !values.id,
       },
       {
         name: "manualEmployeeId",
@@ -287,6 +203,19 @@ const DataTable = () => {
         placeholder: "Masukkan ID (Akan jadi prefix NON-ID)",
         validation: { required: "ID wajib diisi untuk tipe Non-Employee" },
         hiddenWhen: (values: any) => !!values.id || values.userType !== "NON",
+      },
+      {
+        name: "departementId",
+        label: "Departement Id",
+        type: "select",
+        options: deptOptions,
+        hiddenWhen: (values: any) => {
+          if (values.id) return false;
+          return (
+            !values.userType ||
+            (values.userType === "EMPLOYEE" && !isNikVerified)
+          );
+        },
       },
       {
         name: "roleId",
@@ -412,7 +341,6 @@ const DataTable = () => {
         options: gateZoneOptions,
         validation: { required: "Required" },
         hiddenWhen: (values: any) => {
-          // Tampil hanya jika role-nya GATE
           return String(values.roleId) !== String(gateRoleId);
         },
       },
@@ -456,6 +384,7 @@ const DataTable = () => {
       organizationId: String(organizationId),
       warehouseSubId:
         String(data.roleId) === String(gateRoleId) ? data.zoneId : null,
+      departementId: data.departementId,
     };
 
     return createData(payload);
@@ -477,9 +406,9 @@ const DataTable = () => {
         String(rest.roleId) === String(gateRoleId) ? String(zoneId) : null,
       firstName: rest.firstName,
       lastName: rest.lastName,
+      departementId: rest.departementId,
     };
 
-    // Filter undefined saja, nilai null (warehouseSubId) atau "" tetap dikirim jika memang kontrak API-nya string/null
     const cleanPayload = Object.fromEntries(
       Object.entries(payload).filter(([_, v]) => v !== undefined),
     );

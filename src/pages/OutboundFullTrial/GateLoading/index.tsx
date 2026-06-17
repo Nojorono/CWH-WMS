@@ -12,9 +12,7 @@ const GateLoadingPage = () => {
 
   const refreshData = async () => {
     setLoading(true);
-    const res = await fetchAssignedGate();
-    console.log("res fetch gate", res.data);
-    
+    const res = await fetchAssignedGate();    
     if (res.success) {
       let uiData = mapOutboundGateToUILoading(res.data);
       

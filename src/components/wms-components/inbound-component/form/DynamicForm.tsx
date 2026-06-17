@@ -81,7 +81,7 @@ const DynamicForm: React.FC<DynamicFormProps> = ({
     if (fieldName === "so_no" || fieldName === "so_type")
       return selectedSource.type === "SO";
     return true;
-  };
+  };  
 
   return (
     <form
@@ -93,8 +93,7 @@ const DynamicForm: React.FC<DynamicFormProps> = ({
 
         const isDisabled = !isEditMode || field.disabled;
         const fieldError = effectiveErrors?.[field.name];
-        const isReadOnly =
-          field.readonly || (isDisabled && field.readonly !== false);
+        const isReadOnly = field.readonly || (isDisabled && field.readonly !== false);
 
         return (
           <div key={field.name} className="flex flex-col">

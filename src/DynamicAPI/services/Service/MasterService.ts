@@ -34,9 +34,14 @@ import { InventoryVisibilityResponse } from '../../types/InventoryVisibilty.ts'
 import { MasterSupplier, CreateMasterSupplier, UpdateMasterSupplier } from '../../types/MasterSupplier.ts'
 import { InventoryMovementListResponse } from '../../types/InventoryMovement.ts'
 import { StockAdjustment, StockAdjustmentCreateRequest } from '../../types/StockAdjustmentTypes.ts'
-import { MasterWeek, CreateMasterWeek, UpdateMasterWeek } from '../../types/MasterWeekTypes.ts'
+import { MasterWeek } from '../../types/MasterWeekTypes.ts'
 import { OutboundPlanning, UpdateOutboundPlanning } from "../../types/OutboundGoodStock.ts";
 import { InboundIntegration } from "../../types/InboundIntegration.ts";
+import { InventorySelisihItem } from '../../types/InventorySelisih.ts'
+import { IRintegration } from "../../types/IRintegrationType.ts";
+import { ShipConfirmOutboundDO, Memo, MemoItem } from "../../types/ShipConfirmType.ts";
+
+import {Department, CreateDepartment, UpdateDepartment } from '../../types/DepartementType.ts'
 
 
 
@@ -87,7 +92,18 @@ export const StockAdjustmentService = createCrudService<StockAdjustment, StockAd
 export const ReportInboundService = createCrudService<InboundPlanning, CreateInboundPlanning, UpdateInboundPlanning>("/report/inbound");
 export const ReportOutboundService = createCrudService<OutboundPlanning, UpdateOutboundPlanning, null>("/report/outbound");
 export const MasterWeekService = createCrudService<MasterWeek, null, null>("/master-week");
-
 export const InboundIntegrationService = createCrudService<InboundIntegration, null, null>("/inbound-integration");
+export const InventorySelisihService = createCrudService<InventorySelisihItem, null, null>("/inventory-tracking/on-hand-mapping-detail");
+
+export const IRIntegrationService = createCrudService<IRintegration, null, null>("/outbound-integration-ir-req");
+export const ShipConfirmService = createCrudService<ShipConfirmOutboundDO, Memo, MemoItem >("/outbound-integration-deliveries");
+export const ShipConfirmServiceByDO = createCrudService<ShipConfirmOutboundDO, Memo, MemoItem >("/outbound-integration-deliveries/outbound-do");
+
+
+export const DepartementService = createCrudService<Department, CreateDepartment, UpdateDepartment >("/master-departement");
+
+
+
+
 
 

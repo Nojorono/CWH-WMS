@@ -91,9 +91,8 @@ const TableListMemo = <T extends { [key: string]: any }>({
       .rows.map((row) => row.original[accessorKey]);
 
     onSelectionChange(selectedIds);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [table.getState().rowSelection]); // ✅ hanya berubah saat checkbox berubah
-
+  
   return (
     <>
       <div className="overflow-x-auto">

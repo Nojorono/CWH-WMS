@@ -26,7 +26,6 @@ type QuantityHistory = {
   production_date: string;
   week_number: number;
   status_inventory: string;
-  
 };
 
 type HistoryProps = {
@@ -39,11 +38,11 @@ export default function QuantityHistoryTable({ palletCode }: HistoryProps) {
   useEffect(() => {
     if (!palletCode) return;
 
-    const token = localStorage.getItem("token");
     axiosInstance
-      .get(`${EndPoint}master-pallet/by-code/${palletCode}/quantity-history`, {
-        headers: { Authorization: `Bearer ${token}` },
-      })
+      .get(
+        `${EndPoint}master-pallet/by-code/${palletCode}/quantity-history`,
+        {},
+      )
       .then((res) => setData(res.data.data))
       .catch((err) => console.error("Error fetching quantity history:", err));
   }, [palletCode]);
@@ -60,8 +59,7 @@ export default function QuantityHistoryTable({ palletCode }: HistoryProps) {
       header: "Operation Type",
       cell: (info) => {
         const value = info.getValue() as string;
-        if (value === "ADD")
-          return <span className="text-green-600">ADD</span>;
+        if (value === "ADD") return <span className="text-green-600">ADD</span>;
         if (value === "REMOVE")
           return <span className="text-red-600">REMOVE</span>;
         if (value === "MOVE")

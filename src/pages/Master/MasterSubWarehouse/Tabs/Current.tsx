@@ -32,13 +32,8 @@ export default function CurrentQuantityTable({ palletCode }: HistoryProps) {
     if (!palletCode) return;
 
     setIsLoading(true);
-    const token = localStorage.getItem("token");
     axiosInstance
-      .get(`${EndPoint}master-pallet/by-code/${palletCode}/current`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      })
+      .get(`${EndPoint}master-pallet/by-code/${palletCode}/current`, {})
       .then((res) => {
         setData(res.data.data);
       })

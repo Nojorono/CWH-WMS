@@ -5,8 +5,9 @@ import Label from "../../../../components/form/Label";
 import { useDebounce } from "../../../../helper/useDebounce";
 import Select from "../../../../components/form/Select";
 import Button from "../../../../components/ui/button/Button";
-import { FaRecycle, FaSync } from "react-icons/fa";
+import { FaExchangeAlt, FaRecycle, FaSync } from "react-icons/fa";
 import { useStoreInboundIntegration } from "../../../../DynamicAPI/stores/Store/MasterStore";
+import { usePersistAuthStore } from "../../../../API/store/AuthStore/PersistAuthStore";
 
 const MainTable = () => {
   const [selectedIO, setSelectedIO] = useState<any>(null);
@@ -15,23 +16,20 @@ const MainTable = () => {
 
   const { fetchAll } = useStoreInboundIntegration();
 
-  // 1. Ambil data dari localStorage dan format menjadi Options untuk Select
-  const ioOptions = useMemo(() => {
-    const listIO = localStorage.getItem("io_list");
-    if (!listIO) return [{ value: "", label: "No Organization Found" }];
+  const ioList = usePersistAuthStore((state) => state.ioList);
 
-    try {
-      const parsedIO = JSON.parse(listIO);
-      const options = parsedIO.map((item: any) => ({
-        value: item.id, // atau item.organization_id sesuai kebutuhan backend
-        label: `${item.organization_name} - ${item.organization_code}`,
-      }));
-      return [{ value: "", label: "All Organization" }, ...options];
-    } catch (error) {
-      console.error("Error parsing io_list:", error);
-      return [{ value: "", label: "Error Loading IO" }];
+  const ioOptions = useMemo(() => {
+    if (!ioList || ioList.length === 0) {
+      return [{ value: "", label: "No Organization Found" }];
     }
-  }, []);
+
+    const options = ioList.map((item: any) => ({
+      value: item.id,
+      label: `${item.organization_name} - ${item.organization_code}`,
+    }));
+
+    return [{ value: "", label: "All Organization" }, ...options];
+  }, [ioList]); 
 
   const handleRefresh = () => {
     fetchAll();
@@ -39,7 +37,21 @@ const MainTable = () => {
 
   return (
     <>
-      <div className="p-6 bg-white shadow-sm rounded-xl mb-6 border border-slate-100">
+      <div className="p-6 bg-white shadow-sm rounded-xl mb-6 border border-slate-200">
+        <div className="flex items-center gap-3 mb-6 pb-4 border-b border-slate-100">
+          <div className="p-2.5 bg-blue-50 text-blue-600 rounded-lg border border-blue-100">
+            <FaExchangeAlt className="w-4 h-4" />
+          </div>
+          <div>
+            <h3 className="text-base font-bold text-slate-800 tracking-tight">
+              Inbound Integration Log
+            </h3>
+            <p className="text-[11px] text-slate-500 font-medium mt-0.5">
+              Monitor status Integration Inbound to META
+            </p>
+          </div>
+        </div>
+
         <div className="flex flex-col md:flex-row md:items-end gap-6">
           {/* Filter Search */}
           <div className="flex-1 space-y-2">
@@ -74,7 +86,7 @@ const MainTable = () => {
             />
           </div>
 
-          {/* Placeholder untuk button atau filter tambahan jika nanti diperlukan */}
+          {/* Control Actions Bar */}
           <div className="flex items-center gap-2">
             <Button
               variant="primary"
@@ -100,7 +112,7 @@ const MainTable = () => {
         </div>
       </div>
 
-      {/* Tabel Utama */}
+      {/* Tabel Utama Integration Log */}
       <AdjustTable
         globalFilter={debouncedFilter}
         setGlobalFilter={setGlobalFilter}

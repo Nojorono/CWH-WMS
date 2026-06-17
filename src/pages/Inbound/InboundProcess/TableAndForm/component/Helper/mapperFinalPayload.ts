@@ -1,5 +1,6 @@
 import { FormValues } from "../formTypes";
 import { showErrorToast } from "../../../../../../components/toast";
+import { usePersistAuthStore } from "../../../../../../API/store/AuthStore/PersistAuthStore";
 
 /**
  * Helper: Normalisasi Inbound Type untuk API dan Pengecekan
@@ -56,8 +57,10 @@ const mergeInboundItems = (items: any[]) => {
  * MAIN FUNCTION: mapToPayload
  */
 export function mapToPayload(data: FormValues): any {
-    const organization_id = localStorage.getItem("organization_id");
-    const organization_name = localStorage.getItem("organization_name");
+    const state = usePersistAuthStore.getState();
+    const user = state.user;
+    const organization_id = user?.userDetail?.organization?.id;
+    const organization_name = user?.userDetail?.organization?.organization_name;
 
     const { rawType, apiType } = getNormalizedInboundType(data.inbound_type);
 

@@ -6,6 +6,7 @@ import DynamicFormModal from "./DynamicFormModal";
 import { useNavigate } from "react-router-dom";
 import { usePagePermissions } from "../../utils/UserPermission/UserPagePermissions";
 import { showConfirmDialog } from "../../components/swal-confirm";
+import { usePersistAuthStore } from "../../API/store/AuthStore/PersistAuthStore";
 
 interface Props {
   data: any[];
@@ -63,9 +64,12 @@ const DynamicTable = ({
 
   const [selectedItem, setSelectedItem] = useState<any | null>(null);
   const [, setSelectedIds] = useState<any[]>([]);
-  const roleName = localStorage.getItem("role_name");
-  const navigate = useNavigate();
 
+  const state = usePersistAuthStore.getState();
+  const user = state.user;
+  const roleName = user?.role?.name;
+  const navigate = useNavigate();
+  
   const handleCloseModal = () => {
     setSelectedItem(null);
     onCloseCreateModal();

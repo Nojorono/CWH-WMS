@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   FaChevronDown,
   FaChevronRight,
@@ -10,12 +10,12 @@ import {
   FaFingerprint,
 } from "react-icons/fa";
 import { ColumnDef } from "@tanstack/react-table";
-import { formatDateIndo } from "../../../../helper/FormatDate";
 import StatusBadge from "../../../../common/statusBadge";
 import { STATUS_MAP_INTEGRATION_INBOUND } from "../../../../constants/statusMaps";
 import { useStoreInboundIntegration } from "../../../../DynamicAPI/stores/Store/MasterStore";
 import ActIndicator from "../../../../components/ui/activityIndicator";
 import ExpandableTableComponent from "../component/Table";
+import { formatDateTimeIndo } from "../../../../helper/FormatDateTime";
 
 const AdjustTable = ({ globalFilter, setGlobalFilter, filteredIO }: any) => {
   const { fetchAll, list, pagination, isLoading } =
@@ -132,11 +132,11 @@ const AdjustTable = ({ globalFilter, setGlobalFilter, filteredIO }: any) => {
         ),
       },
       {
-        header: "Integration Date",
+        header: "Inbound Integration Date",
         accessorKey: "creation_date",
         cell: ({ row }) => (
-          <div className="text-[11px] text-slate-600 font-semibold italic">
-            {formatDateIndo(row.original.creation_date)}
+          <div className="text-[11px] text-slate-600 font-semibold">
+            {formatDateTimeIndo(row.original.creation_date)}
           </div>
         ),
       },
@@ -144,16 +144,223 @@ const AdjustTable = ({ globalFilter, setGlobalFilter, filteredIO }: any) => {
     [],
   );
 
+  // const renderRowDetails = (row: any) => {
+  //   const data = row.original;
+  //   return (
+  //     <div className="p-6 bg-[#f8fafc] border-x-4 border-l-blue-500">
+  //       <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+  //         {/* Card 1: Technical IDs */}
+  //         <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm relative overflow-hidden group">
+  //           <div className="absolute top-0 right-0 p-3 text-slate-100 group-hover:text-blue-50 transition-colors">
+  //             <FaFingerprint size={40} />
+  //           </div>
+  //           <h4 className="flex items-center gap-2 text-blue-700 font-bold text-xs mb-4 uppercase tracking-widest border-b pb-2">
+  //             <FaDatabase /> System Identifiers
+  //           </h4>
+  //           <div className="space-y-3">
+  //             <InfoItem
+  //               label="Id Data"
+  //               value={data.id}
+  //               mono
+  //               color="text-green-800"
+  //             />
+  //             <InfoItem label="Request ID" value={data.request_id} />
+  //             <InfoItem label="Iface Header ID" value={data.iface_header_id} />
+  //             <InfoItem label="Inbound ID" value={data.inbound_id} mono />
+  //           </div>
+  //         </div>
+
+  //         {/* Card 2: Process & Vendor */}
+  //         <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm relative overflow-hidden group">
+  //           <div className="absolute top-0 right-0 p-3 text-slate-100 group-hover:text-orange-50 transition-colors">
+  //             <FaTruckLoading size={40} />
+  //           </div>
+  //           <h4 className="flex items-center gap-2 text-orange-600 font-bold text-xs mb-4 uppercase tracking-widest border-b pb-2">
+  //             <FaInfoCircle /> Integration Detail
+  //           </h4>
+  //           <div className="space-y-3">
+  //             <InfoItem
+  //               label="Source System"
+  //               value={`${data.source_system} (${data.receipt_source_code})`}
+  //               color="text-orange-700 font-bold"
+  //             />
+  //             <InfoItem
+  //               label="Vendor"
+  //               value={`ID: ${data.vendor_id} (Site: ${data.vendor_site_id})`}
+  //             />
+  //             <InfoItem label="Driver Name" value={`${data.rsh_attribute2}`} />
+  //             <InfoItem label="Org ID" value={data.organization_id} mono />
+  //           </div>
+  //         </div>
+
+  //         {/* Card 3: Timeline */}
+  //         <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm relative overflow-hidden group">
+  //           <div className="absolute top-0 right-0 p-3 text-slate-100 group-hover:text-emerald-50 transition-colors">
+  //             <FaCalendarAlt size={40} />
+  //           </div>
+  //           <h4 className="flex items-center gap-2 text-emerald-600 font-bold text-xs mb-4 uppercase tracking-widest border-b pb-2">
+  //             <FaCalendarAlt /> History Timeline
+  //           </h4>
+  //           <div className="space-y-3">
+  //             <InfoItem
+  //               label="Created At"
+  //               value={formatDateTimeIndo(data.createdAt)}
+  //               color="text-emerald-700 font-medium"
+  //             />
+  //             <InfoItem
+  //               label="Last Updated"
+  //               value={formatDateTimeIndo(data.updatedAt)}
+  //             />
+  //             <InfoItem
+  //               label="Last Sync By"
+  //               value={`User ID: ${data.last_updated_by}`}
+  //             />
+  //             <InfoItem
+  //               label="Process Date"
+  //               value={formatDateTimeIndo(data.last_updated_date)}
+  //             />
+  //           </div>
+  //         </div>
+
+  //         {/* Full Width Section: Inbound Lines */}
+  //         <div className="md:col-span-3 bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+  //           <div className="bg-slate-800 px-4 py-2 flex justify-between items-center">
+  //             <h4 className="flex items-center gap-2 text-white font-bold text-[11px] uppercase tracking-widest">
+  //               <FaBoxOpen /> Line Details
+  //             </h4>
+  //             <span className="bg-blue-500 text-white text-[10px] px-2 py-0.5 rounded-full font-bold">
+  //               {data.lines?.length} Items
+  //             </span>
+  //           </div>
+  //           <div className="overflow-x-auto">
+  //             <table className="w-full text-[11px]">
+  //               <thead className="bg-slate-50 text-slate-500 border-b">
+  //                 <tr>
+  //                   <th className="px-4 py-2 text-left font-bold uppercase tracking-tighter">
+  //                     PO & Line
+  //                   </th>
+  //                   <th className="px-4 py-2 text-left font-bold uppercase tracking-tighter">
+  //                     Inventory Item
+  //                   </th>
+  //                   <th className="px-4 py-2 text-center font-bold uppercase tracking-tighter">
+  //                     Quantity
+  //                   </th>
+  //                   <th className="px-4 py-2 text-left font-bold uppercase tracking-tighter">
+  //                     Subinventory / Locator
+  //                   </th>
+  //                   <th className="px-4 py-2 text-left font-bold uppercase tracking-tighter">
+  //                     Sync Log
+  //                   </th>
+  //                   <th className="px-4 py-2 text-left font-bold uppercase tracking-tighter">
+  //                     Status Selisih
+  //                   </th>
+  //                 </tr>
+  //               </thead>
+
+  //               <tbody className="divide-y divide-slate-100">
+  //                 {data.lines?.map((line: any) => (
+  //                   <tr
+  //                     key={line.id}
+  //                     className="hover:bg-slate-50 transition-colors"
+  //                   >
+  //                     <td className="px-4 py-3">
+  //                       <div className="font-bold text-blue-700">
+  //                         {line.po_number}
+  //                       </div>
+  //                       <div className="text-[9px] text-slate-400">
+  //                         ID: {line.iface_line_id}
+  //                       </div>
+  //                     </td>
+  //                     <td className="px-4 py-3 font-mono text-slate-600">
+  //                       {line.inventory_item_id}
+  //                     </td>
+  //                     <td className="px-4 py-3 text-center">
+  //                       <span className="font-bold text-slate-800 text-xs">
+  //                         {line.quantity}
+  //                       </span>
+  //                       <span className="ml-1 text-slate-400 font-medium uppercase">
+  //                         {line.uom_code}
+  //                       </span>
+  //                     </td>
+  //                     <td className="px-4 py-3">
+  //                       <div className="font-semibold text-slate-700">
+  //                         {line.subinventory}
+  //                       </div>
+  //                       <div className="text-[10px] text-slate-400">
+  //                         Loc: {line.locator_id}
+  //                       </div>
+  //                     </td>
+  //                     <td className="px-4 py-3">
+  //                       <div className="flex items-center gap-1.5">
+  //                         <div
+  //                           className={`w-2 h-2 rounded-full ${line.status === "S" ? "bg-green-500" : "bg-red-500"}`}
+  //                         ></div>
+  //                         <span className="text-[10px] font-bold text-slate-500 uppercase">
+  //                           {line.status === "S" ? "Success" : "Failed"}
+  //                         </span>
+  //                       </div>
+  //                       {line.message && (
+  //                         <div className="text-[10px] text-red-500 italic mt-1">
+  //                           {line.message}
+  //                         </div>
+  //                       )}
+  //                     </td>
+  //                     <td className="px-4 py-3">
+  //                       <div className="flex items-center gap-1.5">
+  //                         <span
+  //                           className={`px-2 py-0.5 rounded text-[9px] font-bold ${
+  //                             line.status_selisih === "E"
+  //                               ? "bg-amber-100 text-amber-600"
+  //                               : "bg-green-100 text-green-600"
+  //                           }`}
+  //                         >
+  //                           {line.status_selisih === "E" ? "SELISIH" : ""}
+  //                         </span>
+  //                         {line.message_selisih && (
+  //                           <span
+  //                             className="text-[9px] text-red-500 mt-1 truncate max-w-[300px]"
+  //                             title={line.message_selisih}
+  //                           >
+  //                             {line.message_selisih}
+  //                           </span>
+  //                         )}
+  //                       </div>
+  //                     </td>
+  //                   </tr>
+  //                 ))}
+  //               </tbody>
+  //             </table>
+  //           </div>
+  //         </div>
+  //       </div>
+
+  //       {/* Global Error Banner */}
+  //       {data.status === "E" && (
+  //         <div className="mt-5 p-3 bg-red-50 border-l-4 border-red-500 rounded flex items-center gap-3">
+  //           <div className="bg-red-500 p-1 rounded text-white text-[10px] font-bold">
+  //             ERROR
+  //           </div>
+  //           <p className="text-xs text-red-700 font-medium italic">
+  //             {data.message}
+  //           </p>
+  //         </div>
+  //       )}
+  //     </div>
+  //   );
+  // };
+
   const renderRowDetails = (row: any) => {
     const data = row.original;
+    // Cek apakah ada setidaknya satu line yang memiliki status selisih
+    const hasSelisih = data.lines?.some(
+      (line: any) => line.status_selisih === "E",
+    );
+
     return (
       <div className="p-6 bg-[#f8fafc] border-x-4 border-l-blue-500">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-          {/* Card 1: Technical IDs */}
+          {/* Card 1, 2, 3 tetap sama... */}
           <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm relative overflow-hidden group">
-            <div className="absolute top-0 right-0 p-3 text-slate-100 group-hover:text-blue-50 transition-colors">
-              <FaFingerprint size={40} />
-            </div>
             <h4 className="flex items-center gap-2 text-blue-700 font-bold text-xs mb-4 uppercase tracking-widest border-b pb-2">
               <FaDatabase /> System Identifiers
             </h4>
@@ -170,11 +377,7 @@ const AdjustTable = ({ globalFilter, setGlobalFilter, filteredIO }: any) => {
             </div>
           </div>
 
-          {/* Card 2: Process & Vendor */}
           <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm relative overflow-hidden group">
-            <div className="absolute top-0 right-0 p-3 text-slate-100 group-hover:text-orange-50 transition-colors">
-              <FaTruckLoading size={40} />
-            </div>
             <h4 className="flex items-center gap-2 text-orange-600 font-bold text-xs mb-4 uppercase tracking-widest border-b pb-2">
               <FaInfoCircle /> Integration Detail
             </h4>
@@ -193,26 +396,28 @@ const AdjustTable = ({ globalFilter, setGlobalFilter, filteredIO }: any) => {
             </div>
           </div>
 
-          {/* Card 3: Timeline */}
           <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm relative overflow-hidden group">
-            <div className="absolute top-0 right-0 p-3 text-slate-100 group-hover:text-emerald-50 transition-colors">
-              <FaCalendarAlt size={40} />
-            </div>
             <h4 className="flex items-center gap-2 text-emerald-600 font-bold text-xs mb-4 uppercase tracking-widest border-b pb-2">
               <FaCalendarAlt /> History Timeline
             </h4>
             <div className="space-y-3">
               <InfoItem
                 label="Created At"
-                value={data.createdAt}
+                value={formatDateTimeIndo(data.createdAt)}
                 color="text-emerald-700 font-medium"
               />
-              <InfoItem label="Last Updated" value={data.updatedAt} />
+              <InfoItem
+                label="Last Updated"
+                value={formatDateTimeIndo(data.updatedAt)}
+              />
               <InfoItem
                 label="Last Sync By"
                 value={`User ID: ${data.last_updated_by}`}
               />
-              <InfoItem label="Process Date" value={data.last_updated_date} />
+              <InfoItem
+                label="Process Date"
+                value={formatDateTimeIndo(data.last_updated_date)}
+              />
             </div>
           </div>
 
@@ -245,57 +450,107 @@ const AdjustTable = ({ globalFilter, setGlobalFilter, filteredIO }: any) => {
                     <th className="px-4 py-2 text-left font-bold uppercase tracking-tighter">
                       Sync Log
                     </th>
+                    {hasSelisih && (
+                      <th className="px-4 py-2 text-left font-bold uppercase tracking-tighter">
+                        Status Selisih
+                      </th>
+                    )}
                   </tr>
                 </thead>
+
                 <tbody className="divide-y divide-slate-100">
                   {data.lines?.map((line: any) => (
-                    <tr
-                      key={line.id}
-                      className="hover:bg-slate-50 transition-colors"
-                    >
-                      <td className="px-4 py-3">
-                        <div className="font-bold text-blue-700">
-                          {line.po_number}
-                        </div>
-                        <div className="text-[9px] text-slate-400">
-                          ID: {line.iface_line_id}
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 font-mono text-slate-600">
-                        {line.inventory_item_id}
-                      </td>
-                      <td className="px-4 py-3 text-center">
-                        <span className="font-bold text-slate-800 text-xs">
-                          {line.quantity}
-                        </span>
-                        <span className="ml-1 text-slate-400 font-medium uppercase">
-                          {line.uom_code}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="font-semibold text-slate-700">
-                          {line.subinventory}
-                        </div>
-                        <div className="text-[10px] text-slate-400">
-                          Loc: {line.locator_id}
-                        </div>
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-1.5">
-                          <div
-                            className={`w-2 h-2 rounded-full ${line.status === "S" ? "bg-green-500" : "bg-red-500"}`}
-                          ></div>
-                          <span className="text-[10px] font-bold text-slate-500 uppercase">
-                            {line.status === "S" ? "Success" : "Failed"}
-                          </span>
-                        </div>
-                        {line.message && (
-                          <div className="text-[10px] text-red-500 italic mt-1">
-                            {line.message}
+                    <React.Fragment key={line.id}>
+                      <tr className="hover:bg-slate-50 transition-colors">
+                        <td className="px-4 py-3">
+                          <div className="font-bold text-blue-700">
+                            {line.po_number}
                           </div>
+                          <div className="text-[9px] text-slate-400">
+                            ID: {line.iface_line_id}
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 font-mono text-slate-600">
+                          {line.inventory_item_id}
+                        </td>
+                        <td className="px-4 py-3 text-center">
+                          <span className="font-bold text-slate-800 text-xs">
+                            {line.quantity}
+                          </span>
+                          <span className="ml-1 text-slate-400 font-medium uppercase">
+                            {line.uom_code}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="font-semibold text-slate-700">
+                            {line.subinventory}
+                          </div>
+                          <div className="text-[10px] text-slate-400">
+                            Loc: {line.locator_id}
+                          </div>
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-1.5">
+                            <div
+                              className={`w-2 h-2 rounded-full ${line.status === "S" ? "bg-green-500" : "bg-red-500"}`}
+                            ></div>
+                            <span className="text-[10px] font-bold text-slate-500 uppercase">
+                              {line.status === "S" ? "Success" : "Failed"}
+                            </span>
+                          </div>
+                        </td>
+                        {hasSelisih && (
+                          <td className="px-4 py-3">
+                            {line.status_selisih === "E" && (
+                              <span className="px-2 py-0.5 rounded bg-amber-100 text-amber-600 text-[9px] font-bold">
+                                E
+                              </span>
+                            )}
+                          </td>
                         )}
-                      </td>
-                    </tr>
+                      </tr>
+
+                      {/* Detail Selisih row hanya muncul untuk line yang selisih */}
+                      {line.status_selisih === "E" && (
+                        <tr className="bg-amber-50/50">
+                          <td
+                            colSpan={hasSelisih ? 6 : 5}
+                            className="px-4 py-2"
+                          >
+                            <div className="flex items-center gap-4 text-[10px]">
+                              <span className="font-bold text-amber-700 uppercase tracking-wider">
+                                ⚠️ Detail Selisih:
+                              </span>
+                              <div className="flex gap-4">
+                                <span>
+                                  Qty:{" "}
+                                  <span className="font-mono font-bold text-amber-800">
+                                    {line.quantity_selisih || 0}
+                                  </span>
+                                </span>
+                                <span>
+                                  Sub:{" "}
+                                  <span className="font-mono font-bold text-amber-800">
+                                    {line.subinventory_selisih || "-"}
+                                  </span>
+                                </span>
+                                <span>
+                                  Loc:{" "}
+                                  <span className="font-mono font-bold text-amber-800">
+                                    {line.locator_id_selisih || "N/A"}
+                                  </span>
+                                </span>
+                              </div>
+                              {line.message_selisih && (
+                                <span className="text-red-500 italic ml-auto">
+                                  {line.message_selisih}
+                                </span>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </React.Fragment>
                   ))}
                 </tbody>
               </table>
@@ -303,7 +558,6 @@ const AdjustTable = ({ globalFilter, setGlobalFilter, filteredIO }: any) => {
           </div>
         </div>
 
-        {/* Global Error Banner */}
         {data.status === "E" && (
           <div className="mt-5 p-3 bg-red-50 border-l-4 border-red-500 rounded flex items-center gap-3">
             <div className="bg-red-500 p-1 rounded text-white text-[10px] font-bold">

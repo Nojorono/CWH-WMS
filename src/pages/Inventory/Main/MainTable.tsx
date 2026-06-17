@@ -15,10 +15,14 @@ import Select from "../../../components/form/Select";
 import axiosInstance from "../../../DynamicAPI/AxiosInstance";
 import Button from "../../../components/ui/button/Button";
 import { FaSync } from "react-icons/fa";
+import { usePersistAuthStore } from "../../../API/store/AuthStore/PersistAuthStore";
 
 const MainTable = () => {
-  const userDetail = localStorage.getItem("user_detail");
-  const isGlobalUser = userDetail === "null";
+  const ioList = usePersistAuthStore((state) => state.ioList);
+  const user = usePersistAuthStore((state) => state.user);
+  
+  const userDetail = user?.userDetail || null;
+  const isGlobalUser = !userDetail;
 
   const [globalFilter, setGlobalFilter] = useState<string>("");
   const debouncedFilter = useDebounce(globalFilter, 500);
@@ -89,23 +93,19 @@ const MainTable = () => {
     }
   }, [selectedZone]);
 
-  // Options Mapping
   const ioOptions = useMemo(() => {
-    const listIO = localStorage.getItem("io_list");
-    if (!listIO) return [{ value: "", label: "No Organization Found" }];
-    try {
-      const parsedIO = JSON.parse(listIO);
-      return [
-        { value: "", label: "Select Organization" },
-        ...parsedIO.map((item: any) => ({
-          value: item.id,
-          label: `${item.organization_name} - ${item.organization_code}`,
-        })),
-      ];
-    } catch {
-      return [{ value: "", label: "Error Loading IO" }];
+    if (!ioList || ioList.length === 0) {
+      return [{ value: "", label: "All Organization" }];
     }
-  }, []);
+
+    return [
+      { value: "", label: "All Organization" },
+      ...ioList.map((item: any) => ({
+        value: item.id,
+        label: `${item.organization_name} - ${item.organization_code}`,
+      })),
+    ];
+  }, [ioList]);
 
   const optWarehouse = [
     { value: "", label: "Select Warehouse" },
@@ -267,7 +267,6 @@ const MainTable = () => {
               width="100%"
             />
           </div>
-
         </div>
       </div>
 

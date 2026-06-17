@@ -4,7 +4,6 @@ import React, { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import Button from "../../../../components/ui/button/Button";
 import PageBreadcrumb from "../../../../components/common/PageBreadCrumb";
-// import TableComponent from "../Table/TableComponent";
 import DynamicForm, {
   FieldConfig,
 } from "../../../../components/wms-components/inbound-component/form/DynamicForm";
@@ -21,6 +20,7 @@ import Select from "../../../../components/form/Select";
 import ActIndicator from "../../../../components/ui/activityIndicator";
 import { FaCheck } from "react-icons/fa";
 import TableComponent from "../../../../components/tables/ActionTable/TableComponent";
+import { usePersistAuthStore } from "../../../../API/store/AuthStore/PersistAuthStore";
 
 type MemoFormValues = {
   requestor: string;
@@ -43,9 +43,11 @@ const CreateDO: React.FC = () => {
   const navigate = useNavigate();
   const { mode } = location.state || {};
   const isDetail = mode === "detail";
-  const username = localStorage.getItem("username");
-  const orgId = localStorage.getItem("organization_id");
-  const orgName = localStorage.getItem("organization_name");
+  
+  const user = usePersistAuthStore((state) => state.user);
+  const username = user?.username;
+  const orgId = user?.userDetail?.organizationId || user?.userDetail?.organization?.id;
+  const orgName = user?.userDetail?.organization?.organization_name;
 
   const methods = useForm<MemoFormValues>({
     defaultValues: {
@@ -199,8 +201,9 @@ const CreateDO: React.FC = () => {
       limit: pageSize,
       status: "APPROVED",
       type: value,
+      has_do: false
     });
-  };
+  };  
 
   return (
     <div className="p-6 space-y-6">

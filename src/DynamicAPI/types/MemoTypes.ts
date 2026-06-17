@@ -70,6 +70,9 @@ export interface OutboundMemoUpdate {
 // For GET Response
 export interface OutboundMemo {
     has_do: any;
+    so_number?: string | number;
+    so_organization_id?: string | number;
+    header_id?: string | number;
     transaction_pickings: any;
     outbound_memo_number: string;
     type: string;

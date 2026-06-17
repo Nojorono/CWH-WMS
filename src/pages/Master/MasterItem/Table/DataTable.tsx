@@ -12,6 +12,7 @@ import {
 import { showErrorToast, showSuccessToast } from "../../../../components/toast";
 import { EndPoint } from "../../../../utils/EndPoint";
 import { showConfirmDialog } from "../../../../components/swal-confirm";
+import axiosInstance from "../../../../DynamicAPI/AxiosInstance";
 
 const DataTable = () => {
   const {
@@ -66,30 +67,22 @@ const DataTable = () => {
   const [isLoadingFetch, setIsLoadingFetch] = useState(false);
 
   const handleFetchItem = async () => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      showErrorToast("Token not found");
-      return;
-    }
     setIsLoadingFetch(true);
+
     try {
-      const response = await fetch(
-        `${EndPoint}master-item/sync-from-meta-oracle`,
-        {
-          method: "POST",
-          headers: {
-            accept: "*/*",
-            Authorization: `Bearer ${token}`,
-          },
+      await axiosInstance.post("master-item/sync-from-meta-oracle", null, {
+        headers: {
+          accept: "*/*",
         },
-      );
-      if (!response.ok) {
-        throw new Error("Failed to fetch item from Meta Oracle");
-      }
+      });
       showSuccessToast("Sync from Meta Oracle successful");
       fetchAll();
     } catch (error: any) {
-      showErrorToast(error.message || "Error syncing from Meta Oracle");
+      const errorMsg =
+        error.response?.data?.message ||
+        error.message ||
+        "Error syncing from Meta Oracle";
+      showErrorToast(errorMsg);
     } finally {
       setIsLoadingFetch(false);
     }
@@ -100,17 +93,6 @@ const DataTable = () => {
       { accessorKey: "sku", header: "SKU" },
       { accessorKey: "item_number", header: "Item Number" },
       { accessorKey: "description", header: "Description" },
-      // {
-      //   accessorKey: "organization_id",
-      //   header: "Organization",
-      //   cell: ({ row }: any) => {
-      //     const org = ioList.find(
-      //       (item: any) =>
-      //         item.organization_id === row.original.organization_id,
-      //     );
-      //     return org ? org.organization_name : row.original.organization_id;
-      //   },
-      // },
       { accessorKey: "inventory_item_id", header: "Inventory Item ID" },
       { accessorKey: "bal_per_dus", header: "Bal/Dus" },
       { accessorKey: "press_per_bal", header: "Press/Bal" },
@@ -139,16 +121,6 @@ const DataTable = () => {
       type: "text",
       validation: { required: "Required" },
     },
-    // {
-    //   name: "organization_id",
-    //   label: "Organization",
-    //   type: "select",
-    //   options: ioList.map((item: any) => ({
-    //     label: item.organization_name,
-    //     value: item.organization_id,
-    //   })),
-    //   validation: { required: "Required" },
-    // },
     {
       name: "inventory_item_id",
       label: "Inventory Item ID",
