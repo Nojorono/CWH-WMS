@@ -212,15 +212,15 @@ export const usePickingActions = ({
             }
 
             // 2. Validasi Kesiapan (Wajib dari data integrasi)
-            // if (!doDetail.is_ready_ship_confirm) {
-            //     Swal.fire({
-            //         icon: "warning",
-            //         title: "Belum Siap Ship Confirm",
-            //         text: "Pastikan semua item berstatus Pick Release (S) sebelum melakukan penyelesaian pengiriman.",
-            //         confirmButtonColor: "#3085d6",
-            //     });
-            //     return;
-            // }
+            if (!doDetail.is_ready_ship_confirm) {
+                Swal.fire({
+                    icon: "warning",
+                    title: "Belum Siap Ship Confirm",
+                    text: "Pastikan semua item berstatus Pick Release (S) sebelum melakukan penyelesaian pengiriman.",
+                    confirmButtonColor: "#3085d6",
+                });
+                return;
+            }
 
             // 3. REFACTOR SUPER BERSIH: Satukan id Transaksi ERP dengan info teks dari Tabel Utama
             const enrichedMemos = doDetail.outbound_memos?.map((memo: any) => ({
@@ -257,28 +257,23 @@ export const usePickingActions = ({
     }) => {
         if (!qtyModalData) return;
 
+        try {
+            const response = await axiosInstance.post(
+                `${EndPoint}outbound-do/ship-confirm-subdist/${qtyModalData.id}`,
+                payload
+            );
 
-        console.log("data id", qtyModalData.id);
-        console.log("payload", payload);
-        
-
-        // try {
-        //     const response = await axiosInstance.post(
-        //         `${EndPoint}outbound-do/ship-confirm-subdist/${qtyModalData.id}`,
-        //         payload
-        //     );
-
-        //     if (response.status === 200 || response.status === 201) {
-        //         showSuccessToast("Final Ship Confirm Subdist berhasil diproses!");
-        //         setShowQtyModal(false);
-        //         setQtyModalData(null);
-        //         refreshTable();
-        //     }
-        // } catch (error: any) {
-        //     showErrorToast(error.response?.data?.message || "Gagal melakukan Ship Confirm");
-        // } finally {
-        //     setIsSubmittingQty(false);
-        // }
+            if (response.status === 200 || response.status === 201) {
+                showSuccessToast("Final Ship Confirm Subdist berhasil diproses!");
+                setShowQtyModal(false);
+                setQtyModalData(null);
+                refreshTable();
+            }
+        } catch (error: any) {
+            showErrorToast(error.response?.data?.message || "Gagal melakukan Ship Confirm");
+        } finally {
+            setIsSubmittingQty(false);
+        }
     };
 
     // --- AMO INTERNAL HANDLER ---

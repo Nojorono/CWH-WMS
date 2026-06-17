@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { CallPlanBindings, BTBResponse } from '../../../../API/types/callPlan'; // Pastikan import interface yang benar
+import { CallPlanBindings, BTBResponse } from '../../../../API/types/callPlan'; 
 import { getBTB } from '../../../../API/store/DOsuggestionServices/getBTBservice';
 
 

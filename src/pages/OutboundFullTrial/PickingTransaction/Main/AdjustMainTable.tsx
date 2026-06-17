@@ -180,17 +180,14 @@ const AdjustTableTransactionPicking = ({
               label: "Pick Release",
               icon: FaBoxOpen,
               onClick: () => actions.handlePickRelease(row.original),
-              visible: outbound_type === "SUBDIST",
-              // && status === "APPROVED",
+              visible: outbound_type === "SUBDIST" && status === "APPROVED",
               className: "text-indigo-600",
             },
             {
               label: "Upload Manifest",
               icon: FaCloudUploadAlt, // Diubah ke icon upload agar lebih intuitif
               onClick: () => actions.handleOpenUploadModal(row.original),
-              // 2. Muncul jika Pick Release selesai (status berubah, misal: 'READY_TO_MANIFEST' atau 'PICKED')
-              visible: outbound_type === "SUBDIST",
-              // && status === "READY_TO_MANIFEST",
+              visible: outbound_type === "SUBDIST" &&  status !== "PENDING",
               className: "text-amber-600",
             },
             {
@@ -198,8 +195,7 @@ const AdjustTableTransactionPicking = ({
               icon: FaCheck,
               onClick: () =>
                 actions.handleFinalShipConfirmSubdist(row.original),
-              visible: outbound_type === "SUBDIST",
-              // && status === "MANIFEST",
+              visible: outbound_type === "SUBDIST" && status !== "PENDING",
               className: "text-emerald-600",
             },
           ].filter((a) => a.visible);

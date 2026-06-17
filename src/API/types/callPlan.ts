@@ -23,7 +23,6 @@ export interface CallPlanDetail {
     SALES_NIK: string;
     CALL_PLAN_START_DATE: string;
     CALL_PLAN_END_DATE: string;
-    // Properti gabungan hasil merge
     BTB?: BTBItem[];
     is_active_plan?: boolean;
 }
@@ -42,7 +41,6 @@ export interface BTBResponse {
     SALES_SUPERVISOR_NIK: string;
     SALES_SUPERVISOR_NAME: string;
     BTB: BTBItem[];
-    // Field lain yang ada di log Anda
     CABANG: string;
     CALL_PLAN_NUMBER: string;
     CALL_PLAN_START_DATE: string;
