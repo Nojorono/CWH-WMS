@@ -98,3 +98,5 @@ export const STATUS_MAPS = {
   inventory_progress: STATUS_PROGRESSION_INVENTORY,
   putaway: STATUS_MAP_PUTAWAY,
 } as const;
+
+

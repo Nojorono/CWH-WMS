@@ -72,6 +72,24 @@ const AdjustTable = ({
         ),
       },
       {
+        accessorKey: "CALL_PLAN_START_DATE",
+        header: () => <div className="text-left">CALLPLAN START DATE</div>,
+        cell: ({ row }) => (
+          <span className="text-sm text-slate-600">
+            {row.original.CALL_PLAN_START_DATE}
+          </span>
+        ),
+      },
+       {
+        accessorKey: "CALL_PLAN_END_DATE",
+        header: () => <div className="text-left">CALLPLAN END DATE</div>,
+        cell: ({ row }) => (
+          <span className="text-sm text-slate-600">
+            {row.original.CALL_PLAN_END_DATE}
+          </span>
+        ),
+      },
+      {
         id: "action",
         header: () => <div className="text-center">ACTION</div>,
         cell: ({ row }) => (

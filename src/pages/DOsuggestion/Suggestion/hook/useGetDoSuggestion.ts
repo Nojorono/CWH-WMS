@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
-import { CallPlanBindings, SupervisorData } from '../../../../API/types/callPlan';
-import { generateCallPlan } from '../../../../API/store/DOsuggestionServices/generateCallPlanService';
+import { CallPlanBindings } from '../../../../API/types/callPlan';
+import { SuggestionSummary } from '../../../../API/types/DOsuggestion';
+import { getDOsuggestion } from '../../../../API/store/DOsuggestionServices/DOsuggestionService';
 
-export const useGenerateCallPlan = (params: CallPlanBindings) => {
-    const [data, setData] = useState<SupervisorData[]>([]);
+export const useGetDoSuggestion = (params: CallPlanBindings) => {
+    // Ubah tipe data menjadi SuggestionSummary | null
+    const [data, setData] = useState<SuggestionSummary | null>(null);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
@@ -11,10 +13,10 @@ export const useGenerateCallPlan = (params: CallPlanBindings) => {
         setIsLoading(true);
         setError(null);
         try {
-            const result = await generateCallPlan(params);
+            const result = await getDOsuggestion(params);
             setData(result);
         } catch (err) {
-            setError('Gagal memuat data call plan');
+            setError('Gagal memuat data suggestion');
             console.error(err);
         } finally {
             setIsLoading(false);
@@ -22,6 +24,7 @@ export const useGenerateCallPlan = (params: CallPlanBindings) => {
     };
 
     useEffect(() => {
+        // Sesuaikan validasi params jika perlu (misalnya menyertakan NIK jika diperlukan)
         if (params.CABANG && params.SALES_SUPERVISOR_NIK) {
             fetchData();
         }

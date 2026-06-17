@@ -2,11 +2,14 @@ import { useState, useMemo } from "react";
 import { FaSync, FaSearch } from "react-icons/fa";
 import { useCallPlan } from "../hook/useCallPlan";
 import { useGenerateCallPlan } from "../hook/useGenerateCallPlan";
+import { useGetDoSuggestion } from "../hook/useGetDoSuggestion";
+
 import AdjustTable from "../component/AdjustTable";
 import PageBreadcrumb from "../../../../components/common/PageBreadCrumb";
 import Button from "../../../../components/ui/button/Button";
 import { mergeSalesWithCallPlan } from "../helper/callPlanMapper";
 import { CallPlanDetail } from "../../../../API/types/callPlan";
+import ActIndicator from "../../../../components/ui/activityIndicator";
 
 const MainTable = () => {
   const [globalFilter, setGlobalFilter] = useState<string>("");
@@ -19,6 +22,9 @@ const MainTable = () => {
 
   const { data: callPlanList, isLoading, error } = useCallPlan(params);
   const { data: allSalesData } = useGenerateCallPlan(params);
+  const { data: DOsuggestionData } = useGetDoSuggestion(params);
+
+  console.log("DOsuggestionData", DOsuggestionData);
 
   const mergedData = useMemo(() => {
     if (!allSalesData || !Array.isArray(allSalesData)) return [];
@@ -27,7 +33,6 @@ const MainTable = () => {
     return mergeSalesWithCallPlan(callPlanList || [], masterData);
   }, [callPlanList, allSalesData]);
 
-  if (isLoading) return <div className="p-10 text-center">Loading Data...</div>;
   if (error)
     return <div className="p-10 text-red-500 text-center">{error}</div>;
 
@@ -60,13 +65,21 @@ const MainTable = () => {
         </Button>
       </div>
 
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-        <AdjustTable
-          data={mergedData} // Mengirim data yang sudah lengkap
-          globalFilter={globalFilter}
-          setGlobalFilter={setGlobalFilter}
-        />
-      </div>
+      {isLoading ? (
+        <>
+          <ActIndicator />
+        </>
+      ) : (
+        <>
+          <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+            <AdjustTable
+              data={mergedData} 
+              globalFilter={globalFilter}
+              setGlobalFilter={setGlobalFilter}
+            />
+          </div>
+        </>
+      )}
     </div>
   );
 };

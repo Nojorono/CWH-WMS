@@ -7,8 +7,6 @@ import Select from "../../../../components/form/Select";
 import Button from "../../../../components/ui/button/Button";
 import { FaExchangeAlt, FaRecycle, FaSync } from "react-icons/fa";
 import { useStoreInboundIntegration } from "../../../../DynamicAPI/stores/Store/MasterStore";
-
-// KUNCI PERBAIKAN: Import store persistent terenkripsi yang baru
 import { usePersistAuthStore } from "../../../../API/store/AuthStore/PersistAuthStore";
 
 const MainTable = () => {
@@ -18,10 +16,8 @@ const MainTable = () => {
 
   const { fetchAll } = useStoreInboundIntegration();
 
-  // 1. Ambil data ioList secara reaktif langsung dari Zustand global state
   const ioList = usePersistAuthStore((state) => state.ioList);
 
-  // 2. Format menjadi Options untuk Select secara aman tanpa boilerplates try-catch/JSON.parse
   const ioOptions = useMemo(() => {
     if (!ioList || ioList.length === 0) {
       return [{ value: "", label: "No Organization Found" }];
@@ -33,7 +29,7 @@ const MainTable = () => {
     }));
 
     return [{ value: "", label: "All Organization" }, ...options];
-  }, [ioList]); // Otomatis mengkalkulasi ulang jika data IO berubah atau terisi setelah sign-in
+  }, [ioList]); 
 
   const handleRefresh = () => {
     fetchAll();
