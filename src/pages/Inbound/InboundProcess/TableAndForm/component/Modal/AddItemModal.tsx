@@ -19,10 +19,12 @@ export default function AddItemModal({
   isOpen,
   onClose,
   onSave,
+  isDOsuggestion,
 }: {
   isOpen: boolean;
   onClose: () => void;
   onSave: (item: ItemForm) => void;
+  isDOsuggestion: boolean;
 }) {
   const { fetchAll, list } = useStoreItem();
   const { fetchAll: fetchAllUom, list: uomList } = useStoreUom();
@@ -40,15 +42,16 @@ export default function AddItemModal({
   const [tempClassification, setTempClassification] = useState("");
   const [tempUom, setTempUom] = useState("");
 
-  // defaultkan UoM ke "DUS" kalau ada
+  const defaultUomCode = isDOsuggestion ? "BKS" : "DUS";
+
   useEffect(() => {
     if (uomList.length > 0 && !tempUom) {
-      const dus = uomList.find((u: any) => u.code === "DUS");
-      if (dus) {
-        setTempUom(dus.code);
+      const targetUom = uomList.find((u: any) => u.code === defaultUomCode);
+      if (targetUom) {
+        setTempUom(targetUom.code);
       }
     }
-  }, [uomList, tempUom]);
+  }, [uomList, tempUom, defaultUomCode]);
 
   const selectedMaster = list.find((m: any) => m.sku === tempSku);
 
@@ -76,7 +79,7 @@ export default function AddItemModal({
     setTempSku("");
     setTempQty("");
     setTempClassification("");
-    setTempUom("DUS");
+    setTempUom("");
     onClose();
   };
 
@@ -84,7 +87,7 @@ export default function AddItemModal({
     setTempSku("");
     setTempQty("");
     setTempClassification("");
-    setTempUom("DUS");
+    setTempUom("");
     onClose();
   };
 
@@ -138,22 +141,30 @@ export default function AddItemModal({
               />
             </div>
 
-            {/* UoM Dropdown */}
+            {/* UoM Dropdown / Read-Only */}
             <div className="flex flex-col">
               <label className="text-xs text-slate-600 font-bold mb-1">
                 UoM
               </label>
-              <Select
-                options={uomList.map((u: any) => ({
-                  value: u.code,
-                  label: `${u.code}`,
-                }))}
-                value={tempUom}
-                onChange={setTempUom}
-                placeholder="-- Select UoM --"
-                className="w-full"
-                width="100%"
-              />
+              {isDOsuggestion ? (
+                <input
+                  className={`${inputCls} w-full bg-slate-100 text-slate-500 cursor-not-allowed`}
+                  value={tempUom}
+                  readOnly
+                />
+              ) : (
+                <Select
+                  options={uomList.map((u: any) => ({
+                    value: u.code,
+                    label: `${u.code}`,
+                  }))}
+                  value={tempUom}
+                  onChange={setTempUom}
+                  placeholder="-- Select UoM --"
+                  className="w-full"
+                  width="100%"
+                />
+              )}
             </div>
 
             {/* Qty */}

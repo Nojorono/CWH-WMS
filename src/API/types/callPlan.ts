@@ -25,13 +25,18 @@ export interface CallPlanDetail {
     CALL_PLAN_END_DATE: string;
     BTB?: BTBItem[];
     is_active_plan?: boolean;
+    is_generated?: boolean;
 }
 
 // 4. Tipe data Wrapper Supervisor (Digunakan di CallPlan API)
 export interface SupervisorData {
-    DETAIL: CallPlanDetail[];
+    // Tambahkan AHOM di level Header
+    AHOM_NAME?: string;
+    AHOM_NIK?: string;
+    CABANG?: string; // Tambahkan CABANG di header agar rapi
     SALES_SUPERVISOR_NAME: string;
     SALES_SUPERVISOR_NIK: string;
+    DETAIL: CallPlanDetail[];
 }
 
 // 5. Tipe data untuk respon API BTB (Berdasarkan log data Anda)

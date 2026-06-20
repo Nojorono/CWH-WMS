@@ -78,8 +78,8 @@ import Reporting2 from "../pages/Reporting/Main/Report2";
 
 // DO SUGGESTION
 import DOsuggestionMain from '../pages/DOsuggestion/Suggestion/Main/MainTable'
-import GenerateDO from '../pages/DOsuggestion/Suggestion/Main/GenerateDO'
-import OutboundSales from '../pages/DOsuggestion/OutboundSales/Main/MainTable'
+import GenerateDO from '../pages/DOsuggestion/Suggestion/Main/DetailSuggestionSection'
+import OutboundSales from '../pages/DOsuggestion/OutboundSales/MainTable'
 
 
 export {

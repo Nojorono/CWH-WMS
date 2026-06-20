@@ -41,3 +41,31 @@ export interface WeeklyQty {
 export interface ParsedSnowflakeData {
     summary: SuggestionSummary;
 }
+
+
+export interface DOSuggestionLine {
+  id?: string;
+  item_code: string;
+  item_qty_suggestion: number;
+  item_qty_revision?: number;
+  item_qty_final?: number;
+  contribution_percentage?: number;
+  item_uom: string;
+}
+
+export interface DOSuggestionPayload {
+  id?: string;
+  organization_id: string;
+  callplan_number: string;
+  callplan_date_start: string;
+  callplan_date_end: string;
+  route_number: string;
+  trip_type: string;
+  sales_nik: string;
+  sales_name: string;
+  sales_spv: string;
+  status: string;
+  created_by: number;
+  updated_by: number;
+  lines: DOSuggestionLine[];
+}

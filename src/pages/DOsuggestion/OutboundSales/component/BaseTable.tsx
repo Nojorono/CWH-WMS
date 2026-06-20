@@ -1,0 +1,197 @@
+import React from "react";
+import {
+  useReactTable,
+  getCoreRowModel,
+  getExpandedRowModel,
+  getFilteredRowModel,
+  getPaginationRowModel,
+  flexRender,
+  ColumnDef,
+} from "@tanstack/react-table";
+import {
+  FaSearch,
+  FaFilter,
+  FaChevronDown,
+  FaChevronRight,
+  FaSlidersH,
+  FaChevronLeft,
+} from "react-icons/fa";
+
+// --- INTERFACES ---
+interface BaseTableProps<TData> {
+  data: TData[];
+  columns: ColumnDef<TData, any>[];
+  globalFilter?: string;
+  setGlobalFilter?: (val: string) => void;
+  isExpandable?: boolean;
+  renderSubComponent?: (row: TData) => React.ReactNode;
+  headerActions?: React.ReactNode; // Tombol di atas kanan (misal Download SPB)
+  footerAction?: React.ReactNode; // Tombol CTA di bawah (misal Proceed to...)
+}
+
+// --- MAIN REUSABLE COMPONENT ---
+export function BaseTable<TData>({
+  data,
+  columns,
+  globalFilter,
+  setGlobalFilter,
+  isExpandable = true,
+  renderSubComponent,
+  headerActions,
+  footerAction,
+}: BaseTableProps<TData>) {
+  // Persiapkan kolom tambahan untuk expander jika diaktifkan
+  const finalColumns = React.useMemo(() => {
+    if (!isExpandable) return columns;
+
+    const expanderColumn: ColumnDef<TData> = {
+      id: "expander",
+      header: () => null,
+      cell: ({ row }) => (
+        <button
+          onClick={row.getToggleExpandedHandler()}
+          className="p-1 rounded-md hover:bg-slate-100 text-orange-500 transition-colors cursor-pointer"
+        >
+          {row.getIsExpanded() ? (
+            <FaChevronDown size={14} />
+          ) : (
+            <FaChevronRight size={14} />
+          )}
+        </button>
+      ),
+    };
+
+    return [expanderColumn, ...columns];
+  }, [columns, isExpandable]);
+
+  const table = useReactTable({
+    data,
+    columns: finalColumns,
+    state: {
+      globalFilter,
+    },
+    onGlobalFilterChange: setGlobalFilter,
+    getCoreRowModel: getCoreRowModel(),
+    getExpandedRowModel: getExpandedRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    getRowCanExpand: () => isExpandable,
+    initialState: {
+      pagination: { pageSize: 10 },
+    },
+  });
+
+  return (
+    <div className="w-full bg-white border border-slate-200 rounded-xl shadow-sm">
+      {/* Top Controls */}
+      <div className="p-4 border-b border-slate-100 flex flex-wrap gap-3 justify-between items-center bg-slate-50/50 rounded-t-xl">
+        <div className="relative w-full md:w-80">
+          <FaSearch
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+            size={16}
+          />
+          <input
+            type="text"
+            placeholder="Search here..."
+            value={globalFilter ?? ""}
+            onChange={(e) => setGlobalFilter && setGlobalFilter(e.target.value)}
+            className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all placeholder:text-slate-400"
+          />
+        </div>
+
+        <div className="flex gap-2 items-center">
+          {/* Slot untuk aksi tambahan di header (misal tombol Print Qty Per SPB) */}
+          {headerActions && (
+            <div className="mr-2 border-r border-slate-200 pr-2">
+              {headerActions}
+            </div>
+          )}
+
+          {/* <button className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-50 transition-all">
+            Sort by <FaSlidersH size={14} className="text-slate-400" />
+          </button>
+          <button className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-50 transition-all">
+            Filter <FaFilter size={12} className="text-slate-400" />
+          </button> */}
+        </div>
+      </div>
+
+      {/* Main Table */}
+      <div className="overflow-x-auto">
+        <table className="w-full text-left text-sm text-slate-600 border-collapse">
+          <thead className="bg-slate-300/40 text-slate-500 font-semibold text-xs uppercase tracking-wide">
+            {table.getHeaderGroups().map((headerGroup) => (
+              <tr key={headerGroup.id}>
+                {headerGroup.headers.map((header) => (
+                  <th key={header.id} className="px-5 py-4 whitespace-nowrap">
+                    {header.isPlaceholder
+                      ? null
+                      : flexRender(
+                          header.column.columnDef.header,
+                          header.getContext(),
+                        )}
+                  </th>
+                ))}
+              </tr>
+            ))}
+          </thead>
+          <tbody className="divide-y divide-slate-100">
+            {table.getRowModel().rows.length > 0 ? (
+              table.getRowModel().rows.map((row) => (
+                <React.Fragment key={row.id}>
+                  {/* Master Row */}
+                  <tr
+                    className={`hover:bg-slate-50/80 transition-colors ${row.getIsExpanded() ? "bg-slate-50" : ""}`}
+                  >
+                    {row.getVisibleCells().map((cell) => (
+                      <td
+                        key={cell.id}
+                        className="px-5 py-3.5 whitespace-nowrap"
+                      >
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext(),
+                        )}
+                      </td>
+                    ))}
+                  </tr>
+
+                  {/* Expanded Detail Row via Render Props */}
+                  {row.getIsExpanded() && renderSubComponent && (
+                    <tr>
+                      <td
+                        colSpan={row.getVisibleCells().length}
+                        className="p-0 border-b border-slate-200"
+                      >
+                        {renderSubComponent(row.original)}
+                      </td>
+                    </tr>
+                  )}
+                </React.Fragment>
+              ))
+            ) : (
+              <tr>
+                <td
+                  colSpan={finalColumns.length}
+                  className="px-5 py-8 text-center text-slate-500"
+                >
+                  Tidak ada data yang ditemukan.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Footer / Pagination & CTA */}
+      <div className="px-5 py-4 border-t border-slate-100 flex flex-col sm:flex-row justify-between items-center gap-4 bg-slate-50/30 rounded-b-xl">
+        <span className="text-sm text-slate-500">
+          Showing 1 to {table.getRowModel().rows.length} of {data.length} items
+        </span>
+
+        {/* Slot untuk CTA dinamis */}
+        {footerAction}
+      </div>
+    </div>
+  );
+}
