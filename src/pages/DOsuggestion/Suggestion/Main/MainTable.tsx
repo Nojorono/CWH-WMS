@@ -167,8 +167,8 @@ const MainTable = () => {
   const organization_name = user?.userDetail?.organization?.organization_name;
   const userNIK = user?.userDetail?.employee_id;
   const role_name = user?.role?.name;
-
   const isAhom = role_name === "AHOM";
+  const activeSpvNik = isAhom ? selectedSpvNik : userNIK;
 
   // === FETCH MASTER USER UNTUK DROPDOWN ===
   const { list: userData, fetchAll: fetchAllUsers } = useStoreUser();
@@ -182,10 +182,6 @@ const MainTable = () => {
   // Filter user yang rolenya SALES_SUPERVISOR dan map ke format option Select
   const spvOptions = useMemo(() => {
     if (!userData) return [];
-
-    // Perhatikan struktur response userData Anda, asumsikan userData adalah array di dalam "data"
-    // atau jika userData sudah berupa array item, sesuaikan logic filter ini.
-    // Asumsi: userData adalah array berdasarkan schema yang Anda berikan.
     const spvList = Array.isArray(userData)
       ? userData
       : (userData as any).data || [];
@@ -197,10 +193,6 @@ const MainTable = () => {
         value: spv.userDetail?.employee_id,
       }));
   }, [userData]);
-
-  // === PENENTUAN PARAMETER API ===
-  // Jika AHOM, pakai state selectedSpvNik. Jika bukan, pakai userNIK bawaan.
-  const activeSpvNik = isAhom ? selectedSpvNik : userNIK;
 
   const params = {
     CABANG: String(organization_name),
