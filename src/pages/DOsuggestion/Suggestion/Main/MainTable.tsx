@@ -1,4 +1,146 @@
-import { useState, useEffect } from "react";
+// import { useState, useEffect } from "react";
+// import { FaSync, FaSearch } from "react-icons/fa";
+// import { useCallPlan } from "../hook/useCallPlan";
+// import AdjustTable from "../component/AdjustTable";
+// import PageBreadcrumb from "../../../../components/common/PageBreadCrumb";
+// import Button from "../../../../components/ui/button/Button";
+// import { processCallPlanData } from "../helper/callPlanMapper";
+// import { CallPlanDetail } from "../../../../API/types/callPlan";
+// import ActIndicator from "../../../../components/ui/activityIndicator";
+// import { usePersistAuthStore } from "../../../../API/store/AuthStore/PersistAuthStore";
+// import dummyCallplan from "../helper/dummyCallplan";
+// import dayjs from "dayjs";
+
+// const MainTable = () => {
+//   const [globalFilter, setGlobalFilter] = useState<string>("");
+//   const [mergedData, setMergedData] = useState<CallPlanDetail[]>([]);
+//   const [isProcessing, setIsProcessing] = useState<boolean>(false);
+
+//   const state = usePersistAuthStore.getState();
+//   const user = state.user;
+//   const organization_name = user?.userDetail?.organization?.organization_name;
+//   const userNIK = user?.userDetail?.employee_id;
+
+//   const DateNow = dayjs().format("YYYY-MM-DD");
+//   console.log("dateNow", dayjs().format("YYYY-MM-DD"));
+
+//   const role_name = user?.role?.name;
+//   console.log("role_name", role_name);
+
+//   const params = {
+//     CABANG: String(organization_name),
+//     SALES_SUPERVISOR_NIK: String(userNIK),
+//     // CALL_PLAN_START_DATE: DateNow,
+//     CALL_PLAN_START_DATE: "2026-06-02",
+//   };
+
+//   const {
+//     data: callPlanList,
+//     isLoading: isCallPlanLoading,
+//     error,
+//     refetch,
+//   } = useCallPlan(params);
+
+//   useEffect(() => {
+//     const callplanChecked = async () => {
+//       const result = await processCallPlanData(callPlanList || []);
+//       setMergedData(result);
+//       setIsProcessing(false);
+//     };
+
+//     callplanChecked();
+//   }, [callPlanList]);
+
+//   if (error)
+//     return <div className="p-10 text-red-500 text-center">{error}</div>;
+
+//   const isLoading = isCallPlanLoading || isProcessing;
+
+//   // const [dataWithStatus, setDataWithStatus] = useState<any[]>([]);
+//   // const [isLoading, setIsLoading] = useState(true);
+//   // useEffect(() => {
+//   //   const processData = async () => {
+//   //     setIsLoading(true);
+
+//   //     // Lakukan pengecekan status untuk setiap item di dummyCallplan secara paralel
+//   //     const processed = await Promise.all(
+//   //       dummyCallplan.map(async (item) => {
+//   //         let isGenerated = false;
+
+//   //         if (item.CALL_PLAN_NUMBER && item.CALL_PLAN_NUMBER !== "-") {
+//   //           try {
+//   //             // Cek ke DB asli
+//   //             const existingData = await checkIsGenerated(
+//   //               item.CALL_PLAN_NUMBER,
+//   //             );
+//   //             isGenerated = !!existingData;
+//   //           } catch (err) {
+//   //             console.warn(
+//   //               `Gagal cek ${item.CALL_PLAN_NUMBER}, status default false`,
+//   //             );
+//   //           }
+//   //         }
+
+//   //         // Gabungkan data asli dengan status generated
+//   //         return { ...item, is_generated: isGenerated };
+//   //       }),
+//   //     );
+
+//   //     setDataWithStatus(processed);
+//   //     setIsLoading(false);
+//   //   };
+
+//   //   processData();
+//   // }, []);
+
+//   return (
+//     <div className="w-full space-y-4 p-4 bg-[#F8FAFC] min-h-screen">
+//       <PageBreadcrumb breadcrumbs={[{ title: "List Salesman" }]} />
+
+//       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+//         <div className="flex-1">
+//           <div className="relative w-full max-w-md">
+//             <span className="absolute inset-y-0 left-3 flex items-center text-slate-400">
+//               <FaSearch className="size-3.5" />
+//             </span>
+//             <input
+//               type="text"
+//               placeholder="Search sales name..."
+//               className="w-full pl-10 pr-4 py-2 text-sm bg-slate-50 border border-slate-200 rounded-lg"
+//               onChange={(e) => setGlobalFilter(e.target.value)}
+//             />
+//           </div>
+//         </div>
+
+//         <Button
+//           variant="primary"
+//           size="sm"
+//           className="bg-blue-600"
+//           onClick={() => refetch()}
+//         >
+//           <FaSync className="mr-2 size-3" /> Refresh
+//         </Button>
+//       </div>
+
+//       {isLoading ? (
+//         <ActIndicator />
+//       ) : (
+//         <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+//           <AdjustTable
+//             // data={dataWithStatus}
+//             data={mergedData}
+//             globalFilter={globalFilter}
+//             setGlobalFilter={setGlobalFilter}
+//           />
+//         </div>
+//       )}
+//     </div>
+//   );
+// };
+
+// export default MainTable;
+
+import { useState, useEffect, useMemo } from "react";
 import { FaSync, FaSearch } from "react-icons/fa";
 import { useCallPlan } from "../hook/useCallPlan";
 import AdjustTable from "../component/AdjustTable";
@@ -8,7 +150,8 @@ import { processCallPlanData } from "../helper/callPlanMapper";
 import { CallPlanDetail } from "../../../../API/types/callPlan";
 import ActIndicator from "../../../../components/ui/activityIndicator";
 import { usePersistAuthStore } from "../../../../API/store/AuthStore/PersistAuthStore";
-import dummyCallplan from "../helper/dummyCallplan";
+import Select from "../../../../components/form/Select"; // Asumsi path komponen Select
+import { useStoreUser } from "../../../../DynamicAPI/stores/Store/MasterStore";
 import dayjs from "dayjs";
 
 const MainTable = () => {
@@ -16,31 +159,75 @@ const MainTable = () => {
   const [mergedData, setMergedData] = useState<CallPlanDetail[]>([]);
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
 
+  // State untuk menyimpan NIK Supervisor yang dipilih oleh AHOM
+  const [selectedSpvNik, setSelectedSpvNik] = useState<string | null>(null);
+
   const state = usePersistAuthStore.getState();
   const user = state.user;
   const organization_name = user?.userDetail?.organization?.organization_name;
   const userNIK = user?.userDetail?.employee_id;
-  const DateNow = dayjs().format("YYYY-MM-DD");
+  const role_name = user?.role?.name;
 
-  console.log("dateNow", dayjs().format("YYYY-MM-DD"));
+  const isAhom = role_name === "AHOM";
+
+  // === FETCH MASTER USER UNTUK DROPDOWN ===
+  const { list: userData, fetchAll: fetchAllUsers } = useStoreUser();
+
+  useEffect(() => {
+    if (isAhom) {
+      fetchAllUsers();
+    }
+  }, [isAhom, fetchAllUsers]);
+
+  // Filter user yang rolenya SALES_SUPERVISOR dan map ke format option Select
+  const spvOptions = useMemo(() => {
+    if (!userData) return [];
+
+    // Perhatikan struktur response userData Anda, asumsikan userData adalah array di dalam "data"
+    // atau jika userData sudah berupa array item, sesuaikan logic filter ini.
+    // Asumsi: userData adalah array berdasarkan schema yang Anda berikan.
+    const spvList = Array.isArray(userData)
+      ? userData
+      : (userData as any).data || [];
+
+    return spvList
+      .filter((u: any) => u.role?.name === "SALES_SUPERVISOR")
+      .map((spv: any) => ({
+        label: `${spv.userDetail?.firstName} ${spv.userDetail?.lastName} - ${spv.userDetail?.employee_id}`,
+        value: spv.userDetail?.employee_id,
+      }));
+  }, [userData]);
+
+  // === PENENTUAN PARAMETER API ===
+  // Jika AHOM, pakai state selectedSpvNik. Jika bukan, pakai userNIK bawaan.
+  const activeSpvNik = isAhom ? selectedSpvNik : userNIK;
 
   const params = {
     CABANG: String(organization_name),
-    SALES_SUPERVISOR_NIK: String(userNIK),
-    // CALL_PLAN_START_DATE: DateNow,
-    CALL_PLAN_START_DATE: "2026-06-02",
+    SALES_SUPERVISOR_NIK: String(activeSpvNik),
+    CALL_PLAN_START_DATE: "2026-06-02", // atau DateNow
   };
+
+  // Kita hanya memanggil/mengaktifkan API jika NIK Supervisor sudah ada
+  const shouldFetchCallPlan = !!activeSpvNik;
 
   const {
     data: callPlanList,
     isLoading: isCallPlanLoading,
     error,
     refetch,
-  } = useCallPlan(params);
+  } = useCallPlan(params, { enabled: shouldFetchCallPlan });
 
   useEffect(() => {
+    // Jika tidak ada data, kosongkan tabel (penting saat AHOM belum memilih SPV)
+    if (!callPlanList || callPlanList.length === 0) {
+      setMergedData([]);
+      return;
+    }
+
     const callplanChecked = async () => {
-      const result = await processCallPlanData(callPlanList || []);
+      setIsProcessing(true);
+      const result = await processCallPlanData(callPlanList);
       setMergedData(result);
       setIsProcessing(false);
     };
@@ -48,53 +235,27 @@ const MainTable = () => {
     callplanChecked();
   }, [callPlanList]);
 
-  if (error)
-    return <div className="p-10 text-red-500 text-center">{error}</div>;
-
-  const isLoading = isCallPlanLoading || isProcessing;
-
-  // const [dataWithStatus, setDataWithStatus] = useState<any[]>([]);
-  // const [isLoading, setIsLoading] = useState(true);
-  // useEffect(() => {
-  //   const processData = async () => {
-  //     setIsLoading(true);
-
-  //     // Lakukan pengecekan status untuk setiap item di dummyCallplan secara paralel
-  //     const processed = await Promise.all(
-  //       dummyCallplan.map(async (item) => {
-  //         let isGenerated = false;
-
-  //         if (item.CALL_PLAN_NUMBER && item.CALL_PLAN_NUMBER !== "-") {
-  //           try {
-  //             // Cek ke DB asli
-  //             const existingData = await checkIsGenerated(
-  //               item.CALL_PLAN_NUMBER,
-  //             );
-  //             isGenerated = !!existingData;
-  //           } catch (err) {
-  //             console.warn(
-  //               `Gagal cek ${item.CALL_PLAN_NUMBER}, status default false`,
-  //             );
-  //           }
-  //         }
-
-  //         // Gabungkan data asli dengan status generated
-  //         return { ...item, is_generated: isGenerated };
-  //       }),
-  //     );
-
-  //     setDataWithStatus(processed);
-  //     setIsLoading(false);
-  //   };
-
-  //   processData();
-  // }, []);
+  const isLoading = (isCallPlanLoading && shouldFetchCallPlan) || isProcessing;
 
   return (
     <div className="w-full space-y-4 p-4 bg-[#F8FAFC] min-h-screen">
       <PageBreadcrumb breadcrumbs={[{ title: "List Salesman" }]} />
 
+      <div className="p-10 text-red-500 text-center">{error}</div>
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+        {/* Render Dropdown SPV hanya jika user adalah AHOM */}
+        {isAhom && (
+          <div className="w-full md:w-64">
+            <Select
+              options={spvOptions}
+              value={selectedSpvNik || ""}
+              onChange={(value) => setSelectedSpvNik(value)}
+              placeholder="Pilih Supervisor..."
+              className="w-full"
+            />
+          </div>
+        )}
+
         <div className="flex-1">
           <div className="relative w-full max-w-md">
             <span className="absolute inset-y-0 left-3 flex items-center text-slate-400">
@@ -105,6 +266,7 @@ const MainTable = () => {
               placeholder="Search sales name..."
               className="w-full pl-10 pr-4 py-2 text-sm bg-slate-50 border border-slate-200 rounded-lg"
               onChange={(e) => setGlobalFilter(e.target.value)}
+              disabled={!activeSpvNik} // Disable search jika SPV belum dipilih (untuk AHOM)
             />
           </div>
         </div>
@@ -114,17 +276,26 @@ const MainTable = () => {
           size="sm"
           className="bg-blue-600"
           onClick={() => refetch()}
+          disabled={!activeSpvNik} // Disable tombol refresh jika SPV belum dipilih (untuk AHOM)
         >
           <FaSync className="mr-2 size-3" /> Refresh
         </Button>
       </div>
 
-      {isLoading ? (
+      {/* Tampilan berdasarkan state */}
+      {!activeSpvNik ? (
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-10 flex flex-col items-center justify-center text-slate-500">
+          <p className="font-medium text-lg mb-2">Pilih Supervisor</p>
+          <p className="text-sm">
+            Silakan pilih Sales Supervisor pada opsi di atas untuk menampilkan
+            data.
+          </p>
+        </div>
+      ) : isLoading ? (
         <ActIndicator />
       ) : (
         <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
           <AdjustTable
-            // data={dataWithStatus}
             data={mergedData}
             globalFilter={globalFilter}
             setGlobalFilter={setGlobalFilter}

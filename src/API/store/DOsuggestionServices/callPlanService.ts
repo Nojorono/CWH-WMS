@@ -29,9 +29,7 @@ export const getCallPlan = async (params: CallPlanBindings): Promise<SupervisorD
         );
 
         // 1. Parsing hasil flat dari Snowflake
-        const flatRows = response.data.data.map((row) => JSON.parse(row[0]));
-        console.log("DATA CALL PLAN SNOWFLAKE", flatRows);
-        
+        const flatRows = response.data.data.map((row) => JSON.parse(row[0]));        
 
         // 2. Siapkan Map untuk Grouping menjadi SupervisorData
         const groupedMap = new Map<string, SupervisorData>();
@@ -47,7 +45,7 @@ export const getCallPlan = async (params: CallPlanBindings): Promise<SupervisorD
                     CABANG: item.CABANG,
                     SALES_SUPERVISOR_NAME: item.SALES_SUPERVISOR_NAME,
                     SALES_SUPERVISOR_NIK: item.SALES_SUPERVISOR_NIK,
-                    DETAIL: [] // Array kosong untuk menampung CallPlanDetail
+                    DETAIL: []
                 });
             }
 
@@ -67,15 +65,11 @@ export const getCallPlan = async (params: CallPlanBindings): Promise<SupervisorD
             groupedMap.get(spvNik)?.DETAIL.push(detailItem);
         });
 
-
-        console.log("DATA CALLPLAN for UI ", Array.from(groupedMap.values()));
-
-
         // 3. Kembalikan dalam bentuk Array of SupervisorData
         return Array.from(groupedMap.values());
 
     } catch (error) {
         console.error("Gagal mengambil Master Call Plan:", error);
-        throw new Error("Terjadi kesalahan saat berkomunikasi dengan server Snowflake.");
+        throw new Error("Terjadi kesalahan saat berkomunikasi dengan server DWH.");
     }
 };
