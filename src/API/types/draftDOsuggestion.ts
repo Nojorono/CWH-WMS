@@ -19,6 +19,9 @@ export interface DOSuggestionDetail {
     line_number: number | null;
     qty_btb: string
     no_found_in_btb: string
+    item_number?: string
+    item_description?: string
+    inventory_item_id?: string
 }
 
 export interface DOSuggestionData {

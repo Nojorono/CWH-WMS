@@ -12,6 +12,7 @@ import { CalculationPage } from "./pages/CalculationPage";
 import { GoodsPreparationPage } from "./pages/GoodsPreparationPage";
 import { useGetBTB } from "./hook/useGetBTB";
 import { DOSuggestionData } from "../../../API/types/draftDOsuggestion";
+import dayjs from "dayjs";
 
 // --- DEKLARASI INTERFACE BARU DI SINI ---
 // Export interface ini agar SPBSubmittedPage bisa meng-import-nya
@@ -29,6 +30,7 @@ const MainTable = () => {
   const user = state.user;
   const organization_name = user?.userDetail?.organization?.organization_name;
   const userNIK = user?.userDetail?.employee_id;
+  const DateNow = dayjs().format("YYYY-MM-DD");
 
   const {
     submittedList,
@@ -37,6 +39,7 @@ const MainTable = () => {
   } = useGetLocalDoSuggestion();
 
   const isParamsReady = !!(organization_name && userNIK);
+
   const params = {
     CABANG: String(organization_name),
     CALL_PLAN_START_DATE: "2026-06-02",
@@ -114,16 +117,27 @@ const MainTable = () => {
 
   const isLoadingAll = isLocalLoading || isBTBLoading;
 
+  const STEP_CONFIG = {
+    SUBMITTED: {
+      title: "SPB Submitted",
+      breadcrumbs: [{ title: "SPB Submitted" }],
+    },
+
+    CALCULATION: {
+      title: "Stock on Hand & Calculation",
+      breadcrumbs: [{ title: "Stock on Hand & Calculation" }],
+    },
+    PREPARATION: {
+      title: "Goods Preparation",
+      breadcrumbs: [{ title: "Goods Preparation" }],
+    },
+  };
+
+  const config = STEP_CONFIG[currentStep];
+
   return (
     <div className="w-full space-y-4 p-4 bg-[#F8FAFC] min-h-screen">
-      <PageBreadcrumb
-        breadcrumbs={[
-          { title: "Outbound Sales" },
-          ...(currentStep === "CALCULATION"
-            ? [{ title: "Stock on Hand & Calculation" }]
-            : []),
-        ]}
-      />
+      <PageBreadcrumb breadcrumbs={config.breadcrumbs} />
 
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
         <div className="flex flex-1 items-center gap-3">
@@ -178,6 +192,7 @@ const MainTable = () => {
             {currentStep === "CALCULATION" && (
               <CalculationPage
                 data={groupedAndMappedData as any}
+                params={params}
                 onProceed={() => setCurrentStep("PREPARATION")}
               />
             )}
