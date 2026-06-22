@@ -178,7 +178,7 @@ const AdjustTable = ({
     [navigate, loadingRowId],
   );
 
-  const prepareFinalPayload = (
+  const initialPayload = (
     suggestionData: SuggestionSummary,
     revisions: Map<string, number>,
     selectedSales: any,
@@ -195,8 +195,7 @@ const AdjustTable = ({
       sales_spv: selectedSales?.SALES_SUPERVISOR_NAME || "N/A",
       sales_spv_nik: selectedSales?.SALES_SUPERVISOR_NIK || "",
       status: "DRAFT",
-      created_by: 1001,
-      updated_by: 1001,
+      created_by: selectedSales?.SALES_SUPERVISOR_NIK,
       lines: suggestionData.summary.map((item, index) => ({
         item_code: item.product_sku,
         item_qty_suggestion: item.total_suggestion_qty,
@@ -226,12 +225,12 @@ const AdjustTable = ({
         CALL_PLAN_END_DATE: rowData.CALL_PLAN_END_DATE,
       };
       const suggestionData = await getDOsuggestion(params);
-      const payload = prepareFinalPayload(suggestionData, new Map(), rowData);
+      const payload = initialPayload(suggestionData, new Map(), rowData);
+
+      console.log("initialPayload", payload);
 
       await postDOsuggestion(payload);
       setGeneratedCallPlans((prev) => new Set(prev).add(rowId));
-
-      // await postToLocalDB(payload);
       navigate("generate_do", { state: { selectedSales: rowData } });
     } catch (error) {
       showErrorToast("Gagal generate data.");

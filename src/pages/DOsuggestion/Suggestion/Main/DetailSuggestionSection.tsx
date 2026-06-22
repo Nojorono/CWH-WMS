@@ -12,6 +12,11 @@ import AddItemModal from "../../../Inbound/InboundProcess/TableAndForm/component
 import Button from "../../../../components/ui/button/Button";
 import { FaPlus, FaSearch, FaUndo } from "react-icons/fa";
 import { updateDO } from "../../../../API/store/DOsuggestionServices/postDOsuggestion";
+import {
+  DOSuggestionPayload,
+  DOSuggestionLine,
+} from "../../../../API/types/DOsuggestion";
+import { useSubmitDOSuggestion } from "../hook/useSubmitDOSuggestion";
 
 export default function DetailSuggestionSection() {
   const location = useLocation();
@@ -90,9 +95,9 @@ export default function DetailSuggestionSection() {
     }
 
     const newItem = {
-      id: `temp-${Date.now()}`,
+      id: "",
       item_code: sku,
-      item_qty_suggestion: "0",
+      item_qty_suggestion: 0,
       item_qty_revision: qty.toString(),
       item_qty_final: qty.toString(),
       item_uom: uom,
@@ -110,80 +115,6 @@ export default function DetailSuggestionSection() {
 
     setIsModalOpen(false);
     showSuccessToast("Item berhasil ditambahkan ke draft.");
-  };
-
-  // SUBMIT HANDLER
-  const handleSubmit = async (actionType: "revision" | "submit" = "submit") => {
-    if (!data) return;
-
-    const hasRevisions = revisions.size > 0;
-    const isRevisionAction = actionType === "revision";
-
-    // 1. Dinamiskan status payload
-    const basePayload = {
-      id: data.id,
-      callplan_number: data.callplan_number,
-      status: isRevisionAction ? "REVISED" : "SUBMITTED",
-    };
-
-    const dialogConfig = isRevisionAction
-      ? {
-          title: "Simpan Revisi?",
-          text: "Perubahan akan disimpan sementara sebagai Revision Data. Anda masih bisa mengubahnya nanti.",
-          confirmBtn: "Ya, Simpan",
-          successMsg: "Revisi berhasil disimpan.",
-        }
-      : {
-          title: "Konfirmasi Submit",
-          text: "Data yang telah disubmit tidak dapat diubah kembali. Apakah Anda yakin ingin melanjutkan?",
-          confirmBtn: "Ya, Submit",
-          successMsg: "Data berhasil disubmit.",
-        };
-
-    showConfirmDialog(
-      async () => {
-        try {
-          let payload;
-          // Kirim array lines jika ada revisi, atau jika user secara eksplisit menyimpan revisi
-          if (hasRevisions || isRevisionAction) {
-            const payloadLines = localDetails.map((item) => {
-              const isRevised = revisions.has(item.item_code);
-              const revisionQty = revisions.get(item.item_code) || 0;
-              const isNewItem = String(item.id).startsWith("temp-");
-
-              return {
-                id: isNewItem ? null : item.id,
-                item_code: item.item_code,
-                item_qty_revision: isRevised
-                  ? revisionQty.toString()
-                  : item.item_qty_revision,
-                item_uom: item.item_uom,
-              };
-            });
-            payload = { ...basePayload, lines: payloadLines };
-          } else {
-            payload = { ...basePayload, lines: [] };
-          }
-
-          await updateDO(payload);
-          showSuccessToast(dialogConfig.successMsg);
-
-          setEditingRows([]);
-          setRevisions(new Map());
-        } catch (err) {
-          showErrorToast(
-            `Gagal ${isRevisionAction ? "menyimpan revisi" : "submit"}. Periksa kembali koneksi Anda.`,
-          );
-          console.error(err);
-        }
-      },
-      {
-        title: dialogConfig.title,
-        text: dialogConfig.text,
-        confirmButtonText: dialogConfig.confirmBtn,
-        cancelButtonText: "Batal",
-      },
-    );
   };
 
   if (isLoading) return <ActIndicator />;
@@ -211,6 +142,21 @@ export default function DetailSuggestionSection() {
       },
     );
   };
+
+  // REVISION & SUBMIT HANDLER
+  const { handleSubmit } = useSubmitDOSuggestion({
+    data,
+    localDetails,
+    revisions,
+    onSuccess: () => {
+      setEditingRows([]);
+      setRevisions(new Map());
+      navigate(-1);
+    },
+  });
+
+  console.log("DATA DO SGS", data);
+  
 
   return (
     <div className="w-full min-h-screen p-6 bg-[#f8fafc] font-sans">
@@ -312,29 +258,29 @@ export default function DetailSuggestionSection() {
 
         {/* Submit Action */}
         <div className="flex justify-end gap-3 mt-6">
-          {!isSubmitted && (
-            <>
-              {/* Tombol Simpan Sementara (Draf/Revised) */}
-              <Button
-                variant="outline" // Bedakan gaya tombol agar UX lebih jelas
-                onClick={() => handleSubmit("revision")} // <-- Perbaikan Parameter
-                startIcon={<MdAssignment />}
-                className="border-orange-500 text-orange-600 hover:bg-orange-50"
-              >
-                Save Revision
-              </Button>
+          {/* {!isSubmitted && ( */}
+          <>
+            {/* Tombol Simpan Sementara (Draf/Revised) */}
+            <Button
+              variant="outline" // Bedakan gaya tombol agar UX lebih jelas
+              onClick={() => handleSubmit("revision")} // <-- Perbaikan Parameter
+              startIcon={<MdAssignment />}
+              className="border-orange-500 text-orange-600 hover:bg-orange-50"
+            >
+              Save Revision
+            </Button>
 
-              {/* Tombol Simpan Permanen (Submitted) */}
-              <Button
-                variant="primary" // Gaya tombol utama
-                onClick={() => handleSubmit("submit")} // <-- Parameter Submit
-                startIcon={<MdAssignment />}
-                className="bg-green-600 hover:bg-green-700 text-white shadow-md"
-              >
-                Final Submit
-              </Button>
-            </>
-          )}
+            {/* Tombol Simpan Permanen (Submitted) */}
+            <Button
+              variant="primary" // Gaya tombol utama
+              onClick={() => handleSubmit("submit")} // <-- Parameter Submit
+              startIcon={<MdAssignment />}
+              className="bg-green-600 hover:bg-green-700 text-white shadow-md"
+            >
+              Final Submit
+            </Button>
+          </>
+          {/* )} */}
         </div>
 
         {/* Modal Add Item */}

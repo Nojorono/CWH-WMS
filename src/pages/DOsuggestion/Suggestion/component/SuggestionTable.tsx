@@ -61,6 +61,8 @@ export default function SuggestionTable({
     });
   }, [data, revisions]);
 
+  console.log("data", data);
+
   const columns = useMemo(
     () => [
       columnHelper.accessor("product_name", {
@@ -125,28 +127,14 @@ export default function SuggestionTable({
           return <span className="font-bold text-slate-700">{currentVal}</span>;
         },
       }),
-      // columnHelper.display({
-      //   id: "final_qty",
-      //   header: "Final Qty",
-      //   cell: ({ row, table }) => {
-      //     const meta = table.options.meta as TableMeta;
-      //     const item = row.original;
-      //     const isEdited = meta.revisions.has(item.item_code);
-      //     const liveRevisionQty = meta.revisions.get(item.item_code);
-
-      //     const displayFinal = isEdited
-      //       ? liveRevisionQty
-      //       : item.item_qty_final !== "0"
-      //         ? item.item_qty_final
-      //         : item.item_qty_suggestion;
-
-      //     return (
-      //       <div className=" font-black text-slate-800 text-lg">
-      //         {displayFinal}
-      //       </div>
-      //     );
-      //   },
-      // }),
+      columnHelper.accessor("item_qty_submitted", {
+        header: "Submitted Qty",
+        cell: (info) => (
+          <div className=" font-bold text-slate-500">
+            {info.getValue()}
+          </div>
+        ),
+      }),
       columnHelper.display({
         id: "status",
         header: "Status",
@@ -154,10 +142,17 @@ export default function SuggestionTable({
           const meta = table.options.meta as TableMeta;
           const item = row.original;
 
-          const isAdditional = String(item.id).startsWith("temp-");
           const isEdited = meta.revisions.has(item.item_code);
           const hasSavedRevision =
             item.item_qty_revision && item.item_qty_revision !== "0";
+
+          // 1. Cek apakah ini item baru di layar (on action)
+          const isTempAdditional = String(item.id).startsWith("temp-");
+
+          const isDbAdditional = Number(item.item_qty_suggestion) === 0 && Number(item.item_qty_revision) != 0;
+
+          // Gabungkan keduanya
+          const isAdditional = isTempAdditional || isDbAdditional;
 
           if (isAdditional) {
             return (

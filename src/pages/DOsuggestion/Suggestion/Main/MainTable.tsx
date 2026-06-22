@@ -153,6 +153,8 @@ import { usePersistAuthStore } from "../../../../API/store/AuthStore/PersistAuth
 import Select from "../../../../components/form/Select"; // Asumsi path komponen Select
 import { useStoreUser } from "../../../../DynamicAPI/stores/Store/MasterStore";
 import dayjs from "dayjs";
+import dummyCallplan from "../helper/dummyCallplan";
+import { checkIsGenerated } from "../../../../API/store/DOsuggestionServices/checkIsGeneratedDO";
 
 const MainTable = () => {
   const [globalFilter, setGlobalFilter] = useState<string>("");
@@ -169,6 +171,7 @@ const MainTable = () => {
   const role_name = user?.role?.name;
   const isAhom = role_name === "AHOM";
   const activeSpvNik = isAhom ? selectedSpvNik : userNIK;
+  const DateNow = dayjs().format("YYYY-MM-DD");
 
   // === FETCH MASTER USER UNTUK DROPDOWN ===
   const { list: userData, fetchAll: fetchAllUsers } = useStoreUser();
@@ -198,6 +201,7 @@ const MainTable = () => {
     CABANG: String(organization_name),
     SALES_SUPERVISOR_NIK: String(activeSpvNik),
     CALL_PLAN_START_DATE: "2026-06-02", // atau DateNow
+    // CALL_PLAN_START_DATE: DateNow
   };
 
   // Kita hanya memanggil/mengaktifkan API jika NIK Supervisor sudah ada
@@ -229,11 +233,50 @@ const MainTable = () => {
 
   const isLoading = (isCallPlanLoading && shouldFetchCallPlan) || isProcessing;
 
+  // const [dataWithStatus, setDataWithStatus] = useState<any[]>([]);
+  // const [isLoading, setIsLoading] = useState(true);
+  // useEffect(() => {
+  //   const processData = async () => {
+  //     setIsLoading(true);
+
+  //     // Lakukan pengecekan status untuk setiap item di dummyCallplan secara paralel
+  //     const processed = await Promise.all(
+  //       dummyCallplan.map(async (item) => {
+  //         let isGenerated = false;
+
+  //         if (item.CALL_PLAN_NUMBER && item.CALL_PLAN_NUMBER !== "-") {
+  //           try {
+  //             // Cek ke DB asli
+  //             const existingData = await checkIsGenerated(
+  //               item.CALL_PLAN_NUMBER,
+  //             );
+  //             isGenerated = !!existingData;
+  //           } catch (err) {
+  //             console.warn(
+  //               `Gagal cek ${item.CALL_PLAN_NUMBER}, status default false`,
+  //             );
+  //           }
+  //         }
+
+  //         // Gabungkan data asli dengan status generated
+  //         return { ...item, is_generated: isGenerated };
+  //       }),
+  //     );
+
+  //     setDataWithStatus(processed);
+  //     setIsLoading(false);
+  //   };
+
+  //   processData();
+  // }, []);
+
+  // if (error)
+  //   return <div className="p-10 text-red-500 text-center">{error}</div>;
+
   return (
     <div className="w-full space-y-4 p-4 bg-[#F8FAFC] min-h-screen">
       <PageBreadcrumb breadcrumbs={[{ title: "List Salesman" }]} />
 
-      <div className="p-10 text-red-500 text-center">{error}</div>
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
         {/* Render Dropdown SPV hanya jika user adalah AHOM */}
         {isAhom && (
@@ -258,7 +301,7 @@ const MainTable = () => {
               placeholder="Search sales name..."
               className="w-full pl-10 pr-4 py-2 text-sm bg-slate-50 border border-slate-200 rounded-lg"
               onChange={(e) => setGlobalFilter(e.target.value)}
-              disabled={!activeSpvNik} // Disable search jika SPV belum dipilih (untuk AHOM)
+              disabled={!activeSpvNik}
             />
           </div>
         </div>
@@ -268,7 +311,7 @@ const MainTable = () => {
           size="sm"
           className="bg-blue-600"
           onClick={() => refetch()}
-          disabled={!activeSpvNik} // Disable tombol refresh jika SPV belum dipilih (untuk AHOM)
+          disabled={!activeSpvNik}
         >
           <FaSync className="mr-2 size-3" /> Refresh
         </Button>
@@ -289,6 +332,7 @@ const MainTable = () => {
         <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
           <AdjustTable
             data={mergedData}
+            // data={dataWithStatus}
             globalFilter={globalFilter}
             setGlobalFilter={setGlobalFilter}
           />
