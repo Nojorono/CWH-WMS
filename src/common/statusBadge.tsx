@@ -3,7 +3,7 @@ import type { StatusMap, BadgeColor } from "../constants/statusMaps";
 import Badge from "../components/ui/badge/Badge"; // pastikan path sesuai project kamu
 
 interface StatusBadgeProps {
-  status: string;
+  status: any;
   colorMap: StatusMap;
   variant?: "light" | "solid";
   size?: "sm" | "md";

@@ -3,30 +3,30 @@ import { ColumnDef } from "@tanstack/react-table";
 import TableComponent from "./Table";
 import { useNavigate } from "react-router-dom";
 import { CallPlanDetail } from "../../../../API/types/callPlan";
-import { IsAny } from "react-hook-form";
 import { SuggestionSummary } from "../../../../API/types/DOsuggestion";
 import { getDOsuggestion } from "../../../../API/store/DOsuggestionServices/DOsuggestionService";
 import { checkIsGenerated } from "../../../../API/store/DOsuggestionServices/checkIsGeneratedDO";
 import { showErrorToast, showSuccessToast } from "../../../../components/toast";
 import { postDOsuggestion } from "../../../../API/store/DOsuggestionServices/postDOsuggestion";
 import { usePersistAuthStore } from "../../../../API/store/AuthStore/PersistAuthStore";
-import {
-  FaCheckCircle,
-  FaEdit,
-  FaEye,
-  FaList,
-  FaMagic,
-  FaPrint,
-} from "react-icons/fa";
+import { FaEye, FaMagic } from "react-icons/fa";
 import { ActionMenu } from "./ActionMenu";
 import { useDOActions } from "../hook/useDOActions";
 import ActIndicator from "../../../../components/ui/activityIndicator";
+import StatusBadge from "../../../../common/statusBadge";
+import { StatusMap } from "../../../../constants/statusMaps";
 
 interface AdjustTableProps {
   data: CallPlanDetail[];
   globalFilter: string;
   setGlobalFilter: (val: string) => void;
 }
+
+export const STATUS_MAP_DO: StatusMap = {
+  DRAFT: "dark",
+  REVISED: "warning",
+  SUBMITTED: "success",
+};
 
 const AdjustTable = ({
   data,
@@ -114,6 +114,26 @@ const AdjustTable = ({
         ),
       },
       {
+        accessorKey: "do_status",
+        header: () => <div className="text-left">DO STATUS</div>,
+        cell: ({ row }) => {
+          const status = row.original.do_status;
+
+          if (!status) {
+            return <span className="text-slate-400 italic text-sm">-</span>;
+          }
+
+          return (
+            <StatusBadge
+              status={status}
+              colorMap={STATUS_MAP_DO}
+              variant="solid"
+              size="sm"
+            />
+          );
+        },
+      },
+      {
         accessorKey: "is_generated",
         header: () => <div className="text-left">Status Generate</div>,
         cell: ({ row }) => {
@@ -128,7 +148,7 @@ const AdjustTable = ({
               className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase ${
                 isGenerated
                   ? "bg-green-100 text-green-700"
-                  : "bg-amber-100 text-amber-700"
+                  : "bg-red-400 text-white"
               }`}
             >
               {isGenerated ? "Generated" : "Not Generated"}

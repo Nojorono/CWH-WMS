@@ -26,6 +26,7 @@ export interface CallPlanDetail {
     BTB?: BTBItem[];
     is_active_plan?: boolean;
     is_generated?: boolean;
+    do_status?: string;
 }
 
 // 4. Tipe data Wrapper Supervisor (Digunakan di CallPlan API)
