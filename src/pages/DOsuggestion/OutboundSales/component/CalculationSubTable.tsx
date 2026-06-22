@@ -82,7 +82,7 @@ export const CalculationSubTable = ({
           <thead className="bg-slate-50 text-slate-500 font-medium text-xs uppercase">
             <tr>
               <th className="px-5 py-3">SKU</th>
-              <th className="px-5 py-3 text-right">SOH</th>
+              <th className="px-5 py-3 text-right">Stock on Hand</th>
               <th className="px-5 py-3 text-right">Request</th>
               <th className="px-5 py-3 text-right">Contrib %</th>
               <th className="px-5 py-3 text-right">Status</th>

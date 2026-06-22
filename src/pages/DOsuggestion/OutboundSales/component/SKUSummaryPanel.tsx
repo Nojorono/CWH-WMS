@@ -93,7 +93,7 @@ export const SKUSummaryPanel = ({
       </div>
 
       <div className="overflow-x-auto pb-4">
-        <div className="flex flex-wrap gap-3 max-h-67 overflow-y-auto pr-2 custom-scrollbar">
+        <div className="flex flex-wrap gap-3 max-h-70 overflow-y-auto pr-2 custom-scrollbar">
           {filteredData.map((item) => {
             const isAvailable = item.soh >= item.totalRequest;
             const isLessStock = item.soh > 0 && item.soh < item.totalRequest;

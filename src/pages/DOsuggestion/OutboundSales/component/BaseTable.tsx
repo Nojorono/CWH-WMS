@@ -10,14 +10,8 @@ import {
   getSortedRowModel,
   SortingState,
 } from "@tanstack/react-table";
-import {
-  FaSearch,
-  FaFilter,
-  FaChevronDown,
-  FaChevronRight,
-  FaSlidersH,
-  FaChevronLeft,
-} from "react-icons/fa";
+import { FaChevronDown, FaChevronRight } from "react-icons/fa";
+import { PaginationControls } from "./PaginationControls";
 
 // --- INTERFACES ---
 interface BaseTableProps<TData> {
@@ -26,9 +20,9 @@ interface BaseTableProps<TData> {
   globalFilter?: string;
   setGlobalFilter?: (val: string) => void;
   isExpandable?: boolean;
-renderSubComponent?: (row: TData, globalFilter?: string) => React.ReactNode;
-  headerActions?: React.ReactNode; 
-  footerAction?: React.ReactNode; 
+  renderSubComponent?: (row: TData, globalFilter?: string) => React.ReactNode;
+  headerActions?: React.ReactNode;
+  footerAction?: React.ReactNode;
 }
 
 // --- MAIN REUSABLE COMPONENT ---
@@ -79,7 +73,6 @@ export function BaseTable<TData>({
     getSortedRowModel: getSortedRowModel(),
     globalFilterFn: (row, columnId, filterValue) => {
       const searchValue = filterValue.toLowerCase();
-      // Cari di kolom utama (default) atau di dalam array details (SKU)
       const rowData = JSON.stringify(row.original).toLowerCase();
       return rowData.includes(searchValue);
     },
@@ -93,20 +86,6 @@ export function BaseTable<TData>({
     <div className="w-full bg-white border border-slate-200 rounded-xl shadow-sm">
       {/* Top Controls */}
       <div className="p-4 border-b border-slate-100 flex flex-wrap gap-3 justify-between items-center bg-slate-50/50 rounded-t-xl">
-        {/* <div className="relative w-full md:w-80">
-          <FaSearch
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
-            size={16}
-          />
-          <input
-            type="text"
-            placeholder="Search here..."
-            value={globalFilter ?? ""}
-            onChange={(e) => setGlobalFilter && setGlobalFilter(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all placeholder:text-slate-400"
-          />
-        </div> */}
-
         <div className="flex gap-2 items-center">
           {/* Slot untuk aksi tambahan di header (misal tombol Print Qty Per SPB) */}
           {headerActions && (
@@ -116,7 +95,6 @@ export function BaseTable<TData>({
           )}
         </div>
       </div>
-
       {/* Main Table */}
       <div className="overflow-x-auto">
         <table className="w-full text-left text-sm text-slate-600 border-collapse">
@@ -153,7 +131,13 @@ export function BaseTable<TData>({
                 <React.Fragment key={row.id}>
                   {/* Master Row */}
                   <tr
-                    className={`hover:bg-slate-50/80 transition-colors ${row.getIsExpanded() ? "bg-slate-50" : ""}`}
+                    onClick={(e) => {
+                      if ((e.target as HTMLElement).closest("button")) return;
+                      row.toggleExpanded();
+                    }}
+                    className={`cursor-pointer hover:bg-slate-50/80 transition-colors ${
+                      row.getIsExpanded() ? "bg-slate-50" : ""
+                    }`}
                   >
                     {row.getVisibleCells().map((cell) => (
                       <td
@@ -194,14 +178,18 @@ export function BaseTable<TData>({
           </tbody>
         </table>
       </div>
-
       {/* Footer / Pagination & CTA */}
+
       <div className="px-5 py-4 border-t border-slate-100 flex flex-col sm:flex-row justify-between items-center gap-4 bg-slate-50/30 rounded-b-xl">
+        {/* Indikator Jumlah Data */}
         <span className="text-sm text-slate-500">
-          Showing 1 to {table.getRowModel().rows.length} of {data.length} items
+          Showing {table.getRowModel().rows.length} of {data.length} items
         </span>
 
-        {/* Slot untuk CTA dinamis */}
+        {/* Panggil komponen pagination di sini */}
+        <PaginationControls table={table} />
+
+        {/* Slot untuk CTA dinamis (e.g. Proceed button) */}
         {footerAction}
       </div>
     </div>
