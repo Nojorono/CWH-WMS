@@ -2,7 +2,6 @@ import { create } from 'zustand';
 import { SuggestionSummary } from '../../types/DOsuggestion';
 
 interface SuggestionState {
-  // Key: sales_nik, Value: Data Suggestion
   cache: Record<string, SuggestionSummary>;
   setCache: (nik: string, data: SuggestionSummary) => void;
   getCache: (nik: string) => SuggestionSummary | undefined;

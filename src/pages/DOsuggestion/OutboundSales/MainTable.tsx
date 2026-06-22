@@ -1,29 +1,51 @@
-// MainTable.tsx
+// File: src/pages/DOsuggestion/OutboundSales/MainTable.tsx
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { FaArrowLeft, FaSync } from "react-icons/fa";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import Button from "../../../components/ui/button/Button";
 import { useGetLocalDoSuggestion } from "../Suggestion/hook/useGetLocalDoSuggestion";
 import { usePersistAuthStore } from "../../../API/store/AuthStore/PersistAuthStore";
 
-// Import kedua halaman
 import { SPBSubmittedPage } from "./pages/SPBSubmittedPage";
 import { CalculationPage } from "./pages/CalculationPage";
 import { GoodsPreparationPage } from "./pages/GoodsPreparationPage";
+import { useGetBTB } from "./hook/useGetBTB";
+import { DOSuggestionData } from "../../../API/types/draftDOsuggestion";
 
-// Definisikan tipe untuk langkah aplikasi
+// --- DEKLARASI INTERFACE BARU DI SINI ---
+// Export interface ini agar SPBSubmittedPage bisa meng-import-nya
+export interface GroupedSPBData {
+  sales_spv_nik: string;
+  sales_spv_name: string;
+  salesmenDO: DOSuggestionData[];
+}
+// -----------------------------------------
+
 type Step = "SUBMITTED" | "CALCULATION" | "PREPARATION";
 
 const MainTable = () => {
   const state = usePersistAuthStore.getState();
   const user = state.user;
   const organization_name = user?.userDetail?.organization?.organization_name;
+  const userNIK = user?.userDetail?.employee_id;
 
-  const { submittedList, isLoading, fetchSubmittedList } =
-    useGetLocalDoSuggestion();
+  const {
+    submittedList,
+    isLoading: isLocalLoading,
+    fetchSubmittedList,
+  } = useGetLocalDoSuggestion();
 
-  // State untuk mengontrol komponen mana yang dirender
+  const isParamsReady = !!(organization_name && userNIK);
+  const params = {
+    CABANG: String(organization_name),
+    CALL_PLAN_START_DATE: "2026-06-02",
+  };
+
+  const { data: BTBdata, isLoading: isBTBLoading } = useGetBTB(params, {
+    enabled: isParamsReady,
+  });
+
   const [currentStep, setCurrentStep] = useState<Step>("SUBMITTED");
 
   useEffect(() => {
@@ -32,22 +54,73 @@ const MainTable = () => {
     }
   }, [fetchSubmittedList, organization_name]);
 
-  // Handler untuk kembali ke halaman sebelumnya (Opsional jika ingin dibuatkan tombol Back)
   const handleBack = () => {
     if (currentStep === "CALCULATION") setCurrentStep("SUBMITTED");
     if (currentStep === "PREPARATION") setCurrentStep("CALCULATION");
   };
 
-  console.log("currentStep", currentStep);
+  // --- LOGIKA MAPPING & GROUPING ---
+  const groupedAndMappedData = useMemo<GroupedSPBData[]>(() => {
+    if (!submittedList || submittedList.length === 0) return [];
+
+    const enrichedDOs = submittedList.map((doDocument) => {
+      let salesmanBTB = null;
+
+      if (BTBdata && BTBdata.length > 0) {
+        salesmanBTB = BTBdata.find(
+          (btbGroup) => btbGroup.SALES_NIK === doDocument.sales_nik,
+        );
+      }
+
+      const updatedDetails = doDocument.details.map((doDetail: any) => {
+        const skuMatch = salesmanBTB?.details.find(
+          (btbLine) => btbLine.PRODUCT_SKU === doDetail.item_code,
+        );
+
+        return {
+          ...doDetail,
+          qty_btb: skuMatch ? skuMatch.QTY_BTB : "-",
+          no_found_in_btb: !skuMatch,
+        };
+      });
+
+      return {
+        ...doDocument,
+        details: updatedDetails,
+      };
+    });
+
+    const groupedBySpv = enrichedDOs.reduce(
+      (acc: Record<string, GroupedSPBData>, currentDO) => {
+        const spvNik = currentDO.sales_spv_nik || "UNKNOWN";
+        const spvName = currentDO.sales_spv || "Unknown Supervisor";
+
+        if (!acc[spvNik]) {
+          acc[spvNik] = {
+            sales_spv_nik: spvNik,
+            sales_spv_name: spvName,
+            salesmenDO: [],
+          };
+        }
+
+        acc[spvNik].salesmenDO.push(currentDO);
+        return acc;
+      },
+      {},
+    );
+
+    return Object.values(groupedBySpv) as GroupedSPBData[];
+  }, [submittedList, BTBdata]);
+
+  const isLoadingAll = isLocalLoading || isBTBLoading;
 
   return (
     <div className="w-full space-y-4 p-4 bg-[#F8FAFC] min-h-screen">
-      {/* Update Breadcrumb sesuai halaman aktif */}
       <PageBreadcrumb
         breadcrumbs={[
           { title: "Outbound Sales" },
           ...(currentStep === "CALCULATION"
-            ? [{ title: "Allocation & Calculation" }]
+            ? [{ title: "Stock on Hand & Calculation" }]
             : []),
         ]}
       />
@@ -56,14 +129,18 @@ const MainTable = () => {
         <div className="flex flex-1 items-center gap-3">
           <h2 className="text-lg font-semibold text-slate-800">
             {currentStep === "SUBMITTED" && "SPB Submitted"}
-            {currentStep === "CALCULATION" && "Allocation & Calculation"}
+            {currentStep === "CALCULATION" && "Stock on Hand & Calculation"}
           </h2>
         </div>
 
         <div className="flex items-center gap-2">
-          {/* Tombol Back dinamis */}
           {currentStep !== "SUBMITTED" && (
-            <Button variant="outline" size="sm" onClick={handleBack} startIcon={<FaArrowLeft/>}>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleBack}
+              startIcon={<FaArrowLeft />}
+            >
               Back
             </Button>
           )}
@@ -82,30 +159,31 @@ const MainTable = () => {
       </div>
 
       <div>
-        {isLoading ? (
+        {isLoadingAll ? (
           <div className="flex items-center justify-center h-64 text-slate-500 flex-col gap-3">
             <FaSync className="animate-spin text-orange-500" size={24} />
-            <span className="text-sm font-medium">Memuat data...</span>
+            <span className="text-sm font-medium">
+              Memuat dan menyinkronkan data...
+            </span>
           </div>
         ) : (
           <>
-            {/* Conditional Rendering berdasarkan currentStep */}
             {currentStep === "SUBMITTED" && (
               <SPBSubmittedPage
-                data={submittedList || []}
+                data={groupedAndMappedData}
                 onProceed={() => setCurrentStep("CALCULATION")}
               />
             )}
 
             {currentStep === "CALCULATION" && (
               <CalculationPage
-                data={submittedList || []}
+                data={groupedAndMappedData as any}
                 onProceed={() => setCurrentStep("PREPARATION")}
               />
             )}
 
             {currentStep === "PREPARATION" && (
-              <GoodsPreparationPage data={submittedList || []} />
+              <GoodsPreparationPage data={groupedAndMappedData as any} />
             )}
           </>
         )}

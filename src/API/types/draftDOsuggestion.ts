@@ -5,7 +5,6 @@ export interface Organization {
     org_name: string;
     organization_type: string;
     address: string;
-    // Tambahkan field lain jika diperlukan
 }
 
 export interface DOSuggestionDetail {
@@ -14,9 +13,12 @@ export interface DOSuggestionDetail {
     item_qty_suggestion: string;
     item_qty_revision: string;
     item_qty_final: string;
+    item_qty_submitted: string;
     contribution_percentage: string;
     item_uom: string;
     line_number: number | null;
+    qty_btb: string
+    no_found_in_btb: string
 }
 
 export interface DOSuggestionData {
@@ -28,6 +30,7 @@ export interface DOSuggestionData {
     sales_nik: string;
     sales_name: string;
     sales_spv: string;
+    sales_spv_nik?: string;
     status: string;
     organization: Organization;
     details: DOSuggestionDetail[];
