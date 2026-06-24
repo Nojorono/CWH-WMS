@@ -26,7 +26,7 @@ export default function AddItemModal({
   onSave: (item: ItemForm) => void;
   isDOsuggestion: boolean;
 }) {
-  const { fetchAll, list } = useStoreItem();
+  const { fetchAll, list: itemList } = useStoreItem();
   const { fetchAll: fetchAllUom, list: uomList } = useStoreUom();
   const { fetchAll: fetchAllClassification, list: classificationList } =
     useStoreClassification();
@@ -53,7 +53,7 @@ export default function AddItemModal({
     }
   }, [uomList, tempUom, defaultUomCode]);
 
-  const selectedMaster = list.find((m: any) => m.sku === tempSku);
+  const selectedMaster = itemList.find((m: any) => m.sku === tempSku);
 
   const handleSave = () => {
     if (!tempSku || !tempQty || !tempUom) {
@@ -69,10 +69,10 @@ export default function AddItemModal({
       description: selectedMaster?.description ?? "",
       qty: Number(tempQty),
       uom: tempUom,
-      // classification: tempClassification,
       expired_date: null,
       qty_plan: Number(tempQty),
       item_name: selectedMaster?.description ?? "",
+      inventory_item_id: selectedMaster?.inventory_item_id
     });
 
     // reset state
@@ -90,7 +90,7 @@ export default function AddItemModal({
     setTempUom("");
     onClose();
   };
-
+  
   return (
     <Dialog open={isOpen} onClose={onClose} className="fixed inset-0 z-[99999]">
       <DialogBackdrop className="fixed inset-0 bg-black/30 z-0" />
@@ -105,7 +105,7 @@ export default function AddItemModal({
                 SKU
               </label>
               <Select
-                options={list.map((m: any) => ({
+                options={itemList.map((m: any) => ({
                   value: m.sku,
                   label: `${m.sku}`,
                 }))}

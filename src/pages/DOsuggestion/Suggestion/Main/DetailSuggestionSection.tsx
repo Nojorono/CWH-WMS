@@ -11,12 +11,12 @@ import { showConfirmDialog } from "../../../../components/swal-confirm";
 import AddItemModal from "../../../Inbound/InboundProcess/TableAndForm/component/Modal/AddItemModal";
 import Button from "../../../../components/ui/button/Button";
 import { FaPlus, FaSearch, FaUndo } from "react-icons/fa";
-import { updateDO } from "../../../../API/store/DOsuggestionServices/postDOsuggestion";
-import {
-  DOSuggestionPayload,
-  DOSuggestionLine,
-} from "../../../../API/types/DOsuggestion";
 import { useSubmitDOSuggestion } from "../hook/useSubmitDOSuggestion";
+// import { updateDO } from "../../../../API/store/DOsuggestionServices/postDOsuggestion";
+// import {
+//   DOSuggestionPayload,
+//   DOSuggestionLine,
+// } from "../../../../API/types/DOsuggestion";
 
 export default function DetailSuggestionSection() {
   const location = useLocation();
@@ -88,6 +88,7 @@ export default function DetailSuggestionSection() {
     const sku = itemData.sku;
     const qty = itemData.qty;
     const uom = itemData.uom;
+    const inventory_item_id = itemData.inventory_item_id;
 
     if (localDetails.some((item) => item.item_code === sku)) {
       showErrorToast("SKU ini sudah ada di dalam list!");
@@ -101,6 +102,7 @@ export default function DetailSuggestionSection() {
       item_qty_revision: qty.toString(),
       item_qty_final: qty.toString(),
       item_uom: uom,
+      inventory_item_id: inventory_item_id,
     };
 
     // 3. Update State Tabel & Revisions
@@ -154,9 +156,6 @@ export default function DetailSuggestionSection() {
       navigate(-1);
     },
   });
-
-  console.log("DATA DO SGS", data);
-  
 
   return (
     <div className="w-full min-h-screen p-6 bg-[#f8fafc] font-sans">
@@ -220,26 +219,28 @@ export default function DetailSuggestionSection() {
 
             {/* Action Buttons */}
             <div className="flex gap-2 w-full sm:w-auto">
-              <Button
-                onClick={handleReset}
-                variant="outline"
-                size="sm"
-                className="flex-1 sm:flex-none border-slate-300 hover:bg-slate-50 text-slate-700"
-                startIcon={<FaUndo />}
-              >
-                Reset
-              </Button>
-
               {!isSubmitted && (
-                <Button
-                  variant="primary"
-                  size="sm"
-                  onClick={() => setIsModalOpen(true)}
-                  className="flex-1 sm:flex-none bg-orange-500 hover:bg-orange-600 shadow-sm"
-                  startIcon={<FaPlus />}
-                >
-                  Add Item
-                </Button>
+                <>
+                  <Button
+                    onClick={handleReset}
+                    variant="outline"
+                    size="sm"
+                    className="flex-1 sm:flex-none border-slate-300 hover:bg-slate-50 text-slate-700"
+                    startIcon={<FaUndo />}
+                  >
+                    Reset
+                  </Button>
+
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    onClick={() => setIsModalOpen(true)}
+                    className="flex-1 sm:flex-none bg-orange-500 hover:bg-orange-600 shadow-sm"
+                    startIcon={<FaPlus />}
+                  >
+                    Add Item
+                  </Button>
+                </>
               )}
             </div>
           </div>
@@ -254,33 +255,34 @@ export default function DetailSuggestionSection() {
           editingRows={editingRows}
           toggleEditRow={toggleEditRow}
           cancelEditRow={cancelEditRow}
+          isSubmitted={isSubmitted}
         />
 
         {/* Submit Action */}
         <div className="flex justify-end gap-3 mt-6">
-          {/* {!isSubmitted && ( */}
-          <>
-            {/* Tombol Simpan Sementara (Draf/Revised) */}
-            <Button
-              variant="outline" // Bedakan gaya tombol agar UX lebih jelas
-              onClick={() => handleSubmit("revision")} // <-- Perbaikan Parameter
-              startIcon={<MdAssignment />}
-              className="border-orange-500 text-orange-600 hover:bg-orange-50"
-            >
-              Save Revision
-            </Button>
+          {!isSubmitted && (
+            <>
+              {/* Tombol Simpan Sementara (Draf/Revised) */}
+              <Button
+                variant="outline"
+                onClick={() => handleSubmit("revision")}
+                startIcon={<MdAssignment />}
+                className="border-orange-500 text-orange-600 hover:bg-orange-50"
+              >
+                Save Revision
+              </Button>
 
-            {/* Tombol Simpan Permanen (Submitted) */}
-            <Button
-              variant="primary" // Gaya tombol utama
-              onClick={() => handleSubmit("submit")} // <-- Parameter Submit
-              startIcon={<MdAssignment />}
-              className="bg-green-600 hover:bg-green-700 text-white shadow-md"
-            >
-              Final Submit
-            </Button>
-          </>
-          {/* )} */}
+              {/* Tombol Simpan Permanen (Submitted) */}
+              <Button
+                variant="action"
+                onClick={() => handleSubmit("submit")}
+                startIcon={<MdAssignment />}
+                className="bg-green-600 hover:bg-green-700 text-white shadow-md"
+              >
+                Final Submit
+              </Button>
+            </>
+          )}
         </div>
 
         {/* Modal Add Item */}

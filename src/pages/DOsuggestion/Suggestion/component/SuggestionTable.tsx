@@ -16,6 +16,7 @@ interface TableProps {
   editingRows: string[];
   toggleEditRow: (sku: string) => void;
   cancelEditRow: (sku: string) => void;
+  isSubmitted: boolean;
 }
 
 interface TableMeta {
@@ -35,6 +36,7 @@ export default function SuggestionTable({
   editingRows,
   toggleEditRow,
   cancelEditRow,
+  isSubmitted,
 }: TableProps) {
   // 1. LOGIKA AUTO-SORTING (Mendorong Additional & Revised ke Paling Atas)
   const sortedData = useMemo(() => {
@@ -61,20 +63,8 @@ export default function SuggestionTable({
     });
   }, [data, revisions]);
 
-  console.log("data", data);
-
   const columns = useMemo(
     () => [
-      columnHelper.accessor("product_name", {
-        header: "SKU Name",
-        cell: (info) => (
-          <div>
-            <span className="font-mono font-bold text-slate-800">
-              {info.getValue()}
-            </span>
-          </div>
-        ),
-      }),
       columnHelper.accessor("item_code", {
         header: "SKU Code",
         cell: (info) => (
@@ -85,6 +75,7 @@ export default function SuggestionTable({
           </div>
         ),
       }),
+
       columnHelper.accessor("item_qty_suggestion", {
         header: "Suggest Qty",
         cell: (info) => (
@@ -93,6 +84,7 @@ export default function SuggestionTable({
           </div>
         ),
       }),
+
       columnHelper.accessor("item_qty_revision", {
         header: "Qty Revision",
         cell: ({ row, getValue, table }) => {
@@ -127,14 +119,14 @@ export default function SuggestionTable({
           return <span className="font-bold text-slate-700">{currentVal}</span>;
         },
       }),
+
       columnHelper.accessor("item_qty_submitted", {
         header: "Submitted Qty",
         cell: (info) => (
-          <div className=" font-bold text-slate-500">
-            {info.getValue()}
-          </div>
+          <div className=" font-bold text-slate-500">{info.getValue()}</div>
         ),
       }),
+
       columnHelper.display({
         id: "status",
         header: "Status",
@@ -149,7 +141,9 @@ export default function SuggestionTable({
           // 1. Cek apakah ini item baru di layar (on action)
           const isTempAdditional = String(item.id).startsWith("temp-");
 
-          const isDbAdditional = Number(item.item_qty_suggestion) === 0 && Number(item.item_qty_revision) != 0;
+          const isDbAdditional =
+            Number(item.item_qty_suggestion) === 0 &&
+            Number(item.item_qty_revision) != 0;
 
           // Gabungkan keduanya
           const isAdditional = isTempAdditional || isDbAdditional;
@@ -212,15 +206,16 @@ export default function SuggestionTable({
               </div>
             );
           }
-
-          return (
-            <button
-              onClick={() => meta.toggleEditRow(item.item_code)}
-              className="flex items-center gap-1 px-3 py-1.5 bg-white text-blue-600 hover:bg-blue-50 text-xs font-bold rounded-md transition border border-blue-200 shadow-sm"
-            >
-              <MdEdit size={14} /> Revise
-            </button>
-          );
+          if (!isSubmitted) {
+            return (
+              <button
+                onClick={() => meta.toggleEditRow(item.item_code)}
+                className="flex items-center gap-1 px-3 py-1.5 bg-white text-blue-600 hover:bg-blue-50 text-xs font-bold rounded-md transition border border-blue-200 shadow-sm"
+              >
+                <MdEdit size={14} /> Revise
+              </button>
+            );
+          }
         },
       }),
     ],

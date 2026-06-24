@@ -12,7 +12,7 @@ export const getDOsuggestion = async (params: any): Promise<SuggestionSummary> =
         const response = await axios.post<SnowflakeApiResponse>(
             SNOWFLAKE_API,
             {
-                "statement": "CALL NEW_DEV_SFA_OUTSYSTEMS.GOLD.SP_API_DO_SUGGESTION(START_PRED=>?, END_PRED=>?, V_CABANG=>?, V_RUTE=>?, V_CALLPLAN=>?, V_SALES=>?, V_NIK=>?)",
+                "statement": "CALL NEW_DEV_SFA_OUTSYSTEMS.GOLD.SP_API_DO_SUGGESTION_V2(START_PRED=>?, END_PRED=>?, V_CABANG=>?, V_RUTE=>?, V_CALLPLAN=>?, V_SALES=>?, V_NIK=>?)", 
                 "database": "NEW_DEV_SFA_OUTSYSTEMS",
                 "schema": "GOLD",
                 "warehouse": "TASK_SFA",

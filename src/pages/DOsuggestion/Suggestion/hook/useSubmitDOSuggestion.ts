@@ -49,7 +49,7 @@ export const useSubmitDOSuggestion = ({
                         callplan_date_start: data.callplan_date_start,
                         callplan_date_end: data.callplan_date_end,
                         route_number: data.route_number,
-                        trip_type: "",
+                        trip_type: data.trip_route,
                         sales_nik: data.sales_nik,
                         sales_name: data.sales_name,
                         sales_spv: data.sales_spv,
@@ -99,14 +99,13 @@ export const useSubmitDOSuggestion = ({
                         }
 
                         return {
-                            // UPDATE: Jika isNewItem true, properti 'id' sama sekali tidak akan dibuat di dalam object ini
                             ...(!isNewItem && { id: item.id }),
-
                             item_code: item.item_code,
                             item_qty_suggestion: Number(item.item_qty_suggestion || 0),
                             item_qty_revision: latestRevisionQty !== null ? latestRevisionQty : undefined,
                             item_qty_submitted: submittedQty,
                             item_uom: item.item_uom,
+                            inventory_item_id: item.inventory_item_id
                         };
                     });
 
@@ -115,7 +114,6 @@ export const useSubmitDOSuggestion = ({
                     onSuccess();
 
                 } catch (err) {
-                    // Pastikan showErrorToast tersedia di scope ini
                     showErrorToast(
                         `Gagal ${isRevisionAction ? "menyimpan revisi" : "submit"}. Periksa kembali koneksi Anda.`
                     );

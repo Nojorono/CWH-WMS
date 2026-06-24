@@ -20,7 +20,7 @@ export const getBTB = async (params: CallPlanBindings): Promise<BTBFlatItem[]> =
                 'INVENTORYID', COALESCE(INVENTORYID,''), 
                 'QTY_BTB', COALESCE(TO_VARCHAR(QTY_BTB),'')
             ) AS DATA 
-            FROM DEV_SFA_OUTSYSTEMS.SFA.V_API_BTB 
+            FROM NEW_DEV_SFA_OUTSYSTEMS.Bronze.V_API_BTB 
             WHERE CABANG = ? AND TANGGAL_BTB = ?
         `;
 
@@ -34,8 +34,8 @@ export const getBTB = async (params: CallPlanBindings): Promise<BTBFlatItem[]> =
             SNOWFLAKE_API,
             {
                 statement,
-                database: "DEV_SFA_OUTSYSTEMS",
-                schema: "SFA",
+                database: "NEW_DEV_SFA_OUTSYSTEMS",
+                schema: "Bronze",
                 warehouse: "TASK_SFA",
                 role: "ROLE_API",
                 bindings

@@ -22,6 +22,7 @@ export interface DOSuggestionDetail {
     item_number?: string
     item_description?: string
     inventory_item_id?: string
+    prepared_qty?: string
 }
 
 export interface DOSuggestionData {
@@ -37,8 +38,9 @@ export interface DOSuggestionData {
     status: string;
     organization: Organization;
     details: DOSuggestionDetail[];
-    createdAt: string,
+    createdAt: string
     updatedAt: string
+    spb_number: string
 }
 
 export interface DOSuggestionResponse {

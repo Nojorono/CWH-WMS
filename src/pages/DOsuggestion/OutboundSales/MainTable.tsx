@@ -31,6 +31,8 @@ const MainTable = () => {
   const organization_name = user?.userDetail?.organization?.organization_name;
   const userNIK = user?.userDetail?.employee_id;
   const DateNow = dayjs().format("YYYY-MM-DD");
+  const [calculatedResults, setCalculatedResults] = useState<any[]>([]);
+  const [currentStep, setCurrentStep] = useState<Step>("SUBMITTED");
 
   const {
     submittedList,
@@ -40,16 +42,14 @@ const MainTable = () => {
 
   const isParamsReady = !!(organization_name && userNIK);
 
-  const params = {
+  const paramGetBTB = {
     CABANG: String(organization_name),
     CALL_PLAN_START_DATE: "2026-06-02",
   };
 
-  const { data: BTBdata, isLoading: isBTBLoading } = useGetBTB(params, {
+  const { data: BTBdata, isLoading: isBTBLoading } = useGetBTB(paramGetBTB, {
     enabled: isParamsReady,
   });
-
-  const [currentStep, setCurrentStep] = useState<Step>("SUBMITTED");
 
   useEffect(() => {
     if (organization_name) {
@@ -192,13 +192,16 @@ const MainTable = () => {
             {currentStep === "CALCULATION" && (
               <CalculationPage
                 data={groupedAndMappedData as any}
-                params={params}
-                onProceed={() => setCurrentStep("PREPARATION")}
+                params={paramGetBTB}
+                onProceed={(results) => {
+                  setCalculatedResults(results); // Simpan hasil kalkulasi
+                  setCurrentStep("PREPARATION");
+                }}
               />
             )}
 
             {currentStep === "PREPARATION" && (
-              <GoodsPreparationPage data={groupedAndMappedData as any} />
+              <GoodsPreparationPage data={calculatedResults} />
             )}
           </>
         )}

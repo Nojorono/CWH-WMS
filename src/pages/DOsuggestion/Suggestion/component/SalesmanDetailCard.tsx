@@ -21,7 +21,6 @@ export default function SalesmanDetailCard({
 
   return (
     <div className="bg-white rounded-xl border border-slate-200 shadow-sm mb-6 overflow-hidden">
-      
       {/* SECTION 1: TOP HEADER (Salesman & Status) */}
       <div className="p-6 flex justify-between items-center border-b border-slate-100 bg-slate-50/50">
         <div className="flex items-center gap-4">
@@ -84,7 +83,7 @@ export default function SalesmanDetailCard({
           <DetailRow
             icon={<MdMap size={16} />}
             label="Trip Type"
-            value="Luar Kota/Dalam Kota"
+            value={salesData?.trip_type || "-"}
           />
           <DetailRow
             icon={<MdCalendarToday size={15} />}
@@ -103,7 +102,15 @@ export default function SalesmanDetailCard({
 }
 
 // Komponen pembantu untuk Row (Bisa dibiarkan di file yang sama)
-function DetailRow({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
+function DetailRow({
+  icon,
+  label,
+  value,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: string;
+}) {
   return (
     <div className="flex items-center gap-3 text-slate-700">
       <span className="text-slate-400">{icon}</span>

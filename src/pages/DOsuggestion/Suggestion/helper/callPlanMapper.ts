@@ -15,23 +15,31 @@ export const processCallPlanData = async (callPlanList: any[] = []) => {
         }));
     });
 
+
+
+
     // 2. Map ke UI & Cek API: Loop array yang sudah diratakan untuk hit API checkIsGenerated
     const processedResults = await Promise.all(
         flatDetails.map(async (item) => {
-            let isGenerated = false;
-            // 1. Jadikan null sebagai default (tidak ada status sama sekali)
-            let currentStatus: string | null = null;
+            console.log("processCallPlanData", item);
 
-            // Pengecekan kondisi ke API lain
+            let isGenerated = false;
+            let currentStatus = null;
+
+            // --- LOGIKA BARU UNTUK TRIP_TYPE ---
+            let tripType = ""; // Default string kosong jika tidak ada Call Plan
+
             if (item.CALL_PLAN_NUMBER) {
-                // 2. Karena dia punya Call Plan, status awalnya adalah NOT_STARTED
-                currentStatus = "NOT_STARTED";
+                // Jika ada Call Plan, tentukan tipe berdasarkan ISLUARKOTA
+                tripType = item.ISLUARKOTA === true ? "MD" : "SD";
+
+                // Status awal untuk yang memiliki Call Plan
+                currentStatus = "";
 
                 try {
                     const existingData = await checkIsGenerated(item.CALL_PLAN_NUMBER);
                     if (existingData) {
                         isGenerated = true;
-                        // Tangkap statusnya jika ada, misalnya "DRAFT", "REVISED", "SUBMITTED"
                         currentStatus = existingData.status || "DRAFT";
                     }
                 } catch (error) {
@@ -39,11 +47,13 @@ export const processCallPlanData = async (callPlanList: any[] = []) => {
                     isGenerated = false;
                 }
             }
+            // ------------------------------------
 
             return {
                 ...item,
                 is_generated: isGenerated,
-                do_status: currentStatus, 
+                do_status: currentStatus,
+                trip_type: tripType, // Penambahan field baru di sini
             };
         })
     );

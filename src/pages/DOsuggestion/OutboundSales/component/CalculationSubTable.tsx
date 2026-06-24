@@ -78,63 +78,71 @@ export const CalculationSubTable = ({
     <div className="p-4 bg-slate-50/50">
       <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
         <div className="max-h-[500px] overflow-y-auto custom-scrollbar">
-        <table className="w-full text-left text-sm text-slate-600">
-          <thead className="bg-slate-50 text-slate-500 font-medium text-xs uppercase">
-            <tr>
-              <th className="px-5 py-3">SKU</th>
-              <th className="px-5 py-3 text-right">Stock on Hand</th>
-              <th className="px-5 py-3 text-right">Request</th>
-              <th className="px-5 py-3 text-right">Contrib %</th>
-              <th className="px-5 py-3 text-right">Status</th>
-              <th className="px-5 py-3 text-right">Final Qty</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100">
-            {sortedDetails.map((item, idx) => {
-              const highlighted =
-                globalFilter &&
-                item.item_code
-                  ?.toLowerCase()
-                  .includes(globalFilter.toLowerCase());
+          <table className="w-full text-left text-sm text-slate-600">
+            <thead className="bg-slate-50 text-slate-500 font-medium text-xs uppercase">
+              <tr>
+                <th className="px-5 py-3">SKU</th>
+                <th className="px-5 py-3 text-right">Stock on Hand</th>
+                <th className="px-5 py-3 text-right">Request</th>
+                <th className="px-5 py-3 text-right">Contrib %</th>
+                <th className="px-5 py-3 text-right">Status</th>
+                <th className="px-5 py-3 text-right">Final Qty</th>
+                <th className="px-5 py-3 text-right">BTB Qty</th>
+                <th className="px-5 py-3 text-right">Prepared Qty</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {sortedDetails.map((item, idx) => {
+                const highlighted =
+                  globalFilter &&
+                  item.item_code
+                    ?.toLowerCase()
+                    .includes(globalFilter.toLowerCase());
 
-              const status = STATUS_CONFIG[item.allocation_status] || {
-                label: item.allocation_status,
-                class: "text-slate-600 bg-slate-50 border-slate-200",
-              };
+                const status = STATUS_CONFIG[item.allocation_status] || {
+                  label: item.allocation_status,
+                  class: "text-slate-600 bg-slate-50 border-slate-200",
+                };
 
-              return (
-                <tr
-                  key={idx}
-                  className={`transition-colors duration-300 ${highlighted ? "bg-yellow-100/60 hover:bg-yellow-100" : "hover:bg-slate-50"}`}
-                >
-                  <td className="px-5 py-3 font-medium text-slate-700">
-                    <HighlightText
-                      text={item.item_code}
-                      highlight={globalFilter || ""}
-                    />
-                  </td>
-                  <td className="px-5 py-3 text-right">{item.soh}</td>
-                  <td className="px-5 py-3 text-right">
-                    {item.item_qty_submitted}
-                  </td>
-                  <td className="px-5 py-3 text-right text-blue-600 font-semibold">
-                    {item.contribution_percentage}%
-                  </td>
-                  <td className="px-5 py-3 text-right">
-                    <span
-                      className={`px-2 py-1 rounded border text-[10px] font-semibold ${status.class}`}
-                    >
-                      {status.label}
-                    </span>
-                  </td>
-                  <td className="px-5 py-3 text-right font-bold text-slate-800">
-                    {item.item_qty_final}
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+                return (
+                  <tr
+                    key={idx}
+                    className={`transition-colors duration-300 ${highlighted ? "bg-yellow-100/60 hover:bg-yellow-100" : "hover:bg-slate-50"}`}
+                  >
+                    <td className="px-5 py-3 font-medium text-slate-700">
+                      <HighlightText
+                        text={item.item_code}
+                        highlight={globalFilter || ""}
+                      />
+                    </td>
+                    <td className="px-5 py-3 text-right">{item.soh}</td>
+                    <td className="px-5 py-3 text-right">
+                      {item.item_qty_submitted}
+                    </td>
+                    <td className="px-5 py-3 text-right text-blue-600 font-semibold">
+                      {item.contribution_percentage}%
+                    </td>
+                    <td className="px-5 py-3 text-right">
+                      <span
+                        className={`px-2 py-1 rounded border text-[10px] font-semibold ${status.class}`}
+                      >
+                        {status.label}
+                      </span>
+                    </td>
+                    <td className="px-5 py-3 text-right font-bold text-slate-800">
+                      {item.item_qty_final}
+                    </td>
+                    <td className="px-5 py-3 text-right font-bold text-slate-800">
+                      {item.qty_btb}
+                    </td>
+                    <td className="px-5 py-3 text-right font-bold text-slate-800">
+                      {item.prepared_qty}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         </div>
       </div>
     </div>

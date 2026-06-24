@@ -209,10 +209,10 @@ const AdjustTable = ({
       callplan_date_start: selectedSales?.CALL_PLAN_START_DATE || "",
       callplan_date_end: selectedSales?.CALL_PLAN_END_DATE || "",
       route_number: selectedSales?.ROUTE_NUMBER || "",
-      trip_type: "LK/DK",
+      trip_type: selectedSales?.trip_type || "",
       sales_nik: selectedSales?.SALES_NIK || "",
       sales_name: selectedSales?.SALES_NAME || "",
-      sales_spv: selectedSales?.SALES_SUPERVISOR_NAME || "N/A",
+      sales_spv: selectedSales?.SALES_SUPERVISOR_NAME || "",
       sales_spv_nik: selectedSales?.SALES_SUPERVISOR_NIK || "",
       status: "DRAFT",
       created_by: selectedSales?.SALES_SUPERVISOR_NIK,
@@ -221,6 +221,7 @@ const AdjustTable = ({
         item_qty_suggestion: item.total_suggestion_qty,
         item_uom: "BKS",
         line_number: index + 1,
+        inventory_item_id: Number(item.inventoryid),
       })),
     };
   };
@@ -246,10 +247,10 @@ const AdjustTable = ({
       };
       const suggestionData = await getDOsuggestion(params);
       const payload = initialPayload(suggestionData, new Map(), rowData);
-
-      console.log("initialPayload", payload);
-
+      console.log("payload intial qty", payload);
+      
       await postDOsuggestion(payload);
+
       setGeneratedCallPlans((prev) => new Set(prev).add(rowId));
       navigate("generate_do", { state: { selectedSales: rowData } });
     } catch (error) {

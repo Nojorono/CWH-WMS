@@ -20,8 +20,6 @@ export const SKUSummaryPanel = ({
     onSearchChange(val);
   };
 
-  console.log("summary", summary);
-
   const filteredData = useMemo(() => {
     let data = summary.filter(
       (s) => s.sku && s.sku !== "null" && s.sku !== "undefined",

@@ -53,12 +53,12 @@ const StandardSubTable = ({
                   </td>
                   <td className="px-5 py-3 text-right">
                     {item.no_found_in_btb ? (
-                      <span className="text-[10px] uppercase font-bold text-amber-700 bg-amber-100 px-2 py-1 rounded">
-                        No BTB Data
+                      <span className="text-[10px] uppercase font-bold text-amber-700 bg-red-100 px-2 py-1 rounded">
+                       BTB Not Exist
                       </span>
                     ) : (
                       <span className="text-[10px] uppercase font-bold text-emerald-700 bg-emerald-100 px-2 py-1 rounded">
-                        Synced
+                        BTB Exist
                       </span>
                     )}
                   </td>

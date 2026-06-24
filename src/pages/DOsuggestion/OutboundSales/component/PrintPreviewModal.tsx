@@ -33,6 +33,9 @@ export const PrintPreviewModal = ({
     // onClose(); // Opsional: tutup modal setelah klik print
   };
 
+
+  console.log("data untuk diPrint", data);
+  
   return (
     <div className="fixed inset-0 z-9999 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
       {/* Modal Container */}
@@ -68,7 +71,7 @@ export const PrintPreviewModal = ({
 
                 <span>No. SPB</span>
                 <span>:</span>
-                <span>666</span>
+                <span>{data.spb_number}</span>
 
                 <span>NIK Salesman</span>
                 <span>:</span>
@@ -95,10 +98,10 @@ export const PrintPreviewModal = ({
                       <tr key={item.id}>
                         <td className="py-2">{item.item_code}</td>
                         <td className="py-2 text-right">
-                          {item.item_qty_final || 0}
+                          {item.item_qty_final}
                         </td>
-                        <td className="py-2 text-right">0</td>
-                        <td className="py-2 text-right">0</td>
+                        <td className="py-2 text-right">{item.qty_btb}</td>
+                        <td className="py-2 text-right">{item.prepared_qty}</td>
                       </tr>
                     ))
                   ) : (

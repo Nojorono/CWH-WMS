@@ -10,7 +10,7 @@ interface UseCallPlanOptions {
 
 export const useCallPlan = (
     params: CallPlanBindings,
-    options: UseCallPlanOptions = { enabled: true } // Default-nya true agar tidak merusak komponen lain yang pakai hook ini
+    options: UseCallPlanOptions = { enabled: true }
 ) => {
     const [data, setData] = useState<SupervisorData[]>([]);
     const [isLoading, setIsLoading] = useState(false);
@@ -33,10 +33,9 @@ export const useCallPlan = (
         } finally {
             setIsLoading(false);
         }
-    }, [params.CABANG, params.CALL_PLAN_START_DATE, params.SALES_SUPERVISOR_NIK]); // Dependencies untuk fetchData
+    }, [params.CABANG, params.CALL_PLAN_START_DATE, params.SALES_SUPERVISOR_NIK]);
 
     useEffect(() => {
-        // Cek options.enabled DAN pastikan NIK bukan teks "null" atau "undefined"
         const isSpvValid = params.SALES_SUPERVISOR_NIK &&
             params.SALES_SUPERVISOR_NIK !== "null" &&
             params.SALES_SUPERVISOR_NIK !== "undefined";
@@ -44,7 +43,6 @@ export const useCallPlan = (
         if (options.enabled && params.CABANG && isSpvValid) {
             fetchData();
         } else if (!options.enabled) {
-            // Opsional: Kosongkan data jika hook dimatikan (disabled)
             setData([]);
         }
     }, [fetchData, options.enabled, params.CABANG, params.SALES_SUPERVISOR_NIK]);

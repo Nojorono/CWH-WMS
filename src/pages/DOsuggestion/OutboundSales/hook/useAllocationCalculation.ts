@@ -10,9 +10,6 @@ export const useAllocationCalculation = (data: GroupedSPBData[], stockList: any[
 
         const flatSalesmanList = data.flatMap((g) => g.salesmenDO);
 
-        console.log("flatSalesmanList", flatSalesmanList);
-        console.log(" stockList", stockList);
-
         // 1. Mapping Stok
         const skuMetaMap = new Map<string, any>();
         const sohMap = stockList.reduce((acc, item) => {
@@ -79,9 +76,12 @@ export const useAllocationCalculation = (data: GroupedSPBData[], stockList: any[
                 .map((detail: any) => {
                     const key = resolveSku(detail);
                     const submitted = safeParse(detail.item_qty_submitted);
+                    const qtyBtb = safeParse(detail.qty_btb || 0);
+
                     const totalReq = totalSubmittedPerSku[key] || 0;
                     const soh = sohMap[key] || 0;
                     const contribution = totalReq > 0 ? submitted / totalReq : 0;
+
 
                     let finalQty = 0;
                     let status = "NORMAL";
@@ -97,6 +97,9 @@ export const useAllocationCalculation = (data: GroupedSPBData[], stockList: any[
                         status = "LESS_STOCK";
                     }
 
+                    const preparedQty = Math.max(0, finalQty - qtyBtb);
+
+
                     return {
                         ...detail,
                         resolved_sku: key,
@@ -104,6 +107,8 @@ export const useAllocationCalculation = (data: GroupedSPBData[], stockList: any[
                         contribution_percentage: soh <= 0 ? "0" : (contribution * 100).toFixed(2),
                         allocation_status: status,
                         item_qty_final: finalQty,
+                        qty_btb: qtyBtb,
+                        prepared_qty: preparedQty
                     };
                 }),
         }));

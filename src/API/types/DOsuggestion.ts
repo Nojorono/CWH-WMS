@@ -27,6 +27,7 @@ export interface ProductSummary {
     product_sku: string;
     total_customer: number;
     total_suggestion_qty: number;
+    inventoryid: string;
     data: WeeklyQty[];
 }
 
@@ -52,6 +53,7 @@ export interface DOSuggestionLine {
     item_qty_final?: number;
     contribution_percentage?: number;
     item_uom: string;
+    inventory_item_id?: any
 }
 
 export interface DOSuggestionPayload {

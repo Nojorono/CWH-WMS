@@ -29,9 +29,9 @@ const MainTable = () => {
   const role_name = user?.role?.name;
   const isAhom = role_name === "AHOM";
   const activeSpvNik = isAhom ? selectedSpvNik : userNIK;
+  const shouldFetchCallPlan = !!activeSpvNik;
   const DateNow = dayjs().format("YYYY-MM-DD");
 
-  // === FETCH MASTER USER UNTUK DROPDOWN ===
   const { list: userData, fetchAll: fetchAllUsers } = useStoreUser();
 
   useEffect(() => {
@@ -40,7 +40,6 @@ const MainTable = () => {
     }
   }, [isAhom, fetchAllUsers]);
 
-  // Filter user yang rolenya SALES_SUPERVISOR dan map ke format option Select
   const spvOptions = useMemo(() => {
     if (!userData) return [];
     const spvList = Array.isArray(userData)
@@ -55,22 +54,21 @@ const MainTable = () => {
       }));
   }, [userData]);
 
-  const params = {
+  const paramGetCallplan = {
     CABANG: String(organization_name),
     SALES_SUPERVISOR_NIK: String(activeSpvNik),
     CALL_PLAN_START_DATE: "2026-06-02", // atau DateNow
     // CALL_PLAN_START_DATE: DateNow
   };
 
-  // Kita hanya memanggil/mengaktifkan API jika NIK Supervisor sudah ada
-  const shouldFetchCallPlan = !!activeSpvNik;
-
   const {
     data: callPlanList,
     isLoading: isCallPlanLoading,
     error,
     refetch,
-  } = useCallPlan(params, { enabled: shouldFetchCallPlan });
+  } = useCallPlan(paramGetCallplan, { enabled: shouldFetchCallPlan });
+
+  console.log("callPlanList", callPlanList);
 
   useEffect(() => {
     if (!callPlanList || callPlanList.length === 0) {
@@ -189,7 +187,6 @@ const MainTable = () => {
         <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
           <AdjustTable
             data={mergedData}
-            // data={dataWithStatus}
             globalFilter={globalFilter}
             setGlobalFilter={setGlobalFilter}
           />
