@@ -1,39 +1,62 @@
-// File: src/pages/DOsuggestion/OutboundSales/MainTable.tsx
-
 import { useState, useEffect, useMemo } from "react";
 import { FaArrowLeft, FaSync } from "react-icons/fa";
+import dayjs from "dayjs";
+
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import Button from "../../../components/ui/button/Button";
-import { useGetLocalDoSuggestion } from "../Suggestion/hook/useGetLocalDoSuggestion";
-import { usePersistAuthStore } from "../../../API/store/AuthStore/PersistAuthStore";
-
 import { SPBSubmittedPage } from "./pages/SPBSubmittedPage";
 import { CalculationPage } from "./pages/CalculationPage";
 import { GoodsPreparationPage } from "./pages/GoodsPreparationPage";
-import { useGetBTB } from "./hook/useGetBTB";
-import { DOSuggestionData } from "../../../API/types/draftDOsuggestion";
-import dayjs from "dayjs";
 
-// --- DEKLARASI INTERFACE BARU DI SINI ---
-// Export interface ini agar SPBSubmittedPage bisa meng-import-nya
+import { useGetLocalDoSuggestion } from "../Suggestion/hook/useGetLocalDoSuggestion";
+import { useGetBTB } from "./hook/useGetBTB";
+import { usePersistAuthStore } from "../../../API/store/AuthStore/PersistAuthStore";
+import { DOSuggestionData } from "../../../API/types/draftDOsuggestion";
+import { showErrorToast } from "../../../components/toast";
+
+// --- INTERFACES ---
 export interface GroupedSPBData {
   sales_spv_nik: string;
   sales_spv_name: string;
   salesmenDO: DOSuggestionData[];
 }
-// -----------------------------------------
 
 type Step = "SUBMITTED" | "CALCULATION" | "PREPARATION";
+type StatusFilter = "SUBMITTED" | "FINAL";
+const TARGET_DATE = "2026-06-02";
+
+// --- CONSTANTS ---
+// Pindahkan config ke luar komponen agar tidak dirender ulang terus menerus
+const STEP_CONFIG: Record<
+  Step,
+  { title: string; breadcrumbs: { title: string }[] }
+> = {
+  SUBMITTED: {
+    title: "SPB Submitted",
+    breadcrumbs: [{ title: "SPB Submitted" }],
+  },
+  CALCULATION: {
+    title: "Stock on Hand & Calculation",
+    breadcrumbs: [{ title: "Stock on Hand & Calculation" }],
+  },
+  PREPARATION: {
+    title: "Goods Preparation",
+    breadcrumbs: [{ title: "Goods Preparation" }],
+  },
+};
 
 const MainTable = () => {
-  const state = usePersistAuthStore.getState();
-  const user = state.user;
+  // 1. STATE & AUTH
+  const { user } = usePersistAuthStore.getState();
   const organization_name = user?.userDetail?.organization?.organization_name;
+  const organization_id = user?.userDetail?.organizationId;
   const userNIK = user?.userDetail?.employee_id;
-  const DateNow = dayjs().format("YYYY-MM-DD");
-  const [calculatedResults, setCalculatedResults] = useState<any[]>([]);
-  const [currentStep, setCurrentStep] = useState<Step>("SUBMITTED");
 
+  const [currentStep, setCurrentStep] = useState<Step>("SUBMITTED");
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("SUBMITTED");
+  const [calculatedResults, setCalculatedResults] = useState<any[]>([]);
+
+  // 2. FETCHING DATA
   const {
     submittedList,
     isLoading: isLocalLoading,
@@ -42,99 +65,177 @@ const MainTable = () => {
 
   const isParamsReady = !!(organization_name && userNIK);
 
-  const paramGetBTB = {
-    CABANG: String(organization_name),
-    CALL_PLAN_START_DATE: "2026-06-02",
-  };
+  const paramGetBTB = useMemo(
+    () => ({
+      CABANG: String(organization_name),
+      CALL_PLAN_START_DATE: TARGET_DATE,
+    }),
+    [organization_name],
+  );
 
   const { data: BTBdata, isLoading: isBTBLoading } = useGetBTB(paramGetBTB, {
     enabled: isParamsReady,
   });
 
   useEffect(() => {
-    if (organization_name) {
-      fetchSubmittedList(organization_name);
+    if (organization_id) {
+      fetchSubmittedList(TARGET_DATE, organization_id, statusFilter);
     }
-  }, [fetchSubmittedList, organization_name]);
+  }, [organization_id, statusFilter, fetchSubmittedList]);
 
-  const handleBack = () => {
-    if (currentStep === "CALCULATION") setCurrentStep("SUBMITTED");
-    if (currentStep === "PREPARATION") setCurrentStep("CALCULATION");
-  };
-
-  // --- LOGIKA MAPPING & GROUPING ---
+  // 3. DATA TRANSFORMATION (BUSINESS LOGIC)
   const groupedAndMappedData = useMemo<GroupedSPBData[]>(() => {
-    if (!submittedList || submittedList.length === 0) return [];
+    if (!submittedList?.length) return [];
 
-    const enrichedDOs = submittedList.map((doDocument) => {
-      let salesmanBTB = null;
-
-      if (BTBdata && BTBdata.length > 0) {
-        salesmanBTB = BTBdata.find(
-          (btbGroup) => btbGroup.SALES_NIK === doDocument.sales_nik,
-        );
-      }
-
-      const updatedDetails = doDocument.details.map((doDetail: any) => {
+    // Helper untuk mapping data BTB ke DO Details
+    const enrichDetails = (details: any[], salesmanBTB: any) => {
+      return details.map((doDetail) => {
         const skuMatch = salesmanBTB?.details.find(
-          (btbLine) => btbLine.PRODUCT_SKU === doDetail.item_code,
+          (btbLine: any) => btbLine.PRODUCT_SKU === doDetail.item_code,
         );
-
         return {
           ...doDetail,
           qty_btb: skuMatch ? skuMatch.QTY_BTB : "-",
           no_found_in_btb: !skuMatch,
         };
       });
+    };
 
-      return {
-        ...doDocument,
-        details: updatedDetails,
-      };
-    });
-
-    const groupedBySpv = enrichedDOs.reduce(
+    const groupedBySpv = submittedList.reduce(
       (acc: Record<string, GroupedSPBData>, currentDO) => {
-        const spvNik = currentDO.sales_spv_nik || "UNKNOWN";
-        const spvName = currentDO.sales_spv || "Unknown Supervisor";
+        // 1. Destructure data agar lebih rapi
+        const { sales_spv_nik, sales_spv } = currentDO;
 
-        if (!acc[spvNik]) {
-          acc[spvNik] = {
-            sales_spv_nik: spvNik,
-            sales_spv_name: spvName,
+        // 2. GUARD CLAUSE (Validasi Mandatory)
+        // Jika tidak ada NIK atau Nama SPV, hentikan proses untuk item ini dan kembalikan accumulator (skip item).
+        if (!sales_spv_nik || !sales_spv) {
+          showErrorToast("Tidak ada data SPV Sales!");
+          return acc;
+        }
+
+        // 3. Proses mapping BTB berjalan seperti biasa jika lolos validasi
+        const salesmanBTB = BTBdata?.find(
+          (btb) => btb.SALES_NIK === currentDO.sales_nik,
+        );
+
+        const enrichedDO = {
+          ...currentDO,
+          details: enrichDetails(currentDO.details, salesmanBTB),
+        };
+
+        // 4. Grouping dengan data yang sudah dijamin pasti ada (mandatory)
+        if (!acc[sales_spv_nik]) {
+          acc[sales_spv_nik] = {
+            sales_spv_nik: sales_spv_nik,
+            sales_spv_name: sales_spv,
             salesmenDO: [],
           };
         }
 
-        acc[spvNik].salesmenDO.push(currentDO);
+        acc[sales_spv_nik].salesmenDO.push(enrichedDO);
         return acc;
       },
       {},
     );
 
-    return Object.values(groupedBySpv) as GroupedSPBData[];
+    return Object.values(groupedBySpv);
   }, [submittedList, BTBdata]);
 
-  const isLoadingAll = isLocalLoading || isBTBLoading;
+  const dataForCalculation = useMemo(() => {
+    if (!groupedAndMappedData.length) return [];
+    return groupedAndMappedData
+      .map((spvGroup) => ({
+        ...spvGroup,
+        salesmenDO: spvGroup.salesmenDO.filter(
+          (doDoc) => doDoc.status === "SUBMITTED",
+        ),
+      }))
+      .filter((spvGroup) => spvGroup.salesmenDO.length > 0);
+  }, [groupedAndMappedData]);
 
-  const STEP_CONFIG = {
-    SUBMITTED: {
-      title: "SPB Submitted",
-      breadcrumbs: [{ title: "SPB Submitted" }],
-    },
+  // 4. HANDLERS
+  const handleBack = () => setCurrentStep("SUBMITTED");
+  const handleRefresh = () => window.location.reload();
 
-    CALCULATION: {
-      title: "Stock on Hand & Calculation",
-      breadcrumbs: [{ title: "Stock on Hand & Calculation" }],
-    },
-    PREPARATION: {
-      title: "Goods Preparation",
-      breadcrumbs: [{ title: "Goods Preparation" }],
-    },
+  // 5. RENDER HELPERS
+  const renderLoading = () => (
+    <div className="flex flex-col items-center justify-center py-20">
+      <div className="w-10 h-10 border-4 border-orange-600 border-t-transparent rounded-full animate-spin mb-4" />
+      <p className="text-slate-600 font-medium">Processing data...</p>
+    </div>
+  );
+
+  const renderEmptyCalculation = () => (
+    <div className="flex flex-col items-center justify-center h-64 bg-white rounded-xl border border-slate-200 shadow-sm gap-4">
+      <div className="p-4 bg-orange-50 rounded-full text-orange-500">
+        <svg
+          className="w-8 h-8"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+          />
+        </svg>
+      </div>
+      <div className="text-center">
+        <h3 className="text-lg font-semibold text-slate-800">
+          Tidak ada data untuk dikalkulasi
+        </h3>
+        <p className="text-sm text-slate-500 mt-1">
+          SPB harus dengan status SUBMITTED.
+        </p>
+      </div>
+      <Button
+        onClick={handleBack}
+        variant="outline"
+        startIcon={<FaArrowLeft />}
+      >
+        Kembali ke Daftar SPB
+      </Button>
+    </div>
+  );
+
+  const renderActiveStep = () => {
+    switch (currentStep) {
+      case "SUBMITTED":
+        return (
+          <SPBSubmittedPage
+            data={groupedAndMappedData}
+            onProceed={() => setCurrentStep("CALCULATION")}
+            onGoToPreparation={() => setCurrentStep("PREPARATION")}
+            setCalculatedResults={setCalculatedResults}
+          />
+        );
+      case "CALCULATION":
+        return dataForCalculation.length > 0 ? (
+          <CalculationPage
+            data={dataForCalculation as any}
+            params={paramGetBTB}
+            onProceed={async (results) => {
+              setCalculatedResults(results);
+              setCurrentStep("PREPARATION");
+              setStatusFilter("FINAL");
+            }}
+          />
+        ) : (
+          renderEmptyCalculation()
+        );
+      case "PREPARATION":
+        return <GoodsPreparationPage targetDate={TARGET_DATE} />;
+      default:
+        return null;
+    }
   };
 
+  const isLoadingAll = isLocalLoading || isBTBLoading;
   const config = STEP_CONFIG[currentStep];
 
+  // 6. MAIN RENDER
   return (
     <div className="w-full space-y-4 p-4 bg-[#F8FAFC] min-h-screen">
       <PageBreadcrumb breadcrumbs={config.breadcrumbs} />
@@ -142,13 +243,23 @@ const MainTable = () => {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
         <div className="flex flex-1 items-center gap-3">
           <h2 className="text-lg font-semibold text-slate-800">
-            {currentStep === "SUBMITTED" && "SPB Submitted"}
-            {currentStep === "CALCULATION" && "Stock on Hand & Calculation"}
+            {config.title}
           </h2>
+
+          {currentStep === "SUBMITTED" && (
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
+              className="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-200 rounded-xl shadow-[0_1px_2px_rgba(0,0,0,0.04)] hover:border-slate-300 transition-all cursor-pointer focus:outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10"
+            >
+              <option value="SUBMITTED">SUBMITTED</option>
+              <option value="FINAL">FINAL</option>
+            </select>
+          )}
         </div>
 
         <div className="flex items-center gap-2">
-          {currentStep !== "SUBMITTED" && (
+          {currentStep !== "SUBMITTED" ? (
             <Button
               variant="outline"
               size="sm"
@@ -157,14 +268,12 @@ const MainTable = () => {
             >
               Back
             </Button>
-          )}
-
-          {currentStep === "SUBMITTED" && (
+          ) : (
             <Button
               variant="primary"
               size="sm"
               className="bg-blue-600 hover:bg-blue-700 transition-colors"
-              onClick={() => window.location.reload()}
+              onClick={handleRefresh}
             >
               <FaSync className="mr-2 size-3" /> Refresh
             </Button>
@@ -172,40 +281,7 @@ const MainTable = () => {
         </div>
       </div>
 
-      <div>
-        {isLoadingAll ? (
-          <div className="flex items-center justify-center h-64 text-slate-500 flex-col gap-3">
-            <FaSync className="animate-spin text-orange-500" size={24} />
-            <span className="text-sm font-medium">
-              Memuat dan menyinkronkan data...
-            </span>
-          </div>
-        ) : (
-          <>
-            {currentStep === "SUBMITTED" && (
-              <SPBSubmittedPage
-                data={groupedAndMappedData}
-                onProceed={() => setCurrentStep("CALCULATION")}
-              />
-            )}
-
-            {currentStep === "CALCULATION" && (
-              <CalculationPage
-                data={groupedAndMappedData as any}
-                params={paramGetBTB}
-                onProceed={(results) => {
-                  setCalculatedResults(results); // Simpan hasil kalkulasi
-                  setCurrentStep("PREPARATION");
-                }}
-              />
-            )}
-
-            {currentStep === "PREPARATION" && (
-              <GoodsPreparationPage data={calculatedResults} />
-            )}
-          </>
-        )}
-      </div>
+      <div>{isLoadingAll ? renderLoading() : renderActiveStep()}</div>
     </div>
   );
 };

@@ -227,45 +227,6 @@ const ModalForm: React.FC<ModalFormProps> = ({
           />
         );
 
-      // case "select":
-      //   return (
-      //     <Controller
-      //       name={field.name}
-      //       control={control}
-      //       rules={{
-      //         ...(field.validation?.required
-      //           ? {
-      //               validate: (v) =>
-      //                 !!v || field.validation?.required || "Required",
-      //             }
-      //           : {}),
-      //         ...field.validation,
-      //       }}
-      //       render={({ field: controllerField }) => (
-      //         <Select
-      //           {...controllerField}
-      //           options={field.options}
-      //           placeholder={field.placeholder || "Select..."}
-      //           classNamePrefix="react-select"
-      //           value={field.options?.find(
-      //             (opt) => opt.value === controllerField.value,
-      //           )}
-      //           // onChange={(opt) => controllerField.onChange(opt?.value ?? "")}
-      //           isDisabled={isDisabled}
-      //           styles={{ menuPortal: (base) => ({ ...base, zIndex: 9999 }) }}
-      //           menuPortalTarget={document.body}
-      //           onChange={(opt) => {
-      //             const value = opt?.value ?? "";
-      //             controllerField.onChange(value);
-      //             if (typeof (field as any).onChange === "function") {
-      //               (field as any).onChange(value);
-      //             }
-      //           }}
-      //         />
-      //       )}
-      //     />
-      //   );
-
       case "select":
         return (
           <Controller

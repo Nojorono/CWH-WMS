@@ -1,7 +1,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { CallPlanBindings, SupervisorData } from '../../../../API/types/callPlan';
-import { getCallPlan } from '../../../../API/store/DOsuggestionServices/callPlanService';
+import { getCallPlan } from '../../../../API/services/DOsuggestionServices/callPlanService';
 
 // Tambahkan interface untuk options
 interface UseCallPlanOptions {

@@ -4,10 +4,7 @@ import TableComponent from "./Table";
 import { useNavigate } from "react-router-dom";
 import { CallPlanDetail } from "../../../../API/types/callPlan";
 import { SuggestionSummary } from "../../../../API/types/DOsuggestion";
-import { getDOsuggestion } from "../../../../API/store/DOsuggestionServices/DOsuggestionService";
-import { checkIsGenerated } from "../../../../API/store/DOsuggestionServices/checkIsGeneratedDO";
 import { showErrorToast, showSuccessToast } from "../../../../components/toast";
-import { postDOsuggestion } from "../../../../API/store/DOsuggestionServices/postDOsuggestion";
 import { usePersistAuthStore } from "../../../../API/store/AuthStore/PersistAuthStore";
 import { FaEye, FaMagic } from "react-icons/fa";
 import { ActionMenu } from "./ActionMenu";
@@ -15,6 +12,9 @@ import { useDOActions } from "../hook/useDOActions";
 import ActIndicator from "../../../../components/ui/activityIndicator";
 import StatusBadge from "../../../../common/statusBadge";
 import { StatusMap } from "../../../../constants/statusMaps";
+import { checkIsGenerated } from "../../../../API/services/DOsuggestionServices/checkIsGeneratedDO";
+import { getDOsuggestion } from "../../../../API/services/DOsuggestionServices/DOsuggestionService";
+import { postDOsuggestion } from "../../../../API/services/DOsuggestionServices/postDOsuggestion";
 
 interface AdjustTableProps {
   data: CallPlanDetail[];
@@ -166,30 +166,29 @@ const AdjustTable = ({
             return null;
           }
 
-          const actionList = [
-            {
-              label: isGenerated ? "View Detail" : "Generate Suggestion",
-              icon: isGenerated ? FaEye : FaMagic,
-              onClick: () =>
-                isGenerated
-                  ? actions.handleAdjust(row.original, organization_id)
-                  : handleGenerateDO(row.original),
-              className: isGenerated
-                ? "text-slate-700"
-                : "text-orange-600 font-bold",
-            },
-            // {
-            //   label: "Print Label",
-            //   icon: FaPrint,
-            //   onClick: () => actions.handlePrintLabel(row.original),
-            //   className: "text-slate-700",
-            //   disabled: !isGenerated,
-            // },
-          ];
-
           return (
-            <div className="flex justify-center">
-              <ActionMenu actions={actionList} />
+            <div className="flex justify-center items-center">
+              {isGenerated ? (
+                <button
+                  onClick={() =>
+                    actions.handleAdjust(row.original, organization_id)
+                  }
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-700 bg-white border border-slate-300 rounded-lg shadow-sm hover:bg-slate-50 hover:text-slate-900 hover:border-slate-400 transition-all focus:outline-none focus:ring-2 focus:ring-slate-200"
+                  title="View Detail"
+                >
+                  <FaEye className="text-slate-500" />
+                  <span>View Detail</span>
+                </button>
+              ) : (
+                <button
+                  onClick={() => handleGenerateDO(row.original)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-white bg-emerald-600 border border-transparent rounded-lg shadow-sm hover:bg-emerald-700 hover:shadow-md transition-all focus:outline-none focus:ring-2 focus:ring-orange-500/50"
+                  title="Generate Suggestion"
+                >
+                  <FaMagic />
+                  <span>Generate</span>
+                </button>
+              )}
             </div>
           );
         },
@@ -245,16 +244,22 @@ const AdjustTable = ({
         CALL_PLAN_START_DATE: rowData.CALL_PLAN_START_DATE,
         CALL_PLAN_END_DATE: rowData.CALL_PLAN_END_DATE,
       };
-      const suggestionData = await getDOsuggestion(params);
-      const payload = initialPayload(suggestionData, new Map(), rowData);
-      console.log("payload intial qty", payload);
-      
-      await postDOsuggestion(payload);
 
+      const suggestionData = await getDOsuggestion(params);
+
+      if (!suggestionData.summary || suggestionData.summary.length === 0) {
+        showErrorToast("Tidak ada data DO Suggestion untuk Callplan ini.");
+        return;
+      }
+
+      const payload = initialPayload(suggestionData, new Map(), rowData);
+      await postDOsuggestion(payload);
       setGeneratedCallPlans((prev) => new Set(prev).add(rowId));
+      showSuccessToast("DO Suggestion berhasil di-generate!");
+      await new Promise((resolve) => setTimeout(resolve, 1000));
       navigate("generate_do", { state: { selectedSales: rowData } });
-    } catch (error) {
-      showErrorToast("Gagal generate data.");
+    } catch (error: any) {
+      showErrorToast(error.message);
     } finally {
       setLoadingRowId(null);
     }

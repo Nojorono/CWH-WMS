@@ -16,26 +16,10 @@ export const PrintPreviewModal = ({
 }: PrintPreviewModalProps) => {
   if (!isOpen || !data) return null;
 
-  // Format Date Helper
-  const formatDate = (dateStr: string) => {
-    if (!dateStr) return "-";
-    const date = new Date(dateStr);
-    return date.toLocaleDateString("id-ID", {
-      day: "2-digit",
-      month: "long",
-      year: "numeric",
-    });
-  };
-
   const handlePrint = () => {
-    // Logika untuk trigger print (misal window.print() atau API call ke print server)
     console.log("Printing document for SPB:", data.callplan_number);
-    // onClose(); // Opsional: tutup modal setelah klik print
   };
 
-
-  console.log("data untuk diPrint", data);
-  
   return (
     <div className="fixed inset-0 z-9999 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
       {/* Modal Container */}
@@ -83,40 +67,64 @@ export const PrintPreviewModal = ({
               </div>
 
               {/* Tabel Item */}
-              <table className="w-full text-left divide-slate-300 divide-dashed">
+              <table className="w-full text-left text-black text-sm">
                 <thead>
-                  <tr className="border-b border-slate-800 border-dashed">
-                    <th className="py-2 font-semibold">SKU</th>
-                    <th className="py-2 font-semibold text-right">SPB</th>
-                    <th className="py-2 font-semibold text-right">BTB</th>
-                    <th className="py-2 font-semibold text-right">TOP UP</th>
+                  <tr className="border-b border-black border-dashed">
+                    <th className="py-2 font-bold">SKU</th>
+                    <th className="py-2 font-bold text-center">SPB</th>
+                    <th className="py-2 font-bold text-center">BTB</th>
+                    <th className="py-2 font-bold text-right">TOP UP</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-300 divide-dashed">
+                <tbody className="divide-y divide-black divide-dashed">
                   {data.details && data.details.length > 0 ? (
-                    data.details.map((item) => (
-                      <tr key={item.id}>
-                        <td className="py-2">{item.item_code}</td>
-                        <td className="py-2 text-right">
-                          {item.item_qty_final}
-                        </td>
-                        <td className="py-2 text-right">{item.qty_btb}</td>
-                        <td className="py-2 text-right">{item.prepared_qty}</td>
-                      </tr>
-                    ))
+                    data.details.map((item: any, idx: number) => {
+                      // 1. Parsing aman: Ubah "-" atau "" atau null menjadi angka 0
+                      const btbQty =
+                        item.qty_btb && item.qty_btb !== "-"
+                          ? Number(item.qty_btb)
+                          : 0;
+                      const finalQty = Number(item.item_qty_final || 0);
+
+                      // 2. Kalkulasi Matematika
+                      const topUpValue = finalQty - btbQty;
+                      return (
+                        <tr key={item.id || idx}>
+                          <td className="py-2">
+                            {item.item_code}
+                          </td>
+
+                          {/* SPB */}
+                          <td className="py-2 text-center">
+                            {item.item_qty_submitted}
+                          </td>
+
+                          {/* BTB */}
+                          <td className="py-2 text-center">
+                            {item.qty_btb && item.qty_btb !== "-"
+                              ? item.qty_btb
+                              : ""}
+                          </td>
+
+                          {/* TOP UP (Hasil Kalkulasi) */}
+                          <td className="py-2 text-right text-base">
+                            {topUpValue > 0 ? topUpValue : 0}
+                          </td>
+                        </tr>
+                      );
+                    })
                   ) : (
                     <tr>
                       <td
                         colSpan={4}
-                        className="py-4 text-center italic text-slate-500"
+                        className="py-4 text-center italic text-black font-medium"
                       >
-                        Kosong
+                        - KOSONG -
                       </td>
                     </tr>
                   )}
                 </tbody>
               </table>
-
               {/* Tanda Tangan */}
               <div className="flex justify-between mt-12 text-center">
                 <div>

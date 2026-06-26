@@ -11,8 +11,7 @@ import { usePersistAuthStore } from "../../../../API/store/AuthStore/PersistAuth
 import Select from "../../../../components/form/Select"; // Asumsi path komponen Select
 import { useStoreUser } from "../../../../DynamicAPI/stores/Store/MasterStore";
 import dayjs from "dayjs";
-import dummyCallplan from "../helper/dummyCallplan";
-import { checkIsGenerated } from "../../../../API/store/DOsuggestionServices/checkIsGeneratedDO";
+
 
 const MainTable = () => {
   const [globalFilter, setGlobalFilter] = useState<string>("");
@@ -68,8 +67,6 @@ const MainTable = () => {
     refetch,
   } = useCallPlan(paramGetCallplan, { enabled: shouldFetchCallPlan });
 
-  console.log("callPlanList", callPlanList);
-
   useEffect(() => {
     if (!callPlanList || callPlanList.length === 0) {
       setMergedData([]);
@@ -88,49 +85,9 @@ const MainTable = () => {
 
   const isLoading = (isCallPlanLoading && shouldFetchCallPlan) || isProcessing;
 
-  // const [dataWithStatus, setDataWithStatus] = useState<any[]>([]);
-  // const [isLoading, setIsLoading] = useState(true);
-  // useEffect(() => {
-  //   const processData = async () => {
-  //     setIsLoading(true);
-
-  //     // Lakukan pengecekan status untuk setiap item di dummyCallplan secara paralel
-  //     const processed = await Promise.all(
-  //       dummyCallplan.map(async (item) => {
-  //         let isGenerated = false;
-
-  //         if (item.CALL_PLAN_NUMBER && item.CALL_PLAN_NUMBER !== "-") {
-  //           try {
-  //             // Cek ke DB asli
-  //             const existingData = await checkIsGenerated(
-  //               item.CALL_PLAN_NUMBER,
-  //             );
-  //             isGenerated = !!existingData;
-  //           } catch (err) {
-  //             console.warn(
-  //               `Gagal cek ${item.CALL_PLAN_NUMBER}, status default false`,
-  //             );
-  //           }
-  //         }
-
-  //         // Gabungkan data asli dengan status generated
-  //         return { ...item, is_generated: isGenerated };
-  //       }),
-  //     );
-
-  //     setDataWithStatus(processed);
-  //     setIsLoading(false);
-  //   };
-
-  //   processData();
-  // }, []);
-
-  // if (error)
-  //   return <div className="p-10 text-red-500 text-center">{error}</div>;
-
   return (
     <div className="w-full space-y-4 p-4 bg-[#F8FAFC] min-h-screen">
-      <PageBreadcrumb breadcrumbs={[{ title: "List Salesman" }]} />
+      <PageBreadcrumb breadcrumbs={[{ title: "List Salesman Callplan" }]} />
 
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
         {/* Render Dropdown SPV hanya jika user adalah AHOM */}

@@ -88,7 +88,7 @@ export const useAllocationCalculation = (data: GroupedSPBData[], stockList: any[
 
                     if (soh <= 0) {
                         finalQty = 0;
-                        status = "NO_STOCK"; // Sesuai kesepakatan istilah
+                        status = "NO_STOCK";
                     } else if (soh >= totalReq) {
                         finalQty = submitted;
                         status = "AVAILABLE";
@@ -99,12 +99,11 @@ export const useAllocationCalculation = (data: GroupedSPBData[], stockList: any[
 
                     const preparedQty = Math.max(0, finalQty - qtyBtb);
 
-
                     return {
                         ...detail,
                         resolved_sku: key,
                         soh,
-                        contribution_percentage: soh <= 0 ? "0" : (contribution * 100).toFixed(2),
+                        contribution_percentage: (contribution * 100).toFixed(2),
                         allocation_status: status,
                         item_qty_final: finalQty,
                         qty_btb: qtyBtb,

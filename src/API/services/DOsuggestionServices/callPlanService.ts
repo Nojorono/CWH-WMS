@@ -29,7 +29,7 @@ export const getCallPlan = async (params: CallPlanBindings): Promise<SupervisorD
         );
 
         // 1. Parsing hasil flat dari Snowflake
-        const flatRows = response.data.data.map((row) => JSON.parse(row[0]));
+        const flatRows = response.data.data.map((row) => JSON.parse(row[0]));        
 
         // 2. Siapkan Map untuk Grouping menjadi SupervisorData
         const groupedMap = new Map<string, SupervisorData>();

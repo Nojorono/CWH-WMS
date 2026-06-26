@@ -77,7 +77,6 @@ import {
 const DefaultPage = () => (
   <div className="flex items-center justify-center h-full">
     <p className="text-gray-500">
-      Halaman tidak ditemukan atau Anda tidak memiliki akses.
     </p>
   </div>
 );
@@ -167,7 +166,9 @@ export function AppRoutes() {
       "/ir_integration_log": <IRintegrationLog />,
       "/outbound_integration_log": <ShipConfirmLog />,
       "/do_suggestion": <DOsuggestionMain />,
+      "/do": <OutboundSales />,
       "/outbound_sales": <OutboundSales />,
+
     };
     return map[path] || <DefaultPage />;
   }

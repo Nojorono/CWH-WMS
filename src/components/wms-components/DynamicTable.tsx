@@ -5,7 +5,6 @@ import { FaEdit, FaKey, FaPlus, FaTrash } from "react-icons/fa";
 import DynamicFormModal from "./DynamicFormModal";
 import { useNavigate } from "react-router-dom";
 import { usePagePermissions } from "../../utils/UserPermission/UserPagePermissions";
-import { showConfirmDialog } from "../../components/swal-confirm";
 import { usePersistAuthStore } from "../../API/store/AuthStore/PersistAuthStore";
 
 interface Props {
