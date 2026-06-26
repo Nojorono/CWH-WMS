@@ -4,9 +4,9 @@
   "version": "2.0.2",
   "type": "module",
   "scripts": {
-    "dev":     "vite --host --mode dev",
-    "build":   "tsc -b && vite build --mode prod",
-    "lint":    "eslint .",
+    "dev": "vite --host --mode dev",
+    "build": "tsc -b && vite build --mode prod",
+    "lint": "eslint .",
     "preview": "vite preview"
   },
   "dependencies": {
@@ -30,6 +30,7 @@
     "datatables.net-bs5": "^2.2.2",
     "datatables.net-dt": "^2.2.2",
     "datatables.net-select-dt": "^3.0.0",
+    "dayjs": "^1.11.21",
     "file-saver": "^2.0.5",
     "flatpickr": "^4.6.13",
     "html2canvas": "^1.4.1",

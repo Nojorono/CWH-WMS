@@ -67,7 +67,6 @@ export const STATUS_MAP_INVENTORY: StatusMap = {
 }
 
 export const STATUS_PROGRESSION_INVENTORY: StatusMap = {
-  NOT_STARTED: "grey",
   IN_PROGRESS: "info",
   COMPLETED: "success"
 };

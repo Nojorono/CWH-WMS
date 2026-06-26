@@ -1,26 +1,62 @@
-import { SupervisorData, CallPlanDetail, BTBResponse } from "../../../../API/types/callPlan";
+import { checkIsGenerated } from "../../../../API/store/DOsuggestionServices/checkIsGeneratedDO";
 
-// Di helper/callPlanMapper.ts
-export const mergeSalesWithCallPlan = (
-    supervisorData: SupervisorData[] = [],
-    masterData: CallPlanDetail[] = [],
-) => {
-    // Pastikan supervisorData valid sebelum di-flatMap
-    const activeDetailsMap = new Map(
-        (supervisorData || []).flatMap(s => s.DETAIL || []).map(d => [d.SALES_NIK, d])
+export const processCallPlanData = async (callPlanList: any[] = []) => {
+    if (!callPlanList || callPlanList.length === 0) return [];
+
+    // 1. Flatten Data: Ekstrak semua objek di dalam array 'DETAIL' menjadi satu array sejajar (flat)
+    const flatDetails = callPlanList.flatMap((supervisorGroup) => {
+        const supervisorName = supervisorGroup.SALES_SUPERVISOR_NAME;
+        const supervisorNik = supervisorGroup.SALES_SUPERVISOR_NIK;
+
+        return (supervisorGroup.DETAIL || []).map((detail: any) => ({
+            ...detail,
+            SALES_SUPERVISOR_NAME: supervisorName,
+            SALES_SUPERVISOR_NIK: supervisorNik,
+        }));
+    });
+
+
+
+
+    // 2. Map ke UI & Cek API: Loop array yang sudah diratakan untuk hit API checkIsGenerated
+    const processedResults = await Promise.all(
+        flatDetails.map(async (item) => {
+            console.log("processCallPlanData", item);
+
+            let isGenerated = false;
+            let currentStatus = null;
+
+            // --- LOGIKA BARU UNTUK TRIP_TYPE ---
+            let tripType = ""; // Default string kosong jika tidak ada Call Plan
+
+            if (item.CALL_PLAN_NUMBER) {
+                // Jika ada Call Plan, tentukan tipe berdasarkan ISLUARKOTA
+                tripType = item.ISLUARKOTA === true ? "MD" : "SD";
+
+                // Status awal untuk yang memiliki Call Plan
+                currentStatus = "";
+
+                try {
+                    const existingData = await checkIsGenerated(item.CALL_PLAN_NUMBER);
+                    if (existingData) {
+                        isGenerated = true;
+                        currentStatus = existingData.status || "DRAFT";
+                    }
+                } catch (error) {
+                    console.error(`Gagal mengecek status untuk ${item.CALL_PLAN_NUMBER}`, error);
+                    isGenerated = false;
+                }
+            }
+            // ------------------------------------
+
+            return {
+                ...item,
+                is_generated: isGenerated,
+                do_status: currentStatus,
+                trip_type: tripType, // Penambahan field baru di sini
+            };
+        })
     );
 
-
-    return masterData.map(master => {
-        const activePlan = activeDetailsMap.get(master.SALES_NIK);
-
-        return {
-            ...master,
-            CALL_PLAN_NUMBER: activePlan?.CALL_PLAN_NUMBER || master.CALL_PLAN_NUMBER || "-",
-            CALL_PLAN_START_DATE: activePlan?.CALL_PLAN_START_DATE || master.CALL_PLAN_START_DATE || "-",
-            CALL_PLAN_END_DATE: activePlan?.CALL_PLAN_END_DATE || master.CALL_PLAN_END_DATE || "-",
-            ROUTE_NUMBER: activePlan?.ROUTE_NUMBER || master.ROUTE_NUMBER || "-",
-            is_active_plan: !!activePlan,
-        };
-    });
+    return processedResults;
 };

@@ -12,7 +12,7 @@ export const getDOsuggestion = async (params: any): Promise<SuggestionSummary> =
         const response = await axios.post<SnowflakeApiResponse>(
             SNOWFLAKE_API,
             {
-                "statement": "CALL NEW_DEV_SFA_OUTSYSTEMS.GOLD.SP_API_DO_SUGGESTION(START_PRED=>?, END_PRED=>?, V_CABANG=>?, V_RUTE=>?, V_CALLPLAN=>?, V_SALES=>?, V_NIK=>?)",
+                "statement": "CALL NEW_DEV_SFA_OUTSYSTEMS.GOLD.SP_API_DO_SUGGESTION_V2(START_PRED=>?, END_PRED=>?, V_CABANG=>?, V_RUTE=>?, V_CALLPLAN=>?, V_SALES=>?, V_NIK=>?)", 
                 "database": "NEW_DEV_SFA_OUTSYSTEMS",
                 "schema": "GOLD",
                 "warehouse": "TASK_SFA",
@@ -37,15 +37,12 @@ export const getDOsuggestion = async (params: any): Promise<SuggestionSummary> =
             }
         );
 
+        console.log(" GET DO SUGGESTION", response.data.data);
+
         // Parsing logic:
         const rawJsonString = response.data.data[0][0];
         const parsedData: SuggestionSummary = JSON.parse(rawJsonString);
-
-
-        console.log("parsedData", parsedData);
-
         return parsedData;
-
     } catch (error) {
         console.error("Gagal mengambil Suggestion Summary:", error);
         throw new Error("Terjadi kesalahan saat mengambil data suggestion dari Snowflake.");

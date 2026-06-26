@@ -35,6 +35,7 @@ export type ItemForm = {
     sku: string;
     item_number?: string;
     description?: string;
+    inventory_item_id?: any;
     qty_plan: number;
     uom?: string;
     classification_id?: string | null;

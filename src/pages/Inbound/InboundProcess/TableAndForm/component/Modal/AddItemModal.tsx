@@ -19,12 +19,14 @@ export default function AddItemModal({
   isOpen,
   onClose,
   onSave,
+  isDOsuggestion,
 }: {
   isOpen: boolean;
   onClose: () => void;
   onSave: (item: ItemForm) => void;
+  isDOsuggestion: boolean;
 }) {
-  const { fetchAll, list } = useStoreItem();
+  const { fetchAll, list: itemList } = useStoreItem();
   const { fetchAll: fetchAllUom, list: uomList } = useStoreUom();
   const { fetchAll: fetchAllClassification, list: classificationList } =
     useStoreClassification();
@@ -40,17 +42,18 @@ export default function AddItemModal({
   const [tempClassification, setTempClassification] = useState("");
   const [tempUom, setTempUom] = useState("");
 
-  // defaultkan UoM ke "DUS" kalau ada
+  const defaultUomCode = isDOsuggestion ? "BKS" : "DUS";
+
   useEffect(() => {
     if (uomList.length > 0 && !tempUom) {
-      const dus = uomList.find((u: any) => u.code === "DUS");
-      if (dus) {
-        setTempUom(dus.code);
+      const targetUom = uomList.find((u: any) => u.code === defaultUomCode);
+      if (targetUom) {
+        setTempUom(targetUom.code);
       }
     }
-  }, [uomList, tempUom]);
+  }, [uomList, tempUom, defaultUomCode]);
 
-  const selectedMaster = list.find((m: any) => m.sku === tempSku);
+  const selectedMaster = itemList.find((m: any) => m.sku === tempSku);
 
   const handleSave = () => {
     if (!tempSku || !tempQty || !tempUom) {
@@ -66,17 +69,17 @@ export default function AddItemModal({
       description: selectedMaster?.description ?? "",
       qty: Number(tempQty),
       uom: tempUom,
-      // classification: tempClassification,
       expired_date: null,
       qty_plan: Number(tempQty),
       item_name: selectedMaster?.description ?? "",
+      inventory_item_id: selectedMaster?.inventory_item_id
     });
 
     // reset state
     setTempSku("");
     setTempQty("");
     setTempClassification("");
-    setTempUom("DUS");
+    setTempUom("");
     onClose();
   };
 
@@ -84,10 +87,10 @@ export default function AddItemModal({
     setTempSku("");
     setTempQty("");
     setTempClassification("");
-    setTempUom("DUS");
+    setTempUom("");
     onClose();
   };
-
+  
   return (
     <Dialog open={isOpen} onClose={onClose} className="fixed inset-0 z-[99999]">
       <DialogBackdrop className="fixed inset-0 bg-black/30 z-0" />
@@ -102,7 +105,7 @@ export default function AddItemModal({
                 SKU
               </label>
               <Select
-                options={list.map((m: any) => ({
+                options={itemList.map((m: any) => ({
                   value: m.sku,
                   label: `${m.sku}`,
                 }))}
@@ -138,22 +141,30 @@ export default function AddItemModal({
               />
             </div>
 
-            {/* UoM Dropdown */}
+            {/* UoM Dropdown / Read-Only */}
             <div className="flex flex-col">
               <label className="text-xs text-slate-600 font-bold mb-1">
                 UoM
               </label>
-              <Select
-                options={uomList.map((u: any) => ({
-                  value: u.code,
-                  label: `${u.code}`,
-                }))}
-                value={tempUom}
-                onChange={setTempUom}
-                placeholder="-- Select UoM --"
-                className="w-full"
-                width="100%"
-              />
+              {isDOsuggestion ? (
+                <input
+                  className={`${inputCls} w-full bg-slate-100 text-slate-500 cursor-not-allowed`}
+                  value={tempUom}
+                  readOnly
+                />
+              ) : (
+                <Select
+                  options={uomList.map((u: any) => ({
+                    value: u.code,
+                    label: `${u.code}`,
+                  }))}
+                  value={tempUom}
+                  onChange={setTempUom}
+                  placeholder="-- Select UoM --"
+                  className="w-full"
+                  width="100%"
+                />
+              )}
             </div>
 
             {/* Qty */}
