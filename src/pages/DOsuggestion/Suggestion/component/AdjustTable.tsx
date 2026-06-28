@@ -7,7 +7,6 @@ import { SuggestionSummary } from "../../../../API/types/DOsuggestion";
 import { showErrorToast, showSuccessToast } from "../../../../components/toast";
 import { usePersistAuthStore } from "../../../../API/store/AuthStore/PersistAuthStore";
 import { FaEye, FaMagic } from "react-icons/fa";
-import { ActionMenu } from "./ActionMenu";
 import { useDOActions } from "../hook/useDOActions";
 import ActIndicator from "../../../../components/ui/activityIndicator";
 import StatusBadge from "../../../../common/statusBadge";
@@ -15,6 +14,10 @@ import { StatusMap } from "../../../../constants/statusMaps";
 import { checkIsGenerated } from "../../../../API/services/DOsuggestionServices/checkIsGeneratedDO";
 import { getDOsuggestion } from "../../../../API/services/DOsuggestionServices/DOsuggestionService";
 import { postDOsuggestion } from "../../../../API/services/DOsuggestionServices/postDOsuggestion";
+import {
+  isGenerateDOAllowed,
+  getGenerateErrorMessage,
+} from "../helper/allowedDate";
 
 interface AdjustTableProps {
   data: CallPlanDetail[];
@@ -161,10 +164,17 @@ const AdjustTable = ({
         header: () => <div className="text-center">Action</div>,
         cell: ({ row }) => {
           const isGenerated = row.original.is_generated;
+          const startDate = row.original.CALL_PLAN_START_DATE;
 
           if (!row.original.CALL_PLAN_NUMBER?.trim()) {
             return null;
           }
+
+          // 1. Cek izin menggunakan fungsi global
+          const isAllowedToGenerate = isGenerateDOAllowed(startDate);
+          const errorMessage = startDate
+            ? getGenerateErrorMessage(startDate)
+            : "Tanggal tidak valid";
 
           return (
             <div className="flex justify-center items-center">
@@ -182,8 +192,18 @@ const AdjustTable = ({
               ) : (
                 <button
                   onClick={() => handleGenerateDO(row.original)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-white bg-emerald-600 border border-transparent rounded-lg shadow-sm hover:bg-emerald-700 hover:shadow-md transition-all focus:outline-none focus:ring-2 focus:ring-orange-500/50"
-                  title="Generate Suggestion"
+                  // 2. Disable tombol jika tidak sesuai SOP (H-1)
+                  disabled={!isAllowedToGenerate}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-white border border-transparent rounded-lg transition-all focus:outline-none focus:ring-2 
+                    ${
+                      isAllowedToGenerate
+                        ? "bg-emerald-600 hover:bg-emerald-700 shadow-sm focus:ring-emerald-500/50"
+                        : "bg-slate-300 cursor-not-allowed text-slate-500" // Visual jika terkunci
+                    }`}
+                  // 3. Ubah tooltip agar user paham kenapa tombolnya mati
+                  title={
+                    isAllowedToGenerate ? "Generate Suggestion" : errorMessage
+                  }
                 >
                   <FaMagic />
                   <span>Generate</span>
@@ -226,6 +246,11 @@ const AdjustTable = ({
   };
 
   const handleGenerateDO = async (rowData: any) => {
+    if (!isGenerateDOAllowed(rowData.CALL_PLAN_START_DATE)) {
+      showErrorToast(getGenerateErrorMessage(rowData.CALL_PLAN_START_DATE));
+      return;
+    }
+
     const rowId = rowData.CALL_PLAN_NUMBER;
     const existingData = await checkIsGenerated(rowId);
 

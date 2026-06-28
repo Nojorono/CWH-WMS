@@ -1,18 +1,17 @@
 import { useState, useEffect, useMemo } from "react";
 import { FaArrowLeft, FaSync } from "react-icons/fa";
 import dayjs from "dayjs";
-
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import Button from "../../../components/ui/button/Button";
 import { SPBSubmittedPage } from "./pages/SPBSubmittedPage";
 import { CalculationPage } from "./pages/CalculationPage";
 import { GoodsPreparationPage } from "./pages/GoodsPreparationPage";
-
 import { useGetLocalDoSuggestion } from "../Suggestion/hook/useGetLocalDoSuggestion";
 import { useGetBTB } from "./hook/useGetBTB";
 import { usePersistAuthStore } from "../../../API/store/AuthStore/PersistAuthStore";
 import { DOSuggestionData } from "../../../API/types/draftDOsuggestion";
 import { showErrorToast } from "../../../components/toast";
+import Swal from "sweetalert2";
 
 // --- INTERFACES ---
 export interface GroupedSPBData {
@@ -25,8 +24,14 @@ type Step = "SUBMITTED" | "CALCULATION" | "PREPARATION";
 type StatusFilter = "SUBMITTED" | "FINAL";
 const TARGET_DATE = "2026-06-02";
 
+// Fungsi pengecekan waktu (Return true jika jam 9 pagi)
+const isCalculationTimeAllowed = () => {
+  const currentHour = dayjs().hour();
+  // Angka 9 mewakili pukul 09:00:00 s/d 09:59:59
+  return currentHour === 9;
+};
+
 // --- CONSTANTS ---
-// Pindahkan config ke luar komponen agar tidak dirender ulang terus menerus
 const STEP_CONFIG: Record<
   Step,
   { title: string; breadcrumbs: { title: string }[] }
@@ -35,10 +40,12 @@ const STEP_CONFIG: Record<
     title: "SPB Submitted",
     breadcrumbs: [{ title: "SPB Submitted" }],
   },
+
   CALCULATION: {
     title: "Stock on Hand & Calculation",
     breadcrumbs: [{ title: "Stock on Hand & Calculation" }],
   },
+
   PREPARATION: {
     title: "Goods Preparation",
     breadcrumbs: [{ title: "Goods Preparation" }],
@@ -206,11 +213,24 @@ const MainTable = () => {
         return (
           <SPBSubmittedPage
             data={groupedAndMappedData}
-            onProceed={() => setCurrentStep("CALCULATION")}
+            onProceed={() => {
+              // 2. Terapkan Guard Clause di sini
+              if (isCalculationTimeAllowed()) {
+                setCurrentStep("CALCULATION");
+              } else {
+                Swal.fire({
+                  icon: "error",
+                  title: "Akses Ditolak",
+                  text: "Proses Kalkulasi Stock on Hand hanya dapat dilakukan pada pukul 09:00 - 10:00 pagi.",
+                  confirmButtonColor: "#ea580c" // Warna orange agar seragam dengan UI-mu
+                });
+              }
+            }}
             onGoToPreparation={() => setCurrentStep("PREPARATION")}
             setCalculatedResults={setCalculatedResults}
           />
         );
+
       case "CALCULATION":
         return dataForCalculation.length > 0 ? (
           <CalculationPage
@@ -225,8 +245,10 @@ const MainTable = () => {
         ) : (
           renderEmptyCalculation()
         );
+
       case "PREPARATION":
         return <GoodsPreparationPage targetDate={TARGET_DATE} />;
+
       default:
         return null;
     }
