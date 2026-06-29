@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { FaSync, FaSearch } from "react-icons/fa";
+import { FaSync, FaSearch, FaInfoCircle } from "react-icons/fa";
 import { useCallPlan } from "../hook/useCallPlan";
 import AdjustTable from "../component/AdjustTable";
 import PageBreadcrumb from "../../../../components/common/PageBreadCrumb";
@@ -11,7 +11,6 @@ import { usePersistAuthStore } from "../../../../API/store/AuthStore/PersistAuth
 import Select from "../../../../components/form/Select";
 import { useStoreUser } from "../../../../DynamicAPI/stores/Store/MasterStore";
 import dayjs from "dayjs";
-
 
 const MainTable = () => {
   const [globalFilter, setGlobalFilter] = useState<string>("");
@@ -32,6 +31,15 @@ const MainTable = () => {
   const DateNow = dayjs().format("YYYY-MM-DD");
 
   const { list: userData, fetchAll: fetchAllUsers } = useStoreUser();
+
+  const getTargetDate = () => {
+    if (role_name === "ADMIN_GUDANG") {
+      return dayjs().add(1, "day").format("YYYY-MM-DD");
+    }
+    return dayjs().add(2, "day").format("YYYY-MM-DD");
+  };
+
+  const TARGET_DATE = getTargetDate();
 
   useEffect(() => {
     if (isAhom) {
@@ -56,8 +64,8 @@ const MainTable = () => {
   const paramGetCallplan = {
     CABANG: String(organization_name),
     SALES_SUPERVISOR_NIK: String(activeSpvNik),
-    CALL_PLAN_START_DATE: "2026-06-02", // atau DateNow
-    // CALL_PLAN_START_DATE: DateNow
+    CALL_PLAN_START_DATE: TARGET_DATE, // <-- Tidak lagi di-hardcode "2026-06-02"
+    // CALL_PLAN_START_DATE: "2026-06-02"
   };
 
   const {
@@ -88,6 +96,21 @@ const MainTable = () => {
   return (
     <div className="w-full space-y-4 p-4 bg-[#F8FAFC] min-h-screen">
       <PageBreadcrumb breadcrumbs={[{ title: "List Salesman Callplan" }]} />
+
+      <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-xl shadow-sm flex items-start gap-3">
+        <FaInfoCircle className="text-blue-500 mt-0.5 size-5 flex-shrink-0" />
+        <div>
+          <h4 className="text-sm font-bold text-blue-900">
+            Informasi Jadwal Generate DO Suggestion
+          </h4>
+          <p className="text-sm text-blue-800 mt-1">
+            Sesuai SOP, Generate DO Suggestion hanya dapat dilakukan pada{" "}
+            <strong>H-2 dari Call Plan Start Date</strong> dan{" "}
+            <strong>setelah pukul 13:00</strong>. Tombol Generate akan otomatis aktif
+            pada rentang waktu tersebut.
+          </p>
+        </div>
+      </div>
 
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
         {/* Render Dropdown SPV hanya jika user adalah AHOM */}
@@ -141,12 +164,16 @@ const MainTable = () => {
       ) : isLoading ? (
         <ActIndicator />
       ) : (
-        <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-          <AdjustTable
-            data={mergedData}
-            globalFilter={globalFilter}
-            setGlobalFilter={setGlobalFilter}
-          />
+        <div className="space-y-4">
+          {/* --- GLOBAL INFO BANNER --- */}
+
+          <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+            <AdjustTable
+              data={mergedData}
+              globalFilter={globalFilter}
+              setGlobalFilter={setGlobalFilter}
+            />
+          </div>
         </div>
       )}
     </div>

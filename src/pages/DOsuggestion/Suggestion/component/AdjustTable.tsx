@@ -17,7 +17,7 @@ import { postDOsuggestion } from "../../../../API/services/DOsuggestionServices/
 import {
   isGenerateDOAllowed,
   getGenerateErrorMessage,
-} from "../helper/allowedDate";
+} from "../global/allowedDate";
 
 interface AdjustTableProps {
   data: CallPlanDetail[];
@@ -192,7 +192,6 @@ const AdjustTable = ({
               ) : (
                 <button
                   onClick={() => handleGenerateDO(row.original)}
-                  // 2. Disable tombol jika tidak sesuai SOP (H-1)
                   disabled={!isAllowedToGenerate}
                   className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-white border border-transparent rounded-lg transition-all focus:outline-none focus:ring-2 
                     ${
@@ -200,7 +199,6 @@ const AdjustTable = ({
                         ? "bg-emerald-600 hover:bg-emerald-700 shadow-sm focus:ring-emerald-500/50"
                         : "bg-slate-300 cursor-not-allowed text-slate-500" // Visual jika terkunci
                     }`}
-                  // 3. Ubah tooltip agar user paham kenapa tombolnya mati
                   title={
                     isAllowedToGenerate ? "Generate Suggestion" : errorMessage
                   }
