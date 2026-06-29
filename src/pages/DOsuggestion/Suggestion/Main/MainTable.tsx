@@ -1,17 +1,17 @@
 import { useState, useEffect, useMemo } from "react";
 import { FaSync, FaSearch, FaInfoCircle } from "react-icons/fa";
-import { useCallPlan } from "../hook/useCallPlan";
 import AdjustTable from "../component/AdjustTable";
 import PageBreadcrumb from "../../../../components/common/PageBreadCrumb";
 import Button from "../../../../components/ui/button/Button";
-import { processCallPlanData } from "../helper/callPlanMapper";
-import { CallPlanDetail } from "../../../../API/types/callPlan";
 import ActIndicator from "../../../../components/ui/activityIndicator";
 import { usePersistAuthStore } from "../../../../API/store/AuthStore/PersistAuthStore";
 import Select from "../../../../components/form/Select";
 import { useStoreUser } from "../../../../DynamicAPI/stores/Store/MasterStore";
 import { getTargetDate } from "../global/allowedDate";
-
+import { useCallPlan } from "../hook/useCallPlan";
+import { processCallPlanData } from "../helper/callPlanMapper";
+import { CallPlanDetail } from "../../../../API/types/callPlan";
+import { showErrorToast } from "../../../../components/toast";
 
 const MainTable = () => {
   const [globalFilter, setGlobalFilter] = useState<string>("");
@@ -56,20 +56,24 @@ const MainTable = () => {
   }, [userData]);
 
   // 3. Masukkan Target Date dinamis ke param API
-  const paramGetCallplan = useMemo(() => ({
-    CABANG: String(organization_name),
-    SALES_SUPERVISOR_NIK: String(activeSpvNik),
-    CALL_PLAN_START_DATE: TARGET_DATE,
-  }), [organization_name, activeSpvNik, TARGET_DATE]);
+  const paramGetCallplan = useMemo(
+    () => ({
+      CABANG: String(organization_name),
+      SALES_SUPERVISOR_NIK: String(activeSpvNik),
+      CALL_PLAN_START_DATE: TARGET_DATE,
+    }),
+    [organization_name, activeSpvNik, TARGET_DATE],
+  );
 
   const {
     data: callPlanList,
     isLoading: isCallPlanLoading,
-    error,
+    error: errorGetCallplan,
     refetch,
   } = useCallPlan(paramGetCallplan, { enabled: shouldFetchCallPlan });
 
   useEffect(() => {
+
     if (!callPlanList || callPlanList.length === 0) {
       setMergedData([]);
       return;
@@ -100,8 +104,8 @@ const MainTable = () => {
           <p className="text-sm text-blue-800 mt-1">
             Sesuai SOP, Generate DO Suggestion hanya dapat dilakukan pada{" "}
             <strong>H-2 dari Call Plan Start Date</strong> dan{" "}
-            <strong>setelah pukul 13:00</strong>. Tombol Generate akan otomatis aktif
-            pada rentang waktu tersebut.
+            <strong>setelah pukul 13:00</strong>. Tombol Generate akan otomatis
+            aktif pada rentang waktu tersebut.
           </p>
         </div>
       </div>
