@@ -80,6 +80,8 @@ import Reporting2 from "../pages/Reporting/Main/Report2";
 import DOsuggestionMain from '../pages/DOsuggestion/Suggestion/Main/MainTable'
 import GenerateDO from '../pages/DOsuggestion/Suggestion/Main/DetailSuggestionSection'
 import OutboundSales from '../pages/DOsuggestion/OutboundSales/MainTable'
+import IntegrationMonitoringPage from '../pages/DOsuggestion/IntegrationLog/index'
+
 
 
 export {
@@ -160,4 +162,5 @@ export {
   GenerateDO,
 
   OutboundSales,
+  IntegrationMonitoringPage
 };

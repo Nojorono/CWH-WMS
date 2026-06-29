@@ -113,8 +113,6 @@ export const CalculationPage = ({
               })),
             };
 
-            console.log("bulkPayload", bulkPayload);
-
             // Kirim seluruh batch dalam 1 request
             await updateBatchDO(bulkPayload);
             showSuccessToast(

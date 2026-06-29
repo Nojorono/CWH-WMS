@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { FaArrowLeft, FaSync } from "react-icons/fa";
+import { FaArrowLeft, FaInfoCircle, FaSync } from "react-icons/fa";
 import dayjs from "dayjs";
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
 import Button from "../../../components/ui/button/Button";
@@ -12,6 +12,10 @@ import { usePersistAuthStore } from "../../../API/store/AuthStore/PersistAuthSto
 import { DOSuggestionData } from "../../../API/types/draftDOsuggestion";
 import { showErrorToast } from "../../../components/toast";
 import Swal from "sweetalert2";
+import {
+  getCalculationErrorMessage,
+  isCalculationTimeAllowed,
+} from "../Suggestion/global/allowedDate";
 
 // --- INTERFACES ---
 export interface GroupedSPBData {
@@ -22,14 +26,6 @@ export interface GroupedSPBData {
 
 type Step = "SUBMITTED" | "CALCULATION" | "PREPARATION";
 type StatusFilter = "SUBMITTED" | "FINAL";
-const TARGET_DATE = "2026-06-02";
-
-// Fungsi pengecekan waktu (Return true jika jam 9 pagi)
-const isCalculationTimeAllowed = () => {
-  const currentHour = dayjs().hour();
-  // Angka 9 mewakili pukul 09:00:00 s/d 09:59:59
-  return currentHour === 9;
-};
 
 // --- CONSTANTS ---
 const STEP_CONFIG: Record<
@@ -58,7 +54,8 @@ const MainTable = () => {
   const organization_name = user?.userDetail?.organization?.organization_name;
   const organization_id = user?.userDetail?.organizationId;
   const userNIK = user?.userDetail?.employee_id;
-
+  const TARGET_DATE = useMemo(() => dayjs().add(2, "day").format("YYYY-MM-DD"), []);
+  
   const [currentStep, setCurrentStep] = useState<Step>("SUBMITTED");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("SUBMITTED");
   const [calculatedResults, setCalculatedResults] = useState<any[]>([]);
@@ -209,20 +206,20 @@ const MainTable = () => {
 
   const renderActiveStep = () => {
     switch (currentStep) {
-      case "SUBMITTED":
+      case "SUBMITTED": 
         return (
           <SPBSubmittedPage
             data={groupedAndMappedData}
             onProceed={() => {
-              // 2. Terapkan Guard Clause di sini
-              if (isCalculationTimeAllowed()) {
+              // Gunakan The Master Validator
+              if (isCalculationTimeAllowed(TARGET_DATE)) {
                 setCurrentStep("CALCULATION");
               } else {
                 Swal.fire({
-                  icon: "error",
-                  title: "Akses Ditolak",
-                  text: "Proses Kalkulasi Stock on Hand hanya dapat dilakukan pada pukul 09:00 - 10:00 pagi.",
-                  confirmButtonColor: "#ea580c" // Warna orange agar seragam dengan UI-mu
+                  icon: "warning", // Gunakan warning karena ini penjagaan SOP, bukan system error
+                  title: "Jadwal Terkunci",
+                  text: getCalculationErrorMessage(TARGET_DATE),
+                  confirmButtonColor: "#ea580c",
                 });
               }
             }}
@@ -261,6 +258,23 @@ const MainTable = () => {
   return (
     <div className="w-full space-y-4 p-4 bg-[#F8FAFC] min-h-screen">
       <PageBreadcrumb breadcrumbs={config.breadcrumbs} />
+
+      {currentStep === "SUBMITTED" && (
+        <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-xl shadow-sm flex items-start gap-3">
+          <FaInfoCircle className="text-blue-500 mt-0.5 size-5 flex-shrink-0" />
+          <div>
+            <h4 className="text-sm font-bold text-blue-900">
+              Informasi SOP Kalkulasi Stock On Hand (SOH)
+            </h4>
+            <p className="text-sm text-blue-800 mt-1">
+              Tombol "Proceed to Calculation" hanya aktif pada{" "}
+              <strong>H-1</strong> (untuk SPB besok: {TARGET_DATE}) antara pukul{" "}
+              <strong>09:00 - 10:00</strong>. Jika melewati pukul 10:00, SOH
+              akan ditarik otomatis oleh Scheduler.
+            </p>
+          </div>
+        </div>
+      )}
 
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
         <div className="flex flex-1 items-center gap-3">

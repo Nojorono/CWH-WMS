@@ -10,7 +10,8 @@ import ActIndicator from "../../../../components/ui/activityIndicator";
 import { usePersistAuthStore } from "../../../../API/store/AuthStore/PersistAuthStore";
 import Select from "../../../../components/form/Select";
 import { useStoreUser } from "../../../../DynamicAPI/stores/Store/MasterStore";
-import dayjs from "dayjs";
+import { getTargetDate } from "../global/allowedDate";
+
 
 const MainTable = () => {
   const [globalFilter, setGlobalFilter] = useState<string>("");
@@ -28,18 +29,11 @@ const MainTable = () => {
   const isAhom = role_name === "AHOM";
   const activeSpvNik = isAhom ? selectedSpvNik : userNIK;
   const shouldFetchCallPlan = !!activeSpvNik;
-  const DateNow = dayjs().format("YYYY-MM-DD");
+
+  // 2. Gunakan fungsi global untuk menentukan Target Date, dibungkus useMemo
+  const TARGET_DATE = useMemo(() => getTargetDate(role_name), [role_name]);
 
   const { list: userData, fetchAll: fetchAllUsers } = useStoreUser();
-
-  const getTargetDate = () => {
-    if (role_name === "ADMIN_GUDANG") {
-      return dayjs().add(1, "day").format("YYYY-MM-DD");
-    }
-    return dayjs().add(2, "day").format("YYYY-MM-DD");
-  };
-
-  const TARGET_DATE = getTargetDate();
 
   useEffect(() => {
     if (isAhom) {
@@ -61,12 +55,12 @@ const MainTable = () => {
       }));
   }, [userData]);
 
-  const paramGetCallplan = {
+  // 3. Masukkan Target Date dinamis ke param API
+  const paramGetCallplan = useMemo(() => ({
     CABANG: String(organization_name),
     SALES_SUPERVISOR_NIK: String(activeSpvNik),
-    CALL_PLAN_START_DATE: TARGET_DATE, // <-- Tidak lagi di-hardcode "2026-06-02"
-    // CALL_PLAN_START_DATE: "2026-06-02"
-  };
+    CALL_PLAN_START_DATE: TARGET_DATE,
+  }), [organization_name, activeSpvNik, TARGET_DATE]);
 
   const {
     data: callPlanList,
@@ -165,8 +159,6 @@ const MainTable = () => {
         <ActIndicator />
       ) : (
         <div className="space-y-4">
-          {/* --- GLOBAL INFO BANNER --- */}
-
           <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
             <AdjustTable
               data={mergedData}

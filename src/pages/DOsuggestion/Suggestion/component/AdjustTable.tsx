@@ -40,7 +40,6 @@ const AdjustTable = ({
   const state = usePersistAuthStore.getState();
   const user = state.user;
   const organization_id = user?.userDetail?.organization?.id;
-
   const actions = useDOActions();
 
   const [loadingRowId, setLoadingRowId] = useState<string | null>(null);
@@ -270,6 +269,8 @@ const AdjustTable = ({
 
       const suggestionData = await getDOsuggestion(params);
 
+      console.log("suggestionData", suggestionData);
+
       if (!suggestionData.summary || suggestionData.summary.length === 0) {
         showErrorToast("Tidak ada data DO Suggestion untuk Callplan ini.");
         return;
@@ -277,9 +278,11 @@ const AdjustTable = ({
 
       const payload = initialPayload(suggestionData, new Map(), rowData);
       await postDOsuggestion(payload);
+
       setGeneratedCallPlans((prev) => new Set(prev).add(rowId));
       showSuccessToast("DO Suggestion berhasil di-generate!");
       await new Promise((resolve) => setTimeout(resolve, 1000));
+
       navigate("generate_do", { state: { selectedSales: rowData } });
     } catch (error: any) {
       showErrorToast(error.message);
