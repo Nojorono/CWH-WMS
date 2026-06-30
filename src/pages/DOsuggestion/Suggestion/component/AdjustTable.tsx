@@ -4,17 +4,20 @@ import TableComponent from "./Table";
 import { useNavigate } from "react-router-dom";
 import { CallPlanDetail } from "../../../../API/types/callPlan";
 import { SuggestionSummary } from "../../../../API/types/DOsuggestion";
-import { getDOsuggestion } from "../../../../API/store/DOsuggestionServices/DOsuggestionService";
-import { checkIsGenerated } from "../../../../API/store/DOsuggestionServices/checkIsGeneratedDO";
 import { showErrorToast, showSuccessToast } from "../../../../components/toast";
-import { postDOsuggestion } from "../../../../API/store/DOsuggestionServices/postDOsuggestion";
 import { usePersistAuthStore } from "../../../../API/store/AuthStore/PersistAuthStore";
 import { FaEye, FaMagic } from "react-icons/fa";
-import { ActionMenu } from "./ActionMenu";
 import { useDOActions } from "../hook/useDOActions";
 import ActIndicator from "../../../../components/ui/activityIndicator";
 import StatusBadge from "../../../../common/statusBadge";
 import { StatusMap } from "../../../../constants/statusMaps";
+import { checkIsGenerated } from "../../../../API/services/DOsuggestionServices/checkIsGeneratedDO";
+import { getDOsuggestion } from "../../../../API/services/DOsuggestionServices/DOsuggestionService";
+import { postDOsuggestion } from "../../../../API/services/DOsuggestionServices/postDOsuggestion";
+import {
+  isGenerateDOAllowed,
+  getGenerateErrorMessage,
+} from "../global/allowedDate";
 
 interface AdjustTableProps {
   data: CallPlanDetail[];
@@ -37,7 +40,6 @@ const AdjustTable = ({
   const state = usePersistAuthStore.getState();
   const user = state.user;
   const organization_id = user?.userDetail?.organization?.id;
-
   const actions = useDOActions();
 
   const [loadingRowId, setLoadingRowId] = useState<string | null>(null);
@@ -161,35 +163,49 @@ const AdjustTable = ({
         header: () => <div className="text-center">Action</div>,
         cell: ({ row }) => {
           const isGenerated = row.original.is_generated;
+          const startDate = row.original.CALL_PLAN_START_DATE;
 
           if (!row.original.CALL_PLAN_NUMBER?.trim()) {
             return null;
           }
 
-          const actionList = [
-            {
-              label: isGenerated ? "View Detail" : "Generate Suggestion",
-              icon: isGenerated ? FaEye : FaMagic,
-              onClick: () =>
-                isGenerated
-                  ? actions.handleAdjust(row.original, organization_id)
-                  : handleGenerateDO(row.original),
-              className: isGenerated
-                ? "text-slate-700"
-                : "text-orange-600 font-bold",
-            },
-            // {
-            //   label: "Print Label",
-            //   icon: FaPrint,
-            //   onClick: () => actions.handlePrintLabel(row.original),
-            //   className: "text-slate-700",
-            //   disabled: !isGenerated,
-            // },
-          ];
+          // 1. Cek izin menggunakan fungsi global
+          const isAllowedToGenerate = isGenerateDOAllowed(startDate);
+          const errorMessage = startDate
+            ? getGenerateErrorMessage(startDate)
+            : "Tanggal tidak valid";
 
           return (
-            <div className="flex justify-center">
-              <ActionMenu actions={actionList} />
+            <div className="flex justify-center items-center">
+              {isGenerated ? (
+                <button
+                  onClick={() =>
+                    actions.handleAdjust(row.original, organization_id)
+                  }
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-700 bg-white border border-slate-300 rounded-lg shadow-sm hover:bg-slate-50 hover:text-slate-900 hover:border-slate-400 transition-all focus:outline-none focus:ring-2 focus:ring-slate-200"
+                  title="View Detail"
+                >
+                  <FaEye className="text-slate-500" />
+                  <span>View Detail</span>
+                </button>
+              ) : (
+                <button
+                  onClick={() => handleGenerateDO(row.original)}
+                  disabled={!isAllowedToGenerate}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-white border border-transparent rounded-lg transition-all focus:outline-none focus:ring-2 
+                    ${
+                      isAllowedToGenerate
+                        ? "bg-emerald-600 hover:bg-emerald-700 shadow-sm focus:ring-emerald-500/50"
+                        : "bg-slate-300 cursor-not-allowed text-slate-500" // Visual jika terkunci
+                    }`}
+                  title={
+                    isAllowedToGenerate ? "Generate Suggestion" : errorMessage
+                  }
+                >
+                  <FaMagic />
+                  <span>Generate</span>
+                </button>
+              )}
             </div>
           );
         },
@@ -227,6 +243,11 @@ const AdjustTable = ({
   };
 
   const handleGenerateDO = async (rowData: any) => {
+    if (!isGenerateDOAllowed(rowData.CALL_PLAN_START_DATE)) {
+      showErrorToast(getGenerateErrorMessage(rowData.CALL_PLAN_START_DATE));
+      return;
+    }
+
     const rowId = rowData.CALL_PLAN_NUMBER;
     const existingData = await checkIsGenerated(rowId);
 
@@ -245,16 +266,26 @@ const AdjustTable = ({
         CALL_PLAN_START_DATE: rowData.CALL_PLAN_START_DATE,
         CALL_PLAN_END_DATE: rowData.CALL_PLAN_END_DATE,
       };
+
       const suggestionData = await getDOsuggestion(params);
+
+      console.log("suggestionData", suggestionData);
+
+      if (!suggestionData.summary || suggestionData.summary.length === 0) {
+        showErrorToast("Tidak ada data DO Suggestion untuk Callplan ini.");
+        return;
+      }
+
       const payload = initialPayload(suggestionData, new Map(), rowData);
-      console.log("payload intial qty", payload);
-      
       await postDOsuggestion(payload);
 
       setGeneratedCallPlans((prev) => new Set(prev).add(rowId));
+      showSuccessToast("DO Suggestion berhasil di-generate!");
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
       navigate("generate_do", { state: { selectedSales: rowData } });
-    } catch (error) {
-      showErrorToast("Gagal generate data.");
+    } catch (error: any) {
+      showErrorToast(error.message);
     } finally {
       setLoadingRowId(null);
     }

@@ -1,6 +1,7 @@
-import { checkIsGenerated } from "../../../../API/store/DOsuggestionServices/checkIsGeneratedDO";
+import { checkIsGenerated } from "../../../../API/services/DOsuggestionServices/checkIsGeneratedDO";
 
 export const processCallPlanData = async (callPlanList: any[] = []) => {
+
     if (!callPlanList || callPlanList.length === 0) return [];
 
     // 1. Flatten Data: Ekstrak semua objek di dalam array 'DETAIL' menjadi satu array sejajar (flat)
@@ -15,25 +16,18 @@ export const processCallPlanData = async (callPlanList: any[] = []) => {
         }));
     });
 
-
-
-
     // 2. Map ke UI & Cek API: Loop array yang sudah diratakan untuk hit API checkIsGenerated
     const processedResults = await Promise.all(
         flatDetails.map(async (item) => {
-            console.log("processCallPlanData", item);
 
             let isGenerated = false;
             let currentStatus = null;
 
             // --- LOGIKA BARU UNTUK TRIP_TYPE ---
-            let tripType = ""; // Default string kosong jika tidak ada Call Plan
+            let tripType = ""; 
 
             if (item.CALL_PLAN_NUMBER) {
-                // Jika ada Call Plan, tentukan tipe berdasarkan ISLUARKOTA
                 tripType = item.ISLUARKOTA === true ? "MD" : "SD";
-
-                // Status awal untuk yang memiliki Call Plan
                 currentStatus = "";
 
                 try {

@@ -1,10 +1,7 @@
 import { useState, useCallback } from 'react';
-import {
-    getDOSuggestionByCallplan,
-    getSubmittedSuggestions
-} from '../../../../API/store/DOsuggestionServices/draftDOsuggestionService';
 import { showErrorToast } from '../../../../components/toast';
 import { DOSuggestionData } from '../../../../API/types/draftDOsuggestion';
+import { getDOSuggestionByCallplan, getSubmittedSuggestions } from '../../../../API/services/DOsuggestionServices/draftDOsuggestionService';
 
 export const useGetLocalDoSuggestion = () => {
     // State untuk 1 Callplan (Mode Detail)
@@ -39,24 +36,21 @@ export const useGetLocalDoSuggestion = () => {
     }, []);
 
     // Fetch Semua List (Bisa untuk Submitted / History)
-    const fetchSubmittedList = useCallback(async (param: any) => {
+    const fetchSubmittedList = useCallback(async (dateStart: string, orgId: string, status: string) => {
         setIsLoading(true);
         setError(null);
+
         try {
-            const result = await getSubmittedSuggestions();
+            // Panggil service dengan 3 parameter
+            const result = await getSubmittedSuggestions(dateStart, orgId, status);
 
             if (result.success && result.data) {
-                const filteredData = result.data.filter(
-                    (item) =>
-                        item.status === "SUBMITTED" &&
-                        item.organization?.organization_name === param
-                );
-                setSubmittedList(filteredData);
+                setSubmittedList(result.data);
             } else {
                 setSubmittedList([]);
             }
         } catch (err: any) {
-            const errorMessage = err.message || "Gagal mengambil daftar DO yang disubmit";
+            const errorMessage = err.message || "Gagal mengambil daftar DO";
             setError(errorMessage);
             showErrorToast(errorMessage);
         } finally {

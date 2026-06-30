@@ -1,38 +1,42 @@
 // File: src/pages/DOsuggestion/OutboundSales/hook/useGetStockOnHand.ts
 
-import { useState, useEffect } from 'react';
-import { StockOnHand } from '../../../../API/types/stockOnHand';
-import { getStockOnHand } from '../../../../API/store/DOsuggestionServices/StockOnHandService';
+import { useEffect } from 'react';
+import { useStockStore } from '../../../../API/store/DOsuggestionStore/useStockOnHandStore';
+import { getStockOnHand } from '../../../../API/services/DOsuggestionServices/StockOnHandService';
 
 export const useGetStockOnHand = (params: {
     org: string;
     sub: string;
     date: string
 }) => {
-    const [data, setData] = useState<StockOnHand[]>([]);
-    const [isLoading, setIsLoading] = useState(false);
+    // 1. Panggil state & setter dari Zustand
+    const { sohData, isLoadingSoh, setSohData, setIsLoadingSoh } = useStockStore();
 
     useEffect(() => {
         const fetchData = async () => {
-            setIsLoading(true);
+            setIsLoadingSoh(true);
             try {
                 const result = await getStockOnHand({
                     organization_code: params.org,
                     subinventory_code: params.sub,
                     date: params.date
                 });
-                setData(result);
+
+                // 2. Simpan hasil fetch langsung ke Zustand global!
+                setSohData(result);
             } catch (err) {
                 console.error(err);
+                setSohData([]); // Reset jika error
             } finally {
-                setIsLoading(false);
+                setIsLoadingSoh(false);
             }
         };
 
         if (params.org && params.date) {
             fetchData();
         }
-    }, [params.org, params.sub, params.date]);
+    }, [params.org, params.sub, params.date, setSohData, setIsLoadingSoh]);
 
-    return { data, isLoading };
+    // 3. Tetap return state dari Zustand agar komponen pemanggil hook bisa memantau loading
+    return { data: sohData, isLoading: isLoadingSoh };
 };

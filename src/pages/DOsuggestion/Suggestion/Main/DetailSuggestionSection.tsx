@@ -12,11 +12,6 @@ import AddItemModal from "../../../Inbound/InboundProcess/TableAndForm/component
 import Button from "../../../../components/ui/button/Button";
 import { FaPlus, FaSearch, FaUndo } from "react-icons/fa";
 import { useSubmitDOSuggestion } from "../hook/useSubmitDOSuggestion";
-// import { updateDO } from "../../../../API/store/DOsuggestionServices/postDOsuggestion";
-// import {
-//   DOSuggestionPayload,
-//   DOSuggestionLine,
-// } from "../../../../API/types/DOsuggestion";
 
 export default function DetailSuggestionSection() {
   const location = useLocation();
@@ -118,8 +113,6 @@ export default function DetailSuggestionSection() {
     setIsModalOpen(false);
     showSuccessToast("Item berhasil ditambahkan ke draft.");
   };
-
-  if (isLoading) return <ActIndicator />;
 
   const isSubmitted = data?.status === "SUBMITTED";
 

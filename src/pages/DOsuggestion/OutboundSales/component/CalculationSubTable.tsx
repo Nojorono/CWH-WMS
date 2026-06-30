@@ -79,7 +79,7 @@ export const CalculationSubTable = ({
       <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
         <div className="max-h-[500px] overflow-y-auto custom-scrollbar">
           <table className="w-full text-left text-sm text-slate-600">
-            <thead className="bg-slate-50 text-slate-500 font-medium text-xs uppercase">
+            <thead className="bg-slate-50 text-slate-500 font-medium text-xs uppercase sticky top-0 z-10 shadow-sm">
               <tr>
                 <th className="px-5 py-3">SKU</th>
                 <th className="px-5 py-3 text-right">Stock on Hand</th>

@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { CallPlanBindings, SupervisorData, CallPlanDetail, SnowflakeApiResponse } from '../../types/callPlan';
 import { DWHCallplanAPI, DWHCallplanAPItoken } from '../../../utils/EndPoint';
+import { showErrorToast } from '../../../components/toast';
 
 export const getCallPlan = async (params: CallPlanBindings): Promise<SupervisorData[]> => {
     try {
@@ -60,7 +61,7 @@ export const getCallPlan = async (params: CallPlanBindings): Promise<SupervisorD
                 CALL_PLAN_END_DATE: item.CALL_PLAN_END_DATE,
                 is_active_plan: item.CALL_PLAN_NUMBER !== "",
                 ISLUARKOTA: item.ISLUARKOTA
-            };            
+            };
 
             // Masukkan Salesman ke dalam array DETAIL milik SPV terkait
             groupedMap.get(spvNik)?.DETAIL.push(detailItem);
@@ -70,6 +71,7 @@ export const getCallPlan = async (params: CallPlanBindings): Promise<SupervisorD
         return Array.from(groupedMap.values());
 
     } catch (error) {
+        showErrorToast("Gagal ambil Master Callplan,terjadi kesalahan saat berkomunikasi dengan server DWH.")
         console.error("Gagal mengambil Master Call Plan:", error);
         throw new Error("Terjadi kesalahan saat berkomunikasi dengan server DWH.");
     }

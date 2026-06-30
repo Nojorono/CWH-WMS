@@ -5,10 +5,13 @@ import { BaseTable } from "../component/BaseTable";
 import Button from "../../../../components/ui/button/Button";
 import { GroupedSPBData } from "../MainTable";
 import { DOSuggestionDetail } from "../../../../API/types/draftDOsuggestion";
+import { FaPrint } from "react-icons/fa6";
 
 interface SPBSubmittedPageProps {
   data: GroupedSPBData[];
   onProceed: () => void;
+  onGoToPreparation: () => void; // Tambahkan ini
+  setCalculatedResults: (data: any[]) => void; // Tambahkan ini
 }
 
 // 1. KOMPONEN SUB-TABLE (Versi Scrollable - Tanpa Pagination)
@@ -54,7 +57,7 @@ const StandardSubTable = ({
                   <td className="px-5 py-3 text-right">
                     {item.no_found_in_btb ? (
                       <span className="text-[10px] uppercase font-bold text-amber-700 bg-red-100 px-2 py-1 rounded">
-                       BTB Not Exist
+                        BTB Not Exist
                       </span>
                     ) : (
                       <span className="text-[10px] uppercase font-bold text-emerald-700 bg-emerald-100 px-2 py-1 rounded">
@@ -76,6 +79,8 @@ const StandardSubTable = ({
 export const SPBSubmittedPage = ({
   data,
   onProceed,
+  onGoToPreparation,
+  setCalculatedResults,
 }: SPBSubmittedPageProps) => {
   const [globalFilter, setGlobalFilter] = React.useState("");
 
@@ -117,9 +122,34 @@ export const SPBSubmittedPage = ({
         header: "End Date",
         cell: (info) => formatDate(info.getValue<string>()),
       },
+      { accessorKey: "status", header: "status" },
     ],
     [],
   );
+
+  // Di SPBSubmittedPage.tsx
+ const isFinalStatus = allSalesmen.length > 0 && allSalesmen[0].status === "FINAL";
+
+const footerButton = useMemo(() => {
+    if (isFinalStatus) {
+      return {
+        label: "Proceed to Printing",
+        icon: <FaPrint />,
+        action: () => {
+          setCalculatedResults(allSalesmen);
+          onGoToPreparation();
+        },
+        className: "bg-emerald-600 hover:bg-emerald-700",
+      };
+    } else {
+      return {
+        label: "Proceed to Calculation",
+        icon: <FaArrowRight />,
+        action: onProceed,
+        className: "bg-blue-600 hover:bg-blue-700",
+      };
+    }
+  }, [isFinalStatus, allSalesmen, onProceed, onGoToPreparation, setCalculatedResults]);
 
   return (
     <BaseTable
@@ -133,11 +163,12 @@ export const SPBSubmittedPage = ({
       )}
       footerAction={
         <Button
-          onClick={onProceed}
+          onClick={footerButton.action}
           variant="primary"
-          endIcon={<FaArrowRight />}
+          className={footerButton.className}
+          endIcon={footerButton.icon}
         >
-          Proceed to Allocation & Calculation
+          {footerButton.label}
         </Button>
       }
     />

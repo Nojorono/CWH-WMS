@@ -1,9 +1,9 @@
 // File: src/API/store/DOsuggestionServices/hook/useGetBTB.ts
 
 import { useState, useEffect, useCallback } from 'react';
-import { getBTB } from '../../../../API/store/DOsuggestionServices/getBTBservice';
 import { CallPlanBindings } from '../../../../API/types/callPlan';
 import { BTBSalesmanGroup, BTBFlatItem } from '../../../../API/types/BTBdata';
+import { getBTB } from '../../../../API/services/DOsuggestionServices/getBTBservice';
 
 interface UseGetBTBOptions {
     enabled?: boolean;

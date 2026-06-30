@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { CallPlanBindings } from '../../../../API/types/callPlan';
 import { SuggestionSummary } from '../../../../API/types/DOsuggestion';
-import { getDOsuggestion } from '../../../../API/store/DOsuggestionServices/DOsuggestionService';
 import { useSuggestionStore } from '../../../../API/store/DOsuggestionStore/useSuggestionStore';
+import { getDOsuggestion } from '../../../../API/services/DOsuggestionServices/DOsuggestionService';
 
 export const useGetDoSuggestionDWH = (params: CallPlanBindings) => {
     const salesNik = params.SALES_NIK ?? "";

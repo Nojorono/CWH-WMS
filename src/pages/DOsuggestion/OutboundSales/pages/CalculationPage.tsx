@@ -1,17 +1,17 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { BaseTable } from "../component/BaseTable";
 import Button from "../../../../components/ui/button/Button";
 import { FaArrowRight, FaCalculator } from "react-icons/fa";
 import { GroupedSPBData } from "../MainTable";
 import { useGetStockOnHand } from "../hook/useGetStockOnHand";
-import { FaRecycle } from "react-icons/fa6";
 import { useAllocationCalculation } from "../hook/useAllocationCalculation";
 import { SKUSummaryPanel } from "../component/SKUSummaryPanel";
 import { CalculationSubTable } from "../component/CalculationSubTable";
 import { CallPlanBindings } from "../../../../API/types/callPlan";
 import dayjs from "dayjs";
-import { updateDO } from "../../../../API/store/DOsuggestionServices/postDOsuggestion";
-import { showErrorToast } from "../../../../components/toast";
+import { showErrorToast, showSuccessToast } from "../../../../components/toast";
+import { updateBatchDO } from "../../../../API/services/DOsuggestionServices/postDOsuggestion";
+import { showConfirmDialog } from "../../../../components/swal-confirm";
 
 interface CalculationPageProps {
   data: GroupedSPBData[];
@@ -27,6 +27,7 @@ export const CalculationPage = ({
   const [globalFilter, setGlobalFilter] = useState("");
   const [isCalculating, setIsCalculating] = useState(false);
   const [isCalculated, setIsCalculated] = useState(false);
+  const [isInserting, setIsInserting] = useState(false);
   const DateNow = dayjs().format("YYYY-MM-DD");
 
   const { data: stockList } = useGetStockOnHand({
@@ -42,12 +43,17 @@ export const CalculationPage = ({
   );
 
   const handleCalculate = () => {
+    setIsCalculated(false);
     setIsCalculating(true);
     setTimeout(() => {
       setIsCalculating(false);
       setIsCalculated(true);
-    }, 2000);
+    }, 3000);
   };
+
+  useEffect(() => {
+    handleCalculate();
+  }, []);
 
   const chunkArray = (array: any[], size: number) => {
     return Array.from({ length: Math.ceil(array.length / size) }, (v, i) =>
@@ -55,60 +61,81 @@ export const CalculationPage = ({
     );
   };
 
-  const handleInsert = async (calculatedData: any[]) => {
-    setIsCalculating(true);
-    const BATCH_SIZE = 50;
-    const batches = chunkArray(calculatedData, BATCH_SIZE);
+  const [progress, setProgress] = useState({ current: 0, total: 0 });
 
-    try {
-      for (const batch of batches) {
-        // Proses satu batch sebelum lanjut ke batch berikutnya
-        await Promise.all(
-          batch.map(async (salesman) => {
-            const payload = {
-              id: salesman.id,
-              organization_id: salesman.organization_id,
-              callplan_number: salesman.callplan_number,
-              callplan_date_start: salesman.callplan_date_start,
-              callplan_date_end: salesman.callplan_date_end,
-              route_number: salesman.route_number,
-              trip_type: salesman.trip_type,
-              sales_nik: salesman.sales_nik,
-              sales_name: salesman.sales_name,
-              sales_spv: salesman.sales_spv,
-              sales_spv_nik: salesman.sales_spv_nik,
-              status: "FINAL",
-              created_by: salesman.created_by,
-              updated_by: salesman.created_by,
-              spb_date: salesman.spb_date,
-              spb_number: salesman.spb_number,
-              // Mapping detail ke lines
-              lines: salesman.details.map((detail: any, index: number) => ({
-                id: detail.id,
-                item_code: detail.item_code,
-                inventory_item_id: detail.inventory_item_id,
-                item_qty_suggestion: Number(detail.item_qty_suggestion),
-                item_qty_revision: detail.item_qty_revision,
-                item_qty_submitted: Number(detail.item_qty_submitted),
-                item_qty_final: detail.item_qty_final,
-                contribution_percentage: Number(detail.contribution_percentage),
-                item_uom: detail.item_uom,
-                line_number: index + 1,
+  const handleInsert = (calculatedData: any[]) => {
+    showConfirmDialog(
+      async () => {
+        setIsInserting(true);
+        const BATCH_SIZE = 10;
+        const batches = chunkArray(calculatedData, BATCH_SIZE);
+        setProgress({ current: 0, total: batches.length });
+
+        try {
+          let batchCount = 0;
+          for (const batch of batches) {
+            batchCount++;
+            setProgress({ current: batchCount, total: batches.length });
+
+            // Transformasi batch menjadi format Bulk Payload
+            const bulkPayload = {
+              data: batch.map((salesman) => ({
+                id: salesman.id,
+                organization_id: salesman.organization_id,
+                callplan_number: salesman.callplan_number,
+                callplan_date_start: salesman.callplan_date_start,
+                callplan_date_end: salesman.callplan_date_end,
+                route_number: salesman.route_number,
+                trip_type: salesman.trip_type,
+                sales_nik: salesman.sales_nik,
+                sales_name: salesman.sales_name,
+                sales_spv: salesman.sales_spv,
+                sales_spv_nik: salesman.sales_spv_nik,
+                status: "FINAL",
+                created_by: salesman.created_by,
+                updated_by: salesman.created_by,
+                spb_date: salesman.spb_date,
+                spb_number: salesman.spb_number,
+                lines: salesman.details.map((detail: any, index: number) => ({
+                  id: detail.id,
+                  item_code: detail.item_code,
+                  inventory_item_id: detail.inventory_item_id,
+                  item_qty_suggestion: Number(detail.item_qty_suggestion || 0),
+                  item_qty_revision: detail.item_qty_revision,
+                  item_qty_submitted: Number(detail.item_qty_submitted || 0),
+                  item_qty_final: detail.item_qty_final,
+                  contribution_percentage: Number(
+                    detail.contribution_percentage || 0,
+                  ),
+                  item_uom: detail.item_uom,
+                  line_number: index + 1,
+                })),
               })),
             };
-            return await updateDO(payload);
-          }),
-        );
-        console.log(`Berhasil memproses batch dengan ${batch.length} SPB`);
-      }
 
-      onProceed(calculatedData);
-    } catch (error) {
-      console.error("Gagal melakukan insert ke DB:", error);
-      showErrorToast("Gagal melakukan insert ke DB");
-    } finally {
-      setIsCalculating(false);
-    }
+            // Kirim seluruh batch dalam 1 request
+            await updateBatchDO(bulkPayload);
+            showSuccessToast(
+              `Berhasil mengirim batch ${batchCount} dengan ${batch.length} SPB`,
+            );
+          }
+
+            onProceed(calculatedData);
+        } catch (error) {
+          console.error("Gagal melakukan bulk insert:", error);
+          showErrorToast("Gagal melakukan insert data ke server");
+        } finally {
+          setIsInserting(true);
+          setProgress({ current: 0, total: 0 });
+        }
+      },
+      {
+        title: "Simpan Hasil Kalkulasi?",
+        text: "Data kalkulasi stok akan disimpan ke sistem. Setelah ini, Anda akan diarahkan untuk mencetak dokumen SPB.",
+        confirmButtonText: "Ya, Simpan & Lanjutkan",
+        cancelButtonText: "Batal",
+      },
+    );
   };
 
   return (
@@ -119,22 +146,52 @@ export const CalculationPage = ({
           <h3 className="text-lg font-semibold text-slate-700">
             Ready to Calculate?
           </h3>
-          <Button
-            onClick={handleCalculate}
-            variant="primary"
-            endIcon={<FaArrowRight />}
-          >
-            Calculate Stock Allocation
-          </Button>
         </div>
       )}
 
       {isCalculating && (
         <div className="flex flex-col items-center justify-center py-20">
-          <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mb-4" />
+          <div className="w-10 h-10 border-4 border-orange-600 border-t-transparent rounded-full animate-spin mb-4" />
           <p className="text-slate-600 font-medium">
-            Processing allocation logic...
+            Processing and Calculating...
           </p>
+        </div>
+      )}
+
+      {isInserting && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/80 backdrop-blur-sm">
+          <div className="bg-white p-8 rounded-2xl shadow-xl border border-slate-100 flex flex-col items-center max-w-sm w-full">
+            {/* Spinner */}
+            <div className="w-12 h-12 border-4 border-orange-500 border-t-transparent rounded-full animate-spin mb-6" />
+
+            {/* Judul */}
+            <h3 className="text-lg font-bold text-slate-800 mb-1">
+              Saving Final Calculation
+            </h3>
+
+            {/* Progress */}
+            <p className="text-sm text-slate-500 mb-6 text-center">
+              Batch {progress.current} dari {progress.total}
+            </p>
+
+            {/* Progress bar */}
+            <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-orange-500 transition-all duration-300"
+                style={{
+                  width: `${
+                    progress.total > 0
+                      ? (progress.current / progress.total) * 100
+                      : 0
+                  }%`,
+                }}
+              />
+            </div>
+
+            <div className="mt-4 text-xs text-slate-400">
+              Mohon jangan menutup halaman selama proses berlangsung
+            </div>
+          </div>
         </div>
       )}
 
@@ -144,17 +201,6 @@ export const CalculationPage = ({
             summary={skuSummary}
             onSearchChange={setGlobalFilter}
           />
-
-          <div className="flex justify-end">
-            <Button
-              onClick={() => setIsCalculated(false)}
-              variant="outline"
-              className="text-xs"
-              startIcon={<FaRecycle />}
-            >
-              Re-calculate
-            </Button>
-          </div>
 
           <BaseTable
             data={calculatedData}
@@ -179,7 +225,6 @@ export const CalculationPage = ({
             )}
             footerAction={
               <Button
-                // onClick={() => onProceed(calculatedData)}
                 onClick={() => handleInsert(calculatedData)}
                 variant="primary"
                 endIcon={<FaArrowRight />}

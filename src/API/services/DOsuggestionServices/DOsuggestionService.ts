@@ -37,8 +37,6 @@ export const getDOsuggestion = async (params: any): Promise<SuggestionSummary> =
             }
         );
 
-        console.log(" GET DO SUGGESTION", response.data.data);
-
         // Parsing logic:
         const rawJsonString = response.data.data[0][0];
         const parsedData: SuggestionSummary = JSON.parse(rawJsonString);

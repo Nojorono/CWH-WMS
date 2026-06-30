@@ -45,19 +45,10 @@ const DataTable = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [passwordError, setPasswordError] = useState("");
 
-  const [editNikInput, setEditNikInput] = useState("");
-  const [isEditNikVerified, setIsEditNikVerified] = useState(false);
-  const [editNikLoading, setEditNikLoading] = useState(false);
-
-  const normalizeStorageValue = (val: string | null) => {
-    if (!val) return "";
-    const cleaned = String(val).trim();
-    if (!cleaned || cleaned === "undefined" || cleaned === "null") return "";
-    return cleaned;
-  };
-
   const globalIoList = usePersistAuthStore((state) => state.ioList) || [];
   const user = usePersistAuthStore((state) => state.user);
+  const roleName = user?.role?.name;
+
 
   useEffect(() => {
     fetchAll();
@@ -223,11 +214,19 @@ const DataTable = () => {
         type: "select",
         options:
           roles
-            ?.filter((r: any) => r.name !== "superadmin")
-            .map((role: any) => ({ label: role.name, value: role.id })) || [],
+            ?.filter((role: any) => {
+              if (roleName === "superadmin") {
+                return true;
+              }
+              return role.name !== "superadmin";
+            })
+            .map((role: any) => ({
+              label: role.name,
+              value: role.id,
+            })) ?? [],
         validation: { required: "Role wajib dipilih" },
         hiddenWhen: (values: any) => {
-          if (values.id) return false; // Selalu tampil saat update
+          if (values.id) return false;
           return (
             !values.userType ||
             (values.userType === "EMPLOYEE" && !isNikVerified)
@@ -243,7 +242,6 @@ const DataTable = () => {
             label: io.organization_name,
             value: io.id,
           })) || [],
-        validation: { required: "Required" },
         hiddenWhen: (values: any) => {
           if (values.id) return false;
           return (
@@ -358,9 +356,6 @@ const DataTable = () => {
       isNikVerified,
       nikLoading,
       nikInput,
-      editNikInput, // ← tambah
-      isEditNikVerified, // ← tambah
-      editNikLoading, // ← tambah
     ],
   );
 
@@ -432,26 +427,33 @@ const DataTable = () => {
   const mappedUserData = useMemo(
     () =>
       (userData ?? [])
-        .map((user: any) => ({
-          ...user, // Bawa semua data asli (id, employeeId, dll)
-          id: user.id,
-          username: user.username,
-          isActive: user.isActive,
-          roleId: user.roleId,
-          role: user.role,
-          // Buat data menjadi FLAT agar form otomatis terisi (defaultValue)
-          firstName: user.userDetail?.firstName ?? "",
-          lastName: user.userDetail?.lastName ?? "",
-          email: user.userDetail?.email ?? "",
-          phone: user.userDetail?.phone ?? "",
-          organizationId: user.userDetail?.organizationId ?? "",
-          zoneId: user.warehouseSubId ?? "",
-          // userType untuk logika internal form
-          userType: user.employeeId?.startsWith("NON-") ? "NON" : "EMPLOYEE",
-          employeeId: user.userDetail?.employee_id ?? user.employeeId ?? "",
-        }))
+        .map((user: any) => {
+          const organizationId = user.userDetail?.organizationId ?? "";
+
+          const organizationName =
+            IoList.find((io: any) => String(io.id) === String(organizationId))
+              ?.organization_name ?? "-";
+
+          return {
+            ...user,
+            id: user.id,
+            username: user.username,
+            isActive: user.isActive,
+            roleId: user.roleId,
+            role: user.role,
+            firstName: user.userDetail?.firstName ?? "",
+            lastName: user.userDetail?.lastName ?? "",
+            email: user.userDetail?.email ?? "",
+            phone: user.userDetail?.phone ?? "",
+            organizationId,
+            organizationName, // <-- tambahkan ini
+            zoneId: user.warehouseSubId ?? "",
+            userType: user.employeeId?.startsWith("NON-") ? "NON" : "EMPLOYEE",
+            employeeId: user.userDetail?.employee_id ?? user.employeeId ?? "",
+          };
+        })
         .filter((user: any) => user.role?.name !== "superadmin"),
-    [userData],
+    [userData, IoList], // <-- jangan lupa IoList sebagai dependency
   );
 
   const handleDelete = async (id: any) => {
@@ -494,21 +496,9 @@ const DataTable = () => {
         onCloseCreateModal={() => setCreateModalOpen(false)}
         columns={[
           {
-            accessorKey: "organization_id",
+            accessorKey: "organizationName",
             header: "Organization",
-            cell: ({ row }: { row: { original: any } }) => {
-              const rowOrgId = row.original.organizationId;
-
-              const org = IoList.find(
-                (item: any) => String(item.id) === String(rowOrgId),
-              );
-
-              return (
-                <span className="">
-                  {org ? org.organization_name : `ID Not Found: ${rowOrgId}`}
-                </span>
-              );
-            },
+            cell: ({ getValue }) => getValue() || "-",
           },
           { accessorKey: "username", header: "Username" },
           { accessorKey: "firstName", header: "First Name" },

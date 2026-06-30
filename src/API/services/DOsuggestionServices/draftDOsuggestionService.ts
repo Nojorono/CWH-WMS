@@ -23,14 +23,24 @@ export const getDOSuggestionByCallplan = async (
 /**
  * Mengambil semua data DO Suggestion (List untuk History / Submitted)
  */
-export const getSubmittedSuggestions = async (): Promise<DOSuggestionResponse> => {
+export const getSubmittedSuggestions = async (
+    dateStart: string,
+    organizationId: string,
+    status: string
+): Promise<DOSuggestionResponse> => {
     try {
         const response = await axiosInstance.get<DOSuggestionResponse>(
-            `${EndPoint}do-suggestion`
+            `${EndPoint}do-suggestion/callplan/date-start/${dateStart}/organization/${organizationId}`,
+            {
+                params: { status }
+            }
         );
+
+        console.log("res get DO", response);
+        
         return response.data;
     } catch (error) {
-        console.error(`Error fetching all DO Suggestions:`, error);
+        console.error(`Error fetching DO Suggestions:`, error);
         throw error;
     }
 };

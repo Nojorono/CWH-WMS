@@ -1,18 +1,17 @@
 import { useState, useEffect, useMemo } from "react";
-import { FaSync, FaSearch } from "react-icons/fa";
-import { useCallPlan } from "../hook/useCallPlan";
+import { FaSync, FaSearch, FaInfoCircle } from "react-icons/fa";
 import AdjustTable from "../component/AdjustTable";
 import PageBreadcrumb from "../../../../components/common/PageBreadCrumb";
 import Button from "../../../../components/ui/button/Button";
-import { processCallPlanData } from "../helper/callPlanMapper";
-import { CallPlanDetail } from "../../../../API/types/callPlan";
 import ActIndicator from "../../../../components/ui/activityIndicator";
 import { usePersistAuthStore } from "../../../../API/store/AuthStore/PersistAuthStore";
-import Select from "../../../../components/form/Select"; // Asumsi path komponen Select
+import Select from "../../../../components/form/Select";
 import { useStoreUser } from "../../../../DynamicAPI/stores/Store/MasterStore";
-import dayjs from "dayjs";
-import dummyCallplan from "../helper/dummyCallplan";
-import { checkIsGenerated } from "../../../../API/store/DOsuggestionServices/checkIsGeneratedDO";
+import { getTargetDate } from "../global/allowedDate";
+import { useCallPlan } from "../hook/useCallPlan";
+import { processCallPlanData } from "../helper/callPlanMapper";
+import { CallPlanDetail } from "../../../../API/types/callPlan";
+import { showErrorToast } from "../../../../components/toast";
 
 const MainTable = () => {
   const [globalFilter, setGlobalFilter] = useState<string>("");
@@ -30,7 +29,9 @@ const MainTable = () => {
   const isAhom = role_name === "AHOM";
   const activeSpvNik = isAhom ? selectedSpvNik : userNIK;
   const shouldFetchCallPlan = !!activeSpvNik;
-  const DateNow = dayjs().format("YYYY-MM-DD");
+
+  // 2. Gunakan fungsi global untuk menentukan Target Date, dibungkus useMemo
+  const TARGET_DATE = useMemo(() => getTargetDate(role_name), [role_name]);
 
   const { list: userData, fetchAll: fetchAllUsers } = useStoreUser();
 
@@ -54,23 +55,25 @@ const MainTable = () => {
       }));
   }, [userData]);
 
-  const paramGetCallplan = {
-    CABANG: String(organization_name),
-    SALES_SUPERVISOR_NIK: String(activeSpvNik),
-    CALL_PLAN_START_DATE: "2026-06-02", // atau DateNow
-    // CALL_PLAN_START_DATE: DateNow
-  };
+  // 3. Masukkan Target Date dinamis ke param API
+  const paramGetCallplan = useMemo(
+    () => ({
+      CABANG: String(organization_name),
+      SALES_SUPERVISOR_NIK: String(activeSpvNik),
+      CALL_PLAN_START_DATE: TARGET_DATE,
+    }),
+    [organization_name, activeSpvNik, TARGET_DATE],
+  );
 
   const {
     data: callPlanList,
     isLoading: isCallPlanLoading,
-    error,
+    error: errorGetCallplan,
     refetch,
   } = useCallPlan(paramGetCallplan, { enabled: shouldFetchCallPlan });
 
-  console.log("callPlanList", callPlanList);
-
   useEffect(() => {
+
     if (!callPlanList || callPlanList.length === 0) {
       setMergedData([]);
       return;
@@ -88,49 +91,24 @@ const MainTable = () => {
 
   const isLoading = (isCallPlanLoading && shouldFetchCallPlan) || isProcessing;
 
-  // const [dataWithStatus, setDataWithStatus] = useState<any[]>([]);
-  // const [isLoading, setIsLoading] = useState(true);
-  // useEffect(() => {
-  //   const processData = async () => {
-  //     setIsLoading(true);
-
-  //     // Lakukan pengecekan status untuk setiap item di dummyCallplan secara paralel
-  //     const processed = await Promise.all(
-  //       dummyCallplan.map(async (item) => {
-  //         let isGenerated = false;
-
-  //         if (item.CALL_PLAN_NUMBER && item.CALL_PLAN_NUMBER !== "-") {
-  //           try {
-  //             // Cek ke DB asli
-  //             const existingData = await checkIsGenerated(
-  //               item.CALL_PLAN_NUMBER,
-  //             );
-  //             isGenerated = !!existingData;
-  //           } catch (err) {
-  //             console.warn(
-  //               `Gagal cek ${item.CALL_PLAN_NUMBER}, status default false`,
-  //             );
-  //           }
-  //         }
-
-  //         // Gabungkan data asli dengan status generated
-  //         return { ...item, is_generated: isGenerated };
-  //       }),
-  //     );
-
-  //     setDataWithStatus(processed);
-  //     setIsLoading(false);
-  //   };
-
-  //   processData();
-  // }, []);
-
-  // if (error)
-  //   return <div className="p-10 text-red-500 text-center">{error}</div>;
-
   return (
     <div className="w-full space-y-4 p-4 bg-[#F8FAFC] min-h-screen">
-      <PageBreadcrumb breadcrumbs={[{ title: "List Salesman" }]} />
+      <PageBreadcrumb breadcrumbs={[{ title: "List Salesman Callplan" }]} />
+
+      <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-xl shadow-sm flex items-start gap-3">
+        <FaInfoCircle className="text-blue-500 mt-0.5 size-5 flex-shrink-0" />
+        <div>
+          <h4 className="text-sm font-bold text-blue-900">
+            Informasi Jadwal Generate DO Suggestion
+          </h4>
+          <p className="text-sm text-blue-800 mt-1">
+            Sesuai SOP, Generate DO Suggestion hanya dapat dilakukan pada{" "}
+            <strong>H-2 dari Call Plan Start Date</strong> dan{" "}
+            <strong>setelah pukul 13:00</strong>. Tombol Generate akan otomatis
+            aktif pada rentang waktu tersebut.
+          </p>
+        </div>
+      </div>
 
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
         {/* Render Dropdown SPV hanya jika user adalah AHOM */}
@@ -184,12 +162,14 @@ const MainTable = () => {
       ) : isLoading ? (
         <ActIndicator />
       ) : (
-        <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-          <AdjustTable
-            data={mergedData}
-            globalFilter={globalFilter}
-            setGlobalFilter={setGlobalFilter}
-          />
+        <div className="space-y-4">
+          <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+            <AdjustTable
+              data={mergedData}
+              globalFilter={globalFilter}
+              setGlobalFilter={setGlobalFilter}
+            />
+          </div>
         </div>
       )}
     </div>
