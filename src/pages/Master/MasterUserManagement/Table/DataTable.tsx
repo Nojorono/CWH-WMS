@@ -18,13 +18,7 @@ import Select from "../../../../components/form/Select";
 import axiosInstance from "../../../../DynamicAPI/AxiosInstance";
 
 const DataTable = () => {
-  const {
-    list: userData,
-    createData,
-    updateData,
-    fetchAll,
-    deleteData,
-  } = useStoreUser();
+  const { list: userData, createData, updateData, fetchAll } = useStoreUser();
 
   const { list: subWarehouseList, fetchAll: fetchSubWarehouses } =
     useStoreSubWarehouse();
@@ -411,7 +405,7 @@ const DataTable = () => {
       Object.entries(payload).filter(([_, v]) => v !== undefined),
     );
 
-    return updateData(id, cleanPayload);
+    return await updateData(id, cleanPayload);
   };
 
   const handleResetPassword = async () => {
