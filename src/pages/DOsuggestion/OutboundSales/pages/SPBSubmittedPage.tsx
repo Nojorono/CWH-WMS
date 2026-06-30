@@ -6,12 +6,12 @@ import Button from "../../../../components/ui/button/Button";
 import { GroupedSPBData } from "../MainTable";
 import { DOSuggestionDetail } from "../../../../API/types/draftDOsuggestion";
 import { FaPrint } from "react-icons/fa6";
+import { formatDateTimeIndo } from "../../../../helper/FormatDateTime";
 
 interface SPBSubmittedPageProps {
   data: GroupedSPBData[];
   onProceed: () => void;
-  onGoToPreparation: () => void; // Tambahkan ini
-  setCalculatedResults: (data: any[]) => void; // Tambahkan ini
+  onGoToPreparation: () => void;
 }
 
 // 1. KOMPONEN SUB-TABLE (Versi Scrollable - Tanpa Pagination)
@@ -80,7 +80,6 @@ export const SPBSubmittedPage = ({
   data,
   onProceed,
   onGoToPreparation,
-  setCalculatedResults,
 }: SPBSubmittedPageProps) => {
   const [globalFilter, setGlobalFilter] = React.useState("");
 
@@ -102,7 +101,7 @@ export const SPBSubmittedPage = ({
 
   const columns = useMemo<ColumnDef<any>[]>(
     () => [
-      { accessorKey: "callplan_number", header: "Call Plan Number" },
+      { accessorKey: "callplan_number", header: "Callplan Number" },
       { accessorKey: "sales_nik", header: "NIK Sales" },
       { accessorKey: "sales_name", header: "Nama Sales" },
       { accessorKey: "sales_spv_name", header: "Nama SPV" },
@@ -114,29 +113,39 @@ export const SPBSubmittedPage = ({
       },
       {
         accessorKey: "callplan_date_start",
-        header: "Start Date",
-        cell: (info) => formatDate(info.getValue<string>()),
+        header: "Callplan Start Date",
+        cell: (info) => info.getValue<string>(),
       },
       {
         accessorKey: "callplan_date_end",
-        header: "End Date",
-        cell: (info) => formatDate(info.getValue<string>()),
+        header: "Callplan End Date",
+        cell: (info) => info.getValue<string>(),
       },
       { accessorKey: "status", header: "status" },
+      {
+        accessorKey: "createdAt",
+        header: "created at",
+        cell: (info) => formatDateTimeIndo(info.getValue<string>()),
+      },
+      {
+        accessorKey: "updatedAt",
+        header: "updated at",
+        cell: (info) => formatDateTimeIndo(info.getValue<string>()),
+      },
     ],
     [],
   );
 
   // Di SPBSubmittedPage.tsx
- const isFinalStatus = allSalesmen.length > 0 && allSalesmen[0].status === "FINAL";
+  const isFinalStatus =
+    allSalesmen.length > 0 && allSalesmen[0].status === "FINAL";
 
-const footerButton = useMemo(() => {
+  const footerButton = useMemo(() => {
     if (isFinalStatus) {
       return {
         label: "Proceed to Printing",
         icon: <FaPrint />,
         action: () => {
-          setCalculatedResults(allSalesmen);
           onGoToPreparation();
         },
         className: "bg-emerald-600 hover:bg-emerald-700",
@@ -149,7 +158,7 @@ const footerButton = useMemo(() => {
         className: "bg-blue-600 hover:bg-blue-700",
       };
     }
-  }, [isFinalStatus, allSalesmen, onProceed, onGoToPreparation, setCalculatedResults]);
+  }, [isFinalStatus, allSalesmen, onProceed, onGoToPreparation]);
 
   return (
     <BaseTable

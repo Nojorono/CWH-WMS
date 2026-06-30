@@ -1,9 +1,10 @@
-// File: src/API/store/DOsuggestionServices/hook/useGetBTB.ts
-
 import { useState, useEffect, useCallback } from 'react';
 import { CallPlanBindings } from '../../../../API/types/callPlan';
 import { BTBSalesmanGroup, BTBFlatItem } from '../../../../API/types/BTBdata';
 import { getBTB } from '../../../../API/services/DOsuggestionServices/getBTBservice';
+import { showErrorToast } from '../../../../components/toast';
+import { getBTBErrorMessage, getServerDayjs, isBypassMode, isGetBTBTimeAllowed } from '../../Suggestion/global/allowedDate';
+import dayjs from 'dayjs';
 
 interface UseGetBTBOptions {
     enabled?: boolean;
@@ -16,33 +17,34 @@ export const useGetBTB = (
     const [data, setData] = useState<BTBSalesmanGroup[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [isSuccess, setIsSuccess] = useState(false); // Tambahan state untuk penanda aman
 
-    // 1. Destructure parameter di luar agar referensinya stabil (mencegah infinite loop)
     const cabang = params.CABANG;
     const startDate = params.CALL_PLAN_START_DATE;
     const isEnabled = options.enabled;
 
+    const btbDate = dayjs(startDate).subtract(1, 'day').format('YYYY-MM-DD');
+
+
     const fetchData = useCallback(async () => {
         setIsLoading(true);
         setError(null);
+        setIsSuccess(false);
 
         try {
-            // Gunakan variabel yang sudah diekstrak
             const flatResult: BTBFlatItem[] = await getBTB({
                 CABANG: cabang,
-                CALL_PLAN_START_DATE: startDate
+                CALL_PLAN_START_DATE: btbDate
             });
 
-            // 2. Safety Check: Pastikan hasil API benar-benar sebuah Array
             if (!flatResult || !Array.isArray(flatResult)) {
                 setData([]);
+                setIsSuccess(true); // Data kosong bukan berarti error, melainkan sales memang bawa 0 barang.
                 return;
             }
 
-            // 3. Proses Transformasi dengan pelindung data kotor
             const groupedData = flatResult.reduce((acc, curr) => {
-                const salesNik = curr.SALES_NIK || "UNKNOWN_NIK"; // Fallback NIK kosong
-
+                const salesNik = curr.SALES_NIK || "UNKNOWN_NIK";
                 if (!acc[salesNik]) {
                     acc[salesNik] = {
                         SALES_NIK: salesNik,
@@ -53,41 +55,55 @@ export const useGetBTB = (
                         details: []
                     };
                 }
-
                 acc[salesNik].details.push({
                     PRODUCT_SKU: curr.PRODUCT_SKU,
                     PRODUCT_NAME: curr.PRODUCT_NAME,
                     INVENTORYID: curr.INVENTORYID,
                     QTY_BTB: curr.QTY_BTB
                 });
-
                 return acc;
             }, {} as Record<string, BTBSalesmanGroup>);
 
             setData(Object.values(groupedData));
+            setIsSuccess(true); // Tandai bahwa sinkronisasi DWH sukses
 
         } catch (err) {
-            if (err instanceof Error) {
-                setError(err.message);
-            } else {
-                setError(String(err));
-            }
+            const errorMsg = err instanceof Error ? err.message : String(err);
+            setError(errorMsg);
+            // Pindahkan Toast ke sini agar hanya muncul 1x saat gagal fetch
+            showErrorToast("Gagal sinkronisasi data BTB dari DWH: " + errorMsg);
             console.error("Fetch BTB Error:", err);
         } finally {
             setIsLoading(false);
         }
-    }, [cabang, startDate]); // Dependency aman karena berupa string primitif
+    }, [cabang, startDate]);
 
+
+    // Di dalam hook useGetBTB
     useEffect(() => {
+        // 1. Ambil waktu server yang akurat
+        const serverNow = getServerDayjs();
+
+        // 2. Gunakan fungsi validasi Anda
+        const isAllowed = isGetBTBTimeAllowed(startDate);
+
         const isValidBranch = cabang && cabang !== "null" && cabang !== "undefined";
         const isValidDate = startDate && startDate !== "null" && startDate !== "undefined";
 
+        // 3. Logika Proteksi
         if (isEnabled && isValidBranch && isValidDate) {
-            fetchData();
+            if (isAllowed || isBypassMode()) {
+                fetchData();
+            } else {
+                // Tampilkan error jika mencoba tarik data di luar jam 09:00 - 10:00
+                setError(getBTBErrorMessage(startDate));
+                // showErrorToast(getBTBErrorMessage(startDate));
+                setData([]); // Bersihkan data agar tidak over-picking
+            }
         } else if (!isEnabled) {
             setData([]);
         }
     }, [fetchData, isEnabled, cabang, startDate]);
 
-    return { data, isLoading, error, refetch: fetchData };
+    return { data, isLoading, error, isSuccess, refetch: fetchData };
 };

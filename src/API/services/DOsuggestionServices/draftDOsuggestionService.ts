@@ -35,8 +35,6 @@ export const getSubmittedSuggestions = async (
                 params: { status }
             }
         );
-
-        console.log("res get DO", response);
         
         return response.data;
     } catch (error) {

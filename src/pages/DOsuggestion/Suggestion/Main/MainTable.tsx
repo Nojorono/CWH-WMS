@@ -11,10 +11,11 @@ import { getTargetDate } from "../global/allowedDate";
 import { useCallPlan } from "../hook/useCallPlan";
 import { processCallPlanData } from "../helper/callPlanMapper";
 import { CallPlanDetail } from "../../../../API/types/callPlan";
-import { showErrorToast } from "../../../../components/toast";
 import { BypassTimeController } from "../../OutboundSales/component/BypassTimeController";
 
 const MainTable = () => {
+  const [loadingVisible, setLoadingVisible] = useState(false);
+
   const [globalFilter, setGlobalFilter] = useState<string>("");
   const [mergedData, setMergedData] = useState<CallPlanDetail[]>([]);
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
@@ -30,10 +31,7 @@ const MainTable = () => {
   const isAhom = role_name === "AHOM";
   const activeSpvNik = isAhom ? selectedSpvNik : userNIK;
   const shouldFetchCallPlan = !!activeSpvNik;
-
-  // 2. Gunakan fungsi global untuk menentukan Target Date, dibungkus useMemo
   const TARGET_DATE = useMemo(() => getTargetDate(role_name), [role_name]);
-
   const { list: userData, fetchAll: fetchAllUsers } = useStoreUser();
 
   useEffect(() => {
@@ -78,7 +76,6 @@ const MainTable = () => {
       setMergedData([]);
       return;
     }
-
     const callplanChecked = async () => {
       setIsProcessing(true);
       const result = await processCallPlanData(callPlanList);
@@ -89,7 +86,20 @@ const MainTable = () => {
     callplanChecked();
   }, [callPlanList]);
 
-  const isLoading = (isCallPlanLoading && shouldFetchCallPlan) || isProcessing;
+  useEffect(() => {
+    if (isCallPlanLoading || isProcessing) {
+      setLoadingVisible(true);
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      setLoadingVisible(false);
+    }, 250);
+
+    return () => clearTimeout(timer);
+  }, [isCallPlanLoading, isProcessing]);
+
+  const isLoading = loadingVisible;
 
   return (
     <div className="w-full space-y-4 p-4 bg-[#F8FAFC] min-h-screen">
@@ -101,14 +111,13 @@ const MainTable = () => {
         <FaInfoCircle className="text-blue-500 mt-0.5 size-5 flex-shrink-0" />
         <div>
           <h4 className="text-sm font-bold text-blue-900">
-            Informasi Jadwal Generate DO Suggestion, VALID DATE{" "}
-            {TARGET_DATE}{" "}
+            Informasi Jadwal Generate DO Suggestion
           </h4>
           <p className="text-sm text-blue-800 mt-1">
             Sesuai SOP, Generate DO Suggestion hanya dapat dilakukan pada{" "}
-            <strong>H-2 dari Call Plan Start Date</strong> dan{" "}
-            <strong>setelah pukul 13:00</strong>. Tombol Generate akan otomatis
-            aktif pada rentang waktu tersebut.
+            <strong>H-2 dari Callplan Start Date ({TARGET_DATE})</strong> dan{" "}
+            <strong>setelah pukul 13:00</strong>.<br /> Tombol Generate akan
+            otomatis aktif pada rentang waktu tersebut.
           </p>
         </div>
       </div>
@@ -163,7 +172,9 @@ const MainTable = () => {
           </p>
         </div>
       ) : isLoading ? (
-        <ActIndicator />
+        <>
+          <ActIndicator />
+        </>
       ) : (
         <div className="space-y-4">
           <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">

@@ -3,6 +3,7 @@
 import { useEffect } from 'react';
 import { useStockStore } from '../../../../API/store/DOsuggestionStore/useStockOnHandStore';
 import { getStockOnHand } from '../../../../API/services/DOsuggestionServices/StockOnHandService';
+import dayjs from 'dayjs';
 
 export const useGetStockOnHand = (params: {
     org: string;
@@ -11,6 +12,7 @@ export const useGetStockOnHand = (params: {
 }) => {
     // 1. Panggil state & setter dari Zustand
     const { sohData, isLoadingSoh, setSohData, setIsLoadingSoh } = useStockStore();
+    const sohDate = dayjs(params.date).subtract(1, 'day').format('YYYY-MM-DD');
 
     useEffect(() => {
         const fetchData = async () => {
@@ -19,7 +21,7 @@ export const useGetStockOnHand = (params: {
                 const result = await getStockOnHand({
                     organization_code: params.org,
                     subinventory_code: params.sub,
-                    date: params.date
+                    date: sohDate
                 });
 
                 // 2. Simpan hasil fetch langsung ke Zustand global!

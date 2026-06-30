@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { MdAssignment, MdClose } from "react-icons/md";
 import { useLocation, useNavigate } from "react-router-dom";
-import ActIndicator from "../../../../components/ui/activityIndicator";
 import { showErrorToast, showSuccessToast } from "../../../../components/toast";
 import PageBreadcrumb from "../../../../components/common/PageBreadCrumb";
 import { useGetLocalDoSuggestion } from "../hook/useGetLocalDoSuggestion";
@@ -12,6 +11,7 @@ import AddItemModal from "../../../Inbound/InboundProcess/TableAndForm/component
 import Button from "../../../../components/ui/button/Button";
 import { FaPlus, FaSearch, FaUndo } from "react-icons/fa";
 import { useSubmitDOSuggestion } from "../hook/useSubmitDOSuggestion";
+import ActIndicator from "../../../../components/ui/activityIndicator";
 
 export default function DetailSuggestionSection() {
   const location = useLocation();
@@ -24,7 +24,7 @@ export default function DetailSuggestionSection() {
   const [localDetails, setLocalDetails] = useState<any[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const { data, isLoading, fetchDOData } = useGetLocalDoSuggestion();
+  const { data, fetchDOData, isLoading } = useGetLocalDoSuggestion();
   const [searchQuery, setSearchQuery] = useState("");
 
   const filteredDetails = useMemo(() => {
@@ -114,7 +114,10 @@ export default function DetailSuggestionSection() {
     showSuccessToast("Item berhasil ditambahkan ke draft.");
   };
 
-  const isSubmitted = data?.status === "SUBMITTED";
+  const isSubmitted = useMemo(
+    () => data?.status === "SUBMITTED",
+    [data?.status],
+  );
 
   // RESET HANDLER
   const handleReset = () => {
@@ -149,6 +152,21 @@ export default function DetailSuggestionSection() {
       navigate(-1);
     },
   });
+
+  const [loadingVisible, setLoadingVisible] = useState(false);
+
+  useEffect(() => {
+    if (isLoading) {
+      setLoadingVisible(true);
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      setLoadingVisible(false);
+    }, 250);
+
+    return () => clearTimeout(timer);
+  }, [isLoading]);
 
   return (
     <div className="w-full min-h-screen p-6 bg-[#f8fafc] font-sans">
@@ -240,43 +258,50 @@ export default function DetailSuggestionSection() {
         </div>
         {/* --- END TOOLBAR --- */}
 
-        {/* TanStack Table Integration */}
-        <SuggestionTable
-          data={filteredDetails}
-          revisions={revisions}
-          handleRevisionChange={handleRevisionChange}
-          editingRows={editingRows}
-          toggleEditRow={toggleEditRow}
-          cancelEditRow={cancelEditRow}
-          isSubmitted={isSubmitted}
-        />
+        {loadingVisible ? (
+          <>
+            <ActIndicator />
+          </>
+        ) : (
+          <>
+            <SuggestionTable
+              data={filteredDetails}
+              revisions={revisions}
+              handleRevisionChange={handleRevisionChange}
+              editingRows={editingRows}
+              toggleEditRow={toggleEditRow}
+              cancelEditRow={cancelEditRow}
+              isSubmitted={isSubmitted}
+            />
 
-        {/* Submit Action */}
-        <div className="flex justify-end gap-3 mt-6">
-          {!isSubmitted && (
-            <>
-              {/* Tombol Simpan Sementara (Draf/Revised) */}
-              <Button
-                variant="outline"
-                onClick={() => handleSubmit("revision")}
-                startIcon={<MdAssignment />}
-                className="border-orange-500 text-orange-600 hover:bg-orange-50"
-              >
-                Save Revision
-              </Button>
+            {/* Submit Action */}
+            <div className="flex justify-end gap-3 mt-6">
+              {!isSubmitted && (
+                <>
+                  {/* Tombol Simpan Sementara (Draf/Revised) */}
+                  <Button
+                    variant="outline"
+                    onClick={() => handleSubmit("revision")}
+                    startIcon={<MdAssignment />}
+                    className="border-orange-500 text-orange-600 hover:bg-orange-50"
+                  >
+                    Save Revision
+                  </Button>
 
-              {/* Tombol Simpan Permanen (Submitted) */}
-              <Button
-                variant="action"
-                onClick={() => handleSubmit("submit")}
-                startIcon={<MdAssignment />}
-                className="bg-green-600 hover:bg-green-700 text-white shadow-md"
-              >
-                Final Submit
-              </Button>
-            </>
-          )}
-        </div>
+                  {/* Tombol Simpan Permanen (Submitted) */}
+                  <Button
+                    variant="action"
+                    onClick={() => handleSubmit("submit")}
+                    startIcon={<MdAssignment />}
+                    className="bg-green-600 hover:bg-green-700 text-white shadow-md"
+                  >
+                    Final Submit
+                  </Button>
+                </>
+              )}
+            </div>
+          </>
+        )}
 
         {/* Modal Add Item */}
         <AddItemModal

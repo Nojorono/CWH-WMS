@@ -143,17 +143,16 @@ const TableComponent = <T extends { [key: string]: any }>({
 
         <div className="max-h-[650px] overflow-y-auto">
           <table className="min-w-full table-fixed divide-y divide-gray-200">
-            <thead className="sticky top-0 z-10 bg-orange-500 text-white">
+            <thead className="sticky top-0 z-10 text-white">
               {table.getHeaderGroups().map((headerGroup) => (
                 <tr key={headerGroup.id}>
                   {headerGroup.headers.map((header) => (
                     <th
                       key={header.id}
-                      // Menambahkan width dinamis dari konfigurasi kolom
                       style={{
                         width: header.id === "select" ? "50px" : "auto",
                       }}
-                      className={`px-4 py-4 text-left text-[11px] font-bold uppercase tracking-wider transition-colors whitespace-nowrap ${
+                      className={`sticky top-0 bg-orange-500 px-4 py-4 text-left text-[11px] font-bold uppercase tracking-wider transition-colors whitespace-nowrap ${
                         header.column.getCanSort()
                           ? "cursor-pointer hover:bg-orange-600"
                           : ""

@@ -10,7 +10,12 @@ import { FaPrint, FaDownload, FaCheckCircle } from "react-icons/fa";
 import { useGetLocalDoSuggestion } from "../../Suggestion/hook/useGetLocalDoSuggestion";
 import { usePersistAuthStore } from "../../../../API/store/AuthStore/PersistAuthStore";
 import { useGetBTB } from "../hook/useGetBTB";
-import axiosInstance from "../../../../DynamicAPI/AxiosInstance";
+import { showErrorToast } from "../../../../components/toast";
+import {
+  getBTBErrorMessage,
+  isGetBTBTimeAllowed,
+} from "../../Suggestion/global/allowedDate";
+import { exportSummaryToExcel } from "../hook/exportSummaryExcel";
 
 interface GoodsPreparationPageProps {
   targetDate: string;
@@ -109,6 +114,11 @@ export const GoodsPreparationPage = ({
     fetchSubmittedList,
   } = useGetLocalDoSuggestion();
 
+  // 2. Ekstrak tanggal dari data API (Asumsi bentuknya Array)
+  const apiDate = submittedList?.[0]?.callplan_date_start;
+  const isDateMatch = apiDate === targetDate;
+  const isTimeAllowed = isGetBTBTimeAllowed(apiDate);
+
   const paramGetBTB = useMemo(
     () => ({
       CABANG: String(organization_name),
@@ -117,9 +127,36 @@ export const GoodsPreparationPage = ({
     [organization_name, targetDate],
   );
 
-  const { data: BTBdata, isLoading: isBTBLoading } = useGetBTB(paramGetBTB, {
-    enabled: !!(organization_name && targetDate),
+  const {
+    data: BTBdata,
+    isLoading: isBTBLoading,
+    error: errBTB,
+    isSuccess: isBTBSuccess,
+  } = useGetBTB(paramGetBTB, {
+    enabled: !!(
+      organization_name &&
+      targetDate &&
+      isDateMatch &&
+      isTimeAllowed
+    ),
   });
+
+  useEffect(() => {
+    if (errBTB) {
+      showErrorToast(errBTB);
+    }
+
+    // Pastikan loading lokal selesai dan data ada
+    if (!isDOLoading && apiDate) {
+      if (!isDateMatch) {
+        showErrorToast(
+          `Data Error: URL (${targetDate}) berbeda dengan Data (${apiDate})`,
+        );
+      } else if (!isTimeAllowed) {
+        showErrorToast(getBTBErrorMessage(apiDate));
+      }
+    }
+  }, [isDOLoading, apiDate, targetDate, isDateMatch, isTimeAllowed]);
 
   useEffect(() => {
     if (organization_id && targetDate) {
@@ -127,35 +164,40 @@ export const GoodsPreparationPage = ({
     }
   }, [organization_id, targetDate, fetchSubmittedList]);
 
-  // --- LOGIKA MAPPING BTB (Penyelamat Refresh Halaman) ---
   const enrichedData = useMemo(() => {
-    if (!submittedList || submittedList.length === 0) return [];
+    if (!submittedList.length || !BTBdata?.length) return submittedList;
 
     return submittedList.map((doDocument) => {
-      // 1. Cari data BTB salesman yang cocok
-      const salesmanBTB = BTBdata?.find(
-        (btb) => btb.SALES_NIK === doDocument.sales_nik,
+      const salesmanBTB = BTBdata.find(
+        (btb) => btb.SALES_NIK.trim() === doDocument.sales_nik.trim(),
       );
 
-      // 2. Loop details-nya dan masukkan qty_btb jika SKU cocok
+      console.log(
+        "Matching NIK:",
+        doDocument.sales_nik,
+        "Found:",
+        !!salesmanBTB,
+      );
+
       const updatedDetails = doDocument.details.map((doDetail: any) => {
         const skuMatch = salesmanBTB?.details.find(
-          (btbLine: any) => btbLine.PRODUCT_SKU === doDetail.item_code,
+          (btbLine: any) =>
+            btbLine.PRODUCT_SKU.trim() === doDetail.item_code.trim(),
         );
 
-        return {
-          ...doDetail,
-          qty_btb: skuMatch ? skuMatch.QTY_BTB : 0,
-        };
+        console.log(
+          "Matching SKU:",
+          doDetail.item_code,
+          "Match:",
+          skuMatch?.QTY_BTB,
+        );
+
+        return { ...doDetail, qty_btb: skuMatch ? skuMatch.QTY_BTB : 0 };
       });
 
-      return {
-        ...doDocument,
-        details: updatedDetails,
-      };
+      return { ...doDocument, details: updatedDetails };
     });
   }, [submittedList, BTBdata]);
-  // ---------------------------------------------------------
 
   const handleOpenPrintPreview = async (rowData: DOSuggestionData) => {
     setSelectedDataToPrint(rowData);
@@ -163,14 +205,14 @@ export const GoodsPreparationPage = ({
 
     const idData = rowData.id;
 
-    try {
-      const response = await axiosInstance.post(
-        `/do-suggestion/${idData}/integrate`,
-      );
-      return response.data;
-    } catch (error) {
-      throw error;
-    }
+    // try {
+    //   const response = await axiosInstance.post(
+    //     `/do-suggestion/${idData}/integrate`,
+    //   );
+    //   return response.data;
+    // } catch (error) {
+    //   throw error;
+    // }
   };
 
   const columns = useMemo<ColumnDef<DOSuggestionData>[]>(
@@ -178,6 +220,8 @@ export const GoodsPreparationPage = ({
       { accessorKey: "spb_number", header: "SPB Number" },
       { accessorKey: "sales_name", header: "Sales Name" },
       { accessorKey: "sales_spv", header: "Supervisor" },
+      { accessorKey: "callplan_date_start", header: "Callplan Start Date" },
+      { accessorKey: "callplan_date_end", header: "Callplan End Date" },
       {
         id: "total_items",
         header: "Total SKU to Pick",
@@ -229,6 +273,10 @@ export const GoodsPreparationPage = ({
     );
   }
 
+  const handleExportSummary = () => {
+    exportSummaryToExcel(enrichedData, String(organization_name), targetDate);
+  };
+
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
       <BaseTable
@@ -240,13 +288,46 @@ export const GoodsPreparationPage = ({
         // Pastikan melempar row.original.details
         renderSubComponent={(row) => <PrepDetailTable details={row.details} />}
         headerActions={
-          <div className="flex gap-2">
-            <button className="flex items-center gap-2 px-4 py-2 text-xs font-semibold text-slate-600 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors shadow-sm">
-              <FaDownload className="text-slate-400" /> Summary
-            </button>
-            <button className="flex items-center gap-2 px-4 py-2 text-xs font-semibold text-white bg-orange-500 border border-transparent rounded-lg hover:bg-orange-600 transition-colors shadow-sm">
-              <FaPrint /> Print All Picklists
-            </button>
+          // 1. Tambahkan flex-1 dan min-w-full agar container ini memaksa melar memenuhi sisa ruang BaseTable
+          <div className="flex items-center flex-1 w-full min-w-full gap-4">
+            {/* --- BAGIAN KIRI: Notifikasi Warning --- */}
+            <div>
+              {(!isTimeAllowed || errBTB) && (
+                <span className="px-3 py-1.5 text-xs font-bold text-red-600 bg-red-50 border border-red-200 rounded-lg flex items-center w-fit shadow-sm whitespace-nowrap">
+                  <span className="mr-2">⚠️</span>
+                  {errBTB
+                    ? "DWH Error: Data BTB Gagal Ditarik, data yang ditampilkan belum dikurangi dengan data BTB"
+                    : "Belum Masuk Waktu Tarik BTB"}
+                </span>
+              )}
+            </div>
+
+            {/* --- BAGIAN KANAN: Tombol Aksi --- */}
+            {/* 2. Tambahkan ml-auto di sini. Ini adalah kunci untuk mendorong elemen ke ujung kanan! */}
+            <div className="flex items-center gap-2 ml-auto">
+              <button
+                onClick={handleExportSummary}
+                // disabled={!isBTBSuccess || !isTimeAllowed}
+                // className={`flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-lg shadow-sm transition-colors ${
+                //   !isBTBSuccess || !isTimeAllowed
+                //     ? "bg-slate-200 text-slate-400 cursor-not-allowed"
+                //     : "text-slate-600 bg-white border border-slate-300 hover:bg-slate-50"
+                // }`}
+              >
+                <FaDownload /> Summary
+              </button>
+
+              <button
+                disabled={!isBTBSuccess || !isTimeAllowed}
+                className={`flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-lg shadow-sm transition-colors ${
+                  !isBTBSuccess || !isTimeAllowed
+                    ? "bg-slate-200 text-slate-400 cursor-not-allowed border-transparent"
+                    : "text-white bg-orange-500 border-transparent hover:bg-orange-600"
+                }`}
+              >
+                <FaPrint /> Print All Picklists
+              </button>
+            </div>
           </div>
         }
       />

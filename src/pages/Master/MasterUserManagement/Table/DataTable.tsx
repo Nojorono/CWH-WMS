@@ -14,6 +14,8 @@ import { useRoleStore } from "../../../../API/store/MasterStore";
 import { UserVerifyService } from "../../../../DynamicAPI/services/Service/UserVerifyService";
 import { showErrorToast, showSuccessToast } from "../../../../components/toast";
 import { usePersistAuthStore } from "../../../../API/store/AuthStore/PersistAuthStore";
+import Select from "../../../../components/form/Select";
+import axiosInstance from "../../../../DynamicAPI/AxiosInstance";
 
 const DataTable = () => {
   const {
@@ -49,6 +51,7 @@ const DataTable = () => {
   const user = usePersistAuthStore((state) => state.user);
   const roleName = user?.role?.name;
 
+  const [selectedOrganization, setSelectedOrganization] = useState("");
 
   useEffect(() => {
     fetchAll();
@@ -424,6 +427,16 @@ const DataTable = () => {
     }
   };
 
+  const organizationOptions = useMemo(() => {
+    return [
+      { label: "All Organization", value: "" },
+      ...IoList.map((io: any) => ({
+        label: io.organization_name,
+        value: String(io.id),
+      })),
+    ];
+  }, [IoList]);
+
   const mappedUserData = useMemo(
     () =>
       (userData ?? [])
@@ -446,7 +459,7 @@ const DataTable = () => {
             email: user.userDetail?.email ?? "",
             phone: user.userDetail?.phone ?? "",
             organizationId,
-            organizationName, // <-- tambahkan ini
+            organizationName,
             zoneId: user.warehouseSubId ?? "",
             userType: user.employeeId?.startsWith("NON-") ? "NON" : "EMPLOYEE",
             employeeId: user.userDetail?.employee_id ?? user.employeeId ?? "",
@@ -456,24 +469,53 @@ const DataTable = () => {
     [userData, IoList], // <-- jangan lupa IoList sebagai dependency
   );
 
+  const filteredUserData = useMemo(() => {
+    if (!selectedOrganization) return mappedUserData;
+
+    return mappedUserData.filter(
+      (user: any) =>
+        String(user.organizationId) === String(selectedOrganization),
+    );
+  }, [mappedUserData, selectedOrganization]);
+
   const handleDelete = async (id: any) => {
-    // await updateData(id, { isActive: false });
-    await deleteData(id);
+    try {
+      // Melakukan request DELETE ke endpoint yang Anda tentukan
+      await axiosInstance.delete(`/user/${id}/hard`);
+      console.log(`User dengan ID ${id} berhasil dihapus.`);
+    } catch (error) {
+      console.error("Gagal menghapus data:", error);
+    }
   };
 
   return (
     <>
       <div className="p-4 bg-white shadow rounded-md mb-5">
         <div className="flex justify-between items-center">
-          <div className="space-x-4 flex items-center">
-            <Label htmlFor="search">Search</Label>
-            <Input
-              onChange={(e) => setSearch(e.target.value)}
-              type="text"
-              id="search"
-              placeholder="🔍 Masukan data.."
-            />
+          <div className="flex items-end gap-4">
+            <div>
+              <Label htmlFor="search">Search</Label>
+              <Input
+                onChange={(e) => setSearch(e.target.value)}
+                type="text"
+                id="search"
+                placeholder="🔍 Masukan data.."
+              />
+            </div>
+
+            <div className="min-w-[240px]">
+              <Label>Organization</Label>
+
+              <Select
+                options={organizationOptions}
+                value={selectedOrganization}
+                placeholder="All Organization"
+                width="240px"
+                onChange={(value) => setSelectedOrganization(value)}
+              />
+            </div>
           </div>
+
           <Button
             variant="primary"
             size="sm"
@@ -490,7 +532,7 @@ const DataTable = () => {
       </div>
 
       <DynamicTable
-        data={mappedUserData}
+        data={filteredUserData}
         globalFilter={debouncedSearch}
         isCreateModalOpen={isCreateModalOpen}
         onCloseCreateModal={() => setCreateModalOpen(false)}

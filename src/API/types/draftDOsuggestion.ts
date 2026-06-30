@@ -23,6 +23,7 @@ export interface DOSuggestionDetail {
     item_description?: string
     inventory_item_id?: string
     prepared_qty?: string
+    createdAt?: string
 }
 
 export interface DOSuggestionData {

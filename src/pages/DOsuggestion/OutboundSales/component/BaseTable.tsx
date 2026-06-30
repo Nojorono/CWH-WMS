@@ -36,7 +36,6 @@ export function BaseTable<TData>({
   headerActions,
   footerAction,
 }: BaseTableProps<TData>) {
-  // Persiapkan kolom tambahan untuk expander jika diaktifkan
   const finalColumns = React.useMemo(() => {
     if (!isExpandable) return columns;
 
@@ -84,27 +83,34 @@ export function BaseTable<TData>({
 
   return (
     <div className="w-full bg-white border border-slate-200 rounded-xl shadow-sm">
-      {/* Top Controls */}
-      <div className="p-4 border-b border-slate-100 flex flex-wrap gap-3 justify-between items-center bg-slate-50/50 rounded-t-xl">
-        <div className="flex gap-2 items-center">
-          {/* Slot untuk aksi tambahan di header (misal tombol Print Qty Per SPB) */}
-          {headerActions && (
-            <div className="mr-2 border-r border-slate-200 pr-2">
-              {headerActions}
-            </div>
-          )}
+      {/* --- TOP CONTROLS (DIREVISI) --- */}
+      {headerActions && (
+        <div className="p-4 border-b border-slate-100 bg-slate-50/50 rounded-t-xl w-full">
+          <div className="w-full flex items-center justify-between">
+            {headerActions}
+          </div>
         </div>
-      </div>
+      )}
+      {/* -------------------------------- */}
+
       {/* Main Table */}
       <div className="overflow-x-auto">
         <table className="w-full text-left text-sm text-slate-600 border-collapse">
-          <thead className="bg-slate-300/40 text-slate-500 font-semibold text-xs uppercase tracking-wide">
+          <thead className="text-white">
             {table.getHeaderGroups().map((headerGroup) => (
               <tr key={headerGroup.id}>
                 {headerGroup.headers.map((header) => (
                   <th
                     key={header.id}
-                    className={`px-5 py-4 whitespace-nowrap ${header.column.getCanSort() ? "cursor-pointer select-none" : ""}`}
+                    style={{
+                      width: header.id === "select" ? "50px" : "auto",
+                    }}
+                    // Tambahkan bg-orange-500 langsung di sini
+                    className={`sticky top-0 bg-orange-500 px-4 py-4 text-left text-[11px] font-bold uppercase tracking-wider transition-colors whitespace-nowrap ${
+                      header.column.getCanSort()
+                        ? "cursor-pointer hover:bg-orange-600"
+                        : ""
+                    }`}
                     onClick={header.column.getToggleSortingHandler()}
                   >
                     <div className="flex items-center gap-2">
@@ -114,7 +120,6 @@ export function BaseTable<TData>({
                             header.column.columnDef.header,
                             header.getContext(),
                           )}
-                      {/* Indikator Sorting */}
                       {{
                         asc: " 🔼",
                         desc: " 🔽",
@@ -178,18 +183,15 @@ export function BaseTable<TData>({
           </tbody>
         </table>
       </div>
-      {/* Footer / Pagination & CTA */}
 
+      {/* Footer / Pagination & CTA */}
       <div className="px-5 py-4 border-t border-slate-100 flex flex-col sm:flex-row justify-between items-center gap-4 bg-slate-50/30 rounded-b-xl">
-        {/* Indikator Jumlah Data */}
         <span className="text-sm text-slate-500">
           Showing {table.getRowModel().rows.length} of {data.length} items
         </span>
 
-        {/* Panggil komponen pagination di sini */}
         <PaginationControls table={table} />
 
-        {/* Slot untuk CTA dinamis (e.g. Proceed button) */}
         {footerAction}
       </div>
     </div>

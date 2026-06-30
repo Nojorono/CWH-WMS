@@ -59,6 +59,7 @@ export const CalculationSubTable = ({
   details: any[];
   globalFilter?: string;
 }) => {
+  
   const sortedDetails = React.useMemo(() => {
     if (!globalFilter) return details;
     return [...details].sort((a, b) => {
