@@ -12,6 +12,7 @@ import { useCallPlan } from "../hook/useCallPlan";
 import { processCallPlanData } from "../helper/callPlanMapper";
 import { CallPlanDetail } from "../../../../API/types/callPlan";
 import { showErrorToast } from "../../../../components/toast";
+import { BypassTimeController } from "../../OutboundSales/component/BypassTimeController";
 
 const MainTable = () => {
   const [globalFilter, setGlobalFilter] = useState<string>("");
@@ -73,7 +74,6 @@ const MainTable = () => {
   } = useCallPlan(paramGetCallplan, { enabled: shouldFetchCallPlan });
 
   useEffect(() => {
-
     if (!callPlanList || callPlanList.length === 0) {
       setMergedData([]);
       return;
@@ -95,11 +95,14 @@ const MainTable = () => {
     <div className="w-full space-y-4 p-4 bg-[#F8FAFC] min-h-screen">
       <PageBreadcrumb breadcrumbs={[{ title: "List Salesman Callplan" }]} />
 
+      <BypassTimeController />
+
       <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-xl shadow-sm flex items-start gap-3">
         <FaInfoCircle className="text-blue-500 mt-0.5 size-5 flex-shrink-0" />
         <div>
           <h4 className="text-sm font-bold text-blue-900">
-            Informasi Jadwal Generate DO Suggestion
+            Informasi Jadwal Generate DO Suggestion, VALID DATE{" "}
+            {TARGET_DATE}{" "}
           </h4>
           <p className="text-sm text-blue-800 mt-1">
             Sesuai SOP, Generate DO Suggestion hanya dapat dilakukan pada{" "}

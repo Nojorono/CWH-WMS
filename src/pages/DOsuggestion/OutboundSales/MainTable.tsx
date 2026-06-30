@@ -14,8 +14,12 @@ import { showErrorToast } from "../../../components/toast";
 import Swal from "sweetalert2";
 import {
   getCalculationErrorMessage,
+  getTargetDate,
+  isBypassMode,
   isCalculationTimeAllowed,
+  getServerDayjs,
 } from "../Suggestion/global/allowedDate";
+import { BypassTimeController } from "./component/BypassTimeController";
 
 // --- INTERFACES ---
 export interface GroupedSPBData {
@@ -48,14 +52,24 @@ const STEP_CONFIG: Record<
   },
 };
 
+const isFinalStatusAllowed = () => {
+  if (isBypassMode()) return true;
+  const now = getServerDayjs();
+  return now.hour() >= 10;
+};
+
 const MainTable = () => {
   // 1. STATE & AUTH
   const { user } = usePersistAuthStore.getState();
   const organization_name = user?.userDetail?.organization?.organization_name;
   const organization_id = user?.userDetail?.organizationId;
   const userNIK = user?.userDetail?.employee_id;
-  const TARGET_DATE = useMemo(() => dayjs().add(2, "day").format("YYYY-MM-DD"), []);
-  
+  const role_name = user?.role?.name;
+  const TARGET_DATE = useMemo(() => getTargetDate(role_name), [role_name]);
+
+  console.log("TARGET_DATE", TARGET_DATE);
+  console.log(getServerDayjs().format("HH:mm:ss"));
+
   const [currentStep, setCurrentStep] = useState<Step>("SUBMITTED");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("SUBMITTED");
   const [calculatedResults, setCalculatedResults] = useState<any[]>([]);
@@ -81,11 +95,22 @@ const MainTable = () => {
     enabled: isParamsReady,
   });
 
+  // FETCH DATA BY FILTER
   useEffect(() => {
     if (organization_id) {
+      // JANGAN fetch jika status FINAL tapi belum jam 10 dan BUKAN bypass
+      if (
+        statusFilter === "FINAL" &&
+        !isBypassMode() &&
+        getServerDayjs().hour() < 10
+      ) {
+        console.warn("Akses ditolak: Belum jam 10:00");
+        return; // Berhenti di sini, jangan jalankan fetch
+      }
+
       fetchSubmittedList(TARGET_DATE, organization_id, statusFilter);
     }
-  }, [organization_id, statusFilter, fetchSubmittedList]);
+  }, [organization_id, statusFilter, fetchSubmittedList, TARGET_DATE]);
 
   // 3. DATA TRANSFORMATION (BUSINESS LOGIC)
   const groupedAndMappedData = useMemo<GroupedSPBData[]>(() => {
@@ -204,9 +229,15 @@ const MainTable = () => {
     </div>
   );
 
+  const isFinalStatusAllowed = () => {
+    if (isBypassMode()) return true;
+    const now = getServerDayjs();
+    return now.hour() >= 10;
+  };
+
   const renderActiveStep = () => {
     switch (currentStep) {
-      case "SUBMITTED": 
+      case "SUBMITTED":
         return (
           <SPBSubmittedPage
             data={groupedAndMappedData}
@@ -258,13 +289,14 @@ const MainTable = () => {
   return (
     <div className="w-full space-y-4 p-4 bg-[#F8FAFC] min-h-screen">
       <PageBreadcrumb breadcrumbs={config.breadcrumbs} />
+      <BypassTimeController />
 
       {currentStep === "SUBMITTED" && (
         <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-xl shadow-sm flex items-start gap-3">
           <FaInfoCircle className="text-blue-500 mt-0.5 size-5 flex-shrink-0" />
           <div>
             <h4 className="text-sm font-bold text-blue-900">
-              Informasi SOP Kalkulasi Stock On Hand (SOH)
+              Informasi SOP Kalkulasi Stock On Hand (SOH), VALID DATE {TARGET_DATE}
             </h4>
             <p className="text-sm text-blue-800 mt-1">
               Tombol "Proceed to Calculation" hanya aktif pada{" "}
@@ -285,8 +317,27 @@ const MainTable = () => {
           {currentStep === "SUBMITTED" && (
             <select
               value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
-              className="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-200 rounded-xl shadow-[0_1px_2px_rgba(0,0,0,0.04)] hover:border-slate-300 transition-all cursor-pointer focus:outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10"
+              onChange={(e) => {
+                const selectedValue = e.target.value as StatusFilter;
+
+                // Validasi sebelum mengubah state
+                if (
+                  selectedValue === "FINAL" &&
+                  !isFinalStatusAllowed() &&
+                  !isBypassMode()
+                ) {
+                  Swal.fire({
+                    icon: "error",
+                    title: "Akses Ditolak",
+                    text: "Data FINAL hanya tersedia setelah pukul 10:00.",
+                    confirmButtonColor: "#ea580c",
+                  });
+                  return; // Jangan update state jika tidak valid
+                }
+
+                setStatusFilter(selectedValue);
+              }}
+              className="..."
             >
               <option value="SUBMITTED">SUBMITTED</option>
               <option value="FINAL">FINAL</option>
@@ -316,7 +367,6 @@ const MainTable = () => {
           )}
         </div>
       </div>
-
       <div>{isLoadingAll ? renderLoading() : renderActiveStep()}</div>
     </div>
   );
