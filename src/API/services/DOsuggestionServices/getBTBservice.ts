@@ -51,7 +51,7 @@ export const getBTB = async (params: CallPlanBindings): Promise<BTBFlatItem[]> =
         );
 
         // Tampung data dari partisi pertama
-        let allRows: any[] = response.data.data || [];
+        let allRows: any[] = response.data.data || [];        
 
         const statementHandle = response.data.statementHandle;
         const partitionInfo = response.data.resultSetMetaData?.partitionInfo || [];

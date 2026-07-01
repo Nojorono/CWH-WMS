@@ -3,12 +3,7 @@ import { CallPlanBindings } from '../../../../API/types/callPlan';
 import { BTBSalesmanGroup, BTBFlatItem } from '../../../../API/types/BTBdata';
 import { getBTB } from '../../../../API/services/DOsuggestionServices/getBTBservice';
 import { showErrorToast } from '../../../../components/toast';
-import {
-    getBTBErrorMessage,
-    getServerDayjs,
-    isBypassMode,
-    isGetBTBTimeAllowed
-} from '../../Suggestion/global/allowedDate';
+import { getBTBErrorMessage, getServerDayjs, isBypassMode, isGetBTBTimeAllowed } from '../../Suggestion/global/allowedDate';
 import dayjs from 'dayjs';
 
 interface UseGetBTBOptions {
@@ -22,41 +17,33 @@ export const useGetBTB = (
     const [data, setData] = useState<BTBSalesmanGroup[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [isSuccess, setIsSuccess] = useState(false);
+    const [isSuccess, setIsSuccess] = useState(false); // Tambahan state untuk penanda aman
 
     const cabang = params.CABANG;
     const startDate = params.CALL_PLAN_START_DATE;
     const isEnabled = options.enabled;
 
-    // Hitung tanggal BTB: H-2 dari tanggal Call Plan
     const btbDate = dayjs(startDate).subtract(2, 'day').format('YYYY-MM-DD');
 
     const fetchData = useCallback(async () => {
         setIsLoading(true);
         setError(null);
         setIsSuccess(false);
-``
+
         try {
-            // Karena service sekarang mengambil SEMUA partisi secara paralel, 
-            // proses await ini akan menunggu sampai semua ribuan row terkumpul.
             const flatResult: BTBFlatItem[] = await getBTB({
                 CABANG: cabang,
                 CALL_PLAN_START_DATE: btbDate
             });
 
-            console.log("flatResult BTB", flatResult);
-
-
-            if (!flatResult || !Array.isArray(flatResult) || flatResult.length === 0) {
+            if (!flatResult || !Array.isArray(flatResult)) {
                 setData([]);
-                setIsSuccess(true); // Data kosong karena sales memang tidak bawa barang
+                setIsSuccess(true); // Data kosong bukan berarti error, melainkan sales memang bawa 0 barang.
                 return;
             }
 
-            // Grouping data berdasarkan SALES_NIK
             const groupedData = flatResult.reduce((acc, curr) => {
                 const salesNik = curr.SALES_NIK || "UNKNOWN_NIK";
-
                 if (!acc[salesNik]) {
                     acc[salesNik] = {
                         SALES_NIK: salesNik,
@@ -67,41 +54,37 @@ export const useGetBTB = (
                         details: []
                     };
                 }
-
-                const rawQty = curr.QTY_BTB;
-                const finalQty = (!rawQty || rawQty === "") ? "0" : rawQty;
-                const statusItem = finalQty === "0" ? "Item habis" : "Tersedia";
-
                 acc[salesNik].details.push({
                     PRODUCT_SKU: curr.PRODUCT_SKU,
                     PRODUCT_NAME: curr.PRODUCT_NAME,
                     INVENTORYID: curr.INVENTORYID,
-                    QTY_BTB: finalQty,
-                    STATUS_ITEM: statusItem
+                    QTY_BTB: curr.QTY_BTB
                 });
-
                 return acc;
             }, {} as Record<string, BTBSalesmanGroup>);
 
             setData(Object.values(groupedData));
-            setIsSuccess(true);
+            setIsSuccess(true); // Tandai bahwa sinkronisasi DWH sukses
 
         } catch (err) {
             const errorMsg = err instanceof Error ? err.message : String(err);
             setError(errorMsg);
+            // Pindahkan Toast ke sini agar hanya muncul 1x saat gagal fetch
             showErrorToast("Gagal sinkronisasi data BTB dari DWH: " + errorMsg);
             console.error("Fetch BTB Error:", err);
         } finally {
             setIsLoading(false);
         }
-    }, [cabang, btbDate]); // Dependencies disesuaikan ke btbDate
+    }, [cabang, startDate]);
 
+    // Di dalam hook useGetBTB
     useEffect(() => {
-        // 1. Ambil waktu server yang akurat (jika dibutuhkan oleh fungsi validasi internal Anda)
+        // 1. Ambil waktu server yang akurat
         const serverNow = getServerDayjs();
 
-        // 2. Validasi waktu tarik data
+        // 2. Gunakan fungsi validasi Anda
         const isAllowed = isGetBTBTimeAllowed(startDate);
+
         const isValidBranch = cabang && cabang !== "null" && cabang !== "undefined";
         const isValidDate = startDate && startDate !== "null" && startDate !== "undefined";
 
@@ -110,13 +93,17 @@ export const useGetBTB = (
             if (isAllowed || isBypassMode()) {
                 fetchData();
             } else {
+                // Tampilkan error jika mencoba tarik data di luar jam 09:00 - 10:00
                 setError(getBTBErrorMessage(startDate));
-                setData([]);
+                // showErrorToast(getBTBErrorMessage(startDate));
+                setData([]); // Bersihkan data agar tidak over-picking
             }
         } else if (!isEnabled) {
             setData([]);
         }
     }, [fetchData, isEnabled, cabang, startDate]);
+
+    console.log("GET DATA BTB", data);
 
     return { data, isLoading, error, isSuccess, refetch: fetchData };
 };

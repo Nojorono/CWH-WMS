@@ -1,12 +1,13 @@
-import React, { useMemo } from "react";
+import React, { useEffect, useMemo } from "react";
 import { ColumnDef } from "@tanstack/react-table";
 import { FaArrowRight } from "react-icons/fa";
-import { BaseTable } from "../component/BaseTable";
 import Button from "../../../../components/ui/button/Button";
 import { GroupedSPBData } from "../MainTable";
 import { DOSuggestionDetail } from "../../../../API/types/draftDOsuggestion";
 import { FaPrint } from "react-icons/fa6";
 import { formatDateTimeIndo } from "../../../../helper/FormatDateTime";
+import { BaseTable } from "../component/BaseTable";
+import { useStoreItem } from "../../../../DynamicAPI/stores/Store/MasterStore";
 
 interface SPBSubmittedPageProps {
   data: GroupedSPBData[];
@@ -21,65 +22,98 @@ const StandardSubTable = ({
   details: DOSuggestionDetail[];
   status?: string;
 }) => {
-  return (
-    <div className="p-4 bg-slate-50/50">
-      <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
-        {/* Header dengan informasi jumlah item */}
-        <div className="flex justify-between items-center px-5 py-4 border-b border-slate-100">
-          <h4 className="font-semibold text-slate-800 text-sm">
-            Product Detail ({details.length} Items)
-          </h4>
-        </div>
+  const { fetchAll, list: itemList } = useStoreItem();
 
-        {/* Scrollable Content */}
-        <div className="overflow-x-auto max-h-[400px] overflow-y-auto">
-          {/* Ubah w-full menjadi w-max agar lebar tabel hanya mengikuti isi konten */}
-          <table className="w-max min-w-full text-left text-sm text-slate-600">
-            <thead className="bg-slate-50 text-slate-500 font-medium text-xs sticky top-0 z-10 shadow-sm whitespace-nowrap">
-              <tr>
-                {/* Padding dikurangi dari px-5 py-3 menjadi px-3 py-2 */}
-                <th className="px-3 py-2">No</th>
-                <th className="px-3 py-2">SKU Name</th>
-                <th className="px-3 py-2 text-right">Locked Qty</th>
-                <th className="px-3 py-2 text-right">BTB Qty</th>
-                <th className="px-3 py-2 text-right">Status</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100 whitespace-nowrap">
-              {details.map((item, idx) => (
-                <tr key={idx} className="hover:bg-slate-50">
-                  {/* Padding di setiap sel juga dirapatkan */}
-                  <td className="px-3 py-2 text-xs font-mono text-slate-400">
-                    {idx + 1}
-                  </td>
-                  <td className="px-3 py-2 font-medium text-slate-700">
+  // Fetch master items saat komponen dimuat
+  useEffect(() => {
+    fetchAll();
+  }, []); // Anda bisa menambahkan dependency yang sesuai jika perlu
+  
+
+  // Menggabungkan data details dengan master item untuk mendapatkan nama produk
+  const processedData = useMemo(() => {
+    const mappedData = details.map((item: any) => {
+      const matchedItem = itemList?.find(
+        (master: any) => master.sku === item.item_code,
+      );
+      const itemName = matchedItem ? matchedItem.description : item.item_code;
+
+      return { ...item, itemName };
+    });
+
+    return mappedData.sort((a, b) => {
+      return a.itemName.localeCompare(b.itemName);
+    });
+  }, [details, itemList]);
+
+  // Handle Empty State
+  if (!details?.length) {
+    return (
+      <div className="text-center py-6 bg-slate-50 border border-dashed border-slate-200 rounded-lg text-slate-400 text-sm italic mx-4 my-2">
+        Data product details kosong.
+      </div>
+    );
+  }
+
+  return (
+    // Wrapper luar menggunakan background sedikit gelap untuk membedakan dari baris utama
+    <div className="p-3 bg-slate-50/80 border-t border-slate-100 shadow-inner">
+      {/* Header Panel */}
+      <div className="flex justify-between items-center mb-3 px-1">
+        <h4 className="font-semibold text-slate-700 text-xs uppercase tracking-wider flex items-center gap-2">
+          Product Details
+          <span className="bg-blue-100 border border-blue-200 text-blue-700 py-0.5 px-2 rounded-full text-[10px] font-bold">
+            {processedData.length} Items
+          </span>
+        </h4>
+      </div>
+
+      {/* Scrollable Container untuk banyak item */}
+      {/* max-h-[300px] akan memunculkan scroll jika item terlalu banyak */}
+      <div className="max-h-[300px] overflow-y-auto pr-1 custom-scrollbar">
+        {/* Grid System: 1 kolom di mobile, 2 di tablet, 3-4 kolom di layar lebar */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2.5 pb-1">
+          {processedData.map((item, idx) => (
+            // Mini Card Item
+            <div
+              key={idx}
+              className="group flex flex-col p-2.5 bg-white border border-slate-200 rounded-lg hover:border-blue-400 hover:shadow-md transition-all duration-200 cursor-default relative overflow-hidden"
+            >
+              {/* Highlight bar saat di-hover */}
+              <div className="absolute top-0 right-0 w-1 h-full bg-blue-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+
+              {/* Bagian Kiri: Nomor & Nama SKU */}
+              <div className="flex items-start gap-2.5 mb-2 overflow-hidden">
+                {/* Badge Nomor */}
+                <span className="flex-shrink-0 flex items-center justify-center min-w-[24px] h-6 rounded-md bg-slate-50 border border-slate-100 text-slate-400 text-[10px] font-bold group-hover:bg-blue-50 group-hover:text-blue-600 group-hover:border-blue-200 transition-colors">
+                  {idx + 1}
+                </span>
+
+                {/* Teks Nama Item & SKU */}
+                <div className="flex flex-col w-full overflow-hidden">
+                  <span
+                    className="text-xs font-bold text-slate-800 truncate"
+                    title={item.itemName}
+                  >
+                    {item.itemName}
+                  </span>
+                  <span className="text-[10px] font-mono text-slate-400 mt-0.5">
                     {item.item_code}
-                  </td>
-                  <td className="px-3 py-2 text-right">
-                    {item.item_qty_submitted}
-                  </td>
-                  <td className="px-3 py-2 text-right font-semibold text-blue-600">
-                    {item.qty_btb}
-                  </td>
-                  <td className="px-3 py-2 text-right">
-                    {item.no_found_in_btb ? (
-                      <span className="text-[10px] uppercase font-bold text-red-700 bg-red-100 px-1.5 py-0.5 rounded">
-                        Tak Ada di BTB
-                      </span>
-                    ) : item.qty_btb === "0" ? (
-                      <span className="text-[10px] uppercase font-bold text-amber-700 bg-amber-100 px-1.5 py-0.5 rounded">
-                        Item Habis
-                      </span>
-                    ) : (
-                      <span className="text-[10px] uppercase font-bold text-emerald-700 bg-emerald-100 px-1.5 py-0.5 rounded">
-                        Tersedia
-                      </span>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                  </span>
+                </div>
+              </div>
+
+              {/* Bagian Bawah: Qty Submitted */}
+              <div className="flex flex-col items-end pt-2 border-t border-slate-100 mt-auto">
+                <span className="text-[9px] uppercase tracking-wide text-slate-400 font-medium mb-0.5">
+                  Locked Qty
+                </span>
+                <span className="text-xl font-bold text-blue-600">
+                  {item.item_qty_submitted}
+                </span>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     </div>
@@ -104,6 +138,9 @@ export const SPBSubmittedPage = ({
     );
   }, [data]);
 
+  console.log("DATA DO SUBMITTED", data);
+  
+
   const columns = useMemo<ColumnDef<any>[]>(
     () => [
       { accessorKey: "callplan_number", header: "Callplan Number" },
@@ -127,16 +164,16 @@ export const SPBSubmittedPage = ({
         cell: (info) => info.getValue<string>(),
       },
       { accessorKey: "status", header: "status" },
-      {
-        accessorKey: "createdAt",
-        header: "created at",
-        cell: (info) => formatDateTimeIndo(info.getValue<string>()),
-      },
-      {
-        accessorKey: "updatedAt",
-        header: "updated at",
-        cell: (info) => formatDateTimeIndo(info.getValue<string>()),
-      },
+      // {
+      //   accessorKey: "createdAt",
+      //   header: "created at",
+      //   cell: (info) => formatDateTimeIndo(info.getValue<string>()),
+      // },
+      // {
+      //   accessorKey: "updatedAt",
+      //   header: "updated at",
+      //   cell: (info) => formatDateTimeIndo(info.getValue<string>()),
+      // },
     ],
     [],
   );
