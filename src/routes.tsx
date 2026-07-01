@@ -167,7 +167,7 @@ export function AppRoutes() {
       "/outbound_integration_log": <ShipConfirmLog />,
       "/do_suggestion": <DOsuggestionMain />,
       "/outbound_sales": <OutboundSales />,
-      "/do_suggestion_integration": <IntegrationMonitoringPage />,
+      "/do_su_log_integration": <IntegrationMonitoringPage />,
     };
     return map[path] || <DefaultPage />;
   }

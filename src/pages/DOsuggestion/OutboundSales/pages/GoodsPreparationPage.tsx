@@ -16,6 +16,7 @@ import {
   isGetBTBTimeAllowed,
 } from "../../Suggestion/global/allowedDate";
 import { exportSummaryToExcel } from "../hook/exportSummaryExcel";
+import axiosInstance from "../../../../DynamicAPI/AxiosInstance";
 
 interface GoodsPreparationPageProps {
   targetDate: string;
@@ -172,25 +173,12 @@ export const GoodsPreparationPage = ({
         (btb) => btb.SALES_NIK.trim() === doDocument.sales_nik.trim(),
       );
 
-      console.log(
-        "Matching NIK:",
-        doDocument.sales_nik,
-        "Found:",
-        !!salesmanBTB,
-      );
-
       const updatedDetails = doDocument.details.map((doDetail: any) => {
         const skuMatch = salesmanBTB?.details.find(
           (btbLine: any) =>
             btbLine.PRODUCT_SKU.trim() === doDetail.item_code.trim(),
         );
 
-        console.log(
-          "Matching SKU:",
-          doDetail.item_code,
-          "Match:",
-          skuMatch?.QTY_BTB,
-        );
 
         return { ...doDetail, qty_btb: skuMatch ? skuMatch.QTY_BTB : 0 };
       });
@@ -205,14 +193,14 @@ export const GoodsPreparationPage = ({
 
     const idData = rowData.id;
 
-    // try {
-    //   const response = await axiosInstance.post(
-    //     `/do-suggestion/${idData}/integrate`,
-    //   );
-    //   return response.data;
-    // } catch (error) {
-    //   throw error;
-    // }
+    try {
+      const response = await axiosInstance.post(
+        `/do-suggestion/${idData}/integrate`,
+      );
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
   };
 
   const columns = useMemo<ColumnDef<DOSuggestionData>[]>(
@@ -285,12 +273,9 @@ export const GoodsPreparationPage = ({
         globalFilter={globalFilter}
         setGlobalFilter={setGlobalFilter}
         isExpandable={true}
-        // Pastikan melempar row.original.details
         renderSubComponent={(row) => <PrepDetailTable details={row.details} />}
         headerActions={
-          // 1. Tambahkan flex-1 dan min-w-full agar container ini memaksa melar memenuhi sisa ruang BaseTable
           <div className="flex items-center flex-1 w-full min-w-full gap-4">
-            {/* --- BAGIAN KIRI: Notifikasi Warning --- */}
             <div>
               {(!isTimeAllowed || errBTB) && (
                 <span className="px-3 py-1.5 text-xs font-bold text-red-600 bg-red-50 border border-red-200 rounded-lg flex items-center w-fit shadow-sm whitespace-nowrap">
@@ -307,12 +292,12 @@ export const GoodsPreparationPage = ({
             <div className="flex items-center gap-2 ml-auto">
               <button
                 onClick={handleExportSummary}
-                // disabled={!isBTBSuccess || !isTimeAllowed}
-                // className={`flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-lg shadow-sm transition-colors ${
-                //   !isBTBSuccess || !isTimeAllowed
-                //     ? "bg-slate-200 text-slate-400 cursor-not-allowed"
-                //     : "text-slate-600 bg-white border border-slate-300 hover:bg-slate-50"
-                // }`}
+                disabled={!isBTBSuccess || !isTimeAllowed}
+                className={`flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-lg shadow-sm transition-colors ${
+                  !isBTBSuccess || !isTimeAllowed
+                    ? "bg-slate-200 text-slate-400 cursor-not-allowed"
+                    : "text-slate-600 bg-white border border-slate-300 hover:bg-slate-50"
+                }`}
               >
                 <FaDownload /> Summary
               </button>

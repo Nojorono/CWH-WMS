@@ -96,15 +96,15 @@ const MainTable = () => {
   useEffect(() => {
     if (!organization_id || !TARGET_DATE) return;
 
-    // Cek jam akses
-    if (
-      statusFilter === "FINAL" &&
-      !isBypassMode() &&
-      getServerDayjs().hour() < 10
-    ) {
-      showErrorToast("Akses ditolak: Belum jam 10:00");
-      return;
-    }
+    // // Cek jam akses
+    // if (
+    //   statusFilter === "FINAL" &&
+    //   !isBypassMode() &&
+    //   getServerDayjs().hour() < 10
+    // ) {
+    //   showErrorToast("Akses ditolak: Belum jam 10:00");
+    //   return;
+    // }
 
     // Fetch data SPB
     fetchSubmittedList(TARGET_DATE, organization_id, statusFilter);
@@ -300,7 +300,7 @@ const MainTable = () => {
   return (
     <div className="w-full space-y-4 p-4 bg-[#F8FAFC] min-h-screen">
       <PageBreadcrumb breadcrumbs={config.breadcrumbs} />
-      {/* <BypassTimeController /> */}
+      <BypassTimeController />
 
       {currentStep === "SUBMITTED" && (
         <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-xl shadow-sm flex items-start gap-3">
@@ -331,20 +331,20 @@ const MainTable = () => {
               onChange={(e) => {
                 const selectedValue = e.target.value as StatusFilter;
 
-                // Validasi sebelum mengubah state
-                if (
-                  selectedValue === "FINAL" &&
-                  !isFinalStatusAllowed() &&
-                  !isBypassMode()
-                ) {
-                  Swal.fire({
-                    icon: "error",
-                    title: "Akses Ditolak",
-                    text: "Data FINAL hanya tersedia setelah pukul 10:00.",
-                    confirmButtonColor: "#ea580c",
-                  });
-                  return; // Jangan update state jika tidak valid
-                }
+                // // Validasi sebelum mengubah state
+                // if (
+                //   selectedValue === "FINAL" &&
+                //   !isFinalStatusAllowed() &&
+                //   !isBypassMode()
+                // ) {
+                //   Swal.fire({
+                //     icon: "error",
+                //     title: "Akses Ditolak",
+                //     text: "Data FINAL hanya tersedia setelah pukul 10:00.",
+                //     confirmButtonColor: "#ea580c",
+                //   });
+                //   return; // Jangan update state jika tidak valid
+                // }
 
                 setStatusFilter(selectedValue);
               }}
