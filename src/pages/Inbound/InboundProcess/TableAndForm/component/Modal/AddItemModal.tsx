@@ -24,7 +24,7 @@ export default function AddItemModal({
   isOpen: boolean;
   onClose: () => void;
   onSave: (item: ItemForm) => void;
-  isDOsuggestion: boolean;
+  isDOsuggestion?: boolean;
 }) {
   const { fetchAll, list: itemList } = useStoreItem();
   const { fetchAll: fetchAllUom, list: uomList } = useStoreUom();

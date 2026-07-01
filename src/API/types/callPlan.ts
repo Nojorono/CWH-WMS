@@ -18,6 +18,9 @@ export interface CallPlanDetail {
     do_status?: string;
     trip_type?: string
     inventoryid?: string;
+    createdAt?: string
+    updatedAt?: string
+    created_by?: string
 }
 
 export interface SupervisorData {

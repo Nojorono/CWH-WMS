@@ -2,10 +2,11 @@ import React, { useEffect, useState } from "react";
 import { useForm, Controller } from "react-hook-form";
 import Select from "react-select";
 import DatePicker from "../../../../components/form/date-picker";
-import { useUserStore } from "../../../../API/store/MasterStore/MasterUserStore";
+// import { useUserStore } from "../../../../API/store/MasterStore/MasterUserStore";
 import { showErrorToast, showSuccessToast } from "../../../../components/toast";
 import { usePagePermissions } from "../../../../utils/UserPermission/UserPagePermissions";
 import { usePersistAuthStore } from "../../../../API/store/AuthStore/PersistAuthStore";
+import { useStoreUser } from "../../../../DynamicAPI/stores/Store/MasterStore";
 
 interface Option<T = string | number> {
   label: string;
@@ -55,7 +56,8 @@ const FormDetailUser: React.FC<FormDetailUserProps> = ({
   optionBranch,
   optionRegion,
 }) => {
-  const { updateUser } = useUserStore();
+  const { updateData: updateUser } = useStoreUser();
+
   const [isEditable, setIsEditable] = useState(false);
   const { canUpdate, canManage } = usePagePermissions();
   const user = usePersistAuthStore((state) => state.user);
@@ -179,10 +181,7 @@ const FormDetailUser: React.FC<FormDetailUserProps> = ({
     };
 
     const employeeId = defaultValues.employee_id;
-
-    const result = await updateUser(employeeId, payload);
-    if (!result.ok) return;
-    showSuccessToast("Berhasil memperbarui user");
+    await updateUser(employeeId, payload);
     onClose();
   };
 

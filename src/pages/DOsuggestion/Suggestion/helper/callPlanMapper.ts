@@ -22,9 +22,10 @@ export const processCallPlanData = async (callPlanList: any[] = []) => {
 
             let isGenerated = false;
             let currentStatus = null;
+            let createdBy = null
 
             // --- LOGIKA BARU UNTUK TRIP_TYPE ---
-            let tripType = ""; 
+            let tripType = "";
 
             if (item.CALL_PLAN_NUMBER) {
                 tripType = item.ISLUARKOTA === true ? "MD" : "SD";
@@ -32,10 +33,13 @@ export const processCallPlanData = async (callPlanList: any[] = []) => {
 
                 try {
                     const existingData = await checkIsGenerated(item.CALL_PLAN_NUMBER);
+
                     if (existingData) {
                         isGenerated = true;
                         currentStatus = existingData.status || "DRAFT";
+                        createdBy = existingData.created_by;
                     }
+
                 } catch (error) {
                     console.error(`Gagal mengecek status untuk ${item.CALL_PLAN_NUMBER}`, error);
                     isGenerated = false;
@@ -47,7 +51,8 @@ export const processCallPlanData = async (callPlanList: any[] = []) => {
                 ...item,
                 is_generated: isGenerated,
                 do_status: currentStatus,
-                trip_type: tripType, // Penambahan field baru di sini
+                trip_type: tripType,
+                created_by: createdBy
             };
         })
     );

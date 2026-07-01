@@ -1,6 +1,7 @@
+import dayjs from "dayjs";
 import React, { useState, useMemo } from "react";
-import { FaTrash } from "react-icons/fa";
 import { FaRotate } from "react-icons/fa6";
+import { formatDateTimeIndo } from "../../../../helper/FormatDateTime";
 
 interface SKUSummaryPanelProps {
   summary: any[];
@@ -125,21 +126,20 @@ export const SKUSummaryPanel = ({
                     <span className="text-[14px] uppercase tracking-wider font-bold text-slate-500">
                       {item.sku}
                     </span>
-                    <span className="text-[11px] font-semibold text-slate-800leading-tight">
+
+                    <span className="text-[11px] font-semibold text-slate-800 leading-tight">
                       {item.item_description}
                     </span>
+
+                    {item.createdAt && (
+                      <span className="mt-1 text-[10px] text-slate-500">
+                        Generate at{" "}
+                        <span className="font-medium">
+                          {formatDateTimeIndo(item.createdAt)}
+                        </span>
+                      </span>
+                    )}
                   </div>
-                  <span
-                    className={`text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wide border ${
-                      isAvailable
-                        ? "text-emerald-600 bg-white border-emerald-200"
-                        : isLessStock
-                          ? "text-amber-700 bg-amber-100 border-amber-200"
-                          : "text-red-600 bg-red-100 border-red-200"
-                    }`}
-                  >
-                    {label}
-                  </span>
                 </div>
 
                 {/* Metrics Section: Menggunakan Grid agar sejajar rapi */}
@@ -152,6 +152,7 @@ export const SKUSummaryPanel = ({
                       {item.soh.toLocaleString()}
                     </p>
                   </div>
+
                   <div className="text-right">
                     <p className="text-[9px] uppercase tracking-wider text-slate-400 font-medium">
                       Total Req

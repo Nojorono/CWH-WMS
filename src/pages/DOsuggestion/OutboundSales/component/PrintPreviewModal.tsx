@@ -1,195 +1,13 @@
-// import React from "react";
-// import { FaTimes, FaPrint, FaChevronDown } from "react-icons/fa";
-// import { DOSuggestionData } from "../../../../API/types/draftDOsuggestion";
-// import { formatDateTimeIndo } from "../../../../helper/FormatDateTime";
-
-// interface PrintPreviewModalProps {
-//   isOpen: boolean;
-//   onClose: () => void;
-//   data: DOSuggestionData | null; // Data spesifik baris yang di-klik
-// }
-
-// export const PrintPreviewModal = ({
-//   isOpen,
-//   onClose,
-//   data,
-// }: PrintPreviewModalProps) => {
-//   if (!isOpen || !data) return null;
-
-//   const handlePrint = () => {
-//     console.log("Printing document for SPB:", data.callplan_number);
-//   };
-
-//   return (
-//     <div className="fixed inset-0 z-9999 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
-//       {/* Modal Container */}
-//       <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg flex flex-col max-h-[90vh] overflow-hidden animate-in fade-in zoom-in duration-200 ">
-//         {/* Header */}
-//         <div className="flex justify-between items-center px-6 py-4 border-b border-slate-100 bg-slate-50/50">
-//           <h3 className="font-semibold text-slate-800 flex items-center gap-2">
-//             <FaPrint className="text-orange-500" /> Print Preview
-//           </h3>
-//           <button
-//             onClick={onClose}
-//             className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-colors"
-//           >
-//             <FaTimes size={16} />
-//           </button>
-//         </div>
-
-//         {/* Print Preview Area (Scrollable) */}
-//         <div className="flex-1 overflow-y-auto p-6 bg-slate-100">
-//           <div className="min-h-full w-full flex items-center justify-center p-6">
-//             {/* Kertas Dokumen */}
-//             <div className="bg-white shadow-sm w-full max-w-[400px] p-8 border border-slate-200 text-xs font-mono text-slate-800">
-//               {/* Kop Dokumen */}
-//               <div className="text-center font-bold text-sm mb-4 pb-2 uppercase">
-//                 SPB AMO {data.organization?.organization_name || "Cabang"}
-//               </div>
-
-//               {/* Info Dokumen */}
-//               <div className="grid grid-cols-[100px_10px_1fr] gap-y-1 mb-6">
-//                 <span>Tanggal SPB</span>
-//                 <span>:</span>
-//                 <span>{formatDateTimeIndo(data.createdAt)}</span>
-
-//                 <span>No. SPB</span>
-//                 <span>:</span>
-//                 <span>{data.spb_number}</span>
-
-//                 <span>NIK Salesman</span>
-//                 <span>:</span>
-//                 <span>{data.sales_nik}</span>
-
-//                 <span>Nama Salesman</span>
-//                 <span>:</span>
-//                 <span>{data.sales_name}</span>
-//               </div>
-
-//               {/* Tabel Item */}
-//               <table className="w-full text-left text-black text-sm">
-//                 <thead>
-//                   <tr className="border-b border-black border-dashed">
-//                     <th className="py-2 font-bold">SKU</th>
-//                     <th className="py-2 font-bold text-center">SPB</th>
-//                     <th className="py-2 font-bold text-center">BTB</th>
-//                     <th className="py-2 font-bold text-right">TOP UP</th>
-//                   </tr>
-//                 </thead>
-//                 <tbody className="divide-y divide-black divide-dashed">
-//                   {(() => {
-//                     // 1. Kalkulasi dan Filter data terlebih dahulu
-//                     const filteredDetails = (data.details || [])
-//                       .map((item: any) => {
-//                         const btbQty =
-//                           item.qty_btb && item.qty_btb !== "-"
-//                             ? Number(item.qty_btb)
-//                             : 0;
-//                         const finalQty = Number(item.item_qty_final || 0);
-//                         const topUpValue = finalQty - btbQty;
-
-//                         // Bawa data kalkulasi ke proses selanjutnya
-//                         return { ...item, btbQty, finalQty, topUpValue };
-//                       })
-//                       .filter((item: any) => item.topUpValue > 0); // Buang yang Top Up-nya 0 atau minus
-
-//                     // 2. Render baris jika ada data yang Top Up-nya > 0
-//                     if (filteredDetails.length > 0) {
-//                       return filteredDetails.map((item: any, idx: number) => (
-//                         <tr key={item.id || item.item_code || idx}>
-//                           <td className="py-2">{item.item_code}</td>
-
-//                           {/* SPB */}
-//                           <td className="py-2 text-center">
-//                             {item.item_qty_submitted}
-//                           </td>
-
-//                           {/* BTB */}
-//                           <td className="py-2 text-center">
-//                             {item.qty_btb && item.qty_btb !== "-"
-//                               ? item.qty_btb
-//                               : ""}
-//                           </td>
-
-//                           {/* TOP UP (Hasil Kalkulasi) */}
-//                           <td className="py-2 text-right text-base font-semibold">
-//                             {item.topUpValue}
-//                           </td>
-//                         </tr>
-//                       ));
-//                     }
-
-//                     // 3. Render fallback jika KOSONG (atau semua barang Top Up-nya 0)
-//                     return (
-//                       <tr>
-//                         <td
-//                           colSpan={4}
-//                           className="py-4 text-center italic text-black font-medium"
-//                         >
-//                           - KOSONG -
-//                         </td>
-//                       </tr>
-//                     );
-//                   })()}
-//                 </tbody>
-//               </table>
-//               {/* Tanda Tangan */}
-//               <div className="flex justify-between mt-12 text-center">
-//                 <div>
-//                   <p className="mb-12">Dibuat,</p>
-//                   <p className="border-b border-slate-800 px-4 inline-block">
-//                     ( Admin Gudang )
-//                   </p>
-//                 </div>
-//                 <div>
-//                   <p className="mb-12">Salesman,</p>
-//                   <p className="border-b border-slate-800 px-4 inline-block">
-//                     ( {data.sales_name} )
-//                   </p>
-//                 </div>
-//               </div>
-//             </div>
-//           </div>
-//         </div>
-
-//         {/* Footer Actions */}
-//         <div className="px-6 py-4 border-t border-slate-100 flex items-center justify-between bg-white">
-//           {/* Printer Selector */}
-//           <div className="relative">
-//             <select className="appearance-none bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-lg px-4 py-2.5 pr-10 focus:outline-none focus:ring-2 focus:ring-orange-500/20 w-48 font-medium">
-//               <option>Printer L120 (Kasir)</option>
-//               <option>Printer Thermal B</option>
-//               <option>Save as PDF</option>
-//             </select>
-//             <FaChevronDown
-//               className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
-//               size={12}
-//             />
-//           </div>
-
-//           <button
-//             onClick={handlePrint}
-//             className="flex items-center gap-2 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white px-6 py-2.5 rounded-lg text-sm font-semibold shadow-md shadow-orange-500/20 transition-all hover:shadow-lg"
-//           >
-//             <FaPrint size={14} /> Print
-//           </button>
-//         </div>
-//       </div>
-//     </div>
-//   );
-// };
-
-import React from "react";
-import { FaTimes, FaPrint, FaChevronDown } from "react-icons/fa";
-import { DOSuggestionData } from "../../../../API/types/draftDOsuggestion";
-import { formatDateTimeIndo } from "../../../../helper/FormatDateTime";
-// 1. Import dayjs
+import React, { useEffect, useRef } from "react";
+import { useReactToPrint } from "react-to-print";
+import { FaPrint, FaTimes } from "react-icons/fa";
 import dayjs from "dayjs";
+import { useStoreItem } from "../../../../DynamicAPI/stores/Store/MasterStore";
 
 interface PrintPreviewModalProps {
   isOpen: boolean;
   onClose: () => void;
-  data: DOSuggestionData | null;
+  data: any | null;
 }
 
 export const PrintPreviewModal = ({
@@ -197,160 +15,211 @@ export const PrintPreviewModal = ({
   onClose,
   data,
 }: PrintPreviewModalProps) => {
+  const { fetchAll, list: itemList } = useStoreItem();
+  useEffect(() => {
+    fetchAll();
+  }, []);
+
+  const componentRef = useRef<HTMLDivElement>(null);
+  const handlePrint = useReactToPrint({
+    contentRef: componentRef,
+    documentTitle: `SPB_${data?.spb_number || "Document"}`,
+    pageStyle: `
+      @page {
+        size: auto;
+        margin: 0mm;
+      }
+      @media print {
+        html, body {
+          margin: 0;
+          padding: 0;
+          background-color: white;
+        }
+      }
+    `,
+  });
+
   if (!isOpen || !data) return null;
 
-  const handlePrint = () => {
-    console.log("Printing document for SPB:", data.callplan_number);
-    // Tambahkan logika print aktual di sini nanti (misal window.print())
-  };
+  // --- LOGIKA PERSIAPAN DATA ---
+  const processedDetails = (data.details || [])
+    .map((item: any) => {
+      // 1. Kalkulasi Qty
+      const btbQty =
+        item.qty_btb && item.qty_btb !== "-" ? Number(item.qty_btb) : 0;
+      const finalQty = Number(item.item_qty_final || 0);
+      const topUpValue = finalQty - btbQty;
+
+      const matchedItem = itemList.find(
+        (master: any) => master.sku === item.item_code,
+      );
+
+      const itemName = matchedItem ? matchedItem.description : item.item_code;
+
+      return {
+        ...item,
+        calculated_btb: btbQty,
+        calculated_top_up: topUpValue > 0 ? topUpValue : 0,
+        item_description: itemName, // 🔴 Simpan nama panjang di sini
+      };
+    })
+    .filter((item: any) => item.calculated_top_up > 0);
 
   return (
-    <div className="fixed inset-0 z-9999 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
-      {/* Modal Container */}
-      <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg flex flex-col max-h-[90vh] overflow-hidden animate-in fade-in zoom-in duration-200 ">
-        {/* Header (Tetap Sama) */}
-        <div className="flex justify-between items-center px-6 py-4 border-b border-slate-100 bg-slate-50/50">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+      <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg flex flex-col max-h-[90vh] overflow-hidden animate-in fade-in zoom-in duration-200 flex justify-center">
+        {/* Header Modal */}
+        <div className="flex justify-between items-center px-6 py-4 border-b border-slate-100 bg-slate-50/80">
           <h3 className="font-semibold text-slate-800 flex items-center gap-2">
             <FaPrint className="text-orange-500" /> Print Preview
           </h3>
           <button
             onClick={onClose}
-            className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-colors"
+            className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-200 rounded-full transition-colors"
           >
             <FaTimes size={16} />
           </button>
         </div>
 
         {/* Print Preview Area */}
-        <div className="flex-1 overflow-y-auto p-6 bg-slate-100">
-          <div className="min-h-full w-full flex items-center justify-center p-6">
-            {/* AREA KERTAS DOKUMEN YANG AKAN DI-PRINT */}
-            <div className="bg-white shadow-sm w-full max-w-[400px] p-8 border border-slate-200 text-xs font-mono text-slate-800 relative">
-              {/* Kop Dokumen */}
-              <div className="text-center font-bold text-sm mb-4 pb-2 uppercase border-b border-dashed border-slate-400">
-                SPB AMO {data.organization?.organization_name || "Cabang"}
-              </div>
+        <div className="flex-1 overflow-y-auto p-6 bg-slate-200">
+          {/* ========================================================== */}
+          {/* AREA KERTAS DOKUMEN YANG AKAN DI-PRINT                     */}
+          {/* ========================================================== */}
+          <div
+            ref={componentRef}
+            className="bg-white shadow-md w-full max-w-[380px] p-6 print:p-0 print:px-4 print:pt-4 print:pb-8 text-[12px] text-black relative mx-auto h-fit"
+            style={{ fontFamily: "monospace" }}
+          >
+            {/* Kop Dokumen */}
+            <div className="text-center mb-4">
+              <h2 className="font-extrabold text-base tracking-widest uppercase">
+                SPB AMO {data.organization?.organization_name || "CABANG"}
+              </h2>
+              <div className="border-b-2 border-black border-dashed mt-2"></div>
+            </div>
 
-              {/* Info Dokumen */}
-              <div className="grid grid-cols-[100px_10px_1fr] gap-y-1 mb-6">
-                <span>Tanggal SPB</span>
-                <span>:</span>
-                <span>{formatDateTimeIndo(data.createdAt)}</span>
+            {/* Info Dokumen */}
+            {/* grid layout diatur agar teks panjang seperti nama & SPB bisa break-words (turun baris) dengan rapi */}
+            <div className="grid grid-cols-[90px_10px_1fr] gap-y-1.5 mb-5 font-semibold leading-snug">
+              <span>Tanggal SPB</span>
+              <span>:</span>
+              <span className="break-words">
+                {dayjs(data.createdAt).format("DD-MM-YYYY, HH:mm")}
+              </span>
 
-                <span>No. SPB</span>
-                <span>:</span>
-                <span>{data.spb_number}</span>
+              <span>No. SPB</span>
+              <span>:</span>
+              <span className="break-all">{data.spb_number}</span>
 
-                <span>NIK Salesman</span>
-                <span>:</span>
-                <span>{data.sales_nik}</span>
+              <span>NIK Salesman</span>
+              <span>:</span>
+              <span className="break-words">{data.sales_nik}</span>
 
-                <span>Nama Salesman</span>
-                <span>:</span>
-                <span>{data.sales_name}</span>
-              </div>
+              <span>Nama Salesman</span>
+              <span>:</span>
+              <span className="break-words leading-tight">
+                {data.sales_name}
+              </span>
+            </div>
 
-              {/* Tabel Item (Tetap Sama) */}
-              <table className="w-full text-left text-black text-sm mb-8">
-                <thead>
-                  <tr className="border-b border-black border-dashed">
-                    <th className="py-2 font-bold">SKU</th>
-                    <th className="py-2 font-bold text-center">SPB</th>
-                    <th className="py-2 font-bold text-center">BTB</th>
-                    <th className="py-2 font-bold text-right">TOP UP</th>
+            <div className="border-b-2 border-black border-dashed mb-2"></div>
+
+            {/* Tabel Item - table-fixed sangat penting di sini */}
+            <table className="w-full text-left text-black text-[12px] table-fixed mb-4">
+              <thead>
+                <tr className="border-b border-black border-dashed">
+                  <th className="py-2 w-[40%] font-bold align-bottom">SKU</th>
+                  <th className="py-2 w-[18%] font-bold text-right align-bottom">
+                    SPB
+                  </th>
+                  <th className="py-2 w-[18%] font-bold text-right align-bottom">
+                    BTB
+                  </th>
+                  <th className="py-2 w-[24%] font-bold text-right align-bottom">
+                    TOP UP
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-black divide-dashed">
+                {processedDetails.length > 0 ? (
+                  processedDetails.map((item: any, idx: number) => (
+                    <tr key={item.id || idx}>
+                      {/* SKU dipaksa break-words jika kode sangat panjang */}
+                      <td className="py-2.5 font-bold pr-1 break-words">
+                        {item.item_description}
+                      </td>
+                      <td className="py-2.5 text-right font-medium pr-1">
+                        {item.item_qty_submitted}
+                      </td>
+                      <td className="py-2.5 text-right font-medium pr-1">
+                        {item.calculated_btb === 0 ? "-" : item.calculated_btb}
+                      </td>
+                      {/* TOP UP Dibuat lebih besar dan tebal */}
+                      <td className="py-2.5 text-right text-[14px] font-extrabold">
+                        {item.calculated_top_up}
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td
+                      colSpan={4}
+                      className="py-6 text-center italic font-bold"
+                    >
+                      - KEBUTUHAN TERPENUHI -
+                    </td>
                   </tr>
-                </thead>
-                <tbody className="divide-y divide-black divide-dashed">
-                  {(() => {
-                    const filteredDetails = (data.details || [])
-                      .map((item: any) => {
-                        const btbQty =
-                          item.qty_btb && item.qty_btb !== "-"
-                            ? Number(item.qty_btb)
-                            : 0;
-                        const finalQty = Number(item.item_qty_final || 0);
-                        const topUpValue = finalQty - btbQty;
-                        return { ...item, btbQty, finalQty, topUpValue };
-                      })
-                      .filter((item: any) => item.topUpValue > 0);
+                )}
+              </tbody>
+            </table>
 
-                    if (filteredDetails.length > 0) {
-                      return filteredDetails.map((item: any, idx: number) => (
-                        <tr key={item.id || item.item_code || idx}>
-                          <td className="py-2">{item.item_code}</td>
-                          <td className="py-2 text-center">
-                            {item.item_qty_submitted}
-                          </td>
-                          <td className="py-2 text-center">
-                            {item.qty_btb && item.qty_btb !== "-"
-                              ? item.qty_btb
-                              : ""}
-                          </td>
-                          <td className="py-2 text-right text-base font-semibold">
-                            {item.topUpValue}
-                          </td>
-                        </tr>
-                      ));
-                    }
+            <div className="border-t-2 border-black border-dashed mb-6"></div>
 
-                    return (
-                      <tr>
-                        <td
-                          colSpan={4}
-                          className="py-4 text-center italic text-black font-medium"
-                        >
-                          - KOSONG -
-                        </td>
-                      </tr>
-                    );
-                  })()}
-                </tbody>
-              </table>
-
-              {/* Tanda Tangan */}
-              <div className="flex justify-between mt-8 text-center pb-8 border-b border-dashed border-slate-400">
-                <div>
-                  <p className="mb-12">Dibuat,</p>
-                  <p className="border-b border-slate-800 px-4 inline-block">
+            {/* Tanda Tangan */}
+            <div className="flex justify-between text-center pb-6 border-b-2">
+              <div className="w-1/2 flex flex-col items-center">
+                <p className="mb-12 font-semibold">Dibuat,</p>
+                <div className="border-b border-black px-2 min-w-[80px]">
+                  <p className="font-bold text-[11px] uppercase">
                     ( Admin Gudang )
                   </p>
                 </div>
-                <div>
-                  <p className="mb-12">Salesman,</p>
-                  <p className="border-b border-slate-800 px-4 inline-block">
-                    ( {data.sales_name} )
+              </div>
+              <div className="w-1/2 flex flex-col items-center">
+                <p className="mb-12 font-semibold">Salesman,</p>
+                <div className="border-b border-black px-2 min-w-[80px]">
+                  <p className="font-bold text-[11px] break-words line-clamp-1 uppercase  truncate max-w-[130px]">
+                    {data.sales_name}
                   </p>
                 </div>
               </div>
+            </div>
 
-              {/* 2. DATE TIME PRINT (Ditambahkan di Paling Bawah Kertas) */}
-              <div className="mt-4 text-[10px] text-slate-500 flex justify-between items-center">
-                <span>Printed on: {dayjs().format("DD/MM/YYYY HH:mm:ss")}</span>
-                <span>By System</span>
-              </div>
+            {/* Date Time Print */}
+            <div className="mt-3 text-[10px] font-semibold flex justify-between items-center px-1">
+              <span>Print: {dayjs().format("DD/MM/YY HH:mm")}</span>
+              <span>WMS System</span>
+            </div>
+
+            <div className="mt-8 text-[10px] font-semibold flex justify-between items-center px-1">
+              <span>-</span>
             </div>
           </div>
+          {/* ========================================================== */}
+          {/* END AREA KERTAS DOKUMEN                                    */}
+          {/* ========================================================== */}
         </div>
 
-        {/* Footer Actions (Tetap Sama) */}
-        <div className="px-6 py-4 border-t border-slate-100 flex items-center justify-between bg-white">
-          <div className="relative">
-            <select className="appearance-none bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-lg px-4 py-2.5 pr-10 focus:outline-none focus:ring-2 focus:ring-orange-500/20 w-48 font-medium">
-              <option>Printer L120 (Kasir)</option>
-              <option>Printer Thermal B</option>
-              <option>Save as PDF</option>
-            </select>
-            <FaChevronDown
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
-              size={12}
-            />
-          </div>
+        {/* Footer Actions */}
+        <div className="px-6 py-4 border-t border-slate-200 flex items-center justify-between bg-slate-50">
+          <div className="relative"></div>
 
           <button
-            onClick={handlePrint}
-            className="flex items-center gap-2 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white px-6 py-2.5 rounded-lg text-sm font-semibold shadow-md shadow-orange-500/20 transition-all hover:shadow-lg"
+            onClick={() => handlePrint()}
+            className="flex items-center gap-2 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white px-6 py-2.5 rounded-lg text-sm font-semibold shadow-md transition-all hover:shadow-lg hover:-translate-y-0.5"
           >
-            <FaPrint size={14} /> Print
+            <FaPrint size={14} /> Cetak Struk
           </button>
         </div>
       </div>

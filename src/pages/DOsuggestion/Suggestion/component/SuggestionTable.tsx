@@ -206,6 +206,7 @@ export default function SuggestionTable({
               </div>
             );
           }
+
           if (!isSubmitted) {
             return (
               <button
@@ -216,6 +217,7 @@ export default function SuggestionTable({
               </button>
             );
           }
+          
         },
       }),
     ],
@@ -226,9 +228,6 @@ export default function SuggestionTable({
     data: sortedData, // 2. Gunakan data yang SUDAH DI-SORT
     columns,
     getCoreRowModel: getCoreRowModel(),
-
-    // CRITICAL UX FIX: Menggunakan item_code sebagai ID Baris permanen.
-    // Ini mencegah baris kehilangan fokus input saat posisinya melompat ke atas secara realtime.
     getRowId: (row) => row.item_code,
 
     meta: {

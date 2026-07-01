@@ -77,8 +77,7 @@ import IntegrationMonitoringPage from "./pages/DOsuggestion/IntegrationLog";
 
 const DefaultPage = () => (
   <div className="flex items-center justify-center h-full">
-    <p className="text-gray-500">
-    </p>
+    <p className="text-gray-500"></p>
   </div>
 );
 
@@ -168,9 +167,7 @@ export function AppRoutes() {
       "/outbound_integration_log": <ShipConfirmLog />,
       "/do_suggestion": <DOsuggestionMain />,
       "/outbound_sales": <OutboundSales />,
-      "/do_su_log_integration": <IntegrationMonitoringPage />,
-
-
+      "/do_suggestion_integration": <IntegrationMonitoringPage />,
     };
     return map[path] || <DefaultPage />;
   }

@@ -17,7 +17,5 @@ export interface ServerTimeResponse {
 
 export const getServerDatetime = async (): Promise<ServerTimeResponse> => {
     const response = await axiosInstance.get("/common/server-datetime");
-    console.log("GET TIME SERVER", response.data);
-
     return response.data;
 };

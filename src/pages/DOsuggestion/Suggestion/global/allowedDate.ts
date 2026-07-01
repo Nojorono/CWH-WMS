@@ -43,9 +43,11 @@ export const getTargetDate = (roleName: string | undefined): string => {
     }
 
     // Gunakan getServerDayjs() agar konsisten
-    if (roleName === "WH_ADMIN_CABANG") {
+    if (roleName === "WH_ADMIN_CABANG" || roleName === "FAS") {
         return getServerDayjs().add(1, "day").format("YYYY-MM-DD");
     }
+
+
     return getServerDayjs().add(2, "day").format("YYYY-MM-DD");
 };
 
@@ -89,3 +91,16 @@ export const getCalculationErrorMessage = (callPlanStartDate: string): string =>
     return `Kalkulasi SOH Manual hanya dapat dilakukan pada H-1 (${batasWaktu}) pukul 09:00 - 10:00.`;
 };
 
+
+// ============================================================================
+// 3. VALIDASI TARIK DATA BTB
+// ============================================================================
+export const isGetBTBTimeAllowed = (callPlanStartDate: string | undefined): boolean => {
+    // Karena SOP-nya berbarengan dengan Kalkulasi SOH, kita bisa langsung pakai/reuse fungsi SOH
+    return isCalculationTimeAllowed(callPlanStartDate);
+};
+
+export const getBTBErrorMessage = (callPlanStartDate: string): string => {
+    const batasWaktu = dayjs(callPlanStartDate).subtract(1, "day").format("DD MMM YYYY");
+    return `Penarikan data BTB hanya dapat dilakukan pada H-1 (${batasWaktu}) pukul 09:00 - 10:00.`;
+};

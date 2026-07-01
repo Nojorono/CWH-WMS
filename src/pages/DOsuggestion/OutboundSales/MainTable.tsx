@@ -18,6 +18,8 @@ import {
   isBypassMode,
   isCalculationTimeAllowed,
   getServerDayjs,
+  isGetBTBTimeAllowed,
+  getBTBErrorMessage,
 } from "../Suggestion/global/allowedDate";
 import { BypassTimeController } from "./component/BypassTimeController";
 
@@ -52,12 +54,6 @@ const STEP_CONFIG: Record<
   },
 };
 
-const isFinalStatusAllowed = () => {
-  if (isBypassMode()) return true;
-  const now = getServerDayjs();
-  return now.hour() >= 10;
-};
-
 const MainTable = () => {
   // 1. STATE & AUTH
   const { user } = usePersistAuthStore.getState();
@@ -66,9 +62,6 @@ const MainTable = () => {
   const userNIK = user?.userDetail?.employee_id;
   const role_name = user?.role?.name;
   const TARGET_DATE = useMemo(() => getTargetDate(role_name), [role_name]);
-
-  console.log("TARGET_DATE", TARGET_DATE);
-  console.log(getServerDayjs().format("HH:mm:ss"));
 
   const [currentStep, setCurrentStep] = useState<Step>("SUBMITTED");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("SUBMITTED");
@@ -88,29 +81,34 @@ const MainTable = () => {
       CABANG: String(organization_name),
       CALL_PLAN_START_DATE: TARGET_DATE,
     }),
-    [organization_name],
+    [organization_name, TARGET_DATE],
   );
 
-  const { data: BTBdata, isLoading: isBTBLoading } = useGetBTB(paramGetBTB, {
+  const {
+    data: BTBdata,
+    isLoading: isBTBLoading,
+    error: errBTB,
+  } = useGetBTB(paramGetBTB, {
     enabled: isParamsReady,
   });
 
   // FETCH DATA BY FILTER
   useEffect(() => {
-    if (organization_id) {
-      // JANGAN fetch jika status FINAL tapi belum jam 10 dan BUKAN bypass
-      if (
-        statusFilter === "FINAL" &&
-        !isBypassMode() &&
-        getServerDayjs().hour() < 10
-      ) {
-        console.warn("Akses ditolak: Belum jam 10:00");
-        return; // Berhenti di sini, jangan jalankan fetch
-      }
+    if (!organization_id || !TARGET_DATE) return;
 
-      fetchSubmittedList(TARGET_DATE, organization_id, statusFilter);
+    // Cek jam akses
+    if (
+      statusFilter === "FINAL" &&
+      !isBypassMode() &&
+      getServerDayjs().hour() < 10
+    ) {
+      showErrorToast("Akses ditolak: Belum jam 10:00");
+      return;
     }
-  }, [organization_id, statusFilter, fetchSubmittedList, TARGET_DATE]);
+
+    // Fetch data SPB
+    fetchSubmittedList(TARGET_DATE, organization_id, statusFilter);
+  }, [organization_id, statusFilter, TARGET_DATE]);
 
   // 3. DATA TRANSFORMATION (BUSINESS LOGIC)
   const groupedAndMappedData = useMemo<GroupedSPBData[]>(() => {
@@ -120,11 +118,14 @@ const MainTable = () => {
     const enrichDetails = (details: any[], salesmanBTB: any) => {
       return details.map((doDetail) => {
         const skuMatch = salesmanBTB?.details.find(
-          (btbLine: any) => btbLine.PRODUCT_SKU === doDetail.item_code,
+          (btbLine: any) =>
+            btbLine.PRODUCT_SKU.toString().trim().toUpperCase() ===
+            doDetail.item_code.toString().trim().toUpperCase(),
         );
+
         return {
           ...doDetail,
-          qty_btb: skuMatch ? skuMatch.QTY_BTB : "-",
+          qty_btb: skuMatch ? skuMatch.QTY_BTB : "0",
           no_found_in_btb: !skuMatch,
         };
       });
@@ -242,20 +243,30 @@ const MainTable = () => {
           <SPBSubmittedPage
             data={groupedAndMappedData}
             onProceed={() => {
-              // Gunakan The Master Validator
               if (isCalculationTimeAllowed(TARGET_DATE)) {
                 setCurrentStep("CALCULATION");
               } else {
                 Swal.fire({
-                  icon: "warning", // Gunakan warning karena ini penjagaan SOP, bukan system error
+                  icon: "warning",
                   title: "Jadwal Terkunci",
                   text: getCalculationErrorMessage(TARGET_DATE),
                   confirmButtonColor: "#ea580c",
                 });
               }
             }}
-            onGoToPreparation={() => setCurrentStep("PREPARATION")}
-            setCalculatedResults={setCalculatedResults}
+            // 🔴 PENJAGAAN PINTU KE HALAMAN PREPARATION (GET BTB)
+            onGoToPreparation={() => {
+              if (isGetBTBTimeAllowed(TARGET_DATE)) {
+                setCurrentStep("PREPARATION");
+              } else {
+                Swal.fire({
+                  icon: "warning",
+                  title: "Akses Preparation Terkunci",
+                  text: getBTBErrorMessage(TARGET_DATE),
+                  confirmButtonColor: "#ea580c",
+                });
+              }
+            }}
           />
         );
 
@@ -289,14 +300,14 @@ const MainTable = () => {
   return (
     <div className="w-full space-y-4 p-4 bg-[#F8FAFC] min-h-screen">
       <PageBreadcrumb breadcrumbs={config.breadcrumbs} />
-      <BypassTimeController />
+      {/* <BypassTimeController /> */}
 
       {currentStep === "SUBMITTED" && (
         <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-xl shadow-sm flex items-start gap-3">
           <FaInfoCircle className="text-blue-500 mt-0.5 size-5 flex-shrink-0" />
           <div>
             <h4 className="text-sm font-bold text-blue-900">
-              Informasi SOP Kalkulasi Stock On Hand (SOH), VALID DATE {TARGET_DATE}
+              Informasi SOP Kalkulasi Stock On Hand (SOH)
             </h4>
             <p className="text-sm text-blue-800 mt-1">
               Tombol "Proceed to Calculation" hanya aktif pada{" "}

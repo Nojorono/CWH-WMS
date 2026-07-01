@@ -8,10 +8,10 @@ import { useAllocationCalculation } from "../hook/useAllocationCalculation";
 import { SKUSummaryPanel } from "../component/SKUSummaryPanel";
 import { CalculationSubTable } from "../component/CalculationSubTable";
 import { CallPlanBindings } from "../../../../API/types/callPlan";
-import dayjs from "dayjs";
 import { showErrorToast, showSuccessToast } from "../../../../components/toast";
 import { updateBatchDO } from "../../../../API/services/DOsuggestionServices/postDOsuggestion";
 import { showConfirmDialog } from "../../../../components/swal-confirm";
+import dayjs from "dayjs";
 
 interface CalculationPageProps {
   data: GroupedSPBData[];
@@ -28,11 +28,16 @@ export const CalculationPage = ({
   const [isCalculating, setIsCalculating] = useState(false);
   const [isCalculated, setIsCalculated] = useState(false);
   const [isInserting, setIsInserting] = useState(false);
-  const DateNow = dayjs().format("YYYY-MM-DD");
+
+  const effectiveSohDate = useMemo(() => {
+    return dayjs(params.CALL_PLAN_START_DATE)
+      .subtract(1, "day")
+      .format("YYYY-MM-DD");
+  }, [params.CALL_PLAN_START_DATE]);
 
   const { data: stockList } = useGetStockOnHand({
     org: params.CABANG,
-    date: DateNow,
+    date: params.CALL_PLAN_START_DATE,
     sub: "KECIL",
   });
 
@@ -120,7 +125,7 @@ export const CalculationPage = ({
             );
           }
 
-            onProceed(calculatedData);
+          onProceed(calculatedData);
         } catch (error) {
           console.error("Gagal melakukan bulk insert:", error);
           showErrorToast("Gagal melakukan insert data ke server");
@@ -150,10 +155,28 @@ export const CalculationPage = ({
       )}
 
       {isCalculating && (
-        <div className="flex flex-col items-center justify-center py-20">
-          <div className="w-10 h-10 border-4 border-orange-600 border-t-transparent rounded-full animate-spin mb-4" />
-          <p className="text-slate-600 font-medium">
-            Processing and Calculating...
+        <div className="flex flex-col items-center justify-center py-20 animate-in fade-in">
+          {/* Spinner */}
+          <div className="w-12 h-12 border-4 border-orange-600 border-t-transparent rounded-full animate-spin mb-6" />
+
+          {/* Judul Utama */}
+          <h3 className="text-lg font-bold text-slate-800 mb-2">
+            Processing Data...
+          </h3>
+
+          {/* Indikator Tanggal (Sesuai permintaan Anda) */}
+          <div className="bg-orange-50 px-4 py-2 rounded-lg border border-orange-100 flex items-center gap-2">
+            <span className="text-sm text-orange-800 font-medium">
+              Sedang menarik & mengalkulasi Stock On Hand tanggal:
+            </span>
+            <span className="text-sm font-bold text-orange-900 bg-white px-2 py-0.5 rounded border border-orange-200">
+              {effectiveSohDate}
+            </span>
+          </div>
+
+          <p className="text-sm text-slate-500 mt-4 text-center max-w-xs">
+            Mohon tunggu, sistem sedang memproses kalkulasi stok berdasarkan
+            tanggal tersebut.
           </p>
         </div>
       )}
