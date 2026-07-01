@@ -21,11 +21,10 @@ export const useGetBTB = (
 
     const cabang = params.CABANG;
     const startDate = params.CALL_PLAN_START_DATE;
-    const isEnabled = options.enabled;
+    const isEnabled = options.enabled;    
 
-    const btbDate = dayjs(startDate).subtract(1, 'day').format('YYYY-MM-DD');
-
-
+    const btbDate = dayjs(startDate).subtract(2, 'day').format('YYYY-MM-DD');
+    
     const fetchData = useCallback(async () => {
         setIsLoading(true);
         setError(null);

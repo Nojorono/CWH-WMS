@@ -69,10 +69,9 @@ export function DataTable<TData, TValue>({
               table.getRowModel().rows.map((row) => (
                 <React.Fragment key={row.id}>
                   {/* BARIS UTAMA */}
-                  <tr className="hover:bg-slate-50/50">
+                  <tr className="hover:bg-slate-50/50"  onClick={row.getToggleExpandedHandler()}>
                     <td className="px-6 py-4">
                       <button
-                        onClick={row.getToggleExpandedHandler()}
                         className="text-slate-400 hover:text-indigo-600 transition-transform"
                       >
                         {row.getIsExpanded() ? (

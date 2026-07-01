@@ -105,7 +105,7 @@ const MainTable = () => {
     <div className="w-full space-y-4 p-4 bg-[#F8FAFC] min-h-screen">
       <PageBreadcrumb breadcrumbs={[{ title: "List Salesman Callplan" }]} />
 
-      <BypassTimeController />
+      {/* <BypassTimeController /> */}
 
       <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-xl shadow-sm flex items-start gap-3">
         <FaInfoCircle className="text-blue-500 mt-0.5 size-5 flex-shrink-0" />

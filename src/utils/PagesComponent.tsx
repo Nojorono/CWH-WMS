@@ -82,8 +82,6 @@ import GenerateDO from '../pages/DOsuggestion/Suggestion/Main/DetailSuggestionSe
 import OutboundSales from '../pages/DOsuggestion/OutboundSales/MainTable'
 import IntegrationMonitoringPage from '../pages/DOsuggestion/IntegrationLog/index'
 
-
-
 export {
   // DASHBOARD
   Dashboard,
