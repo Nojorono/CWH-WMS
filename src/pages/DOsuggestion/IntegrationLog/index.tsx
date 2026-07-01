@@ -9,6 +9,7 @@ import {
   FaCheckCircle,
   FaBox,
   FaClock,
+  FaSyncAlt,
 } from "react-icons/fa";
 import { formatDateTimeIndo } from "../../../helper/FormatDateTime";
 
@@ -58,7 +59,11 @@ const IntegrationMonitoringPage = () => {
     "INTEGRATED" | "ERROR" | "TIMEOUT" | ""
   >("");
 
-  const { data: response, isLoading } = useMoveOrderIntegration({
+  const {
+    data: response,
+    isLoading,
+    refetch,
+  } = useMoveOrderIntegration({
     page,
     limit,
     sortOrder: "DESC",
@@ -118,24 +123,42 @@ const IntegrationMonitoringPage = () => {
             <p className="text-sm text-slate-500">
               Pusat kontrol dan pantauan sinkronisasi data.
             </p>
-
-            
           </div>
-          <div className="flex items-center gap-2 bg-white border border-slate-200 px-4 py-2 rounded-lg shadow-sm">
-            <FaFilter className="text-slate-400" size={14} />
-            <select
-              value={statusFilter}
-              onChange={(e) => {
-                setStatusFilter(e.target.value as any);
-                setPage(1);
+
+          <div className="flex items-center gap-3">
+            {/* Tombol Refresh */}
+            <button
+              onClick={() => {
+                console.log("Tombol ditekan, menjalankan refetch...");
+                refetch();
               }}
-              className="text-sm border-none bg-transparent focus:ring-0 cursor-pointer font-medium text-slate-700"
+              disabled={isLoading}
+              className={`flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-lg shadow-sm text-sm font-medium text-slate-700 hover:bg-slate-50 transition-all ${isLoading ? "opacity-50 cursor-not-allowed" : ""}`}
             >
-              <option value="">Semua Status</option>
-              <option value="INTEGRATED">Berhasil (Integrated)</option>
-              <option value="ERROR">Gagal (Error)</option>
-              <option value="TIMEOUT">Waktu Habis (Timeout)</option>
-            </select>
+              <FaSyncAlt
+                className={`${isLoading ? "animate-spin" : ""}`}
+                size={14}
+              />
+              {isLoading ? "Memuat..." : "Refresh"}
+            </button>
+
+            {/* Filter */}
+            <div className="flex items-center gap-2 bg-white border border-slate-200 px-4 py-2 rounded-lg shadow-sm">
+              <FaFilter className="text-slate-400" size={14} />
+              <select
+                value={statusFilter}
+                onChange={(e) => {
+                  setStatusFilter(e.target.value as any);
+                  setPage(1);
+                }}
+                className="text-sm border-none bg-transparent focus:ring-0 cursor-pointer font-medium text-slate-700"
+              >
+                <option value="">Semua Status</option>
+                <option value="INTEGRATED">Berhasil</option>
+                <option value="ERROR">Gagal</option>
+                <option value="TIMEOUT">Timeout</option>
+              </select>
+            </div>
           </div>
         </div>
 

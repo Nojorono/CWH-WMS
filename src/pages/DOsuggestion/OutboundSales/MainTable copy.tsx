@@ -92,9 +92,7 @@ const MainTable = () => {
     enabled: isParamsReady,
   });
 
-
-  console.log("BTBdata", BTBdata);
-  
+  console.log("DATA BTB", BTBdata);
 
   // FETCH DATA BY FILTE
   useEffect(() => {

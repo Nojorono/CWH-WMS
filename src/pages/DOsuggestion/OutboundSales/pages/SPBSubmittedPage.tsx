@@ -33,35 +33,46 @@ const StandardSubTable = ({
 
         {/* Scrollable Content */}
         <div className="overflow-x-auto max-h-[400px] overflow-y-auto">
-          <table className="w-full text-left text-sm text-slate-600">
-            <thead className="bg-slate-50 text-slate-500 font-medium text-xs sticky top-0 z-10 shadow-sm">
+          {/* Ubah w-full menjadi w-max agar lebar tabel hanya mengikuti isi konten */}
+          <table className="w-max min-w-full text-left text-sm text-slate-600">
+            <thead className="bg-slate-50 text-slate-500 font-medium text-xs sticky top-0 z-10 shadow-sm whitespace-nowrap">
               <tr>
-                <th className="px-5 py-3">SKU Name</th>
-                <th className="px-5 py-3 text-right">Locked Qty</th>
-                <th className="px-5 py-3 text-right">BTB Qty</th>
-                <th className="px-5 py-3 text-right">Status</th>
+                {/* Padding dikurangi dari px-5 py-3 menjadi px-3 py-2 */}
+                <th className="px-3 py-2">No</th>
+                <th className="px-3 py-2">SKU Name</th>
+                <th className="px-3 py-2 text-right">Locked Qty</th>
+                <th className="px-3 py-2 text-right">BTB Qty</th>
+                <th className="px-3 py-2 text-right">Status</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-slate-100 whitespace-nowrap">
               {details.map((item, idx) => (
                 <tr key={idx} className="hover:bg-slate-50">
-                  <td className="px-5 py-3 font-medium text-slate-700">
+                  {/* Padding di setiap sel juga dirapatkan */}
+                  <td className="px-3 py-2 text-xs font-mono text-slate-400">
+                    {idx + 1}
+                  </td>
+                  <td className="px-3 py-2 font-medium text-slate-700">
                     {item.item_code}
                   </td>
-                  <td className="px-5 py-3 text-right">
+                  <td className="px-3 py-2 text-right">
                     {item.item_qty_submitted}
                   </td>
-                  <td className="px-5 py-3 text-right font-semibold text-blue-600">
+                  <td className="px-3 py-2 text-right font-semibold text-blue-600">
                     {item.qty_btb}
                   </td>
-                  <td className="px-5 py-3 text-right">
+                  <td className="px-3 py-2 text-right">
                     {item.no_found_in_btb ? (
-                      <span className="text-[10px] uppercase font-bold text-amber-700 bg-red-100 px-2 py-1 rounded">
-                        BTB Not Exist
+                      <span className="text-[10px] uppercase font-bold text-red-700 bg-red-100 px-1.5 py-0.5 rounded">
+                        Tak Ada di BTB
+                      </span>
+                    ) : item.qty_btb === "0" ? (
+                      <span className="text-[10px] uppercase font-bold text-amber-700 bg-amber-100 px-1.5 py-0.5 rounded">
+                        Item Habis
                       </span>
                     ) : (
-                      <span className="text-[10px] uppercase font-bold text-emerald-700 bg-emerald-100 px-2 py-1 rounded">
-                        BTB Exist
+                      <span className="text-[10px] uppercase font-bold text-emerald-700 bg-emerald-100 px-1.5 py-0.5 rounded">
+                        Tersedia
                       </span>
                     )}
                   </td>
@@ -92,12 +103,6 @@ export const SPBSubmittedPage = ({
       })),
     );
   }, [data]);
-
-  const formatDate = (dateStr: string) => {
-    if (!dateStr) return "-";
-    const [year, month, day] = dateStr.split("-");
-    return `${day}-${month}-${year}`;
-  };
 
   const columns = useMemo<ColumnDef<any>[]>(
     () => [

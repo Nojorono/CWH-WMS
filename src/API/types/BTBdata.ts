@@ -19,6 +19,9 @@ export interface BTBDetailLine {
     PRODUCT_NAME: string;
     INVENTORYID: string;
     QTY_BTB: string;
+    STATUS_ITEM?: string;
+    IS_MATCH_DO?: boolean;
+    DO_DATA?: DOItemData | null;
 }
 
 export interface BTBSalesmanGroup {
@@ -28,4 +31,9 @@ export interface BTBSalesmanGroup {
     TANGGAL_BTB: string;
     CABANG: string;
     details: BTBDetailLine[]; // Di sinilah array SKU diikat ke Salesman
+}
+
+export interface DOItemData {
+    PRODUCT_SKU: string;
+    QTY_DO?: string | number; // Opsional: Sesuaikan dengan field DO Anda
 }
