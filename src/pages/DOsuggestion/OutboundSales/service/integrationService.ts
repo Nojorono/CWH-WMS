@@ -8,8 +8,6 @@ export const checkAndIntegrateSPB = async (sourceHeaderId: string) => {
         );
 
         const integrationData = response.data;
-
-        console.log("integrationData", integrationData);
         
         // 2. Jika data sudah ada dan statusnya SUCCESS/INTEGRATED
         if (integrationData && (integrationData.iface_status === "SUCCESS" || integrationData.iface_status === "INTEGRATED")) {

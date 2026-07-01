@@ -103,7 +103,5 @@ export const useGetBTB = (
         }
     }, [fetchData, isEnabled, cabang, startDate]);
 
-    console.log("GET DATA BTB", data);
-
     return { data, isLoading, error, isSuccess, refetch: fetchData };
 };

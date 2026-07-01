@@ -230,27 +230,6 @@ export const GoodsPreparationPage = ({
       (b) => b.SALES_NIK.trim() === sodikin?.sales_nik.trim(),
     );
 
-    if (sodikin && btbSodikin) {
-      console.log("--- DEBUG SODIKIN ---");
-      console.log(
-        "DO Items:",
-        sodikin.details.map((d) => d.item_code.trim()),
-      );
-      console.log(
-        "BTB Items:",
-        btbSodikin.details.map((b) => b.PRODUCT_SKU.trim()),
-      );
-
-      // Cari mana yang di BTB tapi tidak ada di DO
-      const missing = btbSodikin.details.filter(
-        (b) =>
-          !sodikin.details.find(
-            (d) => d.item_code.trim() === b.PRODUCT_SKU.trim(),
-          ),
-      );
-      console.log("Item yang ada di BTB tapi hilang di DO:", missing);
-    }
-
     return submittedList.map((doc) => {
       // 1. Ambil data BTB khusus untuk salesman ini
       const btbForSalesman = BTBdata?.find(
@@ -296,7 +275,6 @@ export const GoodsPreparationPage = ({
     setLoadingVisible(true);
     try {
       const result = await checkAndIntegrateSPB(rowData.id);
-      console.log("result checkAndIntegrateSPB", result.data);
       setIntegrationStatus(result.data);
 
       await new Promise((r) => setTimeout(r, 800));

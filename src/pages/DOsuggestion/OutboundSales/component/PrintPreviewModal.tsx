@@ -21,13 +21,6 @@ export const PrintPreviewModal = ({
   const isIntegrated = ["SUCCESS", "INTEGRATED"].includes(status);
   const buttonLabel = isIntegrated ? "Re-Print Struk" : "Cetak Struk";
 
-  console.log("isIntegrated", isIntegrated);
-
-  useEffect(() => {
-    console.log("Integration Info yang diterima:", integrationInfo);
-    console.log("Status:", integrationInfo?.iface_status);
-  }, [integrationInfo]);
-
   const { fetchAll, list: itemList } = useStoreItem();
   useEffect(() => {
     fetchAll();

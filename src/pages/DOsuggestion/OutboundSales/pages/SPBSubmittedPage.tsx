@@ -136,10 +136,7 @@ export const SPBSubmittedPage = ({
         sales_spv_nik: spvGroup.sales_spv_nik,
       })),
     );
-  }, [data]);
-
-  console.log("DATA DO SUBMITTED", data);
-  
+  }, [data]);  
 
   const columns = useMemo<ColumnDef<any>[]>(
     () => [

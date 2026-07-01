@@ -74,6 +74,9 @@ const MainTable = () => {
     fetchSubmittedList,
   } = useGetLocalDoSuggestion();
 
+  console.log("submittedList", submittedList);
+  
+
   const isParamsReady = !!(organization_name && userNIK);
 
   const paramGetBTB = useMemo(
@@ -92,13 +95,9 @@ const MainTable = () => {
     enabled: isParamsReady,
   });
 
-  console.log("BTBdata", BTBdata);
-
   // FETCH DATA BY FILTE
   useEffect(() => {
     if (!organization_id || !TARGET_DATE) return;
-
-    // Fetch data SPB
     fetchSubmittedList(TARGET_DATE, organization_id, statusFilter);
   }, [organization_id, statusFilter, TARGET_DATE]);
 
