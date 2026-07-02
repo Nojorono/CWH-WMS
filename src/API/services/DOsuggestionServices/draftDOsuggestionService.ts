@@ -2,24 +2,6 @@ import axiosInstance from "../../../DynamicAPI/AxiosInstance";
 import { EndPoint } from "../../../utils/EndPoint";
 import { DOSuggestionResponse } from "../../types/draftDOsuggestion";
 
-/**
- * Mengambil data DO Suggestion berdasarkan callplan_number
- */
-// export const getDOSuggestionByCallplan = async (
-//     callPlanNumber: string
-// ): Promise<DOSuggestionResponse> => {
-//     try {
-//         const encodedNumber = encodeURIComponent(callPlanNumber);
-//         const response = await axiosInstance.get<DOSuggestionResponse>(
-//             `${EndPoint}do-suggestion/callplan/${encodedNumber}`
-//         );
-//         return response.data;
-//     } catch (error) {
-//         console.error(`Error fetching DO Suggestion for ${callPlanNumber}:`, error);
-//         throw error;
-//     }
-// };
-
 export const getDOSuggestionByCallplan = async (
     callPlanNumber: string
 ): Promise<DOSuggestionResponse> => {

@@ -215,33 +215,33 @@ const AdjustTable = ({
 
           return (
             <div className="flex justify-center items-center whitespace-nowrap">
-              {isGenerated ? (
-                <button
-                  onClick={() => handleAdjust(row.original, organization_id)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-700 bg-white border border-slate-300 rounded-lg shadow-sm hover:bg-slate-50 hover:text-slate-900 hover:border-slate-400 transition-all focus:outline-none focus:ring-2 focus:ring-slate-200"
-                  title="View Detail"
-                >
-                  <FaEye className="text-slate-500 flex-shrink-0" />
-                  <span>View</span>
-                </button>
-              ) : (
-                <button
-                  onClick={() => handleGenerateDO(row.original)}
-                  disabled={!isAllowedToGenerate}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-white border border-transparent rounded-lg transition-all focus:outline-none focus:ring-2 
+              {/* {isGenerated ? ( */}
+              <button
+                onClick={() => handleAdjust(row.original, organization_id)}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-700 bg-white border border-slate-300 rounded-lg shadow-sm hover:bg-slate-50 hover:text-slate-900 hover:border-slate-400 transition-all focus:outline-none focus:ring-2 focus:ring-slate-200"
+                title="View Detail"
+              >
+                <FaEye className="text-slate-500 flex-shrink-0" />
+                <span>View</span>
+              </button>
+              {/* ) : ( */}
+              <button
+                onClick={() => handleGenerateDO(row.original)}
+                disabled={!isAllowedToGenerate}
+                className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-white border border-transparent rounded-lg transition-all focus:outline-none focus:ring-2 
                     ${
                       isAllowedToGenerate
                         ? "bg-emerald-600 hover:bg-emerald-700 shadow-sm focus:ring-emerald-500/50"
                         : "bg-slate-300 cursor-not-allowed text-slate-500"
                     }`}
-                  title={
-                    isAllowedToGenerate ? "Generate Suggestion" : errorMessage
-                  }
-                >
-                  <FaMagic className="flex-shrink-0" />
-                  <span>Generate</span>
-                </button>
-              )}
+                title={
+                  isAllowedToGenerate ? "Generate Suggestion" : errorMessage
+                }
+              >
+                <FaMagic className="flex-shrink-0" />
+                <span>Generate</span>
+              </button>
+              {/* )} */}
             </div>
           );
         },
@@ -288,22 +288,22 @@ const AdjustTable = ({
   };
 
   const handleGenerateDO = async (rowData: any) => {
-    if (!isGenerateDOAllowed(rowData.CALL_PLAN_START_DATE)) {
-      showErrorToast(getGenerateErrorMessage(rowData.CALL_PLAN_START_DATE));
-      return;
-    }
-
     const rowId = rowData.CALL_PLAN_NUMBER;
-    const existingData = await checkIsGenerated(rowId);
-
-    if (existingData) {
-      showSuccessToast("Data Sudah Generate");
-      return;
-    }
-
     setLoadingRowId(rowId);
 
     try {
+      if (!isGenerateDOAllowed(rowData.CALL_PLAN_START_DATE)) {
+        showErrorToast(getGenerateErrorMessage(rowData.CALL_PLAN_START_DATE));
+        return;
+      }
+
+      const existingData = await checkIsGenerated(rowId);
+
+      if (existingData) {
+        showSuccessToast("Data sudah pernah di-generate.");
+        return;
+      }
+
       const params = {
         CABANG: rowData.CABANG,
         SALES_SUPERVISOR_NIK: rowData.SALES_SUPERVISOR_NIK,
