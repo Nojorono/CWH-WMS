@@ -215,7 +215,7 @@ const AdjustTable = ({
 
           return (
             <div className="flex justify-center items-center whitespace-nowrap">
-              {/* {isGenerated ? ( */}
+              {isGenerated ? (
               <button
                 onClick={() => handleAdjust(row.original, organization_id)}
                 className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-700 bg-white border border-slate-300 rounded-lg shadow-sm hover:bg-slate-50 hover:text-slate-900 hover:border-slate-400 transition-all focus:outline-none focus:ring-2 focus:ring-slate-200"
@@ -224,7 +224,7 @@ const AdjustTable = ({
                 <FaEye className="text-slate-500 flex-shrink-0" />
                 <span>View</span>
               </button>
-              {/* ) : ( */}
+              ) : (
               <button
                 onClick={() => handleGenerateDO(row.original)}
                 disabled={!isAllowedToGenerate}
@@ -241,7 +241,7 @@ const AdjustTable = ({
                 <FaMagic className="flex-shrink-0" />
                 <span>Generate</span>
               </button>
-              {/* )} */}
+              )}
             </div>
           );
         },
