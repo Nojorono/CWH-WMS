@@ -74,6 +74,9 @@ const MainTable = () => {
     fetchSubmittedList,
   } = useGetLocalDoSuggestion();
 
+  console.log("submittedList", submittedList);
+  
+
   const isParamsReady = !!(organization_name && userNIK);
 
   const paramGetBTB = useMemo(
@@ -92,21 +95,9 @@ const MainTable = () => {
     enabled: isParamsReady,
   });
 
-  // FETCH DATA BY FILTER
+  // FETCH DATA BY FILTE
   useEffect(() => {
     if (!organization_id || !TARGET_DATE) return;
-
-    // // Cek jam akses
-    // if (
-    //   statusFilter === "FINAL" &&
-    //   !isBypassMode() &&
-    //   getServerDayjs().hour() < 10
-    // ) {
-    //   showErrorToast("Akses ditolak: Belum jam 10:00");
-    //   return;
-    // }
-
-    // Fetch data SPB
     fetchSubmittedList(TARGET_DATE, organization_id, statusFilter);
   }, [organization_id, statusFilter, TARGET_DATE]);
 
@@ -298,30 +289,50 @@ const MainTable = () => {
 
   // 6. MAIN RENDER
   return (
-    <div className="w-full space-y-4 p-4 bg-[#F8FAFC] min-h-screen">
+    <div className="w-full space-y-3 p-2 sm:p-4 bg-[#F8FAFC] min-h-screen">
       <PageBreadcrumb breadcrumbs={config.breadcrumbs} />
       <BypassTimeController />
 
       {currentStep === "SUBMITTED" && (
-        <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-xl shadow-sm flex items-start gap-3">
-          <FaInfoCircle className="text-blue-500 mt-0.5 size-5 flex-shrink-0" />
-          <div>
-            <h4 className="text-sm font-bold text-blue-900">
+        <div className="bg-blue-50 border-l-4 border-blue-500 p-3 sm:p-4 rounded-r-lg shadow-sm flex items-start gap-2.5">
+          <FaInfoCircle className="text-blue-500 mt-0.5 size-4 sm:size-5 flex-shrink-0" />
+          <div className="flex-1 w-full overflow-hidden">
+            <h4 className="text-xs sm:text-sm font-bold text-blue-900 leading-tight mb-1">
               Informasi SOP Kalkulasi Stock On Hand (SOH)
             </h4>
-            <p className="text-sm text-blue-800 mt-1">
+            <p className="text-[11px] sm:text-xs text-blue-800 leading-snug mb-2">
               Tombol "Proceed to Calculation" hanya aktif pada{" "}
-              <strong>H-1</strong> (untuk SPB besok: {TARGET_DATE}) antara pukul{" "}
-              <strong>09:00 - 10:00</strong>. Jika melewati pukul 10:00, SOH
-              akan ditarik otomatis oleh Scheduler.
+              <strong>H-1</strong> (untuk SPB Submitted berikutnya di tanggal{" "}
+              {TARGET_DATE}) antara pukul <strong>09:00 - 10:00</strong>.
             </p>
+
+            <div className="pt-2 border-t border-blue-200/60 mt-2">
+              <p className="text-[10px] sm:text-[11px] text-blue-900 font-semibold mb-0.5">
+                Panduan Filter Status:
+              </p>
+              <ul className="text-[10px] sm:text-[11px] text-blue-800 space-y-0.5 list-disc list-inside">
+                <li>
+                  Pilih <strong>SUBMITTED</strong> untuk memproses data baru
+                  menuju{" "}
+                  <span className="font-semibold">
+                    Calculation & Good Prepared
+                  </span>
+                  .
+                </li>
+                <li>
+                  Pilih <strong>FINAL</strong> untuk melihat SPB yang telah
+                  selesai dan siap{" "}
+                  <span className="font-semibold">Print Dokumen</span>.
+                </li>
+              </ul>
+            </div>
           </div>
         </div>
       )}
 
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-        <div className="flex flex-1 items-center gap-3">
-          <h2 className="text-lg font-semibold text-slate-800">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-3 sm:p-4 rounded-lg border border-slate-200 shadow-sm w-full">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3 w-full sm:w-auto">
+          <h2 className="text-base sm:text-lg font-semibold text-slate-800 truncate">
             {config.title}
           </h2>
 
@@ -330,39 +341,25 @@ const MainTable = () => {
               value={statusFilter}
               onChange={(e) => {
                 const selectedValue = e.target.value as StatusFilter;
-
-                // // Validasi sebelum mengubah state
-                // if (
-                //   selectedValue === "FINAL" &&
-                //   !isFinalStatusAllowed() &&
-                //   !isBypassMode()
-                // ) {
-                //   Swal.fire({
-                //     icon: "error",
-                //     title: "Akses Ditolak",
-                //     text: "Data FINAL hanya tersedia setelah pukul 10:00.",
-                //     confirmButtonColor: "#ea580c",
-                //   });
-                //   return; // Jangan update state jika tidak valid
-                // }
-
                 setStatusFilter(selectedValue);
               }}
-              className="..."
+              className="w-full sm:w-auto bg-slate-50 border border-slate-200 text-slate-700 text-xs sm:text-sm rounded py-1.5 px-3 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-colors cursor-pointer"
             >
-              <option value="SUBMITTED">SUBMITTED</option>
-              <option value="FINAL">FINAL</option>
+              <option value="SUBMITTED">Status: SUBMITTED</option>
+              <option value="FINAL">Status: FINAL</option>
             </select>
           )}
         </div>
 
-        <div className="flex items-center gap-2">
+        {/* Action Buttons: Full width di mobile, auto width di tablet/desktop */}
+        <div className="flex w-full sm:w-auto">
           {currentStep !== "SUBMITTED" ? (
             <Button
               variant="outline"
               size="sm"
               onClick={handleBack}
               startIcon={<FaArrowLeft />}
+              className="w-full sm:w-auto justify-center"
             >
               Back
             </Button>
@@ -370,15 +367,19 @@ const MainTable = () => {
             <Button
               variant="primary"
               size="sm"
-              className="bg-blue-600 hover:bg-blue-700 transition-colors"
+              className="bg-blue-600 hover:bg-blue-700 transition-colors w-full sm:w-auto justify-center shadow-sm"
               onClick={handleRefresh}
             >
-              <FaSync className="mr-2 size-3" /> Refresh
+              <FaSync className="mr-2 size-3 sm:size-3.5" /> Refresh Data
             </Button>
           )}
         </div>
       </div>
-      <div>{isLoadingAll ? renderLoading() : renderActiveStep()}</div>
+
+      {/* 4. Table/Content Container (Tidak butuh margin/padding tambahan di sini karena space-y-3 sudah di set di wrapper atas) */}
+      <div className="w-full overflow-hidden">
+        {isLoadingAll ? renderLoading() : renderActiveStep()}
+      </div>
     </div>
   );
 };

@@ -71,19 +71,26 @@ export const getGenerateErrorMessage = (callPlanStartDate: string): string => {
     return `DO Suggestion hanya dapat di-generate pada H-2 (${batasWaktu}) setelah pukul 13:00.`;
 };
 
-// ============================================================================
-// 2. VALIDASI KALKULASI STOCK ON HAND
-// ============================================================================
-export const isCalculationTimeAllowed = (callPlanStartDate: string | undefined): boolean => {
-    if (isBypassMode()) return true;
+const isHMinusOne = (callPlanStartDate: string | undefined): boolean => {
     if (!callPlanStartDate) return false;
 
     const now = getServerDayjs(); // Waktu Server
     const hariIni = now.format("YYYY-MM-DD");
     const batasWaktu = dayjs(callPlanStartDate).subtract(1, "day").format("YYYY-MM-DD");
-    const jamSaatIni = now.hour();
 
-    return (hariIni === batasWaktu) && (jamSaatIni === 9);
+    return hariIni === batasWaktu;
+};
+
+
+// ============================================================================
+// 2. VALIDASI KALKULASI STOCK ON HAND
+// ============================================================================
+export const isCalculationTimeAllowed = (callPlanStartDate: string | undefined): boolean => {
+    if (isBypassMode()) return true;
+
+    // Cek tanggal H-1 DAN jam harus pukul 09:00 (09:00 - 09:59)
+    const jamSaatIni = getServerDayjs().hour();
+    return isHMinusOne(callPlanStartDate) && (jamSaatIni === 9);
 };
 
 export const getCalculationErrorMessage = (callPlanStartDate: string): string => {
@@ -91,13 +98,14 @@ export const getCalculationErrorMessage = (callPlanStartDate: string): string =>
     return `Kalkulasi SOH Manual hanya dapat dilakukan pada H-1 (${batasWaktu}) pukul 09:00 - 10:00.`;
 };
 
-
 // ============================================================================
 // 3. VALIDASI TARIK DATA BTB
 // ============================================================================
 export const isGetBTBTimeAllowed = (callPlanStartDate: string | undefined): boolean => {
-    // Karena SOP-nya berbarengan dengan Kalkulasi SOH, kita bisa langsung pakai/reuse fungsi SOH
-    return isCalculationTimeAllowed(callPlanStartDate);
+    if (isBypassMode()) return true;
+
+    // Hanya cek tanggal H-1, tanpa batasan jam
+    return isHMinusOne(callPlanStartDate);
 };
 
 export const getBTBErrorMessage = (callPlanStartDate: string): string => {

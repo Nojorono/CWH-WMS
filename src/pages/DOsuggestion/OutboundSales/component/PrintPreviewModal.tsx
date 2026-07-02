@@ -8,19 +8,26 @@ interface PrintPreviewModalProps {
   isOpen: boolean;
   onClose: () => void;
   data: any | null;
+  integrationInfo: any;
 }
 
 export const PrintPreviewModal = ({
   isOpen,
   onClose,
   data,
+  integrationInfo,
 }: PrintPreviewModalProps) => {
+  const status = integrationInfo?.iface_status || "";
+  const isIntegrated = ["SUCCESS", "INTEGRATED"].includes(status);
+  const buttonLabel = isIntegrated ? "Re-Print Struk" : "Cetak Struk";
+
   const { fetchAll, list: itemList } = useStoreItem();
   useEffect(() => {
     fetchAll();
   }, []);
 
   const componentRef = useRef<HTMLDivElement>(null);
+
   const handlePrint = useReactToPrint({
     contentRef: componentRef,
     documentTitle: `SPB_${data?.spb_number || "Document"}`,
@@ -60,7 +67,7 @@ export const PrintPreviewModal = ({
         ...item,
         calculated_btb: btbQty,
         calculated_top_up: topUpValue > 0 ? topUpValue : 0,
-        item_description: itemName, // 🔴 Simpan nama panjang di sini
+        item_description: itemName,
       };
     })
     .filter((item: any) => item.calculated_top_up > 0);
@@ -217,9 +224,13 @@ export const PrintPreviewModal = ({
 
           <button
             onClick={() => handlePrint()}
-            className="flex items-center gap-2 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white px-6 py-2.5 rounded-lg text-sm font-semibold shadow-md transition-all hover:shadow-lg hover:-translate-y-0.5"
+            className={`flex items-center gap-2 px-6 py-2.5 rounded-lg text-sm font-semibold shadow-md transition-all ${
+              isIntegrated
+                ? "bg-slate-700 text-white hover:bg-slate-800" // Warna netral untuk Re-Print
+                : "bg-gradient-to-r from-orange-500 to-orange-600 text-white hover:from-orange-600 hover:to-orange-700"
+            }`}
           >
-            <FaPrint size={14} /> Cetak Struk
+            <FaPrint size={14} /> {buttonLabel}
           </button>
         </div>
       </div>
