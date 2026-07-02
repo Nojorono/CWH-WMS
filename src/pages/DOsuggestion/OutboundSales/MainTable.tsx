@@ -75,7 +75,6 @@ const MainTable = () => {
   } = useGetLocalDoSuggestion();
 
   console.log("submittedList", submittedList);
-  
 
   const isParamsReady = !!(organization_name && userNIK);
 
@@ -287,11 +286,28 @@ const MainTable = () => {
   const isLoadingAll = isLocalLoading || isBTBLoading;
   const config = STEP_CONFIG[currentStep];
 
+  const [showBypass, setShowBypass] = useState(false);
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === "b") {
+        e.preventDefault();
+        setShowBypass((prev) => !prev);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, []);
+
   // 6. MAIN RENDER
   return (
     <div className="w-full space-y-3 p-2 sm:p-4 bg-[#F8FAFC] min-h-screen">
       <PageBreadcrumb breadcrumbs={config.breadcrumbs} />
-      <BypassTimeController />
+
+      {showBypass && <BypassTimeController />}
 
       {currentStep === "SUBMITTED" && (
         <div className="bg-blue-50 border-l-4 border-blue-500 p-3 sm:p-4 rounded-r-lg shadow-sm flex items-start gap-2.5">
