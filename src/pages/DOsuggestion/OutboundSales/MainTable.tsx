@@ -225,6 +225,7 @@ const MainTable = () => {
     const now = getServerDayjs();
     return now.hour() >= 10;
   };
+  
 
   const renderActiveStep = () => {
     switch (currentStep) {
@@ -257,6 +258,7 @@ const MainTable = () => {
                 });
               }
             }}
+            
           />
         );
 

@@ -16,6 +16,8 @@ export const useCallPlan = (
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
+    console.log("Fetching CallPlan Date:", params.CALL_PLAN_START_DATE);
+
     // Gunakan useCallback agar reference function stabil
     const fetchData = useCallback(async () => {
         setIsLoading(true);

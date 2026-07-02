@@ -67,7 +67,6 @@ const MainTable = () => {
   const {
     data: callPlanList,
     isLoading: isCallPlanLoading,
-    error: errorGetCallplan,
     refetch,
   } = useCallPlan(paramGetCallplan, { enabled: shouldFetchCallPlan });
 

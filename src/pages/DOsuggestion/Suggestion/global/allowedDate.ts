@@ -36,19 +36,40 @@ export const isBypassMode = (): boolean => {
     return false;
 };
 
+// export const getTargetDate = (roleName: string | undefined): string => {
+//     if (typeof window !== "undefined") {
+//         const testDate = localStorage.getItem("TEST_TARGET_DATE");
+//         if (testDate && /^\d{4}-\d{2}-\d{2}$/.test(testDate)) return testDate;
+//     }
+
+//     // Gunakan getServerDayjs() agar konsisten
+//     if (roleName === "WH_ADMIN_CABANG" || roleName === "FAS") {
+//         return getServerDayjs().add(1, "day").format("YYYY-MM-DD");
+//     }
+
+
+//     return getServerDayjs().add(2, "day").format("YYYY-MM-DD");
+// };
+
 export const getTargetDate = (roleName: string | undefined): string => {
+    // 1. Cek LocalStorage Bypass (tetap dipertahankan untuk testing)
     if (typeof window !== "undefined") {
         const testDate = localStorage.getItem("TEST_TARGET_DATE");
         if (testDate && /^\d{4}-\d{2}-\d{2}$/.test(testDate)) return testDate;
     }
 
-    // Gunakan getServerDayjs() agar konsisten
-    if (roleName === "WH_ADMIN_CABANG" || roleName === "FAS") {
-        return getServerDayjs().add(1, "day").format("YYYY-MM-DD");
-    }
+    const now = getServerDayjs();
 
+    // 2. Tentukan jam batas (09:00)
+    // Jika sekarang sebelum jam 09:00, kita kurangi 1 hari dari referensi hari ini
+    // sehingga saat ditambah 1 atau 2 hari, hasilnya tetap mengacu ke hari sebelumnya.
+    const isBeforeNine = now.hour() < 9;
+    const baseDate = isBeforeNine ? now.subtract(1, 'day') : now;
 
-    return getServerDayjs().add(2, "day").format("YYYY-MM-DD");
+    // 3. Tentukan jumlah hari tambahan berdasarkan role
+    const daysToAdd = (roleName === "WH_ADMIN_CABANG" || roleName === "FAS") ? 1 : 2;
+
+    return baseDate.add(daysToAdd, "day").format("YYYY-MM-DD");
 };
 
 // ============================================================================
@@ -86,11 +107,15 @@ const isHMinusOne = (callPlanStartDate: string | undefined): boolean => {
 // 2. VALIDASI KALKULASI STOCK ON HAND
 // ============================================================================
 export const isCalculationTimeAllowed = (callPlanStartDate: string | undefined): boolean => {
+    // 1. Bypass Mode untuk Testing (Opsional: Tetap aktifkan ini agar Anda bisa testing kapan saja)
     if (isBypassMode()) return true;
 
-    // Cek tanggal H-1 DAN jam harus pukul 09:00 (09:00 - 09:59)
+    // 2. Validasi H-1
+    if (!isHMinusOne(callPlanStartDate)) return false;
+
+    // 3. Validasi Jam (Strict: Harus jam 9)
     const jamSaatIni = getServerDayjs().hour();
-    return isHMinusOne(callPlanStartDate) && (jamSaatIni === 9);
+    return jamSaatIni === 9;
 };
 
 export const getCalculationErrorMessage = (callPlanStartDate: string): string => {
