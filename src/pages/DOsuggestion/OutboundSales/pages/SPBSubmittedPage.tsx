@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { ColumnDef } from "@tanstack/react-table";
 import { FaArrowRight } from "react-icons/fa";
 import Button from "../../../../components/ui/button/Button";
@@ -188,12 +188,32 @@ export const SPBSubmittedPage = ({
   const isBypass =
     localStorage.getItem("BYPASS_SOP_TIME") === "true";
 
+  const [showBypass, setShowBypass] = useState(false);
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === "b") {
+        e.preventDefault();
+        setShowBypass((prev) => !prev);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, []);
+
   return (
     <>
+
+
+
       <div className="mb-4 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
         <div className="flex flex-wrap items-center gap-6 text-sm">
-          <div>
-            <span className="font-semibold text-slate-600">Mode</span>
+
+          {showBypass && <> <div>
+            <span className="font-semibold text-slate-600">From</span>
             <div
               className={`font-bold ${isBypass ? "text-orange-600" : "text-green-600"
                 }`}
@@ -202,6 +222,13 @@ export const SPBSubmittedPage = ({
             </div>
           </div>
 
+            <div>
+              <span className="font-semibold text-slate-600">Status</span>
+              <div className="font-bold">{status}</div>
+            </div>
+          </>
+          }
+
           <div>
             <span className="font-semibold text-slate-600">Current Time</span>
             <div className="font-mono font-bold">
@@ -209,10 +236,6 @@ export const SPBSubmittedPage = ({
             </div>
           </div>
 
-          <div>
-            <span className="font-semibold text-slate-600">Status</span>
-            <div className="font-bold">{status}</div>
-          </div>
 
           <div>
             <span className="font-semibold text-slate-600">
