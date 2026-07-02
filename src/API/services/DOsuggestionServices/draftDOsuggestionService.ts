@@ -2,20 +2,20 @@ import axiosInstance from "../../../DynamicAPI/AxiosInstance";
 import { EndPoint } from "../../../utils/EndPoint";
 import { DOSuggestionResponse } from "../../types/draftDOsuggestion";
 
-/**
- * Mengambil data DO Suggestion berdasarkan callplan_number
- */
 export const getDOSuggestionByCallplan = async (
     callPlanNumber: string
 ): Promise<DOSuggestionResponse> => {
     try {
-        const encodedNumber = encodeURIComponent(callPlanNumber);
-        const response = await axiosInstance.get<DOSuggestionResponse>(
-            `${EndPoint}do-suggestion/callplan/${encodedNumber}`
+        const response = await axiosInstance.post<DOSuggestionResponse>(
+            `${EndPoint}do-suggestion/callplan/find`,
+            {
+                callplanNumber: callPlanNumber,
+            }
         );
+
         return response.data;
-    } catch (error) {
-        console.error(`Error fetching DO Suggestion for ${callPlanNumber}:`, error);
+    } catch (error: any) {
+        console.error(error);
         throw error;
     }
 };
@@ -35,7 +35,7 @@ export const getSubmittedSuggestions = async (
                 params: { status }
             }
         );
-        
+
         return response.data;
     } catch (error) {
         console.error(`Error fetching DO Suggestions:`, error);
