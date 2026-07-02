@@ -27,6 +27,7 @@ export const PrintPreviewModal = ({
   }, []);
 
   const componentRef = useRef<HTMLDivElement>(null);
+
   const handlePrint = useReactToPrint({
     contentRef: componentRef,
     documentTitle: `SPB_${data?.spb_number || "Document"}`,
@@ -66,7 +67,7 @@ export const PrintPreviewModal = ({
         ...item,
         calculated_btb: btbQty,
         calculated_top_up: topUpValue > 0 ? topUpValue : 0,
-        item_description: itemName, // 🔴 Simpan nama panjang di sini
+        item_description: itemName,
       };
     })
     .filter((item: any) => item.calculated_top_up > 0);

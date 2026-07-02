@@ -95,10 +95,16 @@ const BTBTotalBreakdown = ({
         </h3>
 
         {/* Badge Grand Total */}
-        {/* <div className="flex items-center gap-2 bg-indigo-600 text-white px-3 py-1.5 rounded-lg">
-          <span className="text-xs font-medium opacity-90">Total</span>
-          <span className="text-sm font-bold">{grandTotal} BKS</span>
-        </div> */}
+        <div className="flex items-center gap-2">
+         <div className="bg-white border border-indigo-200 text-indigo-700 px-4 py-1.5 rounded-lg shadow-sm">
+            <span className="text-sm font-medium text-indigo-900">
+              {grandTotal} BKS
+            </span>
+            <span className="text-sm font-medium text-indigo-500 ml-2 uppercase">
+              dari {breakdownList.length} SKU
+            </span>
+          </div>
+        </div>
       </div>
 
       {/* Grid Breakdown Item */}

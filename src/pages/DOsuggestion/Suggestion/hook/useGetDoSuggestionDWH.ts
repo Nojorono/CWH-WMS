@@ -40,5 +40,9 @@ export const useGetDoSuggestionDWH = (params: CallPlanBindings) => {
         }
     }, [salesNik, params.CABANG, params.CALL_PLAN_START_DATE]);
 
+
+    console.log("data DO sgst", data);
+    
+
     return { data, isLoading, error, refetch: fetchData };
 };

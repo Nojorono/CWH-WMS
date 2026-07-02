@@ -40,6 +40,7 @@ export const getDOsuggestion = async (params: any): Promise<SuggestionSummary> =
         // Parsing logic:
         const rawJsonString = response.data.data[0][0];
         const parsedData: SuggestionSummary = JSON.parse(rawJsonString);
+        
         return parsedData;
     } catch (error) {
         console.error("Gagal mengambil Suggestion Summary:", error);

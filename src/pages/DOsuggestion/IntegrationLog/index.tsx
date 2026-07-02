@@ -129,7 +129,6 @@ const IntegrationMonitoringPage = () => {
             {/* Tombol Refresh */}
             <button
               onClick={() => {
-                console.log("Tombol ditekan, menjalankan refetch...");
                 refetch();
               }}
               disabled={isLoading}

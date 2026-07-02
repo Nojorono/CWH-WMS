@@ -94,11 +94,11 @@ const PrepDetailTable = ({
     <div className="p-4 grid grid-cols-1 lg:grid-cols-2 gap-6 bg-slate-50 border-t">
       {/* PANEL PICKING LIST (TABLE) */}
       <div className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
-        <div className="px-4 py-3 bg-slate-50 border-b font-bold text-xs uppercase text-slate-700">
+        <div className="px-4 py-3 bg-emerald-50 border-b font-bold text-xs uppercase text-slate-700">
           Picking List (Top Up) {pickList.length} Items
         </div>
         <table className="w-full text-xs text-left">
-          <thead className="bg-slate-50 text-slate-500">
+          <thead className="bg-emerald-50 text-slate-500">
             <tr>
               <th className="px-3 py-2">No</th>
               <th className="px-3 py-2">Item</th>
@@ -132,18 +132,22 @@ const PrepDetailTable = ({
       {/* PANEL UNMATCHED (TABLE) */}
       <div className="bg-white rounded-lg shadow-sm border border-rose-200 overflow-hidden">
         <div className="px-4 py-3 bg-rose-50 border-b border-rose-100 font-bold text-xs uppercase text-rose-700">
-          Unmatched BTB {excessList.length} Items
+          Unmatched BTB SKU
         </div>
         <table className="w-full text-xs text-left">
           <thead className="bg-rose-50 text-rose-600">
             <tr>
+              <th className="px-3 py-2">No</th>
               <th className="px-3 py-2">Item</th>
-              <th className="px-3 py-2 text-center">Sisa Qty</th>
+              <th className="px-3 py-2 text-center">Qty</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-rose-50">
             {excessList.map((item, i) => (
               <tr key={i} className="hover:bg-rose-50">
+                <td className="px-3 py-2 font-medium text-slate-800">
+                  {i + 1}
+                </td>
                 <td className="px-3 py-2 font-medium text-slate-800">
                   {item.itemName}
                 </td>
