@@ -1,9 +1,9 @@
+// File: useGetBTB.ts
 import { useState, useEffect, useCallback } from 'react';
 import { CallPlanBindings } from '../../../../API/types/callPlan';
 import { BTBSalesmanGroup, BTBFlatItem } from '../../../../API/types/BTBdata';
 import { getBTB } from '../../../../API/services/DOsuggestionServices/getBTBservice';
 import { showErrorToast } from '../../../../components/toast';
-import { getBTBErrorMessage, getServerDayjs, isBypassMode, isGetBTBTimeAllowed } from '../../Suggestion/global/allowedDate';
 import dayjs from 'dayjs';
 
 interface UseGetBTBOptions {
@@ -17,18 +17,19 @@ export const useGetBTB = (
     const [data, setData] = useState<BTBSalesmanGroup[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [isSuccess, setIsSuccess] = useState(false); // Tambahan state untuk penanda aman
+    const [isSuccess, setIsSuccess] = useState(false);
 
     const cabang = params.CABANG;
     const startDate = params.CALL_PLAN_START_DATE;
     const isEnabled = options.enabled;
 
-    const btbDate = dayjs(startDate).subtract(2, 'day').format('YYYY-MM-DD');
-
     const fetchData = useCallback(async () => {
         setIsLoading(true);
         setError(null);
         setIsSuccess(false);
+
+        // Gunakan Tanggal Hari Ini - 1 Hari
+        const btbDate = dayjs().subtract(1, 'day').format('YYYY-MM-DD');
 
         try {
             const flatResult: BTBFlatItem[] = await getBTB({
@@ -38,7 +39,7 @@ export const useGetBTB = (
 
             if (!flatResult || !Array.isArray(flatResult)) {
                 setData([]);
-                setIsSuccess(true); // Data kosong bukan berarti error, melainkan sales memang bawa 0 barang.
+                setIsSuccess(true);
                 return;
             }
 
@@ -64,40 +65,25 @@ export const useGetBTB = (
             }, {} as Record<string, BTBSalesmanGroup>);
 
             setData(Object.values(groupedData));
-            setIsSuccess(true); // Tandai bahwa sinkronisasi DWH sukses
+            setIsSuccess(true);
 
         } catch (err) {
             const errorMsg = err instanceof Error ? err.message : String(err);
             setError(errorMsg);
-            // Pindahkan Toast ke sini agar hanya muncul 1x saat gagal fetch
             showErrorToast("Gagal sinkronisasi data BTB dari DWH: " + errorMsg);
             console.error("Fetch BTB Error:", err);
         } finally {
             setIsLoading(false);
         }
-    }, [cabang, startDate]);
+    }, [cabang]);
 
-    // Di dalam hook useGetBTB
     useEffect(() => {
-        // 1. Ambil waktu server yang akurat
-        const serverNow = getServerDayjs();
-
-        // 2. Gunakan fungsi validasi Anda
-        const isAllowed = isGetBTBTimeAllowed(startDate);
-
         const isValidBranch = cabang && cabang !== "null" && cabang !== "undefined";
         const isValidDate = startDate && startDate !== "null" && startDate !== "undefined";
 
-        // 3. Logika Proteksi
+        // Tarik data secara langsung tanpa pembatasan jam DWH
         if (isEnabled && isValidBranch && isValidDate) {
-            if (isAllowed || isBypassMode()) {
-                fetchData();
-            } else {
-                // Tampilkan error jika mencoba tarik data di luar jam 09:00 - 10:00
-                setError(getBTBErrorMessage(startDate));
-                // showErrorToast(getBTBErrorMessage(startDate));
-                setData([]); // Bersihkan data agar tidak over-picking
-            }
+            fetchData();
         } else if (!isEnabled) {
             setData([]);
         }

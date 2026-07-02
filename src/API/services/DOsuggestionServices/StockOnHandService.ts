@@ -1,3 +1,4 @@
+import dayjs from "dayjs";
 import axiosInstance from "../../../DynamicAPI/AxiosInstance";
 import { EndPoint } from "../../../utils/EndPoint";
 import { StockOnHand } from "../../types/stockOnHand";
@@ -14,24 +15,63 @@ interface ApiResponse<T> {
 interface GetStockParams {
     organization_code: string;
     subinventory_code: string;
-    date: string;
 }
 
 export const getStockOnHand = async (params: GetStockParams): Promise<StockOnHand[]> => {
+
+    // Menggunakan tanggal hari ini (now)
+    const sohDate = dayjs().format('YYYY-MM-DD');
+
     try {
-        // 2. Gunakan ApiResponse<StockOnHand[]> sebagai tipe response axios
         const response = await axiosInstance.get<ApiResponse<StockOnHand[]>>(
             `${EndPoint}outbound-sales/on-hand`,
             {
                 params: {
                     organization_code: params.organization_code,
                     subinventory_code: params.subinventory_code,
-                    date: params.date,
+                    date: sohDate,
                 },
             }
         );
 
-        return response.data?.data ?? [];
+        const rawData = response.data?.data ?? [];
+
+        // Map untuk menyimpan data unik (ter-update)
+        const uniqueStockMap = new Map<string, StockOnHand>();
+
+        rawData.forEach((item) => {
+            const orgCode = item.organization_code || "";
+            const itemId = item.inventory_item_id || "";
+
+            // Cukup gunakan orgCode dan itemId saja untuk key unik duplikasi
+            const compositeKey = `${orgCode}_${itemId}`;
+            const existingItem = uniqueStockMap.get(compositeKey);
+
+            if (!existingItem) {
+                uniqueStockMap.set(compositeKey, item);
+            } else {
+                // Parsing tanggal untuk dibandingkan
+                const existingTime = new Date(existingItem.createdAt || 0).getTime();
+                const newTime = new Date(item.createdAt || 0).getTime();
+
+                if (newTime > existingTime) {
+                    // Ambil yang paling baru secara tanggal
+                    uniqueStockMap.set(compositeKey, item);
+                } else if (newTime === existingTime) {
+                    // Jika createdAt sama persis, gunakan ID (secara string/alfabetis) sebagai fallback sorting
+                    if (String(item.id) > String(existingItem.id)) {
+                        uniqueStockMap.set(compositeKey, item);
+                    }
+                }
+            }
+        });
+
+        // Kembalikan data yang sudah bersih dari duplikasi
+        const cleanedData = Array.from(uniqueStockMap.values());
+
+        console.log("Deduplicated Stock On Hand:", cleanedData);
+        return cleanedData;
+
     } catch (error) {
         console.error("Error fetching Stock On Hand:", error);
         throw error;

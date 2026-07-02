@@ -235,18 +235,20 @@ const MainTable = () => {
             data={groupedAndMappedData}
             onProceed={() => setCurrentStep("CALCULATION")}
             // 🔴 PENJAGAAN PINTU KE HALAMAN PREPARATION (GET BTB)
-            onGoToPreparation={() => {
-              if (isGetBTBTimeAllowed(TARGET_DATE)) {
-                setCurrentStep("PREPARATION");
-              } else {
-                Swal.fire({
-                  icon: "warning",
-                  title: "Akses Preparation Terkunci",
-                  text: getBTBErrorMessage(TARGET_DATE),
-                  confirmButtonColor: "#ea580c",
-                });
-              }
-            }}
+            // onGoToPreparation={() => {
+            //   if (isGetBTBTimeAllowed(TARGET_DATE)) {
+            //     setCurrentStep("PREPARATION");
+            //   } else {
+            //     Swal.fire({
+            //       icon: "warning",
+            //       title: "Akses Preparation Terkunci",
+            //       text: getBTBErrorMessage(TARGET_DATE),
+            //       confirmButtonColor: "#ea580c",
+            //     });
+            //   }
+            // }}
+
+            onGoToPreparation={() => { setCurrentStep("PREPARATION"); }}
 
           />
         );

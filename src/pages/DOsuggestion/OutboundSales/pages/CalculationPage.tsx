@@ -37,7 +37,6 @@ export const CalculationPage = ({
 
   const { data: stockList } = useGetStockOnHand({
     org: params.CABANG,
-    date: params.CALL_PLAN_START_DATE,
     sub: "KECIL",
   });
 
@@ -219,6 +218,7 @@ export const CalculationPage = ({
 
       {isCalculated && (
         <div className="space-y-4 animate-in fade-in duration-500">
+
           <SKUSummaryPanel
             summary={skuSummary}
             onSearchChange={setGlobalFilter}
