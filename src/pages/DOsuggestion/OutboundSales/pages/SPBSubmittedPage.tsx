@@ -8,6 +8,8 @@ import { FaPrint } from "react-icons/fa6";
 import { formatDateTimeIndo } from "../../../../helper/FormatDateTime";
 import { BaseTable } from "../component/BaseTable";
 import { useStoreItem } from "../../../../DynamicAPI/stores/Store/MasterStore";
+import { getServerDayjs } from "../../Suggestion/global/allowedDate";
+import dayjs from "dayjs";
 
 interface SPBSubmittedPageProps {
   data: GroupedSPBData[];
@@ -249,43 +251,38 @@ export const SPBSubmittedPage = ({
         cell: (info) => info.getValue<string>(),
       },
       { accessorKey: "status", header: "status" },
-      // {
-      //   accessorKey: "createdAt",
-      //   header: "created at",
-      //   cell: (info) => formatDateTimeIndo(info.getValue<string>()),
-      // },
-      // {
-      //   accessorKey: "updatedAt",
-      //   header: "updated at",
-      //   cell: (info) => formatDateTimeIndo(info.getValue<string>()),
-      // },
     ],
     [],
   );
 
-  // Di SPBSubmittedPage.tsx
-  const isFinalStatus =
-    allSalesmen.length > 0 && allSalesmen[0].status === "FINAL";
+  const status = allSalesmen[0]?.status;
+  // const now = dayjs("2026-07-03 09:00:00");
+  const now = getServerDayjs();
+  const hour = now.hour();
+
+  // SUBMITTED : hanya 09:00 - 09:59
+  const canCalculate = status === "SUBMITTED" && hour === 9;
+
+  // FINAL : 09:00 - 08:59 (selalu selain jam 09-10 untuk calculate)
+  const canPrint = status === "FINAL" && (hour >= 9 || hour < 9);
 
   const footerButton = useMemo(() => {
-    if (isFinalStatus) {
-      return {
-        label: "Proceed to Printing",
-        icon: <FaPrint />,
-        action: () => {
-          onGoToPreparation();
-        },
-        className: "bg-emerald-600 hover:bg-emerald-700",
-      };
-    } else {
-      return {
-        label: "Proceed to Calculation",
-        icon: <FaArrowRight />,
-        action: onProceed,
-        className: "bg-blue-600 hover:bg-blue-700",
-      };
-    }
-  }, [isFinalStatus, allSalesmen, onProceed, onGoToPreparation]);
+    const isPrint = status === "FINAL";
+
+    return {
+      label: isPrint ? "Proceed to Printing" : "Proceed to Calculation",
+      icon: isPrint ? <FaPrint /> : <FaArrowRight />,
+      action: isPrint ? onGoToPreparation : onProceed,
+      className: isPrint
+        ? "bg-emerald-600 hover:bg-emerald-700"
+        : "bg-blue-600 hover:bg-blue-700",
+
+      disabled: isPrint ? !canPrint : !canCalculate,
+      tooltip: isPrint
+        ? "Printing is available from 09:00 AM until 08:59 AM the next day."
+        : "Calculation is only available from 09:00 AM to 10:00 AM.",
+    };
+  }, [status, canCalculate, canPrint, onProceed, onGoToPreparation]);
 
   return (
     <BaseTable
@@ -298,14 +295,17 @@ export const SPBSubmittedPage = ({
         <StandardSubTable details={row.details} status={row.status} />
       )}
       footerAction={
-        <Button
-          onClick={footerButton.action}
-          variant="primary"
-          className={footerButton.className}
-          endIcon={footerButton.icon}
-        >
-          {footerButton.label}
-        </Button>
+        <div title={footerButton.disabled ? footerButton.tooltip : ""}>
+          <Button
+            onClick={footerButton.action}
+            disabled={footerButton.disabled}
+            variant="primary"
+            className={footerButton.className}
+            endIcon={footerButton.icon}
+          >
+            {footerButton.label}
+          </Button>
+        </div>
       }
     />
   );

@@ -67,7 +67,6 @@ const MainTable = () => {
   const {
     data: callPlanList,
     isLoading: isCallPlanLoading,
-    error: errorGetCallplan,
     refetch,
   } = useCallPlan(paramGetCallplan, { enabled: shouldFetchCallPlan });
 
@@ -101,11 +100,27 @@ const MainTable = () => {
 
   const isLoading = loadingVisible;
 
+  const [showBypass, setShowBypass] = useState(false);
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === "b") {
+        e.preventDefault();
+        setShowBypass((prev) => !prev);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, []);
+
   return (
     <div className="w-full space-y-4 p-4 bg-[#F8FAFC] min-h-screen">
       <PageBreadcrumb breadcrumbs={[{ title: "List Salesman Callplan" }]} />
 
-      <BypassTimeController />
+      {showBypass && <BypassTimeController />}
 
       <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-xl shadow-sm flex items-start gap-3">
         <FaInfoCircle className="text-blue-500 mt-0.5 size-5 flex-shrink-0" />
