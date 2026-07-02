@@ -9,21 +9,33 @@ let timeOffset = 0;
 export const syncServerTime = (serverTimestamp: number) => {
     const localTimestamp = Date.now();
     timeOffset = serverTimestamp - localTimestamp;
+    console.log("timeOffset =", timeOffset);
 };
 
-/**
- * Helper pengganti dayjs() yang sudah disinkronkan dengan server
- */
+
 export const getServerDayjs = () => {
-    // Mengecek apakah bypass aktif dan ada waktu custom yang tersimpan
+    console.log("isBypassMode:", isBypassMode());
+    console.log(
+        "BYPASS_CUSTOM_TIME:",
+        localStorage.getItem("BYPASS_CUSTOM_TIME")
+    );
+    console.log("timeOffset:", timeOffset);
+
     if (isBypassMode()) {
         const customTime = localStorage.getItem("BYPASS_CUSTOM_TIME");
+
         if (customTime) {
-            return dayjs(customTime);
+            const bypassTime = dayjs(customTime);
+            console.log("Using bypass:", bypassTime.format("YYYY-MM-DD HH:mm:ss"));
+            return bypassTime;
         }
     }
-    // Fallback ke waktu server asli
-    return dayjs().add(timeOffset, "millisecond");
+
+    const serverTime = dayjs().add(timeOffset, "millisecond");
+
+    console.log("Using server:", serverTime.format("YYYY-MM-DD HH:mm:ss"));
+
+    return serverTime;
 };
 
 // ============================================================================
@@ -36,20 +48,6 @@ export const isBypassMode = (): boolean => {
     return false;
 };
 
-// export const getTargetDate = (roleName: string | undefined): string => {
-//     if (typeof window !== "undefined") {
-//         const testDate = localStorage.getItem("TEST_TARGET_DATE");
-//         if (testDate && /^\d{4}-\d{2}-\d{2}$/.test(testDate)) return testDate;
-//     }
-
-//     // Gunakan getServerDayjs() agar konsisten
-//     if (roleName === "WH_ADMIN_CABANG" || roleName === "FAS") {
-//         return getServerDayjs().add(1, "day").format("YYYY-MM-DD");
-//     }
-
-
-//     return getServerDayjs().add(2, "day").format("YYYY-MM-DD");
-// };
 
 export const getTargetDate = (roleName: string | undefined): string => {
     // 1. Cek LocalStorage Bypass (tetap dipertahankan untuk testing)

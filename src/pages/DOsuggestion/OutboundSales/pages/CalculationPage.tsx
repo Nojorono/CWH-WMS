@@ -202,11 +202,10 @@ export const CalculationPage = ({
               <div
                 className="h-full bg-orange-500 transition-all duration-300"
                 style={{
-                  width: `${
-                    progress.total > 0
-                      ? (progress.current / progress.total) * 100
-                      : 0
-                  }%`,
+                  width: `${progress.total > 0
+                    ? (progress.current / progress.total) * 100
+                    : 0
+                    }%`,
                 }}
               />
             </div>

@@ -38,6 +38,8 @@ export const BypassTimeController = () => {
   }, [isVisible]);
 
   const handleApply = () => {
+    console.log("customTime =", customTime);
+
     if (!customTime) return;
 
     localStorage.setItem("BYPASS_SOP_TIME", "true");

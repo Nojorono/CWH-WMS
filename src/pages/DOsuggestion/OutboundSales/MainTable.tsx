@@ -225,7 +225,7 @@ const MainTable = () => {
     const now = getServerDayjs();
     return now.hour() >= 10;
   };
-  
+
 
   const renderActiveStep = () => {
     switch (currentStep) {
@@ -233,18 +233,7 @@ const MainTable = () => {
         return (
           <SPBSubmittedPage
             data={groupedAndMappedData}
-            onProceed={() => {
-              if (isCalculationTimeAllowed(TARGET_DATE)) {
-                setCurrentStep("CALCULATION");
-              } else {
-                Swal.fire({
-                  icon: "warning",
-                  title: "Jadwal Terkunci",
-                  text: getCalculationErrorMessage(TARGET_DATE),
-                  confirmButtonColor: "#ea580c",
-                });
-              }
-            }}
+            onProceed={() => setCurrentStep("CALCULATION")}
             // 🔴 PENJAGAAN PINTU KE HALAMAN PREPARATION (GET BTB)
             onGoToPreparation={() => {
               if (isGetBTBTimeAllowed(TARGET_DATE)) {
@@ -258,7 +247,7 @@ const MainTable = () => {
                 });
               }
             }}
-            
+
           />
         );
 

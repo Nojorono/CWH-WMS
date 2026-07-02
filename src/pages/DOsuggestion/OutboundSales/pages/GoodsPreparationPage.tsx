@@ -381,22 +381,20 @@ export const GoodsPreparationPage = ({
               <button
                 onClick={handleExportSummary}
                 disabled={!isBTBSuccess || !isTimeAllowed}
-                className={`flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-lg shadow-sm transition-colors ${
-                  !isBTBSuccess || !isTimeAllowed
-                    ? "bg-slate-200 text-slate-400 cursor-not-allowed"
-                    : "text-slate-600 bg-white border border-slate-300 hover:bg-slate-50"
-                }`}
+                className={`flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-lg shadow-sm transition-colors ${!isBTBSuccess || !isTimeAllowed
+                  ? "bg-slate-200 text-slate-400 cursor-not-allowed"
+                  : "text-slate-600 bg-white border border-slate-300 hover:bg-slate-50"
+                  }`}
               >
                 <FaDownload /> Summary
               </button>
 
               <button
                 disabled={!isBTBSuccess || !isTimeAllowed}
-                className={`flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-lg shadow-sm transition-colors ${
-                  !isBTBSuccess || !isTimeAllowed
-                    ? "bg-slate-200 text-slate-400 cursor-not-allowed border-transparent"
-                    : "text-white bg-orange-500 border-transparent hover:bg-orange-600"
-                }`}
+                className={`flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-lg shadow-sm transition-colors ${!isBTBSuccess || !isTimeAllowed
+                  ? "bg-slate-200 text-slate-400 cursor-not-allowed border-transparent"
+                  : "text-white bg-orange-500 border-transparent hover:bg-orange-600"
+                  }`}
               >
                 <FaPrint /> Print All Picklists
               </button>
