@@ -173,11 +173,10 @@ const AdjustTable = ({
 
           return (
             <span
-              className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase whitespace-nowrap ${
-                isGenerated
-                  ? "bg-green-100 text-green-700"
-                  : "bg-red-400 text-white"
-              }`}
+              className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase whitespace-nowrap ${isGenerated
+                ? "bg-green-100 text-green-700"
+                : "bg-red-400 text-white"
+                }`}
             >
               {isGenerated ? "Generated" : "Not Generated"}
             </span>
@@ -209,6 +208,8 @@ const AdjustTable = ({
           }
 
           const isAllowedToGenerate = isGenerateDOAllowed(startDate);
+          console.log("startdate", startDate);
+
           const errorMessage = startDate
             ? getGenerateErrorMessage(startDate)
             : "Tanggal tidak valid";
@@ -216,31 +217,30 @@ const AdjustTable = ({
           return (
             <div className="flex justify-center items-center whitespace-nowrap">
               {isGenerated ? (
-              <button
-                onClick={() => handleAdjust(row.original, organization_id)}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-700 bg-white border border-slate-300 rounded-lg shadow-sm hover:bg-slate-50 hover:text-slate-900 hover:border-slate-400 transition-all focus:outline-none focus:ring-2 focus:ring-slate-200"
-                title="View Detail"
-              >
-                <FaEye className="text-slate-500 flex-shrink-0" />
-                <span>View</span>
-              </button>
+                <button
+                  onClick={() => handleAdjust(row.original, organization_id)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-700 bg-white border border-slate-300 rounded-lg shadow-sm hover:bg-slate-50 hover:text-slate-900 hover:border-slate-400 transition-all focus:outline-none focus:ring-2 focus:ring-slate-200"
+                  title="View Detail"
+                >
+                  <FaEye className="text-slate-500 flex-shrink-0" />
+                  <span>View</span>
+                </button>
               ) : (
-              <button
-                onClick={() => handleGenerateDO(row.original)}
-                disabled={!isAllowedToGenerate}
-                className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-white border border-transparent rounded-lg transition-all focus:outline-none focus:ring-2 
-                    ${
-                      isAllowedToGenerate
-                        ? "bg-emerald-600 hover:bg-emerald-700 shadow-sm focus:ring-emerald-500/50"
-                        : "bg-slate-300 cursor-not-allowed text-slate-500"
+                <button
+                  onClick={() => handleGenerateDO(row.original)}
+                  disabled={!isAllowedToGenerate}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-white border border-transparent rounded-lg transition-all focus:outline-none focus:ring-2 
+                    ${isAllowedToGenerate
+                      ? "bg-emerald-600 hover:bg-emerald-700 shadow-sm focus:ring-emerald-500/50"
+                      : "bg-slate-300 cursor-not-allowed text-slate-500"
                     }`}
-                title={
-                  isAllowedToGenerate ? "Generate Suggestion" : errorMessage
-                }
-              >
-                <FaMagic className="flex-shrink-0" />
-                <span>Generate</span>
-              </button>
+                  title={
+                    isAllowedToGenerate ? "Generate Suggestion" : errorMessage
+                  }
+                >
+                  <FaMagic className="flex-shrink-0" />
+                  <span>Generate</span>
+                </button>
               )}
             </div>
           );

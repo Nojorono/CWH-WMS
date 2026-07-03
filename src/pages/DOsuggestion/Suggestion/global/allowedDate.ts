@@ -73,16 +73,48 @@ export const getTargetDate = (roleName: string | undefined): string => {
 // ============================================================================
 // 1. VALIDASI GENERATE DO SUGGESTION
 // ============================================================================
-export const isGenerateDOAllowed = (callPlanStartDate: string | undefined): boolean => {
+// export const isGenerateDOAllowed = (callPlanStartDate: string | undefined): boolean => {
+//     if (isBypassMode()) return true;
+//     if (!callPlanStartDate) return false;
+
+//     console.log("callPlanStartDate", callPlanStartDate);
+
+//     // if callplan start date H-1 sd jam 9 today
+//     // if callplan H-2 open jam 13
+
+//     const now = getServerDayjs(); // Waktu Server
+//     const hariIni = now.format("YYYY-MM-DD");
+//     const batasWaktu = dayjs(callPlanStartDate).subtract(1, "day").format("YYYY-MM-DD");
+//     const jamSaatIni = now.hour();
+
+//     return (hariIni === batasWaktu) && (jamSaatIni >= 9);
+// };
+
+export const isGenerateDOAllowed = (
+    callPlanStartDate?: string,
+): boolean => {
     if (isBypassMode()) return true;
     if (!callPlanStartDate) return false;
 
-    const now = getServerDayjs(); // Waktu Server
-    const hariIni = now.format("YYYY-MM-DD");
-    const batasWaktu = dayjs(callPlanStartDate).subtract(2, "day").format("YYYY-MM-DD");
-    const jamSaatIni = now.hour();
+    const now = getServerDayjs();
 
-    return (hariIni === batasWaktu) && (jamSaatIni >= 13);
+    const today = now.startOf("day");
+    const callPlanDate = dayjs(callPlanStartDate).startOf("day");
+
+    // Selisih hari antara Call Plan dengan hari ini
+    const diffDay = callPlanDate.diff(today, "day");
+
+    // H-1
+    if (diffDay === 1) {
+        return now.hour() <= 9;
+    }
+
+    // H-2 atau lebih
+    if (diffDay >= 2) {
+        return now.hour() >= 13;
+    }
+
+    return false;
 };
 
 export const getGenerateErrorMessage = (callPlanStartDate: string): string => {

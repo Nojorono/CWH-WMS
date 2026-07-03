@@ -64,6 +64,9 @@ const MainTable = () => {
     [organization_name, activeSpvNik, TARGET_DATE],
   );
 
+  console.log("TARGET DATE", TARGET_DATE);
+
+
   const {
     data: callPlanList,
     isLoading: isCallPlanLoading,
