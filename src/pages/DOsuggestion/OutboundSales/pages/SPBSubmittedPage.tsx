@@ -193,7 +193,10 @@ export const SPBSubmittedPage = ({
   // Ambil flag bypass dari local storage
   const isBypass = localStorage.getItem("BYPASS_SOP_TIME") === "true";
 
-  // SUBMITTED : Diizinkan mulai dari jam 9 pagi ke atas (atau jika bypass aktif)
+  // Cek apakah saat ini berada di dalam jendela tarik stok (09:00 - 10:00)
+  const isStockWindow = hour === 9;
+
+  // Tombol kalkulasi aktif jika status SUBMITTED dan sudah masuk jam 9 ke atas (atau jika bypass aktif)
   const canCalculate = status === "SUBMITTED" && (hour >= 9 || isBypass);
 
   // FINAL : Selalu diizinkan untuk mencetak
@@ -202,8 +205,8 @@ export const SPBSubmittedPage = ({
   const footerButton = useMemo(() => {
     const isPrint = status === "FINAL";
 
-    // Default config untuk proses kalkulasi
-    let label = "Get Stock on Hand";
+    // Default label di luar jam 9-10 adalah "Proceed Calculate"
+    let label = "Proceed Calculate";
     let icon = <FaArrowRight />;
     let action = onProceed;
     let className = "bg-blue-600 hover:bg-blue-700";
@@ -213,9 +216,9 @@ export const SPBSubmittedPage = ({
       icon = <FaPrint />;
       action = onGoToPreparation;
       className = "bg-emerald-600 hover:bg-emerald-700";
-    } else if (hour >= 10) {
-      // Jika di atas jam 10:00 (hour >= 10)
-      label = "Proceed Calculate";
+    } else if (isStockWindow) {
+      // PENTING: Label "Get Stock on Hand" HANYA muncul jika benar-benar di jam 9 s/d 10 pagi
+      label = "Get Stock on Hand";
     }
 
     return {
@@ -227,10 +230,10 @@ export const SPBSubmittedPage = ({
       tooltip: isPrint
         ? "Printing is available from 09:00 until 08:59 the next day."
         : hour < 9
-          ? "Get Stock on Hand is only available starting from 09:00."
+          ? "Get Stock on Hand is only available from 09:00 to 10:00."
           : "",
     };
-  }, [status, canCalculate, canPrint, hour, onProceed, onGoToPreparation]);
+  }, [status, canCalculate, canPrint, hour, isStockWindow, onProceed, onGoToPreparation]);
 
 
   const [showBypass, setShowBypass] = useState(false);
