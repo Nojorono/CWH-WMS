@@ -157,36 +157,81 @@ export const SPBSubmittedPage = ({
     [],
   );
 
+  // const status = allSalesmen[0]?.status;
+  // const now = getServerDayjs();
+  // const hour = now.hour();
+
+  // // SUBMITTED : hanya 09:00
+  // const canCalculate = status === "SUBMITTED"
+
+  // // FINAL : 09:00 - 08:59 (selalu selain jam 09-10 untuk calculate)
+  // const canPrint = status === "FINAL" && (hour >= 9 || hour < 9);
+
+  // const footerButton = useMemo(() => {
+  //   const isPrint = status === "FINAL";
+
+  //   return {
+  //     label: isPrint ? "Proceed to Printing" : "Get Stock on Hand",
+  //     icon: isPrint ? <FaPrint /> : <FaArrowRight />,
+  //     action: isPrint ? onGoToPreparation : onProceed,
+  //     className: isPrint
+  //       ? "bg-emerald-600 hover:bg-emerald-700"
+  //       : "bg-blue-600 hover:bg-blue-700",
+
+  //     disabled: isPrint ? !canPrint : !canCalculate,
+  //     tooltip: isPrint
+  //       ? "Printing is available from 09:00 until 08:59 the next day."
+  //       : "Calculation is only available from 09:00 to 10:00.",
+  //   };
+  // }, [status, canCalculate, canPrint, onProceed, onGoToPreparation]);
+
+
   const status = allSalesmen[0]?.status;
   const now = getServerDayjs();
   const hour = now.hour();
 
-  // SUBMITTED : hanya 09:00
-  const canCalculate = status === "SUBMITTED"
+  // Ambil flag bypass dari local storage
+  const isBypass = localStorage.getItem("BYPASS_SOP_TIME") === "true";
 
-  // FINAL : 09:00 - 08:59 (selalu selain jam 09-10 untuk calculate)
-  const canPrint = status === "FINAL" && (hour >= 9 || hour < 9);
+  // SUBMITTED : Diizinkan mulai dari jam 9 pagi ke atas (atau jika bypass aktif)
+  const canCalculate = status === "SUBMITTED" && (hour >= 9 || isBypass);
+
+  // FINAL : Selalu diizinkan untuk mencetak
+  const canPrint = status === "FINAL";
 
   const footerButton = useMemo(() => {
     const isPrint = status === "FINAL";
 
-    return {
-      label: isPrint ? "Proceed to Printing" : "Proceed to Calculation",
-      icon: isPrint ? <FaPrint /> : <FaArrowRight />,
-      action: isPrint ? onGoToPreparation : onProceed,
-      className: isPrint
-        ? "bg-emerald-600 hover:bg-emerald-700"
-        : "bg-blue-600 hover:bg-blue-700",
+    // Default config untuk proses kalkulasi
+    let label = "Get Stock on Hand";
+    let icon = <FaArrowRight />;
+    let action = onProceed;
+    let className = "bg-blue-600 hover:bg-blue-700";
 
+    if (isPrint) {
+      label = "Proceed to Printing";
+      icon = <FaPrint />;
+      action = onGoToPreparation;
+      className = "bg-emerald-600 hover:bg-emerald-700";
+    } else if (hour >= 10) {
+      // Jika di atas jam 10:00 (hour >= 10)
+      label = "Proceed Calculate";
+    }
+
+    return {
+      label,
+      icon,
+      action,
+      className,
       disabled: isPrint ? !canPrint : !canCalculate,
       tooltip: isPrint
         ? "Printing is available from 09:00 until 08:59 the next day."
-        : "Calculation is only available from 09:00 to 10:00.",
+        : hour < 9
+          ? "Get Stock on Hand is only available starting from 09:00."
+          : "",
     };
-  }, [status, canCalculate, canPrint, onProceed, onGoToPreparation]);
+  }, [status, canCalculate, canPrint, hour, onProceed, onGoToPreparation]);
 
-  const isBypass =
-    localStorage.getItem("BYPASS_SOP_TIME") === "true";
 
   const [showBypass, setShowBypass] = useState(false);
   useEffect(() => {

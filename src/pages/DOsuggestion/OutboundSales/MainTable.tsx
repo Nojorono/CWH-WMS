@@ -307,7 +307,7 @@ const MainTable = () => {
           <FaInfoCircle className="text-blue-500 mt-0.5 size-4 sm:size-5 flex-shrink-0" />
           <div className="flex-1 w-full overflow-hidden">
             <h4 className="text-xs sm:text-sm font-bold text-blue-900 leading-tight mb-1">
-              Informasi SOP Kalkulasi Stock On Hand (SOH)
+              Informasi GET Stock On Hand (SOH)
             </h4>
             <p className="text-[11px] sm:text-xs text-blue-800 leading-snug mb-2">
               Tombol "Proceed to Calculation" hanya aktif pada{" "}
