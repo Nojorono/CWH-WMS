@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { ColumnDef } from "@tanstack/react-table";
 import { FaArrowRight } from "react-icons/fa";
 import Button from "../../../../components/ui/button/Button";
@@ -8,8 +8,10 @@ import { FaPrint } from "react-icons/fa6";
 import { formatDateTimeIndo } from "../../../../helper/FormatDateTime";
 import { BaseTable } from "../component/BaseTable";
 import { useStoreItem } from "../../../../DynamicAPI/stores/Store/MasterStore";
-import { getServerDayjs } from "../../Suggestion/global/allowedDate";
+import { getServerDayjs, getTargetDate } from "../../Suggestion/global/allowedDate";
 import dayjs from "dayjs";
+import { log } from "node:console";
+import { usePersistAuthStore } from "../../../../API/store/AuthStore/PersistAuthStore";
 
 interface SPBSubmittedPageProps {
   data: GroupedSPBData[];
@@ -17,116 +19,13 @@ interface SPBSubmittedPageProps {
   onGoToPreparation: () => void;
 }
 
-// 1. KOMPONEN SUB-TABLE (Versi Scrollable - Tanpa Pagination)
-// const StandardSubTable = ({
-//   details,
-// }: {
-//   details: DOSuggestionDetail[];
-//   status?: string;
-// }) => {
-//   const { fetchAll, list: itemList } = useStoreItem();
-
-//   // Fetch master items saat komponen dimuat
-//   useEffect(() => {
-//     fetchAll();
-//   }, []); // Anda bisa menambahkan dependency yang sesuai jika perlu
-
-//   // Menggabungkan data details dengan master item untuk mendapatkan nama produk
-//   const processedData = useMemo(() => {
-//     const mappedData = details.map((item: any) => {
-//       const matchedItem = itemList?.find(
-//         (master: any) => master.sku === item.item_code,
-//       );
-//       const itemName = matchedItem ? matchedItem.description : item.item_code;
-
-//       return { ...item, itemName };
-//     });
-
-//     return mappedData.sort((a, b) => {
-//       return a.itemName.localeCompare(b.itemName);
-//     });
-//   }, [details, itemList]);
-
-//   // Handle Empty State
-//   if (!details?.length) {
-//     return (
-//       <div className="text-center py-6 bg-slate-50 border border-dashed border-slate-200 rounded-lg text-slate-400 text-sm italic mx-4 my-2">
-//         Data product details kosong.
-//       </div>
-//     );
-//   }
-
-//   return (
-//     // Wrapper luar menggunakan background sedikit gelap untuk membedakan dari baris utama
-//     <div className="p-3 bg-slate-50/80 border-t border-slate-100 shadow-inner">
-//       {/* Header Panel */}
-//       <div className="flex justify-between items-center mb-3 px-1">
-//         <h4 className="font-semibold text-slate-700 text-xs uppercase tracking-wider flex items-center gap-2">
-//           Product Details
-//           <span className="bg-blue-100 border border-blue-200 text-blue-700 py-0.5 px-2 rounded-full text-[10px] font-bold">
-//             {processedData.length} Items
-//           </span>
-//         </h4>
-//       </div>
-
-//       {/* Scrollable Container untuk banyak item */}
-//       {/* max-h-[300px] akan memunculkan scroll jika item terlalu banyak */}
-//       <div className="max-h-[200px] overflow-y-auto pr-1 custom-scrollbar">
-//         {/* Grid System: 1 kolom di mobile, 2 di tablet, 3-4 kolom di layar lebar */}
-//         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2.5 pb-1">
-//           {processedData.map((item, idx) => (
-//             // Mini Card Item
-//             <div
-//               key={idx}
-//               className="group flex flex-col p-2.5 bg-white border border-slate-200 rounded-lg hover:border-blue-400 hover:shadow-md transition-all duration-200 cursor-default relative overflow-hidden"
-//             >
-//               {/* Highlight bar saat di-hover */}
-//               <div className="absolute top-0 right-0 w-1 h-full bg-blue-400 opacity-0 group-hover:opacity-100 transition-opacity" />
-
-//               {/* Bagian Kiri: Nomor & Nama SKU */}
-//               <div className="flex items-start gap-2.5 mb-2 overflow-hidden">
-//                 {/* Badge Nomor */}
-//                 <span className="flex-shrink-0 flex items-center justify-center min-w-[24px] h-6 rounded-md bg-slate-50 border border-slate-100 text-slate-400 text-[10px] font-bold group-hover:bg-blue-50 group-hover:text-blue-600 group-hover:border-blue-200 transition-colors">
-//                   {idx + 1}
-//                 </span>
-
-//                 {/* Teks Nama Item & SKU */}
-//                 <div className="flex flex-col w-full overflow-hidden">
-//                   <span
-//                     className="text-xs font-bold text-slate-800 truncate"
-//                     title={item.itemName}
-//                   >
-//                     {item.itemName}
-//                   </span>
-//                   <span className="text-[10px] font-mono text-slate-400 mt-0.5">
-//                     {item.item_code}
-//                   </span>
-//                 </div>
-//               </div>
-
-//               {/* Bagian Bawah: Qty Submitted */}
-//               <div className="flex flex-col items-end pt-2 border-t border-slate-100 mt-auto">
-//                 <span className="text-[9px] uppercase tracking-wide text-slate-400 font-medium mb-0.5">
-//                   Locked Qty
-//                 </span>
-//                 <span className="text-xl font-bold text-blue-600">
-//                   {item.item_qty_submitted}
-//                 </span>
-//               </div>
-//             </div>
-//           ))}
-//         </div>
-//       </div>
-//     </div>
-//   );
-// };
-
 const StandardSubTable = ({
   details,
 }: {
   details: DOSuggestionDetail[];
   status?: string;
 }) => {
+
   const { fetchAll, list: itemList } = useStoreItem();
 
   useEffect(() => {
@@ -217,6 +116,9 @@ export const SPBSubmittedPage = ({
   onGoToPreparation,
 }: SPBSubmittedPageProps) => {
   const [globalFilter, setGlobalFilter] = React.useState("");
+  const state = usePersistAuthStore.getState();
+  const user = state.user;
+  const role_name = user?.role?.name;
 
   const allSalesmen = useMemo(() => {
     return data.flatMap((spvGroup) =>
@@ -256,7 +158,6 @@ export const SPBSubmittedPage = ({
   );
 
   const status = allSalesmen[0]?.status;
-  // const now = dayjs("2026-07-03 09:00:00");
   const now = getServerDayjs();
   const hour = now.hour();
 
@@ -279,34 +180,112 @@ export const SPBSubmittedPage = ({
 
       disabled: isPrint ? !canPrint : !canCalculate,
       tooltip: isPrint
-        ? "Printing is available from 09:00 AM until 08:59 AM the next day."
-        : "Calculation is only available from 09:00 AM to 10:00 AM.",
+        ? "Printing is available from 09:00 until 08:59 the next day."
+        : "Calculation is only available from 09:00 to 10:00.",
     };
   }, [status, canCalculate, canPrint, onProceed, onGoToPreparation]);
 
-  return (
-    <BaseTable
-      data={allSalesmen}
-      columns={columns}
-      globalFilter={globalFilter}
-      setGlobalFilter={setGlobalFilter}
-      isExpandable={true}
-      renderSubComponent={(row) => (
-        <StandardSubTable details={row.details} status={row.status} />
-      )}
-      footerAction={
-        <div title={footerButton.disabled ? footerButton.tooltip : ""}>
-          <Button
-            onClick={footerButton.action}
-            disabled={footerButton.disabled}
-            variant="primary"
-            className={footerButton.className}
-            endIcon={footerButton.icon}
-          >
-            {footerButton.label}
-          </Button>
-        </div>
+  const isBypass =
+    localStorage.getItem("BYPASS_SOP_TIME") === "true";
+
+  const [showBypass, setShowBypass] = useState(false);
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === "b") {
+        e.preventDefault();
+        setShowBypass((prev) => !prev);
       }
-    />
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, []);
+
+  return (
+    <>
+
+
+
+      <div className="mb-4 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
+        <div className="flex flex-wrap items-center gap-6 text-sm">
+
+          {showBypass && <> <div>
+            <span className="font-semibold text-slate-600">From</span>
+            <div
+              className={`font-bold ${isBypass ? "text-orange-600" : "text-green-600"
+                }`}
+            >
+              {isBypass ? "BP" : "SERVER"}
+            </div>
+          </div>
+
+            <div>
+              <span className="font-semibold text-slate-600">Status</span>
+              <div className="font-bold">{status}</div>
+            </div>
+          </>
+          }
+
+          <div>
+            <span className="font-semibold text-slate-600">Current Time</span>
+            <div className="font-mono font-bold">
+              {now.format("DD MMM YYYY HH:mm:ss")}
+            </div>
+          </div>
+
+
+          <div>
+            <span className="font-semibold text-slate-600">
+              Calculate Allowed
+            </span>
+            <div
+              className={`font-bold ${canCalculate ? "text-green-600" : "text-red-600"
+                }`}
+            >
+              {canCalculate ? "YES" : "NO"}
+            </div>
+          </div>
+
+          <div>
+            <span className="font-semibold text-slate-600">
+              Print Allowed
+            </span>
+            <div
+              className={`font-bold ${canPrint ? "text-green-600" : "text-red-600"
+                }`}
+            >
+              {canPrint ? "YES" : "NO"}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <BaseTable
+        data={allSalesmen}
+        columns={columns}
+        globalFilter={globalFilter}
+        setGlobalFilter={setGlobalFilter}
+        isExpandable={true}
+        renderSubComponent={(row) => (
+          <StandardSubTable details={row.details} status={row.status} />
+        )}
+        footerAction={
+          <div title={footerButton.disabled ? footerButton.tooltip : ""}>
+            <Button
+              onClick={footerButton.action}
+              disabled={footerButton.disabled}
+              variant="primary"
+              className={footerButton.className}
+              endIcon={footerButton.icon}
+            >
+              {footerButton.label}
+            </Button>
+          </div>
+        }
+      />
+    </>
   );
 };

@@ -37,7 +37,6 @@ export const CalculationPage = ({
 
   const { data: stockList } = useGetStockOnHand({
     org: params.CABANG,
-    date: params.CALL_PLAN_START_DATE,
     sub: "KECIL",
   });
 
@@ -202,11 +201,10 @@ export const CalculationPage = ({
               <div
                 className="h-full bg-orange-500 transition-all duration-300"
                 style={{
-                  width: `${
-                    progress.total > 0
-                      ? (progress.current / progress.total) * 100
-                      : 0
-                  }%`,
+                  width: `${progress.total > 0
+                    ? (progress.current / progress.total) * 100
+                    : 0
+                    }%`,
                 }}
               />
             </div>
@@ -220,6 +218,7 @@ export const CalculationPage = ({
 
       {isCalculated && (
         <div className="space-y-4 animate-in fade-in duration-500">
+
           <SKUSummaryPanel
             summary={skuSummary}
             onSearchChange={setGlobalFilter}

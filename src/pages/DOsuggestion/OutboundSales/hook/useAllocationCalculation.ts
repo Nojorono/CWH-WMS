@@ -3,11 +3,21 @@ import { resolveSku, safeParse } from "../utils/sku";
 import { GroupedSPBData } from "../MainTable";
 
 type SkuMeta = {
+    sku: string; // Tambahan field sku murni untuk visualisasi di UI
     item_code?: string;
     item_number?: string;
     item_description?: string;
     inventory_item_id?: string | number;
     createdAt?: string;
+};
+
+// Helper untuk mendapatkan key unik pencocokan (mengutamakan inventory_item_id)
+const getItemKey = (item: any): string => {
+    const itemId = item?.inventory_item_id;
+    if (itemId !== undefined && itemId !== null && itemId !== "") {
+        return String(itemId);
+    }
+    return resolveSku(item) || "";
 };
 
 export const useAllocationCalculation = (
@@ -23,13 +33,13 @@ export const useAllocationCalculation = (
         }
 
         const flatSalesmanList = data.flatMap((group) => group.salesmenDO);
-
         const skuMetaMap = new Map<string, SkuMeta>();
 
-        const registerSkuMeta = (sku: string, source: any) => {
-            if (!sku || skuMetaMap.has(sku)) return;
+        const registerSkuMeta = (key: string, source: any) => {
+            if (!key || skuMetaMap.has(key)) return;
 
-            skuMetaMap.set(sku, {
+            skuMetaMap.set(key, {
+                sku: resolveSku(source) || "",
                 item_code: source.item_code,
                 item_number: source.item_number,
                 item_description: source.item_description,
@@ -39,19 +49,17 @@ export const useAllocationCalculation = (
         };
 
         /**
-         * =========================
-         * 1. Build SOH Map
-         * =========================
+         * ======================================
+         * 1. Build SOH Map (Menggunakan Unique Key)
+         * ======================================
          */
         const sohMap = stockList.reduce(
             (acc, item) => {
-                const sku = resolveSku(item);
+                const key = getItemKey(item);
+                if (!key) return acc;
 
-                if (!sku) return acc;
-
-                registerSkuMeta(sku, item);
-
-                acc[sku] = (acc[sku] || 0) + (item.quantity || 0);
+                registerSkuMeta(key, item);
+                acc[key] = (acc[key] || 0) + (item.quantity || 0);
 
                 return acc;
             },
@@ -59,22 +67,19 @@ export const useAllocationCalculation = (
         );
 
         /**
-         * =========================
-         * 2. Build Request Map
-         * =========================
+         * ======================================
+         * 2. Build Request Map (Menggunakan Unique Key)
+         * ======================================
          */
         const totalSubmittedPerSku = flatSalesmanList
             .flatMap((salesman) => salesman.details)
             .reduce(
                 (acc, detail) => {
-                    const sku = resolveSku(detail);
+                    const key = getItemKey(detail);
+                    if (!key) return acc;
 
-                    if (!sku) return acc;
-
-                    registerSkuMeta(sku, detail);
-
-                    acc[sku] =
-                        (acc[sku] || 0) + safeParse(detail.item_qty_submitted);
+                    registerSkuMeta(key, detail);
+                    acc[key] = (acc[key] || 0) + safeParse(detail.item_qty_submitted);
 
                     return acc;
                 },
@@ -82,24 +87,25 @@ export const useAllocationCalculation = (
             );
 
         /**
-         * =========================
+         * ======================================
          * 3. Generate SKU Summary
-         * =========================
+         * ======================================
          */
-        const uniqueSkus = [
+        const uniqueKeys = [
             ...new Set([
                 ...Object.keys(sohMap),
                 ...Object.keys(totalSubmittedPerSku),
             ]),
         ];
 
-        const skuSummary = uniqueSkus.map((sku) => {
-            const meta = skuMetaMap.get(sku);
+        const skuSummary = uniqueKeys.map((key) => {
+            const meta = skuMetaMap.get(key);
+            const sku = meta?.sku || key;
 
             return {
                 sku,
-                soh: sohMap[sku] || 0,
-                totalRequest: totalSubmittedPerSku[sku] || 0,
+                soh: sohMap[key] || 0,
+                totalRequest: totalSubmittedPerSku[key] || 0,
                 item_code: meta?.item_code || sku,
                 item_number: meta?.item_number || "-",
                 item_description: meta?.item_description || "-",
@@ -109,9 +115,9 @@ export const useAllocationCalculation = (
         });
 
         /**
-         * =========================
-         * 4. Allocation Calculation
-         * =========================
+         * ======================================
+         * 4. Allocation Calculation (Unique Key)
+         * ======================================
          */
         const calculatedData = flatSalesmanList.map((salesman) => ({
             ...salesman,
@@ -119,15 +125,15 @@ export const useAllocationCalculation = (
                 .filter((detail) => resolveSku(detail))
                 .map((detail) => {
                     const sku = resolveSku(detail);
+                    const key = getItemKey(detail); // Gunakan key unik untuk matching
 
                     const submitted = safeParse(detail.item_qty_submitted);
                     const qtyBtb = safeParse(detail.qty_btb || 0);
 
-                    const totalReq = totalSubmittedPerSku[sku] || 0;
-                    const soh = sohMap[sku] || 0;
+                    const totalReq = totalSubmittedPerSku[key] || 0;
+                    const soh = sohMap[key] || 0;
 
-                    const contribution =
-                        totalReq > 0 ? submitted / totalReq : 0;
+                    const contribution = totalReq > 0 ? submitted / totalReq : 0;
 
                     let finalQty = 0;
                     let allocationStatus = "NORMAL";
@@ -143,18 +149,13 @@ export const useAllocationCalculation = (
                         allocationStatus = "LESS_STOCK";
                     }
 
-                    const preparedQty = Math.max(
-                        0,
-                        finalQty - qtyBtb,
-                    );
+                    const preparedQty = Math.max(0, finalQty - qtyBtb);
 
                     return {
                         ...detail,
                         resolved_sku: sku,
                         soh,
-                        contribution_percentage: (
-                            contribution * 100
-                        ).toFixed(2),
+                        contribution_percentage: (contribution * 100).toFixed(2),
                         allocation_status: allocationStatus,
                         item_qty_final: finalQty,
                         qty_btb: qtyBtb,

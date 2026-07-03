@@ -59,7 +59,7 @@ export const CalculationSubTable = ({
   details: any[];
   globalFilter?: string;
 }) => {
-  
+
   const sortedDetails = React.useMemo(() => {
     if (!globalFilter) return details;
     return [...details].sort((a, b) => {
@@ -88,8 +88,8 @@ export const CalculationSubTable = ({
                 <th className="px-5 py-3 text-right">Contrib %</th>
                 <th className="px-5 py-3 text-right">Status</th>
                 <th className="px-5 py-3 text-right">Final Qty</th>
-                <th className="px-5 py-3 text-right">BTB Qty</th>
-                <th className="px-5 py-3 text-right">Prepared Qty</th>
+                {/* <th className="px-5 py-3 text-right">BTB Qty</th>
+                <th className="px-5 py-3 text-right">Prepared Qty</th> */}
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -133,12 +133,12 @@ export const CalculationSubTable = ({
                     <td className="px-5 py-3 text-right font-bold text-slate-800">
                       {item.item_qty_final}
                     </td>
-                    <td className="px-5 py-3 text-right font-bold text-slate-800">
+                    {/* <td className="px-5 py-3 text-right font-bold text-slate-800">
                       {item.qty_btb}
                     </td>
                     <td className="px-5 py-3 text-right font-bold text-slate-800">
                       {item.prepared_qty}
-                    </td>
+                    </td> */}
                   </tr>
                 );
               })}
