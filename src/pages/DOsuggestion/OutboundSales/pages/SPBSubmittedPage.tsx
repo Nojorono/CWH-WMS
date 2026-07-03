@@ -161,8 +161,8 @@ export const SPBSubmittedPage = ({
   const now = getServerDayjs();
   const hour = now.hour();
 
-  // SUBMITTED : hanya 09:00 - 09:59
-  const canCalculate = status === "SUBMITTED" && hour === 9;
+  // SUBMITTED : hanya 09:00
+  const canCalculate = status === "SUBMITTED"
 
   // FINAL : 09:00 - 08:59 (selalu selain jam 09-10 untuk calculate)
   const canPrint = status === "FINAL" && (hour >= 9 || hour < 9);
@@ -206,9 +206,6 @@ export const SPBSubmittedPage = ({
 
   return (
     <>
-
-
-
       <div className="mb-4 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
         <div className="flex flex-wrap items-center gap-6 text-sm">
 
