@@ -310,9 +310,9 @@ const MainTable = () => {
               Informasi GET Stock On Hand (SOH)
             </h4>
             <p className="text-[11px] sm:text-xs text-blue-800 leading-snug mb-2">
-              Tombol "Proceed to Calculation" hanya aktif pada{" "}
+              Tombol "Get Stock on Hand" hanya aktif pada{" "}
               <strong>H-1</strong> (untuk SPB Submitted berikutnya di tanggal{" "}
-              {TARGET_DATE}) antara pukul <strong>09:00 - 10:00</strong>.
+              {TARGET_DATE}) pukul <strong>09:00</strong>.
             </p>
 
             <div className="pt-2 border-t border-blue-200/60 mt-2">
