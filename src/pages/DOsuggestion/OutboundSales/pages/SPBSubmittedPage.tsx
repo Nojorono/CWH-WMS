@@ -5,13 +5,12 @@ import Button from "../../../../components/ui/button/Button";
 import { GroupedSPBData } from "../MainTable";
 import { DOSuggestionDetail } from "../../../../API/types/draftDOsuggestion";
 import { FaPrint } from "react-icons/fa6";
-import { formatDateTimeIndo } from "../../../../helper/FormatDateTime";
 import { BaseTable } from "../component/BaseTable";
 import { useStoreItem } from "../../../../DynamicAPI/stores/Store/MasterStore";
 import { getServerDayjs, getTargetDate } from "../../Suggestion/global/allowedDate";
-import dayjs from "dayjs";
-import { log } from "node:console";
 import { usePersistAuthStore } from "../../../../API/store/AuthStore/PersistAuthStore";
+import { useGetStockOnHand } from "../hook/useGetStockOnHand";
+import dayjs from "dayjs";
 
 interface SPBSubmittedPageProps {
   data: GroupedSPBData[];
@@ -47,61 +46,96 @@ const StandardSubTable = ({
   if (!details?.length) {
     return (
       <div className="text-center py-6 bg-slate-50 border border-dashed border-slate-200 rounded-lg text-slate-400 text-xs italic mx-4 my-2">
-        Data product details kosong.
+        Data SPB kosong.
       </div>
     );
   }
 
+  // ⚡ 1. Hitung total SKU dan total Qty SPB secara dinamis
+  const totalSkuSpb = processedData.length;
+  const totalQtySpb = processedData.reduce(
+    (sum, item) => sum + (Number(item.item_qty_submitted) || 0),
+    0
+  );
+
   return (
-    <div className="p-3 bg-white border-t border-slate-100">
-      {/* Header Panel */}
-      <div className="flex justify-between items-center mb-2 px-1">
-        <h4 className="font-bold text-slate-700 text-[11px] uppercase tracking-wider flex items-center gap-2">
-          Product Details
-          <span className="bg-blue-50 text-blue-600 py-0.5 px-2 rounded text-[10px] font-bold border border-blue-100">
-            {processedData.length} Items
+    <div className="p-4 bg-white border-t border-slate-200">
+      {/* 📊 STATS PANEL: Ringkasan Total SKU & Qty */}
+      <div className="grid grid-cols-2 gap-4 mb-4">
+        {/* Card Total SKU */}
+        <div className="bg-slate-50 border border-slate-200/80 rounded-xl p-3 flex flex-col shadow-sm">
+          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+            Total SKU SPB
           </span>
-        </h4>
+          <span className="text-lg font-extrabold text-slate-800 mt-1">
+            {totalSkuSpb}{" "}
+            <span className="text-xs font-semibold text-slate-400 ml-0.5">Item</span>
+          </span>
+        </div>
+
+        {/* Card Total Qty */}
+        <div className="bg-blue-50/50 border border-blue-100 rounded-xl p-3 flex flex-col shadow-sm">
+          <span className="text-[10px] font-bold text-blue-500 uppercase tracking-wider">
+            Total Qty SPB
+          </span>
+          <span className="text-lg font-extrabold text-blue-600 mt-1">
+            {totalQtySpb.toLocaleString("id-ID")}{" "}
+            <span className="text-xs font-semibold text-blue-400 ml-0.5">BKS</span>
+          </span>
+        </div>
       </div>
 
-      {/* Table Container */}
-      <div className="overflow-hidden border border-slate-200 rounded-lg">
-        <div className="max-h-[250px] overflow-y-auto custom-scrollbar">
+      {/* 📋 TABLE CONTAINER */}
+      <div className="overflow-hidden border border-slate-200 rounded-xl shadow-sm">
+        <div className="max-h-[220px] overflow-y-auto custom-scrollbar">
           <table className="w-full text-left text-sm text-slate-600 border-collapse">
-            <thead className="bg-slate-50 sticky top-0 z-10 border-b border-slate-200">
+            <thead className="bg-slate-50 sticky top-0 z-10 border-b border-slate-200 shadow-sm">
               <tr>
-                <th className="px-4 py-3 font-bold uppercase text-slate-500 text-xs w-12">
+                <th className="px-4 py-2.5 font-bold uppercase text-slate-500 text-[10px] tracking-wider w-12 text-center">
                   No
                 </th>
-                <th className="px-4 py-3 font-bold uppercase text-slate-500 text-xs">
+                <th className="px-4 py-2.5 font-bold uppercase text-slate-500 text-[10px] tracking-wider">
                   Item Name
                 </th>
-                <th className="px-4 py-3 font-bold uppercase text-slate-500 text-xs">
+                <th className="px-4 py-2.5 font-bold uppercase text-slate-500 text-[10px] tracking-wider">
                   SKU
                 </th>
-                <th className="px-4 py-3 font-bold uppercase text-slate-500 text-xs text-right">
+                <th className="px-4 py-2.5 font-bold uppercase text-slate-500 text-[10px] tracking-wider text-right">
                   Qty
                 </th>
               </tr>
             </thead>
+
             <tbody className="divide-y divide-slate-100">
               {processedData.map((item, idx) => (
-                <tr key={idx} className="hover:bg-blue-50/50 transition-colors">
-                  <td className="px-4 py-3 font-medium text-slate-400">
+                <tr key={idx} className="hover:bg-blue-50/30 transition-colors">
+                  <td className="px-4 py-2.5 font-medium text-slate-400 text-center">
                     {idx + 1}
                   </td>
-                  <td className="px-4 py-3 font-semibold text-slate-800">
+                  <td className="px-4 py-2.5 font-semibold text-slate-800 text-xs">
                     {item.itemName}
                   </td>
-                  <td className="px-4 py-3 font-mono text-slate-500">
+                  <td className="px-4 py-2.5 font-mono text-slate-400 text-[11px] tracking-tight">
                     {item.item_code}
                   </td>
-                  <td className="px-4 py-3 font-bold text-blue-600 text-right">
-                    {item.item_qty_submitted}
+                  <td className="px-4 py-2.5 font-bold text-slate-700 text-right text-xs">
+                    {Number(item.item_qty_submitted).toLocaleString("id-ID")}
                   </td>
                 </tr>
               ))}
             </tbody>
+
+            {/* 🧮 SUMMARY ROW: Tfoot nempel di bagian paling bawah tabel */}
+            <tfoot className="bg-slate-50 sticky bottom-0 z-10 border-t border-slate-200">
+              <tr>
+                <td colSpan={3} className="px-4 py-2.5 font-bold text-slate-500 text-[10px] tracking-wider text-right uppercase">
+                  Total
+                </td>
+                <td className="px-4 py-2.5 font-black text-blue-600 text-right text-xs">
+                  {totalQtySpb.toLocaleString("id-ID")}
+                </td>
+              </tr>
+            </tfoot>
           </table>
         </div>
       </div>
@@ -117,8 +151,8 @@ export const SPBSubmittedPage = ({
 }: SPBSubmittedPageProps) => {
   const [globalFilter, setGlobalFilter] = React.useState("");
   const state = usePersistAuthStore.getState();
-  const user = state.user;
-  const role_name = user?.role?.name;
+  const { user } = usePersistAuthStore.getState();
+  const organization_name = user?.userDetail?.organization?.organization_name;
 
   const allSalesmen = useMemo(() => {
     return data.flatMap((spvGroup) =>
@@ -221,6 +255,21 @@ export const SPBSubmittedPage = ({
       window.removeEventListener("keydown", handleKeyDown);
     };
   }, []);
+
+  const { data: stockList } = useGetStockOnHand({
+    org: String(organization_name),
+    sub: "KECIL",
+  });
+
+  const sohGeneratedTime = useMemo(() => {
+    // Pastikan stockList valid dan memiliki data
+    const list = Array.isArray(stockList) ? stockList : (stockList as any)?.data || [];
+    if (!list || list.length === 0) return null;
+    const firstItem = list[0];
+    if (!firstItem?.createdAt) return null;
+    // Format otomatis ke Jam:Menit sesuai waktu lokal browser user (contoh: 10:00)
+    return dayjs(firstItem.createdAt).format("HH:mm");
+  }, [stockList]);
 
   return (
     <>

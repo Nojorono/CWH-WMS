@@ -210,7 +210,7 @@ export const SKUSummaryPanel = ({
 
                   <div className="text-right">
                     <p className="text-[9px] uppercase tracking-wider text-slate-400 font-medium">
-                      Total Req
+                      Total Qty SPB
                     </p>
                     <p className="text-sm font-bold text-slate-800">
                       {item.totalRequest.toLocaleString()}
