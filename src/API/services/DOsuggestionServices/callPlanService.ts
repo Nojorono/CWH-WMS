@@ -8,9 +8,8 @@ export const getCallPlan = async (params: CallPlanBindings): Promise<SupervisorD
         const response = await axios.post<SnowflakeApiResponse>(
             DWHCallplanAPI,
             {
-                "statement": "SELECT OBJECT_CONSTRUCT('AHOM_NAME', COALESCE(AHOM_NAME, ''), 'AHOM_NIK', COALESCE(AHOM_NIK, ''), 'CABANG', COALESCE(CABANG, ''),'ISLUARKOTA', COALESCE(ISLUARKOTA, FALSE), 'CALL_PLAN_END_DATE', COALESCE(CALL_PLAN_END_DATE, ''), 'CALL_PLAN_NUMBER', COALESCE(CALL_PLAN_NUMBER, ''), 'CALL_PLAN_START_DATE', COALESCE(CALL_PLAN_START_DATE, ''), 'ROUTE_NUMBER', COALESCE(ROUTE_NUMBER, ''), 'SALES_NAME', COALESCE(SALES_NAME, ''), 'SALES_NIK', COALESCE(SALES_NIK, ''), 'SALES_SUPERVISOR_NAME', COALESCE(SALES_SUPERVISOR_NAME, ''), 'SALES_SUPERVISOR_NIK', COALESCE(SALES_SUPERVISOR_NIK, '')) AS DATA FROM NEW_DEV_SFA_OUTSYSTEMS.Bronze.V_API_CALL_PLAN WHERE CABANG = ? AND SALES_SUPERVISOR_NIK = ? AND (CALL_PLAN_START_DATE = ? OR CALL_PLAN_START_DATE IS NULL)",
-                "database": "NEW_DEV_SFA_OUTSYSTEMS",
-                "schema": "Bronze",
+                "statement": "SELECT OBJECT_CONSTRUCT('AHOM_NAME', COALESCE(AHOM_NAME, ''), 'AHOM_NIK', COALESCE(AHOM_NIK, ''), 'CABANG', COALESCE(CABANG, ''), 'ISLUARKOTA', COALESCE(ISLUARKOTA, FALSE), 'CALL_PLAN_END_DATE', COALESCE(CALL_PLAN_END_DATE, ''), 'CALL_PLAN_NUMBER', COALESCE(CALL_PLAN_NUMBER, ''), 'CALL_PLAN_START_DATE', COALESCE(CALL_PLAN_START_DATE, ''), 'ROUTE_NUMBER', COALESCE(ROUTE_NUMBER, ''), 'SALES_NAME', COALESCE(SALES_NAME, ''), 'SALES_NIK', COALESCE(SALES_NIK, ''), 'SALES_SUPERVISOR_NAME', COALESCE(SALES_SUPERVISOR_NAME, ''), 'SALES_SUPERVISOR_NIK', COALESCE(SALES_SUPERVISOR_NIK, ''), 'CHANNEL', COALESCE(CHANNEL, ''), 'CALL_PLAN_START_PERIOD', COALESCE(CALL_PLAN_START_PERIOD, ''), 'CALL_PLAN_END_PERIOD', COALESCE(CALL_PLAN_END_PERIOD, '')) AS DATA FROM NEW_DEV_SFA_OUTSYSTEMS.BRONZE.V_API_CALL_PLAN WHERE CABANG = ? and SALES_SUPERVISOR_NIK = ? AND (CALL_PLAN_START_DATE = ? OR CALL_PLAN_START_DATE IS NULL) AND CALL_PLAN_NUMBER IS NOT NULL", "database": "NEW_DEV_SFA_OUTSYSTEMS",
+                "schema": "BRONZE",
                 "warehouse": "TASK_SFA",
                 "role": "ROLE_API",
                 "bindings": {
@@ -37,8 +36,6 @@ export const getCallPlan = async (params: CallPlanBindings): Promise<SupervisorD
 
         flatRows.forEach((item: any) => {
             const spvNik = item.SALES_SUPERVISOR_NIK;
-
-            // Buat Header SPV jika belum ada di dalam Map
             if (!groupedMap.has(spvNik)) {
                 groupedMap.set(spvNik, {
                     AHOM_NAME: item.AHOM_NAME,
@@ -49,7 +46,6 @@ export const getCallPlan = async (params: CallPlanBindings): Promise<SupervisorD
                     DETAIL: []
                 });
             }
-
             // Bentuk detail Salesman sesuai tipe CallPlanDetail
             const detailItem: CallPlanDetail = {
                 CABANG: item.CABANG,
@@ -60,10 +56,12 @@ export const getCallPlan = async (params: CallPlanBindings): Promise<SupervisorD
                 CALL_PLAN_START_DATE: item.CALL_PLAN_START_DATE,
                 CALL_PLAN_END_DATE: item.CALL_PLAN_END_DATE,
                 is_active_plan: item.CALL_PLAN_NUMBER !== "",
-                ISLUARKOTA: item.ISLUARKOTA
+                ISLUARKOTA: item.ISLUARKOTA,
+                // === 🚀 PETAKAN 3 FIELD BARU DARI DATABASE ===
+                CHANNEL: item.CHANNEL,
+                CALL_PLAN_START_PERIOD: item.CALL_PLAN_START_PERIOD,
+                CALL_PLAN_END_PERIOD: item.CALL_PLAN_END_PERIOD
             };
-
-            // Masukkan Salesman ke dalam array DETAIL milik SPV terkait
             groupedMap.get(spvNik)?.DETAIL.push(detailItem);
         });
 

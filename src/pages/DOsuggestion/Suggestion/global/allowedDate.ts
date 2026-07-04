@@ -12,29 +12,17 @@ export const syncServerTime = (serverTimestamp: number) => {
     console.log("timeOffset =", timeOffset);
 };
 
-
 export const getServerDayjs = () => {
-    console.log("isBypassMode:", isBypassMode());
-    console.log(
-        "BYPASS_CUSTOM_TIME:",
-        localStorage.getItem("BYPASS_CUSTOM_TIME")
-    );
-    console.log("timeOffset:", timeOffset);
-
     if (isBypassMode()) {
         const customTime = localStorage.getItem("BYPASS_CUSTOM_TIME");
-
         if (customTime) {
             const bypassTime = dayjs(customTime);
-            console.log("Using bypass:", bypassTime.format("YYYY-MM-DD HH:mm:ss"));
+            console.log("Using bypass time:", bypassTime.format("YYYY-MM-DD HH:mm:ss"));
             return bypassTime;
         }
     }
 
     const serverTime = dayjs().add(timeOffset, "millisecond");
-
-    console.log("Using server:", serverTime.format("YYYY-MM-DD HH:mm:ss"));
-
     return serverTime;
 };
 
@@ -48,69 +36,41 @@ export const isBypassMode = (): boolean => {
     return false;
 };
 
-
 export const getTargetDate = (roleName: string | undefined): string => {
-    // 1. Cek LocalStorage Bypass (tetap dipertahankan untuk testing)
     if (typeof window !== "undefined") {
         const testDate = localStorage.getItem("TEST_TARGET_DATE");
         if (testDate && /^\d{4}-\d{2}-\d{2}$/.test(testDate)) return testDate;
     }
 
     const now = getServerDayjs();
-
-    // 2. Tentukan jam batas (09:00)
-    // Jika sekarang sebelum jam 09:00, kita kurangi 1 hari dari referensi hari ini
-    // sehingga saat ditambah 1 atau 2 hari, hasilnya tetap mengacu ke hari sebelumnya.
     const isBeforeNine = now.hour() < 9;
     const baseDate = isBeforeNine ? now.subtract(1, 'day') : now;
 
-    // 3. Tentukan jumlah hari tambahan berdasarkan role
     const daysToAdd = (roleName === "WH_ADMIN_CABANG" || roleName === "FAS") ? 1 : 2;
-
     return baseDate.add(daysToAdd, "day").format("YYYY-MM-DD");
 };
 
 // ============================================================================
 // 1. VALIDASI GENERATE DO SUGGESTION
 // ============================================================================
-// export const isGenerateDOAllowed = (callPlanStartDate: string | undefined): boolean => {
-//     if (isBypassMode()) return true;
-//     if (!callPlanStartDate) return false;
-
-//     console.log("callPlanStartDate", callPlanStartDate);
-
-//     // if callplan start date H-1 sd jam 9 today
-//     // if callplan H-2 open jam 13
-
-//     const now = getServerDayjs(); // Waktu Server
-//     const hariIni = now.format("YYYY-MM-DD");
-//     const batasWaktu = dayjs(callPlanStartDate).subtract(1, "day").format("YYYY-MM-DD");
-//     const jamSaatIni = now.hour();
-
-//     return (hariIni === batasWaktu) && (jamSaatIni >= 9);
-// };
-
 export const isGenerateDOAllowed = (
     callPlanStartDate?: string,
 ): boolean => {
-    if (isBypassMode()) return true;
     if (!callPlanStartDate) return false;
 
     const now = getServerDayjs();
-
     const today = now.startOf("day");
     const callPlanDate = dayjs(callPlanStartDate).startOf("day");
 
-    // Selisih hari antara Call Plan dengan hari ini
     const diffDay = callPlanDate.diff(today, "day");
 
     // H-1
     if (diffDay === 1) {
-        return now.hour() <= 9;
+        return now.hour() < 9;
     }
 
-    // H-2 atau lebih
-    if (diffDay >= 2) {
+    // H-2 atau lebih awal (H-3, dst)
+    if (diffDay === 2) {
         return now.hour() >= 13;
     }
 
@@ -118,34 +78,31 @@ export const isGenerateDOAllowed = (
 };
 
 export const getGenerateErrorMessage = (callPlanStartDate: string): string => {
-    const batasWaktu = dayjs(callPlanStartDate).subtract(2, "day").format("DD MMM YYYY");
-    return `DO Suggestion hanya dapat di-generate pada H-2 (${batasWaktu}) setelah pukul 13:00.`;
+    const hMinus2 = dayjs(callPlanStartDate).subtract(2, "day").format("DD MMM YYYY");
+    const hMinus1 = dayjs(callPlanStartDate).subtract(1, "day").format("DD MMM YYYY");
+
+    return `DO Suggestion hanya dapat di-generate mulai H-2 (${hMinus2}) pukul 13:00 s/d H-1 (${hMinus1}) pukul 08:59.`;
 };
 
 const isHMinusOne = (callPlanStartDate: string | undefined): boolean => {
     if (!callPlanStartDate) return false;
 
-    const now = getServerDayjs(); // Waktu Server
+    const now = getServerDayjs();
     const hariIni = now.format("YYYY-MM-DD");
     const batasWaktu = dayjs(callPlanStartDate).subtract(1, "day").format("YYYY-MM-DD");
 
     return hariIni === batasWaktu;
 };
 
-
 // ============================================================================
 // 2. VALIDASI KALKULASI STOCK ON HAND
 // ============================================================================
 export const isCalculationTimeAllowed = (callPlanStartDate: string | undefined): boolean => {
-    // 1. Bypass Mode untuk Testing (Opsional: Tetap aktifkan ini agar Anda bisa testing kapan saja)
-    if (isBypassMode()) return true;
-
-    // 2. Validasi H-1
+    // MOCK-TIME ONLY: Bypass dihapus dari short-circuit true agar tetap mengecek jam simulasi
     if (!isHMinusOne(callPlanStartDate)) return false;
 
-    // 3. Validasi Jam (Strict: Harus jam 9)
     const jamSaatIni = getServerDayjs().hour();
-    return jamSaatIni === 9;
+    return jamSaatIni === 9; // Hanya jam 09:00 - 09:59
 };
 
 export const getCalculationErrorMessage = (callPlanStartDate: string): string => {
@@ -157,13 +114,18 @@ export const getCalculationErrorMessage = (callPlanStartDate: string): string =>
 // 3. VALIDASI TARIK DATA BTB
 // ============================================================================
 export const isGetBTBTimeAllowed = (callPlanStartDate: string | undefined): boolean => {
-    if (isBypassMode()) return true;
+    // MOCK-TIME ONLY: Bypass dihapus dari short-circuit true
+    if (!isHMinusOne(callPlanStartDate)) return false;
 
-    // Hanya cek tanggal H-1, tanpa batasan jam
-    return isHMinusOne(callPlanStartDate);
+    // CATATAN: Jika BTB harus dibatasi jam 9-10 pagi juga seperti pesan error-nya, aktifkan kode di bawah ini:
+    // const jamSaatIni = getServerDayjs().hour();
+    // return jamSaatIni === 9;
+
+    return true;
 };
 
 export const getBTBErrorMessage = (callPlanStartDate: string): string => {
     const batasWaktu = dayjs(callPlanStartDate).subtract(1, "day").format("DD MMM YYYY");
+    // Sesuaikan pesan di bawah jika BTB tidak membatasi jam tarik data
     return `Penarikan data BTB hanya dapat dilakukan pada H-1 (${batasWaktu}) pukul 09:00 - 10:00.`;
 };
