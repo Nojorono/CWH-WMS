@@ -256,20 +256,6 @@ export const SPBSubmittedPage = ({
     };
   }, []);
 
-  const { data: stockList } = useGetStockOnHand({
-    org: String(organization_name),
-    sub: "KECIL",
-  });
-
-  const sohGeneratedTime = useMemo(() => {
-    // Pastikan stockList valid dan memiliki data
-    const list = Array.isArray(stockList) ? stockList : (stockList as any)?.data || [];
-    if (!list || list.length === 0) return null;
-    const firstItem = list[0];
-    if (!firstItem?.createdAt) return null;
-    // Format otomatis ke Jam:Menit sesuai waktu lokal browser user (contoh: 10:00)
-    return dayjs(firstItem.createdAt).format("HH:mm");
-  }, [stockList]);
 
   return (
     <>

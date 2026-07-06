@@ -29,13 +29,12 @@ export const useGetBTB = (
         setError(null);
         setIsSuccess(false);
 
-        // Gunakan Tanggal Hari Ini - 1 Hari
         const btbDate = dayjs().subtract(1, 'day').format('YYYY-MM-DD');
 
         try {
             const flatResult: BTBFlatItem[] = await getBTB({
                 CABANG: cabang,
-                CALL_PLAN_START_DATE: btbDate
+                CALL_PLAN_START_DATE: "2026-07-04"
             });
 
             if (!flatResult || !Array.isArray(flatResult)) {

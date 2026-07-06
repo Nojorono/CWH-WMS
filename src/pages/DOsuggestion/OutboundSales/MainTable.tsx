@@ -75,8 +75,6 @@ const MainTable = () => {
     fetchSubmittedList,
   } = useGetLocalDoSuggestion();
 
-  console.log("submittedList", submittedList);
-
   const isParamsReady = !!(organization_name && userNIK);
 
   const paramGetBTB = useMemo(

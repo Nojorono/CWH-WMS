@@ -43,6 +43,8 @@ export interface DOSuggestionData {
     createdAt: string
     updatedAt: string
     spb_number: string
+    unmatchedBTBDetails: any[] | undefined;
+
 }
 
 export interface DOSuggestionResponse {
