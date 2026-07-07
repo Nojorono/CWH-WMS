@@ -34,7 +34,7 @@ export const useGetBTB = (
         try {
             const flatResult: BTBFlatItem[] = await getBTB({
                 CABANG: cabang,
-                CALL_PLAN_START_DATE: "2026-07-04"
+                CALL_PLAN_START_DATE: btbDate
             });
 
             if (!flatResult || !Array.isArray(flatResult)) {

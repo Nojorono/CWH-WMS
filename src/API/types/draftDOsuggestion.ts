@@ -27,6 +27,7 @@ export interface DOSuggestionDetail {
 }
 
 export interface DOSuggestionData {
+    iface_status: any;
     isCallPlanBeforeBTB: boolean;
     id: string;
     callplan_number: string;

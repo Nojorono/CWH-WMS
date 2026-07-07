@@ -1,5 +1,5 @@
 // File: GoodsPreparationPage.tsx
-import React, { useState, useMemo, useEffect, useCallback } from "react";
+import React, { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import { ColumnDef } from "@tanstack/react-table";
 import { BaseTable } from "../component/BaseTable";
 import {
@@ -7,6 +7,7 @@ import {
   DOSuggestionDetail,
 } from "../../../../API/types/draftDOsuggestion";
 import { PrintPreviewModal } from "../component/PrintPreviewModal";
+import { PrintAllSKU } from "../component/PrintAllSKU"; // Import komponen baru yang dipisahkan
 import { FaPrint, FaDownload, FaSyncAlt } from "react-icons/fa";
 import { useGetLocalDoSuggestion } from "../../Suggestion/hook/useGetLocalDoSuggestion";
 import { usePersistAuthStore } from "../../../../API/store/AuthStore/PersistAuthStore";
@@ -15,6 +16,7 @@ import { showErrorToast, showSuccessToast } from "../../../../components/toast";
 import { exportSummaryToExcel } from "../hook/exportSummaryExcel";
 import { checkAndIntegrateSPB } from "../service/integrationService";
 import { useStoreItem } from "../../../../DynamicAPI/stores/Store/MasterStore";
+import { useGetStockOnHand } from "../hook/useGetStockOnHand";
 import BTBTotalBreakdown from "../component/BTBTotalBreakdown";
 import dayjs from "dayjs";
 import { showConfirmDialog } from "../../../../components/swal-confirm";
@@ -167,17 +169,29 @@ export const GoodsPreparationPage = ({
   targetDate,
 }: GoodsPreparationPageProps) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isPrintAllOpen, setIsPrintAllOpen] = useState(false);
   const [loadingVisible, setLoadingVisible] = useState(false);
   const [showLoading, setShowLoading] = useState(true);
   const [selectedDataToPrint, setSelectedDataToPrint] =
     useState<DOSuggestionData | null>(null);
 
+  // Ambil list item master untuk deskripsi SKU
+  const { list: itemList } = useStoreItem();
+
+  // Menyimpan list ID yang sedang/sudah di-check status integrasinya untuk menghindari request ganda
+  const requestedIdsRef = useRef<Set<string>>(new Set());
+
   const { user } = usePersistAuthStore.getState();
   const { organizationId, organization } = user?.userDetail || {};
   const organization_name = user?.userDetail?.organization?.organization_name;
 
-  const [integrationStatus, setIntegrationStatus] = useState<Record<string, any>>({});
+  // Hook untuk mengambil data SOH Cabang Gudang Kecil
+  const { data: stockList } = useGetStockOnHand({
+    org: String(organization_name),
+    sub: "KECIL",
+  });
 
+  const [integrationStatus, setIntegrationStatus] = useState<Record<string, any>>({});
 
   // Menentukan tanggal BTB hari ini - 1 hari (format YYYY-MM-DD)
   const btbDateString = useMemo(() => {
@@ -193,10 +207,10 @@ export const GoodsPreparationPage = ({
   const apiDate = submittedList?.[0]?.callplan_date_start;
   const isDateMatch = apiDate === targetDate;
 
-  // Proteksi: Cek apakah tanggal Callplan lebih lampau dari tanggal BTB
+  // Proteksi: Cek apakah tanggal Callplan lebih lampau dari tanggal BTB (-1)
   const isCallPlanBeforeBTB = useMemo(() => {
     if (!apiDate) return false;
-    const btbCompareDate = dayjs().subtract(3, "day").format("YYYY-MM-DD");
+    const btbCompareDate = dayjs().subtract(1, "day").format("YYYY-MM-DD");
     return dayjs(apiDate).isBefore(dayjs(btbCompareDate), "day");
   }, [apiDate]);
 
@@ -215,7 +229,7 @@ export const GoodsPreparationPage = ({
         organization?.organization_name &&
         targetDate &&
         isDateMatch &&
-        !isCallPlanBeforeBTB // Nonaktifkan fetch BTB jika tanggal tidak valid
+        !isCallPlanBeforeBTB
       ),
     },
   );
@@ -227,9 +241,37 @@ export const GoodsPreparationPage = ({
   const isGlobalPrintDisabled = isPrintDisabled || isCallPlanBeforeBTB;
 
   useEffect(() => {
-    if (organizationId && targetDate)
+    if (organizationId && targetDate) {
+      requestedIdsRef.current.clear(); // Bersihkan cache request ketika pindah tanggal / org
       fetchSubmittedList(targetDate, organizationId, "FINAL");
+    }
   }, [organizationId, targetDate, fetchSubmittedList]);
+
+
+  // Auto-fetch status integrasi ke Meta di background untuk setiap dokumen pada awal render/load
+  useEffect(() => {
+    if (!submittedList || submittedList.length === 0) return;
+
+    submittedList.forEach(async (doc) => {
+      // 1. Lewati jika status dari DB utama sudah menunjukkan terintegrasi
+      const isDbIntegrated = ["SUCCESS", "INTEGRATED"].includes(doc.iface_status || "");
+      if (isDbIntegrated) return;
+
+      // 2. Lewati jika ID ini sedang/sudah diproses di background untuk mencegah request ganda
+      if (requestedIdsRef.current.has(doc.id)) return;
+      requestedIdsRef.current.add(doc.id);
+
+      try {
+        const result = await checkAndIntegrateSPB(doc.id);
+        setIntegrationStatus((prev) => ({
+          ...prev,
+          [doc.id]: result.data,
+        }));
+      } catch (error) {
+        console.error(`Gagal memuat status integrasi SPB ${doc.spb_number} di background:`, error);
+      }
+    });
+  }, [submittedList]);
 
   useEffect(() => {
     if (errBTB) showErrorToast(errBTB);
@@ -238,7 +280,7 @@ export const GoodsPreparationPage = ({
     }
   }, [isDOLoading, apiDate, targetDate, isDateMatch, errBTB]);
 
-  // --- REFACTOR: Data Mapping diabaikan (return []) jika Callplan lampau ---
+  // Data Mapping Rekonsiliasi SPB & BTB
   const enrichedData = useMemo(() => {
     if (!submittedList.length || isCallPlanBeforeBTB) return [];
 
@@ -270,27 +312,70 @@ export const GoodsPreparationPage = ({
         details: matchedDetails,
         unmatchedBTBDetails,
         rawBTBDetails: btbDetails,
+        btbNumber: btbForSalesman?.BTB_NUMBER || null,
+        btbDate: btbForSalesman?.TANGGAL_BTB || null,
       };
     });
   }, [submittedList, BTBdata, isCallPlanBeforeBTB]);
 
-  // const handleOpenPrintPreview = async (rowData: DOSuggestionData) => {
-  //   setLoadingVisible(true);
-  //   try {
-  //     const result = await checkAndIntegrateSPB(rowData.id);
-  //     setIntegrationStatus(result.data);
-  //     await new Promise((r) => setTimeout(r, 800));
+  // Aggregasi data SKU & Inventory ID dari seluruh SPB
+  const aggregatedPickList = useMemo(() => {
+    const summary: Record<string, {
+      item_code: string;
+      itemName: string;
+      inventory_item_id: string; // Menggunakan properti dari JSON payload
+      finalQty: number;
+      btbQty: number;
+      topUpQty: number;
+      item_uom?: string; // Menggunakan properti dari JSON payload
+    }> = {};
 
-  //     setSelectedDataToPrint(rowData);
-  //     setIsModalOpen(true);
-  //   } catch (error) {
-  //     console.error("Gagal melakukan integrasi:", error);
-  //   } finally {
-  //     setLoadingVisible(false);
-  //   }
-  // };
+    enrichedData.forEach((doc) => {
+      if (!doc.details) return;
+      doc.details.forEach((d: any) => {
+        const final = Number(d.item_qty_final) || 0;
+        if (final <= 0) return;
 
+        const btb = Number(d.qty_btb) || 0;
+        const topUp = Math.max(0, final - btb);
+        const sku = d.item_code || "";
+        const invId = d.inventory_item_id || ""; // Membaca inventory_item_id dari JSON payload detail
+        const key = `${sku}_${invId}`; // Pengelompokan berdasarkan SKU dan Inventory Item ID
+
+        const master = itemList?.find((m: any) => m.sku === sku);
+        const itemName = master?.description || d.item_name || sku;
+
+        if (summary[key]) {
+          summary[key].finalQty += final;
+          summary[key].btbQty += btb;
+          summary[key].topUpQty += topUp;
+        } else {
+          summary[key] = {
+            item_code: sku,
+            itemName,
+            inventory_item_id: invId,
+            finalQty: final,
+            btbQty: btb,
+            topUpQty: topUp,
+            item_uom: "BKS",
+          };
+        }
+      });
+    });
+
+    return Object.values(summary).sort((a, b) => a.itemName.localeCompare(b.itemName));
+  }, [enrichedData, itemList]);
+
+  // Handler: Integrasikan SPB ke Meta (Preventif & Early return jika sudah sukses)
   const handleIntegrateMeta = useCallback(async (rowData: DOSuggestionData) => {
+    const rowStatus = integrationStatus[rowData.id]?.iface_status || rowData.iface_status || "";
+    const isAlreadyIntegrated = ["SUCCESS", "INTEGRATED"].includes(rowStatus);
+
+    if (isAlreadyIntegrated) {
+      showSuccessToast(`Dokumen SPB ${rowData.spb_number} sudah pernah di-integrasikan sebelumnya.`);
+      return;
+    }
+
     showConfirmDialog(
       async () => {
         setLoadingVisible(true);
@@ -315,12 +400,17 @@ export const GoodsPreparationPage = ({
         cancelButtonText: "Batal",
       }
     );
-  }, []);
+  }, [integrationStatus]);
 
+  // Handler: Buka Preview Cetak SPB (Optimasi API background)
   const handleOpenPrintPreview = useCallback(async (rowData: DOSuggestionData) => {
     setSelectedDataToPrint(rowData);
     setIsModalOpen(true);
-    if (!integrationStatus[rowData.id]) {
+
+    const rowStatus = integrationStatus[rowData.id]?.iface_status || rowData.iface_status || "";
+    const isAlreadyIntegrated = ["SUCCESS", "INTEGRATED"].includes(rowStatus);
+
+    if (!isAlreadyIntegrated) {
       try {
         const result = await checkAndIntegrateSPB(rowData.id);
         setIntegrationStatus((prev) => ({
@@ -345,39 +435,53 @@ export const GoodsPreparationPage = ({
       {
         id: "action",
         header: "Action",
-        cell: ({ row }) => (
-          <div className="flex gap-2 whitespace-nowrap">
-            {/* Tombol 1: Integrate Meta */}
-            <button
-              onClick={() => handleIntegrateMeta(row.original)}
-              disabled={isGlobalPrintDisabled}
-              className={`px-3 py-1.5 text-xs font-bold text-white rounded transition-colors flex items-center gap-1.5 ${isGlobalPrintDisabled
-                ? "bg-slate-200 text-slate-400 cursor-not-allowed"
-                : "bg-emerald-600 hover:bg-emerald-700"
-                }`}
-            >
-              <FaSyncAlt className="inline" size={11} /> Integrate Meta
-            </button>
-            {/* Tombol 2: Print SPB */}
-            <button
-              onClick={() => handleOpenPrintPreview(row.original)}
-              disabled={isGlobalPrintDisabled}
-              className={`px-3 py-1.5 text-xs font-bold text-white rounded transition-colors flex items-center gap-1.5 ${isGlobalPrintDisabled
-                ? "bg-slate-200 text-slate-400 cursor-not-allowed"
-                : "bg-blue-600 hover:bg-blue-700"
-                }`}
-            >
-              <FaPrint className="inline" size={11} /> Print SPB
-            </button>
-          </div>
-        ),
+        cell: ({ row }) => {
+          const rowData = row.original;
+
+          const rowStatus = integrationStatus[rowData.id]?.iface_status || rowData.iface_status || "";
+          const isAlreadyIntegrated = ["SUCCESS", "INTEGRATED"].includes(rowStatus);
+          const integrateTooltip = isAlreadyIntegrated
+            ? "Dokumen SPB sudah berhasil di-integrasikan sebelumnya"
+            : "Integrasikan ke Meta SPB";
+
+          return (
+            <div className="flex gap-2 items-center whitespace-nowrap">
+              {isAlreadyIntegrated ? (
+                <></>
+              ) : (
+                <button
+                  onClick={() => handleIntegrateMeta(rowData)}
+                  disabled={isGlobalPrintDisabled}
+                  className={`px-3 py-1.5 text-xs font-bold text-white rounded transition-colors flex items-center gap-1.5 ${isGlobalPrintDisabled
+                    ? "bg-slate-200 text-slate-400 cursor-not-allowed border-transparent"
+                    : "bg-emerald-600 hover:bg-emerald-700"
+                    }`}
+                  title={integrateTooltip}
+                >
+                  <FaSyncAlt className="inline" size={11} /> Integrate Meta
+                </button>
+              )}
+
+              <button
+                onClick={() => handleOpenPrintPreview(rowData)}
+                disabled={isGlobalPrintDisabled}
+                className={`px-3 py-1.5 text-xs font-bold text-white rounded transition-colors flex items-center gap-1.5 ${isGlobalPrintDisabled
+                  ? "bg-slate-200 text-slate-400 cursor-not-allowed border-transparent"
+                  : "bg-blue-600 hover:bg-blue-700"
+                  }`}
+              >
+                <FaPrint className="inline" size={11} /> Print SPB
+              </button>
+            </div>
+          );
+        },
       },
     ],
-    [isGlobalPrintDisabled, handleIntegrateMeta, handleOpenPrintPreview]
+    [isGlobalPrintDisabled, integrationStatus, handleIntegrateMeta, handleOpenPrintPreview]
   );
 
   const handleExportSummary = () => {
-    exportSummaryToExcel(enrichedData, String(organization_name), targetDate);
+    exportSummaryToExcel(enrichedData, String(organization_name), targetDate, stockList);
   };
 
   const isLoading = isDOLoading || (isDateMatch && isBTBLoading);
@@ -396,6 +500,9 @@ export const GoodsPreparationPage = ({
     return () => clearTimeout(timer);
   }, [isLoading]);
 
+  console.log("BTBdata", BTBdata);
+  console.log("enrichedData", enrichedData);
+
   return (
     <div className="space-y-6">
       <PremiumLoadingOverlay visible={loadingVisible || showLoading} btbDate={btbDateString} />
@@ -406,6 +513,23 @@ export const GoodsPreparationPage = ({
         isExpandable={true}
         renderSubComponent={(row: any) => (
           <div className="flex flex-col gap-4 bg-slate-50/50 p-2 border-b border-slate-200">
+            {(row.btbNumber || row.btbDate) && (
+              <div className="flex flex-wrap gap-6 items-center bg-white p-3 rounded-lg border border-slate-200 shadow-xs">
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">No. BTB:</span>
+                  <span className="px-2 py-0.5 text-xs font-bold text-blue-700 bg-blue-50 border border-blue-200 rounded">
+                    {row.btbNumber || "Tidak Diketahui"}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Tanggal BTB:</span>
+                  <span className="text-xs font-bold text-slate-800">
+                    {row.btbDate ? dayjs(row.btbDate).format("DD MMMM YYYY") : "-"}
+                  </span>
+                </div>
+              </div>
+            )}
+
             <BTBTotalBreakdown
               title={`Total Seluruh BTB - ${row.sales_name}`}
               data={row.rawBTBDetails || []}
@@ -417,6 +541,7 @@ export const GoodsPreparationPage = ({
             />
           </div>
         )}
+
         headerActions={
           <div className="flex items-center flex-1 w-full min-w-full gap-4">
             <div>
@@ -445,6 +570,7 @@ export const GoodsPreparationPage = ({
               </button>
 
               <button
+                onClick={() => setIsPrintAllOpen(true)}
                 disabled={isGlobalPrintDisabled}
                 className={`flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-lg shadow-sm transition-colors ${isGlobalPrintDisabled
                   ? "bg-slate-200 text-slate-400 cursor-not-allowed border-transparent"
@@ -464,6 +590,17 @@ export const GoodsPreparationPage = ({
         data={selectedDataToPrint}
         integrationInfo={selectedDataToPrint ? integrationStatus[selectedDataToPrint.id] : null}
         unmatchBTB={selectedDataToPrint ? selectedDataToPrint.unmatchedBTBDetails : []}
+      />
+
+      {/* Modal Print Preview untuk Semua SKU yang Terakumulasi */}
+      <PrintAllSKU
+        isOpen={isPrintAllOpen}
+        onClose={() => setIsPrintAllOpen(false)}
+        data={aggregatedPickList}
+        targetDate={targetDate}
+        organizationName={String(organization_name || organization?.organization_name || "")}
+        spbCount={submittedList.length}
+        callplanNumber={submittedList?.[0]?.callplan_number || "CP-" + targetDate.replace(/-/g, "")}
       />
     </div>
   );
