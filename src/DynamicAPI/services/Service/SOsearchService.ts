@@ -1,4 +1,4 @@
-import { Server47 } from "../../../utils/EndPoint";
+import axiosInstance from "../../../API/services/AxiosInstance";
 import { ItemForm, SOHeaderInfo } from "../../types/searchSO";
 
 export interface SOSearchResult {
@@ -25,10 +25,13 @@ export async function SOsearchService(
     masterItems: any[],
     uomList: UomOption[]
 ): Promise<SOSearchResult> {
-
-    const res = await fetch(`${Server47}/sales-order?order_number=${soNo}`);
-    const json = await res.json();
-    const data = json?.data?.[0];
+    const response = await axiosInstance.get("inbound/sales-order", {
+        params: {
+            orderNumber: soNo,
+        },
+    });
+    const json = response.data;
+    const data = json.data.data[0];
     if (!data) throw new Error(`SO ${soNo} tidak ditemukan.`);
 
     const vendorName = data.ORG_NAME?.toUpperCase() ?? "";
@@ -39,7 +42,7 @@ export async function SOsearchService(
                     m.item_number === it.ITEM_NUMBER ||
                     String(m.id) === String(it.INVENTORY_ITEM_ID)
             );
-            
+
             if (!master) return null;
 
             return {

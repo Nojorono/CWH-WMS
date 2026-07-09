@@ -1,5 +1,5 @@
 import { showErrorToast } from "../../../components/toast";
-import { Server47 } from "../../../utils/EndPoint";
+import axiosInstance from "../../../API/services/AxiosInstance";
 import { ItemForm } from "../../types/searchPO";
 
 export interface UomOption {
@@ -27,15 +27,21 @@ export async function POsearchService(
     masterItems: any[],
     uomList: UomOption[]
 ): Promise<POSearchResult> {
-    const res = await fetch(`${Server47}/purchase-order?nomorPO=${poNo}`);
+    const response = await axiosInstance.get("inbound/purchase-order", {
+        params: {
+            nomorPO: poNo,
+        },
+    });
+    const json = response.data;
 
-    if (!res.ok) throw new Error("Gagal mengambil data dari server.");
-    const json = await res.json();    
     if (!json?.data || json.data.length === 0) {
         throw new Error(`Detail PO ${poNo} tidak ditemukan atau sudah Closed`);
     }
+
+    const data = json.data.data[0];
+
+    console.log("data PO", data);
     
-    const data = json.data[0];
 
     if (!data) {
         console.error("Data array kosong atau struktur tidak sesuai:", json);
