@@ -38,10 +38,7 @@ export async function POsearchService(
         throw new Error(`Detail PO ${poNo} tidak ditemukan atau sudah Closed`);
     }
 
-    const data = json.data.data[0];
-
-    console.log("data PO", data);
-    
+    const data = json.data.data[0];    
 
     if (!data) {
         console.error("Data array kosong atau struktur tidak sesuai:", json);
