@@ -148,10 +148,6 @@ export {
   IRintegrationLog,
   ShipConfirmLog,
 
-  // Approval Set Up
-  // ApprovalSetup,
-  // CreateApproval,
-  // ApprovalProcess,
   ReportInbound,
   ReportOutbound,
   Reporting2,

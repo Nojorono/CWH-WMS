@@ -29,9 +29,6 @@ const startApp = async () => {
     // 2. Sync ke dateValidation.ts
     if (response?.data?.timestamp) {
       syncServerTime(response.data.timestamp);
-
-      console.log("API server date time response:", response);
-      console.log("serverTimestamp:", response.data.timestamp);
     }
   } catch (error) {
     console.error(

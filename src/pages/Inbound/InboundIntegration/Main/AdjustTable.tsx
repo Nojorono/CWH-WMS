@@ -6,8 +6,6 @@ import {
   FaBoxOpen,
   FaInfoCircle,
   FaCalendarAlt,
-  FaTruckLoading,
-  FaFingerprint,
 } from "react-icons/fa";
 import { ColumnDef } from "@tanstack/react-table";
 import StatusBadge from "../../../../common/statusBadge";
@@ -20,6 +18,7 @@ import { formatDateTimeIndo } from "../../../../helper/FormatDateTime";
 const AdjustTable = ({ globalFilter, setGlobalFilter, filteredIO }: any) => {
   const { fetchAll, list, pagination, isLoading } =
     useStoreInboundIntegration();
+
   const [pageIndex, setPageIndex] = useState(0);
   const [pageSize, setPageSize] = useState(25);
 
@@ -143,12 +142,13 @@ const AdjustTable = ({ globalFilter, setGlobalFilter, filteredIO }: any) => {
     ],
     [],
   );
-  
+
   const renderRowDetails = (row: any) => {
     const data = row.original;
+
     // Cek apakah ada setidaknya satu line yang memiliki status selisih
     const hasSelisih = data.lines?.some(
-      (line: any) => line.status_selisih === "E",
+      (line: any) => line.status_selisih === "S",
     );
 
     return (
@@ -245,11 +245,13 @@ const AdjustTable = ({ globalFilter, setGlobalFilter, filteredIO }: any) => {
                     <th className="px-4 py-2 text-left font-bold uppercase tracking-tighter">
                       Sync Log
                     </th>
+
                     {hasSelisih && (
                       <th className="px-4 py-2 text-left font-bold uppercase tracking-tighter">
                         Status Selisih
                       </th>
                     )}
+
                   </tr>
                 </thead>
 
@@ -294,19 +296,21 @@ const AdjustTable = ({ globalFilter, setGlobalFilter, filteredIO }: any) => {
                             </span>
                           </div>
                         </td>
+
                         {hasSelisih && (
                           <td className="px-4 py-3">
-                            {line.status_selisih === "E" && (
+                            {line.status_selisih === "S" && (
                               <span className="px-2 py-0.5 rounded bg-amber-100 text-amber-600 text-[9px] font-bold">
-                                E
+                                S
                               </span>
                             )}
                           </td>
                         )}
+
                       </tr>
 
                       {/* Detail Selisih row hanya muncul untuk line yang selisih */}
-                      {line.status_selisih === "E" && (
+                      {line.status_selisih === "S" && (
                         <tr className="bg-amber-50/50">
                           <td
                             colSpan={hasSelisih ? 6 : 5}
@@ -318,19 +322,19 @@ const AdjustTable = ({ globalFilter, setGlobalFilter, filteredIO }: any) => {
                               </span>
                               <div className="flex gap-4">
                                 <span>
-                                  Qty:{" "}
+                                  Qty{" "}
                                   <span className="font-mono font-bold text-amber-800">
                                     {line.quantity_selisih || 0}
                                   </span>
                                 </span>
                                 <span>
-                                  Sub:{" "}
+                                  SUB-INV{" "}
                                   <span className="font-mono font-bold text-amber-800">
                                     {line.subinventory_selisih || "-"}
                                   </span>
                                 </span>
                                 <span>
-                                  Loc:{" "}
+                                  LOCATOR_ID{" "}
                                   <span className="font-mono font-bold text-amber-800">
                                     {line.locator_id_selisih || "N/A"}
                                   </span>
