@@ -22,6 +22,7 @@ import {
   getBTBErrorMessage,
 } from "../Suggestion/global/allowedDate";
 import { BypassTimeController } from "./component/BypassTimeController";
+import { useGetStockOnHand } from "./hook/useGetStockOnHand";
 
 // --- INTERFACES ---
 export interface GroupedSPBData {
@@ -73,8 +74,6 @@ const MainTable = () => {
     isLoading: isLocalLoading,
     fetchSubmittedList,
   } = useGetLocalDoSuggestion();
-
-  console.log("submittedList", submittedList);
 
   const isParamsReady = !!(organization_name && userNIK);
 
@@ -234,22 +233,7 @@ const MainTable = () => {
           <SPBSubmittedPage
             data={groupedAndMappedData}
             onProceed={() => setCurrentStep("CALCULATION")}
-            // 🔴 PENJAGAAN PINTU KE HALAMAN PREPARATION (GET BTB)
-            // onGoToPreparation={() => {
-            //   if (isGetBTBTimeAllowed(TARGET_DATE)) {
-            //     setCurrentStep("PREPARATION");
-            //   } else {
-            //     Swal.fire({
-            //       icon: "warning",
-            //       title: "Akses Preparation Terkunci",
-            //       text: getBTBErrorMessage(TARGET_DATE),
-            //       confirmButtonColor: "#ea580c",
-            //     });
-            //   }
-            // }}
-
             onGoToPreparation={() => { setCurrentStep("PREPARATION"); }}
-
           />
         );
 
@@ -295,6 +279,21 @@ const MainTable = () => {
     };
   }, []);
 
+
+  const { data: stockList } = useGetStockOnHand({
+    org: String(organization_name),
+    sub: "KECIL",
+  });
+
+  const sohGeneratedTime = useMemo(() => {
+    const list = Array.isArray(stockList) ? stockList : (stockList as any)?.data || [];
+    if (!list || list.length === 0) return null;
+    const firstItem = list[0];
+    if (!firstItem?.createdAt) return null;
+    return dayjs(firstItem.createdAt).format("DD MMM YYYY - HH:mm");
+  }, [stockList]);
+
+
   // 6. MAIN RENDER
   return (
     <div className="w-full space-y-3 p-2 sm:p-4 bg-[#F8FAFC] min-h-screen">
@@ -306,32 +305,49 @@ const MainTable = () => {
         <div className="bg-blue-50 border-l-4 border-blue-500 p-3 sm:p-4 rounded-r-lg shadow-sm flex items-start gap-2.5">
           <FaInfoCircle className="text-blue-500 mt-0.5 size-4 sm:size-5 flex-shrink-0" />
           <div className="flex-1 w-full overflow-hidden">
-            <h4 className="text-xs sm:text-sm font-bold text-blue-900 leading-tight mb-1">
-              Informasi SOP Kalkulasi Stock On Hand (SOH)
+            <h4 className="text-xs sm:text-sm font-bold text-blue-900 leading-tight mb-1.5">
+              Informasi Penarikan & Kalkulasi Stock On Hand (SOH)
             </h4>
             <p className="text-[11px] sm:text-xs text-blue-800 leading-snug mb-2">
-              Tombol "Proceed to Calculation" hanya aktif pada{" "}
-              <strong>H-1</strong> (untuk SPB Submitted berikutnya di tanggal{" "}
-              {TARGET_DATE}) antara pukul <strong>09:00 - 10:00</strong>.
+              Untuk mempersiapkan data SPB kunjungan tanggal <strong className="text-blue-950 font-bold">{TARGET_DATE}</strong> (proses dilakukan pada H-1):
             </p>
 
-            <div className="pt-2 border-t border-blue-200/60 mt-2">
-              <p className="text-[10px] sm:text-[11px] text-blue-900 font-semibold mb-0.5">
+            {/* 📅 ALUR JADWAL PENARIKAN SOH & KALKULASI */}
+            <ul className="text-[10px] sm:text-[11px] text-blue-800 space-y-1.5 list-disc list-inside mb-3">
+              <li>
+                <strong>Tarik Data SOH Manual:</strong> Hanya dibuka pada pukul <strong className="text-blue-950 font-bold">09:00 - 10:00 WIB</strong> di hari H-1.
+              </li>
+              <li>
+                <strong>Tarik Data SOH Otomatis:</strong> Setelah melewati pukul <strong className="text-blue-950 font-bold">10:00 WIB</strong>, sistem akan secara otomatis menarik data SOH apabila Anda belum sempat menariknya secara manual.
+              </li>
+              <li>
+                Setelah data SOH tersedia (baik ditarik secara manual maupun otomatis), Anda tetap dapat melakukan kalkulasi dan men-submit hasilnya kapan saja untuk merubah status SPB dari <span className="font-semibold text-blue-950">SUBMITTED</span> menjadi <span className="font-semibold text-emerald-800">FINAL</span>.
+              </li>
+            </ul>
+
+            {sohGeneratedTime && (
+              <div className="mt-3 bg-emerald-50 border border-emerald-200 rounded-lg p-2.5 flex items-center gap-2">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                </span>
+                <span className="text-[10px] sm:text-[11px] text-emerald-800 font-semibold">
+                  Data SOH sudah ter-generate pada pukul <span className="underline font-bold">{sohGeneratedTime}</span>.
+                </span>
+              </div>
+            )}
+
+            {/* 🔍 PANDUAN FILTER STATUS */}
+            <div className="pt-2.5 border-t border-blue-200/60">
+              <p className="text-[10px] sm:text-[11px] text-blue-900 font-semibold mb-1">
                 Panduan Filter Status:
               </p>
-              <ul className="text-[10px] sm:text-[11px] text-blue-800 space-y-0.5 list-disc list-inside">
+              <ul className="text-[10px] sm:text-[11px] text-blue-800 space-y-1 list-disc list-inside pl-1">
                 <li>
-                  Pilih <strong>SUBMITTED</strong> untuk memproses data baru
-                  menuju{" "}
-                  <span className="font-semibold">
-                    Calculation & Good Prepared
-                  </span>
-                  .
+                  Pilih filter status <strong className="text-blue-950 font-bold">SUBMITTED</strong> untuk memproses data SPB baru yang siap dicocokkan (Kalkulasi) dengan stok fisik (SOH).
                 </li>
                 <li>
-                  Pilih <strong>FINAL</strong> untuk melihat SPB yang telah
-                  selesai dan siap{" "}
-                  <span className="font-semibold">Print Dokumen</span>.
+                  Pilih filter status <strong className="text-blue-950 font-bold">FINAL</strong> untuk melihat daftar SPB yang telah selesai dikalkulasi dan siap dilakukan cetak dokumen (Print).
                 </li>
               </ul>
             </div>

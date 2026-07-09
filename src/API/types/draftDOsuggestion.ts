@@ -27,6 +27,7 @@ export interface DOSuggestionDetail {
 }
 
 export interface DOSuggestionData {
+    iface_status: any;
     isCallPlanBeforeBTB: boolean;
     id: string;
     callplan_number: string;
@@ -43,6 +44,8 @@ export interface DOSuggestionData {
     createdAt: string
     updatedAt: string
     spb_number: string
+    unmatchedBTBDetails: any[] | undefined;
+
 }
 
 export interface DOSuggestionResponse {

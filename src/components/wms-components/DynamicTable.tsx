@@ -68,7 +68,7 @@ const DynamicTable = ({
   const user = state.user;
   const roleName = user?.role?.name;
   const navigate = useNavigate();
-  
+
   const handleCloseModal = () => {
     setSelectedItem(null);
     onCloseCreateModal();

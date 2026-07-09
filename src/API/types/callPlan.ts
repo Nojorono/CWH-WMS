@@ -11,6 +11,8 @@ export interface CallPlanDetail {
     ROUTE_NUMBER: string;
     SALES_NAME: string;
     SALES_NIK: string;
+    SALES_SUPERVISOR_NAME?: string;
+    SALES_SUPERVISOR_NIK?: string;
     CALL_PLAN_START_DATE: string;
     CALL_PLAN_END_DATE: string;
     ISLUARKOTA?: string;
@@ -22,6 +24,10 @@ export interface CallPlanDetail {
     createdAt?: string;
     updatedAt?: string;
     created_by?: string;
+
+    CHANNEL?: string;
+    CALL_PLAN_START_PERIOD?: string;
+    CALL_PLAN_END_PERIOD?: string;
 }
 
 export interface SupervisorData {
@@ -35,7 +41,6 @@ export interface SupervisorData {
 }
 
 // --- TIPE BARU UNTUK MENDUKUNG PARTITION SNOWFLAKE ---
-
 export interface PartitionInfo {
     rowCount: number;
     uncompressedSize: number;

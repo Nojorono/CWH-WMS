@@ -20,6 +20,9 @@ const BTBTotalBreakdown = ({
 }: BTBTotalBreakdownProps) => {
   const { fetchAll, list: itemList } = useStoreItem();
 
+  console.log("DATA BTB", data);
+
+
   useEffect(() => {
     fetchAll();
   }, [fetchAll]);
@@ -96,7 +99,7 @@ const BTBTotalBreakdown = ({
 
         {/* Badge Grand Total */}
         <div className="flex items-center gap-2">
-         <div className="bg-white border border-indigo-200 text-indigo-700 px-4 py-1.5 rounded-lg shadow-sm">
+          <div className="bg-white border border-indigo-200 text-indigo-700 px-4 py-1.5 rounded-lg shadow-sm">
             <span className="text-sm font-medium text-indigo-900">
               {grandTotal} BKS
             </span>

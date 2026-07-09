@@ -16,6 +16,7 @@ import { showErrorToast, showSuccessToast } from "../../../../components/toast";
 import { usePersistAuthStore } from "../../../../API/store/AuthStore/PersistAuthStore";
 import Select from "../../../../components/form/Select";
 import axiosInstance from "../../../../DynamicAPI/AxiosInstance";
+import { log } from "node:console";
 
 const DataTable = () => {
   const { list: userData, createData, updateData, fetchAll } = useStoreUser();
@@ -401,6 +402,10 @@ const DataTable = () => {
       departementId: rest.departementId,
     };
 
+    console.log("update id", id);
+    console.log("update payload", payload);
+
+
     const cleanPayload = Object.fromEntries(
       Object.entries(payload).filter(([_, v]) => v !== undefined),
     );
@@ -452,6 +457,7 @@ const DataTable = () => {
             lastName: user.userDetail?.lastName ?? "",
             email: user.userDetail?.email ?? "",
             phone: user.userDetail?.phone ?? "",
+            departementId: user.userDetail?.departementId ?? "",
             organizationId,
             organizationName,
             zoneId: user.warehouseSubId ?? "",
@@ -460,7 +466,7 @@ const DataTable = () => {
           };
         })
         .filter((user: any) => user.role?.name !== "superadmin"),
-    [userData, IoList], // <-- jangan lupa IoList sebagai dependency
+    [userData, IoList],
   );
 
   const filteredUserData = useMemo(() => {
@@ -555,6 +561,7 @@ const DataTable = () => {
           },
         ]}
         formFields={formFields.filter((f) => f.name !== "isActive")}
+
         updateFormFields={formFields.filter(
           (f) =>
             ![
@@ -566,7 +573,6 @@ const DataTable = () => {
         )}
         onSubmit={handleCreate}
         onUpdate={handleUpdate}
-        // onDelete={async (id) => { await updateData(id, { isActive: false }) }}
         onDelete={async (id) => {
           await handleDelete(id);
         }}

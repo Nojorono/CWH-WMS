@@ -68,8 +68,6 @@ export const getStockOnHand = async (params: GetStockParams): Promise<StockOnHan
 
         // Kembalikan data yang sudah bersih dari duplikasi
         const cleanedData = Array.from(uniqueStockMap.values());
-
-        console.log("Deduplicated Stock On Hand:", cleanedData);
         return cleanedData;
 
     } catch (error) {

@@ -35,6 +35,8 @@ export default function MainScreen() {
     navigate(-1); // Ini akan membawa user kembali 1 halaman di history browser
   };
 
+  console.log("zoneDetails", zoneDetails);
+
   return (
     <div className="p-6">
       <button
@@ -62,6 +64,7 @@ export default function MainScreen() {
                         zoneCode: zoneDetail?.code,
                         locatorId,
                         locatorName,
+                        BINcapacity: zoneDetail?.capacity_bin
                       }}
                     />
                   )}

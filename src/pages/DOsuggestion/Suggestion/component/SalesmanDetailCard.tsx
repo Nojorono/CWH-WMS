@@ -4,20 +4,28 @@ import {
   MdAssignment,
   MdMap,
   MdCalendarToday,
+  MdLayers,
+  MdFormatListBulleted,
 } from "react-icons/md";
 
 interface SalesmanDetailCardProps {
   salesData: any;
   status?: string;
   onBack: () => void;
+  totalSku?: number;
+  totalQty?: number;
 }
 
 export default function SalesmanDetailCard({
   salesData,
   status,
   onBack,
+  totalSku,
+  totalQty
 }: SalesmanDetailCardProps) {
   const isSubmitted = status === "SUBMITTED";
+
+  console.log("salesData", salesData);
 
   return (
     <div className="bg-white rounded-xl border border-slate-200 shadow-sm mb-6 overflow-hidden">
@@ -48,16 +56,14 @@ export default function SalesmanDetailCard({
             Document Status
           </span>
           <div
-            className={`flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-bold border ${
-              isSubmitted
-                ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                : "bg-amber-50 text-amber-700 border-amber-200"
-            }`}
+            className={`flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-bold border ${isSubmitted
+              ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+              : "bg-amber-50 text-amber-700 border-amber-200"
+              }`}
           >
             <span
-              className={`w-2 h-2 rounded-full ${
-                isSubmitted ? "bg-emerald-500" : "bg-amber-500"
-              }`}
+              className={`w-2 h-2 rounded-full ${isSubmitted ? "bg-emerald-500" : "bg-amber-500"
+                }`}
             />
             {status || "DRAFT"}
           </div>
@@ -76,9 +82,14 @@ export default function SalesmanDetailCard({
             value={salesData?.CALL_PLAN_NUMBER || "-"}
           />
           <DetailRow
-            icon={<MdAssignment size={16} />}
-            label="Route Number"
-            value={salesData?.ROUTE_NUMBER || "-"}
+            icon={<MdCalendarToday size={15} />}
+            label="Callplan Start Date"
+            value={salesData?.CALL_PLAN_START_DATE || "-"}
+          />
+          <DetailRow
+            icon={<MdLayers size={16} />}
+            label="Total SKU"
+            value={totalSku !== undefined ? `${totalSku}` : "-"}
           />
           <DetailRow
             icon={<MdMap size={16} />}
@@ -87,13 +98,18 @@ export default function SalesmanDetailCard({
           />
           <DetailRow
             icon={<MdCalendarToday size={15} />}
-            label="Tanggal Awal"
-            value={salesData?.CALL_PLAN_START_DATE || "-"}
+            label="Callplan End Date"
+            value={salesData?.CALL_PLAN_END_DATE || "-"}
           />
           <DetailRow
-            icon={<MdCalendarToday size={15} />}
-            label="Tanggal Akhir"
-            value={salesData?.CALL_PLAN_END_DATE || "-"}
+            icon={<MdFormatListBulleted size={16} />}
+            label="Total Qty SPB"
+            value={totalQty !== undefined ? `${totalQty.toLocaleString("id-ID")} BKS` : "-"}
+          />
+          <DetailRow
+            icon={<MdAssignment size={16} />}
+            label="Route Number"
+            value={salesData?.ROUTE_NUMBER || "-"}
           />
         </div>
       </div>

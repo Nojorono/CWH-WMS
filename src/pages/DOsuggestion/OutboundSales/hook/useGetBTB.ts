@@ -29,7 +29,6 @@ export const useGetBTB = (
         setError(null);
         setIsSuccess(false);
 
-        // Gunakan Tanggal Hari Ini - 1 Hari
         const btbDate = dayjs().subtract(1, 'day').format('YYYY-MM-DD');
 
         try {

@@ -59,15 +59,13 @@ const PutAwayDetail: React.FC = () => {
   const location = useLocation();
   const { data: detailDataPutaway, mode } = location.state || {};
   const user = usePersistAuthStore((state) => state.user);
-  const orgId =
-    user?.userDetail?.organizationId || user?.userDetail?.organization?.id;
+  const orgId = user?.userDetail?.organizationId || user?.userDetail?.organization?.id;
 
   const isDetail = mode === "detail";
   const isEdit = mode === "edit";
   const isCreate = !isEdit && !isDetail;
 
-  const { list: putAwaySuggestions, fetchAll: fetchPutAwaySuggestions } =
-    useStorePutAwaySuggestion();
+  const { list: putAwaySuggestions, fetchAll: fetchPutAwaySuggestions } = useStorePutAwaySuggestion();
 
   const { list: userList, fetchAll: fetchUserList } = useStoreUserManagement();
   const { createBulkData } = useStoreBulkPutAway();
@@ -156,9 +154,9 @@ const PutAwayDetail: React.FC = () => {
         (putAwaySuggestions as any).palletSuggestions ||
         (Array.isArray(putAwaySuggestions)
           ? putAwaySuggestions.flatMap(
-              (res: any) =>
-                res.data?.palletSuggestions || res.palletSuggestions || [],
-            )
+            (res: any) =>
+              res.data?.palletSuggestions || res.palletSuggestions || [],
+          )
           : []);
 
       const formatted: PutAwayRow[] = suggestions.map(
@@ -211,6 +209,7 @@ const PutAwayDetail: React.FC = () => {
       setSelectedIds([firstId]);
     }
   }, [isEdit, mappedData]);
+
 
   const columns = useMemo<ExtendedColumnDef<PutAwayRow>[]>(() => {
     const cols: ExtendedColumnDef<PutAwayRow>[] = [];
@@ -298,12 +297,12 @@ const PutAwayDetail: React.FC = () => {
       prev.map((item) =>
         item.palletId === adjustPutaway.palletId
           ? {
-              ...item,
-              suggestZoneId: adjustPutaway.zone_id,
-              suggestZone: adjustPutaway.suggestZone,
-              suggestBinId: adjustPutaway.bin_id,
-              suggestBin: adjustPutaway.suggestBin,
-            }
+            ...item,
+            suggestZoneId: adjustPutaway.zone_id,
+            suggestZone: adjustPutaway.suggestZone,
+            suggestBinId: adjustPutaway.bin_id,
+            suggestBin: adjustPutaway.suggestBin,
+          }
           : item,
       ),
     );

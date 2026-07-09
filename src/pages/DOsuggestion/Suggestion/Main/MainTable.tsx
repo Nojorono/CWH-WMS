@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { FaSync, FaSearch, FaInfoCircle } from "react-icons/fa";
+import dayjs from "dayjs";
 import AdjustTable from "../component/AdjustTable";
 import PageBreadcrumb from "../../../../components/common/PageBreadCrumb";
 import Button from "../../../../components/ui/button/Button";
@@ -7,7 +8,7 @@ import ActIndicator from "../../../../components/ui/activityIndicator";
 import { usePersistAuthStore } from "../../../../API/store/AuthStore/PersistAuthStore";
 import Select from "../../../../components/form/Select";
 import { useStoreUser } from "../../../../DynamicAPI/stores/Store/MasterStore";
-import { getTargetDate } from "../global/allowedDate";
+import { getTargetDate, getServerDayjs, isBypassMode } from "../global/allowedDate";
 import { useCallPlan } from "../hook/useCallPlan";
 import { processCallPlanData } from "../helper/callPlanMapper";
 import { CallPlanDetail } from "../../../../API/types/callPlan";
@@ -31,8 +32,36 @@ const MainTable = () => {
   const isAhom = role_name === "AHOM";
   const activeSpvNik = isAhom ? selectedSpvNik : userNIK;
   const shouldFetchCallPlan = !!activeSpvNik;
+
   const TARGET_DATE = useMemo(() => getTargetDate(role_name), [role_name]);
+
+  // Kalkulasi H-2 dan H-1 dalam format tanggal nyata agar dipahami user awam
+  const hMinus2Text = useMemo(() => {
+    return dayjs(TARGET_DATE).subtract(2, "day").format("DD MMM YYYY");
+  }, [TARGET_DATE]);
+
+  const hMinus1Text = useMemo(() => {
+    return dayjs(TARGET_DATE).subtract(1, "day").format("DD MMM YYYY");
+  }, [TARGET_DATE]);
+
   const { list: userData, fetchAll: fetchAllUsers } = useStoreUser();
+
+  // State untuk menyimpan informasi waktu dan mode real-time
+  const [timeInfo, setTimeInfo] = useState(() => ({
+    time: getServerDayjs(),
+    isBypass: isBypassMode(),
+  }));
+
+  // Interval 1 detik untuk meng-update waktu secara berkala (detik berjalan)
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setTimeInfo({
+        time: getServerDayjs(),
+        isBypass: isBypassMode(),
+      });
+    }, 1000);
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     if (isAhom) {
@@ -65,7 +94,6 @@ const MainTable = () => {
   );
 
   console.log("TARGET DATE", TARGET_DATE);
-
 
   const {
     data: callPlanList,
@@ -127,16 +155,55 @@ const MainTable = () => {
 
       <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-xl shadow-sm flex items-start gap-3">
         <FaInfoCircle className="text-blue-500 mt-0.5 size-5 flex-shrink-0" />
-        <div>
-          <h4 className="text-sm font-bold text-blue-900">
-            Informasi Jadwal Generate DO Suggestion
-          </h4>
-          <p className="text-sm text-blue-800 mt-1">
-            Sesuai SOP, Generate DO Suggestion hanya dapat dilakukan pada{" "}
-            <strong>H-2 dari Callplan Start Date ({TARGET_DATE})</strong> dan{" "}
-            <strong>setelah pukul 13:00</strong>.<br /> Tombol Generate akan
-            otomatis aktif pada rentang waktu tersebut.
-          </p>
+        <div className="flex-1 flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <h4 className="text-sm font-bold text-blue-900">
+              Jadwal Generate DO Suggestion
+            </h4>
+            <p className="text-xs text-blue-800 mt-1 leading-relaxed">
+              Untuk mempersiapkan kunjungan tanggal{" "}
+              <strong className="text-blue-950 font-bold">{dayjs(TARGET_DATE).format("DD MMM YYYY")}</strong>,
+              DO Suggestion dapat dilakukan pada jadwal berikut:
+            </p>
+            <ul className="text-xs text-blue-800 mt-2 list-disc list-inside space-y-1 pl-1">
+              <li>
+                <strong>Tombol Generate Aktif</strong> H-2 kunjungan yaitu tanggal{" "}
+                <span className="underline font-semibold text-blue-950">{hMinus2Text}</span> mulai pukul{" "}
+                <strong className="text-blue-950 font-bold">13:00 WIB</strong>.
+              </li>
+              <li>
+                <strong>Tombol Generate Non-Aktif</strong> H-1 kunjungan yaitu tanggal{" "}
+                <span className="underline font-semibold text-blue-950">{hMinus1Text}</span> sebelum pukul{" "}
+                <strong className="text-blue-950 font-bold">09:00 WIB</strong> (maksimal pukul <strong className="text-blue-950 font-bold">08:59 WIB</strong>).
+              </li>
+              <li>
+                <strong>Pergantian Siklus Data:</strong> Tepat pukul{" "}
+                <strong className="text-blue-950 font-bold">09:00 WIB</strong> di H-1, data tabel akan otomatis diperbarui dan berganti ke siklus Call Plan untuk jadwal pengiriman berikutnya.
+              </li>
+            </ul>
+            <p className="text-[11px] text-blue-700/80 mt-2 italic">
+              *Catatan: Tombol "Generate" di tabel bawah akan aktif & nonaktif secara otomatis mengikuti jadwal di atas.
+              Setelah jam 09:00 pagi di H-1, sistem akan mengunci data untuk memproses siklus hari berikutnya.
+            </p>
+          </div>
+
+          {/* Widget Indikator Waktu & Mode Validasi */}
+          <div className="flex flex-col items-end whitespace-nowrap bg-white/80 backdrop-blur-sm border border-blue-100 rounded-lg p-2.5 shadow-sm text-xs font-semibold self-start md:self-center">
+            <div className="text-slate-500 mb-1 flex items-center gap-1.5">
+              <span>Mode Waktu:</span>
+              <span
+                className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase border ${timeInfo.isBypass
+                  ? "bg-amber-100 text-amber-800 border-amber-200 animate-pulse"
+                  : "bg-emerald-100 text-emerald-800 border-emerald-200"
+                  }`}
+              >
+                {timeInfo.isBypass ? "⚠️ Bypass (Simulasi)" : "🌍 Server Time"}
+              </span>
+            </div>
+            <div className="text-slate-700 font-mono text-sm font-bold">
+              {timeInfo.time.format("DD MMM YYYY - HH:mm:ss")}
+            </div>
+          </div>
         </div>
       </div>
 
