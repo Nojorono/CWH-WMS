@@ -500,9 +500,6 @@ export const GoodsPreparationPage = ({
     return () => clearTimeout(timer);
   }, [isLoading]);
 
-  console.log("BTBdata", BTBdata);
-  console.log("enrichedData", enrichedData);
-
   return (
     <div className="space-y-6">
       <PremiumLoadingOverlay visible={loadingVisible || showLoading} btbDate={btbDateString} />
