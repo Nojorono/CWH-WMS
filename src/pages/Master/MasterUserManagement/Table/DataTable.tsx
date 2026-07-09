@@ -457,6 +457,7 @@ const DataTable = () => {
             lastName: user.userDetail?.lastName ?? "",
             email: user.userDetail?.email ?? "",
             phone: user.userDetail?.phone ?? "",
+            departementId: user.userDetail?.departementId ?? "",
             organizationId,
             organizationName,
             zoneId: user.warehouseSubId ?? "",
@@ -465,7 +466,7 @@ const DataTable = () => {
           };
         })
         .filter((user: any) => user.role?.name !== "superadmin"),
-    [userData, IoList], // <-- jangan lupa IoList sebagai dependency
+    [userData, IoList],
   );
 
   const filteredUserData = useMemo(() => {

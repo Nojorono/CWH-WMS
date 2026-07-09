@@ -20,7 +20,6 @@ import { useForm, Controller } from "react-hook-form";
 import { useLocation, useNavigate } from "react-router";
 import { formatDateIndo } from "../../../helper/FormatDate";
 import { usePersistAuthStore } from "../../../API/store/AuthStore/PersistAuthStore";
-import { log } from "node:console";
 
 type PutAwayRow = {
   stagingPalletId: string;
@@ -60,15 +59,13 @@ const PutAwayDetail: React.FC = () => {
   const location = useLocation();
   const { data: detailDataPutaway, mode } = location.state || {};
   const user = usePersistAuthStore((state) => state.user);
-  const orgId =
-    user?.userDetail?.organizationId || user?.userDetail?.organization?.id;
+  const orgId = user?.userDetail?.organizationId || user?.userDetail?.organization?.id;
 
   const isDetail = mode === "detail";
   const isEdit = mode === "edit";
   const isCreate = !isEdit && !isDetail;
 
-  const { list: putAwaySuggestions, fetchAll: fetchPutAwaySuggestions } =
-    useStorePutAwaySuggestion();
+  const { list: putAwaySuggestions, fetchAll: fetchPutAwaySuggestions } = useStorePutAwaySuggestion();
 
   const { list: userList, fetchAll: fetchUserList } = useStoreUserManagement();
   const { createBulkData } = useStoreBulkPutAway();
@@ -212,9 +209,6 @@ const PutAwayDetail: React.FC = () => {
       setSelectedIds([firstId]);
     }
   }, [isEdit, mappedData]);
-
-
-  console.log("mappedData putaway", mappedData);
 
 
   const columns = useMemo<ExtendedColumnDef<PutAwayRow>[]>(() => {
