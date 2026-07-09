@@ -100,7 +100,7 @@ export default function DeliveryOrderCard({
   const inbIntegrationData = watch(
     `deliveryOrders.${doIndex}.inbound_integration` as any,
   );
-  
+
   const allDeliveryOrders = useWatch({
     name: "deliveryOrders",
     defaultValue: [],
@@ -392,11 +392,10 @@ export default function DeliveryOrderCard({
                     required: "No Surat Jalan wajib diisi",
                   })}
                   placeholder="Input DO Number..."
-                  className={`${inputCls} !py-1.5 !text-xs !bg-white flex-1 ${
-                    errors.deliveryOrders?.[doIndex]?.do_no || isDuplicateDO
-                      ? "border-red-500"
-                      : ""
-                  }`}
+                  className={`${inputCls} !py-1.5 !text-xs !bg-white flex-1 ${errors.deliveryOrders?.[doIndex]?.do_no || isDuplicateDO
+                    ? "border-red-500"
+                    : ""
+                    }`}
                   disabled={isInputDisabled}
                 />
                 {!isDetailMode && (
@@ -455,6 +454,7 @@ export default function DeliveryOrderCard({
                 <div className="relative group">
                   <input
                     type="file"
+                    accept=".pdf, .jpg, .jpeg, .png"
                     className={`${inputCls} !py-1 !text-[10px] !bg-white w-full file:mr-2 file:py-1 file:px-2 file:border-0 file:text-[10px] file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer`}
                     disabled={isDetailMode || uploading || !isDOChecked}
                     onChange={(e) =>
