@@ -23,6 +23,7 @@ interface DataTableProps {
     zoneCode?: any;
     locatorId?: Number;
     locatorName?: String;
+    BINcapacity?: Number;
   };
 }
 
@@ -73,7 +74,7 @@ const DataTable: React.FC<DataTableProps> = ({ params }) => {
       { accessorKey: "description", header: "Deskripsi" },
       { accessorKey: "capacity_pallet", header: "Kapasitas Pallet" },
     ],
-    [ioList, subWHList],
+    [subWHList],
   );
 
   const formFields = [
@@ -105,6 +106,21 @@ const DataTable: React.FC<DataTableProps> = ({ params }) => {
 
   const handleCreate = async (data: any) => {
     const { name, code, description, capacity_pallet } = data;
+
+    // --- VALIDASI JUMLAH DATA BIN VS BINcapacity ---
+    if (params?.BINcapacity != null) {
+      const maxBinAllowed = Number(params.BINcapacity);
+      const currentBinCount = filteredBinList.length;
+
+      // Jika jumlah BIN saat ini sudah sama atau lebih dari kapasitas yang ditentukan
+      if (currentBinCount >= maxBinAllowed) {
+        showErrorToast(
+          `Gagal! Jumlah BIN di zona ini sudah mencapai batas maksimum (${maxBinAllowed} BIN).`
+        );
+        return { success: false }; // Menghentikan proses submit form
+      }
+    }
+    // ------------------------------------------------
 
     const payload: any = {
       warehouse_sub_id: params?.zoneId,
@@ -152,7 +168,6 @@ const DataTable: React.FC<DataTableProps> = ({ params }) => {
       code,
       description,
       capacity_pallet: Number(capacity_pallet),
-      // Mempertahankan locator data saat update
       locator_id: locator_id || params?.locatorId,
       locator_name: locator_name || params?.locatorName,
     };
@@ -172,9 +187,7 @@ const DataTable: React.FC<DataTableProps> = ({ params }) => {
       showErrorToast("Pilih minimal 1 data untuk dicetak!");
       return;
     }
-    const selected = binList.filter(
-      (p) => typeof p.id === "string" && selectedIds.includes(p.id),
-    );
+    const selected = binList.filter((p) => selectedIds.includes(String(p.id)));
     setSelectedBin(selected);
     setPrintModalOpen(true);
   };
@@ -204,6 +217,9 @@ const DataTable: React.FC<DataTableProps> = ({ params }) => {
     }
     return binList;
   }, [binList, params?.zoneId]);
+
+  console.log("filteredBinList", filteredBinList);
+
 
   return (
     <>

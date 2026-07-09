@@ -52,7 +52,7 @@ const DynamicFormModal = ({
       isOpen={isOpen}
       onClose={onClose}
       onSubmit={handleSubmit}
-     formFields={activeFields}
+      formFields={activeFields}
       defaultValues={defaultValues}
     />
   );

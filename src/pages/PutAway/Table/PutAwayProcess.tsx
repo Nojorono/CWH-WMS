@@ -20,6 +20,7 @@ import { useForm, Controller } from "react-hook-form";
 import { useLocation, useNavigate } from "react-router";
 import { formatDateIndo } from "../../../helper/FormatDate";
 import { usePersistAuthStore } from "../../../API/store/AuthStore/PersistAuthStore";
+import { log } from "node:console";
 
 type PutAwayRow = {
   stagingPalletId: string;
@@ -156,9 +157,9 @@ const PutAwayDetail: React.FC = () => {
         (putAwaySuggestions as any).palletSuggestions ||
         (Array.isArray(putAwaySuggestions)
           ? putAwaySuggestions.flatMap(
-              (res: any) =>
-                res.data?.palletSuggestions || res.palletSuggestions || [],
-            )
+            (res: any) =>
+              res.data?.palletSuggestions || res.palletSuggestions || [],
+          )
           : []);
 
       const formatted: PutAwayRow[] = suggestions.map(
@@ -211,6 +212,10 @@ const PutAwayDetail: React.FC = () => {
       setSelectedIds([firstId]);
     }
   }, [isEdit, mappedData]);
+
+
+  console.log("mappedData putaway", mappedData);
+
 
   const columns = useMemo<ExtendedColumnDef<PutAwayRow>[]>(() => {
     const cols: ExtendedColumnDef<PutAwayRow>[] = [];
@@ -298,12 +303,12 @@ const PutAwayDetail: React.FC = () => {
       prev.map((item) =>
         item.palletId === adjustPutaway.palletId
           ? {
-              ...item,
-              suggestZoneId: adjustPutaway.zone_id,
-              suggestZone: adjustPutaway.suggestZone,
-              suggestBinId: adjustPutaway.bin_id,
-              suggestBin: adjustPutaway.suggestBin,
-            }
+            ...item,
+            suggestZoneId: adjustPutaway.zone_id,
+            suggestZone: adjustPutaway.suggestZone,
+            suggestBinId: adjustPutaway.bin_id,
+            suggestBin: adjustPutaway.suggestBin,
+          }
           : item,
       ),
     );
