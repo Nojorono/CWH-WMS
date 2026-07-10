@@ -4,10 +4,8 @@ import React, { useEffect, useState, useCallback, useMemo } from "react";
 import { FaTimes } from "react-icons/fa";
 import Button from "../../../components/ui/button/Button";
 import Select from "../../../components/form/Select";
-import { useStoreBinByZone } from "../../../DynamicAPI/stores/Store/MasterStore";
-import { EndPoint } from "../../../utils/EndPoint";
+import { useStoreSubWarehouseWithBins } from "../../../DynamicAPI/stores/Store/MasterStore";
 import { showErrorToast } from "../../../components/toast";
-import axiosInstance from "../../../DynamicAPI/AxiosInstance";
 
 type AdjustmentForm = {
   destinationWarehouseSubName: string | undefined;
@@ -29,6 +27,39 @@ interface AdjustmentModalProps {
   data: AdjustmentForm | null;
   onSave: (updated: AdjustmentForm) => void;
   mode?: "edit" | "create";
+}
+
+// 📦 Strict Interfaces sesuai response API
+interface Bin {
+  id: string;
+  locator_id?: string | null;
+  locator_name?: string | null;
+  warehouse_sub_id: string;
+  name: string;
+  code: string;
+  description?: string;
+  capacity_pallet: number | null;
+  current_pallet?: string | null;
+  current_pallet_count: number | null;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+interface Zone {
+  id: string;
+  locator_id?: string | null;
+  locator_name?: string | null;
+  warehouse_id: string;
+  name: string;
+  code: string;
+  description?: string;
+  capacity_bin?: number | null;
+  is_staging?: string | null;
+  is_good_stock?: boolean;
+  is_gate?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+  bins: Bin[];
 }
 
 // 🔹 Default form value
@@ -53,80 +84,30 @@ const AdjustmentModal: React.FC<AdjustmentModalProps> = ({
   onSave,
   mode = "create",
 }) => {
-  const {
-    detail: binList,
-    fetchById: fetchBinList,
-    isLoading: binLoading,
-  } = useStoreBinByZone();
+  // Ambil list dan status loading dari store utama
+  const { list: subWarehouseWithBinList, fetchUsingParam, isLoading } =
+    useStoreSubWarehouseWithBins();
+
+  useEffect(() => {
+    if (open) {
+      fetchUsingParam({
+        is_staging: null,
+        is_good_stock: true,
+        is_gate: false,
+      });
+    }
+  }, [open, fetchUsingParam]);
+
+  console.log("subWarehouseWithBinList", subWarehouseWithBinList);
 
   const [formValues, setFormValues] = useState<AdjustmentForm>(
     data ?? defaultFormValues,
   );
 
-  // local state untuk sub-warehouse (zone) dan loading
-  const [subWarehouseList, setSubWarehouseList] = useState<any[] | null>(null);
-  const [zoneLoading, setZoneLoading] = useState(false);
-
-  // Fetch Sub Warehouse (Zone)
-  // const fetchSubWarehouseList = useCallback(async () => {
-  //   setZoneLoading(true);
-  //   try {
-  //     const headers: Record<string, string> = {
-  //       Accept: "application/json",
-  //     };
-  //     if (token) {
-  //       headers["Authorization"] = `Bearer ${token}`;
-  //     }
-
-  //     const res = await fetch(
-  //       `${EndPoint}master-warehouse-sub/is-staging?is_staging=null`,
-  //       {
-  //         method: "GET",
-  //         headers,
-  //       }
-  //     );
-  //     if (!res.ok) throw new Error(`Failed to fetch: ${res.status}`);
-  //     const json = await res.json();
-
-  //     const list = Array.isArray(json) ? json : json.data ?? json;
-  //     setSubWarehouseList(list);
-  //   } catch (error) {
-  //     console.error("Error fetching sub warehouses:", error);
-  //     setSubWarehouseList([]);
-  //   } finally {
-  //     setZoneLoading(false);
-  //   }
-  // }, []);
-
-  const fetchSubWarehouseList = useCallback(async () => {
-    setZoneLoading(true);
-    try {
-      const res = await axiosInstance.get("master-warehouse-sub/is-staging", {
-        params: {
-          is_staging: "null",
-        },
-      });
-
-      const responseData = res.data;
-      const list = Array.isArray(responseData)
-        ? responseData
-        : (responseData?.data ?? responseData);
-
-      setSubWarehouseList(list);
-    } catch (error) {
-      console.error("Error fetching sub warehouses via axiosInstance:", error);
-      setSubWarehouseList([]);
-    } finally {
-      setZoneLoading(false);
-    }
-  }, []);
-
   useEffect(() => {
     if (open) {
-      fetchSubWarehouseList();
-
       if (data) {
-        // isi fallback jika suggestZone / suggestBin kosong
+        // Isi fallback jika suggestZone / suggestBin kosong
         setFormValues({
           ...data,
           suggestZone:
@@ -144,14 +125,7 @@ const AdjustmentModal: React.FC<AdjustmentModalProps> = ({
         setFormValues(defaultFormValues);
       }
     }
-  }, [open, data, fetchSubWarehouseList]);
-
-  // 📦 Fetch Bin berdasarkan Zone terpilih
-  useEffect(() => {
-    if (formValues.zone_id) {
-      fetchBinList(formValues.zone_id);
-    }
-  }, [formValues.zone_id]);
+  }, [open, data]);
 
   // 🔄 Reset form saat modal ditutup
   useEffect(() => {
@@ -160,26 +134,39 @@ const AdjustmentModal: React.FC<AdjustmentModalProps> = ({
     }
   }, [open]);
 
-  // 🧠 Daftar Zone
+  // 🧠 Daftar Zone dari store utama
   const availableZones = useMemo(() => {
-    return (
-      subWarehouseList?.map((zone: any) => ({
-        value: zone.id,
-        label: `${zone.name}`,
-      })) ?? []
-    );
-  }, [subWarehouseList]);
+    return subWarehouseWithBinList.map((zone) => ({
+      value: zone.id,
+      label: `${zone.name}`,
+    }));
+  }, [subWarehouseWithBinList]);
 
-  // 🧠 Daftar Bin
+  // 🧠 Daftar Bin diambil secara dinamis dari Zone terpilih
   const availableBins = useMemo(() => {
-    const binsArray = Array.isArray(binList) ? binList : [];
-    return binsArray.map((bin: any) => ({
+    if (!formValues.zone_id) return [];
+    
+    const selectedZone = subWarehouseWithBinList.find(
+      (zone) => zone.id === formValues.zone_id,
+    );
+    
+    const binsArray = Array.isArray(selectedZone?.bins) ? selectedZone.bins : [];
+    
+    return binsArray.map((bin: Bin) => ({
       value: bin.id,
-      label: `${bin.code}`,
+      label: bin.code,
       code: bin.code,
       zoneId: bin.warehouse_sub_id,
+      capacity_pallet: bin.capacity_pallet,
+      current_pallet: bin.current_pallet ?? null,
+      current_pallet_count: bin.current_pallet_count ?? 0,
     }));
-  }, [binList]);
+  }, [subWarehouseWithBinList, formValues.zone_id]);
+
+  const selectedBinInfo = useMemo(() => {
+    if (!formValues.bin_id) return null;
+    return availableBins.find((bin) => bin.value === formValues.bin_id) ?? null;
+  }, [availableBins, formValues.bin_id]);
 
   // ⚙️ Handle Zone Change
   const handleZoneChange = useCallback(
@@ -213,13 +200,33 @@ const AdjustmentModal: React.FC<AdjustmentModalProps> = ({
     [availableBins],
   );
 
-  // 🧩 Handle Submit
-  const handleSubmit = (e: React.FormEvent) => {
+  // 🧩 Handle Submit & Validasi Kapasitas
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!formValues.zone_id || !formValues.bin_id) {
       showErrorToast("Please select both Zone and Bin before saving.");
       return;
+    }
+
+    // 🚀 Check capacity limit
+    const selectedBin = availableBins.find((b) => b.value === formValues.bin_id);
+    if (selectedBin) {
+      const { capacity_pallet, current_pallet_count, code } = selectedBin;
+      
+      // Jika capacity_pallet bernilai angka (> 0)
+      if (
+        capacity_pallet !== null &&
+        capacity_pallet !== undefined &&
+        capacity_pallet > 0
+      ) {
+        if (current_pallet_count >= capacity_pallet) {
+          showErrorToast(
+            `Cannot save. Bin ${code} is full (Capacity: ${capacity_pallet}, Current: ${current_pallet_count}).`
+          );
+          return;
+        }
+      }
     }
 
     onSave(formValues);
@@ -241,7 +248,7 @@ const AdjustmentModal: React.FC<AdjustmentModalProps> = ({
 
         {/* Title */}
         <h2 className="text-xl font-bold text-blue-900 mb-4 flex items-center gap-2">
-          🧭 Adjustment Location
+          🧭 Adjustment Location Put Away
         </h2>
 
         {/* Form */}
@@ -287,7 +294,7 @@ const AdjustmentModal: React.FC<AdjustmentModalProps> = ({
               options={[
                 {
                   value: "",
-                  label: zoneLoading ? "Loading Zones..." : "-- Select Zone --",
+                  label: isLoading ? "Loading Zones..." : "-- Select Zone --",
                 },
                 ...availableZones,
               ]}
@@ -306,16 +313,38 @@ const AdjustmentModal: React.FC<AdjustmentModalProps> = ({
               options={[
                 {
                   value: "",
-                  label: binLoading
-                    ? "Loading Bins..."
-                    : formValues.zone_id
-                      ? "-- Select Bin --"
-                      : "Select Zone first",
+                  label: formValues.zone_id
+                    ? "-- Select Bin --"
+                    : "Select Zone first",
                 },
                 ...(formValues.zone_id ? availableBins : []),
               ]}
               width={"100%"}
             />
+            {selectedBinInfo && (
+              <div className="mt-3 space-y-3">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700">
+                    Capacity Pallet
+                  </label>
+                  <input
+                    value={selectedBinInfo.capacity_pallet ?? "-"}
+                    readOnly
+                    className="w-full border rounded-md bg-gray-200 text-gray-600 px-3 py-2"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700">
+                    Current Pallet Count
+                  </label>
+                  <input
+                    value={selectedBinInfo.current_pallet_count}
+                    readOnly
+                    className="w-full border rounded-md bg-gray-200 text-gray-600 px-3 py-2"
+                  />
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Action Buttons */}

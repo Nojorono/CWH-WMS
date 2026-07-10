@@ -74,7 +74,7 @@ const PutAwayDetail: React.FC = () => {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [mappedData, setMappedData] = useState<PutAwayRow[]>([]);
   const [isAdjustmentOpen, setIsAdjustmentOpen] = useState(false);
-  const [selectedRow, setSelectedRow] = useState<PutAwayRow | null>(null);
+  const [selectedRow, setSelectedRow] = useState<PutAwayRow | null>(null);  
 
   useEffect(() => {
     if (isCreate || isEdit || isDetail) {
@@ -112,6 +112,7 @@ const PutAwayDetail: React.FC = () => {
   useEffect(() => {
     if ((isDetail || isEdit) && detailDataPutaway && userList.length > 0) {
       const palletItems = detailDataPutaway.palletItems || [];
+      
       const formatted: PutAwayRow[] = [
         {
           stagingPalletId: detailDataPutaway.inventory_tracking_id,
@@ -289,6 +290,7 @@ const PutAwayDetail: React.FC = () => {
     setSelectedIds([]);
     setTableKey((k) => k + 1);
     setSelectedRow(row);
+    
     setIsAdjustmentOpen(true);
   };
 
@@ -393,7 +395,7 @@ const PutAwayDetail: React.FC = () => {
       console.error(err);
       showErrorToast("Failed to send data to server.");
     }
-  };
+  };  
 
   return (
     <div className="p-6 space-y-6">

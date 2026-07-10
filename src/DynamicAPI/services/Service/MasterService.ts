@@ -42,6 +42,7 @@ import { IRintegration } from "../../types/IRintegrationType.ts";
 import { ShipConfirmOutboundDO, Memo, MemoItem } from "../../types/ShipConfirmType.ts";
 
 import {Department, CreateDepartment, UpdateDepartment } from '../../types/DepartementType.ts'
+import { SubWarehouseWithBins } from "../../types/SubwarehouseWithBins.ts";
 
 
 
@@ -98,11 +99,9 @@ export const InventorySelisihService = createCrudService<InventorySelisihItem, n
 export const IRIntegrationService = createCrudService<IRintegration, null, null>("/outbound-integration-ir-req");
 export const ShipConfirmService = createCrudService<ShipConfirmOutboundDO, Memo, MemoItem >("/outbound-integration-deliveries");
 export const ShipConfirmServiceByDO = createCrudService<ShipConfirmOutboundDO, Memo, MemoItem >("/outbound-integration-deliveries/outbound-do");
-
-
 export const DepartementService = createCrudService<Department, CreateDepartment, UpdateDepartment >("/master-departement");
 
-
+export const SubWarehouseWithBinsService = createCrudService<SubWarehouseWithBins, null, null>("/master-warehouse-sub/with-bins");
 
 
 
