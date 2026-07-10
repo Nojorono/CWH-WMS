@@ -146,9 +146,12 @@ const AdjustTable = ({ globalFilter, setGlobalFilter, filteredIO }: any) => {
   const renderRowDetails = (row: any) => {
     const data = row.original;
 
-    // Cek apakah ada setidaknya satu line yang memiliki status selisih
-    const hasSelisih = data.lines?.some(
-      (line: any) => line.status_selisih === "S",
+    const hasSelisihValue = (status: unknown) =>
+      status != null && String(status).trim() !== "";
+
+    // Cek apakah ada setidaknya satu line yang memiliki status selisih terisi
+    const hasSelisih = data.lines?.some((line: any) =>
+      hasSelisihValue(line.status_selisih),
     );
 
     return (
@@ -299,9 +302,15 @@ const AdjustTable = ({ globalFilter, setGlobalFilter, filteredIO }: any) => {
 
                         {hasSelisih && (
                           <td className="px-4 py-3">
-                            {line.status_selisih === "S" && (
-                              <span className="px-2 py-0.5 rounded bg-amber-100 text-amber-600 text-[9px] font-bold">
-                                S
+                            {hasSelisihValue(line.status_selisih) && (
+                              <span
+                                className={`px-2 py-0.5 rounded text-[12px] font-bold ${
+                                  line.status_selisih === "E"
+                                    ? "bg-red-100 text-red-600"
+                                    : "bg-amber-100 text-amber-600"
+                                }`}
+                              >
+                                {line.status_selisih}
                               </span>
                             )}
                           </td>
@@ -309,8 +318,8 @@ const AdjustTable = ({ globalFilter, setGlobalFilter, filteredIO }: any) => {
 
                       </tr>
 
-                      {/* Detail Selisih row hanya muncul untuk line yang selisih */}
-                      {line.status_selisih === "S" && (
+                      {/* Detail Selisih row muncul untuk line yang status_selisih terisi */}
+                      {hasSelisihValue(line.status_selisih) && (
                         <tr className="bg-amber-50/50">
                           <td
                             colSpan={hasSelisih ? 6 : 5}
