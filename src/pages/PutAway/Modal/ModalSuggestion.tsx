@@ -94,7 +94,7 @@ const AdjustmentModal: React.FC<AdjustmentModalProps> = ({
   useEffect(() => {
     if (open) {
       fetchUsingParam({
-        is_staging: null,
+        is_staging: "null",
         is_good_stock: true,
         is_gate: false,
       });
