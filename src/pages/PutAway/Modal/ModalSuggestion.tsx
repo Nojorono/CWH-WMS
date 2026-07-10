@@ -84,6 +84,7 @@ const AdjustmentModal: React.FC<AdjustmentModalProps> = ({
   onSave,
   mode = "create",
 }) => {
+
   // Ambil list dan status loading dari store utama
   const { list: subWarehouseWithBinList, fetchUsingParam, isLoading } =
     useStoreSubWarehouseWithBins();
@@ -98,7 +99,6 @@ const AdjustmentModal: React.FC<AdjustmentModalProps> = ({
     }
   }, [open, fetchUsingParam]);
 
-  console.log("subWarehouseWithBinList", subWarehouseWithBinList);
 
   const [formValues, setFormValues] = useState<AdjustmentForm>(
     data ?? defaultFormValues,

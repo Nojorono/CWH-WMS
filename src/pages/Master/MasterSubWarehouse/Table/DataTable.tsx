@@ -28,7 +28,7 @@ const DataTable = ({ params }: DataTableProps) => {
   const { list: Warehouse, fetchAll: fetchAllWarehouse } = useStoreWarehouse();
   const { fetchById: fetchZoneByWH, detail: WHdetail } =
     useStoreZoneByWarehouse();
-    
+
   const { fetchAll: fetchAllIo, list: ioList } = useStoreIo();
   const {
     fetchAll: fetchSubWH,
@@ -105,6 +105,13 @@ const DataTable = ({ params }: DataTableProps) => {
           return row.original.is_gate ? "Yes" : "";
         },
       },
+      {
+        accessorKey: "is_good_stock",
+        header: "Good Stock",
+        cell: ({ row }: { row: { original: any } }) => {
+          return row.original.is_good_stock ? "Yes" : "No";
+        },
+      },
     ],
     [ioList, Warehouse],
   );
@@ -124,6 +131,19 @@ const DataTable = ({ params }: DataTableProps) => {
     {
       name: "is_gate",
       label: "Is Gate Area?",
+      type: "select",
+      options: [
+        { label: "NO", value: false },
+        { label: "YES", value: true },
+      ],
+      validation: {
+        validate: (v: boolean | null | undefined) =>
+          v === true || v === false || "Required",
+      },
+    },
+    {
+      name: "is_good_stock",
+      label: "Is Good Stock?",
       type: "select",
       options: [
         { label: "NO", value: false },
@@ -176,7 +196,7 @@ const DataTable = ({ params }: DataTableProps) => {
       barcode_image_url,
       is_staging,
       is_gate,
-      is_good_stock, // field baru
+      is_good_stock,
     } = data;
 
     const payload: any = {
