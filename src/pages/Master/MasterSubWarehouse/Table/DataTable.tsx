@@ -162,7 +162,7 @@ const DataTable = ({ params }: DataTableProps) => {
     },
     {
       name: "code",
-      label: "Kode",
+      label: "Code",
       type: "text",
       validation: { required: "Required" },
     },
