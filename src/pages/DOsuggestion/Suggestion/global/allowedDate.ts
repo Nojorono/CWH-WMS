@@ -9,7 +9,6 @@ let timeOffset = 0;
 export const syncServerTime = (serverTimestamp: number) => {
     const localTimestamp = Date.now();
     timeOffset = serverTimestamp - localTimestamp;
-    console.log("timeOffset =", timeOffset);
 };
 
 export const getServerDayjs = () => {

@@ -49,7 +49,8 @@ import {
     IRIntegrationService,
     ShipConfirmService,
     DepartementService,
-    ShipConfirmServiceByDO
+    ShipConfirmServiceByDO,
+    SubWarehouseWithBinsService
 } from "../../services/Service/MasterService";
 
 import { Uom, CreateUom, UpdateUom } from "../../types/UomTypes";
@@ -95,6 +96,7 @@ import { ShipConfirmOutboundDO, Memo, MemoItem } from "../../types/ShipConfirmTy
 import { InventorySelisihItem } from "../../types/InventorySelisih.ts";
 
 import {Department, CreateDepartment, UpdateDepartment } from '../../types/DepartementType.ts'
+import { SubWarehouseWithBins } from "../../types/SubwarehouseWithBins.ts";
 
 
 // Daftar semua store di sini
@@ -348,3 +350,7 @@ export const useStoreInventorySelisih = createCrudStore<InventorySelisihItem, nu
     service: InventorySelisihService,
 });
 
+export const useStoreSubWarehouseWithBins = createCrudStore<SubWarehouseWithBins, null, null>({
+    name: "SubWarehouseWithBins",
+    service: SubWarehouseWithBinsService,
+});

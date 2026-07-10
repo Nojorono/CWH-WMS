@@ -42,6 +42,7 @@ const MainTable = () => {
   return (
     <>
       <div className="p-6 bg-white shadow-sm rounded-xl mb-6 border border-slate-200">
+        
         <div className="flex items-center gap-3 mb-6 pb-4 border-b border-slate-100">
           <div className="p-2.5 bg-blue-50 text-blue-600 rounded-lg border border-blue-100">
             <FaExchangeAlt className="w-4 h-4" />
