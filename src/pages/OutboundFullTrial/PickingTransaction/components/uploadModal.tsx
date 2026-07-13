@@ -117,8 +117,8 @@ const UploadModal = ({
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-200 p-6">
         <h3 className="font-bold text-slate-800 text-lg mb-1">
           {continueToShipConfirm
-            ? "Upload PDF Manifest untuk Ship Confirm"
-            : "Upload PDF Manifest"}
+            ? "Upload File DO Subdist untuk Ship Confirm"
+            : "Upload File DO Subdist"}
         </h3>
         <p className="text-sm text-slate-500 mb-5">
           DO:{" "}
@@ -162,7 +162,7 @@ const UploadModal = ({
             />
             <div className="flex flex-col gap-1">
               <p className="text-sm font-bold text-slate-700">
-                Tarik & letakkan file PDF di sini
+                Tarik & letakkan File DO Subdist (PDF) di sini
               </p>
               <p className="text-xs text-slate-400">
                 atau{" "}

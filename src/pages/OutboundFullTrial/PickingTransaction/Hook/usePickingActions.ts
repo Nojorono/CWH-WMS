@@ -8,7 +8,7 @@ import { EndPoint } from "../../../../utils/EndPoint";
 import { showErrorToast, showSuccessToast } from "../../../../components/toast";
 import { showConfirmDialog } from "../../../../components/swal-confirm";
 import { mapShipConfirmList } from "../Helper/mapShipConfirmList";
-import { uploadManifestToS3 } from "../Helper/uploadManifestToS3";
+import { uploadFileDO } from "../Helper/uploadFileDO";
 import { deleteFileFromS3 } from "../Helper/deleteFileFromS3";
 import { OutboundDo } from "../Helper/doTypes";
 import { OutboundDoUI } from "../../../../DynamicAPI/types/ShipConfirmType";
@@ -109,7 +109,7 @@ export const usePickingActions = ({
             ...Object.fromEntries(entries),
         }));
     }, []);
-    
+
 
     const hasSubdistDocument = (value?: string | null) =>
         Boolean(value && value.trim() !== "");
@@ -144,8 +144,8 @@ export const usePickingActions = ({
         if (!isManifestUploaded) {
             Swal.fire({
                 icon: "warning",
-                title: "Manifest Belum Diupload",
-                text: "Silakan upload file manifest terlebih dahulu sebelum melakukan Ship Confirm Subdist.",
+                title: "File DO Subdist Belum Diupload",
+                text: "Silakan upload File DO Subdist terlebih dahulu sebelum melakukan Ship Confirm Subdist.",
                 confirmButtonColor: "#3085d6",
             });
             return false;
@@ -264,7 +264,7 @@ export const usePickingActions = ({
         }
     };
 
-    // 2️⃣ TAHAP KEDUA + FINAL: Upload Manifest lalu Ship Confirm Subdist
+    // 2️⃣ TAHAP KEDUA + FINAL: Upload File DO Subdist lalu Ship Confirm Subdist
     const handleShipConfirmSubdistFlow = async (data: OutboundDo) => {
         try {
             const doDetail = await getLatestDoDetail(data.id);
@@ -300,13 +300,13 @@ export const usePickingActions = ({
         }
     };
 
-    // 2.5️⃣ PROSES UPLOAD FILE MANIFEST KE S3 + UPDATE DO
+    // 2.5️⃣ PROSES UPLOAD FILE DO SUBDIST KE S3 + UPDATE DO
     const handleUploadManifestFile = async (file: File) => {
         if (!selectedDO) return;
 
-        const manifestUrl = await uploadManifestToS3(file, selectedDO.id);
+        const manifestUrl = await uploadFileDO(file, selectedDO.id);
         if (!manifestUrl) {
-            throw new Error("Gagal mengunggah file manifest ke S3");
+            throw new Error("Gagal mengunggah File DO Subdist ke S3");
         }
 
         const updateRes = await updateData(selectedDO.id, {
@@ -318,7 +318,7 @@ export const usePickingActions = ({
             throw new Error("Gagal menyimpan subdist_document ke DO");
         }
 
-        showSuccessToast("File manifest berhasil diunggah dan disimpan ke DO!");
+        showSuccessToast("File DO Subdist berhasil diunggah dan disimpan ke DO!");
         setManifestUploadedMap((prev) => ({
             ...prev,
             [selectedDO.id]: true,
@@ -352,8 +352,8 @@ export const usePickingActions = ({
                 await deleteFileFromS3(manifestUrlMap[doId]);
                 await updateData(doId, { subdist_document: null });
             } catch (error) {
-                console.error("Gagal menghapus manifest dari S3:", error);
-                showErrorToast("Gagal menghapus file manifest dari S3.");
+                console.error("Gagal menghapus File DO Subdist dari S3:", error);
+                showErrorToast("Gagal menghapus File DO Subdist dari S3.");
             }
 
             setManifestUploadedMap((prev) => {

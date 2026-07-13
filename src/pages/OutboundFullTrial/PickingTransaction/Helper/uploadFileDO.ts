@@ -6,7 +6,7 @@ const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2 MB
 
 const ALLOWED_EXTENSIONS = ["pdf"];
 
-export async function uploadManifestToS3(
+export async function uploadFileDO(
     file: File,
     doId: string,
 ): Promise<string | null> {
@@ -40,8 +40,8 @@ export async function uploadManifestToS3(
 
         return res.data?.data?.url ?? null;
     } catch (err) {
-        console.error("Upload manifest ke S3 gagal:", err);
-        showErrorToast("Terjadi kesalahan saat mengunggah file manifest ke S3.");
+        console.error("Upload File DO Subdist ke S3 gagal:", err);
+        showErrorToast("Terjadi kesalahan saat mengunggah File DO Subdist ke S3.");
         return null;
     }
 }
