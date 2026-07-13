@@ -9,9 +9,6 @@ export const mapShipConfirmList = (flatData: any[]): OutboundDoUI[] => {
 
     const doMap = new Map<string, any>();
 
-    console.log("flatData", flatData);
-
-
     flatData.forEach((row) => {
         const doId = row.outbound_do_id;
 
@@ -72,15 +69,20 @@ export const mapShipConfirmList = (flatData: any[]): OutboundDoUI[] => {
                 return item.integration_data?.pick_release_status === "S";
             });
 
-            const isReadyShipConfirm = itemsArray.every((item: any) => {
-                const intg = item.integration_data;
-                return intg?.pick_release_status === "S" && intg?.ship_confirm_status === "U";
-            });
+            const isManifestUploaded =
+                itemsArray.length > 0 &&
+                itemsArray.every((item: any) => {
+                    const shippedQty = item.integration_data?.shipped_quantity;
+                    return shippedQty !== null && shippedQty !== undefined;
+                });
+
+            const isReadyShipConfirm = isPickReleaseSuccess && isManifestUploaded;
 
             return {
                 ...memo,
                 outbound_memo_items: itemsArray, // Array unik tanpa double item
                 is_success_pick_release: isPickReleaseSuccess,
+                is_manifest_uploaded: isManifestUploaded,
                 is_ready_ship_confirm: isReadyShipConfirm,
             } as MemoUI;
         });
@@ -88,12 +90,14 @@ export const mapShipConfirmList = (flatData: any[]): OutboundDoUI[] => {
         delete doItem.tempMemoMap;
 
         const isDoPickReleaseSuccess = memosArray.length > 0 && memosArray.every((m) => m.is_success_pick_release);
+        const isDoManifestUploaded = memosArray.length > 0 && memosArray.every((m) => m.is_manifest_uploaded);
         const isDoReadyShipConfirm = memosArray.length > 0 && memosArray.every((m) => m.is_ready_ship_confirm);
 
         return {
             ...doItem,
             outbound_memos: memosArray,
             is_success_pick_release: isDoPickReleaseSuccess,
+            is_manifest_uploaded: isDoManifestUploaded,
             is_ready_ship_confirm: isDoReadyShipConfirm,
         } as OutboundDoUI;
     });

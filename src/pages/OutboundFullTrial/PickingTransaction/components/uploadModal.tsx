@@ -1,7 +1,7 @@
 import { useState, useRef, DragEvent, ChangeEvent } from "react";
 import {
   FaCloudUploadAlt,
-  FaFileExcel,
+  FaFilePdf,
   FaTimes,
   FaSpinner,
 } from "react-icons/fa";
@@ -12,7 +12,8 @@ interface UploadModalProps {
   isOpen: boolean;
   onClose: () => void;
   selectedDO: OutboundDo | null;
-  onUploadConfirm?: (file: File) => Promise<void>; // Prop opsional jika ingin menghandle upload ke API
+  onUploadConfirm?: (file: File) => Promise<void>;
+  continueToShipConfirm?: boolean;
 }
 
 const UploadModal = ({
@@ -20,6 +21,7 @@ const UploadModal = ({
   onClose,
   selectedDO,
   onUploadConfirm,
+  continueToShipConfirm = false,
 }: UploadModalProps) => {
   const [file, setFile] = useState<File | null>(null);
   const [isDragActive, setIsDragActive] = useState(false);
@@ -36,12 +38,12 @@ const UploadModal = ({
     onClose();
   };
 
-  // Validasi tipe file (Hanya menerima Excel)
+  // Validasi tipe file (hanya menerima PDF)
   const validateAndSetFile = (selectedFile: File) => {
-    const allowedExtensions = /(\.xlsx|\.xls)$/i;
+    const allowedExtensions = /(\.pdf)$/i;
     if (!allowedExtensions.exec(selectedFile.name)) {
       showErrorToast(
-        "Format file tidak didukung! Harap unggah file Excel (.xlsx atau .xls).",
+        "Format file tidak didukung! Harap unggah file PDF (.pdf).",
       );
       return;
     }
@@ -114,13 +116,20 @@ const UploadModal = ({
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[999] p-4">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-200 p-6">
         <h3 className="font-bold text-slate-800 text-lg mb-1">
-          Upload Excel Manifes
+          {continueToShipConfirm
+            ? "Upload PDF Manifest untuk Ship Confirm"
+            : "Upload PDF Manifest"}
         </h3>
         <p className="text-sm text-slate-500 mb-5">
           DO:{" "}
           <span className="font-semibold text-slate-700">
             {selectedDO?.outbound_do_number}
           </span>
+          {continueToShipConfirm && (
+            <span className="block mt-1 text-xs text-amber-600">
+              Setelah upload berhasil, proses Ship Confirm Subdist akan dilanjutkan otomatis.
+            </span>
+          )}
         </p>
 
         {/* Input file disembunyikan, di-trigger via ref click */}
@@ -128,7 +137,7 @@ const UploadModal = ({
           ref={fileInputRef}
           type="file"
           className="hidden"
-          accept=".xlsx, .xls"
+          accept=".pdf,application/pdf"
           onChange={handleFileChange}
           disabled={isUploading}
         />
@@ -153,7 +162,7 @@ const UploadModal = ({
             />
             <div className="flex flex-col gap-1">
               <p className="text-sm font-bold text-slate-700">
-                Tarik & letakkan file Excel di sini
+                Tarik & letakkan file PDF di sini
               </p>
               <p className="text-xs text-slate-400">
                 atau{" "}
@@ -163,7 +172,7 @@ const UploadModal = ({
               </p>
             </div>
             <p className="text-[10px] text-slate-400 font-medium tracking-wide uppercase mt-1">
-              Menerima .xlsx, .xls
+              Menerima .pdf
             </p>
           </div>
         ) : (
@@ -171,7 +180,7 @@ const UploadModal = ({
           <div className="border-2 border-emerald-500 bg-emerald-50/30 rounded-xl p-4 flex items-center justify-between gap-4 animate-in fade-in zoom-in-95 duration-150">
             <div className="flex items-center gap-3 min-w-0">
               <div className="bg-emerald-500 p-3 rounded-xl text-white shadow-md shadow-emerald-100">
-                <FaFileExcel className="text-xl" />
+                <FaFilePdf className="text-xl" />
               </div>
               <div className="flex flex-col min-w-0">
                 <p className="text-sm font-black text-slate-800 truncate pr-2">
@@ -217,6 +226,8 @@ const UploadModal = ({
                 <FaSpinner className="animate-spin text-sm" />
                 Processing...
               </>
+            ) : continueToShipConfirm ? (
+              "Upload & Lanjut Ship Confirm"
             ) : (
               "Upload & Konfirmasi"
             )}

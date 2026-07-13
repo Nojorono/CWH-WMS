@@ -11,6 +11,7 @@ export interface OutboundDeliveryCreateUpdate {
   outbound_type?: string;
   delivery_date?: string;
   organization_id?: string;
+  subdist_document?: string | null;
   outbound_memo_ids?: OutboundMemoId[];
 }
 
@@ -36,6 +37,7 @@ export interface OutboundDelivery {
   status: string;
   outbound_type: string;
   delivery_date: string;
+  subdist_document?: string | null;
   memo_id: string[];
   memo_sequence: string[]; // array of string (from API)
   outbound_memos: OutboundMemo[];

@@ -465,7 +465,6 @@ export const SuggestionItemsTable: React.FC<TableProps> = ({
       cell: ({ row }) => {
         const item = row.original;
         const rowIndex = row.index;
-        // if (!isSummaryRow(localItems, item.item_id, rowIndex)) return <span />;
         return <span>{item.suggested_locations?.[0]?.uom ?? ""}</span>;
       },
     },
@@ -476,7 +475,6 @@ export const SuggestionItemsTable: React.FC<TableProps> = ({
       cell: ({ row }) => {
         const item = row.original;
         const rowIndex = row.index;
-        // if (!isSummaryRow(localItems, item.item_id, rowIndex)) return <span />;
         return <span>{item.suggested_locations?.[0]?.week_number ?? ""}</span>;
       },
     },
@@ -542,7 +540,7 @@ export const SuggestionItemsTable: React.FC<TableProps> = ({
         const item = row.original;
         const loc = item.suggested_locations?.[0];
         const available = loc?.available_quantity;
-
+        
         if (available === undefined || available === null) {
           return <span>-</span>;
         }
@@ -554,39 +552,6 @@ export const SuggestionItemsTable: React.FC<TableProps> = ({
         );
       },
     },
-    // {
-    //   id: "warehouse_sub_name",
-    //   header: "Zone",
-    //   enableSorting: false,
-    //   cell: ({ row }) => {
-    //     const item = row.original;
-    //     const rowIndex = row.index;
-
-    //     if (!isSummaryRow(localItems, item.item_id, rowIndex)) return <span />;
-
-    //     return (
-    //       <span>
-    //         {item.suggested_locations?.[0]?.warehouse_sub_name ?? "-"}
-    //       </span>
-    //     );
-    //   },
-    // },
-    // {
-    //   id: "bin_location",
-    //   header: "Bin Locations",
-    //   enableSorting: false,
-    //   cell: ({ row }) => {
-    //     const item = row.original;
-    //     const rowIndex = row.index;
-
-    //     if (!isSummaryRow(localItems, item.item_id, rowIndex)) return <span />;
-
-    //     const bin = item.suggested_locations?.[0]?.bin_name;
-
-    //     return <span>{bin && bin !== "N/A" ? bin : "-"}</span>;
-    //   },
-    // },
-
     {
       id: "warehouse_sub_name",
       header: "Zone",

@@ -4,7 +4,6 @@ import { useSearchParams } from "react-router-dom";
 import {
   FaBoxOpen,
   FaCheck,
-  FaCloudUploadAlt,
   FaPrint,
   FaTasks,
 } from "react-icons/fa";
@@ -109,6 +108,11 @@ const AdjustTableTransactionPicking = ({
     }));
   }, [list, pageIndex, pageSize]);
 
+  useEffect(() => {
+    if (mappedList.length === 0) return;
+    actions.syncPickReleaseStatuses(mappedList);
+  }, [mappedList, actions.syncPickReleaseStatuses]);
+
   // --- COLUMNS DEFINITION ---
   const columns: ColumnDef<OutboundDo>[] = useMemo(
     () => [
@@ -150,7 +154,8 @@ const AdjustTableTransactionPicking = ({
         id: "actions",
         header: "Action",
         cell: ({ row }) => {
-          const { status, outbound_type } = row.original;
+          const { status, outbound_type, id } = row.original;
+          const isPickReleaseDone = actions.pickReleaseStatusMap[id] === true;
           const canAction = ["SUPERVISOR", "MANAGER", "superadmin"].includes(
             roleName || "",
           );
@@ -180,23 +185,23 @@ const AdjustTableTransactionPicking = ({
               label: "Pick Release",
               icon: FaBoxOpen,
               onClick: () => actions.handlePickRelease(row.original),
-              visible: outbound_type === "SUBDIST" && status === "APPROVED",
-              className: "text-indigo-600",
-            },
-            {
-              label: "Upload Manifest",
-              icon: FaCloudUploadAlt, // Diubah ke icon upload agar lebih intuitif
-              onClick: () => actions.handleOpenUploadModal(row.original),
-              visible: outbound_type === "SUBDIST" &&  status !== "PENDING",
-              className: "text-amber-600",
+              visible: outbound_type === "SUBDIST",
+              // && status === "APPROVED",
+              disabled: isPickReleaseDone,
+              className: isPickReleaseDone
+                ? "text-slate-400"
+                : "text-indigo-600",
             },
             {
               label: "Ship Confirm Subdist",
               icon: FaCheck,
-              onClick: () =>
-                actions.handleFinalShipConfirmSubdist(row.original),
-              visible: outbound_type === "SUBDIST" && status !== "PENDING",
-              className: "text-emerald-600",
+              onClick: () => actions.handleShipConfirmSubdistFlow(row.original),
+              visible: outbound_type === "SUBDIST", 
+              // && status === "APPROVED_LOAD",
+              disabled: !isPickReleaseDone,
+              className: isPickReleaseDone
+                ? "text-emerald-600"
+                : "text-slate-400",
             },
           ].filter((a) => a.visible);
 
@@ -234,13 +239,15 @@ const AdjustTableTransactionPicking = ({
 
       <UploadModal
         isOpen={actions.showUploadModal}
-        onClose={() => actions.setShowUploadModal(false)}
+        onClose={actions.handleCloseUploadModal}
         selectedDO={actions.selectedDO}
+        onUploadConfirm={actions.handleUploadManifestFile}
+        continueToShipConfirm={actions.pendingShipConfirmAfterUpload}
       />
 
       <ShipConfirmQtyModal
         isOpen={actions.showQtyModal}
-        onClose={() => actions.setShowQtyModal(false)}
+        onClose={actions.handleCloseShipConfirmQtyModal}
         doDetail={actions.qtyModalData}
         isProcessing={actions.isSubmittingQty}
         onConfirm={actions.handleExecuteShipConfirmWithQty}

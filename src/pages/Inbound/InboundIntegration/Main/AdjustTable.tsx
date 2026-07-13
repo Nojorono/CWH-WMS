@@ -350,8 +350,8 @@ const AdjustTable = ({ globalFilter, setGlobalFilter, filteredIO }: any) => {
                                 </span>
                               </div>
                               {line.message_selisih && (
-                                <span className="text-red-500 italic ml-auto">
-                                  {line.message_selisih}
+                                <span className="text-red-500 italic ml-auto text-[15px]">
+                                  Message Selisih: {line.message_selisih}
                                 </span>
                               )}
                             </div>
@@ -366,12 +366,12 @@ const AdjustTable = ({ globalFilter, setGlobalFilter, filteredIO }: any) => {
           </div>
         </div>
 
-        {data.status === "E" && (
+        {data.message && (
           <div className="mt-5 p-3 bg-red-50 border-l-4 border-red-500 rounded flex items-center gap-3">
-            <div className="bg-red-500 p-1 rounded text-white text-[10px] font-bold">
-              ERROR
+            <div className="bg-red-500 p-1 rounded text-white text-[15px] font-bold">
+              MESSAGE
             </div>
-            <p className="text-xs text-red-700 font-medium italic">
+            <p className="text-[15px] text-red-700 font-medium italic">
               {data.message}
             </p>
           </div>

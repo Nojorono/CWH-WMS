@@ -162,6 +162,7 @@ export interface OutboundDo {
     status: string;
     outbound_type: string;
     delivery_date: string;
+    subdist_document?: string | null;
 
     memo_id: string[];
     memo_sequence: string[];

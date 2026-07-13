@@ -88,11 +88,13 @@ export interface MemoItemUI extends MemoItem {
 export interface MemoUI extends Memo {
   outbound_memo_items: MemoItemUI[];
   is_success_pick_release: boolean;
+  is_manifest_uploaded: boolean;
   is_ready_ship_confirm: boolean;
 }
 
 export interface OutboundDoUI extends ShipConfirmOutboundDO {
   outbound_memos: MemoUI[];
   is_success_pick_release: boolean;
+  is_manifest_uploaded: boolean;
   is_ready_ship_confirm: boolean;
 }
