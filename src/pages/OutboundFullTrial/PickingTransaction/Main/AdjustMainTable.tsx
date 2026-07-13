@@ -7,7 +7,6 @@ import {
   FaPrint,
   FaTasks,
 } from "react-icons/fa";
-
 import StatusBadge from "../../../../common/statusBadge";
 import { STATUS_MAP_DO } from "../../../../constants/statusMaps";
 import { OutboundDo } from "../Helper/doTypes";
@@ -185,8 +184,7 @@ const AdjustTableTransactionPicking = ({
               label: "Pick Release",
               icon: FaBoxOpen,
               onClick: () => actions.handlePickRelease(row.original),
-              visible: outbound_type === "SUBDIST",
-              // && status === "APPROVED",
+              visible: outbound_type === "SUBDIST" && status === "APPROVED",
               disabled: isPickReleaseDone,
               className: isPickReleaseDone
                 ? "text-slate-400"
@@ -196,8 +194,7 @@ const AdjustTableTransactionPicking = ({
               label: "Ship Confirm Subdist",
               icon: FaCheck,
               onClick: () => actions.handleShipConfirmSubdistFlow(row.original),
-              visible: outbound_type === "SUBDIST", 
-              // && status === "APPROVED_LOAD",
+              visible: outbound_type === "SUBDIST" && status === "APPROVED",
               disabled: !isPickReleaseDone,
               className: isPickReleaseDone
                 ? "text-emerald-600"

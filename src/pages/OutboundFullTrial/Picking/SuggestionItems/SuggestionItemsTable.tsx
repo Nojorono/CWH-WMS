@@ -723,8 +723,23 @@ export const SuggestionItemsTable: React.FC<TableProps> = ({
   ];
 
   const prepareReview = () => {
+    const hasAvailableQty = localItems.some(
+      (item) =>
+        Number(item.suggested_locations?.[0]?.available_quantity ?? 0) > 0,
+    );
+
     const apiRaw = buildRawSuggestions(localItems);
     const reviewRaw = buildReviewSuggestions(localItems);
+
+    if (!hasAvailableQty || reviewRaw.length === 0) {
+      Swal.fire({
+        icon: "info",
+        title: "Tidak Ada Item yang Tersedia",
+        text: "Hanya bisa review item yang tersedia saja",
+      });
+      return;
+    }
+
     const groups = prepareReviewGroups(reviewRaw);
     setReviewGroups(groups);
     setFinalRawSuggestions(apiRaw);

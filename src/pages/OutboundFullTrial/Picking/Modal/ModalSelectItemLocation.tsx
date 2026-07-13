@@ -369,7 +369,7 @@ export default function ModalInventoryItemModal({
                     defaultLocation?.quantity_ready_to_pick ??
                     ""); // Ambil dari selectedLocation saat add
                 if (Number(v) > max)
-                  return `Tidak boleh lebih dari Qty Pick ${max}`;
+                  return `Tidak boleh lebih dari Qty Pick : ${max} ${selectedLocation?.uom}`;
                 return true;
               },
             }}
