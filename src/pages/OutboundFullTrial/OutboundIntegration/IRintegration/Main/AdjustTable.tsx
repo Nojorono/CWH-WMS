@@ -28,7 +28,7 @@ const OutboundAdjustTable = ({
 
   useEffect(() => {
     fetchAll();
-  }, [fetchAll]);
+  }, [fetchAll]);  
 
   const filteredData = useMemo(() => {
     if (!list) return [];
