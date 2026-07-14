@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { formatDateIndo } from "../../../../helper/FormatDate";
 import {
   DndContext,
@@ -18,7 +18,7 @@ import { CSS } from "@dnd-kit/utilities";
 interface ConfirmationModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onConfirm: (reorderedList: any[]) => void;
+  onConfirm: (reorderedList: any[]) => void | Promise<void>;
   formData: any;
 }
 
@@ -30,12 +30,22 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
 }) => {
   // 🧠 Hooks harus tetap dipanggil meskipun modal tertutup
   const [memoList, setMemoList] = useState<any[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const isSubmittingRef = useRef(false);
   const sensors = useSensors(useSensor(PointerSensor));
 
   // Sinkronisasi data formData → memoList
   useEffect(() => {
     if (formData?.memo_list) setMemoList(formData.memo_list);
   }, [formData]);
+
+  // Reset status submit saat modal ditutup
+  useEffect(() => {
+    if (!isOpen) {
+      isSubmittingRef.current = false;
+      setIsSubmitting(false);
+    }
+  }, [isOpen]);
 
   const handleDragEnd = (event: any) => {
     const { active, over } = event;
@@ -47,9 +57,24 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
     });
   };
 
+  const handleConfirm = () => {
+    if (isSubmittingRef.current) return;
+
+    isSubmittingRef.current = true;
+    setIsSubmitting(true);
+
+    setTimeout(async () => {
+      try {
+        await Promise.resolve(onConfirm(memoList));
+      } finally {
+        isSubmittingRef.current = false;
+        setIsSubmitting(false);
+      }
+    }, 500);
+  };
+
   // 🚫 Jangan letakkan return null sebelum hook
   if (!isOpen) return null;
-  
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-[999]">
@@ -131,16 +156,20 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
         {/* Tombol Aksi */}
         <div className="flex justify-end gap-3 mt-6">
           <button
+            type="button"
             onClick={onClose}
-            className="px-4 py-2 rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-100 transition-all"
+            disabled={isSubmitting}
+            className="px-4 py-2 rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-100 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Cancel
           </button>
           <button
-            onClick={() => onConfirm(memoList)}
-            className="px-5 py-2 rounded-lg bg-orange-500 text-white hover:bg-orange-600 transition-all"
+            type="button"
+            onClick={handleConfirm}
+            disabled={isSubmitting}
+            className="px-5 py-2 rounded-lg bg-orange-500 text-white hover:bg-orange-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Confirm
+            {isSubmitting ? "Processing..." : "Confirm"}
           </button>
         </div>
       </div>
