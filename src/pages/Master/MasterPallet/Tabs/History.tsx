@@ -1,12 +1,12 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import axios from "axios";
 import DataTable from "./TableTab";
 import { ColumnDef } from "@tanstack/react-table";
 import { EndPoint } from "../../../../utils/EndPoint";
 import { formatDateIndo } from "../../../../helper/FormatDate";
 import axiosInstance from "../../../../DynamicAPI/AxiosInstance";
+import { formatDateTimeIndo } from "../../../../helper/FormatDateTime";
 
 type QuantityHistory = {
   id: string;
@@ -16,16 +16,17 @@ type QuantityHistory = {
   previous_quantity: number;
   quantity_change: number;
   new_quantity: number;
-  operation_type: "ADD" | "REMOVE" | "MOVE";
+  operation_type: "ADD" | "REMOVE" | "MOVE" | string;
   reference_id: string;
   reference_type: string;
   notes: string;
   user_id: string;
   uom: string;
   createdAt: string;
+  last_updated?: string | null;
   production_date: string;
   week_number: number;
-  status_inventory: string;
+  status_inventory?: string;
 };
 
 type HistoryProps = {
@@ -43,17 +44,11 @@ export default function QuantityHistoryTable({ palletCode }: HistoryProps) {
         `${EndPoint}master-pallet/by-code/${palletCode}/quantity-history`,
         {},
       )
-      .then((res) => setData(res.data.data))
+      .then((res) => setData(res.data.data || []))
       .catch((err) => console.error("Error fetching quantity history:", err));
   }, [palletCode]);
 
   const columns: ColumnDef<QuantityHistory>[] = [
-    {
-      accessorKey: "createdAt",
-      header: "Date/Time",
-      cell: (info) =>
-        new Date(info.getValue() as string).toLocaleString("id-ID"),
-    },
     {
       accessorKey: "operation_type",
       header: "Operation Type",
@@ -68,16 +63,27 @@ export default function QuantityHistoryTable({ palletCode }: HistoryProps) {
       },
     },
     { accessorKey: "item_name", header: "SKU Name" },
-    { accessorKey: "new_quantity", header: "Quantity" },
+    { accessorKey: "uom", header: "UOM" },
+    { accessorKey: "previous_quantity", header: "Previous Qty" },
+    { accessorKey: "quantity_change", header: "Qty Change" },
+    { accessorKey: "new_quantity", header: "New Quantity" },
     {
       accessorKey: "production_date",
       header: "Production Date",
-      cell: (info) => formatDateIndo(info.getValue() as string),
+      cell: (info) => formatDateIndo(info.getValue() as string) || "-",
     },
     { accessorKey: "week_number", header: "Week Number" },
     { accessorKey: "notes", header: "Notes" },
     { accessorKey: "reference_type", header: "Reference Type" },
-    { accessorKey: "status_inventory", header: "Status Inventory" },
+    {
+      id: "last_updated",
+      header: "Last Updated",
+      cell: ({ row }) => {
+        const trackingDate =
+          row.original.last_updated || row.original.createdAt;
+        return formatDateTimeIndo(trackingDate) || "-";
+      },
+    },
   ];
 
   return (
