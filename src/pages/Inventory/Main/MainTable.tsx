@@ -14,13 +14,13 @@ import {
 import Select from "../../../components/form/Select";
 import axiosInstance from "../../../DynamicAPI/AxiosInstance";
 import Button from "../../../components/ui/button/Button";
-import { FaSync } from "react-icons/fa";
+import { FaSync, FaUndo } from "react-icons/fa";
 import { usePersistAuthStore } from "../../../API/store/AuthStore/PersistAuthStore";
 
 const MainTable = () => {
   const ioList = usePersistAuthStore((state) => state.ioList);
   const user = usePersistAuthStore((state) => state.user);
-  
+
   const userDetail = user?.userDetail || null;
   const isGlobalUser = !userDetail;
 
@@ -151,15 +151,36 @@ const MainTable = () => {
 
   const canShowTable = !isGlobalUser || (selectedIO && selectedWH);
 
+  const hasActiveFilters = Boolean(
+    globalFilter ||
+    selectedIO ||
+    selectedWH ||
+    selectedZone ||
+    selectedBin ||
+    selectedStatus ||
+    selectedItem ||
+    selectedPallet,
+  );
+
+  const handleResetFilters = () => {
+    setGlobalFilter("");
+    setSelectedIO("");
+    setSelectedWH("");
+    setSelectedZone("");
+    setSelectedBin("");
+    setSelectedStatus("");
+    setSelectedItem("");
+    setSelectedPallet("");
+    setListWarehouse([]);
+  };
+
   // Buat fungsi refresh handler
   const handleRefresh = () => {
     if (!fetchUsingPagination) return;
 
-    // Panggil kembali dengan parameter state saat ini yang ada di komponen induk
     fetchUsingPagination({
-      page: 1, // atau sesuaikan dengan state page saat ini
+      page: 1,
       limit: 20,
-      search: globalFilter,
       inventory_status: selectedStatus || "",
       warehouse_id: selectedWH || "",
       warehouse_sub_id: selectedZone || "",
@@ -173,120 +194,190 @@ const MainTable = () => {
 
   return (
     <>
-      <div className="p-4 bg-white shadow rounded-md mb-5">
-        <div className="mb-4 w-full md:w-1/3">
-          <div className="flex items-center gap-2">
-            {/* <Label htmlFor="search">Search</Label> */}
+      {/* CONTAINER FILTER UTAMA */}
+      <div className="p-6 bg-white border border-gray-100 shadow-sm rounded-xl mb-6">
+        {/* BAGIAN ATAS: SEARCH DAN REFRESH */}
+        <div className="mb-6 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
+          <div className="relative w-full md:w-1/3">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+              <span className="text-sm">🔍</span>
+            </div>
             <Input
               onChange={(e) => setGlobalFilter(e.target.value)}
               type="text"
               id="search"
-              placeholder="🔍 Masukan data.."
+              placeholder="Cari data di sini..."
               value={globalFilter}
+              className="pl-9 w-full bg-gray-50/50 border-gray-200 focus:bg-white transition-all rounded-lg text-sm"
             />
-
-            <Button variant="action" size="sm" onClick={handleRefresh}>
-              <FaSync className="mr-2" /> Refresh
-            </Button>
           </div>
+
+          <Button
+            variant="action"
+            size="sm"
+            onClick={handleRefresh}
+            className="shadow-sm hover:shadow active:scale-98 transition-all flex items-center gap-2 px-4 py-2"
+          >
+            <FaSync className="text-xs animate-hover-spin" />
+            <span className="font-medium">Refresh</span>
+          </Button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-7 gap-4 items-end">
-          {isGlobalUser && (
-            <>
-              <div className="flex flex-col space-y-1">
-                <Label>Organization/IO</Label>
-                <Select
-                  options={ioOptions}
-                  onChange={setSelectedIO}
-                  value={selectedIO}
-                  width="100%"
-                />
-              </div>
-              <div className="flex flex-col space-y-1">
-                <Label>Warehouse</Label>
-                <Select
-                  options={optWarehouse}
-                  onChange={setSelectedWH}
-                  value={selectedWH}
-                  width="100%"
-                  disabled={!selectedIO}
-                />
-              </div>
-            </>
-          )}
+        {/* PEMISAH DEKORATIF */}
+        <hr className="border-gray-100 my-4" />
 
-          <div className="flex flex-col space-y-1">
-            <Label>Status</Label>
-            <Select
-              options={optStatus}
-              onChange={setSelectedStatus}
-              value={selectedStatus}
-              width="100%"
-            />
+        {/* BAGIAN BAWAH: PANEL CONTROL FILTER */}
+        <div className="flex flex-col gap-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="h-4 w-1 bg-indigo-600 rounded-full"></span>
+              <Label className="mb-0 text-xs font-bold uppercase tracking-wider text-gray-500">
+                Filter Pencarian
+              </Label>
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={handleResetFilters}
+              disabled={!hasActiveFilters}
+              startIcon={<FaUndo className="text-xs" />}
+              className={`text-xs font-medium transition-all rounded-lg ${
+                hasActiveFilters
+                  ? "text-red-600 border-red-200 bg-red-50/50 hover:bg-red-50"
+                  : "text-gray-400 border-gray-100 bg-gray-50"
+              }`}
+            >
+              Reset Filter
+            </Button>
           </div>
 
-          <div className="flex flex-col space-y-1">
-            <Label>Zone</Label>
-            <Select
-              options={optZone}
-              onChange={setSelectedZone}
-              value={selectedZone}
-              width="100%"
-              disabled={isGlobalUser && !selectedWH}
-            />
-          </div>
+          {/* INPUT GRID BANYAK KOLOM - LEBIH ADAPTIF */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {isGlobalUser && (
+              <>
+                <div className="flex flex-col space-y-1.5">
+                  <Label className="text-xs font-semibold text-gray-600">
+                    Organization/IO
+                  </Label>
+                  <Select
+                    options={ioOptions}
+                    onChange={setSelectedIO}
+                    value={selectedIO}
+                    width="100%"
+                    className="rounded-lg text-sm border-gray-200"
+                  />
+                </div>
+                <div className="flex flex-col space-y-1.5">
+                  <Label className="text-xs font-semibold text-gray-600">
+                    Warehouse
+                  </Label>
+                  <Select
+                    options={optWarehouse}
+                    onChange={setSelectedWH}
+                    value={selectedWH}
+                    width="100%"
+                    disabled={!selectedIO}
+                    className="rounded-lg text-sm border-gray-200 disabled:bg-gray-50"
+                  />
+                </div>
+              </>
+            )}
 
-          <div className="flex flex-col space-y-1">
-            <Label>BIN</Label>
-            <Select
-              options={optBin}
-              onChange={setSelectedBin}
-              value={selectedBin}
-              width="100%"
-              disabled={!selectedZone}
-            />
-          </div>
+            <div className="flex flex-col space-y-1.5">
+              <Label className="text-xs font-semibold text-gray-600">
+                Status
+              </Label>
+              <Select
+                options={optStatus}
+                onChange={setSelectedStatus}
+                value={selectedStatus}
+                width="100%"
+                className="rounded-lg text-sm border-gray-200"
+              />
+            </div>
 
-          <div className="flex flex-col space-y-1">
-            <Label>Pallet</Label>
-            <Select
-              options={optPallet}
-              onChange={setSelectedPallet}
-              value={selectedPallet}
-              width="100%"
-            />
-          </div>
+            <div className="flex flex-col space-y-1.5">
+              <Label className="text-xs font-semibold text-gray-600">
+                Zone
+              </Label>
+              <Select
+                options={optZone}
+                onChange={setSelectedZone}
+                value={selectedZone}
+                width="100%"
+                disabled={isGlobalUser && !selectedWH}
+                className="rounded-lg text-sm border-gray-200 disabled:bg-gray-50"
+              />
+            </div>
 
-          <div className="flex flex-col space-y-1">
-            <Label>Item</Label>
-            <Select
-              options={optItems}
-              onChange={setSelectedItem}
-              value={selectedItem}
-              width="100%"
-            />
+            <div className="flex flex-col space-y-1.5">
+              <Label className="text-xs font-semibold text-gray-600">BIN</Label>
+              <Select
+                options={optBin}
+                onChange={setSelectedBin}
+                value={selectedBin}
+                width="100%"
+                disabled={!selectedZone}
+                className="rounded-lg text-sm border-gray-200 disabled:bg-gray-50"
+              />
+            </div>
+
+            <div className="flex flex-col space-y-1.5">
+              <Label className="text-xs font-semibold text-gray-600">
+                Pallet
+              </Label>
+              <Select
+                options={optPallet}
+                onChange={setSelectedPallet}
+                value={selectedPallet}
+                width="100%"
+                className="rounded-lg text-sm border-gray-200"
+              />
+            </div>
+
+            <div className="flex flex-col space-y-1.5">
+              <Label className="text-xs font-semibold text-gray-600">
+                Item
+              </Label>
+              <Select
+                options={optItems}
+                onChange={setSelectedItem}
+                value={selectedItem}
+                width="100%"
+                className="rounded-lg text-sm border-gray-200"
+              />
+            </div>
           </div>
         </div>
       </div>
 
-      {/* TAMPILKAN TABEL HANYA JIKA SYARAT TERPENUHI */}
+      {/* AREA HASH / TABEL DATA */}
       {canShowTable ? (
-        <AdjustTable
-          globalFilter={debouncedFilter}
-          setGlobalFilter={setGlobalFilter}
-          filteredIO={selectedIO}
-          filteredWarehouse={selectedWH}
-          filteredStatus={selectedStatus}
-          filteredZone={selectedZone}
-          filteredBin={selectedBin}
-          filteredItem={selectedItem}
-          filteredPallet={selectedPallet}
-        />
+        <div className="transition-all duration-300 ease-in-out animate-fade-in">
+          <AdjustTable
+            globalFilter={debouncedFilter}
+            filteredIO={selectedIO}
+            filteredWarehouse={selectedWH}
+            filteredStatus={selectedStatus}
+            filteredZone={selectedZone}
+            filteredBin={selectedBin}
+            filteredItem={selectedItem}
+            filteredPallet={selectedPallet}
+          />
+        </div>
       ) : (
-        <div className="p-10 bg-gray-50 border-2 border-dashed border-gray-200 rounded-lg text-center text-gray-400">
-          <p className="text-lg font-medium">
-            Silahkan pilih Organization dahulu.
+        /* EMPTY STATE YANG SENADA DAN BERSIH */
+        <div className="p-16 bg-gray-50/50 border border-dashed border-gray-200 rounded-xl text-center transition-all">
+          <div className="mx-auto w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-sm text-gray-400 mb-4 border border-gray-100">
+            🏢
+          </div>
+          <h3 className="text-sm font-semibold text-gray-700 mb-1">
+            Data Belum Siap Ditampilkan
+          </h3>
+          <p className="text-xs text-gray-400 max-w-sm mx-auto">
+            Silahkan pilih **Organization/IO** terlebih dahulu untuk memuat data
+            gudang dan manajemen stok.
           </p>
         </div>
       )}
