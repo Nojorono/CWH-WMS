@@ -1,26 +1,14 @@
-import React from "react";
+import React, { useEffect, useRef, useState } from "react";
 import Swal from "sweetalert2";
 import Button from "../../../../components/ui/button/Button";
 import { FaCheck, FaArrowLeft } from "react-icons/fa";
 import { ReviewGroup } from "../Types/suggestTableTypes";
 
-interface ReviewItem {
-  do_id: string | null;
-  memo_id: string;
-  item_id: string;
-  quantity: number;
-  uom: string;
-  week_number: number;
-  source_warehouse_sub_id: string;
-  source_bin_id?: string;
-  status: string;
-}
-
 interface Props {
   open: boolean;
   data: ReviewGroup[];
   onClose: () => void;
-  onConfirm: () => void;
+  onConfirm: () => void | Promise<void>;
 }
 
 const ModalReviewFinalSuggestion: React.FC<Props> = ({
@@ -29,20 +17,55 @@ const ModalReviewFinalSuggestion: React.FC<Props> = ({
   onClose,
   onConfirm,
 }) => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const isSubmittingRef = useRef(false);
+
+  useEffect(() => {
+    if (!open) {
+      isSubmittingRef.current = false;
+      setIsSubmitting(false);
+    }
+  }, [open]);
+
   if (!open) return null;
 
   const hasError = data.some(
-    (g) => g.status === "OVER" || g.status === "UOM_MISMATCH"
+    (g) => g.status === "OVER" || g.status === "UOM_MISMATCH",
   );
 
   const isDataEmpty = !data || data.length === 0;
+  const isSubmitDisabled = hasError || isDataEmpty || isSubmitting;
+
+  const handleSubmit = () => {
+    if (isSubmittingRef.current || isSubmitDisabled) return;
+
+    Swal.fire({
+      icon: "question",
+      title: "Confirm Submit?",
+      text: "Apakah data sudah benar dan ingin dikirim?",
+      showCancelButton: true,
+      confirmButtonText: "Yes, Submit",
+    }).then(async (res) => {
+      if (!res.isConfirmed) return;
+      if (isSubmittingRef.current) return;
+
+      isSubmittingRef.current = true;
+      setIsSubmitting(true);
+
+      try {
+        await Promise.resolve(onConfirm());
+      } finally {
+        isSubmittingRef.current = false;
+        setIsSubmitting(false);
+      }
+    });
+  };
 
   return (
     <div className="fixed inset-0 z-999 flex items-center justify-center backdrop-blur-md bg-transparent">
       <div className="bg-white w-2/5 max-h-[90vh] overflow-auto rounded-lg shadow-lg p-6">
         <h2 className="text-lg font-bold mb-4">Review Final Suggestion</h2>
 
-        
         {data.map((group) => (
           <div key={group.item_id} className="border rounded-lg p-4 mb-5">
             {/* ===== CARD SUMMARY ===== */}
@@ -51,7 +74,6 @@ const ModalReviewFinalSuggestion: React.FC<Props> = ({
                 <div className="font-bold">
                   {group.item_code} – {group.item_name}
                 </div>
-                {/* <div className="text-sm text-gray-800">UOM: {group.uom}</div> */}
               </div>
 
               <div className="text-right text-sm">
@@ -118,6 +140,7 @@ const ModalReviewFinalSuggestion: React.FC<Props> = ({
           <Button
             variant="outline"
             onClick={onClose}
+            disabled={isSubmitting}
             startIcon={<FaArrowLeft />}
           >
             Back to Edit
@@ -125,23 +148,11 @@ const ModalReviewFinalSuggestion: React.FC<Props> = ({
 
           <Button
             variant="action"
-            disabled={hasError || isDataEmpty}
-            onClick={() => {
-              Swal.fire({
-                icon: "question",
-                title: "Confirm Submit?",
-                text: "Apakah data sudah benar dan ingin dikirim?",
-                showCancelButton: true,
-                confirmButtonText: "Yes, Submit",
-              }).then((res) => {
-                if (res.isConfirmed) {
-                  onConfirm();
-                }
-              });
-            }}
+            disabled={isSubmitDisabled}
+            onClick={handleSubmit}
             startIcon={<FaCheck />}
           >
-            Confirm & Submit
+            {isSubmitting ? "Processing..." : "Submit"}
           </Button>
         </div>
       </div>
