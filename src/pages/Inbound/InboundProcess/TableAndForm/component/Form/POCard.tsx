@@ -1,6 +1,6 @@
 // NEW CODE
 import { useEffect, useState } from "react";
-import { useFormContext, useFieldArray, useWatch } from "react-hook-form";
+import { useFormContext, useFieldArray, useWatch, Controller } from "react-hook-form";
 import { FormValues } from "../formTypes";
 import { inputCls } from "../constants";
 import ItemTable from "../Table/ItemTable";
@@ -46,7 +46,7 @@ export default function POCard({
 }) {
   const { fetchAll, list } = useStoreItem();
   const { fetchAll: fetchAllUom, list: uomList } = useStoreUom();
-  const { control, register, getValues, setValue } =
+  const { control, register, getValues, setValue, trigger } =
     useFormContext<FormValues>();
 
   const [isOpen, setIsOpen] = useState(false);
@@ -63,11 +63,6 @@ export default function POCard({
   });
 
   const doNo = useWatch({ control, name: `deliveryOrders.${doIndex}.do_no` });
-
-  const vendorNameWatch = useWatch({
-    control,
-    name: `deliveryOrders.${doIndex}.pos.${posIndex}.vendor_name` as any,
-  });
 
   const principalWatch = useWatch({
     control,
@@ -252,31 +247,65 @@ export default function POCard({
 
         {/* Nama Pengirim */}
         <div>
-          <label className="block text-xs text-slate-600 mb-1">
-            Nama Pengirim{" "}
-            {!isDetailMode && <span className="text-red-500">*</span>}
-          </label>
-          <input
-            className={`${inputCls} w-full ${getDisabledCls(isDetailMode ?? false)}`}
-            {...register(
-              `deliveryOrders.${doIndex}.pos.${posIndex}.vendor_name` as any,
-            )}
-            value={vendorNameWatch || principalWatch || ""}
-            readOnly={isDetailMode ?? false}
-            onChange={(e) => {
-              const val = e.target.value.toUpperCase();
-              setValue(
-                `deliveryOrders.${doIndex}.pos.${posIndex}.vendor_name` as any,
-                val,
-              );
-              setValue(
-                `deliveryOrders.${doIndex}.pos.${posIndex}.principal` as any,
-                val,
-              );
-            }}
-            placeholder={
-              isDetailMode ? "" : "Ketik manual jika tidak muncul..."
+          <Controller
+            control={control}
+            name={
+              `deliveryOrders.${doIndex}.pos.${posIndex}.vendor_name` as any
             }
+            rules={{
+              validate: (value) => {
+                if (isDetailMode) return true;
+
+                const principal = getValues(
+                  `deliveryOrders.${doIndex}.pos.${posIndex}.principal` as any,
+                );
+
+                return (
+                  Boolean((value || principal || "").trim()) ||
+                  "Nama Pengirim wajib diisi"
+                );
+              },
+            }}
+            render={({ field, fieldState }) => (
+              <>
+                <label className="flex items-center justify-between gap-2 text-xs text-slate-600 mb-1">
+                  <span>
+                    Nama Pengirim{" "}
+                    {!isDetailMode && <span className="text-red-500">*</span>}
+                  </span>
+                  {fieldState.error && (
+                    <span className="text-xs text-red-500 shrink-0">
+                      {fieldState.error.message}
+                    </span>
+                  )}
+                </label>
+                <input
+                  className={`${inputCls} w-full ${getDisabledCls(isDetailMode ?? false)} ${
+                    fieldState.error ? "border-red-500" : ""
+                  }`}
+                  value={field.value || principalWatch || ""}
+                  readOnly={isDetailMode ?? false}
+                  onChange={(e) => {
+                    const val = e.target.value.toUpperCase();
+                    field.onChange(val);
+                    setValue(
+                      `deliveryOrders.${doIndex}.pos.${posIndex}.principal` as any,
+                      val,
+                      { shouldValidate: true },
+                    );
+                  }}
+                  onBlur={() => {
+                    field.onBlur();
+                    trigger(
+                      `deliveryOrders.${doIndex}.pos.${posIndex}.vendor_name` as any,
+                    );
+                  }}
+                  placeholder={
+                    isDetailMode ? "" : "Ketik manual jika tidak muncul..."
+                  }
+                />
+              </>
+            )}
           />
         </div>
 

@@ -6,6 +6,7 @@ type ActionItem = {
   icon: React.ElementType;
   onClick?: () => void;
   className?: string;
+  disabled?: boolean;
 };
 
 export const ActionMenu = ({ actions }: { actions: ActionItem[] }) => {
@@ -38,11 +39,17 @@ export const ActionMenu = ({ actions }: { actions: ActionItem[] }) => {
           {actions.map((action, i) => (
             <button
               key={i}
+              disabled={action.disabled}
               onClick={() => {
-                if (action.onClick) action.onClick();
+                if (action.disabled || !action.onClick) return;
+                action.onClick();
                 setIsOpen(false);
               }}
-              className={`flex w-full items-center gap-3 px-4 py-2.5 text-xs font-bold hover:bg-slate-50 transition-colors ${action.className || "text-slate-600"}`}
+              className={`flex w-full items-center gap-3 px-4 py-2.5 text-xs font-bold transition-colors ${
+                action.disabled
+                  ? "text-slate-400 cursor-not-allowed opacity-60"
+                  : `hover:bg-slate-50 ${action.className || "text-slate-600"}`
+              }`}
             >
               <action.icon className="size-4" />
               {action.label}

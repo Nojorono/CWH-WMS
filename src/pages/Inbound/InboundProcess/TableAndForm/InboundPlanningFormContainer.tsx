@@ -197,6 +197,13 @@ export default function InboundPlanningFormContainer() {
           return;
         }
 
+        const vendorName = (poItem.vendor_name || poItem.principal || "").trim();
+        if (!vendorName) {
+          const poLabel = poItem.po_no || poItem.so_no || `ke-${j + 1}`;
+          showErrorToast(`PO ${poLabel} → Nama Pengirim wajib diisi.`);
+          return;
+        }
+
         if (!poItem.items || poItem.items.length === 0) {
           const poLabel = poItem.po_no || poItem.so_no || `ke-${j + 1}`;
           showErrorToast(`PO ${poLabel} belum punya Item.`);

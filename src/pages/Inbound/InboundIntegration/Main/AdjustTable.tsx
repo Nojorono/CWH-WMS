@@ -146,9 +146,12 @@ const AdjustTable = ({ globalFilter, setGlobalFilter, filteredIO }: any) => {
   const renderRowDetails = (row: any) => {
     const data = row.original;
 
-    // Cek apakah ada setidaknya satu line yang memiliki status selisih
-    const hasSelisih = data.lines?.some(
-      (line: any) => line.status_selisih === "S",
+    const hasSelisihValue = (status: unknown) =>
+      status != null && String(status).trim() !== "";
+
+    // Cek apakah ada setidaknya satu line yang memiliki status selisih terisi
+    const hasSelisih = data.lines?.some((line: any) =>
+      hasSelisihValue(line.status_selisih),
     );
 
     return (
@@ -299,9 +302,15 @@ const AdjustTable = ({ globalFilter, setGlobalFilter, filteredIO }: any) => {
 
                         {hasSelisih && (
                           <td className="px-4 py-3">
-                            {line.status_selisih === "S" && (
-                              <span className="px-2 py-0.5 rounded bg-amber-100 text-amber-600 text-[9px] font-bold">
-                                S
+                            {hasSelisihValue(line.status_selisih) && (
+                              <span
+                                className={`px-2 py-0.5 rounded text-[12px] font-bold ${
+                                  line.status_selisih === "E"
+                                    ? "bg-red-100 text-red-600"
+                                    : "bg-amber-100 text-amber-600"
+                                }`}
+                              >
+                                {line.status_selisih}
                               </span>
                             )}
                           </td>
@@ -309,8 +318,8 @@ const AdjustTable = ({ globalFilter, setGlobalFilter, filteredIO }: any) => {
 
                       </tr>
 
-                      {/* Detail Selisih row hanya muncul untuk line yang selisih */}
-                      {line.status_selisih === "S" && (
+                      {/* Detail Selisih row muncul untuk line yang status_selisih terisi */}
+                      {hasSelisihValue(line.status_selisih) && (
                         <tr className="bg-amber-50/50">
                           <td
                             colSpan={hasSelisih ? 6 : 5}
@@ -341,8 +350,8 @@ const AdjustTable = ({ globalFilter, setGlobalFilter, filteredIO }: any) => {
                                 </span>
                               </div>
                               {line.message_selisih && (
-                                <span className="text-red-500 italic ml-auto">
-                                  {line.message_selisih}
+                                <span className="text-red-500 italic ml-auto text-[15px]">
+                                  Message Selisih: {line.message_selisih}
                                 </span>
                               )}
                             </div>
@@ -357,12 +366,12 @@ const AdjustTable = ({ globalFilter, setGlobalFilter, filteredIO }: any) => {
           </div>
         </div>
 
-        {data.status === "E" && (
+        {data.message && (
           <div className="mt-5 p-3 bg-red-50 border-l-4 border-red-500 rounded flex items-center gap-3">
-            <div className="bg-red-500 p-1 rounded text-white text-[10px] font-bold">
-              ERROR
+            <div className="bg-red-500 p-1 rounded text-white text-[15px] font-bold">
+              MESSAGE
             </div>
-            <p className="text-xs text-red-700 font-medium italic">
+            <p className="text-[15px] text-red-700 font-medium italic">
               {data.message}
             </p>
           </div>

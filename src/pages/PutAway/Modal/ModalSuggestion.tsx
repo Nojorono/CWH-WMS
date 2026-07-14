@@ -85,20 +85,21 @@ const AdjustmentModal: React.FC<AdjustmentModalProps> = ({
   mode = "create",
 }) => {
   // Ambil list dan status loading dari store utama
-  const { list: subWarehouseWithBinList, fetchUsingParam, isLoading } =
-    useStoreSubWarehouseWithBins();
+  const {
+    list: subWarehouseWithBinList,
+    fetchUsingParam,
+    isLoading,
+  } = useStoreSubWarehouseWithBins();
 
   useEffect(() => {
     if (open) {
       fetchUsingParam({
-        is_staging: null,
+        is_staging: "null",
         is_good_stock: true,
         is_gate: false,
       });
     }
   }, [open, fetchUsingParam]);
-
-  console.log("subWarehouseWithBinList", subWarehouseWithBinList);
 
   const [formValues, setFormValues] = useState<AdjustmentForm>(
     data ?? defaultFormValues,
@@ -145,13 +146,15 @@ const AdjustmentModal: React.FC<AdjustmentModalProps> = ({
   // 🧠 Daftar Bin diambil secara dinamis dari Zone terpilih
   const availableBins = useMemo(() => {
     if (!formValues.zone_id) return [];
-    
+
     const selectedZone = subWarehouseWithBinList.find(
       (zone) => zone.id === formValues.zone_id,
     );
-    
-    const binsArray = Array.isArray(selectedZone?.bins) ? selectedZone.bins : [];
-    
+
+    const binsArray = Array.isArray(selectedZone?.bins)
+      ? selectedZone.bins
+      : [];
+
     return binsArray.map((bin: Bin) => ({
       value: bin.id,
       label: bin.code,
@@ -210,10 +213,12 @@ const AdjustmentModal: React.FC<AdjustmentModalProps> = ({
     }
 
     // 🚀 Check capacity limit
-    const selectedBin = availableBins.find((b) => b.value === formValues.bin_id);
+    const selectedBin = availableBins.find(
+      (b) => b.value === formValues.bin_id,
+    );
     if (selectedBin) {
       const { capacity_pallet, current_pallet_count, code } = selectedBin;
-      
+
       // Jika capacity_pallet bernilai angka (> 0)
       if (
         capacity_pallet !== null &&
@@ -222,7 +227,7 @@ const AdjustmentModal: React.FC<AdjustmentModalProps> = ({
       ) {
         if (current_pallet_count >= capacity_pallet) {
           showErrorToast(
-            `Cannot save. Bin ${code} is full (Capacity: ${capacity_pallet}, Current: ${current_pallet_count}).`
+            `Cannot save. Bin ${code} is full (Capacity: ${capacity_pallet}, Current: ${current_pallet_count}).`,
           );
           return;
         }
