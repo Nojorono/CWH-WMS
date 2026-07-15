@@ -145,9 +145,45 @@ type MenuTableProps = {
   filteredIO?: any;
 };
 
+const matchesGlobalFilter = (rawItem: any, filter: string) => {
+  const query = filter.trim().toLowerCase();
+  if (!query) return true;
+
+  const searchableValues = [
+    rawItem.pallet?.pallet_code,
+    rawItem.warehouseSub?.name,
+    rawItem.warehouseSub?.code,
+    rawItem.warehouseBin?.name,
+    rawItem.warehouseBin?.code,
+    rawItem.inventory_status,
+    rawItem.progression_status,
+    rawItem.inventory_note,
+    ...(rawItem.pallet?.currentItems || []).flatMap((item: any) => [
+      item.item_name,
+      item.item_id,
+      item.uom,
+      item.week_number,
+      item.current_quantity,
+    ]),
+    ...(rawItem.inventoryTrackingBad || []).flatMap((bad: any) => [
+      bad.item_name,
+      bad.item_id,
+      bad.notes,
+      bad.uom,
+      bad.year,
+      bad.hje,
+      bad.quantity,
+    ]),
+  ];
+
+  return searchableValues.some(
+    (value) =>
+      value != null && String(value).toLowerCase().includes(query),
+  );
+};
+
 const AdjustTable = ({
   globalFilter,
-  setGlobalFilter,
   filteredStatus,
   filteredZone,
   filteredBin,
@@ -168,7 +204,6 @@ const AdjustTable = ({
 
   const isInitialMount = useRef(true);
   const prevFiltersRef = useRef({
-    globalFilter,
     filteredStatus,
     filteredZone,
     filteredBin,
@@ -191,7 +226,6 @@ const AdjustTable = ({
       return;
     }
     const hasFilterChanged =
-      prevFiltersRef.current.globalFilter !== globalFilter ||
       prevFiltersRef.current.filteredIO !== filteredIO ||
       prevFiltersRef.current.filteredWarehouse !== filteredWarehouse ||
       prevFiltersRef.current.filteredStatus !== filteredStatus ||
@@ -202,7 +236,6 @@ const AdjustTable = ({
 
     if (hasFilterChanged) {
       prevFiltersRef.current = {
-        globalFilter,
         filteredIO,
         filteredWarehouse,
         filteredStatus,
@@ -216,13 +249,13 @@ const AdjustTable = ({
       setSearchParams(newParams, { replace: true });
     }
   }, [
-    globalFilter,
     filteredStatus,
     filteredZone,
     filteredBin,
     filteredItem,
     filteredPallet,
     filteredWarehouse,
+    filteredIO,
   ]);
 
   useEffect(() => {
@@ -230,7 +263,6 @@ const AdjustTable = ({
     fetchUsingPagination({
       page: currentPage,
       limit: pageSize,
-      search: globalFilter,
       inventory_status: filteredStatus || "",
       warehouse_id: filteredWarehouse || "",
       warehouse_sub_id: filteredZone || "",
@@ -244,7 +276,6 @@ const AdjustTable = ({
     fetchUsingPagination,
     currentPage,
     pageSize,
-    globalFilter,
     filteredStatus,
     filteredZone,
     filteredBin,
@@ -253,9 +284,15 @@ const AdjustTable = ({
     filteredWarehouse,
   ]);
 
+  const filteredList = useMemo(() => {
+    if (!list?.length) return [];
+    if (!globalFilter?.trim()) return list;
+    return list.filter((item) => matchesGlobalFilter(item, globalFilter));
+  }, [list, globalFilter]);
+
   // Transformasi Data
   const mappedList = useMemo(() => {
-    return (list || []).map((item: any, index: number) => ({
+    return filteredList.map((item: any, index: number) => ({
       no: pageIndex * pageSize + (index + 1),
       id: item.id,
       warehouse_sub_name: item.warehouseSub?.name || "-",
@@ -275,7 +312,7 @@ const AdjustTable = ({
           item_name: bad.item_name || bad.item_id,
         })),
     }));
-  }, [list, pageIndex, pageSize]);
+  }, [filteredList, pageIndex, pageSize]);
 
   // Pisahkan Data untuk masing-masing Tab
   const goodStockData = useMemo(
@@ -407,8 +444,6 @@ const AdjustTable = ({
     );
   }
 
-  
-
   return (
     <div className="flex flex-col gap-4">
       <TabsSection
@@ -422,8 +457,6 @@ const AdjustTable = ({
                 <TableComponent
                   data={goodStockData}
                   columns={createColumns("good")}
-                  globalFilter={globalFilter}
-                  setGlobalFilter={setGlobalFilter}
                   pageSize={pageSize}
                   pageIndex={pageIndex}
                   totalPages={pagination.totalPages}
@@ -440,8 +473,6 @@ const AdjustTable = ({
                 <TableComponent
                   data={badStockData}
                   columns={createColumns("bad")}
-                  globalFilter={globalFilter}
-                  setGlobalFilter={setGlobalFilter}
                   pageSize={pageSize}
                   pageIndex={pageIndex}
                   totalPages={pagination.totalPages}

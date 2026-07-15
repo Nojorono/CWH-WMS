@@ -1,24 +1,28 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import TableComponent from "../TableComponent";
 import { useStorePickingAssignHelper } from "../../../../../DynamicAPI/stores/Store/MasterStore";
-import { FaTrash } from "react-icons/fa"; // Menggunakan FaTrash sesuai preferensi
+import { FaTrash } from "react-icons/fa";
+import { showErrorToast } from "../../../../../components/toast";
 
 interface AssignHelperTableProps {
   memoId?: string | null;
   detailData?: any;
+  doStatus?: string;
 }
 
 const AssignHelperTable: React.FC<AssignHelperTableProps> = ({
   memoId,
   detailData,
-}) => {
-  const [globalFilter, setGlobalFilter] = useState<string>("");
+  doStatus,
+}) => {  const [globalFilter, setGlobalFilter] = useState<string>("");
   const [pageIndex, setPageIndex] = useState<number>(0);
   const [pageSize, setPageSize] = useState<number>(10);
   const { list, fetchAll, deleteData } = useStorePickingAssignHelper();
 
-  useEffect(() => {
-    fetchAll();
+  const resolvedDoStatus = doStatus ?? detailData?.status ?? "";
+  const canDeleteHelper = resolvedDoStatus === "PENDING";
+
+  useEffect(() => {    fetchAll();
   }, [fetchAll]);
 
   const rawList = Array.isArray(list)
@@ -27,39 +31,14 @@ const AssignHelperTable: React.FC<AssignHelperTableProps> = ({
       ? (list as any).data
       : [];
 
-  const columns = [
-    {
-      accessorKey: "outbound_memo_number",
-      header: "Memo Number",
-    },
-    {
-      accessorKey: "picking_name",
-      header: "Helper Name",
-    },
-    {
-      accessorKey: "picking_phone",
-      header: "Helper Phone",
-    },
-    {
-      accessorKey: "action",
-      header: "Action",
-      cell: ({ row }: any) => (
-        <div>
-          <button
-            type="button"
-            onClick={() => handleDelete(row.original.picking_user_id)}
-            className="p-2 text-red-500 hover:bg-red-50 rounded-md transition-colors"
-            title="Delete Helper"
-          >
-            <FaTrash size={16} />
-          </button>
-        </div>
-      ),
-    },
-  ];
-
   const handleDelete = async (id: string) => {
-    console.log("ID yang akan dihapus:", id);
+    if (!canDeleteHelper) {
+      showErrorToast(
+        "Helper tidak dapat dihapus karena status DO sudah bukan PENDING.",
+      );
+      return;
+    }
+
     try {
       await deleteData(id);
       fetchAll();
@@ -68,6 +47,48 @@ const AssignHelperTable: React.FC<AssignHelperTableProps> = ({
     }
   };
 
+  const columns = useMemo(
+    () => [
+      {
+        accessorKey: "outbound_memo_number",
+        header: "Memo Number",
+      },
+      {
+        accessorKey: "picking_name",
+        header: "Helper Name",
+      },
+      {
+        accessorKey: "picking_phone",
+        header: "Helper Phone",
+      },
+      {
+        accessorKey: "action",
+        header: "Action",
+        cell: ({ row }: any) => (
+          <div>
+            <button
+              type="button"
+              onClick={() => handleDelete(row.original.picking_user_id)}
+              disabled={!canDeleteHelper}
+              className={`p-2 rounded-md transition-colors ${
+                canDeleteHelper
+                  ? "text-red-500 hover:bg-red-50"
+                  : "text-slate-300 cursor-not-allowed"
+              }`}
+              title={
+                canDeleteHelper
+                  ? "Delete Helper"
+                  : "Helper tidak dapat dihapus karena DO sudah bukan PENDING"
+              }
+            >
+              <FaTrash size={16} />
+            </button>
+          </div>
+        ),
+      },
+    ],
+    [canDeleteHelper],
+  );
   const memoIdsFromDetail: string[] | undefined = (() => {
     if (!detailData) return undefined;
     if (Array.isArray(detailData.memo_id) && detailData.memo_id.length)

@@ -13,7 +13,6 @@ import {
   FaRegWindowClose,
   FaTasks,
 } from "react-icons/fa";
-import { EndPoint } from "../../../../utils/EndPoint";
 import CancelTransactionPickModal from "../Modal/CancelTransactionPickModal";
 import AttachMemoModal from "../Modal/AttachMemoModal"; //
 import Swal from "sweetalert2";
@@ -23,6 +22,7 @@ import { showErrorToast, showSuccessToast } from "../../../../components/toast";
 import TableComponent from "../../../../components/tables/ActionTable/TableComponent";
 import { usePersistAuthStore } from "../../../../API/store/AuthStore/PersistAuthStore";
 import axiosInstance from "../../../../DynamicAPI/AxiosInstance";
+import { ActionMenu } from "../components";
 
 const DetachAttach: React.FC = () => {
   const location = useLocation();
@@ -98,114 +98,42 @@ const DetachAttach: React.FC = () => {
     {
       id: "actions",
       header: "Action",
+      enableSorting: false,
       cell: ({ row }: { row: any }) => {
         const items = row.original.transaction_pickings;
+        const memoNumber = row.original.outbound_memo_number;
 
-        return (
-          <div className="flex items-center gap-1.5">
-            {/* Show Detail */}
-            <Button
-              size="sm"
-              variant="action"
-              title="Show Detail Items"
-              className="px-2 py-1 min-w-[32px]"
-              startIcon={<FaEye size={12} />}
-              onClick={() => {
-                setSelectedItems(items);
-                setIsModalOpen(true);
-              }}
-              children={undefined}
-            />
+        const actionList = [
+          {
+            label: "Lihat Detail Picking",
+            icon: FaEye,
+            onClick: () => {
+              setSelectedItems(items);
+              setIsModalOpen(true);
+            },
+            className: "text-blue-600",
+            visible: true,
+          },
+          {
+            label: `Lepas Memo`,
+            icon: FaTasks,
+            onClick: () => handleDetachMemo(row.original),
+            className: "text-orange-600",
+            visible: statusDO === "IN_PROGRESS",
+          },
+          {
+            label: "Batalkan Task Picking",
+            icon: FaRegWindowClose,
+            onClick: () => handleDetachTransactionPicking(row.original),
+            className: "text-red-600",
+            visible: statusDO === "IN_PROGRESS",
+          },
+        ].filter((action) => action.visible);
 
-            {/* Lepas Memo */}
-            {statusDO === "IN_PROGRESS" ? (
-              <>
-                <Button
-                  size="sm"
-                  type="button"
-                  variant="primary"
-                  title="Lepas Memo"
-                  onClick={() => handleDetachMemo(row.original)}
-                  startIcon={<FaTasks size={12} />}
-                  className="px-2 py-1 min-w-[32px]"
-                  children={undefined}
-                />
-
-                <Button
-                  size="sm"
-                  type="button"
-                  variant="danger"
-                  title="Cancel Suggestion Task"
-                  onClick={() => handleDetachTransactionPicking(row.original)}
-                  startIcon={<FaRegWindowClose size={12} />}
-                  className="px-2 py-1 min-w-[32px]"
-                  children={undefined}
-                />
-              </>
-            ) : null}
-          </div>
-        );
+        return <ActionMenu actions={actionList} />;
       },
     },
   ];
-
-  // const handleDetachMemo = async (memoData: any) => {
-  //   const memoId = memoData.id;
-  //   const memoNumber = memoData.outbound_memo_number;
-  //   const doNumber = params?.outbound_do_number;
-
-  //   const result = await Swal.fire({
-  //     title: "Apakah Anda yakin?",
-  //     text: `Anda akan lepas Memo ${memoNumber} dari DO ${doNumber}`,
-  //     icon: "warning",
-  //     showCancelButton: true,
-  //     confirmButtonText: "Ya, lepas Memo ini!",
-  //     cancelButtonText: "Batal",
-  //   });
-
-  //   if (result.isConfirmed) {
-  //     try {
-  //       const response = await fetch(
-  //         `${EndPoint}outbound-do/${params.id}/detach-memo?memoId=${memoId}`,
-  //         {
-  //           method: "PATCH",
-  //           headers: {
-  //             Authorization: `Bearer ${token}`,
-  //           },
-  //         },
-  //       );
-
-  //       if (!response.ok) {
-  //         throw new Error("Network response was not ok");
-  //       }
-
-  //       // Setelah memo berhasil dilepas, update status outbound DO menjadi PENDING
-  //       try {
-  //         const patchRes = await fetch(`${EndPoint}outbound-do/${params.id}`, {
-  //           method: "PATCH",
-  //           headers: {
-  //             Authorization: `Bearer ${token}`,
-  //             "Content-Type": "application/json",
-  //           },
-  //           body: JSON.stringify({ status: "PENDING" }),
-  //         });
-
-  //         if (!patchRes.ok) {
-  //           console.error("Failed to update DO status to PENDING");
-  //           ``;
-  //           showErrorToast("Gagal mengubah status DO menjadi PENDING");
-  //         }
-  //       } catch (err) {
-  //         console.error("Error updating DO status:", err);
-  //         showErrorToast("Gagal mengubah status DO menjadi PENDING");
-  //       }
-
-  //       navigate("/picking_transaction");
-  //     } catch (error) {
-  //       console.error("Error detaching memo:", error);
-  //     }
-  //   }
-  // };
 
   const handleDetachMemo = async (memoData: any) => {
     const memoId = memoData.id;
@@ -232,6 +160,7 @@ const DetachAttach: React.FC = () => {
         await axiosInstance.patch(`outbound-do/${params.id}`, {
           status: "PENDING",
         });
+        
       } catch (err) {
         console.error(
           "Failed to update DO status to PENDING via axiosInstance:",
@@ -241,7 +170,6 @@ const DetachAttach: React.FC = () => {
       }
 
       showSuccessToast(`Memo ${memoNumber} berhasil dilepas dari DO`);
-
       navigate("/picking_transaction");
     } catch (error: any) {
       console.error("Error detaching memo via axiosInstance:", error);

@@ -23,7 +23,6 @@ export default function MainScreen() {
     { label: "UoM", value: palletDetail?.uom || "-" },
     { label: "Status", value: palletDetail?.isFull ? "Full" : "Not Full" },
     { label: "Active", value: palletDetail?.isActive ? "Active" : "Inactive" },
-    { label: "Ownership", value: palletDetail?.organization_id || "-" },
   ];
 
   const [activeTab, setActiveTab] = useState(0);

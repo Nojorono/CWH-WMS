@@ -143,9 +143,9 @@ const TableComponent = <T extends { [key: string]: any }>({
 
         <div className="max-h-[650px] overflow-y-auto">
           <table className="min-w-full table-fixed divide-y divide-gray-200">
-            <thead className="sticky top-0 z-10 bg-orange-500 text-white">
+            <thead className="sticky top-0 z-10 shadow-sm">
               {table.getHeaderGroups().map((headerGroup) => (
-                <tr key={headerGroup.id}>
+                <tr key={headerGroup.id} className="bg-orange-500 text-white">
                   {headerGroup.headers.map((header) => (
                     <th
                       key={header.id}
@@ -153,7 +153,7 @@ const TableComponent = <T extends { [key: string]: any }>({
                       style={{
                         width: header.id === "select" ? "50px" : "auto",
                       }}
-                      className={`px-4 py-4 text-left text-[11px] font-bold uppercase tracking-wider transition-colors whitespace-nowrap ${
+                      className={`px-4 py-4 text-left text-[11px] font-bold uppercase tracking-wider whitespace-nowrap bg-orange-500 text-white ${
                         header.column.getCanSort()
                           ? "cursor-pointer hover:bg-orange-600"
                           : ""

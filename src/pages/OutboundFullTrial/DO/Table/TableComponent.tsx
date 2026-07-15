@@ -145,13 +145,13 @@ const TableComponent = <T extends { [key: string]: any }>({
 
         <div className="max-h-[600px] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-200">
           <table className="min-w-full divide-y divide-gray-200 table-fixed sm:table-auto">
-            <thead className="sticky top-0 z-10 bg-orange-500 text-white shadow-sm">
+            <thead className="sticky top-0 z-10 shadow-sm">
               {table.getHeaderGroups().map((headerGroup) => (
-                <tr key={headerGroup.id}>
+                <tr key={headerGroup.id} className="bg-orange-500 text-white">
                   {headerGroup.headers.map((header) => (
                     <th
                       key={header.id}
-                      className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider cursor-pointer hover:bg-orange-600 transition-colors"
+                      className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider cursor-pointer bg-orange-500 text-white hover:bg-orange-600"
                       onClick={header.column.getToggleSortingHandler()}
                     >
                       <div className="flex items-center gap-1">

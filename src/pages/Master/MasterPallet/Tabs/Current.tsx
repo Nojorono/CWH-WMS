@@ -10,6 +10,7 @@ import DataTable from "./TableTab";
 import { EndPoint } from "../../../../utils/EndPoint";
 import { formatDateIndo } from "../../../../helper/FormatDate";
 import axiosInstance from "../../../../DynamicAPI/AxiosInstance";
+import { formatDateTimeIndo } from "../../../../helper/FormatDateTime";
 
 type ItemData = {
   item_id: string;
@@ -25,16 +26,18 @@ type HistoryProps = {
 
 export default function CurrentQuantityTable({ palletCode }: HistoryProps) {
   const [data, setData] = useState<ItemData[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);  
 
   useEffect(() => {
     if (!palletCode) return;
-
     setIsLoading(true);
     axiosInstance
       .get(`${EndPoint}master-pallet/by-code/${palletCode}/current`, {})
       .then((res) => {
-        setData(res.data.data);
+        const items = (res.data.data || []).filter(
+          (item: ItemData) => Number(item.current_quantity) !== 0,
+        );
+        setData(items);
       })
       .catch((err) => {
         console.error("Error fetching items:", err);
@@ -71,6 +74,11 @@ export default function CurrentQuantityTable({ palletCode }: HistoryProps) {
       accessorKey: "week_number",
       header: "Week Number",
       cell: (info) => info.getValue(),
+    },
+    {
+      accessorKey: "last_updated",
+      header: "Last Updated Date",
+      cell: (info) => formatDateTimeIndo(info.getValue() as string) || "-",
     },
   ];
 

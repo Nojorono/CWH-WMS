@@ -21,6 +21,7 @@ import TabsSection from "../../../../components/wms-components/inbound-component
 import { MemoFormValues } from "../Types/types";
 import AssignHelperTable from "../Table/AssignHelper";
 import { SuggestionItemLocation } from "./SuggestionItemLocation";
+import { showErrorToast } from "../../../../components/toast";
 
 const PickingSuggestion: React.FC = () => {
   const navigate = useNavigate();
@@ -58,6 +59,10 @@ const PickingSuggestion: React.FC = () => {
   const [selectedMemoIdForModal, setSelectedMemoIdForModal] = useState<
     string | null
   >(null);
+
+  const resolvedDoStatus = statusDO ?? detail?.status ?? "";
+  const isDoApprovedLoad = resolvedDoStatus === "APPROVED_LOAD";
+  const canUseSuggestionActions = isSuggestion && resolvedDoStatus !== "COMPLETED";
 
   // === Fetch Data ===
   useEffect(() => {
@@ -130,13 +135,19 @@ const PickingSuggestion: React.FC = () => {
       header: "Action",
       cell: ({ row }: { row: any }) => (
         <div className="flex gap-2">
-          {isSuggestion && statusDO !== "COMPLETED" ? (
+          {canUseSuggestionActions ? (
             <Button
               type="button"
               variant="primary"
               onClick={() => handleAssignSuggestion(row.original)}
+              disabled={isDoApprovedLoad}
               size="xsm"
               startIcon={<FaClipboardList className="size-5" />}
+              title={
+                isDoApprovedLoad
+                  ? "Picking suggestion tidak tersedia karena DO sudah APPROVED_LOAD"
+                  : undefined
+              }
             >
               Picking Suggestion Items
             </Button>
@@ -148,7 +159,6 @@ const PickingSuggestion: React.FC = () => {
             type="button"
             variant="secondary"
             onClick={() => handlePickingDetail(row.original.id)}
-            // disabled={isSuggestionLoading}
             size="xsm"
             startIcon={<FaEye className="size-5" />}
           >
@@ -159,8 +169,14 @@ const PickingSuggestion: React.FC = () => {
             type="button"
             variant="action"
             onClick={() => handleAssignHelper(row.original.id)}
+            disabled={isDoApprovedLoad}
             size="xsm"
             startIcon={<FaUsers className="size-5" />}
+            title={
+              isDoApprovedLoad
+                ? "Assign helper tidak tersedia karena DO sudah APPROVED_LOAD"
+                : undefined
+            }
           >
             Assign Helper
           </Button>
@@ -176,12 +192,25 @@ const PickingSuggestion: React.FC = () => {
   };
 
   const handleAssignSuggestion = (memo: any) => {
-    const memoIdToFetch = memo.id || memo.memo_id;
+    if (isDoApprovedLoad) {
+      showErrorToast(
+        "Picking suggestion tidak tersedia karena status DO sudah APPROVED_LOAD.",
+      );
+      return;
+    }
+
     setSelectedMemoForSuggestion(memo);
   };
 
   // update: open AssignHelper modal and pass memoId
   const handleAssignHelper = (memoId: string) => {
+    if (isDoApprovedLoad) {
+      showErrorToast(
+        "Assign helper tidak tersedia karena status DO sudah APPROVED_LOAD.",
+      );
+      return;
+    }
+
     setAssignHelperMemoId(memoId);
     setAssignHelperOpen(true);
   };
@@ -196,30 +225,14 @@ const PickingSuggestion: React.FC = () => {
     }
   };
 
-  const handleSelectionChange = (selectedIds: string[]) => {
-    const filtered = approvedMemos.filter(
-      (m) => typeof m.id === "string" && selectedIds.includes(m.id),
-    );
-    // setSelectedMemoIds(selectedIds);
-    // setSelectedMemos(filtered);
-  };
-
   const handleReset = () => {
     methods.reset();
-    // setSelectedMemoIds([]);
-    // setSelectedMemos([]);
     setSelectedMemoForSuggestion(null);
   };
 
   // === Display Suggestion Table ===
   if (selectedMemoForSuggestion) {
     return (
-      // <SuggestionTable
-      //   memoDetail={selectedMemoForSuggestion}
-      //   onBack={() => setSelectedMemoForSuggestion(null)}
-      //   deliveryOrder={detail}
-      // />
-
       <SuggestionItemLocation
         memoDetail={selectedMemoForSuggestion}
         DOid={deliveryOrderId}
@@ -292,7 +305,6 @@ const PickingSuggestion: React.FC = () => {
                       }
                       columns={columnSuggestionPick}
                       pageSize={10}
-                      onSelectionChange={handleSelectionChange}
                     />
                   </div>
                 </section>
@@ -308,7 +320,10 @@ const PickingSuggestion: React.FC = () => {
                     Helper List
                   </div>
                   <div className="p-4">
-                    <AssignHelperTable detailData={detail} />
+                    <AssignHelperTable
+                      detailData={detail}
+                      doStatus={resolvedDoStatus}
+                    />
                   </div>
                 </section>
               </>

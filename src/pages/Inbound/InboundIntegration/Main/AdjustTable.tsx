@@ -289,14 +289,30 @@ const AdjustTable = ({ globalFilter, setGlobalFilter, filteredIO }: any) => {
                             Loc: {line.locator_id}
                           </div>
                         </td>
-                        <td className="px-4 py-3">
-                          <div className="flex items-center gap-1.5">
-                            <div
-                              className={`w-2 h-2 rounded-full ${line.status === "S" ? "bg-green-500" : "bg-red-500"}`}
-                            ></div>
-                            <span className="text-[10px] font-bold text-slate-500 uppercase">
-                              {line.status === "S" ? "Success" : "Failed"}
-                            </span>
+                        <td className="px-4 py-3 max-w-[320px]">
+                          <div className="flex flex-col gap-1">
+                            <div className="flex items-center gap-1.5">
+                              <div
+                                className={`w-2 h-2 rounded-full ${line.status === "S" ? "bg-green-500" : "bg-red-500"}`}
+                              ></div>
+                              <span
+                                className={`text-[10px] font-bold uppercase ${
+                                  line.status === "S"
+                                    ? "text-green-600"
+                                    : "text-red-600"
+                                }`}
+                              >
+                                {line.status === "S" ? "Success" : "Failed"}
+                              </span>
+                            </div>
+                            {line.status !== "S" && line.message && (
+                              <p
+                                className="text-[11px] text-red-600 leading-snug"
+                                title={line.message}
+                              >
+                                {line.message}
+                              </p>
+                            )}
                           </div>
                         </td>
 
@@ -366,14 +382,33 @@ const AdjustTable = ({ globalFilter, setGlobalFilter, filteredIO }: any) => {
           </div>
         </div>
 
-        {data.message && (
-          <div className="mt-5 p-3 bg-red-50 border-l-4 border-red-500 rounded flex items-center gap-3">
-            <div className="bg-red-500 p-1 rounded text-white text-[15px] font-bold">
-              MESSAGE
+        {(data.status === "E" || data.message) && (
+          <div
+            className={`mt-5 p-3 border-l-4 rounded flex items-start gap-3 ${
+              data.status === "E" || data.message
+                ? "bg-red-50 border-red-500"
+                : "bg-slate-50 border-slate-400"
+            }`}
+          >
+            <div
+              className={`px-2 py-1 rounded text-white text-[11px] font-bold uppercase tracking-wider shrink-0 ${
+                data.status === "E" || data.message
+                  ? "bg-red-500"
+                  : "bg-slate-500"
+              }`}
+            >
+              Header Error
             </div>
-            <p className="text-[15px] text-red-700 font-medium italic">
-              {data.message}
-            </p>
+            <div className="min-w-0">
+              <p className="text-[13px] text-red-700 font-medium leading-snug">
+                {data.message || "Integration failed. Check line errors below."}
+              </p>
+              {data.status === "E" && (
+                <p className="text-[11px] text-red-500 mt-1 font-semibold uppercase tracking-wide">
+                  Sync Status: Error
+                </p>
+              )}
+            </div>
           </div>
         )}
       </div>
