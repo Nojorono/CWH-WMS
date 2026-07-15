@@ -201,8 +201,20 @@ export const usePickingActions = ({
         });
     };
 
+    const hasSealNumber = (data: OutboundDo) =>
+        Boolean(data.seal_number && data.seal_number.trim() !== "");
+
+    const requireSealNumber = (data: OutboundDo) => {
+        if (hasSealNumber(data)) return true;
+        showErrorToast(
+            "Seal Number masih kosong. Silakan Print Surat Jalan terlebih dahulu untuk mengisi Seal Number.",
+        );
+        return false;
+    };
+
+    // Wajib: input Seal Number via modal sebelum print (AMO & SUBDIST)
     const handlePrintAction = (data: OutboundDo) => {
-        if (data.seal_number && data.seal_number.trim() !== "") {
+        if (hasSealNumber(data)) {
             navigate("/outbound_do/print_surat_jalan", { state: { params: data.id } });
         } else {
             setSelectedDO(data);
@@ -215,8 +227,10 @@ export const usePickingActions = ({
     // 🔹 SUBDIST SEQUENTIAL WORKFLOW GUARD PILLARS
     // ==========================================
 
-    // 1️⃣ TAHAP AWAL: Pick Release Subdist
+    // 1️⃣ TAHAP AWAL: Pick Release Subdist (setelah Seal Number terisi)
     const handlePickRelease = async (data: OutboundDo) => {
+        if (!requireSealNumber(data)) return;
+
         try {
             const doDetail = await getLatestDoDetail(data.id);
             if (!doDetail) {
@@ -266,6 +280,8 @@ export const usePickingActions = ({
 
     // 2️⃣ TAHAP KEDUA + FINAL: Upload File DO Subdist lalu Ship Confirm Subdist
     const handleShipConfirmSubdistFlow = async (data: OutboundDo) => {
+        if (!requireSealNumber(data)) return;
+
         try {
             const doDetail = await getLatestDoDetail(data.id);
             if (!doDetail) {
@@ -408,8 +424,10 @@ export const usePickingActions = ({
         }
     };
 
-    // --- AMO INTERNAL HANDLER ---
+    // --- AMO INTERNAL HANDLER (setelah Seal Number terisi) ---
     const handleShipConfirmInternalAMO = async (data: OutboundDo) => {
+        if (!requireSealNumber(data)) return;
+
         showConfirmDialog(
             async () => {
                 try {

@@ -1,12 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ColumnDef } from "@tanstack/react-table";
 import { useSearchParams } from "react-router-dom";
-import {
-  FaBoxOpen,
-  FaCheck,
-  FaPrint,
-  FaTasks,
-} from "react-icons/fa";
+import { FaBoxOpen, FaCheck, FaEye, FaPrint, FaTasks } from "react-icons/fa";
 import StatusBadge from "../../../../common/statusBadge";
 import { STATUS_MAP_DO } from "../../../../constants/statusMaps";
 import { OutboundDo } from "../Helper/doTypes";
@@ -153,17 +148,22 @@ const AdjustTableTransactionPicking = ({
         id: "actions",
         header: "Action",
         cell: ({ row }) => {
-          const { status, outbound_type, id } = row.original;
+          const { status, outbound_type, id, seal_number } = row.original;
           const isPickReleaseDone = actions.pickReleaseStatusMap[id] === true;
+          const hasSealNumber = Boolean(seal_number?.trim());
           const canAction = ["SUPERVISOR", "MANAGER", "superadmin"].includes(
             roleName || "",
           );
           if (!canAction) return null;
 
+          // Step wajib: Print Surat Jalan → input Seal Number (modal)
+          // Setelah seal ada:
+          //   AMO     → Ship Confirm AMO
+          //   SUBDIST → Pick Release → Ship Confirm Subdist
           const actionList = [
             {
               label: "Detail Picking",
-              icon: FaTasks,
+              icon: FaEye,
               onClick: () => actions.handleAdjust(row.original),
               visible: status !== "PENDING" && status !== "COMPLETED",
             },
@@ -178,27 +178,32 @@ const AdjustTableTransactionPicking = ({
               icon: FaCheck,
               onClick: () => actions.handleShipConfirmInternalAMO(row.original),
               visible: status === "APPROVED_LOAD" && outbound_type === "AMO",
-              className: "text-emerald-600",
+              disabled: !hasSealNumber,
+              className: hasSealNumber ? "text-emerald-600" : "text-slate-400",
             },
             {
               label: "Pick Release",
               icon: FaBoxOpen,
               onClick: () => actions.handlePickRelease(row.original),
-              visible: outbound_type === "SUBDIST" && status === "APPROVED",
-              disabled: isPickReleaseDone,
-              className: isPickReleaseDone
-                ? "text-slate-400"
-                : "text-indigo-600",
+              visible:
+                outbound_type === "SUBDIST" && status === "APPROVED_LOAD",
+              disabled: !hasSealNumber || isPickReleaseDone,
+              className:
+                hasSealNumber && !isPickReleaseDone
+                  ? "text-indigo-600"
+                  : "text-slate-400",
             },
             {
               label: "Ship Confirm Subdist",
               icon: FaCheck,
               onClick: () => actions.handleShipConfirmSubdistFlow(row.original),
-              visible: outbound_type === "SUBDIST" && status === "APPROVED",
-              disabled: !isPickReleaseDone,
-              className: isPickReleaseDone
-                ? "text-emerald-600"
-                : "text-slate-400",
+              visible:
+                outbound_type === "SUBDIST" && status === "APPROVED_LOAD",
+              disabled: !hasSealNumber || !isPickReleaseDone,
+              className:
+                hasSealNumber && isPickReleaseDone
+                  ? "text-emerald-600"
+                  : "text-slate-400",
             },
           ].filter((a) => a.visible);
 
