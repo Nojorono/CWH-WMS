@@ -14,12 +14,13 @@ export type InventoryVisibilityPalletDetail = {
     warehouse_sub_id: string;
     warehouse_sub_name: string;
     warehouse_sub_code: string;
-    warehouse_bin_id: string | null;
-    warehouse_bin_name: string | null;
-    warehouse_bin_code: string | null;
+    warehouse_bin_id: string | null; // Sudah benar
+    warehouse_bin_name: string | null; // Sudah benar
+    warehouse_bin_code: string | null; // Sudah benar
     quantity: number;
     week_number: number;
     production_date: string;
+    uom?: string;
 };
 
 export type InventoryVisibilityBookingDetail = {
@@ -33,9 +34,10 @@ export type InventoryVisibilityBookingDetail = {
     source_warehouse_sub_id: string;
     source_warehouse_sub_name: string;
     source_warehouse_sub_code: string;
-    source_bin_id: string;
-    source_bin_name: string;
-    source_bin_code: string;
+    source_bin_id: string | null;   
+    source_bin_name: string | null; 
+    source_bin_code: string | null; 
+    uom?: string;
 };
 
 export type InventoryVisibilityItem = {
@@ -58,7 +60,17 @@ export type InventoryVisibilityItem = {
     has_pending_booking: boolean;
 };
 
+// Existing type utama kamu
 export type InventoryVisibilityResponse = {
     summary: InventoryVisibilitySummary;
     items: InventoryVisibilityItem[];
+};
+
+// TAMBAHAN: Wrapper response dari API (opsional, tapi sangat disarankan)
+export type ApiResponse<T> = {
+    success: boolean;
+    message: string;
+    data: T;
+    timestamp: string;
+    path: string;
 };
