@@ -33,16 +33,15 @@ const AdjustTable = ({
   const [pageIndex, setPageIndex] = useState(0);
   const [pageSize, setPageSize] = useState(25);
 
-  // 🔹 Fetch data setiap kali pagination / search berubah
+  // 🔹 Fetch data dari server (tanpa search server-side)
   useEffect(() => {
     if (!fetchUsingPagination) return;
     fetchUsingPagination({
       page: pageIndex + 1, // jika backend 1-based
       limit: pageSize,
-      search: globalFilter || "",
       status: filteredStatus || "",
     });
-  }, [fetchUsingPagination, pageIndex, pageSize, globalFilter, filteredStatus]);
+  }, [fetchUsingPagination, pageIndex, pageSize, filteredStatus]);
 
   const handleDetail = (data: MappedData) => {
     navigate("/putaway/process", {
@@ -59,6 +58,7 @@ const AdjustTable = ({
   const handleDelete = async (id: any) => {
     await deleteData(id);
   };
+  
 
   // ✅ Updated columns to reflect full mapped structure
   const columns: ColumnDef<MappedData>[] = useMemo(() => {
@@ -79,8 +79,8 @@ const AdjustTable = ({
       },
       { accessorKey: "destinationBinCode", header: "Destination Bin" },
       { accessorKey: "totalSku", header: "Total SKU" },
-      { accessorKey: "totalQty", header: "Total Qty" },
-      { accessorKey: "quantity", header: "Quantity" },
+      { accessorKey: "totalQty", header: "Current Qty Pallet" },
+      { accessorKey: "quantity", header: "Qty Put Away" },
 
       { accessorKey: "palletItemUom", header: "UOM" },
       { accessorKey: "driverName", header: "Forklift Driver" },
