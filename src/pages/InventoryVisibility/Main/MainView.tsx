@@ -364,8 +364,11 @@ const InventoryVisibility: React.FC = () => {
 
                                 (row.original.booking_details || []).forEach(
                                   (book) => {
+                                    // UOM ada di level item; fallback ke book.uom jika API kirim
                                     const bookUom =
-                                      book.uom || row.original.uom || "";
+                                      row.original.uom ||
+                                      (book as { uom?: string | null }).uom ||
+                                      "";
                                     const key = `${bookUom}_${book.week_number}`;
                                     bookingPool[key] =
                                       (bookingPool[key] || 0) +
@@ -377,7 +380,9 @@ const InventoryVisibility: React.FC = () => {
                                 return row.original.pallet_details.map(
                                   (plt, idx) => {
                                     const palletUom =
-                                      plt.uom || row.original.uom || "";
+                                      row.original.uom ||
+                                      (plt as { uom?: string | null }).uom ||
+                                      "";
                                     const poolKey = `${palletUom}_${plt.week_number}`;
                                     const totalBookedForThisMatch =
                                       bookingPool[poolKey] || 0;

@@ -129,6 +129,7 @@ export function mapDetailToFormValues(detail: any): FormValues {
                         item_name: item.item?.description || "",
                         description: item.item?.description || "",
                         qty: item.quantity || 0,
+                        qty_plan: item.quantity || 0,
                         quantity_inspection: item.quantity_inspection || 0,
                         uom: item.uom || "",
                         classification: item.classification || item.classification_id || "",

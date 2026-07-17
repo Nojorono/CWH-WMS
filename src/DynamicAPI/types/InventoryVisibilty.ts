@@ -20,7 +20,7 @@ export type InventoryVisibilityPalletDetail = {
     quantity: number;
     week_number: number;
     production_date: string;
-    uom?: string;
+    uom?: string | null;
 };
 
 export type InventoryVisibilityBookingDetail = {
@@ -31,13 +31,13 @@ export type InventoryVisibilityBookingDetail = {
     memo_number: string;
     quantity: number;
     week_number: number;
+    uom?: string | null;
     source_warehouse_sub_id: string;
     source_warehouse_sub_name: string;
     source_warehouse_sub_code: string;
-    source_bin_id: string | null;   
-    source_bin_name: string | null; 
-    source_bin_code: string | null; 
-    uom?: string;
+    source_bin_id: string | null;
+    source_bin_name: string | null;
+    source_bin_code: string | null;
 };
 
 export type InventoryVisibilityItem = {

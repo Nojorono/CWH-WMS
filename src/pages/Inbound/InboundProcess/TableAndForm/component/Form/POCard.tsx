@@ -64,6 +64,16 @@ export default function POCard({
 
   const doNo = useWatch({ control, name: `deliveryOrders.${doIndex}.do_no` });
 
+  const poNoWatch = useWatch({
+    control,
+    name: `deliveryOrders.${doIndex}.pos.${posIndex}.po_no` as any,
+  });
+
+  const soNoWatch = useWatch({
+    control,
+    name: `deliveryOrders.${doIndex}.pos.${posIndex}.so_no` as any,
+  });
+
   const principalWatch = useWatch({
     control,
     name: `deliveryOrders.${doIndex}.pos.${posIndex}.principal` as any,
@@ -78,6 +88,16 @@ export default function POCard({
     typeof InbType === "object" ? (InbType as any)?.value : InbType;
 
   const resolvedMode = isDetailMode ? "detail" : isEditMode ? "edit" : "create";
+
+  const hasPoOrSoNumber = Boolean(
+    String(
+      normalizedInbType === "PO" ? poNoWatch || "" : soNoWatch || "",
+    ).trim(),
+  );
+
+  // Jika nomor PO/SO ada dan item sudah ter-mapping dari fetch, blokir input manual
+  const cantAddManualAddItem =
+    hasPoOrSoNumber && itemFields.length > 0;
 
   useEffect(() => {
     fetchAll();
@@ -152,6 +172,7 @@ export default function POCard({
         setValue(`${path}.po_date` as any, isoDate);
       }
       setValue(`${path}.total_line_items` as any, items.length);
+      // Replace penuh dari API (qty & qty_plan ikut ter-reset)
       replaceItems(items);
     } catch (err: any) {
       replaceItems([]);
@@ -188,6 +209,7 @@ export default function POCard({
         );
       }
 
+      // Replace penuh dari API (qty & qty_plan ikut ter-reset)
       replaceItems(items);
     } catch (err: any) {
       replaceItems([]);
@@ -212,7 +234,7 @@ export default function POCard({
         {/* Input PO/SO */}
         <div>
           <label className="block text-xs text-slate-600 mb-1">
-            Nomor
+            Nomor{" "}
             {normalizedInbType === "PO"
               ? "PO"
               : normalizedInbType === "SO_INTERNAL"
@@ -318,9 +340,14 @@ export default function POCard({
                 variant="secondary"
                 size="xsm"
                 onClick={() => setIsOpen(true)}
-                // disabled={cantAddManualAddItem}
+                disabled={cantAddManualAddItem}
+                title={
+                  cantAddManualAddItem
+                    ? "Item sudah terisi dari PO/SO. Hapus nomor atau item terlebih dahulu untuk input manual."
+                    : "Add Manual Item"
+                }
               >
-                + Add Item
+                + Add Manual Item
               </Button>
             )}
 

@@ -35,7 +35,7 @@ export default function ItemTable({
   uomList,
   inbType,
 }: ItemTableProps) {
-  const { register } = useFormContext<FormValues>();
+  const { register, setValue, getValues } = useFormContext<FormValues>();
 
   // Logic: Cek apakah kolom Qty Inspection perlu muncul (biasanya untuk mode Edit/Detail tertentu)
   const showQtyInspection = useMemo(
@@ -98,15 +98,59 @@ export default function ItemTable({
         header: () => <div className="text-right pr-2">Qty Plan</div>,
         cell: ({ row }: CellContext<ItemForm, unknown>) => {
           const rowIndex = row.index;
+          const basePath =
+            `deliveryOrders.${doIndex}.pos.${posIndex}.items.${rowIndex}` as const;
+          // Batas max dari qty_plan (stabil), jangan dari qty yang sedang diketik
+          const qtyPlan = Number(
+            getValues(`${basePath}.qty_plan`) ??
+              row.original.qty_plan ??
+              0,
+          );
+          // Key dari field-array id agar input remount saat replaceItems (fetch PO/SO)
+          const fieldKey = (row.original as any).id ?? rowIndex;
+
           return isEditMode ? (
             <div className="flex justify-end">
               <input
+                type="hidden"
+                {...register(`${basePath}.qty_plan`, { valueAsNumber: true })}
+              />
+              <input
+                key={`${basePath}-qty-${fieldKey}`}
                 type="number"
+                min={0}
+                max={qtyPlan > 0 ? qtyPlan : undefined}
                 className="h-9 w-24 rounded-md border border-slate-200 bg-white px-3 py-1 text-right text-sm shadow-sm transition-all focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none hover:border-slate-300"
-                {...register(
-                  `deliveryOrders.${doIndex}.pos.${posIndex}.items.${rowIndex}.qty`,
-                  { valueAsNumber: true },
-                )}
+                {...register(`${basePath}.qty`, {
+                  valueAsNumber: true,
+                  onBlur: (e) => {
+                    const raw = e.target.value;
+                    if (raw === "") {
+                      setValue(`${basePath}.qty`, 0, {
+                        shouldDirty: true,
+                        shouldValidate: true,
+                      });
+                      return;
+                    }
+
+                    const num = Number(raw);
+                    if (Number.isNaN(num) || num < 0) {
+                      setValue(`${basePath}.qty`, 0, {
+                        shouldDirty: true,
+                        shouldValidate: true,
+                      });
+                      return;
+                    }
+
+                    // Clamp hanya saat blur, agar ketikan multi-digit tetap smooth
+                    if (qtyPlan > 0 && num > qtyPlan) {
+                      setValue(`${basePath}.qty`, qtyPlan, {
+                        shouldDirty: true,
+                        shouldValidate: true,
+                      });
+                    }
+                  },
+                })}
               />
             </div>
           ) : (
@@ -219,6 +263,8 @@ export default function ItemTable({
       posIndex,
       isEditMode,
       register,
+      setValue,
+      getValues,
       removeItem,
       uomList,
       showQtyInspection,
