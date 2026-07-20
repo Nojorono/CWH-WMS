@@ -24,6 +24,7 @@ interface DataTableProps {
     locatorId?: Number;
     locatorName?: String;
     BINcapacity?: Number;
+    isStaging?: any;
   };
 }
 
@@ -76,7 +77,7 @@ const DataTable: React.FC<DataTableProps> = ({ params }) => {
     ],
     [subWHList],
   );
-
+  
   const formFields = [
     {
       name: "name",
@@ -100,7 +101,7 @@ const DataTable: React.FC<DataTableProps> = ({ params }) => {
       name: "capacity_pallet",
       label: "Kapasitas Pallet",
       type: "number",
-      hiddenWhen: () => params?.zoneCode === "PRELOAD",
+      hiddenWhen: () => params?.isStaging === "OUTBOUND",
     },
   ];
 
@@ -217,9 +218,6 @@ const DataTable: React.FC<DataTableProps> = ({ params }) => {
     }
     return binList;
   }, [binList, params?.zoneId]);
-
-  console.log("filteredBinList", filteredBinList);
-
 
   return (
     <>

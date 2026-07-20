@@ -478,7 +478,7 @@ const InventoryVisibility: React.FC = () => {
                                             )}
 
                                             <p className="text-[10px] bg-blue-50 text-blue-600 border border-blue-100 px-1.5 py-0.5 rounded font-mono font-bold inline-block mt-1">
-                                              Wk {plt.week_number}
+                                              WK {plt.week_number}
                                             </p>
                                           </div>
                                         </div>

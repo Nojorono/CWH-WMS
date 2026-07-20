@@ -7,7 +7,6 @@ import { STATUS_MAP_DO } from "../../../../constants/statusMaps";
 import { useStoreOutboundDeliveryOrder } from "../../../../DynamicAPI/stores/Store/MasterStore";
 import Swal from "sweetalert2";
 import { showErrorToast, showSuccessToast } from "../../../../components/toast";
-import { EndPoint } from "../../../../utils/EndPoint";
 import TableComponent from "../../../../components/tables/ActionTable/TableComponent";
 import ActIndicator from "../../../../components/ui/activityIndicator";
 import { usePersistAuthStore } from "../../../../API/store/AuthStore/PersistAuthStore";
@@ -51,6 +50,42 @@ type MenuTableProps = {
   onRefresh?: () => void;
   filteredStatus?: any;
   filteredTypeOutbound?: any;
+  filteredDoNumber?: string;
+  filteredDestination?: string;
+};
+
+const matchesDoSearch = (item: any, filter: string) => {
+  const query = filter.trim().toLowerCase();
+  if (!query) return true;
+
+  const memoTexts = (item.outbound_memos || []).flatMap((memo: any) => [
+    memo.outbound_memo_number,
+    memo.destination,
+    memo.ship_to,
+    memo.origin,
+    memo.requestor,
+    ...(memo.assigned_pickings || []).map((p: any) => p.picking_name),
+    ...(memo.outbound_memo_items || []).flatMap((mi: any) => [
+      mi.item?.sku,
+      mi.item?.item_number,
+      mi.item?.description,
+    ]),
+  ]);
+
+  const searchable = [
+    item.outbound_do_number,
+    item.origin,
+    item.outbound_type,
+    item.status,
+    item.seal_number,
+    item.license_plate,
+    item.driver_name,
+    ...memoTexts,
+  ];
+
+  return searchable.some(
+    (value) => value != null && String(value).toLowerCase().includes(query),
+  );
 };
 
 const AdjustTableDO = ({
@@ -58,6 +93,8 @@ const AdjustTableDO = ({
   setGlobalFilter,
   filteredStatus,
   filteredTypeOutbound,
+  filteredDoNumber,
+  filteredDestination,
 }: MenuTableProps) => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -73,7 +110,6 @@ const AdjustTableDO = ({
   // 🔹 Ref untuk deteksi Initial Mount dan Perubahan Filter
   const isInitialMount = useRef(true);
   const prevFiltersRef = useRef({
-    globalFilter,
     filteredStatus,
     filteredTypeOutbound,
   });
@@ -97,13 +133,11 @@ const AdjustTableDO = ({
     }
 
     const hasFilterChanged =
-      prevFiltersRef.current.globalFilter !== globalFilter ||
       prevFiltersRef.current.filteredStatus !== filteredStatus ||
       prevFiltersRef.current.filteredTypeOutbound !== filteredTypeOutbound;
 
     if (hasFilterChanged) {
       prevFiltersRef.current = {
-        globalFilter,
         filteredStatus,
         filteredTypeOutbound,
       };
@@ -114,23 +148,21 @@ const AdjustTableDO = ({
       setSearchParams(newParams, { replace: true });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [globalFilter, filteredStatus, filteredTypeOutbound]);
+  }, [filteredStatus, filteredTypeOutbound]);
 
-  // 🔹 Fetch data menggunakan nilai dari URL (currentPage)
+  // 🔹 Fetch data (status & type server-side; search/origin/destination client-side)
   useEffect(() => {
     if (!fetchUsingPagination) return;
     fetchUsingPagination({
-      page: currentPage, // Gunakan currentPage dari URL
+      page: currentPage,
       limit: pageSize,
-      search: globalFilter || "",
       status: filteredStatus || "",
       outbound_type: filteredTypeOutbound || "",
     });
   }, [
     fetchUsingPagination,
-    currentPage, // 🔹 Trigger fetch saat URL param 'page' berubah
+    currentPage,
     pageSize,
-    globalFilter,
     filteredStatus,
     filteredTypeOutbound,
   ]);
@@ -172,8 +204,8 @@ const AdjustTableDO = ({
       fetchUsingPagination({
         page: currentPage,
         limit: pageSize,
-        search: globalFilter || "",
         status: filteredStatus || "",
+        outbound_type: filteredTypeOutbound || "",
       });
     }
   } catch (err: any) {
@@ -561,7 +593,29 @@ const AdjustTableDO = ({
     [roleName, currentPage, pageSize],
   );
 
-  const mappedList = (list || []).map((item: any, index: number) => ({
+  const filteredList = useMemo(() => {
+    return (list || []).filter((item: any) => {
+      if (
+        filteredDoNumber &&
+        item.outbound_do_number !== filteredDoNumber
+      ) {
+        return false;
+      }
+
+      if (filteredDestination) {
+        const hasDestination = (item.outbound_memos || []).some(
+          (memo: any) => memo.destination === filteredDestination,
+        );
+        if (!hasDestination) return false;
+      }
+
+      if (globalFilter && !matchesDoSearch(item, globalFilter)) return false;
+
+      return true;
+    });
+  }, [list, globalFilter, filteredDoNumber, filteredDestination]);
+
+  const mappedList = filteredList.map((item: any, index: number) => ({
     no: pageIndex * pageSize + (index + 1),
     id: item.id,
     outboundDoNumber: item.outbound_do_number || "",

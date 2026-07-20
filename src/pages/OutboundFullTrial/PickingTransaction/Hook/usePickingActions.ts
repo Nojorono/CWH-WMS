@@ -18,6 +18,7 @@ interface UsePickingActionsProps {
     pageSize: number;
     globalFilter?: string;
     filteredStatus?: any;
+    filteredTypeOutbound?: string;
     fetchUsingPagination: any;
     updateData: any;
 }
@@ -27,6 +28,7 @@ export const usePickingActions = ({
     pageSize,
     globalFilter,
     filteredStatus,
+    filteredTypeOutbound,
     fetchUsingPagination,
     updateData,
 }: UsePickingActionsProps) => {
@@ -64,6 +66,7 @@ export const usePickingActions = ({
                 limit: pageSize,
                 search: globalFilter || "",
                 status: filteredStatus || "",
+                outbound_type: filteredTypeOutbound || "",
             });
         }
     };
