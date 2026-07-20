@@ -120,6 +120,7 @@ const DetachAttach: React.FC = () => {
             onClick: () => handleDetachMemo(row.original),
             className: "text-orange-600",
             visible: statusDO === "IN_PROGRESS",
+            
           },
           {
             label: "Batalkan Task Picking",
@@ -156,17 +157,26 @@ const DetachAttach: React.FC = () => {
         params: { memoId },
       });
 
-      try {
-        await axiosInstance.patch(`outbound-do/${params.id}`, {
-          status: "PENDING",
-        });
-        
-      } catch (err) {
-        console.error(
-          "Failed to update DO status to PENDING via axiosInstance:",
-          err,
+      //cek DO dahulu jika punya memo jgn di update pending
+      const memoRemainingCount = outboundMemos.length - 1;
+
+      if (memoRemainingCount === 0) {
+        try {
+          // Hanya update status ke PENDING jika tidak ada memo sama sekali yang tersisa
+          await axiosInstance.patch(`outbound-do/${params.id}`, {
+            status: "PENDING",
+          });
+        } catch (err) {
+          console.error(
+            "Failed to update DO status to PENDING via axiosInstance:",
+            err,
+          );
+          showErrorToast("Gagal mengubah status DO menjadi PENDING");
+        }
+      } else {
+        console.log(
+          `DO masih memiliki ${memoRemainingCount} memo tersisa. Status tidak diubah ke PENDING.`,
         );
-        showErrorToast("Gagal mengubah status DO menjadi PENDING");
       }
 
       showSuccessToast(`Memo ${memoNumber} berhasil dilepas dari DO`);
