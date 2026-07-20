@@ -24,12 +24,14 @@ type Props = {
   globalFilter?: string;
   setGlobalFilter?: (value: string) => void;
   filteredStatus?: any;
+  filteredDoNumber?: string;
 };
 
 const AdjustTableTransactionPicking = ({
   globalFilter,
   setGlobalFilter,
   filteredStatus,
+  filteredDoNumber,
 }: Props) => {
   const user = usePersistAuthStore((state) => state.user);
   const roleName = user?.role?.name;
@@ -96,11 +98,21 @@ const AdjustTableTransactionPicking = ({
   ]);
 
   const mappedList: OutboundDo[] = useMemo(() => {
-    return mapPickingTransactions(list || []).map((item, index) => ({
+    const filtered = (list || []).filter((item: any) => {
+      if (
+        filteredDoNumber &&
+        item.outbound_do_number !== filteredDoNumber
+      ) {
+        return false;
+      }
+      return true;
+    });
+
+    return mapPickingTransactions(filtered).map((item, index) => ({
       ...item,
       no: pageIndex * pageSize + (index + 1),
     }));
-  }, [list, pageIndex, pageSize]);
+  }, [list, pageIndex, pageSize, filteredDoNumber]);
 
   useEffect(() => {
     if (mappedList.length === 0) return;
