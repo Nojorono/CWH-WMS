@@ -327,7 +327,7 @@ export default function DeliveryOrderCard({
               </Button>
             )}
 
-            {isDetailMode && integrationStatus !== "SUCCESS" && (
+            {isDetailMode && integrationStatus !== "SUCCESS" && integrationStatus !== "CANCELLED" && (
               <Button
                 size="xsm"
                 variant="danger"

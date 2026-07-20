@@ -5,7 +5,6 @@ import { BTBSalesmanGroup, BTBFlatItem } from '../../../../API/types/BTBdata';
 import { getBTB } from '../../../../API/services/DOsuggestionServices/getBTBservice';
 import { showErrorToast } from '../../../../components/toast';
 import dayjs from 'dayjs';
-import { log } from 'node:console';
 
 interface UseGetBTBOptions {
     enabled?: boolean;

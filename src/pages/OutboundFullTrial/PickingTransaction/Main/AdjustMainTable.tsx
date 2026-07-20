@@ -25,6 +25,7 @@ type Props = {
   setGlobalFilter?: (value: string) => void;
   filteredStatus?: any;
   filteredDoNumber?: string;
+  filteredTypeOutbound?: string;
 };
 
 const AdjustTableTransactionPicking = ({
@@ -32,6 +33,7 @@ const AdjustTableTransactionPicking = ({
   setGlobalFilter,
   filteredStatus,
   filteredDoNumber,
+  filteredTypeOutbound,
 }: Props) => {
   const user = usePersistAuthStore((state) => state.user);
   const roleName = user?.role?.name;
@@ -45,7 +47,11 @@ const AdjustTableTransactionPicking = ({
   const [pageSize, setPageSize] = useState(10);
 
   const isInitialMount = useRef(true);
-  const prevFiltersRef = useRef({ globalFilter, filteredStatus });
+  const prevFiltersRef = useRef({
+    globalFilter,
+    filteredStatus,
+    filteredTypeOutbound,
+  });
 
   // 🔹 Panggil Custom Hook Bisnis Logik
   const actions = usePickingActions({
@@ -53,6 +59,7 @@ const AdjustTableTransactionPicking = ({
     pageSize,
     globalFilter,
     filteredStatus,
+    filteredTypeOutbound,
     fetchUsingPagination,
     updateData,
   });
@@ -72,14 +79,19 @@ const AdjustTableTransactionPicking = ({
     }
     if (
       prevFiltersRef.current.globalFilter !== globalFilter ||
-      prevFiltersRef.current.filteredStatus !== filteredStatus
+      prevFiltersRef.current.filteredStatus !== filteredStatus ||
+      prevFiltersRef.current.filteredTypeOutbound !== filteredTypeOutbound
     ) {
-      prevFiltersRef.current = { globalFilter, filteredStatus };
+      prevFiltersRef.current = {
+        globalFilter,
+        filteredStatus,
+        filteredTypeOutbound,
+      };
       const newParams = new URLSearchParams(searchParams);
       newParams.set("page", "1");
       setSearchParams(newParams, { replace: true });
     }
-  }, [globalFilter, filteredStatus]);
+  }, [globalFilter, filteredStatus, filteredTypeOutbound]);
 
   useEffect(() => {
     if (!fetchUsingPagination) return;
@@ -88,6 +100,7 @@ const AdjustTableTransactionPicking = ({
       limit: pageSize,
       search: globalFilter || "",
       status: filteredStatus || "",
+      outbound_type: filteredTypeOutbound || "",
     });
   }, [
     fetchUsingPagination,
@@ -95,6 +108,7 @@ const AdjustTableTransactionPicking = ({
     pageSize,
     globalFilter,
     filteredStatus,
+    filteredTypeOutbound,
   ]);
 
   const mappedList: OutboundDo[] = useMemo(() => {
