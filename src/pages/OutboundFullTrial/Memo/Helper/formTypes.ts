@@ -52,5 +52,4 @@ export type FormValues = {
     deliveryOrders: DOForm[];
     flag_validated?: boolean;
     integration_status?: string;
-
 };
