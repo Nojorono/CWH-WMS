@@ -19,7 +19,7 @@ export interface InboundIntegration {
     vendor_site_id: string | null;
     receipt_number: string; // <-- Ini yang akan di-watch
     group_id: string;
-    status: "S" | "E" | string; 
+    status: "S" | "E" | string;
     message: string | null;
     creation_date: string;
     last_updated_date: string;
@@ -31,6 +31,8 @@ export interface InboundIntegration {
 export type ItemForm = {
     id: any;
     item_id?: any;
+    inbound_id?: string;
+    inbound_do_id?: string;
     item_name: string;
     sku: string;
     item_number?: string;
@@ -56,7 +58,7 @@ export type POSForm = {
     so_date?: string;
     items: ItemForm[];
     flag_validated?: boolean;
-    vendor_name?: string; 
+    vendor_name?: string;
     principal?: string;
     vendor_id?: number | null;
     vendor_site_id?: number | null;
@@ -67,15 +69,17 @@ export type POSForm = {
 // =============================
 export type DOForm = {
     id?: string;
+    do_id?: string;
     do_no: string;
     date?: string;
-    attachment?: string | null;
+    attachment?: string;
     pos: POSForm[];
     validation_surat_jalan?: boolean;
     flag_validated?: boolean;
-    integration_status?: string | null;
-    po_type?: string; 
-    inbound_integration?: InboundIntegration | null; 
+    integration_status?: string;
+    po_type?: string;
+    inbound_integration?: InboundIntegration;
+    add_to_receipt_number?: string;
 };
 
 // =============================
@@ -96,4 +100,9 @@ export type FormValues = {
     flag_validated?: boolean;
     status?: string;
     organization_id?: string | null;
+
+    photo_condition?: string;
+    photo_license_plate?: string;
+    photo_seal?: string;
+    notes?: string;
 };

@@ -123,6 +123,9 @@ export function mapDetailToFormValues(detail: any): FormValues {
                         "",
 
                     items: (doItem.inbound_items || []).map((item: any) => ({
+                        id: item.id || "",
+                        inbound_id: item.inbound_id || doItem.inbound_id || detail.id || "",
+                        inbound_do_id: item.inbound_do_id || doItem.id || "",
                         item_id: item.item_id || "",
                         sku: item.item?.sku || "",
                         item_number: item.item?.item_number || "",
@@ -133,6 +136,7 @@ export function mapDetailToFormValues(detail: any): FormValues {
                         quantity_inspection: item.quantity_inspection || 0,
                         uom: item.uom || "",
                         classification: item.classification || item.classification_id || "",
+                        classification_id: item.classification_id || item.classification || null,
                         expired_date: item.expired_date || null,
                         line_number: item.line_number,
                         quantity_difference: item.quantity_difference || 0,

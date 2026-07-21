@@ -41,7 +41,7 @@ const emptyFormValues: FormValues = {
 export default function InboundPlanningFormContainer() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { data: dataInbound, mode, title: formTitle } = location.state || {};
+  const { data: dataInbound, mode, title: formTitle } = location.state || {};  
 
   const isCreateMode = mode === "create";
   const isEditMode = mode === "edit";
@@ -221,7 +221,11 @@ export default function InboundPlanningFormContainer() {
 
   // SUBMIT CREATE OR UPDATE INBOUND PLANING
   const onFinalSubmit = async (data: FormValues) => {
-    let payload = mapToPayload(data);
+    
+    let payload = mapToPayload(data, {
+      includeStatus: !isEditMode,
+      isUpdate: isEditMode,
+    });
 
     // 1. Pembersihan umum untuk semua mode (Root Fields)
     const expeditionField = payload.expedition as any;
@@ -263,7 +267,7 @@ export default function InboundPlanningFormContainer() {
 
     if (isCreateMode) {      
       apiAction = () => createData(payload);
-    } else if (isEditMode && id) {
+    } else if (isEditMode && id) {      
       apiAction = () => updateData(id, payload);
     } else if (isAddToReceiveMode && id) {
       // ✅ Root level tetap membawa inbound_id_reference
