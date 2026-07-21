@@ -35,8 +35,8 @@ const mergeInboundItems = (
                 classification_id:
                     item.classification_id || item.classification || null,
                 ...(item.line_number !== null &&
-                item.line_number !== undefined &&
-                String(item.line_number).trim() !== ""
+                    item.line_number !== undefined &&
+                    String(item.line_number).trim() !== ""
                     ? { line_number: Number(item.line_number) }
                     : {}),
             };
@@ -105,7 +105,8 @@ export function mapToPayload(
             data.no_pol?.toUpperCase().replace(/\s+/g, "").trim() ?? "",
         driver_name: data.driver?.toUpperCase() ?? "",
         driver_phone: data.driver_phone ?? "",
-        ...(includeStatus ? { status: data.status || "CREATED" } : {}),
+        status: "CREATED",
+        // ...(includeStatus ? { status: data.status || "CREATED" } : {}),
         inbound_type: apiType,
         arrival_date: data.arrival_date
             ? new Date(data.arrival_date).toISOString()
