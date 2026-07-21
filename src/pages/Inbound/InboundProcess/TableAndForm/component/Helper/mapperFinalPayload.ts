@@ -111,7 +111,6 @@ export function mapToPayload(
         arrival_date: data.arrival_date
             ? new Date(data.arrival_date).toISOString()
             : "",
-
         inbound_dos: data.deliveryOrders.flatMap((DOs) =>
             DOs.pos.map((po) => {
                 const doId = DOs.do_id || DOs.id;
