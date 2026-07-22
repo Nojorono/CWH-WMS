@@ -1,9 +1,12 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
 import axiosInstance from "../../../../DynamicAPI/AxiosInstance";
 import { useStoreShipConfirmByDO } from "../../../../DynamicAPI/stores/Store/MasterStore";
-import { ShipConfirmServiceByDO } from "../../../../DynamicAPI/services/Service/MasterService";
+import {
+    IRIntegrationService,
+    ShipConfirmServiceByDO,
+} from "../../../../DynamicAPI/services/Service/MasterService";
 import { EndPoint } from "../../../../utils/EndPoint";
 import { showErrorToast, showSuccessToast } from "../../../../components/toast";
 import { showConfirmDialog } from "../../../../components/swal-confirm";
@@ -12,6 +15,9 @@ import { uploadFileDO } from "../Helper/uploadFileDO";
 import { deleteFileFromS3 } from "../Helper/deleteFileFromS3";
 import { OutboundDo } from "../Helper/doTypes";
 import { OutboundDoUI } from "../../../../DynamicAPI/types/ShipConfirmType";
+import { IRintegration } from "../../../../DynamicAPI/types/IRintegrationType";
+
+const MIN_IR_SO_LOADING_MS = 600;
 
 interface UsePickingActionsProps {
     currentPage: number;
@@ -49,6 +55,8 @@ export const usePickingActions = ({
     const [pickReleaseStatusMap, setPickReleaseStatusMap] = useState<Record<string, boolean>>({});
     const [manifestUploadedMap, setManifestUploadedMap] = useState<Record<string, boolean>>({});
     const [manifestUrlMap, setManifestUrlMap] = useState<Record<string, string>>({});
+    const [isCheckingIrSo, setIsCheckingIrSo] = useState(false);
+    const irSoCheckRequestRef = useRef(0);
 
     // 🔹 State Shipping Lines (Sudah dipindahkan ke dalam bodi hook dengan benar)
     const [shippingLines, setShippingLines] = useState<Array<{
@@ -427,27 +435,160 @@ export const usePickingActions = ({
         }
     };
 
+    const isIrSoSuccess = (item: IRintegration) => {
+        const statusOk =
+            item.iface_status_ir === "S" || item.iface_status_ir === "SUCCESS";
+        const hasIr = Boolean(item.ir_number?.trim());
+        const hasSo = Boolean(item.so_number?.trim());
+        return statusOk && hasIr && hasSo;
+    };
+
+    const checkIrSoStatusByOutboundDo = async (outboundDoId: string) => {
+        let related: IRintegration[] = [];
+
+        try {
+            const byParam = await IRIntegrationService.fetchUsingParam({
+                outbound_do_id: outboundDoId,
+            });
+            related = (byParam || []).filter(
+                (item) => item.outbound_do_id === outboundDoId,
+            );
+        } catch {
+            related = [];
+        }
+
+        // Fallback: fetch all lalu filter by outbound_do_id
+        if (related.length === 0) {
+            const all = await IRIntegrationService.fetchAll();
+            related = (all || []).filter(
+                (item) => item.outbound_do_id === outboundDoId,
+            );
+        }
+
+        return {
+            related,
+            isReady:
+                related.length > 0 && related.every((item) => isIrSoSuccess(item)),
+        };
+    };
+
     // --- AMO INTERNAL HANDLER (setelah Seal Number terisi) ---
     const handleShipConfirmInternalAMO = async (data: OutboundDo) => {
         if (!requireSealNumber(data)) return;
 
-        showConfirmDialog(
-            async () => {
-                try {
-                    await axiosInstance.post(`${EndPoint}outbound-do/ship-confirm-internal/${data.id}`);
-                    showSuccessToast("Ship confirm internal berhasil!");
-                    refreshTable();
-                } catch (error: any) {
-                    showErrorToast(error.response?.data?.message || "Gagal Ship-confirm");
-                }
-            },
-            {
-                title: "Confirm Ship Confirm AMO",
-                text: `Apakah anda yakin ingin melakukan Ship Confirm AMO untuk ${data.outbound_do_number}?`,
-                confirmButtonText: "Ya!",
-                cancelButtonText: "Tidak",
-            },
-        );
+        const requestId = ++irSoCheckRequestRef.current;
+        const startedAt = Date.now();
+        setIsCheckingIrSo(true);
+
+        try {
+            const { related, isReady } = await checkIrSoStatusByOutboundDo(
+                data.id,
+            );
+
+            // Pastikan spinner tampil cukup lama agar UI tidak jumping
+            const elapsed = Date.now() - startedAt;
+            if (elapsed < MIN_IR_SO_LOADING_MS) {
+                await new Promise((resolve) =>
+                    setTimeout(resolve, MIN_IR_SO_LOADING_MS - elapsed),
+                );
+            }
+
+            // Abaikan hasil lama jika user sudah trigger baris lain
+            if (requestId !== irSoCheckRequestRef.current) return;
+
+            setIsCheckingIrSo(false);
+
+            if (!related.length) {
+                await Swal.fire({
+                    icon: "warning",
+                    title: "IR/SO Belum Ada",
+                    html: `
+                        <p>DO <b>${data.outbound_do_number}</b> belum memiliki data IR/SO Integration.</p>
+                        <p class="mt-2 text-sm text-slate-600">Silakan proses IR/SO terlebih dahulu sebelum Ship Confirm AMO.</p>
+                    `,
+                    confirmButtonText: "Mengerti",
+                    confirmButtonColor: "#3085d6",
+                });
+                return;
+            }
+
+            if (!isReady) {
+                const detailHtml = related
+                    .map((item, index) => {
+                        const irStatus = item.iface_status_ir || "-";
+                        const irNumber = item.ir_number || "-";
+                        const soNumber = item.so_number || "-";
+                        const message = item.iface_message_ir || "-";
+                        return `
+                            <div style="text-align:left;margin-top:8px;padding:8px;border:1px solid #e2e8f0;border-radius:8px;">
+                                <div><b>#${index + 1}</b></div>
+                                <div>IR Number: <b>${irNumber}</b></div>
+                                <div>SO Number: <b>${soNumber}</b></div>
+                                <div>IR Status: <b>${irStatus}</b></div>
+                                <div>Message: ${message}</div>
+                            </div>
+                        `;
+                    })
+                    .join("");
+
+                await Swal.fire({
+                    icon: "warning",
+                    title: "IR/SO Belum Success",
+                    html: `
+                        <p>DO <b>${data.outbound_do_number}</b> sudah punya data IR/SO, tetapi belum seluruhnya success.</p>
+                        <p class="mt-1 text-sm text-slate-600">Syarat lanjut: IR Number & SO Number tersedia, dan status IR = S/SUCCESS.</p>
+                        ${detailHtml}
+                    `,
+                    confirmButtonText: "Mengerti",
+                    confirmButtonColor: "#3085d6",
+                });
+                return;
+            }
+
+            const summaryText = related
+                .map(
+                    (item, index) =>
+                        `#${index + 1} IR: ${item.ir_number || "-"} | SO: ${item.so_number || "-"}`,
+                )
+                .join("\n");
+
+            showConfirmDialog(
+                async () => {
+                    try {
+                        await axiosInstance.post(
+                            `${EndPoint}outbound-do/ship-confirm-internal/${data.id}`,
+                        );
+                        showSuccessToast("Ship confirm internal berhasil!");
+                        refreshTable();
+                    } catch (error: any) {
+                        showErrorToast(
+                            error.response?.data?.message || "Gagal Ship-confirm",
+                        );
+                    }
+                },
+                {
+                    title: "Ship Confirm AMO",
+                    text: `IR/SO sudah SUCCESS.\n${summaryText}\n\nLanjutkan Ship Confirm AMO untuk ${data.outbound_do_number}?`,
+                    confirmButtonText: "Ya, Ship Confirm!",
+                    cancelButtonText: "Tidak",
+                },
+            );
+        } catch (error: any) {
+            if (requestId !== irSoCheckRequestRef.current) return;
+            setIsCheckingIrSo(false);
+            await Swal.fire({
+                icon: "error",
+                title: "Gagal Cek IR/SO",
+                text:
+                    error?.message ||
+                    "Tidak bisa memvalidasi status IR/SO. Coba lagi.",
+                confirmButtonColor: "#d33",
+            });
+        } finally {
+            if (requestId === irSoCheckRequestRef.current) {
+                setIsCheckingIrSo(false);
+            }
+        }
     };
 
     return {
@@ -469,6 +610,7 @@ export const usePickingActions = ({
         handleShipConfirmInternalAMO,
         pickReleaseStatusMap,
         syncPickReleaseStatuses,
+        isCheckingIrSo,
 
         showQtyModal,
         handleCloseShipConfirmQtyModal,

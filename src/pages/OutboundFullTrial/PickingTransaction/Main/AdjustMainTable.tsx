@@ -17,6 +17,7 @@ import {
   SealModal,
   ShipConfirmQtyModal,
   UploadModal,
+  IrSoCheckingOverlay,
 } from "../components";
 import { usePickingActions } from "../Hook/usePickingActions";
 
@@ -184,7 +185,7 @@ const AdjustTableTransactionPicking = ({
 
           // Step wajib: Print Surat Jalan → input Seal Number (modal)
           // Setelah seal ada:
-          //   AMO     → Ship Confirm AMO
+          //   AMO     → IR/SO -> Ship Confirm AMO
           //   SUBDIST → Pick Release → Ship Confirm Subdist
           const actionList = [
             {
@@ -241,8 +242,10 @@ const AdjustTableTransactionPicking = ({
   );
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-4 relative">
       {isLoading && <ActIndicator />}
+
+      <IrSoCheckingOverlay isOpen={actions.isCheckingIrSo} />
 
       <TableComponent
         data={mappedList}
