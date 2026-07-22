@@ -194,7 +194,7 @@ const MemoCell = ({
   outboundDoStatus,
   sealNumber,
 }: MemoCellProps) => {
-  const [openMemoId, setOpenMemoId] = useState<string | null>(null);
+  const [openMemoIds, setOpenMemoIds] = useState<Set<string>>(() => new Set());
   const isAmo = outboundType === "AMO" && Boolean(outboundDoId);
   const hasSealNumber = Boolean(sealNumber?.trim());
   const canPoll =
@@ -210,9 +210,21 @@ const MemoCell = ({
   const isPolling = outboundDoId ? loadingMap[outboundDoId] : false;
   const pollError = outboundDoId ? errorMap[outboundDoId] : null;
 
+  const activeMemos = memos.filter((memo) => memo.status !== "CANCELLED");
+
   const handlePoll = () => {
     if (!outboundDoId) return;
+    setOpenMemoIds(new Set(activeMemos.map((memo) => memo.id)));
     pollByOutboundDoId(outboundDoId);
+  };
+
+  const toggleMemoOpen = (memoId: string) => {
+    setOpenMemoIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(memoId)) next.delete(memoId);
+      else next.add(memoId);
+      return next;
+    });
   };
 
   if (!memos || memos.length === 0) {
@@ -249,10 +261,8 @@ const MemoCell = ({
         </div>
       )}
 
-      {memos
-        .filter((memo) => memo.status !== "CANCELLED")
-        .map((memo) => {
-          const isOpen = openMemoId === memo.id;
+      {activeMemos.map((memo) => {
+          const isOpen = openMemoIds.has(memo.id);
           const memoItems = memo.outbound_memo_items || [];
 
           return (
@@ -265,7 +275,7 @@ const MemoCell = ({
               }`}
             >
               <div
-                onClick={() => setOpenMemoId(isOpen ? null : memo.id)}
+                onClick={() => toggleMemoOpen(memo.id)}
                 className={`p-4 cursor-pointer flex items-center justify-between gap-4 ${
                   isOpen ? "bg-blue-50/50" : "bg-white hover:bg-slate-50"
                 }`}
