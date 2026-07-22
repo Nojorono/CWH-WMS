@@ -138,10 +138,9 @@ export const mapShipConfirmLogList = (flatData: any[]): OutboundDoUI[] => {
     return {
       ...doItem,
       outbound_memos: memosArray,
-      // Pasang hasil kalkulasi ke root object DO
       computed_status: finalStatus,
       computed_req_id: finalReqId,
       computed_error_message: errorMessage,
-    } as any; // Cast ke any atau perluas Interface OutboundDoUI Anda
+    } as any; 
   });
 };

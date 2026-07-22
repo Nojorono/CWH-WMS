@@ -131,11 +131,20 @@ const AdjustTable = ({ globalFilter, setGlobalFilter, filteredIO }: any) => {
         ),
       },
       {
-        header: "Inbound Integration Date",
-        accessorKey: "creation_date",
+        header: "Created Date",
+        accessorKey: "createdAt",
         cell: ({ row }) => (
           <div className="text-[11px] text-slate-600 font-semibold">
-            {formatDateTimeIndo(row.original.creation_date)}
+            {formatDateTimeIndo(row.original.createdAt)}
+          </div>
+        ),
+      },
+      {
+        header: "Updated Date",
+        accessorKey: "updatedAt",
+        cell: ({ row }) => (
+          <div className="text-[11px] text-slate-600 font-semibold">
+            {formatDateTimeIndo(row.original.updatedAt)}
           </div>
         ),
       },

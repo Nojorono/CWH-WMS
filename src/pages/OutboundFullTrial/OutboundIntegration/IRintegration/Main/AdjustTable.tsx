@@ -145,12 +145,26 @@ const OutboundAdjustTable = ({
         ),
       },
       {
-        header: "Integration Date",
-        accessorKey: "creation_date",
+        header: "Created Date",
+        accessorKey: "createdAt",
         cell: ({ row }) => (
           <div className="flex flex-col">
             <span className="text-[11px] text-slate-700 font-semibold">
-              {formatDateTimeIndo(row.original.creation_date)}
+              {formatDateTimeIndo(row.original.createdAt)}
+            </span>
+            <span className="text-[10px] text-slate-400 font-mono mt-0.5">
+              Batch: {row.original.batch_number}
+            </span>
+          </div>
+        ),
+      },
+      {
+        header: "Updated Date",
+        accessorKey: "updatedAt",
+        cell: ({ row }) => (
+          <div className="flex flex-col">
+            <span className="text-[11px] text-slate-700 font-semibold">
+              {formatDateTimeIndo(row.original.updatedAt)}
             </span>
             <span className="text-[10px] text-slate-400 font-mono mt-0.5">
               Batch: {row.original.batch_number}
