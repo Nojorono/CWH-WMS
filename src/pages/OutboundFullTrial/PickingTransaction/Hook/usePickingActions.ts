@@ -16,6 +16,7 @@ import { deleteFileFromS3 } from "../Helper/deleteFileFromS3";
 import { OutboundDo } from "../Helper/doTypes";
 import { OutboundDoUI } from "../../../../DynamicAPI/types/ShipConfirmType";
 import { IRintegration } from "../../../../DynamicAPI/types/IRintegrationType";
+import { fetchShipConfirmStatusByDoId } from "./useShipConfirmStatusByDo";
 
 const MIN_IR_SO_LOADING_MS = 600;
 
@@ -475,6 +476,17 @@ export const usePickingActions = ({
     // --- AMO INTERNAL HANDLER (setelah Seal Number terisi) ---
     const handleShipConfirmInternalAMO = async (data: OutboundDo) => {
         if (!requireSealNumber(data)) return;
+
+        const alreadyShipConfirmed = await fetchShipConfirmStatusByDoId(data.id);
+        if (alreadyShipConfirmed) {
+            await Swal.fire({
+                icon: "info",
+                title: "Sudah Ship Confirm",
+                text: `DO ${data.outbound_do_number} sudah berhasil Ship Confirm sebelumnya.`,
+                confirmButtonColor: "#3085d6",
+            });
+            return;
+        }
 
         const requestId = ++irSoCheckRequestRef.current;
         const startedAt = Date.now();

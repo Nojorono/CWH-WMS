@@ -20,6 +20,7 @@ import {
   IrSoCheckingOverlay,
 } from "../components";
 import { usePickingActions } from "../Hook/usePickingActions";
+import { useShipConfirmStatusByDo } from "../Hook/useShipConfirmStatusByDo";
 
 type Props = {
   globalFilter?: string;
@@ -64,6 +65,11 @@ const AdjustTableTransactionPicking = ({
     fetchUsingPagination,
     updateData,
   });
+
+  const {
+    shipConfirmStatusMap,
+    syncShipConfirmStatuses,
+  } = useShipConfirmStatusByDo();
 
   // --- EFFECT: SYNC FILTERS & PAGINATION ---
   const handlePageChange = (newPageIndex: number, newSize: number) => {
@@ -132,7 +138,8 @@ const AdjustTableTransactionPicking = ({
   useEffect(() => {
     if (mappedList.length === 0) return;
     actions.syncPickReleaseStatuses(mappedList);
-  }, [mappedList, actions.syncPickReleaseStatuses]);
+    syncShipConfirmStatuses(mappedList);
+  }, [mappedList, actions.syncPickReleaseStatuses, syncShipConfirmStatuses]);
 
   // --- COLUMNS DEFINITION ---
   const columns: ColumnDef<OutboundDo>[] = useMemo(
@@ -177,6 +184,7 @@ const AdjustTableTransactionPicking = ({
         cell: ({ row }) => {
           const { status, outbound_type, id, seal_number } = row.original;
           const isPickReleaseDone = actions.pickReleaseStatusMap[id] === true;
+          const isShipConfirmDone = shipConfirmStatusMap[id] === true;
           const hasSealNumber = Boolean(seal_number?.trim());
           const canAction = ["SUPERVISOR", "MANAGER", "superadmin"].includes(
             roleName || "",
@@ -201,12 +209,17 @@ const AdjustTableTransactionPicking = ({
               visible: status === "APPROVED_LOAD",
             },
             {
-              label: "Ship Confirm AMO",
+              label: isShipConfirmDone
+                ? "Ship Confirm AMO Done!"
+                : "Need to Ship Confirm AMO",
               icon: FaCheck,
               onClick: () => actions.handleShipConfirmInternalAMO(row.original),
               visible: status === "APPROVED_LOAD" && outbound_type === "AMO",
-              disabled: !hasSealNumber,
-              className: hasSealNumber ? "text-emerald-600" : "text-slate-400",
+              disabled: !hasSealNumber || isShipConfirmDone,
+              className:
+                hasSealNumber && !isShipConfirmDone
+                  ? "text-emerald-600"
+                  : "text-slate-400",
             },
             {
               label: "Pick Release",
@@ -238,7 +251,7 @@ const AdjustTableTransactionPicking = ({
         },
       },
     ],
-    [currentPage, pageSize, roleName, actions],
+    [currentPage, pageSize, roleName, actions, shipConfirmStatusMap],
   );
 
   return (
