@@ -121,7 +121,7 @@ export function mapToPayload(
                     principal:
                         (po as any).principal || (po as any).vendor_name || "",
                     vendor_id: (po as any).vendor_id || null,
-                    vendor_site_id: (po as any).vendor_site_id || 1,
+                    vendor_site_id: (po as any).vendor_site_id  || null,
                     total_line_items: po.items.length,
                     validation_surat_jalan:
                         (po as any).validation_surat_jalan ?? true,

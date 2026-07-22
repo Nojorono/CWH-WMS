@@ -149,7 +149,13 @@ const AdjustTableTransactionPicking = ({
         accessorKey: "outbound_memos",
         header: "Memo Number",
         cell: ({ row }) => (
-          <MemoCell memos={row.original.outbound_memos || []} />
+          <MemoCell
+            memos={row.original.outbound_memos || []}
+            outboundDoId={row.original.id}
+            outboundType={row.original.outbound_type}
+            outboundDoStatus={row.original.status}
+            sealNumber={row.original.seal_number}
+          />
         ),
       },
       { accessorKey: "outbound_type", header: "Type" },

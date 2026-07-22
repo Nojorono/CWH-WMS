@@ -1,5 +1,6 @@
 
 import { UIGateAssignedGateLoad } from "./mapOutboundGateToUILoading";
+import { gateLoadMatchesSku } from "./gateSkuHelpers";
 
 export const isMemoGateLoadComplete = (
     memo: any,
@@ -7,12 +8,14 @@ export const isMemoGateLoadComplete = (
 ) => {
     return memo.pallets.every((pallet: any) =>
         pallet.skus.every((sku: any) =>
-            assignedGateLoads.some(
-                (l) =>
-                    l.item_id === sku.item_id &&
-                    l.pallet_id === pallet.pallet_id &&
-                    l.outbound_memo_id === memo.memo_id
-            )
-        )
+            assignedGateLoads.some((l) =>
+                gateLoadMatchesSku(
+                    l,
+                    sku,
+                    pallet.pallet_id,
+                    memo.memo_id,
+                ),
+            ),
+        ),
     );
 };

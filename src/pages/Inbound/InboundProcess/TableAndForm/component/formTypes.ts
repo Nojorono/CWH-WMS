@@ -17,7 +17,7 @@ export interface InboundIntegration {
     do_number: string | null;
     vendor_id: string | null;
     vendor_site_id: string | null;
-    receipt_number: string; // <-- Ini yang akan di-watch
+    receipt_number: string; 
     group_id: string;
     status: "S" | "E" | string;
     message: string | null;

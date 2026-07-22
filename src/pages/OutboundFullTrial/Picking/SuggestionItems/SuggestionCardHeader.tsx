@@ -47,13 +47,13 @@ export const SuggestionCardHeader: React.FC<HeaderProps> = ({
   useEffect(() => {
     fetchUsingParam({
       is_staging: "OUTBOUND",
+      is_gate: false
     });
   }, [fetchUsingParam]);
 
   useEffect(() => {
     if (lsOutBound && lsOutBound.length > 0) {
       const zoneId = lsOutBound[0].id;
-
       fetchBINbyZoneId(zoneId);
     }
   }, [lsOutBound, fetchBINbyZoneId]);

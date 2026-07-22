@@ -221,6 +221,8 @@ export default function InboundPlanningFormContainer() {
 
   // SUBMIT CREATE OR UPDATE INBOUND PLANING
   const onFinalSubmit = async (data: FormValues) => {
+
+    console.log('data: ', data);
     
     let payload = mapToPayload(data, {
       includeStatus: !isEditMode,
@@ -268,9 +270,11 @@ export default function InboundPlanningFormContainer() {
     if (isCreateMode) {      
       apiAction = () => createData(payload);
     } else if (isEditMode && id) {      
+      console.log('payload update: ', payload);
+      console.log('id: ', id);
+      
       apiAction = () => updateData(id, payload);
     } else if (isAddToReceiveMode && id) {
-      // ✅ Root level tetap membawa inbound_id_reference
       const addToReceivePayload = {
         ...payload,
         inbound_id_reference: id,

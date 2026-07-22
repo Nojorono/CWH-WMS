@@ -1,28 +1,30 @@
 import { UIGateLoadingDO } from "./mapOutboundGateToUILoading";
+import { getGateSkuCompositeKey } from "./gateSkuHelpers";
 
 export function isGateLoadComplete(doData: UIGateLoadingDO): boolean {
-    // 1. semua SKU wajib
     const requiredKeys = new Set<string>();
 
     doData.memos.forEach((memo) => {
         memo.pallets.forEach((pallet) => {
             pallet.skus.forEach((sku) => {
                 requiredKeys.add(
-                    `${memo.memo_id}|${pallet.pallet_id}|${sku.item_id}`
+                    `${memo.memo_id}|${pallet.pallet_id}|${getGateSkuCompositeKey(sku)}`,
                 );
             });
         });
     });
 
-    // 2. semua SKU yang sudah diload
     const loadedKeys = new Set<string>(
         doData.assigned_gate_loads.map(
             (l) =>
-                `${l.outbound_memo_id}|${l.pallet_id}|${l.item_id}`
-        )
+                `${l.outbound_memo_id}|${l.pallet_id}|${getGateSkuCompositeKey({
+                    item_id: l.item_id,
+                    uom: l.uom,
+                    week_number: l.week_number,
+                })}`,
+        ),
     );
 
-    // 3. cek semua required ada di loaded
     for (const key of requiredKeys) {
         if (!loadedKeys.has(key)) {
             return false;

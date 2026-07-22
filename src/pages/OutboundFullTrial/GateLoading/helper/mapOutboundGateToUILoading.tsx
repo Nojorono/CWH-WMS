@@ -2,6 +2,8 @@
   UI TYPES
 ======================= */
 
+import { gateSkuMatches } from "./gateSkuHelpers";
+
 export interface UIGateLoadingDO {
   main_status: string;
   assigned_gate_id: string;
@@ -63,6 +65,7 @@ export interface UIGateAssignedGateLoad {
   quantity_loaded: number;
   status: string;
   uom: string;
+  week_number?: number | null;
 }
 
 export interface UIMemo {
@@ -228,6 +231,7 @@ export function mapOutboundGateToUILoading(
           quantity_loaded: l?.quantity_loaded ?? 0,
           status: l?.status ?? "PENDING",
           uom: l?.uom ?? "",
+          week_number: l?.week_number ?? null,
         }),
       ),
 
@@ -261,18 +265,26 @@ export function mapOutboundGateToUILoading(
               const pallet = palletMap.get(palletId)!;
 
               /* =======================
-            SKU LEVEL
+            SKU LEVEL (pisah per item + UOM + week)
           ======================= */
-              let sku = pallet.skus.find((s) => s.item_id === scan?.item_id);
+              const scanUom = scan?.uom ?? picking?.uom ?? "-";
+              const scanWeek =
+                scan?.week_number ?? picking?.week_number ?? null;
+
+              let sku = pallet.skus.find((s) =>
+                gateSkuMatches(s, {
+                  item_id: scan?.item_id ?? "",
+                  uom: scanUom,
+                  week_number: scanWeek,
+                }),
+              );
 
               if (!sku) {
                 sku = {
                   item_id: scan?.item_id ?? "",
-                  // PERBAIKAN DI SINI: Ambil dari scan.item.description
                   item_name: scan?.item?.code ?? scan?.item?.sku ?? "-",
-                  uom: scan?.uom ?? picking?.uom ?? "-",
-                  week_number:
-                    scan?.week_number ?? picking?.week_number ?? null,
+                  uom: scanUom,
+                  week_number: scanWeek,
                   production_date:
                     scan?.production_date ?? picking?.production_date ?? null,
                   pickings: [],

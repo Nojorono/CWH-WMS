@@ -43,7 +43,7 @@ const AdjustTable = ({ globalFilter, setGlobalFilter, filteredIO }: any) => {
 
       setPollingDoIds((prev) => ({ ...prev, [inboundDoId]: true }));
       try {
-        await axiosInstance.post(
+        await axiosInstance.get(
           `${EndPoint}inbound-integration/polling/inbound-do/${inboundDoId}`,
         );
         showSuccessToast("Polling status berhasil. Data sedang diperbarui.");
