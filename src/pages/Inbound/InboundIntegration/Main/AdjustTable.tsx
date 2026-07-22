@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   FaChevronDown,
   FaChevronRight,
@@ -6,6 +6,7 @@ import {
   FaBoxOpen,
   FaInfoCircle,
   FaCalendarAlt,
+  FaSync,
 } from "react-icons/fa";
 import { ColumnDef } from "@tanstack/react-table";
 import StatusBadge from "../../../../common/statusBadge";
@@ -14,6 +15,10 @@ import { useStoreInboundIntegration } from "../../../../DynamicAPI/stores/Store/
 import ActIndicator from "../../../../components/ui/activityIndicator";
 import ExpandableTableComponent from "../component/Table";
 import { formatDateTimeIndo } from "../../../../helper/FormatDateTime";
+import axiosInstance from "../../../../DynamicAPI/AxiosInstance";
+import { EndPoint } from "../../../../utils/EndPoint";
+import { showErrorToast, showSuccessToast } from "../../../../components/toast";
+import Button from "../../../../components/ui/button/Button";
 
 const AdjustTable = ({ globalFilter, setGlobalFilter, filteredIO }: any) => {
   const { fetchAll, list, pagination, isLoading } =
@@ -21,10 +26,44 @@ const AdjustTable = ({ globalFilter, setGlobalFilter, filteredIO }: any) => {
 
   const [pageIndex, setPageIndex] = useState(0);
   const [pageSize, setPageSize] = useState(25);
+  const [pollingDoIds, setPollingDoIds] = useState<Record<string, boolean>>(
+    {},
+  );
 
   useEffect(() => {
     fetchAll();
   }, [fetchAll]);
+
+  const handlePollStatus = useCallback(
+    async (inboundDoId?: string | null) => {
+      if (!inboundDoId) {
+        showErrorToast("Inbound DO ID tidak tersedia untuk polling.");
+        return;
+      }
+
+      setPollingDoIds((prev) => ({ ...prev, [inboundDoId]: true }));
+      try {
+        await axiosInstance.post(
+          `${EndPoint}inbound-integration/polling/inbound-do/${inboundDoId}`,
+        );
+        showSuccessToast("Polling status berhasil. Data sedang diperbarui.");
+        await fetchAll();
+      } catch (error: any) {
+        showErrorToast(
+          error?.response?.data?.message ||
+            error?.message ||
+            "Gagal melakukan polling status.",
+        );
+      } finally {
+        setPollingDoIds((prev) => {
+          const next = { ...prev };
+          delete next[inboundDoId];
+          return next;
+        });
+      }
+    },
+    [fetchAll],
+  );
 
   const filteredData = useMemo(() => {
     if (!list) return [];
@@ -148,8 +187,36 @@ const AdjustTable = ({ globalFilter, setGlobalFilter, filteredIO }: any) => {
           </div>
         ),
       },
+      {
+        id: "actions",
+        header: "Action",
+        cell: ({ row }) => {
+          const inboundDoId = row.original.inbound_do_id;
+          const isPolling = Boolean(inboundDoId && pollingDoIds[inboundDoId]);
+
+          return (
+            <Button
+              type="button"
+              size="xsm"
+              variant="action"
+              disabled={!inboundDoId || isPolling}
+              onClick={() => handlePollStatus(inboundDoId)}
+              startIcon={
+                <FaSync className={`size-3 ${isPolling ? "animate-spin" : ""}`} />
+              }
+              title={
+                inboundDoId
+                  ? "Poll status ke DB"
+                  : "Inbound DO ID tidak tersedia"
+              }
+            >
+              {isPolling ? "Polling..." : "Poll Status"}
+            </Button>
+          );
+        },
+      },
     ],
-    [],
+    [handlePollStatus, pollingDoIds],
   );
 
   const renderRowDetails = (row: any) => {

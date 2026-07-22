@@ -41,8 +41,9 @@ const mergeInboundItems = (
                     : {}),
             };
 
-            // Bawa id item hanya jika ada (biasanya mode update)
-            if (isValidUuid(item.id)) {
+            // Create: jangan kirim id (RHF field-array id / empty id ikut ke payload)
+            // Update: kirim id item existing jika ada
+            if (isUpdate && isValidUuid(item.id)) {
                 base.id = item.id;
             }
 
