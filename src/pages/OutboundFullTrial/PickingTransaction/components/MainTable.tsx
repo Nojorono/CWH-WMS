@@ -202,7 +202,7 @@ const MainTable = <T extends { [key: string]: any }>({
                   <Fragment key={row.id}>
                     {/* BARIS UTAMA (Master) */}
                     <tr
-                      onClick={row.getToggleExpandedHandler()} // <-- 1. TAMBAHKAN ONCLICK INI
+                      // onClick={row.getToggleExpandedHandler()} // <-- 1. TAMBAHKAN ONCLICK INI
                       className={`cursor-pointer hover:bg-orange-50/50 transition-colors group ${
                         // <-- 2. TAMBAHKAN cursor-pointer
                         row.getIsExpanded() ? "bg-orange-50/30" : ""

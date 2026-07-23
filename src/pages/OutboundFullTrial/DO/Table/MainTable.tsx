@@ -204,7 +204,7 @@ const MainTable = <T extends { [key: string]: any }>({
                   <Fragment key={row.id}>
                     {/* BARIS UTAMA (Master) */}
                     <tr
-                      onClick={row.getToggleExpandedHandler()} // <-- TAMBAHAN: Jadikan baris bisa diklik untuk expand
+                      // onClick={row.getToggleExpandedHandler()} // <-- TAMBAHAN: Jadikan baris bisa diklik untuk expand
                       className={`cursor-pointer hover:bg-orange-50/50 transition-colors group ${
                         // <-- TAMBAHAN: cursor-pointer
                         row.getIsExpanded() ? "bg-orange-50/30" : ""
