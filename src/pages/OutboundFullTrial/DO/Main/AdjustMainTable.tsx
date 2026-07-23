@@ -1,5 +1,12 @@
 import { useEffect, useMemo, useState, useRef } from "react";
-import { FaEye, FaTasks, FaTrash } from "react-icons/fa";
+// Tambahkan FaChevronRight & FaChevronDown untuk ikon Expand table
+import {
+  FaEye,
+  FaTasks,
+  FaTrash,
+  FaChevronRight,
+  FaChevronDown,
+} from "react-icons/fa";
 import { ColumnDef } from "@tanstack/react-table";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import StatusBadge from "../../../../common/statusBadge";
@@ -7,10 +14,10 @@ import { STATUS_MAP_DO } from "../../../../constants/statusMaps";
 import { useStoreOutboundDeliveryOrder } from "../../../../DynamicAPI/stores/Store/MasterStore";
 import Swal from "sweetalert2";
 import { showErrorToast, showSuccessToast } from "../../../../components/toast";
-import TableComponent from "../../../../components/tables/ActionTable/TableComponent";
 import ActIndicator from "../../../../components/ui/activityIndicator";
 import { usePersistAuthStore } from "../../../../API/store/AuthStore/PersistAuthStore";
 import axiosInstance from "../../../../DynamicAPI/AxiosInstance";
+import MainTable from "../Table/MainTable";
 
 type OutboundMemo = {
   id: string;
@@ -88,152 +95,27 @@ const matchesDoSearch = (item: any, filter: string) => {
   );
 };
 
-const AdjustTableDO = ({
-  globalFilter,
-  setGlobalFilter,
-  filteredStatus,
-  filteredTypeOutbound,
-  filteredDoNumber,
-  filteredDestination,
-}: MenuTableProps) => {
-  const navigate = useNavigate();
-  const [searchParams, setSearchParams] = useSearchParams();
-  const user = usePersistAuthStore((state) => state.user);
-  const { fetchUsingPagination, list, pagination, isLoading } =
-    useStoreOutboundDeliveryOrder();
-
-  // 🔹 Inisialisasi dari URL (agar saat Back, nilai ini tetap ada)
-  const currentPage = parseInt(searchParams.get("page") || "1");
-  const pageIndex = currentPage - 1;
-  const [pageSize, setPageSize] = useState(10);
-
-  // 🔹 Ref untuk deteksi Initial Mount dan Perubahan Filter
-  const isInitialMount = useRef(true);
-  const prevFiltersRef = useRef({
-    filteredStatus,
-    filteredTypeOutbound,
-  });
-
-  // 🔹 Handler untuk update URL ketika halaman berubah
-  const handlePageChange = (newPageIndex: number, newSize: number) => {
-    const newParams = new URLSearchParams(searchParams);
-    newParams.set("page", (newPageIndex + 1).toString());
-    setSearchParams(newParams);
-
-    if (newSize !== pageSize) {
-      setPageSize(newSize);
-    }
-  };
-
-  // 🔹 Logika Reset ke Halaman 1 HANYA jika filter diubah manual
-  useEffect(() => {
-    if (isInitialMount.current) {
-      isInitialMount.current = false;
-      return;
-    }
-
-    const hasFilterChanged =
-      prevFiltersRef.current.filteredStatus !== filteredStatus ||
-      prevFiltersRef.current.filteredTypeOutbound !== filteredTypeOutbound;
-
-    if (hasFilterChanged) {
-      prevFiltersRef.current = {
-        filteredStatus,
-        filteredTypeOutbound,
-      };
-
-      // Reset ke halaman 1 di URL
-      const newParams = new URLSearchParams(searchParams);
-      newParams.set("page", "1");
-      setSearchParams(newParams, { replace: true });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filteredStatus, filteredTypeOutbound]);
-
-  // 🔹 Fetch data (status & type server-side; search/origin/destination client-side)
-  useEffect(() => {
-    if (!fetchUsingPagination) return;
-    fetchUsingPagination({
-      page: currentPage,
-      limit: pageSize,
-      status: filteredStatus || "",
-      outbound_type: filteredTypeOutbound || "",
-    });
-  }, [
-    fetchUsingPagination,
-    currentPage,
-    pageSize,
-    filteredStatus,
-    filteredTypeOutbound,
-  ]);
-
-  const handleDetail = (id: string) => {
-    navigate("/outbound_do/detail", {
-      state: { data: id, mode: "detail", title: "Detail Memo" },
-    });
-  };
-
-  const handleAdjust = (id: string, status: string) => {
-    navigate("/outbound_do/picking_suggestion", {
-      state: {
-        data: id,
-        mode: "suggestion",
-        title: "Picking Suggestion List",
-        status,
-      },
-    });
-  };
-
-  const handleDeleteDO = async (id: string) => {
-  const confirm = await Swal.fire({
-    icon: "warning",
-    title: "Cancel DO",
-    text: `Yakin cancel DO ini ?`,
-    showCancelButton: true,
-    confirmButtonText: "Ya, batalkan",
-    cancelButtonText: "Batal",
-  });
-
-  if (!confirm.isConfirmed) return;
-
-  try {
-    await axiosInstance.patch(`outbound-do/${id}/cancel`);
-    showSuccessToast("Delivery Order berhasil dibatalkan");
-
-    if (fetchUsingPagination) {
-      fetchUsingPagination({
-        page: currentPage,
-        limit: pageSize,
-        status: filteredStatus || "",
-        outbound_type: filteredTypeOutbound || "",
-      });
-    }
-  } catch (err: any) {
-    console.error("Error canceling DO via axiosInstance:", err);
-    const errorMsg = err.response?.data?.message || err.message || "Terjadi kesalahan saat membatalkan DO";
-    showErrorToast(`Gagal cancel DO: ${errorMsg}`);
-  }
-};
-
-  const MemoCell = ({ memos }: { memos: any[] }) => {
-    const [openMemoId, setOpenMemoId] = useState<string | null>(null);
-
-    if (!memos || memos.length === 0) {
-      return (
-        <div className="p-4 border-2 border-dashed border-slate-200 rounded-lg text-center">
-          <span className="text-slate-400 italic text-xs font-medium">
-            Belum ada data memo
-          </span>
-        </div>
-      );
-    }
-
+// --- KOMPONEN MEMO CELL SEBAGAI SUB-COMPONENT (Expanded Row) ---
+const MemoCell = ({ memos }: { memos: any[] }) => {
+  if (!memos || memos.length === 0) {
     return (
-      <div className="flex flex-col gap-3 min-w-[350px]">
+      <div className="p-6 text-center">
+        <span className="text-slate-400 italic text-xs font-medium">
+          Belum ada data memo pada DO ini.
+        </span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="p-6 bg-slate-50/50 flex flex-col gap-4">
+      <h4 className="text-xs font-bold text-slate-700 border-b border-slate-200 pb-2">
+        Detail Memos & Picking Status
+      </h4>
+      <div className="flex flex-col gap-5">
         {memos
           .filter((memo) => memo.status !== "CANCELLED")
           .map((memo) => {
-            const isOpen = openMemoId === memo.id;
             const assignedUsers = memo.assigned_pickings || [];
             const isAssigned = assignedUsers.length > 0;
             const pickings = (memo.transaction_pickings || []).filter(
@@ -254,17 +136,11 @@ const AdjustTableDO = ({
             return (
               <div
                 key={memo.id}
-                className={`rounded-xl transition-all duration-300 border-2 ${isOpen ? "border-blue-500 shadow-lg" : "border-slate-200 hover:border-slate-300"}`}
+                className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden"
               >
-                {/* --- HEADER MEMO --- */}
-                <div
-                  onClick={() => setOpenMemoId(isOpen ? null : memo.id)}
-                  className={`p-4 cursor-pointer flex items-start justify-between gap-4 ${
-                    isOpen ? "bg-blue-50/50" : "bg-white hover:bg-slate-50"
-                  }`}
-                >
-                  {/* SISI KIRI: Memo Info & Helpers (Gunakan flex-grow agar mengambil ruang yang tersedia) */}
-                  <div className="flex-grow flex flex-col gap-1 overflow-hidden">
+                {/* --- HEADER MEMO (Flat, bukan accordion) --- */}
+                <div className="p-4 bg-slate-50 flex items-start justify-between gap-4 border-b border-slate-100">
+                  <div className="flex-grow flex flex-col gap-1">
                     <div className="flex flex-wrap items-center gap-2">
                       <div className="p-1.5 bg-blue-100 rounded-lg flex-shrink-0">
                         <svg
@@ -287,7 +163,6 @@ const AdjustTableDO = ({
                         {memo.outbound_memo_number}
                       </span>
 
-                      {/* INFO STATUS SKU */}
                       <div className="flex items-center gap-1.5">
                         {remainingSKU > 0 ? (
                           <span className="text-[10px] font-black bg-amber-100 text-amber-700 border border-amber-200 px-2 py-0.5 rounded-full shadow-sm whitespace-nowrap">
@@ -301,14 +176,12 @@ const AdjustTableDO = ({
                       </div>
                     </div>
 
-                    {/* HELPER LIST */}
                     <div className="flex flex-wrap items-center gap-y-2 gap-x-1.5 mt-2">
                       <div className="flex items-center gap-1 flex-shrink-0">
                         <span className="text-[9px] font-black uppercase tracking-widest text-purple-600 bg-purple-50 px-1.5 py-0.5 rounded border border-purple-100">
                           Helper
                         </span>
                       </div>
-
                       {isAssigned ? (
                         <div className="flex flex-wrap gap-1.5">
                           {assignedUsers.map((user: any, idx: number) => (
@@ -321,43 +194,29 @@ const AdjustTableDO = ({
                           ))}
                         </div>
                       ) : (
-                        <span className="text-[10px] font-bold text-red-500 bg-grey-50 px-2 py-0.5 rounded-md border border-red-100 italic">
+                        <span className="text-[10px] font-bold text-red-500 bg-red-50 px-2 py-0.5 rounded-md border border-red-100 italic">
                           ⚠️ Belum ada Helper ditugaskan
                         </span>
                       )}
                     </div>
                   </div>
 
-                  {/* SISI KANAN: Total SKU & Arrow (Gunakan flex-shrink-0 agar ukuran tetap) */}
                   <div className="flex flex-col items-end justify-start gap-3 flex-shrink-0 pt-1">
                     <span className="text-[11px] font-bold text-slate-500 bg-white border px-2.5 py-1.5 rounded-lg shadow-sm whitespace-nowrap">
-                      {totalSKU} SKU
+                      Total {totalSKU} SKU
                     </span>
-                    <svg
-                      className={`w-5 h-5 text-slate-400 transition-transform duration-300 ${isOpen ? "rotate-180" : ""}`}
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M19 9l-7 7-7-7"
-                      />
-                    </svg>
                   </div>
                 </div>
 
                 {/* --- DAFTAR BARANG (BODY) --- */}
-                {isOpen && (
-                  <div className="bg-slate-50/50 p-3 flex flex-col gap-3 border-t-2 border-slate-100">
-                    {pickings.length === 0 ? (
-                      <div className="p-6 text-center text-red-400 text-xs italic bg-white rounded-xl border border-dashed border-slate-200">
-                        Belum ada Picking Suggestion dibuat!
-                      </div>
-                    ) : (
-                      pickings.map((tp: any) => {
+                <div className="p-4 flex flex-col gap-3">
+                  {pickings.length === 0 ? (
+                    <div className="p-6 text-center text-red-400 text-xs italic bg-slate-50 rounded-xl border border-dashed border-slate-200">
+                      Belum ada Picking Suggestion dibuat!
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {pickings.map((tp: any) => {
                         const activeScans = (
                           tp.transactionScanPicking || []
                         ).filter((s: any) => s.status !== "CANCELLED");
@@ -372,7 +231,6 @@ const AdjustTableDO = ({
                                 : "bg-white border-slate-200 shadow-sm hover:border-blue-200"
                             }`}
                           >
-                            {/* Info Utama Barang */}
                             <div className="flex justify-between items-start mb-4">
                               <div className="flex flex-col gap-0.5 max-w-[65%]">
                                 <span className="text-sm font-black text-slate-900 uppercase tracking-wide">
@@ -383,10 +241,9 @@ const AdjustTableDO = ({
                                 </p>
                               </div>
 
-                              {/* Label Status */}
                               {isDone ? (
                                 <div className="flex flex-col items-end">
-                                  <span className="bg-emerald-200 text-black-200 text-[10px] px-2.5 py-1 rounded-lg font-black flex items-center gap-1 shadow-sm shadow-emerald-100">
+                                  <span className="bg-emerald-200 text-emerald-900 text-[10px] px-2.5 py-1 rounded-lg font-black flex items-center gap-1 shadow-sm shadow-emerald-100">
                                     ✅ SELESAI SCAN
                                   </span>
                                   <span className="text-[9px] text-emerald-600 font-bold mt-1.5 px-1">
@@ -402,7 +259,6 @@ const AdjustTableDO = ({
                               )}
                             </div>
 
-                            {/* Detail Lokasi & Jumlah (Section Box Samar) */}
                             <div
                               className={`grid grid-cols-2 gap-4 p-3 rounded-xl border ${
                                 isDone
@@ -410,25 +266,23 @@ const AdjustTableDO = ({
                                   : "bg-slate-50 border-slate-100"
                               }`}
                             >
-                              {/* Lokasi Gudang */}
                               <div className="flex flex-col justify-center">
                                 <span className="text-[9px] text-slate-400 font-bold uppercase tracking-widest mb-1">
                                   Zone/ Bin
                                 </span>
                                 <div className="flex items-center gap-1.5">
-                                  <span className="text-sm font-black text-slate-700">
+                                  <span className="text-sm font-black text-slate-700 line-clamp-1">
                                     {tp.sourceWarehouseSub?.name || "-"}
                                   </span>
                                   <span className="text-slate-300 text-xs">
                                     /
                                   </span>
-                                  <span className="text-sm font-black text-blue-600">
+                                  <span className="text-sm font-black text-blue-600 line-clamp-1">
                                     {tp.sourceBin?.name || "-"}
                                   </span>
                                 </div>
                               </div>
 
-                              {/* Jumlah Barang (Vertical Mode) */}
                               <div className="flex flex-col items-end gap-2 border-l border-slate-200/50 pl-4">
                                 <div className="flex flex-col items-end">
                                   <span className="text-[9px] text-slate-400 font-bold uppercase tracking-widest leading-none mb-1">
@@ -466,7 +320,6 @@ const AdjustTableDO = ({
                               </div>
                             </div>
 
-                            {/* Catatan Waktu (Audit Trail) */}
                             {isDone && (
                               <div className="mt-3 flex items-center gap-2 text-[10px] text-slate-400 bg-emerald-50/50 py-1.5 px-3 rounded-lg w-fit border border-emerald-100/50">
                                 <div className="w-1.5 h-1.5 bg-emerald-400 rounded-full shadow-sm shadow-emerald-200"></div>
@@ -494,15 +347,140 @@ const AdjustTableDO = ({
                             )}
                           </div>
                         );
-                      })
-                    )}
-                  </div>
-                )}
+                      })}
+                    </div>
+                  )}
+                </div>
               </div>
             );
           })}
       </div>
-    );
+    </div>
+  );
+};
+
+const AdjustTableDO = ({
+  globalFilter,
+  setGlobalFilter,
+  filteredStatus,
+  filteredTypeOutbound,
+  filteredDoNumber,
+  filteredDestination,
+}: MenuTableProps) => {
+  const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const user = usePersistAuthStore((state) => state.user);
+  const { fetchUsingPagination, list, pagination, isLoading } =
+    useStoreOutboundDeliveryOrder();
+
+  const currentPage = parseInt(searchParams.get("page") || "1");
+  const pageIndex = currentPage - 1;
+  const [pageSize, setPageSize] = useState(10);
+
+  const isInitialMount = useRef(true);
+  const prevFiltersRef = useRef({
+    filteredStatus,
+    filteredTypeOutbound,
+  });
+
+  const handlePageChange = (newPageIndex: number, newSize: number) => {
+    const newParams = new URLSearchParams(searchParams);
+    newParams.set("page", (newPageIndex + 1).toString());
+    setSearchParams(newParams);
+
+    if (newSize !== pageSize) {
+      setPageSize(newSize);
+    }
+  };
+
+  useEffect(() => {
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
+
+    const hasFilterChanged =
+      prevFiltersRef.current.filteredStatus !== filteredStatus ||
+      prevFiltersRef.current.filteredTypeOutbound !== filteredTypeOutbound;
+
+    if (hasFilterChanged) {
+      prevFiltersRef.current = {
+        filteredStatus,
+        filteredTypeOutbound,
+      };
+
+      const newParams = new URLSearchParams(searchParams);
+      newParams.set("page", "1");
+      setSearchParams(newParams, { replace: true });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filteredStatus, filteredTypeOutbound]);
+
+  useEffect(() => {
+    if (!fetchUsingPagination) return;
+    fetchUsingPagination({
+      page: currentPage,
+      limit: pageSize,
+      status: filteredStatus || "",
+      outbound_type: filteredTypeOutbound || "",
+    });
+  }, [
+    fetchUsingPagination,
+    currentPage,
+    pageSize,
+    filteredStatus,
+    filteredTypeOutbound,
+  ]);
+
+  const handleDetail = (id: string) => {
+    navigate("/outbound_do/detail", {
+      state: { data: id, mode: "detail", title: "Detail Memo" },
+    });
+  };
+
+  const handleAdjust = (id: string, status: string) => {
+    navigate("/outbound_do/picking_suggestion", {
+      state: {
+        data: id,
+        mode: "suggestion",
+        title: "Picking Suggestion List",
+        status,
+      },
+    });
+  };
+
+  const handleDeleteDO = async (id: string) => {
+    const confirm = await Swal.fire({
+      icon: "warning",
+      title: "Cancel DO",
+      text: `Yakin cancel DO ini ?`,
+      showCancelButton: true,
+      confirmButtonText: "Ya, batalkan",
+      cancelButtonText: "Batal",
+    });
+
+    if (!confirm.isConfirmed) return;
+
+    try {
+      await axiosInstance.patch(`outbound-do/${id}/cancel`);
+      showSuccessToast("Delivery Order berhasil dibatalkan");
+
+      if (fetchUsingPagination) {
+        fetchUsingPagination({
+          page: currentPage,
+          limit: pageSize,
+          status: filteredStatus || "",
+          outbound_type: filteredTypeOutbound || "",
+        });
+      }
+    } catch (err: any) {
+      console.error("Error canceling DO via axiosInstance:", err);
+      const errorMsg =
+        err.response?.data?.message ||
+        err.message ||
+        "Terjadi kesalahan saat membatalkan DO";
+      showErrorToast(`Gagal cancel DO: ${errorMsg}`);
+    }
   };
 
   const roleName = user?.role?.name;
@@ -513,14 +491,34 @@ const AdjustTableDO = ({
 
   const columns: ColumnDef<MemoData>[] = useMemo(
     () => [
+      // TAMBAHAN KOLOM EXPANDER DI SINI
+      {
+        id: "expander",
+        header: () => null,
+        cell: ({ row }) => (
+          <button
+            onClick={row.getToggleExpandedHandler()}
+            className="p-1.5 rounded-md hover:bg-slate-100 text-slate-500 transition-colors"
+          >
+            {row.getIsExpanded() ? (
+              <FaChevronDown className="w-3 h-3 text-orange-500" />
+            ) : (
+              <FaChevronRight className="w-3 h-3" />
+            )}
+          </button>
+        ),
+      },
       { accessorKey: "outboundDoNumber", header: "DO Number" },
       { accessorKey: "outboundType", header: "Type Outbound" },
       { accessorKey: "origin", header: "Origin" },
+      // UBAH KOLOM MEMO MENJADI SLIM
       {
         accessorKey: "outboundMemos",
-        header: "Memo Number",
+        header: "Memo Count",
         cell: ({ row }) => (
-          <MemoCell memos={row.original.outboundMemosDetailed || []} />
+          <span className="font-semibold text-slate-700">
+            {row.original.outboundMemosDetailed?.length || 0} Memo(s)
+          </span>
         ),
       },
       {
@@ -595,10 +593,7 @@ const AdjustTableDO = ({
 
   const filteredList = useMemo(() => {
     return (list || []).filter((item: any) => {
-      if (
-        filteredDoNumber &&
-        item.outbound_do_number !== filteredDoNumber
-      ) {
+      if (filteredDoNumber && item.outbound_do_number !== filteredDoNumber) {
         return false;
       }
 
@@ -644,15 +639,19 @@ const AdjustTableDO = ({
     <div className="flex flex-col gap-4">
       {isLoading && <ActIndicator />}
 
-      <TableComponent
+      <MainTable
         data={mappedList}
         columns={columns}
         globalFilter={globalFilter}
         setGlobalFilter={setGlobalFilter}
         pageSize={pageSize}
-        pageIndex={pageIndex} // 🔹 Gunakan index dari URL
+        pageIndex={pageIndex}
         totalPages={pagination.totalPages}
-        onPageChange={handlePageChange} // 🔹 Update URL lewat handler baru
+        onPageChange={handlePageChange}
+        // TAMBAHAN RENDER SUB COMPONENT DI SINI
+        renderSubComponent={({ row }) => (
+          <MemoCell memos={row.original.outboundMemosDetailed} />
+        )}
       />
     </div>
   );

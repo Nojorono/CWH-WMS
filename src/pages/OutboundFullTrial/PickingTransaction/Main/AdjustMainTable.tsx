@@ -1,7 +1,15 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ColumnDef } from "@tanstack/react-table";
 import { useSearchParams } from "react-router-dom";
-import { FaBoxOpen, FaCheck, FaEye, FaPrint, FaTasks } from "react-icons/fa";
+import {
+  FaBoxOpen,
+  FaCheck,
+  FaChevronDown,
+  FaChevronRight,
+  FaEye,
+  FaPrint,
+  FaTasks,
+} from "react-icons/fa";
 import StatusBadge from "../../../../common/statusBadge";
 import { STATUS_MAP_DO } from "../../../../constants/statusMaps";
 import { OutboundDo } from "../Helper/doTypes";
@@ -21,6 +29,7 @@ import {
 } from "../components";
 import { usePickingActions } from "../Hook/usePickingActions";
 import { useShipConfirmStatusByDo } from "../Hook/useShipConfirmStatusByDo";
+import MainTable from "../components/MainTable";
 
 type Props = {
   globalFilter?: string;
@@ -66,10 +75,8 @@ const AdjustTableTransactionPicking = ({
     updateData,
   });
 
-  const {
-    shipConfirmStatusMap,
-    syncShipConfirmStatuses,
-  } = useShipConfirmStatusByDo();
+  const { shipConfirmStatusMap, syncShipConfirmStatuses } =
+    useShipConfirmStatusByDo();
 
   // --- EFFECT: SYNC FILTERS & PAGINATION ---
   const handlePageChange = (newPageIndex: number, newSize: number) => {
@@ -120,10 +127,7 @@ const AdjustTableTransactionPicking = ({
 
   const mappedList: OutboundDo[] = useMemo(() => {
     const filtered = (list || []).filter((item: any) => {
-      if (
-        filteredDoNumber &&
-        item.outbound_do_number !== filteredDoNumber
-      ) {
+      if (filteredDoNumber && item.outbound_do_number !== filteredDoNumber) {
         return false;
       }
       return true;
@@ -144,18 +148,30 @@ const AdjustTableTransactionPicking = ({
   // --- COLUMNS DEFINITION ---
   const columns: ColumnDef<OutboundDo>[] = useMemo(
     () => [
+      {
+        id: "expander",
+        header: () => null,
+        cell: ({ row }) => (
+          <button
+            onClick={row.getToggleExpandedHandler()}
+            className="p-1.5 rounded-md hover:bg-slate-100 text-slate-500 transition-colors"
+          >
+            {row.getIsExpanded() ? (
+              <FaChevronDown className="w-3 h-3 text-orange-500" />
+            ) : (
+              <FaChevronRight className="w-3 h-3" />
+            )}
+          </button>
+        ),
+      },
       { accessorKey: "outbound_do_number", header: "DO Number" },
       {
         accessorKey: "outbound_memos",
-        header: "Memo Number",
+        header: "Memo Count",
         cell: ({ row }) => (
-          <MemoCell
-            memos={row.original.outbound_memos || []}
-            outboundDoId={row.original.id}
-            outboundType={row.original.outbound_type}
-            outboundDoStatus={row.original.status}
-            sealNumber={row.original.seal_number}
-          />
+          <span className="font-semibold text-slate-700">
+            {row.original.outbound_memos?.length || 0} Memo(s)
+          </span>
         ),
       },
       { accessorKey: "outbound_type", header: "Type" },
@@ -266,7 +282,7 @@ const AdjustTableTransactionPicking = ({
 
       <IrSoCheckingOverlay isOpen={actions.isCheckingIrSo} />
 
-      <TableComponent
+      <MainTable
         data={mappedList}
         columns={columns}
         globalFilter={globalFilter}
@@ -275,6 +291,16 @@ const AdjustTableTransactionPicking = ({
         pageIndex={pageIndex}
         totalPages={pagination.totalPages}
         onPageChange={handlePageChange}
+        // 3. OPER MEMOCELL SEBAGAI SUB COMPONENT DISINI
+        renderSubComponent={({ row }) => (
+          <MemoCell
+            memos={row.original.outbound_memos || []}
+            outboundDoId={row.original.id}
+            outboundType={row.original.outbound_type}
+            outboundDoStatus={row.original.status}
+            sealNumber={row.original.seal_number}
+          />
+        )}
       />
 
       {/* Modals berkurang kerumitannya karena state diurus oleh hook */}

@@ -1,4 +1,22 @@
 export const AMO_MUTASI_TRANSACTION_TYPE = "Outbound GS Mutasi SO Internal";
+export const SUBDIST_PICK_RELEASE_TRANSACTION_TYPE =
+  "Outbound GS SO Subdist Pick Release";
+export const SUBDIST_SHIP_CONFIRM_TRANSACTION_TYPE =
+  "Outbound GS SO Subdist Ship Confirm";
+
+/** Resolve poll transaction_type(s) by outbound DO type */
+export const getPollTransactionTypes = (
+  outboundType?: string | null,
+): string[] => {
+  if (outboundType === "AMO") return [AMO_MUTASI_TRANSACTION_TYPE];
+  if (outboundType === "SUBDIST") {
+    return [
+      SUBDIST_PICK_RELEASE_TRANSACTION_TYPE,
+      SUBDIST_SHIP_CONFIRM_TRANSACTION_TYPE,
+    ];
+  }
+  return [];
+};
 
 export interface AmoIntegrationSourceHeader {
   source_header_id: string;
@@ -28,6 +46,10 @@ export interface AmoIntegrationDeliveryRow {
     item_id?: string;
     quantity_plan?: number;
     uom?: string;
+    item?: {
+      sku?: string;
+      description?: string;
+    };
   };
 }
 

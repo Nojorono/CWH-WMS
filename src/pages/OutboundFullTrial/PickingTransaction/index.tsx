@@ -1,5 +1,5 @@
 import PageBreadcrumb from "../../../components/common/PageBreadCrumb";
-import ViewTable from "./Main/MainTable";
+import ViewTable from "./Main/MainViewTable";
 
 export default function PickingTransaction() {
   return (
