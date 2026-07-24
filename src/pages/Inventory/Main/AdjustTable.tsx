@@ -317,7 +317,6 @@ const AdjustTable = ({
   // Pisahkan Data untuk masing-masing Tab
   const goodStockData = useMemo(
     () => mappedList.filter((item) => item.current_items.length > 0),
-    // () => mappedList,
     [mappedList],
   );
 
@@ -397,6 +396,7 @@ const AdjustTable = ({
         id: "actions",
         header: "View",
         cell: ({ row }) => (
+          
           <button
             onClick={() =>
               navigate(`/inventory/detail`, {
@@ -443,7 +443,7 @@ const AdjustTable = ({
       </div>
     );
   }
-
+    
   return (
     <div className="flex flex-col gap-4">
       <TabsSection
