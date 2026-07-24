@@ -99,7 +99,7 @@ const matchesDoSearch = (item: any, filter: string) => {
 const MemoCell = ({ memos }: { memos: any[] }) => {
   if (!memos || memos.length === 0) {
     return (
-      <div className="p-6 text-center">
+      <div className="p-4 text-center">
         <span className="text-slate-400 italic text-xs font-medium">
           Belum ada data memo pada DO ini.
         </span>
@@ -108,11 +108,15 @@ const MemoCell = ({ memos }: { memos: any[] }) => {
   }
 
   return (
-    <div className="p-6 bg-slate-50/50 flex flex-col gap-4">
-      <h4 className="text-xs font-bold text-slate-700 border-b border-slate-200 pb-2">
-        Detail Memos & Picking Status
-      </h4>
-      <div className="flex flex-col gap-5">
+    <div className="p-3 bg-slate-50/60 flex flex-col gap-3 rounded-b-xl">
+      <div className="flex items-center gap-2 border-b border-slate-200/80 pb-2">
+        <div className="w-1 h-3.5 bg-blue-600 rounded-full"></div>
+        <h4 className="text-[11px] font-black uppercase tracking-wider text-slate-700">
+          Detail Memos & Picking Status
+        </h4>
+      </div>
+
+      <div className="flex flex-col gap-3">
         {memos
           .filter((memo) => memo.status !== "CANCELLED")
           .map((memo) => {
@@ -121,6 +125,9 @@ const MemoCell = ({ memos }: { memos: any[] }) => {
             const pickings = (memo.transaction_pickings || []).filter(
               (p: any) => p.status !== "CANCELLED",
             );
+
+            // Mapping item memo untuk pencarian assigned_gate_load / pallet loading
+            const memoItems = memo.outbound_memo_items || [];
 
             const totalSKU = pickings.length;
             const scannedSKUCount = pickings.filter((tp: any) => {
@@ -136,16 +143,16 @@ const MemoCell = ({ memos }: { memos: any[] }) => {
             return (
               <div
                 key={memo.id}
-                className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden"
+                className="bg-white rounded-lg border border-slate-200 shadow-2xs overflow-hidden"
               >
-                {/* --- HEADER MEMO (Flat, bukan accordion) --- */}
-                <div className="p-4 bg-slate-50 flex items-start justify-between gap-4 border-b border-slate-100">
-                  <div className="flex-grow flex flex-col gap-1">
+                {/* --- HEADER MEMO (COMPACT GRID & INFORMASI DESTINATION) --- */}
+                <div className="p-3 bg-slate-50/80 border-b border-slate-100 flex flex-col gap-2">
+                  <div className="flex items-center justify-between gap-2">
                     <div className="flex flex-wrap items-center gap-2">
-                      <div className="p-1.5 bg-blue-100 rounded-lg flex-shrink-0">
+                      <div className="p-1 bg-blue-100 rounded-md flex-shrink-0">
                         <svg
-                          width="16"
-                          height="16"
+                          width="14"
+                          height="14"
                           className="text-blue-600"
                           viewBox="0 0 24 24"
                           fill="none"
@@ -159,151 +166,208 @@ const MemoCell = ({ memos }: { memos: any[] }) => {
                           <path d="M10 9H8" />
                         </svg>
                       </div>
-                      <span className="text-sm font-black text-slate-800 tracking-tight flex-shrink-0">
+
+                      {/* Outbound Memo Number */}
+                      <span className="text-xs font-black text-slate-800 tracking-tight">
                         {memo.outbound_memo_number}
                       </span>
 
-                      <div className="flex items-center gap-1.5">
+                      {/* Badge Destination Kota */}
+                      {memo.destination && (
+                        <span className="text-[9px] font-black uppercase tracking-wider text-blue-700 bg-blue-50 border border-blue-200 px-1.5 py-0.5 rounded flex items-center gap-1">
+                          📍 {memo.destination}
+                        </span>
+                      )}
+
+                      {/* Status Scan SKU */}
+                      <div className="flex items-center gap-1">
                         {remainingSKU > 0 ? (
-                          <span className="text-[10px] font-black bg-amber-100 text-amber-700 border border-amber-200 px-2 py-0.5 rounded-full shadow-sm whitespace-nowrap">
+                          <span className="text-[9px] font-black bg-amber-100 text-amber-700 border border-amber-200 px-2 py-0.5 rounded-full">
                             {remainingSKU} SKU Belum Scan
                           </span>
                         ) : isAllScanned ? (
-                          <span className="text-[10px] font-black bg-emerald-100 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-full shadow-sm whitespace-nowrap">
-                            Semua SKU sudah di-Scan
+                          <span className="text-[9px] font-black bg-emerald-100 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-full">
+                            Semua SKU Selesai
                           </span>
                         ) : null}
                       </div>
                     </div>
 
-                    <div className="flex flex-wrap items-center gap-y-2 gap-x-1.5 mt-2">
-                      <div className="flex items-center gap-1 flex-shrink-0">
-                        <span className="text-[9px] font-black uppercase tracking-widest text-purple-600 bg-purple-50 px-1.5 py-0.5 rounded border border-purple-100">
-                          Helper
-                        </span>
-                      </div>
-                      {isAssigned ? (
-                        <div className="flex flex-wrap gap-1.5">
-                          {assignedUsers.map((user: any, idx: number) => (
-                            <span
-                              key={user.id || idx}
-                              className="text-[10px] font-bold text-blue-700 bg-white border border-blue-200 px-2 py-0.5 rounded-md flex items-center gap-1 shadow-sm whitespace-nowrap"
-                            >
-                              👤 {user.picking_name}
-                            </span>
-                          ))}
-                        </div>
-                      ) : (
-                        <span className="text-[10px] font-bold text-red-500 bg-red-50 px-2 py-0.5 rounded-md border border-red-100 italic">
-                          ⚠️ Belum ada Helper ditugaskan
-                        </span>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="flex flex-col items-end justify-start gap-3 flex-shrink-0 pt-1">
-                    <span className="text-[11px] font-bold text-slate-500 bg-white border px-2.5 py-1.5 rounded-lg shadow-sm whitespace-nowrap">
+                    <span className="text-[10px] font-bold text-slate-600 bg-white border border-slate-200 px-2 py-0.5 rounded shadow-2xs whitespace-nowrap">
                       Total {totalSKU} SKU
                     </span>
+                  </div>
+
+                  {/* Ship To Address (Inline & Compact) */}
+                  {memo.ship_to && (
+                    <div className="flex items-start gap-1 text-[11px] text-slate-500 border-t border-slate-200/50 pt-1.5">
+                      <span className="text-slate-400 flex-shrink-0">🏢</span>
+                      <span
+                        className="line-clamp-1 leading-tight"
+                        title={memo.ship_to}
+                      >
+                        <strong className="text-slate-700 font-bold">
+                          Ship To:
+                        </strong>{" "}
+                        {memo.ship_to}
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Helper Assignment */}
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[8px] font-black uppercase tracking-widest text-purple-600 bg-purple-50 px-1.5 py-0.5 rounded border border-purple-100">
+                      Helper
+                    </span>
+                    {isAssigned ? (
+                      <div className="flex flex-wrap gap-1">
+                        {assignedUsers.map((user: any, idx: number) => (
+                          <span
+                            key={user.id || idx}
+                            className="text-[9px] font-bold text-blue-700 bg-white border border-blue-200 px-1.5 py-0.5 rounded flex items-center gap-1 shadow-2xs"
+                          >
+                            👤 {user.picking_name}
+                          </span>
+                        ))}
+                      </div>
+                    ) : (
+                      <span className="text-[9px] font-bold text-red-500 bg-red-50 px-1.5 py-0.5 rounded border border-red-100 italic">
+                        ⚠️ Belum ada Helper ditugaskan
+                      </span>
+                    )}
                   </div>
                 </div>
 
                 {/* --- DAFTAR BARANG (BODY) --- */}
-                <div className="p-4 flex flex-col gap-3">
+                <div className="p-3">
                   {pickings.length === 0 ? (
-                    <div className="p-6 text-center text-red-400 text-xs italic bg-slate-50 rounded-xl border border-dashed border-slate-200">
+                    <div className="p-4 text-center text-red-400 text-xs italic bg-slate-50 rounded-lg border border-dashed border-slate-200">
                       Belum ada Picking Suggestion dibuat!
                     </div>
                   ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
                       {pickings.map((tp: any) => {
                         const activeScans = (
                           tp.transactionScanPicking || []
                         ).filter((s: any) => s.status !== "CANCELLED");
                         const isDone = activeScans.length > 0;
 
+                        // Fallback Kode Pallet
+                        const scanPalletUseCode =
+                          activeScans[0]?.palletUse?.pallet_code;
+                        const scanPalletSourceCode =
+                          activeScans[0]?.palletSource?.pallet_code;
+
+                        const matchingMemoItem = memoItems.find(
+                          (mi: any) => mi.item_id === tp.item_id,
+                        );
+                        const assignedGatePalletCode =
+                          matchingMemoItem?.assigned_gate_load?.[0]?.pallet
+                            ?.pallet_code;
+
+                        const activePalletCode =
+                          scanPalletUseCode ||
+                          assignedGatePalletCode ||
+                          scanPalletSourceCode ||
+                          null;
+
                         return (
                           <div
                             key={tp.id}
-                            className={`p-4 rounded-xl border transition-all duration-200 ${
+                            className={`p-2.5 rounded-lg border transition-all ${
                               isDone
-                                ? "bg-white border-emerald-100 shadow-sm"
-                                : "bg-white border-slate-200 shadow-sm hover:border-blue-200"
+                                ? "bg-white border-emerald-200/80 shadow-2xs"
+                                : "bg-white border-slate-200 shadow-2xs hover:border-blue-300"
                             }`}
                           >
-                            <div className="flex justify-between items-start mb-4">
+                            <div className="flex justify-between items-start gap-2 mb-2">
                               <div className="flex flex-col gap-0.5 max-w-[65%]">
-                                <span className="text-sm font-black text-slate-900 uppercase tracking-wide">
+                                <span className="text-xs font-black text-slate-900 uppercase tracking-wide">
                                   {tp.item?.sku}
                                 </span>
-                                <p className="text-[11px] text-slate-500 font-medium leading-relaxed">
+                                <p className="text-[10px] text-slate-500 font-medium leading-tight line-clamp-1">
                                   {tp.item?.description}
                                 </p>
+
+                                {/* Informasi Pallet */}
+                                <div className="mt-1 flex items-center gap-1">
+                                  <span className="text-[8px] font-black uppercase tracking-wider bg-slate-100 text-slate-500 px-1 py-0.5 rounded border border-slate-200">
+                                    Pallet
+                                  </span>
+                                  {activePalletCode ? (
+                                    <span className="text-[9px] font-black text-indigo-700 bg-indigo-50 border border-indigo-200 px-1.5 py-0.5 rounded flex items-center gap-1">
+                                      📦 {activePalletCode}
+                                    </span>
+                                  ) : (
+                                    <span className="text-[9px] text-slate-400 italic">
+                                      Belum ada
+                                    </span>
+                                  )}
+                                </div>
                               </div>
 
                               {isDone ? (
                                 <div className="flex flex-col items-end">
-                                  <span className="bg-emerald-200 text-emerald-900 text-[10px] px-2.5 py-1 rounded-lg font-black flex items-center gap-1 shadow-sm shadow-emerald-100">
-                                    ✅ SELESAI SCAN
+                                  <span className="bg-emerald-100 text-emerald-800 text-[9px] px-2 py-0.5 rounded font-black flex items-center gap-0.5 border border-emerald-200">
+                                    ✅ SCAN SELESAI
                                   </span>
-                                  <span className="text-[9px] text-emerald-600 font-bold mt-1.5 px-1">
+                                  <span className="text-[8px] text-emerald-600 font-bold mt-0.5">
                                     Oleh: {activeScans[0].user_name}
                                   </span>
                                 </div>
                               ) : (
                                 <div className="flex flex-col items-end">
-                                  <span className="bg-amber-100 text-amber-700 border border-amber-200 text-[10px] px-2.5 py-1 rounded-lg font-black animate-pulse">
-                                    ⏳ BELUM DI-SCAN
+                                  <span className="bg-amber-50 text-amber-700 border border-amber-200 text-[9px] px-2 py-0.5 rounded font-black animate-pulse">
+                                    ⏳ BELUM SCAN
                                   </span>
                                 </div>
                               )}
                             </div>
 
+                            {/* Section Zone, Bin, & Quantity */}
                             <div
-                              className={`grid grid-cols-2 gap-4 p-3 rounded-xl border ${
+                              className={`grid grid-cols-2 gap-2 p-2 rounded-md border ${
                                 isDone
-                                  ? "bg-emerald-50/30 border-emerald-100/50"
-                                  : "bg-slate-50 border-slate-100"
+                                  ? "bg-emerald-50/20 border-emerald-100/60"
+                                  : "bg-slate-50/70 border-slate-100"
                               }`}
                             >
                               <div className="flex flex-col justify-center">
-                                <span className="text-[9px] text-slate-400 font-bold uppercase tracking-widest mb-1">
-                                  Zone/ Bin
+                                <span className="text-[8px] text-slate-400 font-bold uppercase tracking-widest">
+                                  Zone / Bin
                                 </span>
-                                <div className="flex items-center gap-1.5">
-                                  <span className="text-sm font-black text-slate-700 line-clamp-1">
+                                <div className="flex items-center gap-1">
+                                  <span className="text-xs font-black text-slate-700 line-clamp-1">
                                     {tp.sourceWarehouseSub?.name || "-"}
                                   </span>
-                                  <span className="text-slate-300 text-xs">
+                                  <span className="text-slate-300 text-[10px]">
                                     /
                                   </span>
-                                  <span className="text-sm font-black text-blue-600 line-clamp-1">
+                                  <span className="text-xs font-black text-blue-600 line-clamp-1">
                                     {tp.sourceBin?.name || "-"}
                                   </span>
                                 </div>
                               </div>
 
-                              <div className="flex flex-col items-end gap-2 border-l border-slate-200/50 pl-4">
+                              <div className="flex items-center justify-end gap-3 border-l border-slate-200/60 pl-2">
                                 <div className="flex flex-col items-end">
-                                  <span className="text-[9px] text-slate-400 font-bold uppercase tracking-widest leading-none mb-1">
-                                    Suggestion
+                                  <span className="text-[8px] text-slate-400 font-bold uppercase tracking-widest">
+                                    Plan
                                   </span>
-                                  <span className="text-sm font-black text-slate-800">
+                                  <span className="text-xs font-black text-slate-800">
                                     {tp.quantity}{" "}
-                                    <span className="text-[10px] text-slate-500 font-bold uppercase">
+                                    <span className="text-[9px] text-slate-500 font-bold uppercase">
                                       {tp.uom}
                                     </span>
                                   </span>
                                 </div>
 
-                                <div className="w-full h-[1px] bg-slate-200/50"></div>
-
                                 <div className="flex flex-col items-end">
-                                  <span className="text-[9px] text-slate-400 font-bold uppercase tracking-widest leading-none mb-1">
-                                    Telah Di-Scan
+                                  <span className="text-[8px] text-slate-400 font-bold uppercase tracking-widest">
+                                    Scan
                                   </span>
                                   <span
-                                    className={`text-sm font-black ${
+                                    className={`text-xs font-black ${
                                       isDone
                                         ? "text-emerald-600"
                                         : "text-slate-400"
@@ -312,7 +376,7 @@ const MemoCell = ({ memos }: { memos: any[] }) => {
                                     {isDone
                                       ? activeScans[0].quantity_picked
                                       : "0"}{" "}
-                                    <span className="text-[10px] font-bold uppercase opacity-70">
+                                    <span className="text-[9px] font-bold uppercase opacity-70">
                                       {tp.uom}
                                     </span>
                                   </span>
@@ -321,17 +385,16 @@ const MemoCell = ({ memos }: { memos: any[] }) => {
                             </div>
 
                             {isDone && (
-                              <div className="mt-3 flex items-center gap-2 text-[10px] text-slate-400 bg-emerald-50/50 py-1.5 px-3 rounded-lg w-fit border border-emerald-100/50">
-                                <div className="w-1.5 h-1.5 bg-emerald-400 rounded-full shadow-sm shadow-emerald-200"></div>
+                              <div className="mt-2 flex items-center gap-1.5 text-[9px] text-slate-400 bg-emerald-50/40 py-1 px-2 rounded w-fit border border-emerald-100/40">
+                                <div className="w-1.5 h-1.5 bg-emerald-400 rounded-full"></div>
                                 <span>
-                                  Berhasil di-scan pada{" "}
+                                  Discan:{" "}
                                   <strong className="text-slate-600">
                                     {new Date(
                                       activeScans[0].createdAt,
                                     ).toLocaleDateString("id-ID", {
                                       day: "2-digit",
                                       month: "short",
-                                      year: "numeric",
                                     })}
                                     ,{" "}
                                     {new Date(
@@ -339,8 +402,7 @@ const MemoCell = ({ memos }: { memos: any[] }) => {
                                     ).toLocaleTimeString("id-ID", {
                                       hour: "2-digit",
                                       minute: "2-digit",
-                                    })}{" "}
-                                    WIB
+                                    })}
                                   </strong>
                                 </span>
                               </div>
@@ -382,6 +444,8 @@ const AdjustTableDO = ({
     filteredStatus,
     filteredTypeOutbound,
   });
+
+  console.log("list data DO", list);
 
   const handlePageChange = (newPageIndex: number, newSize: number) => {
     const newParams = new URLSearchParams(searchParams);
