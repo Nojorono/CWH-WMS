@@ -8,6 +8,7 @@ import {
 import { useFormContext } from "react-hook-form";
 import { FormValues, ItemForm } from "../formTypes";
 import { useMemo } from "react";
+import Swal from "sweetalert2";
 
 interface UomOption {
   id: any;
@@ -144,9 +145,15 @@ export default function ItemTable({
 
                     // Clamp hanya saat blur, agar ketikan multi-digit tetap smooth
                     if (qtyPlan > 0 && num > qtyPlan) {
-                      setValue(`${basePath}.qty`, qtyPlan, {
-                        shouldDirty: true,
-                        shouldValidate: true,
+                      Swal.fire({
+                        icon: "warning",
+                        title: "Qty melebihi Qty Plan",
+                        text: `Qty tidak boleh melebihi Qty Plan (${qtyPlan.toLocaleString()}). Nilai akan diset ke Qty Plan.`,
+                      }).then(() => {
+                        setValue(`${basePath}.qty`, qtyPlan, {
+                          shouldDirty: true,
+                          shouldValidate: true,
+                        });
                       });
                     }
                   },

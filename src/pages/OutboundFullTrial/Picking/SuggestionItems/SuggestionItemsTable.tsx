@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { FaCheck, FaEdit, FaPlus, FaTrash } from "react-icons/fa";
 import TableComponent from "../Table/TableComponent";
 import { ColumnDef } from "@tanstack/react-table";
@@ -17,6 +17,81 @@ import {
 } from "../Types/suggestTableTypes";
 import ModalReviewFinalSuggestion from "../Modal/ModalReviewFinalSuggestion";
 import { prepareReviewGroups } from "../Helper/prepareReviewGroups";
+
+/** Local draft input so multi-digit typing stays smooth; validate on blur. */
+const QtyPickInput = ({
+  value,
+  available,
+  onCommit,
+}: {
+  value?: number;
+  available: number;
+  onCommit: (next?: number) => void;
+}) => {
+  const [draft, setDraft] = useState(value == null ? "" : String(value));
+  const focusedRef = useRef(false);
+
+  useEffect(() => {
+    if (!focusedRef.current) {
+      setDraft(value == null ? "" : String(value));
+    }
+  }, [value]);
+
+  const commit = () => {
+    focusedRef.current = false;
+
+    if (draft.trim() === "") {
+      onCommit(undefined);
+      return;
+    }
+
+    const num = Number(draft);
+    if (Number.isNaN(num) || num < 0) {
+      setDraft(value == null ? "" : String(value));
+      return;
+    }
+
+    if (num > available) {
+      Swal.fire({
+        icon: "warning",
+        title: "Invalid Quantity",
+        text: `Qty Picked tidak boleh melebihi Available Quantity (${available}).`,
+      });
+      setDraft(String(available));
+      onCommit(available);
+      return;
+    }
+
+    onCommit(num);
+    setDraft(String(num));
+  };
+
+  return (
+    <input
+      type="text"
+      inputMode="numeric"
+      value={draft}
+      onFocus={() => {
+        focusedRef.current = true;
+      }}
+      onChange={(e) => {
+        const raw = e.target.value;
+        // allow empty / digits while typing (no parent update, no Swal)
+        if (raw === "" || /^\d+$/.test(raw)) {
+          setDraft(raw);
+        }
+      }}
+      onBlur={commit}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") {
+          e.currentTarget.blur();
+        }
+      }}
+      placeholder="Input qty"
+      className="border p-1 rounded w-24"
+    />
+  );
+};
 
 interface TableProps {
   items: Item[];
@@ -587,74 +662,28 @@ export const SuggestionItemsTable: React.FC<TableProps> = ({
       enableSorting: false,
       cell: ({ row }) => {
         const item = row.original;
-        const rowIndex = row.index;
-
         const loc = item.suggested_locations?.[0];
         const available = Number(loc?.available_quantity ?? 0);
 
-        // If no available stock, show message and prevent input
         if (available <= 0) {
           return (
             <div className="text-sm text-gray-500">Tak ada available stock</div>
           );
         }
 
-        const handleQtyChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-          const rawValue = e.target.value;
-
-          // allow empty input
-          if (rawValue === "") {
-            setLocalItems((prev) => {
-              const copy = [...prev];
-              copy[rowIndex] = { ...copy[rowIndex], qty_pick: undefined };
-              return copy;
-            });
-            return;
-          }
-
-          const value = Number(rawValue);
-
-          if (Number.isNaN(value)) return;
-
-          const alreadyPicked = item.already_picked_quantity ?? 0;
-          const requiredQuantity = item.required_quantity ?? 0;
-          const remainingQtyNeeded = item.remaining_quantity_needed ?? 0;
-
-          const allowedQty = requiredQuantity - alreadyPicked;
-
-          // ❗ validasi aggregated per item
-          const totalIfSet = getTotalPickedForItem(
-            item.item_id,
-            rowIndex,
-            value,
-          );
-
-          // ❗ validasi available location
-          if (value > available) {
-            Swal.fire({
-              icon: "warning",
-              title: "Invalid Quantity",
-              text: `Qty Picked tidak boleh melebihi Available Quantity (${available}).`,
-            });
-            return;
-          }
-
-          setLocalItems((prev) => {
-            const copy = [...prev];
-            copy[rowIndex] = { ...copy[rowIndex], qty_pick: value };
-            return copy;
-          });
-        };
-
         return (
-          <input
-            type="number"
-            value={item.qty_pick ?? ""} // ⬅️ kosong default
-            onChange={handleQtyChange}
-            min={0}
-            max={available}
-            placeholder="Input qty"
-            className="border p-1 rounded w-24"
+          <QtyPickInput
+            value={item.qty_pick}
+            available={available}
+            onCommit={(next) => {
+              setLocalItems((prev) =>
+                prev.map((it) =>
+                  it._localId === item._localId
+                    ? { ...it, qty_pick: next }
+                    : it,
+                ),
+              );
+            }}
           />
         );
       },

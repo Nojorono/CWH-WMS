@@ -23,31 +23,6 @@ const CancelTransactionPickModal: React.FC<CancelTransactionPickModalProps> = ({
   const navigate = useNavigate();
   const [expandedItemId, setExpandedItemId] = useState<string | null>(null);
 
-  // const handleCancelPicking = async (pickingId: string) => {
-  //   if (!pickingId) return;
-
-  //   const transactionId = pickingId;
-  //   try {
-  //     const response = await fetch(
-  //       `${EndPoint}transaction-picking/${transactionId}/cancel`,
-  //       {
-  //         method: "PATCH",
-  //         headers: {
-  //           Authorization: `Bearer ${token}`,
-  //         },
-  //       }
-  //     );
-
-  //     if (!response.ok) {
-  //       throw new Error("Network response was not ok");
-  //     }
-  //     onRequestClose();
-  //     navigate("/picking_transaction");
-  //   } catch (error) {
-  //     console.error("Error detaching transaction:", error);
-  //   }
-  // };
-
   const handleCancelPicking = async (pickingId: string) => {
     if (!pickingId) return;
 
