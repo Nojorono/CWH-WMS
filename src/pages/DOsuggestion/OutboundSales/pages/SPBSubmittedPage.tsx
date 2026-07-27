@@ -7,10 +7,8 @@ import { DOSuggestionDetail } from "../../../../API/types/draftDOsuggestion";
 import { FaPrint } from "react-icons/fa6";
 import { BaseTable } from "../component/BaseTable";
 import { useStoreItem } from "../../../../DynamicAPI/stores/Store/MasterStore";
-import { getServerDayjs, getTargetDate } from "../../Suggestion/global/allowedDate";
+import { getServerDayjs } from "../../Suggestion/global/allowedDate";
 import { usePersistAuthStore } from "../../../../API/store/AuthStore/PersistAuthStore";
-import { useGetStockOnHand } from "../hook/useGetStockOnHand";
-import dayjs from "dayjs";
 
 interface SPBSubmittedPageProps {
   data: GroupedSPBData[];

@@ -28,7 +28,9 @@ export const useGetBTB = (
         setError(null);
         setIsSuccess(false);
 
-        const btbDate = dayjs().subtract(1, 'day').format('YYYY-MM-DD');
+        // const btbDate = dayjs().subtract(1, 'day').format('YYYY-MM-DD');
+        const btbDate = startDate
+        
 
         try {
             const flatResult: BTBFlatItem[] = await getBTB({
