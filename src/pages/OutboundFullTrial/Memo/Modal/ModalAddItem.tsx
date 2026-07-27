@@ -6,6 +6,7 @@ import {
   useStoreClassification,
 } from "../../../../DynamicAPI/stores/Store/MasterStore";
 import Select from "../../../../components/form/Select";
+import axiosInstance from "../../../../DynamicAPI/AxiosInstance";
 
 interface ItemData {
   item_id: string;
@@ -25,9 +26,29 @@ type Props = {
   open: boolean;
   onClose: () => void;
   onSubmit: (item: ItemData) => void;
+  /** Dari customer AMO (`organization_name`), contoh: "JAT" → dipakai sebagai organization_code */
+  organizationName?: string;
+  /** Jika true, modal tidak boleh jalan tanpa Organization Name */
+  requireOrganizationName?: boolean;
 };
 
-const ModalAddItem: React.FC<Props> = ({ open, onClose, onSubmit }) => {
+type ValidateStatus = "idle" | "loading" | "valid" | "invalid";
+
+type ValidatedItem = {
+  item_code?: string;
+  item_number?: string;
+  item_description?: string;
+  inventory_item_id?: number;
+  organization_code?: string;
+};
+
+const ModalAddItem: React.FC<Props> = ({
+  open,
+  onClose,
+  onSubmit,
+  organizationName,
+  requireOrganizationName = false,
+}) => {
   const { fetchAll, list } = useStoreItem();
   const { fetchAll: fetchAllUom, list: uomList } = useStoreUom();
   const { fetchAll: fetchAllClassification, list: classificationList } =
@@ -46,8 +67,21 @@ const ModalAddItem: React.FC<Props> = ({ open, onClose, onSubmit }) => {
   const [notes, setNotes] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  // Temukan item yang dipilih berdasarkan SKU
+  const [validateStatus, setValidateStatus] = useState<ValidateStatus>("idle");
+  const [validateMessage, setValidateMessage] = useState("");
+  const [validatedItem, setValidatedItem] = useState<ValidatedItem | null>(
+    null,
+  );
+
+  const resolvedOrganizationName = String(organizationName ?? "").trim();
+  const hasOrganizationName = Boolean(resolvedOrganizationName);
+  const needsOrgValidation = requireOrganizationName || hasOrganizationName;
+
   const selectedItem = list.find((i: any) => i.sku === selectedSku);
+  const inventoryItemId =
+    selectedItem?.inventory_item_id ??
+    (selectedItem as any)?.inventoryItemId ??
+    null;
 
   // Defaultkan UOM ke DUS kalau ada
   useEffect(() => {
@@ -57,14 +91,145 @@ const ModalAddItem: React.FC<Props> = ({ open, onClose, onSubmit }) => {
     }
   }, [uomList, selectedUom]);
 
+  // Reset pilihan SKU jika organization AMO berubah
+  useEffect(() => {
+    setSelectedSku("");
+    setValidateStatus("idle");
+    setValidateMessage("");
+    setValidatedItem(null);
+  }, [resolvedOrganizationName]);
+
+  // Validasi item ke cabang (AMO)
+  useEffect(() => {
+    if (!open || !needsOrgValidation) {
+      setValidateStatus("idle");
+      setValidateMessage("");
+      setValidatedItem(null);
+      return;
+    }
+
+    if (!selectedSku) {
+      setValidateStatus("idle");
+      setValidateMessage("");
+      setValidatedItem(null);
+      return;
+    }
+
+    if (!hasOrganizationName) {
+      setValidateStatus("invalid");
+      setValidateMessage("Organization code tidak tersedia.");
+      setValidatedItem(null);
+      return;
+    }
+
+    if (inventoryItemId == null || inventoryItemId === "") {
+      setValidateStatus("invalid");
+      setValidateMessage(
+        "inventory_item_id tidak ditemukan pada item yang dipilih.",
+      );
+      setValidatedItem(null);
+      return;
+    }
+
+    let cancelled = false;
+
+    const validateItem = async () => {
+      setValidateStatus("loading");
+      setValidateMessage("");
+      setValidatedItem(null);
+      setErrors((prev) => {
+        const next = { ...prev };
+        delete next.sku;
+        return next;
+      });
+
+      try {
+        const res = await axiosInstance.get("master-item/validate-item", {
+          params: {
+            organization_code: resolvedOrganizationName,
+            inventory_item_id: inventoryItemId,
+          },
+        });
+
+        if (cancelled) return;
+
+        const rows = (res.data?.data ?? []) as ValidatedItem[];
+        if (!Array.isArray(rows) || rows.length === 0) {
+          setValidateStatus("invalid");
+          setValidateMessage(
+            res.data?.message ||
+              "Item tidak tersedia untuk organization ini.",
+          );
+          setValidatedItem(null);
+          setErrors((prev) => ({
+            ...prev,
+            sku: "Item tidak tersedia untuk cabang ini.",
+          }));
+          return;
+        }
+
+        setValidateStatus("valid");
+        setValidatedItem(rows[0]);
+        setValidateMessage(res.data?.message || "Item tersedia untuk cabang.");
+      } catch (err: any) {
+        if (cancelled) return;
+        const message =
+          err?.response?.data?.message ||
+          err?.message ||
+          "Gagal validasi item ke cabang.";
+        setValidateStatus("invalid");
+        setValidateMessage(message);
+        setValidatedItem(null);
+        setErrors((prev) => ({
+          ...prev,
+          sku: message,
+        }));
+      }
+    };
+
+    validateItem();
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    open,
+    needsOrgValidation,
+    hasOrganizationName,
+    resolvedOrganizationName,
+    selectedSku,
+    inventoryItemId,
+  ]);
+
   if (!open) return null;
+  if (requireOrganizationName && !hasOrganizationName) return null;
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
     if (!selectedSku) newErrors.sku = "SKU wajib dipilih";
     if (!qty || qty <= 0) newErrors.qty = "Qty harus lebih besar dari 0";
     if (!selectedUom) newErrors.uom = "UOM wajib dipilih";
+    if (needsOrgValidation) {
+      if (validateStatus === "loading") {
+        newErrors.sku = "Sedang memvalidasi item ke cabang...";
+      } else if (validateStatus !== "valid") {
+        newErrors.sku =
+          validateMessage ||
+          "Item tidak tersedia untuk organization/cabang ini.";
+      }
+    }
     return newErrors;
+  };
+
+  const resetForm = () => {
+    setSelectedSku("");
+    setSelectedUom("");
+    setSelectedClassification("");
+    setQty("");
+    setNotes("");
+    setErrors({});
+    setValidateStatus("idle");
+    setValidateMessage("");
+    setValidatedItem(null);
   };
 
   const handleSubmit = () => {
@@ -77,10 +242,12 @@ const ModalAddItem: React.FC<Props> = ({ open, onClose, onSubmit }) => {
 
     const itemData: ItemData = {
       item_id: selectedItem?.id ?? "",
-      sku: selectedItem?.sku ?? "",
-      item_number: selectedItem?.item_number ?? "",
-      item_name: selectedItem?.sku ?? "",
-      item_description: selectedItem?.description ?? "",
+      sku: validatedItem?.item_code || selectedItem?.sku || "",
+      item_number:
+        validatedItem?.item_number || selectedItem?.item_number || "",
+      item_name: validatedItem?.item_code || selectedItem?.sku || "",
+      item_description:
+        validatedItem?.item_description || selectedItem?.description || "",
       quantity_plan: Number(qty),
       uom_id: selectedUom,
       uom_name: uomList.find((u: any) => u.id === selectedUom)?.code || "",
@@ -93,14 +260,10 @@ const ModalAddItem: React.FC<Props> = ({ open, onClose, onSubmit }) => {
 
     onSubmit(itemData);
     onClose();
-
-    // Reset form
-    setSelectedSku("");
-    setSelectedUom("");
-    setSelectedClassification("");
-    setQty("");
-    setNotes("");
+    resetForm();
   };
+
+  const canSubmit = !needsOrgValidation || validateStatus === "valid";
 
   return (
     <div
@@ -114,6 +277,14 @@ const ModalAddItem: React.FC<Props> = ({ open, onClose, onSubmit }) => {
         style={{ zIndex: 2147483648 }}
       >
         <h2 className="text-xl font-bold text-indigo-800">Add Item Memo</h2>
+        {hasOrganizationName && (
+          <p className="text-xs text-slate-500 -mt-2">
+            Organization:{" "}
+            <span className="font-bold text-indigo-700">
+              {resolvedOrganizationName}
+            </span>
+          </p>
+        )}
 
         <div className="space-y-3">
           {/* SKU Dropdown */}
@@ -126,23 +297,50 @@ const ModalAddItem: React.FC<Props> = ({ open, onClose, onSubmit }) => {
                 label: s.sku,
               }))}
               value={selectedSku}
-              onChange={(val) => setSelectedSku(val)}
+              onChange={(val) => {
+                setSelectedSku(val);
+                setValidateStatus("idle");
+                setValidateMessage("");
+                setValidatedItem(null);
+                setErrors((prev) => {
+                  const next = { ...prev };
+                  delete next.sku;
+                  return next;
+                });
+              }}
               placeholder="-- Select SKU --"
               className="w-full"
               width={"100%"}
             />
 
-            {errors.sku && (
-              <p className="text-xs text-red-500 mt-1">{errors.sku}</p>
+            {needsOrgValidation && validateStatus === "loading" && (
+              <p className="text-xs text-blue-600 mt-1 font-medium">
+                Memvalidasi item ke cabang {resolvedOrganizationName}...
+              </p>
+            )}
+            {needsOrgValidation && validateStatus === "valid" && (
+              <p className="text-xs text-emerald-600 mt-1 font-medium">
+                ✓ {validateMessage || "Item tersedia untuk cabang ini."}
+              </p>
+            )}
+            {(errors.sku ||
+              (needsOrgValidation && validateStatus === "invalid")) && (
+              <p className="text-xs text-red-500 mt-1">
+                {errors.sku || validateMessage}
+              </p>
             )}
           </div>
-          
+
           {/* Item Description */}
           <div>
             <label className="block text-sm font-medium">Item Description</label>
             <input
               className="border rounded p-2 w-full bg-gray-100"
-              value={selectedItem?.description ?? ""}
+              value={
+                validatedItem?.item_description ??
+                selectedItem?.description ??
+                ""
+              }
               readOnly
             />
           </div>
@@ -152,7 +350,9 @@ const ModalAddItem: React.FC<Props> = ({ open, onClose, onSubmit }) => {
             <label className="block text-sm font-medium">Item Number</label>
             <input
               className="border rounded p-2 w-full bg-gray-100"
-              value={selectedItem?.item_number ?? ""}
+              value={
+                validatedItem?.item_number ?? selectedItem?.item_number ?? ""
+              }
               readOnly
             />
           </div>
@@ -196,11 +396,21 @@ const ModalAddItem: React.FC<Props> = ({ open, onClose, onSubmit }) => {
 
         {/* ACTION BUTTONS */}
         <div className="flex justify-end gap-3 mt-4">
-          <Button variant="secondary" onClick={onClose}>
+          <Button
+            variant="secondary"
+            onClick={() => {
+              onClose();
+              resetForm();
+            }}
+          >
             Cancel
           </Button>
-          <Button variant="primary" onClick={handleSubmit}>
-            Submit
+          <Button
+            variant="primary"
+            onClick={handleSubmit}
+            disabled={!canSubmit || validateStatus === "loading"}
+          >
+            {validateStatus === "loading" ? "Validating..." : "Submit"}
           </Button>
         </div>
       </div>
