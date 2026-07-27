@@ -40,6 +40,7 @@ const TableComponent = <T extends { [key: string]: any }>({
   const enhancedColumns = useMemo<ColumnDef<T>[]>(() => {
     if (!selectionColumn) return columns;
     const accessorKey = (selectionColumn as any).accessorKey;
+    
     return [
       {
         id: "select",

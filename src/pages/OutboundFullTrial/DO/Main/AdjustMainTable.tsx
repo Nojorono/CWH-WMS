@@ -1,5 +1,12 @@
 import { useEffect, useMemo, useState, useRef } from "react";
-import { FaEye, FaTasks, FaTrash } from "react-icons/fa";
+// Tambahkan FaChevronRight & FaChevronDown untuk ikon Expand table
+import {
+  FaEye,
+  FaTasks,
+  FaTrash,
+  FaChevronRight,
+  FaChevronDown,
+} from "react-icons/fa";
 import { ColumnDef } from "@tanstack/react-table";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import StatusBadge from "../../../../common/statusBadge";
@@ -7,10 +14,10 @@ import { STATUS_MAP_DO } from "../../../../constants/statusMaps";
 import { useStoreOutboundDeliveryOrder } from "../../../../DynamicAPI/stores/Store/MasterStore";
 import Swal from "sweetalert2";
 import { showErrorToast, showSuccessToast } from "../../../../components/toast";
-import TableComponent from "../../../../components/tables/ActionTable/TableComponent";
 import ActIndicator from "../../../../components/ui/activityIndicator";
 import { usePersistAuthStore } from "../../../../API/store/AuthStore/PersistAuthStore";
 import axiosInstance from "../../../../DynamicAPI/AxiosInstance";
+import MainTable from "../Table/MainTable";
 
 type OutboundMemo = {
   id: string;
@@ -88,6 +95,332 @@ const matchesDoSearch = (item: any, filter: string) => {
   );
 };
 
+// --- KOMPONEN MEMO CELL SEBAGAI SUB-COMPONENT (Expanded Row) ---
+const MemoCell = ({ memos }: { memos: any[] }) => {
+  if (!memos || memos.length === 0) {
+    return (
+      <div className="p-4 text-center">
+        <span className="text-slate-400 italic text-xs font-medium">
+          Belum ada data memo pada DO ini.
+        </span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="p-3 bg-slate-50/60 flex flex-col gap-3 rounded-b-xl">
+      <div className="flex items-center gap-2 border-b border-slate-200/80 pb-2">
+        <div className="w-1 h-3.5 bg-blue-600 rounded-full"></div>
+        <h4 className="text-[11px] font-black uppercase tracking-wider text-slate-700">
+          Detail Memos & Picking Status
+        </h4>
+      </div>
+
+      <div className="flex flex-col gap-3">
+        {memos
+          .filter((memo) => memo.status !== "CANCELLED")
+          .map((memo) => {
+            const assignedUsers = memo.assigned_pickings || [];
+            const isAssigned = assignedUsers.length > 0;
+            const pickings = (memo.transaction_pickings || []).filter(
+              (p: any) => p.status !== "CANCELLED",
+            );
+
+            // Mapping item memo untuk pencarian assigned_gate_load / pallet loading
+            const memoItems = memo.outbound_memo_items || [];
+
+            const totalSKU = pickings.length;
+            const scannedSKUCount = pickings.filter((tp: any) => {
+              const activeScans = (tp.transactionScanPicking || []).filter(
+                (s: any) => s.status !== "CANCELLED",
+              );
+              return activeScans.length > 0;
+            }).length;
+
+            const remainingSKU = totalSKU - scannedSKUCount;
+            const isAllScanned = totalSKU > 0 && remainingSKU === 0;
+
+            return (
+              <div
+                key={memo.id}
+                className="bg-white rounded-lg border border-slate-200 shadow-2xs overflow-hidden"
+              >
+                {/* --- HEADER MEMO (COMPACT GRID & INFORMASI DESTINATION) --- */}
+                <div className="p-3 bg-slate-50/80 border-b border-slate-100 flex flex-col gap-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <div className="p-1 bg-blue-100 rounded-md flex-shrink-0">
+                        <svg
+                          width="14"
+                          height="14"
+                          className="text-blue-600"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2.5"
+                        >
+                          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                          <path d="M14 2v6h6" />
+                          <path d="M16 13H8" />
+                          <path d="M16 17H8" />
+                          <path d="M10 9H8" />
+                        </svg>
+                      </div>
+
+                      {/* Outbound Memo Number */}
+                      <span className="text-xs font-black text-slate-800 tracking-tight">
+                        {memo.outbound_memo_number}
+                      </span>
+
+                      {/* Badge Destination Kota */}
+                      {memo.destination && (
+                        <span className="text-[9px] font-black uppercase tracking-wider text-blue-700 bg-blue-50 border border-blue-200 px-1.5 py-0.5 rounded flex items-center gap-1">
+                          📍 {memo.destination}
+                        </span>
+                      )}
+
+                      {/* Status Scan SKU */}
+                      <div className="flex items-center gap-1">
+                        {remainingSKU > 0 ? (
+                          <span className="text-[9px] font-black bg-amber-100 text-amber-700 border border-amber-200 px-2 py-0.5 rounded-full">
+                            {remainingSKU} SKU Belum Scan
+                          </span>
+                        ) : isAllScanned ? (
+                          <span className="text-[9px] font-black bg-emerald-100 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-full">
+                            Semua SKU Selesai
+                          </span>
+                        ) : null}
+                      </div>
+                    </div>
+
+                    <span className="text-[10px] font-bold text-slate-600 bg-white border border-slate-200 px-2 py-0.5 rounded shadow-2xs whitespace-nowrap">
+                      Total {totalSKU} SKU
+                    </span>
+                  </div>
+
+                  {/* Ship To Address (Inline & Compact) */}
+                  {memo.ship_to && (
+                    <div className="flex items-start gap-1 text-[11px] text-slate-500 border-t border-slate-200/50 pt-1.5">
+                      <span className="text-slate-400 flex-shrink-0">🏢</span>
+                      <span
+                        className="line-clamp-1 leading-tight"
+                        title={memo.ship_to}
+                      >
+                        <strong className="text-slate-700 font-bold">
+                          Ship To:
+                        </strong>{" "}
+                        {memo.ship_to}
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Helper Assignment */}
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[8px] font-black uppercase tracking-widest text-purple-600 bg-purple-50 px-1.5 py-0.5 rounded border border-purple-100">
+                      Helper
+                    </span>
+                    {isAssigned ? (
+                      <div className="flex flex-wrap gap-1">
+                        {assignedUsers.map((user: any, idx: number) => (
+                          <span
+                            key={user.id || idx}
+                            className="text-[9px] font-bold text-blue-700 bg-white border border-blue-200 px-1.5 py-0.5 rounded flex items-center gap-1 shadow-2xs"
+                          >
+                            👤 {user.picking_name}
+                          </span>
+                        ))}
+                      </div>
+                    ) : (
+                      <span className="text-[9px] font-bold text-red-500 bg-red-50 px-1.5 py-0.5 rounded border border-red-100 italic">
+                        ⚠️ Belum ada Helper ditugaskan
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* --- DAFTAR BARANG (BODY) --- */}
+                <div className="p-3">
+                  {pickings.length === 0 ? (
+                    <div className="p-4 text-center text-red-400 text-xs italic bg-slate-50 rounded-lg border border-dashed border-slate-200">
+                      Belum ada Picking Suggestion dibuat!
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+                      {pickings.map((tp: any) => {
+                        const activeScans = (
+                          tp.transactionScanPicking || []
+                        ).filter((s: any) => s.status !== "CANCELLED");
+                        const isDone = activeScans.length > 0;
+
+                        // Fallback Kode Pallet
+                        const scanPalletUseCode =
+                          activeScans[0]?.palletUse?.pallet_code;
+                        const scanPalletSourceCode =
+                          activeScans[0]?.palletSource?.pallet_code;
+
+                        const matchingMemoItem = memoItems.find(
+                          (mi: any) => mi.item_id === tp.item_id,
+                        );
+                        const assignedGatePalletCode =
+                          matchingMemoItem?.assigned_gate_load?.[0]?.pallet
+                            ?.pallet_code;
+
+                        const activePalletCode =
+                          scanPalletUseCode ||
+                          assignedGatePalletCode ||
+                          scanPalletSourceCode ||
+                          null;
+
+                        return (
+                          <div
+                            key={tp.id}
+                            className={`p-2.5 rounded-lg border transition-all ${
+                              isDone
+                                ? "bg-white border-emerald-200/80 shadow-2xs"
+                                : "bg-white border-slate-200 shadow-2xs hover:border-blue-300"
+                            }`}
+                          >
+                            <div className="flex justify-between items-start gap-2 mb-2">
+                              <div className="flex flex-col gap-0.5 max-w-[65%]">
+                                <span className="text-xs font-black text-slate-900 uppercase tracking-wide">
+                                  {tp.item?.sku}
+                                </span>
+                                <p className="text-[10px] text-slate-500 font-medium leading-tight line-clamp-1">
+                                  {tp.item?.description}
+                                </p>
+
+                                {/* Informasi Pallet */}
+                                <div className="mt-1 flex items-center gap-1">
+                                  <span className="text-[8px] font-black uppercase tracking-wider bg-slate-100 text-slate-500 px-1 py-0.5 rounded border border-slate-200">
+                                    Pallet
+                                  </span>
+                                  {activePalletCode ? (
+                                    <span className="text-[9px] font-black text-indigo-700 bg-indigo-50 border border-indigo-200 px-1.5 py-0.5 rounded flex items-center gap-1">
+                                      📦 {activePalletCode}
+                                    </span>
+                                  ) : (
+                                    <span className="text-[9px] text-slate-400 italic">
+                                      Belum ada
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+
+                              {isDone ? (
+                                <div className="flex flex-col items-end">
+                                  <span className="bg-emerald-100 text-emerald-800 text-[9px] px-2 py-0.5 rounded font-black flex items-center gap-0.5 border border-emerald-200">
+                                    ✅ SCAN SELESAI
+                                  </span>
+                                  <span className="text-[8px] text-emerald-600 font-bold mt-0.5">
+                                    Oleh: {activeScans[0].user_name}
+                                  </span>
+                                </div>
+                              ) : (
+                                <div className="flex flex-col items-end">
+                                  <span className="bg-amber-50 text-amber-700 border border-amber-200 text-[9px] px-2 py-0.5 rounded font-black animate-pulse">
+                                    ⏳ BELUM SCAN
+                                  </span>
+                                </div>
+                              )}
+                            </div>
+
+                            {/* Section Zone, Bin, & Quantity */}
+                            <div
+                              className={`grid grid-cols-2 gap-2 p-2 rounded-md border ${
+                                isDone
+                                  ? "bg-emerald-50/20 border-emerald-100/60"
+                                  : "bg-slate-50/70 border-slate-100"
+                              }`}
+                            >
+                              <div className="flex flex-col justify-center">
+                                <span className="text-[8px] text-slate-400 font-bold uppercase tracking-widest">
+                                  Zone / Bin
+                                </span>
+                                <div className="flex items-center gap-1">
+                                  <span className="text-xs font-black text-slate-700 line-clamp-1">
+                                    {tp.sourceWarehouseSub?.name || "-"}
+                                  </span>
+                                  <span className="text-slate-300 text-[10px]">
+                                    /
+                                  </span>
+                                  <span className="text-xs font-black text-blue-600 line-clamp-1">
+                                    {tp.sourceBin?.name || "-"}
+                                  </span>
+                                </div>
+                              </div>
+
+                              <div className="flex items-center justify-end gap-3 border-l border-slate-200/60 pl-2">
+                                <div className="flex flex-col items-end">
+                                  <span className="text-[8px] text-slate-400 font-bold uppercase tracking-widest">
+                                    Plan
+                                  </span>
+                                  <span className="text-xs font-black text-slate-800">
+                                    {tp.quantity}{" "}
+                                    <span className="text-[9px] text-slate-500 font-bold uppercase">
+                                      {tp.uom}
+                                    </span>
+                                  </span>
+                                </div>
+
+                                <div className="flex flex-col items-end">
+                                  <span className="text-[8px] text-slate-400 font-bold uppercase tracking-widest">
+                                    Scan
+                                  </span>
+                                  <span
+                                    className={`text-xs font-black ${
+                                      isDone
+                                        ? "text-emerald-600"
+                                        : "text-slate-400"
+                                    }`}
+                                  >
+                                    {isDone
+                                      ? activeScans[0].quantity_picked
+                                      : "0"}{" "}
+                                    <span className="text-[9px] font-bold uppercase opacity-70">
+                                      {tp.uom}
+                                    </span>
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+
+                            {isDone && (
+                              <div className="mt-2 flex items-center gap-1.5 text-[9px] text-slate-400 bg-emerald-50/40 py-1 px-2 rounded w-fit border border-emerald-100/40">
+                                <div className="w-1.5 h-1.5 bg-emerald-400 rounded-full"></div>
+                                <span>
+                                  Discan:{" "}
+                                  <strong className="text-slate-600">
+                                    {new Date(
+                                      activeScans[0].createdAt,
+                                    ).toLocaleDateString("id-ID", {
+                                      day: "2-digit",
+                                      month: "short",
+                                    })}
+                                    ,{" "}
+                                    {new Date(
+                                      activeScans[0].createdAt,
+                                    ).toLocaleTimeString("id-ID", {
+                                      hour: "2-digit",
+                                      minute: "2-digit",
+                                    })}
+                                  </strong>
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+      </div>
+    </div>
+  );
+};
+
 const AdjustTableDO = ({
   globalFilter,
   setGlobalFilter,
@@ -102,19 +435,18 @@ const AdjustTableDO = ({
   const { fetchUsingPagination, list, pagination, isLoading } =
     useStoreOutboundDeliveryOrder();
 
-  // 🔹 Inisialisasi dari URL (agar saat Back, nilai ini tetap ada)
   const currentPage = parseInt(searchParams.get("page") || "1");
   const pageIndex = currentPage - 1;
   const [pageSize, setPageSize] = useState(10);
 
-  // 🔹 Ref untuk deteksi Initial Mount dan Perubahan Filter
   const isInitialMount = useRef(true);
   const prevFiltersRef = useRef({
     filteredStatus,
     filteredTypeOutbound,
   });
 
-  // 🔹 Handler untuk update URL ketika halaman berubah
+  console.log("list data DO", list);
+
   const handlePageChange = (newPageIndex: number, newSize: number) => {
     const newParams = new URLSearchParams(searchParams);
     newParams.set("page", (newPageIndex + 1).toString());
@@ -125,7 +457,6 @@ const AdjustTableDO = ({
     }
   };
 
-  // 🔹 Logika Reset ke Halaman 1 HANYA jika filter diubah manual
   useEffect(() => {
     if (isInitialMount.current) {
       isInitialMount.current = false;
@@ -142,7 +473,6 @@ const AdjustTableDO = ({
         filteredTypeOutbound,
       };
 
-      // Reset ke halaman 1 di URL
       const newParams = new URLSearchParams(searchParams);
       newParams.set("page", "1");
       setSearchParams(newParams, { replace: true });
@@ -150,7 +480,6 @@ const AdjustTableDO = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filteredStatus, filteredTypeOutbound]);
 
-  // 🔹 Fetch data (status & type server-side; search/origin/destination client-side)
   useEffect(() => {
     if (!fetchUsingPagination) return;
     fetchUsingPagination({
@@ -185,324 +514,37 @@ const AdjustTableDO = ({
   };
 
   const handleDeleteDO = async (id: string) => {
-  const confirm = await Swal.fire({
-    icon: "warning",
-    title: "Cancel DO",
-    text: `Yakin cancel DO ini ?`,
-    showCancelButton: true,
-    confirmButtonText: "Ya, batalkan",
-    cancelButtonText: "Batal",
-  });
+    const confirm = await Swal.fire({
+      icon: "warning",
+      title: "Cancel DO",
+      text: `Yakin cancel DO ini ?`,
+      showCancelButton: true,
+      confirmButtonText: "Ya, batalkan",
+      cancelButtonText: "Batal",
+    });
 
-  if (!confirm.isConfirmed) return;
+    if (!confirm.isConfirmed) return;
 
-  try {
-    await axiosInstance.patch(`outbound-do/${id}/cancel`);
-    showSuccessToast("Delivery Order berhasil dibatalkan");
+    try {
+      await axiosInstance.patch(`outbound-do/${id}/cancel`);
+      showSuccessToast("Delivery Order berhasil dibatalkan");
 
-    if (fetchUsingPagination) {
-      fetchUsingPagination({
-        page: currentPage,
-        limit: pageSize,
-        status: filteredStatus || "",
-        outbound_type: filteredTypeOutbound || "",
-      });
+      if (fetchUsingPagination) {
+        fetchUsingPagination({
+          page: currentPage,
+          limit: pageSize,
+          status: filteredStatus || "",
+          outbound_type: filteredTypeOutbound || "",
+        });
+      }
+    } catch (err: any) {
+      console.error("Error canceling DO via axiosInstance:", err);
+      const errorMsg =
+        err.response?.data?.message ||
+        err.message ||
+        "Terjadi kesalahan saat membatalkan DO";
+      showErrorToast(`Gagal cancel DO: ${errorMsg}`);
     }
-  } catch (err: any) {
-    console.error("Error canceling DO via axiosInstance:", err);
-    const errorMsg = err.response?.data?.message || err.message || "Terjadi kesalahan saat membatalkan DO";
-    showErrorToast(`Gagal cancel DO: ${errorMsg}`);
-  }
-};
-
-  const MemoCell = ({ memos }: { memos: any[] }) => {
-    const [openMemoId, setOpenMemoId] = useState<string | null>(null);
-
-    if (!memos || memos.length === 0) {
-      return (
-        <div className="p-4 border-2 border-dashed border-slate-200 rounded-lg text-center">
-          <span className="text-slate-400 italic text-xs font-medium">
-            Belum ada data memo
-          </span>
-        </div>
-      );
-    }
-
-    return (
-      <div className="flex flex-col gap-3 min-w-[350px]">
-        {memos
-          .filter((memo) => memo.status !== "CANCELLED")
-          .map((memo) => {
-            const isOpen = openMemoId === memo.id;
-            const assignedUsers = memo.assigned_pickings || [];
-            const isAssigned = assignedUsers.length > 0;
-            const pickings = (memo.transaction_pickings || []).filter(
-              (p: any) => p.status !== "CANCELLED",
-            );
-
-            const totalSKU = pickings.length;
-            const scannedSKUCount = pickings.filter((tp: any) => {
-              const activeScans = (tp.transactionScanPicking || []).filter(
-                (s: any) => s.status !== "CANCELLED",
-              );
-              return activeScans.length > 0;
-            }).length;
-
-            const remainingSKU = totalSKU - scannedSKUCount;
-            const isAllScanned = totalSKU > 0 && remainingSKU === 0;
-
-            return (
-              <div
-                key={memo.id}
-                className={`rounded-xl transition-all duration-300 border-2 ${isOpen ? "border-blue-500 shadow-lg" : "border-slate-200 hover:border-slate-300"}`}
-              >
-                {/* --- HEADER MEMO --- */}
-                <div
-                  onClick={() => setOpenMemoId(isOpen ? null : memo.id)}
-                  className={`p-4 cursor-pointer flex items-start justify-between gap-4 ${
-                    isOpen ? "bg-blue-50/50" : "bg-white hover:bg-slate-50"
-                  }`}
-                >
-                  {/* SISI KIRI: Memo Info & Helpers (Gunakan flex-grow agar mengambil ruang yang tersedia) */}
-                  <div className="flex-grow flex flex-col gap-1 overflow-hidden">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <div className="p-1.5 bg-blue-100 rounded-lg flex-shrink-0">
-                        <svg
-                          width="16"
-                          height="16"
-                          className="text-blue-600"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2.5"
-                        >
-                          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                          <path d="M14 2v6h6" />
-                          <path d="M16 13H8" />
-                          <path d="M16 17H8" />
-                          <path d="M10 9H8" />
-                        </svg>
-                      </div>
-                      <span className="text-sm font-black text-slate-800 tracking-tight flex-shrink-0">
-                        {memo.outbound_memo_number}
-                      </span>
-
-                      {/* INFO STATUS SKU */}
-                      <div className="flex items-center gap-1.5">
-                        {remainingSKU > 0 ? (
-                          <span className="text-[10px] font-black bg-amber-100 text-amber-700 border border-amber-200 px-2 py-0.5 rounded-full shadow-sm whitespace-nowrap">
-                            {remainingSKU} SKU Belum Scan
-                          </span>
-                        ) : isAllScanned ? (
-                          <span className="text-[10px] font-black bg-emerald-100 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-full shadow-sm whitespace-nowrap">
-                            Semua SKU sudah di-Scan
-                          </span>
-                        ) : null}
-                      </div>
-                    </div>
-
-                    {/* HELPER LIST */}
-                    <div className="flex flex-wrap items-center gap-y-2 gap-x-1.5 mt-2">
-                      <div className="flex items-center gap-1 flex-shrink-0">
-                        <span className="text-[9px] font-black uppercase tracking-widest text-purple-600 bg-purple-50 px-1.5 py-0.5 rounded border border-purple-100">
-                          Helper
-                        </span>
-                      </div>
-
-                      {isAssigned ? (
-                        <div className="flex flex-wrap gap-1.5">
-                          {assignedUsers.map((user: any, idx: number) => (
-                            <span
-                              key={user.id || idx}
-                              className="text-[10px] font-bold text-blue-700 bg-white border border-blue-200 px-2 py-0.5 rounded-md flex items-center gap-1 shadow-sm whitespace-nowrap"
-                            >
-                              👤 {user.picking_name}
-                            </span>
-                          ))}
-                        </div>
-                      ) : (
-                        <span className="text-[10px] font-bold text-red-500 bg-grey-50 px-2 py-0.5 rounded-md border border-red-100 italic">
-                          ⚠️ Belum ada Helper ditugaskan
-                        </span>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* SISI KANAN: Total SKU & Arrow (Gunakan flex-shrink-0 agar ukuran tetap) */}
-                  <div className="flex flex-col items-end justify-start gap-3 flex-shrink-0 pt-1">
-                    <span className="text-[11px] font-bold text-slate-500 bg-white border px-2.5 py-1.5 rounded-lg shadow-sm whitespace-nowrap">
-                      {totalSKU} SKU
-                    </span>
-                    <svg
-                      className={`w-5 h-5 text-slate-400 transition-transform duration-300 ${isOpen ? "rotate-180" : ""}`}
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M19 9l-7 7-7-7"
-                      />
-                    </svg>
-                  </div>
-                </div>
-
-                {/* --- DAFTAR BARANG (BODY) --- */}
-                {isOpen && (
-                  <div className="bg-slate-50/50 p-3 flex flex-col gap-3 border-t-2 border-slate-100">
-                    {pickings.length === 0 ? (
-                      <div className="p-6 text-center text-red-400 text-xs italic bg-white rounded-xl border border-dashed border-slate-200">
-                        Belum ada Picking Suggestion dibuat!
-                      </div>
-                    ) : (
-                      pickings.map((tp: any) => {
-                        const activeScans = (
-                          tp.transactionScanPicking || []
-                        ).filter((s: any) => s.status !== "CANCELLED");
-                        const isDone = activeScans.length > 0;
-
-                        return (
-                          <div
-                            key={tp.id}
-                            className={`p-4 rounded-xl border transition-all duration-200 ${
-                              isDone
-                                ? "bg-white border-emerald-100 shadow-sm"
-                                : "bg-white border-slate-200 shadow-sm hover:border-blue-200"
-                            }`}
-                          >
-                            {/* Info Utama Barang */}
-                            <div className="flex justify-between items-start mb-4">
-                              <div className="flex flex-col gap-0.5 max-w-[65%]">
-                                <span className="text-sm font-black text-slate-900 uppercase tracking-wide">
-                                  {tp.item?.sku}
-                                </span>
-                                <p className="text-[11px] text-slate-500 font-medium leading-relaxed">
-                                  {tp.item?.description}
-                                </p>
-                              </div>
-
-                              {/* Label Status */}
-                              {isDone ? (
-                                <div className="flex flex-col items-end">
-                                  <span className="bg-emerald-200 text-black-200 text-[10px] px-2.5 py-1 rounded-lg font-black flex items-center gap-1 shadow-sm shadow-emerald-100">
-                                    ✅ SELESAI SCAN
-                                  </span>
-                                  <span className="text-[9px] text-emerald-600 font-bold mt-1.5 px-1">
-                                    Oleh: {activeScans[0].user_name}
-                                  </span>
-                                </div>
-                              ) : (
-                                <div className="flex flex-col items-end">
-                                  <span className="bg-amber-100 text-amber-700 border border-amber-200 text-[10px] px-2.5 py-1 rounded-lg font-black animate-pulse">
-                                    ⏳ BELUM DI-SCAN
-                                  </span>
-                                </div>
-                              )}
-                            </div>
-
-                            {/* Detail Lokasi & Jumlah (Section Box Samar) */}
-                            <div
-                              className={`grid grid-cols-2 gap-4 p-3 rounded-xl border ${
-                                isDone
-                                  ? "bg-emerald-50/30 border-emerald-100/50"
-                                  : "bg-slate-50 border-slate-100"
-                              }`}
-                            >
-                              {/* Lokasi Gudang */}
-                              <div className="flex flex-col justify-center">
-                                <span className="text-[9px] text-slate-400 font-bold uppercase tracking-widest mb-1">
-                                  Zone/ Bin
-                                </span>
-                                <div className="flex items-center gap-1.5">
-                                  <span className="text-sm font-black text-slate-700">
-                                    {tp.sourceWarehouseSub?.name || "-"}
-                                  </span>
-                                  <span className="text-slate-300 text-xs">
-                                    /
-                                  </span>
-                                  <span className="text-sm font-black text-blue-600">
-                                    {tp.sourceBin?.name || "-"}
-                                  </span>
-                                </div>
-                              </div>
-
-                              {/* Jumlah Barang (Vertical Mode) */}
-                              <div className="flex flex-col items-end gap-2 border-l border-slate-200/50 pl-4">
-                                <div className="flex flex-col items-end">
-                                  <span className="text-[9px] text-slate-400 font-bold uppercase tracking-widest leading-none mb-1">
-                                    Suggestion
-                                  </span>
-                                  <span className="text-sm font-black text-slate-800">
-                                    {tp.quantity}{" "}
-                                    <span className="text-[10px] text-slate-500 font-bold uppercase">
-                                      {tp.uom}
-                                    </span>
-                                  </span>
-                                </div>
-
-                                <div className="w-full h-[1px] bg-slate-200/50"></div>
-
-                                <div className="flex flex-col items-end">
-                                  <span className="text-[9px] text-slate-400 font-bold uppercase tracking-widest leading-none mb-1">
-                                    Telah Di-Scan
-                                  </span>
-                                  <span
-                                    className={`text-sm font-black ${
-                                      isDone
-                                        ? "text-emerald-600"
-                                        : "text-slate-400"
-                                    }`}
-                                  >
-                                    {isDone
-                                      ? activeScans[0].quantity_picked
-                                      : "0"}{" "}
-                                    <span className="text-[10px] font-bold uppercase opacity-70">
-                                      {tp.uom}
-                                    </span>
-                                  </span>
-                                </div>
-                              </div>
-                            </div>
-
-                            {/* Catatan Waktu (Audit Trail) */}
-                            {isDone && (
-                              <div className="mt-3 flex items-center gap-2 text-[10px] text-slate-400 bg-emerald-50/50 py-1.5 px-3 rounded-lg w-fit border border-emerald-100/50">
-                                <div className="w-1.5 h-1.5 bg-emerald-400 rounded-full shadow-sm shadow-emerald-200"></div>
-                                <span>
-                                  Berhasil di-scan pada{" "}
-                                  <strong className="text-slate-600">
-                                    {new Date(
-                                      activeScans[0].createdAt,
-                                    ).toLocaleDateString("id-ID", {
-                                      day: "2-digit",
-                                      month: "short",
-                                      year: "numeric",
-                                    })}
-                                    ,{" "}
-                                    {new Date(
-                                      activeScans[0].createdAt,
-                                    ).toLocaleTimeString("id-ID", {
-                                      hour: "2-digit",
-                                      minute: "2-digit",
-                                    })}{" "}
-                                    WIB
-                                  </strong>
-                                </span>
-                              </div>
-                            )}
-                          </div>
-                        );
-                      })
-                    )}
-                  </div>
-                )}
-              </div>
-            );
-          })}
-      </div>
-    );
   };
 
   const roleName = user?.role?.name;
@@ -513,14 +555,34 @@ const AdjustTableDO = ({
 
   const columns: ColumnDef<MemoData>[] = useMemo(
     () => [
+      // TAMBAHAN KOLOM EXPANDER DI SINI
+      {
+        id: "expander",
+        header: () => null,
+        cell: ({ row }) => (
+          <button
+            onClick={row.getToggleExpandedHandler()}
+            className="p-1.5 rounded-md hover:bg-slate-100 text-slate-500 transition-colors"
+          >
+            {row.getIsExpanded() ? (
+              <FaChevronDown className="w-3 h-3 text-orange-500" />
+            ) : (
+              <FaChevronRight className="w-3 h-3" />
+            )}
+          </button>
+        ),
+      },
       { accessorKey: "outboundDoNumber", header: "DO Number" },
       { accessorKey: "outboundType", header: "Type Outbound" },
       { accessorKey: "origin", header: "Origin" },
+      // UBAH KOLOM MEMO MENJADI SLIM
       {
         accessorKey: "outboundMemos",
-        header: "Memo Number",
+        header: "Memo Count",
         cell: ({ row }) => (
-          <MemoCell memos={row.original.outboundMemosDetailed || []} />
+          <span className="font-semibold text-slate-700">
+            {row.original.outboundMemosDetailed?.length || 0} Memo(s)
+          </span>
         ),
       },
       {
@@ -595,10 +657,7 @@ const AdjustTableDO = ({
 
   const filteredList = useMemo(() => {
     return (list || []).filter((item: any) => {
-      if (
-        filteredDoNumber &&
-        item.outbound_do_number !== filteredDoNumber
-      ) {
+      if (filteredDoNumber && item.outbound_do_number !== filteredDoNumber) {
         return false;
       }
 
@@ -644,15 +703,19 @@ const AdjustTableDO = ({
     <div className="flex flex-col gap-4">
       {isLoading && <ActIndicator />}
 
-      <TableComponent
+      <MainTable
         data={mappedList}
         columns={columns}
         globalFilter={globalFilter}
         setGlobalFilter={setGlobalFilter}
         pageSize={pageSize}
-        pageIndex={pageIndex} // 🔹 Gunakan index dari URL
+        pageIndex={pageIndex}
         totalPages={pagination.totalPages}
-        onPageChange={handlePageChange} // 🔹 Update URL lewat handler baru
+        onPageChange={handlePageChange}
+        // TAMBAHAN RENDER SUB COMPONENT DI SINI
+        renderSubComponent={({ row }) => (
+          <MemoCell memos={row.original.outboundMemosDetailed} />
+        )}
       />
     </div>
   );

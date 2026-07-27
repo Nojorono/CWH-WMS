@@ -79,7 +79,6 @@ const AdjustTable = ({
       },
       { accessorKey: "destinationBinCode", header: "Destination Bin" },
       { accessorKey: "totalSku", header: "Total SKU" },
-      { accessorKey: "totalQty", header: "Current Qty Pallet" },
       { accessorKey: "quantity", header: "Qty Put Away" },
 
       { accessorKey: "palletItemUom", header: "UOM" },

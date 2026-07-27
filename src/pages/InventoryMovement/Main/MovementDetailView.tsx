@@ -51,6 +51,61 @@ const MovementDetailView = ({
     }
   }, [selectedSub, fetchBinList]);
 
+  const sourceZoneId =
+    data.source_warehouse_sub_id || data.sourceWarehouseSub?.id || "";
+  const sourceBinId = data.source_bin_id || data.sourceBin?.id || "";
+
+  const isSelectableDestinationZone = (zone: any) => {
+    if (zone.is_gate) return false;
+    const staging = zone.is_staging;
+    if (staging === "INBOUND" || staging === "OUTBOUND") return false;
+    // storage: null / NO / false / kosong
+    return (
+      staging === null ||
+      staging === undefined ||
+      staging === false ||
+      staging === "NO" ||
+      staging === ""
+    );
+  };
+
+  /**
+   * Destination Zone: non-gate, non-staging (INBOUND/OUTBOUND).
+   * Zone sama dengan source tetap boleh (pindah antar BIN dalam zone).
+   */
+  const destinationZoneOptions = useMemo(() => {
+    if (!Array.isArray(listZone)) return [];
+
+    return listZone
+      .filter(isSelectableDestinationZone)
+      .map((zone: any) => ({
+        value: zone.id,
+        label: zone.name,
+      }));
+  }, [listZone]);
+
+  /**
+   * Destination BIN:
+   * - zone tujuan = zone sumber → exclude BIN sumber (A/BIN-A → A/BIN-B OK)
+   * - zone berbeda → semua BIN zone tujuan
+   */
+  const destinationBinOptions = useMemo(() => {
+    if (!Array.isArray(binList)) return [];
+
+    const isSameZone = Boolean(selectedSub) && selectedSub === sourceZoneId;
+
+    return binList
+      .filter((bin: any) => !(isSameZone && bin.id === sourceBinId))
+      .map((bin: any) => ({
+        value: bin.id,
+        label: bin.name,
+      }));
+  }, [binList, selectedSub, sourceZoneId, sourceBinId]);
+
+  const isSameSourceLocation =
+    Boolean(selectedSub) &&
+    selectedSub === sourceZoneId &&
+    (!selectedBin || selectedBin === sourceBinId);
   // Filter khusus untuk role DRIVER_FORKLIFT
   const forkliftDrivers = useMemo(() => {
     return Array.isArray(listForklifts)
@@ -330,16 +385,7 @@ const MovementDetailView = ({
                   </label>
                   <Select
                     width={"100%"}
-                    options={
-                      listZone
-                        ?.filter(
-                          (s: any) =>
-                            s.is_staging === null &&
-                            !s.is_gate &&
-                            s.name !== data.sourceWarehouseSub?.name,
-                        )
-                        .map((s: any) => ({ value: s.id, label: s.name })) || []
-                    }
+                    options={destinationZoneOptions}
                     placeholder="Pilih Zone"
                     onChange={(val) => {
                       setSelectedSub(val);
@@ -354,17 +400,13 @@ const MovementDetailView = ({
                   </label>
                   <Select
                     width={"100%"}
-                    options={
-                      Array.isArray(binList)
-                        ? binList.map((s: any) => ({
-                            value: s.id,
-                            label: s.name,
-                          }))
-                        : []
+                    options={destinationBinOptions}
+                    placeholder={
+                      selectedSub ? "Pilih Bin" : "Pilih Zone dahulu"
                     }
-                    placeholder="Pilih Bin"
                     onChange={(val) => setSelectedBin(val)}
                     value={selectedBin}
+                    disabled={!selectedSub}
                   />
                 </div>
               </div>
@@ -496,7 +538,11 @@ const MovementDetailView = ({
                 </button>
                 <button
                   onClick={handleSubmit}
-                  disabled={assignedUsers.length === 0}
+                  disabled={
+                    assignedUsers.length === 0 ||
+                    !selectedSub ||
+                    isSameSourceLocation
+                  }
                   className="flex-1 py-3 bg-orange-500 text-white rounded shadow hover:bg-orange-600 disabled:bg-gray-300 font-medium"
                 >
                   Submit Movement

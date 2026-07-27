@@ -4,9 +4,9 @@ import {
   UIGateLoadingDO,
   UIGateUser,
 } from "../helper/mapOutboundGateToUILoading";
+import { getGateSkuCompositeKey } from "../helper/gateSkuHelpers";
 import { isGateLoadComplete } from "../helper/isGateLoadComplete";
 import { isMemoGateLoadComplete } from "../helper/isMemoLoadComplete";
-import { EndPoint } from "../../../../utils/EndPoint";
 import { showErrorToast, showSuccessToast } from "../../../../components/toast";
 import Button from "../../../../components/ui/button/Button";
 import SKUCard from "./SKUcard";
@@ -17,6 +17,7 @@ export const DODetailPanel: React.FC<{
   doData: UIGateLoadingDO;
   onRefresh: () => void;
 }> = ({ doData, onRefresh }) => {
+
   const [openMemoId, setOpenMemoId] = useState<string | null>(
     doData.memos.length > 0 ? doData.memos[0].memo_id : null,
   );
@@ -52,35 +53,6 @@ export const DODetailPanel: React.FC<{
       .map(([uom, qty]) => `${qty} ${uom}`)
       .join(", ");
   };
-
-  // async function handleCompleteLoadGate(id: string) {
-  //   showConfirmDialog(
-  //     async () => {
-  //       try {
-  //         const res = await fetch(`${EndPoint}assigned-gate/${id}/status`, {
-  //           method: "PATCH",
-  //           headers: {
-  //             "Content-Type": "application/json",
-  //             Authorization: `Bearer ${token}`,
-  //           },
-  //           body: JSON.stringify({ status: "DONE" }),
-  //         });
-  //         if (!res.ok) throw new Error("Failed to approve");
-  //         showSuccessToast("Gate loading completed successfully");
-  //         onRefresh();
-  //       } catch (err) {
-  //         showErrorToast("Gagal melakukan approve gate loading");
-  //       }
-  //     },
-  //     {
-  //       title: "Complete Load Gate",
-  //       text: "Apakah Anda yakin ingin menyelesaikan proses load gate ini? Pastikan semua pallet sudah ter-load dengan benar sebelum melanjutkan.",
-  //       icon: "warning",
-  //       confirmButtonText: "Yes, Complete!",
-  //       cancelButtonText: "No, Cancel",
-  //     },
-  //   );
-  // }
 
   async function handleCompleteLoadGate(id: string) {
     showConfirmDialog(
@@ -260,7 +232,7 @@ export const DODetailPanel: React.FC<{
                         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                           {pallet.skus.map((sku: any) => (
                             <SKUCard
-                              key={sku.item_id}
+                              key={`${pallet.pallet_id}-${getGateSkuCompositeKey(sku)}`}
                               sku={sku}
                               pallet={pallet}
                               memo={memo}

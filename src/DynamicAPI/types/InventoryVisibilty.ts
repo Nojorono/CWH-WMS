@@ -1,9 +1,23 @@
+export type InventoryVisibilitySummaryByUom = {
+  uom: string;
+  item_count: number;
+  total_quantity: number;
+  total_ready_quantity: number;
+  total_pending_quantity: number;
+  total_booked_quantity: number;
+  total_available_quantity: number;
+  items_with_pending_bookings: number;
+};
+
 export type InventoryVisibilitySummary = {
-    total_items: number;
-    total_quantity: number;
-    total_booked_quantity: number;
-    total_available_quantity: number;
-    items_with_pending_bookings: number;
+  total_items: number;
+  total_item_uom_rows?: number;
+  items_with_pending_bookings: number;
+  by_uom?: InventoryVisibilitySummaryByUom[];
+  /** @deprecated legacy flat fields — prefer by_uom */
+  total_quantity?: number;
+  total_booked_quantity?: number;
+  total_available_quantity?: number;
 };
 
 export type InventoryVisibilityPalletDetail = {

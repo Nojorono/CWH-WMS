@@ -11,6 +11,7 @@ export interface UomOption {
 export interface POSearchResult {
     vendorName: string;
     vendorId: number;
+    vendorSiteId: number;
     poDate: string;
     items: ItemForm[];
 }
@@ -47,6 +48,7 @@ export async function POsearchService(
 
     const vendorName = data.NAMA_VENDOR?.toUpperCase() ?? "";
     const vendorId = Number(data.ID_VENDOR);
+    const vendorSiteId = Number(data.VENDOR_SITE_ID);
     const poDate = data.TANGGAL_PEMBUATAN_PO ?? "";
 
     const items: ItemForm[] = (data.ITEM ?? [])
@@ -79,6 +81,7 @@ export async function POsearchService(
     return {
         vendorName,
         vendorId,
+        vendorSiteId,
         poDate,
         items
     };

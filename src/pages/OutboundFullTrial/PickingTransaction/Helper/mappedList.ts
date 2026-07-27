@@ -24,6 +24,9 @@ export function mapPickingTransactions(list: any[] = []): OutboundDo[] {
                     quantity_loaded: gate.quantity_loaded,
                     quantity_unloaded: gate.quantity_unloaded,
                     status: gate.status,
+                    pallet: gate.pallet,
+                    uom: gate.uom,
+                    week_number: gate.week_number,
                 })),
             }));
 

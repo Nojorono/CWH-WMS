@@ -1,7 +1,15 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ColumnDef } from "@tanstack/react-table";
 import { useSearchParams } from "react-router-dom";
-import { FaBoxOpen, FaCheck, FaEye, FaPrint, FaTasks } from "react-icons/fa";
+import {
+  FaBoxOpen,
+  FaCheck,
+  FaChevronDown,
+  FaChevronRight,
+  FaEye,
+  FaPrint,
+  FaTasks,
+} from "react-icons/fa";
 import StatusBadge from "../../../../common/statusBadge";
 import { STATUS_MAP_DO } from "../../../../constants/statusMaps";
 import { OutboundDo } from "../Helper/doTypes";
@@ -17,8 +25,11 @@ import {
   SealModal,
   ShipConfirmQtyModal,
   UploadModal,
+  IrSoCheckingOverlay,
 } from "../components";
 import { usePickingActions } from "../Hook/usePickingActions";
+import { useShipConfirmStatusByDo } from "../Hook/useShipConfirmStatusByDo";
+import MainTable from "../components/MainTable";
 
 type Props = {
   globalFilter?: string;
@@ -63,6 +74,9 @@ const AdjustTableTransactionPicking = ({
     fetchUsingPagination,
     updateData,
   });
+
+  const { shipConfirmStatusMap, syncShipConfirmStatuses } =
+    useShipConfirmStatusByDo();
 
   // --- EFFECT: SYNC FILTERS & PAGINATION ---
   const handlePageChange = (newPageIndex: number, newSize: number) => {
@@ -113,10 +127,7 @@ const AdjustTableTransactionPicking = ({
 
   const mappedList: OutboundDo[] = useMemo(() => {
     const filtered = (list || []).filter((item: any) => {
-      if (
-        filteredDoNumber &&
-        item.outbound_do_number !== filteredDoNumber
-      ) {
+      if (filteredDoNumber && item.outbound_do_number !== filteredDoNumber) {
         return false;
       }
       return true;
@@ -131,17 +142,36 @@ const AdjustTableTransactionPicking = ({
   useEffect(() => {
     if (mappedList.length === 0) return;
     actions.syncPickReleaseStatuses(mappedList);
-  }, [mappedList, actions.syncPickReleaseStatuses]);
+    syncShipConfirmStatuses(mappedList);
+  }, [mappedList, actions.syncPickReleaseStatuses, syncShipConfirmStatuses]);
 
   // --- COLUMNS DEFINITION ---
   const columns: ColumnDef<OutboundDo>[] = useMemo(
     () => [
+      {
+        id: "expander",
+        header: () => null,
+        cell: ({ row }) => (
+          <button
+            onClick={row.getToggleExpandedHandler()}
+            className="p-1.5 rounded-md hover:bg-slate-100 text-slate-500 transition-colors"
+          >
+            {row.getIsExpanded() ? (
+              <FaChevronDown className="w-3 h-3 text-orange-500" />
+            ) : (
+              <FaChevronRight className="w-3 h-3" />
+            )}
+          </button>
+        ),
+      },
       { accessorKey: "outbound_do_number", header: "DO Number" },
       {
         accessorKey: "outbound_memos",
-        header: "Memo Number",
+        header: "Memo Count",
         cell: ({ row }) => (
-          <MemoCell memos={row.original.outbound_memos || []} />
+          <span className="font-semibold text-slate-700">
+            {row.original.outbound_memos?.length || 0} Memo(s)
+          </span>
         ),
       },
       { accessorKey: "outbound_type", header: "Type" },
@@ -176,6 +206,7 @@ const AdjustTableTransactionPicking = ({
         cell: ({ row }) => {
           const { status, outbound_type, id, seal_number } = row.original;
           const isPickReleaseDone = actions.pickReleaseStatusMap[id] === true;
+          const isShipConfirmDone = shipConfirmStatusMap[id] === true;
           const hasSealNumber = Boolean(seal_number?.trim());
           const canAction = ["SUPERVISOR", "MANAGER", "superadmin"].includes(
             roleName || "",
@@ -184,7 +215,7 @@ const AdjustTableTransactionPicking = ({
 
           // Step wajib: Print Surat Jalan → input Seal Number (modal)
           // Setelah seal ada:
-          //   AMO     → Ship Confirm AMO
+          //   AMO     → IR/SO -> Ship Confirm AMO
           //   SUBDIST → Pick Release → Ship Confirm Subdist
           const actionList = [
             {
@@ -200,12 +231,17 @@ const AdjustTableTransactionPicking = ({
               visible: status === "APPROVED_LOAD",
             },
             {
-              label: "Ship Confirm AMO",
+              label: isShipConfirmDone
+                ? "Ship Confirm AMO Done!"
+                : "Need to Ship Confirm AMO",
               icon: FaCheck,
               onClick: () => actions.handleShipConfirmInternalAMO(row.original),
               visible: status === "APPROVED_LOAD" && outbound_type === "AMO",
-              disabled: !hasSealNumber,
-              className: hasSealNumber ? "text-emerald-600" : "text-slate-400",
+              disabled: !hasSealNumber || isShipConfirmDone,
+              className:
+                hasSealNumber && !isShipConfirmDone
+                  ? "text-emerald-600"
+                  : "text-slate-400",
             },
             {
               label: "Pick Release",
@@ -237,14 +273,16 @@ const AdjustTableTransactionPicking = ({
         },
       },
     ],
-    [currentPage, pageSize, roleName, actions],
+    [currentPage, pageSize, roleName, actions, shipConfirmStatusMap],
   );
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-4 relative">
       {isLoading && <ActIndicator />}
 
-      <TableComponent
+      <IrSoCheckingOverlay isOpen={actions.isCheckingIrSo} />
+
+      <MainTable
         data={mappedList}
         columns={columns}
         globalFilter={globalFilter}
@@ -253,6 +291,16 @@ const AdjustTableTransactionPicking = ({
         pageIndex={pageIndex}
         totalPages={pagination.totalPages}
         onPageChange={handlePageChange}
+        // 3. OPER MEMOCELL SEBAGAI SUB COMPONENT DISINI
+        renderSubComponent={({ row }) => (
+          <MemoCell
+            memos={row.original.outbound_memos || []}
+            outboundDoId={row.original.id}
+            outboundType={row.original.outbound_type}
+            outboundDoStatus={row.original.status}
+            sealNumber={row.original.seal_number}
+          />
+        )}
       />
 
       {/* Modals berkurang kerumitannya karena state diurus oleh hook */}

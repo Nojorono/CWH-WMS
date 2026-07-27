@@ -148,12 +148,23 @@ const OutboundShipConfirmTable = ({
         ),
       },
       {
-        header: "Integration Date",
+        header: "Created Date",
         accessorKey: "createdAt",
         cell: ({ row }) => (
           <div className="flex flex-col">
             <span className="text-[11px] text-slate-700 font-semibold">
               {formatDateTimeIndo(row.original.createdAt)}
+            </span>
+          </div>
+        ),
+      },
+      {
+        header: "Updated Date",
+        accessorKey: "updatedAt",
+        cell: ({ row }) => (
+          <div className="flex flex-col">
+            <span className="text-[11px] text-slate-700 font-semibold">
+              {formatDateTimeIndo(row.original.updatedAt)}
             </span>
           </div>
         ),

@@ -2,6 +2,7 @@ import React, { useState, useMemo, useEffect } from "react";
 import { submitGateLoadingSKU } from "../helper/submitGateLoadingSKU";
 import { updateSubmitLoadingGate } from "../helper/updateGateLoading";
 import { showErrorToast } from "../../../../components/toast";
+import { gateLoadMatchesSku } from "../helper/gateSkuHelpers";
 import Swal from "sweetalert2";
 
 const SKUCard = ({
@@ -33,15 +34,11 @@ const SKUCard = ({
   }, [sku]);
 
   const existingLoad = useMemo(() => {
-    return doData.assigned_gate_loads.find(
-      (l: any) =>
-        l.item_id === sku.item_id &&
-        l.pallet_id === pallet.pallet_id &&
-        l.outbound_memo_id === memo.memo_id,
+    return doData.assigned_gate_loads.find((l: any) =>
+      gateLoadMatchesSku(l, sku, pallet.pallet_id, memo.memo_id),
     );
   }, [doData.assigned_gate_loads, sku, pallet, memo]);
 
-  // Syarat tombol utama: Jika data belum ada, ini adalah "First Submit"
   const isFirstSubmit = !existingLoad;
 
   const canUpdate = useMemo(() => {
@@ -130,6 +127,9 @@ const SKUCard = ({
             <h5 className="font-black text-slate-800 text-xl leading-tight uppercase tracking-tight">
               {sku.item_name}
             </h5>
+            <p className="text-[10px] font-bold text-slate-500 mt-1">
+              Week: {sku.week_number ?? "-"}
+            </p>
           </div>
 
           {existingLoad && !isEditing && (

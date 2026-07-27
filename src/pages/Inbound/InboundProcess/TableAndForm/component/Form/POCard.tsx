@@ -150,11 +150,8 @@ export default function POCard({
     setLoading(true);
 
     try {
-      const { vendorName, vendorId, poDate, items } = await POsearchService(
-        poNo,
-        list,
-        uomList,
-      );
+      const { vendorName, vendorId, vendorSiteId, poDate, items } =
+        await POsearchService(poNo, list, uomList);
 
       const path = `deliveryOrders.${doIndex}.pos.${posIndex}`;
 
@@ -165,6 +162,10 @@ export default function POCard({
 
       if (vendorId) {
         setValue(`${path}.vendor_id` as any, vendorId);
+      }
+
+      if (vendorSiteId != null && !Number.isNaN(vendorSiteId)) {
+        setValue(`${path}.vendor_site_id` as any, vendorSiteId);
       }
 
       if (poDate) {

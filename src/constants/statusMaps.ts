@@ -24,6 +24,8 @@ export const STATUS_MAP_INBOUND: StatusMap = {
 export const STATUS_MAP_INTEGRATION_INBOUND: StatusMap = {
   CREATED: 'grey',
   READY: 'secondary',
+  S: 'success',
+  E: 'error',
   SUCCESS: 'success',
   ERROR: 'error',
   FAILED: 'error',

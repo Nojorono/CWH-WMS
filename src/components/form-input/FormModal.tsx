@@ -368,7 +368,6 @@ const ModalForm: React.FC<ModalFormProps> = ({
           <Controller
             name={field.name}
             control={control}
-            // 🔑 TAMBAHKAN INI: Agar validasi 'required' terbaca oleh Controller
             rules={field.validation}
             render={({ field: { onChange, value } }) => (
               <div className="flex gap-4">
@@ -415,6 +414,71 @@ const ModalForm: React.FC<ModalFormProps> = ({
             )}
           />
         );
+
+      case "number": {
+        const numberRules = {
+          valueAsNumber: true as const,
+          ...field.validation,
+          min: (() => {
+            const existingMin = field.validation?.min;
+            const minValue =
+              typeof existingMin === "object" && existingMin != null
+                ? Math.max(0, Number(existingMin.value) || 0)
+                : typeof existingMin === "number"
+                  ? Math.max(0, existingMin)
+                  : 0;
+            const message =
+              typeof existingMin === "object" &&
+              typeof existingMin?.message === "string"
+                ? existingMin.message
+                : "Nilai tidak boleh kurang dari 0";
+            return { value: minValue, message };
+          })(),
+        };
+        const { onChange, onBlur, name, ref } = register(
+          field.name,
+          numberRules,
+        );
+
+        return (
+          <div>
+            <input
+              type="number"
+              min={0}
+              step="any"
+              name={name}
+              ref={ref}
+              onBlur={onBlur}
+              onChange={(e) => {
+                const raw = e.target.value;
+                if (raw !== "") {
+                  const num = Number(raw);
+                  if (!Number.isNaN(num) && num < 0) {
+                    e.target.value = "0";
+                  }
+                }
+                onChange(e);
+              }}
+              onKeyDown={(e) => {
+                if (
+                  e.key === "-" ||
+                  e.key === "e" ||
+                  e.key === "E" ||
+                  e.key === "+"
+                ) {
+                  e.preventDefault();
+                }
+              }}
+              className={isDisabled || field.readOnly ? disabledCls : inputCls}
+              disabled={isDisabled || field.readOnly}
+              placeholder={field.placeholder}
+            />
+            {field.description && (
+              <p className="text-xs text-gray-600 mt-1">{field.description}</p>
+            )}
+          </div>
+        );
+      }
 
       default:
         return (
