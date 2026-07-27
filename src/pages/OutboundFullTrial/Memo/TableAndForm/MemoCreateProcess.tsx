@@ -174,11 +174,17 @@ const CreateMemo: React.FC = () => {
   }, [typeOutbound?.value, selectedCustomer, customerRaw]);
 
   const isAmoType = typeOutbound?.value === "AMO";
+  const hasTypeOutbound = Boolean(typeOutbound?.value);
   const hasAmoOrganizationName = Boolean(amoOrganizationName);
-  /** AMO wajib punya Organization Name; selain AMO boleh lanjut */
-  const canProceedAddItem = !isAmoType || hasAmoOrganizationName;
+  /** Wajib pilih type outbound; AMO juga wajib Organization Name */
+  const canProceedAddItem =
+    hasTypeOutbound && (!isAmoType || hasAmoOrganizationName);
 
   const handleOpenAddItem = () => {
+    if (!hasTypeOutbound) {
+      showErrorToast("Pilih Type Outbound terlebih dahulu.");
+      return;
+    }
     if (!canProceedAddItem) {
       showErrorToast(
         "Organization Name tidak tersedia. Pilih AMO Destination yang valid terlebih dahulu.",
@@ -949,10 +955,17 @@ const CreateMemo: React.FC = () => {
               >
                 + Add Item
               </Button>
-              {isAmoType && !hasAmoOrganizationName && (
+              {!hasTypeOutbound ? (
                 <span className="text-[11px] text-rose-600 font-medium">
-                  Pilih destination AMO agar Organization Name terisi.
+                  Pilih Type Outbound terlebih dahulu.
                 </span>
+              ) : (
+                isAmoType &&
+                !hasAmoOrganizationName && (
+                  <span className="text-[11px] text-rose-600 font-medium">
+                    Pilih destination AMO agar Organization Name terisi.
+                  </span>
+                )
               )}
             </div>
           )}

@@ -210,7 +210,8 @@ export const GoodsPreparationPage = ({
   // Proteksi: Cek apakah tanggal Callplan lebih lampau dari tanggal BTB (-1)
   const isCallPlanBeforeBTB = useMemo(() => {
     if (!apiDate) return false;
-    const btbCompareDate = dayjs().subtract(1, "day").format("YYYY-MM-DD");
+    // const btbCompareDate = dayjs().subtract(1, "day").format("YYYY-MM-DD");
+    const btbCompareDate = targetDate;
     return dayjs(apiDate).isBefore(dayjs(btbCompareDate), "day");
   }, [apiDate]);
 
