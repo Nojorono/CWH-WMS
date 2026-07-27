@@ -27,7 +27,7 @@ const PalletHistoryModal: React.FC<PalletHistoryModalProps> = ({
         <div className="bg-orange-500 px-6 py-4 flex items-center justify-between text-white shrink-0">
           <div>
             <h3 className="font-bold text-lg">Pallet Detail</h3>
-            <p className="text-xs text-orange-100 mt-0.5 font-mono">
+            <p className="text-lg text-orange-100 font-mono">
               {palletCode || "-"}
             </p>
           </div>
