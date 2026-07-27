@@ -26,9 +26,7 @@ type Props = {
   open: boolean;
   onClose: () => void;
   onSubmit: (item: ItemData) => void;
-  /** Dari customer AMO (`organization_name`), contoh: "JAT" → dipakai sebagai organization_code */
   organizationName?: string;
-  /** Jika true, modal tidak boleh jalan tanpa Organization Name */
   requireOrganizationName?: boolean;
 };
 
@@ -279,7 +277,7 @@ const ModalAddItem: React.FC<Props> = ({
         <h2 className="text-xl font-bold text-indigo-800">Add Item Memo</h2>
         {hasOrganizationName && (
           <p className="text-xs text-slate-500 -mt-2">
-            Organization:{" "}
+            Organization/Cabang{" "}
             <span className="font-bold text-indigo-700">
               {resolvedOrganizationName}
             </span>
@@ -320,13 +318,13 @@ const ModalAddItem: React.FC<Props> = ({
             )}
             {needsOrgValidation && validateStatus === "valid" && (
               <p className="text-xs text-emerald-600 mt-1 font-medium">
-                ✓ {validateMessage || "Item tersedia untuk cabang ini."}
+                ✓  Item tersedia untuk cabang ini.
               </p>
             )}
             {(errors.sku ||
               (needsOrgValidation && validateStatus === "invalid")) && (
               <p className="text-xs text-red-500 mt-1">
-                {errors.sku || validateMessage}
+                X Item tidak tersedia untuk cabang ini.
               </p>
             )}
           </div>
