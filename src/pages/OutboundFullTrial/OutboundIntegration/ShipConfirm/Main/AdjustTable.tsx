@@ -4,6 +4,7 @@ import {
   FaChevronRight,
   FaTruck,
   FaExclamationTriangle,
+  FaSync,
 } from "react-icons/fa";
 import { ColumnDef } from "@tanstack/react-table";
 import StatusBadge from "../../../../../common/statusBadge";
@@ -15,6 +16,12 @@ import { formatDateTimeIndo } from "../../../../../helper/FormatDateTime";
 import { OutboundDoUI } from "../../../../../DynamicAPI/types/ShipConfirmType";
 import { ShipConfirmRowDetail } from "../component/ShipConfirmRowDetail";
 import { mapShipConfirmLogList } from "../Helper/mappinganUI";
+import Button from "../../../../../components/ui/button/Button";
+import axiosInstance from "../../../../../DynamicAPI/AxiosInstance";
+import {
+  showErrorToast,
+  showSuccessToast,
+} from "../../../../../components/toast";
 
 const OutboundShipConfirmTable = ({
   globalFilter,
@@ -24,6 +31,7 @@ const OutboundShipConfirmTable = ({
   const { fetchAll, list, pagination, isLoading } = useStoreShipConfirm();
   const [pageIndex, setPageIndex] = useState(0);
   const [pageSize, setPageSize] = useState(25);
+  const [pollingMap, setPollingMap] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     fetchAll();
@@ -48,6 +56,39 @@ const OutboundShipConfirmTable = ({
     }
     return result;
   }, [list, filteredIO, globalFilter]);
+
+  const handlePollStatus = async (
+    outboundDoId?: string,
+    transactionType?: string,
+  ) => {
+    if (!outboundDoId) {
+      showErrorToast("Outbound DO ID tidak ditemukan.");
+      return;
+    }
+
+    const txType = transactionType || "Outbound GS Mutasi SO Internal";
+    const pollKey = `${outboundDoId}::${txType}`;
+
+    setPollingMap((prev) => ({ ...prev, [pollKey]: true }));
+    try {
+      await axiosInstance.get(
+        `outbound-integration-deliveries/poll-status/outbound-do/${outboundDoId}`,
+        {
+          params: { transaction_type: txType },
+        },
+      );
+      showSuccessToast("Poll status outbound integration berhasil.");
+      await fetchAll();
+    } catch (error: any) {
+      const msg =
+        error?.response?.data?.message ||
+        error?.message ||
+        "Gagal poll status outbound integration.";
+      showErrorToast(msg);
+    } finally {
+      setPollingMap((prev) => ({ ...prev, [pollKey]: false }));
+    }
+  };
 
   const columns: ColumnDef<OutboundDoUI>[] = useMemo(
     () => [
@@ -169,8 +210,35 @@ const OutboundShipConfirmTable = ({
           </div>
         ),
       },
+      {
+        id: "action",
+        header: "Action",
+        cell: ({ row }) => {
+          const doData = row.original as any;
+          const outboundDoId = (doData?.outbound_do_id ||
+            doData?.real_do_id) as string | undefined;
+          const txType =
+            doData?.log_transaction_type || "Outbound GS Mutasi SO Internal";
+          const pollKey = `${outboundDoId}::${txType}`;
+          const isPolling = Boolean(pollingMap[pollKey]);
+          const isSuccess = doData?.computed_status === "S";
+
+          return (
+            <Button
+              type="button"
+              variant="action"
+              size="xsm"
+              disabled={!outboundDoId}
+              onClick={() => handlePollStatus(outboundDoId, txType)}
+              startIcon={<FaSync className={isPolling ? "animate-spin" : ""} />}
+            >
+              {isPolling ? "Polling..." : "Poll Status"}
+            </Button>
+          );
+        },
+      },
     ],
-    [],
+    [pollingMap],
   );
 
   return (
