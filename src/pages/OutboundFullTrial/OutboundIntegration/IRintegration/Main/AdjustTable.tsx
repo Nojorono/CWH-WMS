@@ -8,6 +8,7 @@ import {
   FaCalendarAlt,
   FaRoute,
   FaFingerprint,
+  FaSync,
 } from "react-icons/fa";
 import { ColumnDef } from "@tanstack/react-table";
 import StatusBadge from "../../../../../common/statusBadge";
@@ -16,6 +17,9 @@ import { useStoreIRIntegration } from "../../../../../DynamicAPI/stores/Store/Ma
 import ActIndicator from "../../../../../components/ui/activityIndicator";
 import ExpandableTableComponent from "../component/Table";
 import { formatDateTimeIndo } from "../../../../../helper/FormatDateTime";
+import Button from "../../../../../components/ui/button/Button";
+import axiosInstance from "../../../../../DynamicAPI/AxiosInstance";
+import { showErrorToast, showSuccessToast } from "../../../../../components/toast";
 
 const OutboundAdjustTable = ({
   globalFilter,
@@ -25,6 +29,7 @@ const OutboundAdjustTable = ({
   const { fetchAll, list, pagination, isLoading } = useStoreIRIntegration();
   const [pageIndex, setPageIndex] = useState(0);
   const [pageSize, setPageSize] = useState(25);
+  const [pollingMap, setPollingMap] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     fetchAll();
@@ -56,6 +61,30 @@ const OutboundAdjustTable = ({
 
     return result;
   }, [list, filteredIO, globalFilter]);
+
+  const handlePollIRSO = async (outboundDoId?: string) => {
+    if (!outboundDoId) {
+      showErrorToast("Outbound DO ID tidak ditemukan.");
+      return;
+    }
+
+    setPollingMap((prev) => ({ ...prev, [outboundDoId]: true }));
+    try {
+      await axiosInstance.get(
+        `outbound-integration-ir-req/poll-status/outbound-do/${outboundDoId}`,
+      );
+      showSuccessToast("Poll status IR/SO berhasil diproses.");
+      await fetchAll();
+    } catch (error: any) {
+      const msg =
+        error?.response?.data?.message ||
+        error?.message ||
+        "Gagal poll status IR/SO.";
+      showErrorToast(msg);
+    } finally {
+      setPollingMap((prev) => ({ ...prev, [outboundDoId]: false }));
+    }
+  };
 
   const columns: ColumnDef<any>[] = useMemo(
     () => [
@@ -172,8 +201,28 @@ const OutboundAdjustTable = ({
           </div>
         ),
       },
+      {
+        id: "actions",
+        header: "Action",
+        cell: ({ row }) => {
+          const outboundDoId = row.original?.outbound_do_id as string | undefined;
+          const isPolling = outboundDoId ? pollingMap[outboundDoId] : false;
+          return (
+            <Button
+              type="button"
+              variant="action"
+              size="xsm"
+              onClick={() => handlePollIRSO(outboundDoId)}
+              disabled={Boolean(isPolling) || !outboundDoId}
+              startIcon={<FaSync className={isPolling ? "animate-spin" : ""} />}
+            >
+              {isPolling ? "Polling..." : "Poll IR/SO"}
+            </Button>
+          );
+        },
+      },
     ],
-    [],
+    [pollingMap],
   );
 
   const renderRowDetails = (row: any) => {
