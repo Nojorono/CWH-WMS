@@ -16,7 +16,6 @@ import { OutboundDo } from "../Helper/doTypes";
 import { useStoreOutboundDeliveryOrder } from "../../../../DynamicAPI/stores/Store/MasterStore";
 import { mapPickingTransactions } from "../Helper/mappedList";
 import { formatDateIndo } from "../../../../helper/FormatDate";
-import TableComponent from "../../../../components/tables/ActionTable/TableComponent";
 import ActIndicator from "../../../../components/ui/activityIndicator";
 import { usePersistAuthStore } from "../../../../API/store/AuthStore/PersistAuthStore";
 import {
@@ -170,7 +169,7 @@ const AdjustTableTransactionPicking = ({
         header: "Memo Count",
         cell: ({ row }) => (
           <span className="font-semibold text-slate-700">
-            {row.original.outbound_memos?.length || 0} Memo(s)
+            {row.original.outbound_memos?.length || 0} Memo
           </span>
         ),
       },

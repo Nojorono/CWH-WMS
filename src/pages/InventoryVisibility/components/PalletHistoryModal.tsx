@@ -3,6 +3,8 @@ import Button from "../../../components/ui/button/Button";
 import TabsSection from "../../../components/wms-components/inbound-component/tabs/TabsSection";
 import MovementHistoryTable from "../../Inventory/Tabs/HistoryTable";
 import CurrentQuantityTable from "../../Master/MasterPallet/Tabs/Current";
+import QuantityHistoryTable from "../../Master/MasterPallet/Tabs/History";
+import History from "../../Master/MasterPallet/Tabs/History";
 
 type PalletHistoryModalProps = {
   isOpen: boolean;
@@ -27,7 +29,7 @@ const PalletHistoryModal: React.FC<PalletHistoryModalProps> = ({
         <div className="bg-orange-500 px-6 py-4 flex items-center justify-between text-white shrink-0">
           <div>
             <h3 className="font-bold text-lg">Pallet Detail</h3>
-            <p className="text-xs text-orange-100 mt-0.5 font-mono">
+            <p className="text-lg text-orange-100 font-mono">
               {palletCode || "-"}
             </p>
           </div>
@@ -53,6 +55,10 @@ const PalletHistoryModal: React.FC<PalletHistoryModalProps> = ({
                 content: (
                   <CurrentQuantityTable palletCode={palletCode || undefined} />
                 ),
+              },
+              {
+                label: "Pallet History",
+                content: <History palletCode={palletCode || undefined} />,
               },
             ]}
             activeTab={activeTab}

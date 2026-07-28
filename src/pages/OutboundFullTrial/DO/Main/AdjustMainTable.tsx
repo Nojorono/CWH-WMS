@@ -581,7 +581,7 @@ const AdjustTableDO = ({
         header: "Memo Count",
         cell: ({ row }) => (
           <span className="font-semibold text-slate-700">
-            {row.original.outboundMemosDetailed?.length || 0} Memo(s)
+            {row.original.outboundMemosDetailed?.length || 0} Memo
           </span>
         ),
       },
@@ -712,7 +712,6 @@ const AdjustTableDO = ({
         pageIndex={pageIndex}
         totalPages={pagination.totalPages}
         onPageChange={handlePageChange}
-        // TAMBAHAN RENDER SUB COMPONENT DI SINI
         renderSubComponent={({ row }) => (
           <MemoCell memos={row.original.outboundMemosDetailed} />
         )}

@@ -155,8 +155,51 @@ const CreateMemo: React.FC = () => {
     loading: loadingCustomer,
   } = useCustomerByOutboundType(typeOutbound, methods);
 
+  console.log("customerList", customerList);
+  console.log("customerRaw", customerRaw);
+
   // ✅ Watch selected_destination
   const selectedCustomer = methods.watch("selected_destination");
+
+  /** AMO: organization_name dari customerRaw berdasarkan destination terpilih */
+  const amoOrganizationName = useMemo(() => {
+    if (typeOutbound?.value !== "AMO" || !selectedCustomer) return "";
+
+    const found = customerRaw.find((x: any) => {
+      if (selectedCustomer.id && x.id === selectedCustomer.id) return true;
+      return x.organization_code === selectedCustomer.value;
+    });
+
+    return String(found?.organization_name ?? "").trim();
+  }, [typeOutbound?.value, selectedCustomer, customerRaw]);
+
+  const isAmoType = typeOutbound?.value === "AMO";
+  const hasTypeOutbound = Boolean(typeOutbound?.value);
+  const hasAmoOrganizationName = Boolean(amoOrganizationName);
+  /** Wajib pilih type outbound; AMO juga wajib Organization Name */
+  const canProceedAddItem =
+    hasTypeOutbound && (!isAmoType || hasAmoOrganizationName);
+
+  const handleOpenAddItem = () => {
+    if (!hasTypeOutbound) {
+      showErrorToast("Pilih Type Outbound terlebih dahulu.");
+      return;
+    }
+    if (!canProceedAddItem) {
+      showErrorToast(
+        "Organization Name tidak tersedia. Pilih AMO Destination yang valid terlebih dahulu.",
+      );
+      return;
+    }
+    setOpenModal(true);
+  };
+
+  // Tutup modal jika Organization Name hilang (ganti destination / type)
+  useEffect(() => {
+    if (isAmoType && !hasAmoOrganizationName && openModal) {
+      setOpenModal(false);
+    }
+  }, [isAmoType, hasAmoOrganizationName, openModal]);
 
   // ✅ Auto set ship_to setelah pilih customer
   useEffect(() => {
@@ -664,34 +707,6 @@ const CreateMemo: React.FC = () => {
     }
   };
 
-  // const handleRejectedMemo = (memoId: string) => {
-  //   const rejectMemo = async (memoId: string) => {
-  //     try {
-  //       const res = await fetch(
-  //         `${EndPoint}outbound-memo/${memoId}/cancelled`,
-  //         {
-  //           method: "POST",
-  //           headers: {
-  //             "Content-Type": "application/json",
-  //             Authorization: `Bearer ${token}`,
-  //           },
-  //         },
-  //       );
-  //       const data = await res.json();
-  //       if (res.ok) {
-  //         showErrorToast("Memo rejected successfully");
-  //         navigate("/memo");
-  //       } else {
-  //         showErrorToast(data?.message || "Failed to reject memo");
-  //       }
-  //     } catch (err) {
-  //       showErrorToast("Network error rejecting memo");
-  //     }
-  //   };
-
-  //   rejectMemo(memoId);
-  // };
-
   const handleRejectedMemo = async (memoId: string) => {
     try {
       await axiosInstance.post(`outbound-memo/${memoId}/cancelled`);
@@ -931,13 +946,28 @@ const CreateMemo: React.FC = () => {
         <div className="flex justify-between items-center mb-2">
           <h3 className="font-semibold text-lg text-gray-700">Item Details</h3>
           {!isDetail && (
-            <Button
-              type="button"
-              variant="primary"
-              onClick={() => setOpenModal(true)}
-            >
-              + Add Item
-            </Button>
+            <div className="flex flex-col items-end gap-1">
+              <Button
+                type="button"
+                variant="primary"
+                onClick={handleOpenAddItem}
+                disabled={!canProceedAddItem}
+              >
+                + Add Item
+              </Button>
+              {!hasTypeOutbound ? (
+                <span className="text-[11px] text-rose-600 font-medium">
+                  Pilih Type Outbound terlebih dahulu.
+                </span>
+              ) : (
+                isAmoType &&
+                !hasAmoOrganizationName && (
+                  <span className="text-[11px] text-rose-600 font-medium">
+                    Pilih destination AMO agar Organization Name terisi.
+                  </span>
+                )
+              )}
+            </div>
           )}
         </div>
 
@@ -961,18 +991,20 @@ const CreateMemo: React.FC = () => {
             variant="secondary"
             startIcon={<FaCheck />}
             onClick={methods.handleSubmit(onFinalSubmit)}
-            disabled={items.length === 0}
+            disabled={items.length === 0 || !canProceedAddItem}
           >
             {isEdit ? "Update Memo" : "Confirm Memo"}
           </Button>
         </div>
       )}
 
-      {/* MODAL */}
+      {/* MODAL — AMO: hanya buka jika Organization Name terisi */}
       <ModalAddItem
-        open={openModal}
+        open={openModal && canProceedAddItem}
         onClose={() => setOpenModal(false)}
         onSubmit={handleAddItem}
+        organizationName={isAmoType ? amoOrganizationName : undefined}
+        requireOrganizationName={isAmoType}
       />
     </div>
   );

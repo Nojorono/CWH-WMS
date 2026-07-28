@@ -7,9 +7,9 @@ import { EndPoint } from "../../../../utils/EndPoint";
 import { formatDateIndo } from "../../../../helper/FormatDate";
 import axiosInstance from "../../../../DynamicAPI/AxiosInstance";
 import { formatDateTimeIndo } from "../../../../helper/FormatDateTime";
+import Button from "../../../../components/ui/button/Button";
 
-type QuantityHistory = {
-  id: string;
+type QuantityHistory = {  id: string;
   pallet_id: string;
   item_id: string;
   item_name: string;
@@ -35,9 +35,9 @@ type HistoryProps = {
 
 export default function QuantityHistoryTable({ palletCode }: HistoryProps) {
   const [data, setData] = useState<QuantityHistory[]>([]);
+  const [notesDetail, setNotesDetail] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!palletCode) return;
+  useEffect(() => {    if (!palletCode) return;
 
     axiosInstance
       .get(
@@ -73,8 +73,29 @@ export default function QuantityHistoryTable({ palletCode }: HistoryProps) {
       cell: (info) => formatDateIndo(info.getValue() as string) || "-",
     },
     { accessorKey: "week_number", header: "Week Number" },
-    { accessorKey: "notes", header: "Notes" },
-    { accessorKey: "reference_type", header: "Reference Type" },
+    {
+      accessorKey: "notes",
+      header: "Notes",
+      cell: (info) => {
+        const notes = String(info.getValue() ?? "").trim();
+        if (!notes) return <span className="text-slate-400">-</span>;
+
+        return (
+          <div className="flex items-center gap-2 max-w-[200px]">
+            <span className="truncate text-sm flex-1 min-w-0" title={notes}>
+              {notes}
+            </span>
+            <button
+              type="button"
+              onClick={() => setNotesDetail(notes)}
+              className="shrink-0 text-xs font-semibold text-orange-600 hover:text-orange-700 underline"
+            >
+              View
+            </button>
+          </div>
+        );
+      },
+    },    { accessorKey: "reference_type", header: "Reference Type" },
     {
       id: "last_updated",
       header: "Last Updated",
@@ -89,6 +110,27 @@ export default function QuantityHistoryTable({ palletCode }: HistoryProps) {
   return (
     <>
       <DataTable data={data} columns={columns} pageSize={10} />
+
+      {notesDetail && (
+        <div className="fixed inset-0 z-[6000] flex items-center justify-center bg-black/40 p-4">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-lg p-6">
+            <h3 className="text-lg font-bold text-slate-800 mb-3">Notes Detail</h3>
+            <p className="text-sm text-slate-700 whitespace-pre-wrap break-words max-h-[50vh] overflow-y-auto">
+              {notesDetail}
+            </p>
+            <div className="flex justify-end mt-4">
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                onClick={() => setNotesDetail(null)}
+              >
+                Close
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

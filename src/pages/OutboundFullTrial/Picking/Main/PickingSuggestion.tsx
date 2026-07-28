@@ -124,11 +124,21 @@ const PickingSuggestion: React.FC = () => {
     {
       accessorKey: "status",
       header: "Status",
-      cell: ({ row }: any) => (
-        <span className="bg-green-100 text-green-700 px-2 py-1 rounded-md text-sm font-medium">
-          {row.original.status}
-        </span>
-      ),
+      cell: ({ row }: any) => {
+        const status = String(row.original.status ?? "");
+        const isFailed = status.toUpperCase() === "FAILED";
+        return (
+          <span
+            className={`px-2 py-1 rounded-md text-sm font-medium ${
+              isFailed
+                ? "bg-red-100 text-red-700"
+                : "bg-green-100 text-green-700"
+            }`}
+          >
+            {status}
+          </span>
+        );
+      },
     },
     {
       id: "actions",
