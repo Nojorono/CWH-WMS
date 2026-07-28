@@ -215,11 +215,13 @@ const OutboundShipConfirmTable = ({
         header: "Action",
         cell: ({ row }) => {
           const doData = row.original as any;
-          const outboundDoId = doData?.outbound_do_id as string | undefined;
+          const outboundDoId = (doData?.outbound_do_id ||
+            doData?.real_do_id) as string | undefined;
           const txType =
             doData?.log_transaction_type || "Outbound GS Mutasi SO Internal";
           const pollKey = `${outboundDoId}::${txType}`;
           const isPolling = Boolean(pollingMap[pollKey]);
+          const isSuccess = doData?.computed_status === "S";
 
           return (
             <Button

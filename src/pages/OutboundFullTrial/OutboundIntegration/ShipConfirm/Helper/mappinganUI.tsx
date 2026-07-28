@@ -21,6 +21,7 @@ export const mapShipConfirmLogList = (flatData: any[]): OutboundDoUI[] => {
       doMap.set(logDoKey, {
         ...row.outbound_do,
         id: logDoKey,
+        outbound_do_id: doId,
         real_do_id: doId,
         log_transaction_type: txType,
         computed_status: "U",

@@ -97,11 +97,11 @@ export interface OutboundDoUI extends ShipConfirmOutboundDO {
   is_success_pick_release: boolean;
   is_manifest_uploaded: boolean;
   is_ready_ship_confirm: boolean;
-  /** Field tambahan untuk halaman Integration Log */
   last_updated_date?: string;
   log_transaction_type?: string;
   computed_status?: string;
   computed_req_id?: string;
   computed_error_message?: string | null;
+  outbound_do_id?: string;
   real_do_id?: string;
 }
