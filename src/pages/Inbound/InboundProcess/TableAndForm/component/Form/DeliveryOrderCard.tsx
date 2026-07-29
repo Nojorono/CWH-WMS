@@ -275,7 +275,7 @@ export default function DeliveryOrderCard({
                 {/* Penambahan Label Konteks untuk User Awam */}
                 <div className="flex items-center gap-1.5 ml-1 border-l pl-3 border-slate-300">
                   <span className="text-[10px] uppercase font-extrabold text-slate-500 tracking-tight">
-                    Meta Status:
+                  Integration Status:
                   </span>
                   {integrationStatus ? (
                     <StatusBadge

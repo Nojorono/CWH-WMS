@@ -8,7 +8,7 @@ import {
 import { ColumnDef, ExpandedState } from "@tanstack/react-table";
 import StatusBadge from "../../../../../common/statusBadge";
 import { STATUS_MAP_INTEGRATION_OUTBOUND } from "../../../../../constants/statusMaps";
-import { useStoreItem, useStoreShipConfirm } from "../../../../../DynamicAPI/stores/Store/MasterStore";
+import { useStoreShipConfirm } from "../../../../../DynamicAPI/stores/Store/MasterStore";
 import ActIndicator from "../../../../../components/ui/activityIndicator";
 import ExpandableTableComponent from "../component/Table";
 import { formatDateTimeIndo } from "../../../../../helper/FormatDateTime";
@@ -29,9 +29,10 @@ const OutboundShipConfirmTable = ({
   setGlobalFilter,
   filteredIO,
 }: any) => {
-  const { fetchAll, list, pagination, isLoading } = useStoreShipConfirm();
+  const { fetchUsingPagination, list, pagination, isLoading } =
+    useStoreShipConfirm();
   const [pageIndex, setPageIndex] = useState(0);
-  const [pageSize, setPageSize] = useState(25);
+  const [pageSize, setPageSize] = useState(10);
   const [expanded, setExpanded] = useState<ExpandedState>({});
 
   const {
@@ -41,13 +42,24 @@ const OutboundShipConfirmTable = ({
     isPollingKey,
   } = useOutboundDeliveryPollStatus({
     onSuccess: async () => {
-      await fetchAll();
+      if (fetchUsingPagination) {
+        await fetchUsingPagination({
+          page: pageIndex + 1,
+          limit: pageSize,
+          search: globalFilter || "",
+        });
+      }
     },
   });
 
   useEffect(() => {
-    fetchAll();
-  }, [fetchAll]);
+    if (!fetchUsingPagination) return;
+    fetchUsingPagination({
+      page: pageIndex + 1,
+      limit: pageSize,
+      search: globalFilter || "",
+    });
+  }, [fetchUsingPagination, pageIndex, pageSize, globalFilter]);
 
   const filteredData = useMemo(() => {
     if (!list || list.length === 0) return [];
@@ -60,14 +72,8 @@ const OutboundShipConfirmTable = ({
         (doItem: any) => doItem.organization_id === filteredIO,
       );
     }
-    if (globalFilter) {
-      const lowerFilter = globalFilter.toLowerCase();
-      result = result.filter((doItem: any) =>
-        doItem.outbound_do_number?.toLowerCase().includes(lowerFilter),
-      );
-    }
     return result;
-  }, [list, filteredIO, globalFilter]);
+  }, [list, filteredIO]);
 
   const handlePollStatus = async (
     outboundDoId?: string,

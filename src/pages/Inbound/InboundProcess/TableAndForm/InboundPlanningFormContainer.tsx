@@ -7,6 +7,7 @@ import { showErrorToast } from "../../../../components/toast";
 import InboundPlanningFormView from "./InboundPlanningFormView";
 import { mapDetailToFormValues } from "./component/Helper/mapperData";
 import { mapToPayload } from "./component/Helper/mapperFinalPayload";
+import Swal from "sweetalert2";
 
 // --- Default empty values
 const emptyFormValues: FormValues = {
@@ -213,7 +214,48 @@ export default function InboundPlanningFormContainer() {
     }
 
     // ============================================
-    // 4) Kalau semua valid -> lanjut preview
+    // 4) OPSI KHUSUS: jika ada SJ berstatus CANCELLED
+    // ============================================
+    const isCancelledSJ = (doItem: any) =>
+      String(doItem?.integration_status || "").trim().toUpperCase() ===
+      "CANCELLED";
+
+    const cancelledSJ = deliveryOrders.filter(isCancelledSJ);
+
+    if (cancelledSJ.length > 0) {
+      const result = await Swal.fire({
+        icon: "question",
+        title: "Ditemukan SJ CANCELLED",
+        text: `Ada ${cancelledSJ.length} SJ berstatus CANCELLED. Ingin tetap dibawa menjadi Inbound Plan?`,
+        showDenyButton: true,
+        showCancelButton: true,
+        confirmButtonText: "Ya, tetap bawa",
+        denyButtonText: "Tidak, discard CANCELLED",
+        cancelButtonText: "Kembali",
+        confirmButtonColor: "#2563eb",
+        denyButtonColor: "#dc2626",
+      });
+
+      // User batal dari popup -> hentikan preview
+      if (result.isDismissed && !result.isDenied && !result.isConfirmed) {
+        return;
+      }
+
+      // User pilih discard SJ CANCELLED
+      if (result.isDenied) {
+        await Swal.fire({
+          icon: "info",
+          title: "Discard Manual",
+          text: "Silakan discard SJ berstatus CANCELLED secara manual pada form, lalu klik Preview & Submit kembali.",
+          confirmButtonText: "Mengerti",
+          confirmButtonColor: "#2563eb",
+        });
+        return;
+      }
+    }
+
+    // ============================================
+    // 5) Kalau semua valid -> lanjut preview
     // ============================================
     setPreviewData(values);
     setIsConfirmOpen(true);

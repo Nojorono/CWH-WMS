@@ -45,7 +45,6 @@ const AdjustTable = ({
     });
   }, [fetchUsingPagination, pageIndex, pageSize, globalFilter, filteredStatus]);
 
-
   // 🔹 Kolom Table
   const columns: ColumnDef<any>[] = useMemo(
     () => [
@@ -134,6 +133,21 @@ const AdjustTable = ({
         header: "Action",
         cell: ({ row }) => {
           const item = row.original;
+          const sjList = Array.isArray(item?.inbound_dos) ? item.inbound_dos : [];
+          const hasSJ = sjList.length > 0;
+          const isAllSJCancelled =
+            hasSJ &&
+            sjList.every(
+              (sj: any) => String(sj?.integration_status || "").toUpperCase() === "CANCELLED",
+            );
+          const canDeleteByInboundStatus = [
+            "CREATED",
+            "WAITING FOR REVISION",
+            "UNLOADING",
+            "FAILED",
+          ].includes(item.status);
+          const canDelete = canDeleteByInboundStatus && isAllSJCancelled;
+
           return (
             <div style={{ display: "flex", gap: "8px" }}>
               <FaEye
@@ -142,9 +156,7 @@ const AdjustTable = ({
                 title="View"
               />
 
-              {["CREATED", "WAITING FOR REVISION", "UNLOADING", "FAILED"].includes(
-                item.status,
-              ) && (
+              {canDeleteByInboundStatus && (
                 <>
                   <FaEdit
                     className="size-5 cursor-pointer text-blue-600"
@@ -153,9 +165,13 @@ const AdjustTable = ({
                   />
 
                   <FaTrash
-                    className="size-5 cursor-pointer text-red-600"
-                    onClick={() => handleDelete(item.id)}
-                    title="Delete"
+                    className={`size-5 ${canDelete ? "cursor-pointer text-red-600" : "cursor-not-allowed text-slate-300"}`}
+                    onClick={() => canDelete && handleDelete(item)}
+                    title={
+                      canDelete
+                        ? "Delete"
+                        : "Delete hanya bisa jika semua SJ berstatus CANCELLED"
+                    }
                   />
                 </>
               )}
@@ -179,12 +195,21 @@ const AdjustTable = ({
     });
   };
 
-  const handleDelete = (id: any) => {
+  const handleDelete = (item: any) => {
+    const sjList = Array.isArray(item?.inbound_dos) ? item.inbound_dos : [];
+    const hasSJ = sjList.length > 0;
+    const isAllSJCancelled =
+      hasSJ &&
+      sjList.every(
+        (sj: any) => String(sj?.integration_status || "").toUpperCase() === "CANCELLED",
+      );
+
+    if (!isAllSJCancelled) return;
+
     showConfirmDialog(
       async () => {
         try {
-          await deleteData(id);
-          // fetchAll();  
+          await deleteData(item.id);
         } catch (error) {
           console.error(error);
         }
