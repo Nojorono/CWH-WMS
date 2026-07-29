@@ -43,6 +43,8 @@ import { ShipConfirmOutboundDO, Memo, MemoItem } from "../../types/ShipConfirmTy
 
 import {Department, CreateDepartment, UpdateDepartment } from '../../types/DepartementType.ts'
 import { SubWarehouseWithBins } from "../../types/SubwarehouseWithBins.ts";
+import { CreateOpeningStockBalance, OpeningStockBalance, UpdateOpeningStockBalance } from "../../types/OpeningStockBalance.ts";
+
 
 
 
@@ -102,6 +104,7 @@ export const ShipConfirmServiceByDO = createCrudService<ShipConfirmOutboundDO, M
 export const DepartementService = createCrudService<Department, CreateDepartment, UpdateDepartment >("/master-departement");
 
 export const SubWarehouseWithBinsService = createCrudService<SubWarehouseWithBins, null, null>("/master-warehouse-sub/with-bins");
+export const OpeningStockBalanceService = createCrudService<OpeningStockBalance, CreateOpeningStockBalance, UpdateOpeningStockBalance>("/opening-stock-balance");
 
 
 
