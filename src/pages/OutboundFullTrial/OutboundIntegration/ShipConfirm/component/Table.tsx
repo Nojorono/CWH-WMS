@@ -8,6 +8,8 @@ import {
   flexRender,
   ColumnDef,
   Row,
+  ExpandedState,
+  OnChangeFn,
 } from "@tanstack/react-table";
 import { MdChevronLeft, MdChevronRight } from "react-icons/md";
 
@@ -22,6 +24,9 @@ interface ExpandableTableProps<T> {
   totalPages?: number;
   isLoading?: boolean;
   renderRowDetails: (row: Row<T>) => ReactNode;
+  expanded?: ExpandedState;
+  onExpandedChange?: OnChangeFn<ExpandedState>;
+  getRowId?: (originalRow: T, index: number, parent?: Row<T>) => string;
 }
 
 const ExpandableTableComponent = <T extends { [key: string]: any }>({
@@ -35,15 +40,30 @@ const ExpandableTableComponent = <T extends { [key: string]: any }>({
   totalPages = 1,
   isLoading = false,
   renderRowDetails,
+  expanded: controlledExpanded,
+  onExpandedChange,
+  getRowId,
 }: ExpandableTableProps<T>) => {
-  const [expanded, setExpanded] = useState({});
+  const [internalExpanded, setInternalExpanded] = useState<ExpandedState>({});
+  const expanded = controlledExpanded ?? internalExpanded;
+
+  const handleExpandedChange: OnChangeFn<ExpandedState> = (updater) => {
+    if (onExpandedChange) {
+      onExpandedChange(updater);
+      return;
+    }
+    setInternalExpanded((old) =>
+      typeof updater === "function" ? updater(old) : updater,
+    );
+  };
 
   const table = useReactTable<T>({
     data,
     columns,
     state: { globalFilter, expanded },
     onGlobalFilterChange: setGlobalFilter,
-    onExpandedChange: setExpanded,
+    onExpandedChange: handleExpandedChange,
+    getRowId,
     getRowCanExpand: () => true,
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),

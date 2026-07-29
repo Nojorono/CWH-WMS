@@ -14,19 +14,16 @@ import { syncServerTime } from "./pages/DOsuggestion/Suggestion/global/allowedDa
 const queryClient = new QueryClient();
 
 if (import.meta.env.PROD) {
-  console.log = () => { };
-  console.debug = () => { };
-  console.info = () => { };
-  console.warn = () => { };
+  console.log = () => {};
+  console.debug = () => {};
+  console.info = () => {};
+  console.warn = () => {};
 }
 
-// Bungkus proses render dalam fungsi async agar bisa menunggu API waktu
 const startApp = async () => {
   try {
-    // 1. Ambil waktu server SEBELUM aplikasi dirender
     const response = await getServerDatetime();
 
-    // 2. Sync ke dateValidation.ts
     if (response?.data?.timestamp) {
       syncServerTime(response.data.timestamp);
     }
@@ -37,7 +34,6 @@ const startApp = async () => {
     );
   }
 
-  // 3. Render aplikasi setelah sync selesai
   createRoot(document.getElementById("root")!).render(
     <StrictMode>
       <QueryClientProvider client={queryClient}>

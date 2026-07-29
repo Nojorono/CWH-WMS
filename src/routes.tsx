@@ -168,6 +168,7 @@ export function AppRoutes() {
       "/do_suggestion": <DOsuggestionMain />,
       "/outbound_sales": <OutboundSales />,
       "/do_su_log_integration": <IntegrationMonitoringPage />,
+      // "/opening_stock_upload": <OpeningStockUpload />,
     };
     return map[path] || <DefaultPage />;
   }

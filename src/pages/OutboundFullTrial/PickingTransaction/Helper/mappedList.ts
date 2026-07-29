@@ -96,6 +96,7 @@ export function mapPickingTransactions(list: any[] = []): OutboundDo[] {
             id: raw.id,
             outbound_do_number: raw.outbound_do_number,
             origin: raw.origin,
+            delivery_category: raw.delivery_category ?? null,
             status: raw.status,
             outbound_type: raw.outbound_type,
             delivery_date: raw.delivery_date,

@@ -20,6 +20,87 @@ import { fetchShipConfirmStatusByDoId } from "./useShipConfirmStatusByDo";
 
 const MIN_IR_SO_LOADING_MS = 600;
 
+type PickReleaseGateState = "NONE" | "ERROR" | "PENDING" | "SUCCESS";
+
+type PickReleaseGate = {
+    canPickRelease: boolean;
+    state: PickReleaseGateState;
+    message: string;
+};
+
+const normalizePickReleaseStatus = (raw?: string | null): PickReleaseGateState => {
+    const s = String(raw || "").trim().toUpperCase();
+    if (!s) return "PENDING"; // ada baris integrasi tapi status kosong = masih proses/pending
+    if (s === "E" || s === "ERROR" || s === "FAILED") return "ERROR";
+    if (s === "S" || s === "SUCCESS") return "SUCCESS";
+    // U, PENDING, P, PROCESS, PROCESSING, dll.
+    return "PENDING";
+};
+
+const collectPickReleaseStatuses = (doDetail: OutboundDoUI | null): string[] => {
+    if (!doDetail?.outbound_memos?.length) return [];
+    const statuses: string[] = [];
+    doDetail.outbound_memos.forEach((memo) => {
+        memo.outbound_memo_items?.forEach((item) => {
+            if (!item.integration_data) return;
+            statuses.push(item.integration_data.pick_release_status ?? "");
+        });
+    });
+    return statuses;
+};
+
+/** Gate Pick Release berdasarkan status integrasi delivery */
+const assessPickReleaseGate = (doDetail: OutboundDoUI | null): PickReleaseGate => {
+    const statuses = collectPickReleaseStatuses(doDetail);
+
+    // Belum ada data integrasi → boleh Pick Release pertama kali
+    if (!doDetail || statuses.length === 0) {
+        return {
+            canPickRelease: true,
+            state: "NONE",
+            message: "Belum ada data integrasi. Pick Release dapat diproses.",
+        };
+    }
+
+    const normalized = statuses.map(normalizePickReleaseStatus);
+    const hasSuccess = normalized.some((s) => s === "SUCCESS");
+    const hasPending = normalized.some((s) => s === "PENDING");
+    const allError = normalized.every((s) => s === "ERROR");
+
+    if (allError) {
+        return {
+            canPickRelease: true,
+            state: "ERROR",
+            message:
+                "Pick Release sebelumnya Error. Silakan proses Pick Release ulang.",
+        };
+    }
+
+    if (hasSuccess) {
+        return {
+            canPickRelease: false,
+            state: "SUCCESS",
+            message:
+                "DO ini sudah Pick Release SUCCESS. Tidak dapat diproses ulang.",
+        };
+    }
+
+    if (hasPending) {
+        return {
+            canPickRelease: false,
+            state: "PENDING",
+            message:
+                "Pick Release masih PENDING/proses. Tunggu hingga selesai atau Error sebelum mencoba ulang.",
+        };
+    }
+
+    return {
+        canPickRelease: false,
+        state: "PENDING",
+        message: "Pick Release sedang berjalan. Tidak dapat diproses ulang.",
+    };
+};
+
 interface UsePickingActionsProps {
     currentPage: number;
     pageSize: number;
@@ -54,6 +135,7 @@ export const usePickingActions = ({
     const [isSubmittingQty, setIsSubmittingQty] = useState(false);
     const [pendingShipConfirmDO, setPendingShipConfirmDO] = useState<OutboundDo | null>(null);
     const [pickReleaseStatusMap, setPickReleaseStatusMap] = useState<Record<string, boolean>>({});
+    const [pickReleaseLockedMap, setPickReleaseLockedMap] = useState<Record<string, boolean>>({});
     const [manifestUploadedMap, setManifestUploadedMap] = useState<Record<string, boolean>>({});
     const [manifestUrlMap, setManifestUrlMap] = useState<Record<string, string>>({});
     const [isCheckingIrSo, setIsCheckingIrSo] = useState(false);
@@ -83,7 +165,10 @@ export const usePickingActions = ({
     // Helper internal: Ambil detail terbaru dari store dan konversi via mapper UI
     const getLatestDoDetail = async (id: string): Promise<OutboundDoUI | null> => {
         await fetchById(id);
+        console.log("id", id);
+        
         const currentDetail = useStoreShipConfirmByDO.getState().detail;
+
         if (!currentDetail || !Array.isArray(currentDetail) || currentDetail.length === 0) {
             return null;
         }
@@ -91,17 +176,23 @@ export const usePickingActions = ({
         return mapped[0] || null;
     };
 
-    const resolvePickReleaseStatus = async (id: string): Promise<boolean> => {
+    const resolvePickReleaseStatus = async (
+        id: string,
+    ): Promise<{ isSuccess: boolean; isLocked: boolean }> => {
         try {
             const detail = await ShipConfirmServiceByDO.fetchById(id);
             if (!detail || !Array.isArray(detail) || detail.length === 0) {
-                return false;
+                return { isSuccess: false, isLocked: false };
             }
 
             const mapped = mapShipConfirmList(detail);
-            return !!mapped[0]?.is_success_pick_release;
+            const gate = assessPickReleaseGate(mapped[0] || null);
+            return {
+                isSuccess: gate.state === "SUCCESS",
+                isLocked: !gate.canPickRelease,
+            };
         } catch {
-            return false;
+            return { isSuccess: false, isLocked: false };
         }
     };
 
@@ -111,14 +202,18 @@ export const usePickingActions = ({
 
         const entries = await Promise.all(
             subdistDos.map(async (d) => {
-                const pickReleaseDone = await resolvePickReleaseStatus(d.id);
-                return [d.id, pickReleaseDone] as const;
+                const status = await resolvePickReleaseStatus(d.id);
+                return [d.id, status] as const;
             }),
         );
 
         setPickReleaseStatusMap((prev) => ({
             ...prev,
-            ...Object.fromEntries(entries),
+            ...Object.fromEntries(entries.map(([id, s]) => [id, s.isSuccess])),
+        }));
+        setPickReleaseLockedMap((prev) => ({
+            ...prev,
+            ...Object.fromEntries(entries.map(([id, s]) => [id, s.isLocked])),
         }));
     }, []);
 
@@ -244,17 +339,29 @@ export const usePickingActions = ({
         if (!requireSealNumber(data)) return;
 
         try {
+            // Cek ke outbound-integration-deliveries/outbound-do/{id}
             const doDetail = await getLatestDoDetail(data.id);
-            if (!doDetail) {
-                showErrorToast("Gagal memvalidasi status. Data detail kosong.");
-                return;
-            }
+            const gate = assessPickReleaseGate(doDetail);
 
-            if (doDetail.is_success_pick_release) {
+            // Lock UI: SUCCESS / PENDING / PROCESS → tidak bisa Pick Release lagi
+            // ERROR atau belum ada data → boleh
+            setPickReleaseLockedMap((prev) => ({
+                ...prev,
+                [data.id]: !gate.canPickRelease,
+            }));
+            setPickReleaseStatusMap((prev) => ({
+                ...prev,
+                [data.id]: gate.state === "SUCCESS",
+            }));
+
+            if (!gate.canPickRelease) {
                 Swal.fire({
-                    icon: "info",
-                    title: "Sudah Diproses",
-                    text: "Semua item dalam DO ini sudah berhasil di-Pick Release sebelumnya.",
+                    icon: gate.state === "SUCCESS" ? "info" : "warning",
+                    title:
+                        gate.state === "SUCCESS"
+                            ? "Sudah Pick Release"
+                            : "Pick Release Sedang Berjalan",
+                    text: gate.message,
                     confirmButtonColor: "#3085d6",
                 });
                 return;
@@ -264,11 +371,14 @@ export const usePickingActions = ({
                 async () => {
                     try {
                         const response = await axiosInstance.post(`${EndPoint}outbound-do/pick-release-subdist/${data.id}`);
-                        console.log("response pick rilis", response);
                         
                         if (response.status === 200 || response.status === 201) {
                             showSuccessToast("Pick Release berhasil diproses!");
                             setPickReleaseStatusMap((prev) => ({
+                                ...prev,
+                                [data.id]: true,
+                            }));
+                            setPickReleaseLockedMap((prev) => ({
                                 ...prev,
                                 [data.id]: true,
                             }));
@@ -280,7 +390,10 @@ export const usePickingActions = ({
                 },
                 {
                     title: "Konfirmasi Pick Release",
-                    text: `Apakah Anda yakin ingin melakukan Pick Release untuk DO: ${data.outbound_do_number}?`,
+                    text:
+                        gate.state === "ERROR"
+                            ? `Pick Release sebelumnya Error. Proses ulang untuk DO: ${data.outbound_do_number}?`
+                            : `Apakah Anda yakin ingin melakukan Pick Release untuk DO: ${data.outbound_do_number}?`,
                     confirmButtonText: "Ya, Proses!",
                     cancelButtonText: "Batal",
                 },
@@ -295,9 +408,24 @@ export const usePickingActions = ({
         if (!requireSealNumber(data)) return;
 
         try {
+            // Cek ke outbound-integration-deliveries/outbound-do/{id}
             const doDetail = await getLatestDoDetail(data.id);
+
+            // Belum ada data integrasi → belum Pick Release, arahkan ke proses itu
             if (!doDetail) {
-                showErrorToast("Gagal mengambil detail item. Data kosong.");
+                Swal.fire({
+                    icon: "warning",
+                    title: "Belum Terintegrasi",
+                    text: "DO ini belum punya data integrasi outbound. Silakan lakukan Pick Release terlebih dahulu.",
+                    confirmButtonText: "Ke Pick Release",
+                    confirmButtonColor: "#3085d6",
+                    showCancelButton: true,
+                    cancelButtonText: "Batal",
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        handlePickRelease(data);
+                    }
+                });
                 return;
             }
 
@@ -621,6 +749,7 @@ export const usePickingActions = ({
         handleFinalShipConfirmSubdist,
         handleShipConfirmInternalAMO,
         pickReleaseStatusMap,
+        pickReleaseLockedMap,
         syncPickReleaseStatuses,
         isCheckingIrSo,
 

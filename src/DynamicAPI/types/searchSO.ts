@@ -13,6 +13,7 @@ export type ItemForm = {
     quantity_inspection?: any;
     line_number?: number;
     classification_id?: string;
+    released_status?: string;
 };
 
 export type POSForm = {

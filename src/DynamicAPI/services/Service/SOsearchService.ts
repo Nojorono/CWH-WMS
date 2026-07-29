@@ -56,6 +56,7 @@ export async function SOsearchService(
                 uom: normalizeUom(it.ORDER_QUANTITY_UOM || "DUS", uomList),
                 id: String(master.id),
                 line_number: Number(it.SO_LINE_NUMBER),
+                released_status: it.RELEASED_STATUS ?? "",
             } satisfies ItemForm;
         })
         .filter(Boolean) as ItemForm[];
