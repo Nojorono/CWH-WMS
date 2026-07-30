@@ -87,19 +87,25 @@ const buildMemoSoValidationSwalHtml = ({
   orgName?: string;
   soNo?: string;
 }) => {
-  const rows: Array<{ label: string; value?: string | null; highlight?: boolean }> =
-    [
-      { label: "Nomor SO", value: soNo || headerInfo?.orderNumber?.toString() },
-      { label: "Organization Name", value: orgName },
-      { label: "SO Type", value: headerInfo?.soType },
-      { label: "Subinventory From", value: headerInfo?.subinventoryFrom },
-      { label: "Subinventory To", value: headerInfo?.subinventoryTo },
-      {
-        label: expectedLabel,
-        value: expectedValue,
-        highlight: true,
-      },
-    ];
+  const rows: Array<{
+    label: string;
+    value?: string | null;
+    highlight?: boolean;
+  }> = [
+    { label: "Nomor SO", value: soNo || headerInfo?.orderNumber?.toString() },
+    { label: "User Current Organization Name", value: orgName },
+    { label: "SO Type", value: headerInfo?.soType },
+    {
+      label: "Organization Code From",
+      value: headerInfo?.organizationCodeFrom,
+    },
+    { label: "Organization Code To", value: headerInfo?.organizationCodeTo },
+    {
+      label: expectedLabel,
+      value: expectedValue,
+      highlight: true,
+    },
+  ];
 
   const tableRows = rows
     .map(
@@ -168,6 +174,37 @@ const showMemoSoValidationSwal = async ({
     }),
     confirmButtonText: "Mengerti",
     confirmButtonColor: "#3085d6",
+    width: 620,
+  });
+};
+
+const showMemoSoValidationSuccessSwal = async ({
+  headerInfo,
+  expectedLabel,
+  expectedValue,
+  orgName,
+  soNo,
+}: {
+  headerInfo?: SOHeaderInfo | null;
+  expectedLabel: string;
+  expectedValue: string;
+  orgName?: string;
+  soNo?: string;
+}) => {
+  return Swal.fire({
+    icon: "success",
+    title: "SO Valid untuk Memo SUBDIST",
+    html: buildMemoSoValidationSwalHtml({
+      message:
+        "Nomor SO telah tervalidasi dan memenuhi kriteria Memo SUBDIST. Klik OK untuk lanjut mapping item ke tabel SKU.",
+      headerInfo,
+      expectedLabel,
+      expectedValue,
+      orgName,
+      soNo,
+    }),
+    confirmButtonText: "OK, Lanjutkan",
+    confirmButtonColor: "#16a34a",
     width: 620,
   });
 };
@@ -936,8 +973,8 @@ const CreateMemo: React.FC = () => {
 
       // =========================================================
       // Validasi akses SO untuk Memo SUBDIST berdasarkan Org Login
-      // - Login CWH     → SUBINVENTORY_FROM harus CWH
-      // - Login NON_CWH → SUBINVENTORY_FROM harus NON_CWH
+      // - Login CWH     → ORGANIZATION_CODE_FROM harus CWH
+      // - Login NON_CWH → ORGANIZATION_CODE_FROM harus NON_CWH
       // - SO harus tipe SO SUB-DIST
       // =========================================================
       const normalize = (value?: string | null) =>
@@ -950,7 +987,7 @@ const CreateMemo: React.FC = () => {
       const isLoginCwh = loginOrgName === "CWH" || loginOrgName.includes("CWH");
 
       const soType = normalize(headerInfo?.soType);
-      const subinventoryFrom = normalize(headerInfo?.subinventoryFrom);
+      const organizationCodeFrom = normalize(headerInfo?.organizationCodeFrom);
 
       const isSoSubdistType =
         soType === "SO SUB-DIST" ||
@@ -974,13 +1011,13 @@ const CreateMemo: React.FC = () => {
       }
 
       if (isLoginCwh) {
-        if (subinventoryFrom !== "CWH") {
+        if (organizationCodeFrom !== "CWH") {
           await showMemoSoValidationSwal({
             title: "Subinventory Tidak Sesuai",
             message:
-              "Organisasi anda adalah CWH. Anda hanya dapat memproses SO Memo dengan Subinventory From = CWH.",
+              "Organisasi anda adalah CWH. Anda hanya dapat memproses SO Memo dengan Organization Code From = CWH.",
             headerInfo,
-            expectedLabel: "Subinventory From (Wajib)",
+            expectedLabel: "Organization Code From (Wajib)",
             expectedValue: "CWH",
             orgName,
             soNo: soSearchNumber,
@@ -991,16 +1028,16 @@ const CreateMemo: React.FC = () => {
         }
       } else {
         const isNonCwhSubinv =
-          subinventoryFrom === "NON_CWH" ||
-          subinventoryFrom === "NON-CWH" ||
-          subinventoryFrom === "NON CWH";
+          organizationCodeFrom === "NON_CWH" ||
+          organizationCodeFrom === "NON-CWH" ||
+          organizationCodeFrom === "NON CWH";
 
         if (!isNonCwhSubinv) {
           await showMemoSoValidationSwal({
             title: "Subinventory Tidak Sesuai",
-            message: `Login cabang (${orgName || "-"}). Anda hanya dapat memproses SO Memo dengan Subinventory From = NON_CWH.`,
+            message: `Login cabang (${orgName || "-"}). Anda hanya dapat memproses SO Memo dengan Organization Code From = NON_CWH.`,
             headerInfo,
-            expectedLabel: "Subinventory From (Wajib)",
+            expectedLabel: "Organization Code From (Wajib)",
             expectedValue: "NON_CWH",
             orgName,
             soNo: soSearchNumber,
@@ -1009,6 +1046,19 @@ const CreateMemo: React.FC = () => {
           setItems([]);
           return;
         }
+      }
+
+      const expectedOrganizationCodeFrom = isLoginCwh ? "CWH" : "NON_CWH";
+      const validResult = await showMemoSoValidationSuccessSwal({
+        headerInfo,
+        expectedLabel: "Organization Code From (Wajib)",
+        expectedValue: expectedOrganizationCodeFrom,
+        orgName,
+        soNo: soSearchNumber,
+      });
+
+      if (!validResult.isConfirmed) {
+        return;
       }
 
       if (headerInfo) {
@@ -1059,8 +1109,14 @@ const CreateMemo: React.FC = () => {
             ? formatDateIndo(soHeaderData.orderedDate)
             : "-",
         },
-        { label: "Subinventory From", value: soHeaderData.subinventoryFrom },
-        { label: "Subinventory To", value: soHeaderData.subinventoryTo },
+        {
+          label: "Organization Code From",
+          value: soHeaderData.organizationCodeFrom,
+        },
+        {
+          label: "Organization Code To",
+          value: soHeaderData.organizationCodeTo,
+        },
         { label: "Location Bill", value: soHeaderData.locationBill },
         { label: "Location Ship", value: soHeaderData.locationShip },
         { label: "Organization", value: soHeaderData.orgName },

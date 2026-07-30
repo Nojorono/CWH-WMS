@@ -30,28 +30,23 @@ const escapeHtml = (value?: string | null) =>
 const buildSoValidationSwalHtml = ({
   message,
   headerInfo,
-  expectedSubinventoryTo,
+  expectedOrganizationCodeTo,
   orgName,
   soNo,
 }: {
   message: string;
   headerInfo?: SOHeaderInfo | null;
-  expectedSubinventoryTo: string;
+  expectedOrganizationCodeTo: string;
   orgName?: string;
   soNo?: string;
 }) => {
   const rows: Array<{ label: string; value?: string | null; highlight?: boolean }> =
     [
       { label: "Nomor SO", value: soNo || headerInfo?.orderNumber?.toString() },
-      { label: "Organization Name", value: orgName },
+      { label: "User Current Organization Name", value: orgName },
       { label: "SO Type", value: headerInfo?.soType },
-      { label: "Subinventory From", value: headerInfo?.subinventoryFrom },
-      { label: "Subinventory To", value: headerInfo?.subinventoryTo },
-      {
-        label: "Subinventory To (Wajib)",
-        value: expectedSubinventoryTo,
-        highlight: true,
-      },
+      { label: "Organization Code From", value: headerInfo?.organizationCodeFrom },
+      { label: "Organization Code To", value: headerInfo?.organizationCodeTo },
     ];
 
   const tableRows = rows
@@ -94,13 +89,13 @@ const buildSoValidationSwalHtml = ({
 const showSoValidationSwal = async ({
   message,
   headerInfo,
-  expectedSubinventoryTo,
+  expectedOrganizationCodeTo,
   orgName,
   soNo,
 }: {
   message: string;
   headerInfo?: SOHeaderInfo | null;
-  expectedSubinventoryTo: string;
+  expectedOrganizationCodeTo: string;
   orgName?: string;
   soNo?: string;
 }) => {
@@ -110,12 +105,40 @@ const showSoValidationSwal = async ({
     html: buildSoValidationSwalHtml({
       message,
       headerInfo,
-      expectedSubinventoryTo,
+      expectedOrganizationCodeTo,
       orgName,
       soNo,
     }),
     confirmButtonText: "Mengerti",
     confirmButtonColor: "#3085d6",
+    width: 620,
+  });
+};
+
+const showSoValidationSuccessSwal = async ({
+  headerInfo,
+  expectedOrganizationCodeTo,
+  orgName,
+  soNo,
+}: {
+  headerInfo?: SOHeaderInfo | null;
+  expectedOrganizationCodeTo: string;
+  orgName?: string;
+  soNo?: string;
+}) => {
+  return Swal.fire({
+    icon: "success",
+    title: "SO Valid untuk Inbound",
+    html: buildSoValidationSwalHtml({
+      message:
+        "Nomor SO telah tervalidasi dan memenuhi kriteria Inbound. Klik OK untuk lanjut mapping item ke tabel SKU.",
+      headerInfo,
+      expectedOrganizationCodeTo,
+      orgName,
+      soNo,
+    }),
+    confirmButtonText: "OK, Lanjutkan",
+    confirmButtonColor: "#16a34a",
     width: 620,
   });
 };
@@ -319,8 +342,8 @@ export default function POCard({
 
       // =========================================================
       // Validasi akses SO Inbound berdasarkan Org Login
-      // - Login CWH   → SUBINVENTORY_TO harus CWH
-      // - Login Cabang → SUBINVENTORY_TO harus sama dengan org yang login
+      // - Login CWH   → ORGANIZATION_CODE_TO harus CWH
+      // - Login Cabang → ORGANIZATION_CODE_TO harus sama dengan org yang login
       // =========================================================
       const normalize = (value?: string | null) =>
         String(value || "")
@@ -332,31 +355,42 @@ export default function POCard({
       const isLoginCwh =
         loginOrgName === "CWH" || loginOrgName.includes("CWH");
 
-      const subinventoryTo = normalize(headerInfo?.subinventoryTo);
-      const expectedSubinventoryTo = isLoginCwh ? "CWH" : orgName || "-";
+      const organizationCodeTo = normalize(headerInfo?.organizationCodeTo);
+      const expectedOrganizationCodeTo = isLoginCwh ? "CWH" : orgName || "-";
 
       if (isLoginCwh) {
-        if (subinventoryTo !== "CWH") {
+        if (organizationCodeTo !== "CWH") {
           await showSoValidationSwal({
             message:
-              "Organisasi anda adalah CWH. Anda hanya dapat memproses SO Inbound dengan Subinventory To CWH.",
+              "Organisasi anda adalah CWH. Anda hanya dapat memproses SO Inbound dengan Organization Code To CWH.",
             headerInfo,
-            expectedSubinventoryTo: "CWH",
+            expectedOrganizationCodeTo: "CWH",
             orgName,
             soNo,
           });
           replaceItems([]);
           return;
         }
-      } else if (subinventoryTo !== loginOrgName) {
+      } else if (organizationCodeTo !== loginOrgName) {
         await showSoValidationSwal({
-          message: `Login cabang (${orgName || "-"}). SO Inbound hanya boleh diproses jika Subinventory To sama dengan organisasi yang sedang login.`,
+          message: `Login cabang (${orgName || "-"}). SO Inbound hanya boleh diproses jika Organization Code To sama dengan organisasi yang sedang login.`,
           headerInfo,
-          expectedSubinventoryTo,
+          expectedOrganizationCodeTo,
           orgName,
           soNo,
         });
         replaceItems([]);
+        return;
+      }
+
+      const validResult = await showSoValidationSuccessSwal({
+        headerInfo,
+        expectedOrganizationCodeTo,
+        orgName,
+        soNo,
+      });
+
+      if (!validResult.isConfirmed) {
         return;
       }
 
