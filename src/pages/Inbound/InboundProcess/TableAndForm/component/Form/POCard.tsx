@@ -12,10 +12,113 @@ import {
   useStoreUom,
 } from "../../../../../../DynamicAPI/stores/Store/MasterStore";
 import { showErrorToast } from "../../../../../../components/toast";
+import Swal from "sweetalert2";
+import { usePersistAuthStore } from "../../../../../../API/store/AuthStore/PersistAuthStore";
 import {
   POsearchService,
   SOsearchService,
 } from "../../../../../../DynamicAPI/services/Service/";
+import { SOHeaderInfo } from "../../../../../../DynamicAPI/types/searchSO";
+
+const escapeHtml = (value?: string | null) =>
+  String(value ?? "-")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+
+const buildSoValidationSwalHtml = ({
+  message,
+  headerInfo,
+  expectedSubinventoryTo,
+  orgName,
+  soNo,
+}: {
+  message: string;
+  headerInfo?: SOHeaderInfo | null;
+  expectedSubinventoryTo: string;
+  orgName?: string;
+  soNo?: string;
+}) => {
+  const rows: Array<{ label: string; value?: string | null; highlight?: boolean }> =
+    [
+      { label: "Nomor SO", value: soNo || headerInfo?.orderNumber?.toString() },
+      { label: "Organization Name", value: orgName },
+      { label: "SO Type", value: headerInfo?.soType },
+      { label: "Subinventory From", value: headerInfo?.subinventoryFrom },
+      { label: "Subinventory To", value: headerInfo?.subinventoryTo },
+      {
+        label: "Subinventory To (Wajib)",
+        value: expectedSubinventoryTo,
+        highlight: true,
+      },
+    ];
+
+  const tableRows = rows
+    .map(
+      (row) => `
+        <tr>
+          <td style="padding:8px 12px;border-bottom:1px solid #e2e8f0;font-size:12px;color:#64748b;font-weight:600;white-space:nowrap;width:42%;">
+            ${escapeHtml(row.label)}
+          </td>
+          <td style="padding:8px 12px;border-bottom:1px solid #e2e8f0;font-size:12px;color:${row.highlight ? "#1d4ed8" : "#0f172a"};font-weight:${row.highlight ? "700" : "600"};">
+            ${escapeHtml(row.value)}
+          </td>
+        </tr>
+      `,
+    )
+    .join("");
+
+  return `
+    <p style="text-align:left;font-size:13px;color:#334155;line-height:1.55;margin:0 0 14px;">
+      ${escapeHtml(message)}
+    </p>
+    <div style="border:1px solid #e2e8f0;border-radius:10px;overflow:hidden;text-align:left;">
+      <table style="width:100%;border-collapse:collapse;background:#ffffff;">
+        <thead>
+          <tr>
+            <th style="padding:10px 12px;text-align:left;font-size:11px;color:#475569;background:#f8fafc;border-bottom:1px solid #e2e8f0;text-transform:uppercase;letter-spacing:0.04em;">
+              Field
+            </th>
+            <th style="padding:10px 12px;text-align:left;font-size:11px;color:#475569;background:#f8fafc;border-bottom:1px solid #e2e8f0;text-transform:uppercase;letter-spacing:0.04em;">
+              Value
+            </th>
+          </tr>
+        </thead>
+        <tbody>${tableRows}</tbody>
+      </table>
+    </div>
+  `;
+};
+
+const showSoValidationSwal = async ({
+  message,
+  headerInfo,
+  expectedSubinventoryTo,
+  orgName,
+  soNo,
+}: {
+  message: string;
+  headerInfo?: SOHeaderInfo | null;
+  expectedSubinventoryTo: string;
+  orgName?: string;
+  soNo?: string;
+}) => {
+  await Swal.fire({
+    icon: "warning",
+    title: "Subinventory Tidak Sesuai",
+    html: buildSoValidationSwalHtml({
+      message,
+      headerInfo,
+      expectedSubinventoryTo,
+      orgName,
+      soNo,
+    }),
+    confirmButtonText: "Mengerti",
+    confirmButtonColor: "#3085d6",
+    width: 620,
+  });
+};
 
 export default function POCard({
   doIndex,
@@ -46,6 +149,8 @@ export default function POCard({
 }) {
   const { fetchAll, list } = useStoreItem();
   const { fetchAll: fetchAllUom, list: uomList } = useStoreUom();
+  const user = usePersistAuthStore((state) => state.user);
+  const orgName = user?.userDetail?.organization?.organization_name;
   const { control, register, getValues, setValue, trigger } =
     useFormContext<FormValues>();
 
@@ -196,7 +301,62 @@ export default function POCard({
 
     setLoading(true);
     try {
-      const { vendorName, items } = await SOsearchService(soNo, list, uomList);
+      const { vendorName, items, headerInfo } = await SOsearchService(
+        soNo,
+        list,
+        uomList,
+      );
+
+      if (!items || items.length === 0) {
+        showErrorToast(
+          `Data SO ${soNo} tidak ditemukan atau item tidak terdaftar di master data.`,
+        );
+        replaceItems([]);
+        return;
+      }
+
+      // =========================================================
+      // Validasi akses SO Inbound berdasarkan Org Login
+      // - Login CWH   → SUBINVENTORY_TO harus CWH
+      // - Login Cabang → SUBINVENTORY_TO harus sama dengan org yang login
+      // =========================================================
+      const normalize = (value?: string | null) =>
+        String(value || "")
+          .trim()
+          .toUpperCase()
+          .replace(/\s+/g, " ");
+
+      const loginOrgName = normalize(orgName);
+      const isLoginCwh =
+        loginOrgName === "CWH" || loginOrgName.includes("CWH");
+
+      const subinventoryTo = normalize(headerInfo?.subinventoryTo);
+      const expectedSubinventoryTo = isLoginCwh ? "CWH" : orgName || "-";
+
+      if (isLoginCwh) {
+        if (subinventoryTo !== "CWH") {
+          await showSoValidationSwal({
+            message:
+              "Organisasi anda adalah CWH. Anda hanya dapat memproses SO Inbound dengan Subinventory To CWH.",
+            headerInfo,
+            expectedSubinventoryTo: "CWH",
+            orgName,
+            soNo,
+          });
+          replaceItems([]);
+          return;
+        }
+      } else if (subinventoryTo !== loginOrgName) {
+        await showSoValidationSwal({
+          message: `Login cabang (${orgName || "-"}). SO Inbound hanya boleh diproses jika Subinventory To sama dengan organisasi yang sedang login.`,
+          headerInfo,
+          expectedSubinventoryTo,
+          orgName,
+          soNo,
+        });
+        replaceItems([]);
+        return;
+      }
 
       if (vendorName) {
         setValue(

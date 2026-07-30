@@ -65,6 +65,113 @@ type ItemRow = {
   max_quantity_plan?: number;
 };
 
+const escapeHtml = (value?: string | null) =>
+  String(value ?? "-")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+
+const buildMemoSoValidationSwalHtml = ({
+  message,
+  headerInfo,
+  expectedLabel,
+  expectedValue,
+  orgName,
+  soNo,
+}: {
+  message: string;
+  headerInfo?: SOHeaderInfo | null;
+  expectedLabel: string;
+  expectedValue: string;
+  orgName?: string;
+  soNo?: string;
+}) => {
+  const rows: Array<{ label: string; value?: string | null; highlight?: boolean }> =
+    [
+      { label: "Nomor SO", value: soNo || headerInfo?.orderNumber?.toString() },
+      { label: "Organization Name", value: orgName },
+      { label: "SO Type", value: headerInfo?.soType },
+      { label: "Subinventory From", value: headerInfo?.subinventoryFrom },
+      { label: "Subinventory To", value: headerInfo?.subinventoryTo },
+      {
+        label: expectedLabel,
+        value: expectedValue,
+        highlight: true,
+      },
+    ];
+
+  const tableRows = rows
+    .map(
+      (row) => `
+        <tr>
+          <td style="padding:8px 12px;border-bottom:1px solid #e2e8f0;font-size:12px;color:#64748b;font-weight:600;white-space:nowrap;width:42%;">
+            ${escapeHtml(row.label)}
+          </td>
+          <td style="padding:8px 12px;border-bottom:1px solid #e2e8f0;font-size:12px;color:${row.highlight ? "#1d4ed8" : "#0f172a"};font-weight:${row.highlight ? "700" : "600"};">
+            ${escapeHtml(row.value)}
+          </td>
+        </tr>
+      `,
+    )
+    .join("");
+
+  return `
+    <p style="text-align:left;font-size:13px;color:#334155;line-height:1.55;margin:0 0 14px;">
+      ${escapeHtml(message)}
+    </p>
+    <div style="border:1px solid #e2e8f0;border-radius:10px;overflow:hidden;text-align:left;">
+      <table style="width:100%;border-collapse:collapse;background:#ffffff;">
+        <thead>
+          <tr>
+            <th style="padding:10px 12px;text-align:left;font-size:11px;color:#475569;background:#f8fafc;border-bottom:1px solid #e2e8f0;text-transform:uppercase;letter-spacing:0.04em;">
+              Field
+            </th>
+            <th style="padding:10px 12px;text-align:left;font-size:11px;color:#475569;background:#f8fafc;border-bottom:1px solid #e2e8f0;text-transform:uppercase;letter-spacing:0.04em;">
+              Value
+            </th>
+          </tr>
+        </thead>
+        <tbody>${tableRows}</tbody>
+      </table>
+    </div>
+  `;
+};
+
+const showMemoSoValidationSwal = async ({
+  title,
+  message,
+  headerInfo,
+  expectedLabel,
+  expectedValue,
+  orgName,
+  soNo,
+}: {
+  title: string;
+  message: string;
+  headerInfo?: SOHeaderInfo | null;
+  expectedLabel: string;
+  expectedValue: string;
+  orgName?: string;
+  soNo?: string;
+}) => {
+  await Swal.fire({
+    icon: "warning",
+    title,
+    html: buildMemoSoValidationSwalHtml({
+      message,
+      headerInfo,
+      expectedLabel,
+      expectedValue,
+      orgName,
+      soNo,
+    }),
+    confirmButtonText: "Mengerti",
+    confirmButtonColor: "#3085d6",
+    width: 620,
+  });
+};
+
 const warnQtyExceedsSoApi = (itemName?: string, max?: number) => {
   const maxLabel = max != null ? String(max) : "-";
   return Swal.fire({
@@ -156,6 +263,7 @@ const CreateMemo: React.FC = () => {
   const orgId =
     user?.userDetail?.organizationId || user?.userDetail?.organization?.id;
   const orgCode = user?.userDetail?.organization?.organization_code;
+  const orgName = user?.userDetail?.organization?.organization_name;
 
   const { data: memoId, mode, title } = location.state || {};
   const isDetail = mode === "detail";
@@ -824,6 +932,83 @@ const CreateMemo: React.FC = () => {
           `Data SO ${soSearchNumber} tidak ditemukan atau item tidak terdaftar di master data.`,
         );
         return;
+      }
+
+      // =========================================================
+      // Validasi akses SO untuk Memo SUBDIST berdasarkan Org Login
+      // - Login CWH     → SUBINVENTORY_FROM harus CWH
+      // - Login NON_CWH → SUBINVENTORY_FROM harus NON_CWH
+      // - SO harus tipe SO SUB-DIST
+      // =========================================================
+      const normalize = (value?: string | null) =>
+        String(value || "")
+          .trim()
+          .toUpperCase()
+          .replace(/\s+/g, " ");
+
+      const loginOrgName = normalize(orgName);
+      const isLoginCwh = loginOrgName === "CWH" || loginOrgName.includes("CWH");
+
+      const soType = normalize(headerInfo?.soType);
+      const subinventoryFrom = normalize(headerInfo?.subinventoryFrom);
+
+      const isSoSubdistType =
+        soType === "SO SUB-DIST" ||
+        soType.includes("SUB-DIST") ||
+        soType.includes("SUBDIST");
+
+      if (!isSoSubdistType) {
+        await showMemoSoValidationSwal({
+          title: "SO SUBDIST Tidak Valid",
+          message:
+            "Memo SUBDIST hanya boleh memproses SO dengan tipe SO SUB-DIST.",
+          headerInfo,
+          expectedLabel: "SO Type (Wajib)",
+          expectedValue: "SO SUB-DIST",
+          orgName,
+          soNo: soSearchNumber,
+        });
+        setSoHeaderData(null);
+        setItems([]);
+        return;
+      }
+
+      if (isLoginCwh) {
+        if (subinventoryFrom !== "CWH") {
+          await showMemoSoValidationSwal({
+            title: "Subinventory Tidak Sesuai",
+            message:
+              "Organisasi anda adalah CWH. Anda hanya dapat memproses SO Memo dengan Subinventory From = CWH.",
+            headerInfo,
+            expectedLabel: "Subinventory From (Wajib)",
+            expectedValue: "CWH",
+            orgName,
+            soNo: soSearchNumber,
+          });
+          setSoHeaderData(null);
+          setItems([]);
+          return;
+        }
+      } else {
+        const isNonCwhSubinv =
+          subinventoryFrom === "NON_CWH" ||
+          subinventoryFrom === "NON-CWH" ||
+          subinventoryFrom === "NON CWH";
+
+        if (!isNonCwhSubinv) {
+          await showMemoSoValidationSwal({
+            title: "Subinventory Tidak Sesuai",
+            message: `Login cabang (${orgName || "-"}). Anda hanya dapat memproses SO Memo dengan Subinventory From = NON_CWH.`,
+            headerInfo,
+            expectedLabel: "Subinventory From (Wajib)",
+            expectedValue: "NON_CWH",
+            orgName,
+            soNo: soSearchNumber,
+          });
+          setSoHeaderData(null);
+          setItems([]);
+          return;
+        }
       }
 
       if (headerInfo) {
