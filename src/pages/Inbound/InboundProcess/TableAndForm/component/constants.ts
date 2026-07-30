@@ -17,5 +17,9 @@ export const INBOUND_TYPE_OPTIONS = [
 ]
 
 export const inputCls = "w-full rounded-lg border border-slate-300 px-3 py-2 text-sm";
+export const getLockedFieldCls = (locked: boolean) =>
+  locked
+    ? "bg-gray-100 text-gray-500 cursor-not-allowed"
+    : "bg-white";
 export const btnPrimary = "bg-orange-500 hover:bg-orange-600 text-white px-3 py-2 rounded-lg";
 export const btnGhost = "border px-3 py-2 rounded-lg";

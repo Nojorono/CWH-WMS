@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { useFormContext, useFieldArray, useWatch, Controller } from "react-hook-form";
 import { FormValues } from "../formTypes";
-import { inputCls } from "../constants";
+import { inputCls, getLockedFieldCls } from "../constants";
 import ItemTable from "../Table/ItemTable";
 import AddItemModal from "../Modal/AddItemModal";
 import Button from "../../../../../../components/ui/button/Button";
@@ -133,6 +133,7 @@ export default function POCard({
   dataPO,
   isDOChecked,
   isPOValidated,
+  isCancelledSJ = false,
 }: {
   doIndex: number;
   posIndex: number;
@@ -146,6 +147,7 @@ export default function POCard({
   dataPO?: any;
   isDOChecked?: boolean;
   isPOValidated?: boolean;
+  isCancelledSJ?: boolean;
 }) {
   const { fetchAll, list } = useStoreItem();
   const { fetchAll: fetchAllUom, list: uomList } = useStoreUom();
@@ -235,14 +237,14 @@ export default function POCard({
 
   const isPOFieldDisabled =
     isDetailMode ||
+    isCancelledSJ ||
     (!isEditMode && !isCreateMode && !isAddToReceiveMode) ||
     (isCreateMode && !isDOChecked);
 
-  const canAddItem = !isDetailMode && isDOChecked;
+  const canAddItem = !isDetailMode && isDOChecked && !isCancelledSJ;
   // const cantAddManualAddItem = !isDOChecked || isSuratJalanValidated || isPOValidated;
 
-  const getDisabledCls = (disabled: boolean) =>
-    disabled ? "bg-gray-100 text-gray-500 cursor-not-allowed" : "bg-white";
+  const getDisabledCls = (disabled: boolean) => getLockedFieldCls(disabled);
 
   // ✅ SEARCH PO
   const handleSearchPO = async () => {
@@ -384,7 +386,9 @@ export default function POCard({
   };
 
   return (
-    <div className="relative border rounded-md p-3 bg-slate-50">
+    <div
+      className={`relative border rounded-md p-3 bg-slate-50 ${isCancelledSJ ? "cursor-not-allowed" : ""}`}
+    >
       {loading && (
         <div className="absolute inset-0 flex items-center justify-center bg-white/70 z-50 rounded-md">
           <span className="animate-spin rounded-full h-8 w-8 border-t-2 border-blue-500"></span>
@@ -404,7 +408,7 @@ export default function POCard({
           </label>
           <div className="flex gap-2">
             <input
-              className={`${inputCls} ${getDisabledCls(isPOFieldDisabled ?? false)} flex-1`}
+              className={`${inputCls} ${getDisabledCls(isPOFieldDisabled ?? false)} disabled:cursor-not-allowed flex-1`}
               {...register(
                 `deliveryOrders.${doIndex}.pos.${posIndex}.${normalizedInbType === "PO" ? "po_no" : "so_no"}` as any,
               )}
@@ -437,7 +441,7 @@ export default function POCard({
             }
             rules={{
               validate: (value) => {
-                if (isDetailMode) return true;
+                if (isDetailMode || isCancelledSJ) return true;
 
                 const principal = getValues(
                   `deliveryOrders.${doIndex}.pos.${posIndex}.principal` as any,
@@ -454,7 +458,9 @@ export default function POCard({
                 <label className="flex items-center justify-between gap-2 text-xs text-slate-600 mb-1">
                   <span>
                     Nama Pengirim{" "}
-                    {!isDetailMode && <span className="text-red-500">*</span>}
+                    {!isDetailMode && !isCancelledSJ && (
+                      <span className="text-red-500">*</span>
+                    )}
                   </span>
                   {fieldState.error && (
                     <span className="text-xs text-red-500 shrink-0">
@@ -463,11 +469,12 @@ export default function POCard({
                   )}
                 </label>
                 <input
-                  className={`${inputCls} w-full ${getDisabledCls(isDetailMode ?? false)} ${
+                  className={`${inputCls} w-full ${getDisabledCls(isDetailMode || isCancelledSJ)} disabled:cursor-not-allowed ${
                     fieldState.error ? "border-red-500" : ""
                   }`}
                   value={field.value || principalWatch || ""}
-                  readOnly={isDetailMode ?? false}
+                  readOnly={isDetailMode || isCancelledSJ}
+                  disabled={isCancelledSJ}
                   onChange={(e) => {
                     const val = e.target.value.toUpperCase();
                     field.onChange(val);
@@ -484,7 +491,9 @@ export default function POCard({
                     );
                   }}
                   placeholder={
-                    isDetailMode ? "" : "Ketik manual jika tidak muncul..."
+                    isDetailMode || isCancelledSJ
+                      ? ""
+                      : "Ketik manual jika tidak muncul..."
                   }
                 />
               </>
@@ -493,7 +502,7 @@ export default function POCard({
         </div>
 
         {/* Actions */}
-        {!isDetailMode && (
+        {!isDetailMode && !isCancelledSJ && (
           <div className="flex gap-2 justify-end">
             {canAddItem && (
               <Button
@@ -526,7 +535,9 @@ export default function POCard({
         )}
       </div>
 
-      <div className="mt-3 overflow-x-auto">
+      <div
+        className={`mt-3 overflow-x-auto ${isCancelledSJ ? "cursor-not-allowed" : ""}`}
+      >
         <ItemTable
           items={itemFields}
           itemsPath={`deliveryOrders.${doIndex}.pos.${posIndex}.items`}
@@ -539,7 +550,7 @@ export default function POCard({
         />
       </div>
 
-      {!isDetailMode && (
+      {!isDetailMode && !isCancelledSJ && (
         <AddItemModal
           isOpen={isOpen}
           onClose={() => setIsOpen(false)}

@@ -5,7 +5,7 @@ import {
   useWatch,
 } from "react-hook-form";
 import { FormValues } from "../formTypes";
-import { inputCls } from "../constants";
+import { inputCls, getLockedFieldCls } from "../constants";
 import POCard from "./POCard";
 import Button from "../../../../../../components/ui/button/Button";
 import DatePicker from "../../../../../../components/form/date-picker";
@@ -33,6 +33,7 @@ import { useNavigate } from "react-router-dom";
 import { FaCircleXmark } from "react-icons/fa6";
 import { showConfirmDialog } from "../../../../../../components/swal-confirm";
 import { cancelSJservice } from "../Helper/cancelSJservice";
+import { isCancelledDeliveryOrder } from "../Helper/sjStatusHelpers";
 
 export default function DeliveryOrderCard({
   doIndex,
@@ -180,7 +181,11 @@ export default function DeliveryOrderCard({
     }
   };
 
-  const isInputDisabled = !isCreateMode && !isEditMode && !isAddToReceiveMode;
+  const isCancelledSJ = isCancelledDeliveryOrder({
+    integration_status: integrationStatus,
+  });
+  const isInputDisabled =
+    (!isCreateMode && !isEditMode && !isAddToReceiveMode) || isCancelledSJ;
   const isValidType =
     inbType === "PO" || inbType === "SO_INTERNAL" || inbType === "SO_SUBDIST";
 
@@ -252,7 +257,7 @@ export default function DeliveryOrderCard({
 
   return (
     <div
-      className={`transition-all duration-300 border rounded-xl overflow-hidden shadow-sm hover:shadow-md ${open ? "mb-6" : "mb-3"}`}
+      className={`transition-all duration-300 border rounded-xl overflow-hidden shadow-sm hover:shadow-md ${open ? "mb-6" : "mb-3"} ${isCancelledSJ ? "border-slate-300 bg-slate-50/80" : ""}`}
     >
       <details ref={detailsRef} open={open} className="group">
         <summary className="flex flex-wrap justify-between items-center cursor-pointer px-4 py-4 bg-slate-50 group-open:bg-orange-100 border-b border-transparent group-open:border-blue-100 transition-colors list-none">
@@ -316,7 +321,7 @@ export default function DeliveryOrderCard({
               </Button>
             )}
 
-            {!isDetailMode && totalDO > 1 && (
+            {!isDetailMode && totalDO > 1 && !isCancelledSJ && (
               <Button
                 size="xsm"
                 variant="danger"
@@ -340,8 +345,19 @@ export default function DeliveryOrderCard({
           </div>
         </summary>
 
-        <div className="p-5 bg-white space-y-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 bg-slate-50/50 p-4 rounded-lg border border-slate-100">
+        <div
+          className={`p-5 bg-white space-y-6 ${isCancelledSJ ? "cursor-not-allowed" : ""}`}
+        >
+          {isCancelledSJ && !isDetailMode && (
+            <div className="rounded-lg border border-slate-200 bg-slate-100 px-4 py-3 text-xs text-slate-600">
+              SJ berstatus <span className="font-bold text-slate-800">CANCELLED</span>.
+              Data ditampilkan sebagai historical dan tidak dapat diubah.
+            </div>
+          )}
+
+          <div
+            className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 bg-slate-50/50 p-4 rounded-lg border border-slate-100 ${isInputDisabled ? "cursor-not-allowed" : ""}`}
+          >
             {/* PO Group Selection */}
             {inbType === "PO" && (
               <div className="flex flex-col">
@@ -354,7 +370,7 @@ export default function DeliveryOrderCard({
                   render={({ field }) => (
                     <select
                       {...field}
-                      className={`${inputCls} !py-1.5 !text-xs !bg-white ${errors.deliveryOrders?.[doIndex]?.po_type ? "border-red-500" : ""}`}
+                      className={`${inputCls} !py-1.5 !text-xs ${getLockedFieldCls(isInputDisabled)} disabled:cursor-not-allowed ${errors.deliveryOrders?.[doIndex]?.po_type ? "border-red-500" : ""}`}
                       disabled={isInputDisabled}
                       onChange={(e) => {
                         field.onChange(e.target.value);
@@ -392,7 +408,7 @@ export default function DeliveryOrderCard({
                     required: "No Surat Jalan wajib diisi",
                   })}
                   placeholder="Input DO Number..."
-                  className={`${inputCls} !py-1.5 !text-xs !bg-white flex-1 ${errors.deliveryOrders?.[doIndex]?.do_no || isDuplicateDO
+                  className={`${inputCls} !py-1.5 !text-xs flex-1 ${getLockedFieldCls(isInputDisabled)} disabled:cursor-not-allowed ${errors.deliveryOrders?.[doIndex]?.do_no || isDuplicateDO
                     ? "border-red-500"
                     : ""
                     }`}
@@ -406,6 +422,7 @@ export default function DeliveryOrderCard({
                     onClick={onCheckDO}
                     className="!py-1"
                     disabled={
+                      isInputDisabled ||
                       !isValidType ||
                       (isDOChecked && doStatus === "success") ||
                       isDuplicateDO
@@ -437,7 +454,7 @@ export default function DeliveryOrderCard({
                   >
                     View File
                   </a>
-                  {!isDetailMode && (
+                  {!isDetailMode && !isCancelledSJ && (
                     <button
                       type="button"
                       onClick={() => {
@@ -451,12 +468,12 @@ export default function DeliveryOrderCard({
                   )}
                 </div>
               ) : (
-                <div className="relative group">
+                <div className={`relative group ${isInputDisabled ? "cursor-not-allowed" : ""}`}>
                   <input
                     type="file"
                     accept=".pdf, .jpg, .jpeg, .png"
-                    className={`${inputCls} !py-1 !text-[10px] !bg-white w-full file:mr-2 file:py-1 file:px-2 file:border-0 file:text-[10px] file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer`}
-                    disabled={isDetailMode || uploading || !isDOChecked}
+                    className={`${inputCls} !py-1 !text-[10px] w-full file:mr-2 file:py-1 file:px-2 file:border-0 file:text-[10px] file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 ${isDetailMode || uploading || !isDOChecked || isCancelledSJ ? "cursor-not-allowed bg-gray-100 text-gray-500" : "cursor-pointer !bg-white"}`}
+                    disabled={isDetailMode || uploading || !isDOChecked || isCancelledSJ}
                     onChange={(e) =>
                       e.target.files?.[0] && handleUploadFile(e.target.files[0])
                     }
@@ -489,7 +506,7 @@ export default function DeliveryOrderCard({
                           : "",
                       )
                     }
-                    readOnly={isDetailMode || !isDOChecked}
+                    readOnly={isDetailMode || !isDOChecked || isCancelledSJ}
                     id={`date-${doIndex}`}
                   />
                 )}
@@ -498,7 +515,9 @@ export default function DeliveryOrderCard({
           </div>
 
           {/* Item List Section */}
-          <div className="mt-6 border-t border-slate-100 pt-6">
+          <div
+            className={`mt-6 border-t border-slate-100 pt-6 ${isCancelledSJ ? "cursor-not-allowed" : ""}`}
+          >
             <div className="flex items-center gap-2 mb-4">
               <div className="h-4 w-1 bg-blue-600 rounded-full"></div>
               <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wide">
@@ -523,6 +542,7 @@ export default function DeliveryOrderCard({
                     dataPO={inbType === "PO" ? posField.po_no : posField.so_no}
                     isDOChecked={isDOChecked}
                     isPOValidated={!!(posField as any).validation_surat_jalan}
+                    isCancelledSJ={isCancelledSJ}
                   />
                 </>
               ))}
