@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   FaChevronDown,
   FaChevronRight,
@@ -135,37 +135,46 @@ const pollStatusLabel = (status?: string | null) => {
   return s || "-";
 };
 
-const OutboundAdjustTable = ({
+const IRSOTable = ({
   globalFilter,
   setGlobalFilter,
   filteredIO,
 }: any) => {
-  const { fetchAll, list, pagination, isLoading } = useStoreIRIntegration();
+  const { fetchUsingPagination, list, pagination, isLoading } =
+    useStoreIRIntegration();
   const [pageIndex, setPageIndex] = useState(0);
-  const [pageSize, setPageSize] = useState(25);
+  const [pageSize, setPageSize] = useState(10);
   const [pollingMap, setPollingMap] = useState<Record<string, boolean>>({});
   const [pollResultMap, setPollResultMap] = useState<
     Record<string, PollResultView>
   >({});
   const [expanded, setExpanded] = useState<ExpandedState>({});
 
+  const refreshList = useCallback(async () => {
+    if (!fetchUsingPagination) return;
+    await fetchUsingPagination({
+      page: pageIndex + 1,
+      limit: pageSize,
+    });
+  }, [fetchUsingPagination, pageIndex, pageSize]);
+
   useEffect(() => {
-    fetchAll();
-  }, [fetchAll]);  
+    refreshList();
+  }, [refreshList]);
 
   const filteredData = useMemo(() => {
     if (!list) return [];
 
     let result = [...list];
 
-    // 1. Filter berdasarkan Organization ID (filteredIO)
+    // Filter Organization (client-side)
     if (filteredIO) {
       result = result.filter(
         (item: any) => item.organization_id === filteredIO,
       );
     }
 
-    // 2. Filter berdasarkan Global Search
+    // Search client-side pada data page pagination yang aktif
     if (globalFilter) {
       const lowerFilter = globalFilter.toLowerCase();
       result = result.filter(
@@ -201,7 +210,7 @@ const OutboundAdjustTable = ({
       );
       const result = normalizePollPayload(response?.data);
       setPollResultMap((prev) => ({ ...prev, [outboundDoId]: result }));
-      await fetchAll();
+      await refreshList();
     } catch (error: any) {
       const msg =
         error?.response?.data?.message ||
@@ -856,4 +865,4 @@ const MiniStatus = ({ label, status }: { label: string; status: string }) => (
   </div>
 );
 
-export default OutboundAdjustTable;
+export default IRSOTable;

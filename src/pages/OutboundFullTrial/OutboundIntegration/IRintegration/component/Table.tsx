@@ -147,10 +147,39 @@ const ExpandableTableComponent = <T extends { [key: string]: any }>({
       </div>
 
       <div className="px-6 py-3 bg-gray-50 flex items-center justify-between border-t border-gray-200">
-        <span className="text-[11px] text-gray-500 font-medium uppercase tracking-wider">
-          Total Pages: <b className="text-slate-800">{totalPages}</b>
-        </span>
+        <div className="flex items-center gap-4">
+          <span className="text-[11px] text-gray-500 font-medium uppercase tracking-wider">
+            Page <b className="text-slate-800">{pageIndex + 1}</b> of{" "}
+            <b className="text-slate-800">{totalPages}</b>
+          </span>
+          <div className="flex items-center gap-1.5">
+            <span className="text-[10px] text-gray-400 font-semibold uppercase">
+              Rows
+            </span>
+            <select
+              value={pageSize}
+              onChange={(e) => {
+                const newSize = Number(e.target.value);
+                onPageChange?.(0, newSize);
+              }}
+              className="text-xs border border-gray-200 rounded-lg px-2 py-1 bg-white shadow-sm font-semibold text-slate-700 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+            >
+              {[10, 20, 50, 100].map((size) => (
+                <option key={size} value={size}>
+                  {size}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
         <div className="flex items-center gap-2">
+          <button
+            onClick={() => handleGotoPage(0)}
+            disabled={pageIndex === 0}
+            className="px-2 py-1 rounded-lg bg-white border border-gray-200 shadow-sm disabled:opacity-30 hover:bg-gray-50 transition-all text-[10px] font-bold text-slate-600"
+          >
+            First
+          </button>
           <button
             onClick={() => handleGotoPage(pageIndex - 1)}
             disabled={pageIndex === 0}
@@ -167,6 +196,13 @@ const ExpandableTableComponent = <T extends { [key: string]: any }>({
             className="p-1.5 rounded-lg bg-white border border-gray-200 shadow-sm disabled:opacity-30 hover:bg-gray-50 transition-all"
           >
             <MdChevronRight className="w-5 h-5 text-slate-600" />
+          </button>
+          <button
+            onClick={() => handleGotoPage(totalPages - 1)}
+            disabled={pageIndex >= totalPages - 1}
+            className="px-2 py-1 rounded-lg bg-white border border-gray-200 shadow-sm disabled:opacity-30 hover:bg-gray-50 transition-all text-[10px] font-bold text-slate-600"
+          >
+            Last
           </button>
         </div>
       </div>

@@ -46,7 +46,6 @@ const OutboundShipConfirmTable = ({
         await fetchUsingPagination({
           page: pageIndex + 1,
           limit: pageSize,
-          search: globalFilter || "",
         });
       }
     },
@@ -57,9 +56,8 @@ const OutboundShipConfirmTable = ({
     fetchUsingPagination({
       page: pageIndex + 1,
       limit: pageSize,
-      search: globalFilter || "",
     });
-  }, [fetchUsingPagination, pageIndex, pageSize, globalFilter]);
+  }, [fetchUsingPagination, pageIndex, pageSize]);
 
   const filteredData = useMemo(() => {
     if (!list || list.length === 0) return [];
@@ -72,8 +70,15 @@ const OutboundShipConfirmTable = ({
         (doItem: any) => doItem.organization_id === filteredIO,
       );
     }
+    // Search client-side pada data page pagination yang aktif
+    if (globalFilter) {
+      const lowerFilter = globalFilter.toLowerCase();
+      result = result.filter((doItem: any) =>
+        doItem.outbound_do_number?.toLowerCase().includes(lowerFilter),
+      );
+    }
     return result;
-  }, [list, filteredIO]);
+  }, [list, filteredIO, globalFilter]);
 
   const handlePollStatus = async (
     outboundDoId?: string,

@@ -37,7 +37,7 @@ const MainTable = () => {
 
   const handleRefresh = () => {
     if (fetchUsingPagination) {
-      fetchUsingPagination({ page: 1, limit: 10, search: "" });
+      fetchUsingPagination({ page: 1, limit: 10 });
     }
   };
 

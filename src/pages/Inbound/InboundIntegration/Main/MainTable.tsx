@@ -14,7 +14,7 @@ const MainTable = () => {
   const [globalFilter, setGlobalFilter] = useState<string>("");
   const debouncedFilter = useDebounce(globalFilter, 500);
 
-  const { fetchAll } = useStoreInboundIntegration();
+  const { fetchUsingPagination } = useStoreInboundIntegration();
 
   const ioList = usePersistAuthStore((state) => state.ioList);
 
@@ -29,10 +29,12 @@ const MainTable = () => {
     }));
 
     return [{ value: "", label: "All Organization" }, ...options];
-  }, [ioList]); 
+  }, [ioList]);
 
   const handleRefresh = () => {
-    fetchAll();
+    if (fetchUsingPagination) {
+      fetchUsingPagination({ page: 1, limit: 10 });
+    }
   };
 
   return (
