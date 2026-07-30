@@ -352,6 +352,13 @@ const IRSOTable = ({
         cell: ({ row }) => {
           const outboundDoId = row.original?.outbound_do_id as string | undefined;
           const isPolling = outboundDoId ? pollingMap[outboundDoId] : false;
+          const irStatus = String(row.original.iface_status_ir || "").toUpperCase();
+          const isIrSuccess = irStatus === "S" || irStatus === "SUCCESS";
+          const hasSoNumber = Boolean(
+            String(row.original.so_number || "").trim(),
+          );
+          const isPollLocked = isIrSuccess && hasSoNumber;
+
           return (
             <div onClick={(e) => e.stopPropagation()}>
               <Button
@@ -359,12 +366,25 @@ const IRSOTable = ({
                 variant="action"
                 size="xsm"
                 onClick={() => handlePollIRSO(outboundDoId, row.id)}
-                disabled={Boolean(isPolling) || !outboundDoId}
+                disabled={Boolean(isPolling) || !outboundDoId || isPollLocked}
                 startIcon={
                   <FaSync className={isPolling ? "animate-spin" : ""} />
                 }
+                title={
+                  !outboundDoId
+                    ? "Outbound DO ID tidak tersedia"
+                    : isPollLocked
+                      ? "IR sudah SUCCESS dan SO number tersedia"
+                      : isIrSuccess && !hasSoNumber
+                        ? "IR SUCCESS tetapi SO number belum ada — poll masih diperlukan"
+                        : "Poll status IR/SO"
+                }
               >
-                {isPolling ? "Polling..." : "Poll IR/SO"}
+                {isPollLocked
+                  ? "Done"
+                  : isPolling
+                    ? "Polling..."
+                    : "Poll IR/SO"}
               </Button>
             </div>
           );

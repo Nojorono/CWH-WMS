@@ -18,6 +18,8 @@ import { mapShipConfirmLogList } from "../Helper/mappinganUI";
 import Button from "../../../../../components/ui/button/Button";
 import {
   AMO_MUTASI_TRANSACTION_TYPE,
+  SUBDIST_PICK_RELEASE_TRANSACTION_TYPE,
+  SUBDIST_SHIP_CONFIRM_TRANSACTION_TYPE,
   buildDeliveryPollKey,
   getPollButtonLabel,
   resolveOutboundTypeFromTransactionType,
@@ -236,21 +238,64 @@ const OutboundShipConfirmTable = ({
           const pollKey = buildDeliveryPollKey(outboundDoId || "", txType);
           const isPolling = outboundDoId ? isPollingKey(pollKey) : false;
 
+          const integrationData =
+            doData.outbound_memos?.[0]?.outbound_memo_items?.[0]
+              ?.integration_data;
+          const isSuccessStatus = (status?: string | null) => {
+            const normalized = String(status || "").toUpperCase();
+            return normalized === "S" || normalized === "SUCCESS";
+          };
+          const isPickReleaseSuccess = isSuccessStatus(
+            integrationData?.pick_release_status,
+          );
+          const isShipConfirmSuccess = isSuccessStatus(
+            integrationData?.ship_confirm_status,
+          );
+          const isPollDone =
+            txType === SUBDIST_PICK_RELEASE_TRANSACTION_TYPE
+              ? isPickReleaseSuccess
+              : txType === SUBDIST_SHIP_CONFIRM_TRANSACTION_TYPE
+                ? isShipConfirmSuccess
+                : isShipConfirmSuccess || isPickReleaseSuccess;
+
+          const pollDoneTitle =
+            txType === SUBDIST_PICK_RELEASE_TRANSACTION_TYPE
+              ? "Pick Release sudah SUCCESS"
+              : txType === SUBDIST_SHIP_CONFIRM_TRANSACTION_TYPE
+                ? "Ship Confirm sudah SUCCESS"
+                : "Integrasi sudah SUCCESS";
+
+          const pollDoneLabel =
+            txType === SUBDIST_PICK_RELEASE_TRANSACTION_TYPE
+              ? "Done Pick Release"
+              : txType === SUBDIST_SHIP_CONFIRM_TRANSACTION_TYPE
+                ? "Done Ship Confirm"
+                : "Done";
+
           return (
             <div onClick={(e) => e.stopPropagation()}>
               <Button
                 type="button"
                 variant="action"
                 size="xsm"
-                disabled={!outboundDoId || isPolling}
+                disabled={!outboundDoId || isPolling || isPollDone}
                 onClick={() =>
                   handlePollStatus(outboundDoId, txType, row.id)
                 }
                 startIcon={
                   <FaSync className={isPolling ? "animate-spin" : ""} />
                 }
+                title={
+                  !outboundDoId
+                    ? "Outbound DO ID tidak tersedia"
+                    : isPollDone
+                      ? pollDoneTitle
+                      : "Poll status integrasi delivery"
+                }
               >
-                {getPollButtonLabel(txType, isPolling)}
+                {isPollDone
+                  ? pollDoneLabel
+                  : getPollButtonLabel(txType, isPolling)}
               </Button>
             </div>
           );

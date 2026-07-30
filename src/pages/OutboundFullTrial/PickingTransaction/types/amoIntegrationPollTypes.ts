@@ -39,6 +39,9 @@ export interface AmoIntegrationDeliveryRow {
   pick_release_message?: string | null;
   ship_confirm_status?: string | null;
   ship_confirm_message?: string | null;
+  iso_inventory_item_id?: string | null;
+  inventory_item_id?: string | null;
+  outbound_memo_item_id?: string;
   outbound_memo?: {
     outbound_memo_number?: string;
   };
@@ -46,9 +49,11 @@ export interface AmoIntegrationDeliveryRow {
     item_id?: string;
     quantity_plan?: number;
     uom?: string;
+    inventory_item_id?: string | number | null;
     item?: {
       sku?: string;
       description?: string;
+      inventory_item_id?: string | number | null;
     };
   };
 }

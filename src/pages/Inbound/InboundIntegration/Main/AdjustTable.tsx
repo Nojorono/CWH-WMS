@@ -201,24 +201,28 @@ const AdjustTable = ({ globalFilter, setGlobalFilter, filteredIO }: any) => {
         cell: ({ row }) => {
           const inboundDoId = row.original.inbound_do_id;
           const isPolling = Boolean(inboundDoId && pollingDoIds[inboundDoId]);
+          const syncStatus = String(row.original.status || "").toUpperCase();
+          const isSuccess = syncStatus === "S" || syncStatus === "SUCCESS";
 
           return (
             <Button
               type="button"
               size="xsm"
               variant="action"
-              disabled={!inboundDoId || isPolling}
+              disabled={!inboundDoId || isPolling || isSuccess}
               onClick={() => handlePollStatus(inboundDoId)}
               startIcon={
                 <FaSync className={`size-3 ${isPolling ? "animate-spin" : ""}`} />
               }
               title={
-                inboundDoId
-                  ? "Poll status ke DB"
-                  : "Inbound DO ID tidak tersedia"
+                !inboundDoId
+                  ? "Inbound DO ID tidak tersedia"
+                  : isSuccess
+                    ? "Status sudah SUCCESS"
+                    : "Poll status ke DB"
               }
             >
-              {isPolling ? "Polling..." : "Poll Status"}
+              {isSuccess ? "Done" : isPolling ? "Polling..." : "Poll Status"}
             </Button>
           );
         },
