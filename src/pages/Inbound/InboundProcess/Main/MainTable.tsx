@@ -35,6 +35,9 @@ const MainTable = () => {
     { value: "READY_INTEGRATION", label: "READY_INTEGRATION" },
     { value: "INTEGRATED", label: "INTEGRATED" },
     { value: "FAILED", label: "FAILED" },
+    { value: "CANCELLED", label: "CANCELLED" },
+    { value: "PROCESSING", label: "PROCESSING" },
+    { value: "TIMEOUT", label: "TIMEOUT" },
   ];
 
   const handleRefresh = () => {
@@ -71,14 +74,14 @@ const MainTable = () => {
 
           <div className="space-x-4">
             {/* {canCreate && canManage && ( */}
-              <Button
-                size="sm"
-                variant="primary"
-                startIcon={<FaPlus className="size-5" />}
-                onClick={() => handleCreate()}
-              >
-                Add Inbound Planning
-              </Button>
+            <Button
+              size="sm"
+              variant="primary"
+              startIcon={<FaPlus className="size-5" />}
+              onClick={() => handleCreate()}
+            >
+              Add Inbound Planning
+            </Button>
             {/* )} */}
 
             <Button
