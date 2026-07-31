@@ -16,7 +16,7 @@ const MainTable = () => {
   const [globalFilter, setGlobalFilter] = useState<string>("");
   const debouncedFilter = useDebounce(globalFilter, 500);
 
-  const { fetchAll } = useStoreShipConfirm();
+  const { fetchUsingPagination } = useStoreShipConfirm();
 
   // 1. Ambil data ioList secara reaktif langsung dari Zustand global state
   const ioList = usePersistAuthStore((state) => state.ioList);
@@ -36,7 +36,9 @@ const MainTable = () => {
   }, [ioList]); // Otomatis mengkalkulasi ulang jika data IO berubah atau terisi setelah sign-in
 
   const handleRefresh = () => {
-    fetchAll();
+    if (fetchUsingPagination) {
+      fetchUsingPagination({ page: 1, limit: 10 });
+    }
   };
 
   return (

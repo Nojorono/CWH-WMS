@@ -9,6 +9,7 @@ import DynamicForm, {
   FieldConfig,
 } from "../../../../components/wms-components/inbound-component/form/DynamicForm";
 import { showErrorToast, showSuccessToast } from "../../../../components/toast";
+import Swal from "sweetalert2";
 import {
   useStoreItem,
   useStoreOutboundMemo,
@@ -58,6 +59,167 @@ type ItemRow = {
   uom_name?: string;
   notes?: string;
   address?: string;
+  /** true jika item berasal dari hasil Search SO (SUBDIST) */
+  from_so?: boolean;
+  /** Batas max qty dari API SO — quantity_plan tidak boleh melebihi ini */
+  max_quantity_plan?: number;
+};
+
+const escapeHtml = (value?: string | null) =>
+  String(value ?? "-")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+
+const buildMemoSoValidationSwalHtml = ({
+  message,
+  headerInfo,
+  expectedLabel,
+  expectedValue,
+  orgName,
+  soNo,
+}: {
+  message: string;
+  headerInfo?: SOHeaderInfo | null;
+  expectedLabel: string;
+  expectedValue: string;
+  orgName?: string;
+  soNo?: string;
+}) => {
+  const rows: Array<{
+    label: string;
+    value?: string | null;
+    highlight?: boolean;
+  }> = [
+    { label: "Nomor SO", value: soNo || headerInfo?.orderNumber?.toString() },
+    { label: "User Current Organization Name", value: orgName },
+    { label: "SO Type", value: headerInfo?.soType },
+    {
+      label: "Organization Code From",
+      value: headerInfo?.organizationCodeFrom,
+    },
+    { label: "Organization Code To", value: headerInfo?.organizationCodeTo },
+    {
+      label: expectedLabel,
+      value: expectedValue,
+      highlight: true,
+    },
+  ];
+
+  const tableRows = rows
+    .map(
+      (row) => `
+        <tr>
+          <td style="padding:8px 12px;border-bottom:1px solid #e2e8f0;font-size:12px;color:#64748b;font-weight:600;white-space:nowrap;width:42%;">
+            ${escapeHtml(row.label)}
+          </td>
+          <td style="padding:8px 12px;border-bottom:1px solid #e2e8f0;font-size:12px;color:${row.highlight ? "#1d4ed8" : "#0f172a"};font-weight:${row.highlight ? "700" : "600"};">
+            ${escapeHtml(row.value)}
+          </td>
+        </tr>
+      `,
+    )
+    .join("");
+
+  return `
+    <p style="text-align:left;font-size:13px;color:#334155;line-height:1.55;margin:0 0 14px;">
+      ${escapeHtml(message)}
+    </p>
+    <div style="border:1px solid #e2e8f0;border-radius:10px;overflow:hidden;text-align:left;">
+      <table style="width:100%;border-collapse:collapse;background:#ffffff;">
+        <thead>
+          <tr>
+            <th style="padding:10px 12px;text-align:left;font-size:11px;color:#475569;background:#f8fafc;border-bottom:1px solid #e2e8f0;text-transform:uppercase;letter-spacing:0.04em;">
+              Field
+            </th>
+            <th style="padding:10px 12px;text-align:left;font-size:11px;color:#475569;background:#f8fafc;border-bottom:1px solid #e2e8f0;text-transform:uppercase;letter-spacing:0.04em;">
+              Value
+            </th>
+          </tr>
+        </thead>
+        <tbody>${tableRows}</tbody>
+      </table>
+    </div>
+  `;
+};
+
+const showMemoSoValidationSwal = async ({
+  title,
+  message,
+  headerInfo,
+  expectedLabel,
+  expectedValue,
+  orgName,
+  soNo,
+}: {
+  title: string;
+  message: string;
+  headerInfo?: SOHeaderInfo | null;
+  expectedLabel: string;
+  expectedValue: string;
+  orgName?: string;
+  soNo?: string;
+}) => {
+  await Swal.fire({
+    icon: "warning",
+    title,
+    html: buildMemoSoValidationSwalHtml({
+      message,
+      headerInfo,
+      expectedLabel,
+      expectedValue,
+      orgName,
+      soNo,
+    }),
+    confirmButtonText: "Mengerti",
+    confirmButtonColor: "#3085d6",
+    width: 620,
+  });
+};
+
+const showMemoSoValidationSuccessSwal = async ({
+  headerInfo,
+  expectedLabel,
+  expectedValue,
+  orgName,
+  soNo,
+}: {
+  headerInfo?: SOHeaderInfo | null;
+  expectedLabel: string;
+  expectedValue: string;
+  orgName?: string;
+  soNo?: string;
+}) => {
+  return Swal.fire({
+    icon: "success",
+    title: "SO Valid untuk Memo SUBDIST",
+    html: buildMemoSoValidationSwalHtml({
+      message:
+        "Nomor SO telah tervalidasi dan memenuhi kriteria Memo SUBDIST. Klik OK untuk lanjut mapping item ke tabel SKU.",
+      headerInfo,
+      expectedLabel,
+      expectedValue,
+      orgName,
+      soNo,
+    }),
+    confirmButtonText: "OK, Lanjutkan",
+    confirmButtonColor: "#16a34a",
+    width: 620,
+  });
+};
+
+const warnQtyExceedsSoApi = (itemName?: string, max?: number) => {
+  const maxLabel = max != null ? String(max) : "-";
+  return Swal.fire({
+    icon: "warning",
+    title: "Qty Melebihi Batas",
+    text: itemName
+      ? `Item "${itemName}" tidak boleh melebihi qty dari data SO (${maxLabel}).`
+      : `Qty Plan tidak boleh melebihi qty dari data SO (${maxLabel}).`,
+    confirmButtonText: "Mengerti",
+    confirmButtonColor: "#3085d6",
+  });
 };
 
 const LoadingIndicator = () => (
@@ -69,9 +231,13 @@ const LoadingIndicator = () => (
 const TableCellInput = ({
   initialValue,
   onUpdate,
+  max,
+  itemName,
 }: {
   initialValue: any;
   onUpdate: (val: any) => void;
+  max?: number;
+  itemName?: string;
 }) => {
   // State lokal: menahan ketikan secara instan tanpa menunggu parent render
   const [value, setValue] = useState(initialValue);
@@ -81,14 +247,45 @@ const TableCellInput = ({
     setValue(initialValue);
   }, [initialValue]);
 
+  const applyValue = (raw: string, fromBlur = false) => {
+    if (raw === "") {
+      setValue("");
+      onUpdate("");
+      return;
+    }
+
+    let next = Number(raw);
+    if (Number.isNaN(next)) return;
+    if (next < 0) next = 0;
+
+    // Jangan force ke max — beri warning, kembalikan ke nilai sebelumnya
+    if (max != null && next > max) {
+      warnQtyExceedsSoApi(itemName, max);
+      setValue(initialValue ?? "");
+      return;
+    }
+
+    setValue(next);
+    onUpdate(next);
+  };
+
   return (
     <input
       type="number"
+      min={0}
       className="w-28 px-2 py-1 border rounded focus:ring-2 focus:ring-orange-500 outline-none transition-all"
       value={value ?? ""}
       onChange={(e) => {
+        // Izinkan ketikan bebas di UI; validasi max saat blur / Enter
         setValue(e.target.value);
-        onUpdate(e.target.value);
+      }}
+      onBlur={(e) => applyValue(e.target.value, true)}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          applyValue((e.target as HTMLInputElement).value, true);
+          (e.target as HTMLInputElement).blur();
+        }
       }}
     />
   );
@@ -103,6 +300,7 @@ const CreateMemo: React.FC = () => {
   const orgId =
     user?.userDetail?.organizationId || user?.userDetail?.organization?.id;
   const orgCode = user?.userDetail?.organization?.organization_code;
+  const orgName = user?.userDetail?.organization?.organization_name;
 
   const { data: memoId, mode, title } = location.state || {};
   const isDetail = mode === "detail";
@@ -174,17 +372,11 @@ const CreateMemo: React.FC = () => {
   }, [typeOutbound?.value, selectedCustomer, customerRaw]);
 
   const isAmoType = typeOutbound?.value === "AMO";
-  const hasTypeOutbound = Boolean(typeOutbound?.value);
   const hasAmoOrganizationName = Boolean(amoOrganizationName);
-  /** Wajib pilih type outbound; AMO juga wajib Organization Name */
-  const canProceedAddItem =
-    hasTypeOutbound && (!isAmoType || hasAmoOrganizationName);
+  /** AMO wajib punya Organization Name; selain AMO boleh lanjut */
+  const canProceedAddItem = !isAmoType || hasAmoOrganizationName;
 
   const handleOpenAddItem = () => {
-    if (!hasTypeOutbound) {
-      showErrorToast("Pilih Type Outbound terlebih dahulu.");
-      return;
-    }
     if (!canProceedAddItem) {
       showErrorToast(
         "Organization Name tidak tersedia. Pilih AMO Destination yang valid terlebih dahulu.",
@@ -456,15 +648,35 @@ const CreateMemo: React.FC = () => {
           uom: value ?? "",
           uom_name: value ?? "",
         };
+      } else if (field === "quantity_plan") {
+        const row = copy[index];
+        let nextQty: number | "" =
+          value === "" || value === null || value === undefined
+            ? ""
+            : Number(value);
+
+        if (nextQty !== "" && Number.isNaN(nextQty as number)) return prev;
+        if (typeof nextQty === "number" && nextQty < 0) nextQty = 0;
+
+        // Item dari SO: jangan force qty — tolak + warning jika melebihi API
+        if (
+          typeof nextQty === "number" &&
+          row.from_so &&
+          row.max_quantity_plan != null &&
+          nextQty > row.max_quantity_plan
+        ) {
+          warnQtyExceedsSoApi(row.item_name, row.max_quantity_plan);
+          return prev;
+        }
+
+        copy[index] = {
+          ...copy[index],
+          quantity_plan: nextQty as number,
+        };
       } else {
         copy[index] = {
           ...copy[index],
-          [field]:
-            field === "quantity_plan"
-              ? value === ""
-                ? ""
-                : Number(value)
-              : value,
+          [field]: value,
         };
       }
       return copy;
@@ -475,6 +687,18 @@ const CreateMemo: React.FC = () => {
   const onFinalSubmit = async (data: MemoFormValues) => {
     if (items.length === 0) {
       showErrorToast("Item tak boleh kosong! Pilih minimal 1 item.");
+      return;
+    }
+
+    // Validasi qty SO: tidak boleh melebihi qty dari API
+    const overQty = items.find(
+      (i) =>
+        i.from_so &&
+        i.max_quantity_plan != null &&
+        Number(i.quantity_plan) > Number(i.max_quantity_plan),
+    );
+    if (overQty) {
+      warnQtyExceedsSoApi(overQty.item_name, overQty.max_quantity_plan);
       return;
     }
 
@@ -529,11 +753,9 @@ const CreateMemo: React.FC = () => {
           let res: any = null;
 
           if (isEdit && memoId) {
-            // 2. Destructuring untuk memisahkan 'requestor' dan mengambil sisanya (...updatePayload)
             const { requestor, ...updatePayload } = basePayload;
             res = await updateData(memoId, updatePayload as any);
           } else {
-            // Jika Create baru, kirim seluruh data termasuk requestor
             res = await createData(basePayload as any);
           }
 
@@ -557,6 +779,9 @@ const CreateMemo: React.FC = () => {
     );
   };
 
+  const isSubdistType = typeOutbound?.value === "SUBDIST";
+  const hasSoImportedItems = items.some((i) => i.from_so);
+
   const columnsTableItem = useMemo(
     () => [
       { accessorKey: "item_name", header: "Item Name" },
@@ -565,14 +790,26 @@ const CreateMemo: React.FC = () => {
         header: "Qty Plan",
         cell: ({ row, getValue }: any) => {
           const val = getValue() ?? row.original?.quantity_plan ?? "";
+          const maxQty = row.original?.from_so
+            ? row.original?.max_quantity_plan
+            : undefined;
 
           return !isDetail ? (
-            <TableCellInput
-              initialValue={val}
-              onUpdate={(newValue) =>
-                handleUpdateItemField(row.index, "quantity_plan", newValue)
-              }
-            />
+            <div className="flex flex-col gap-0.5">
+              <TableCellInput
+                initialValue={val}
+                max={maxQty}
+                itemName={row.original?.item_name}
+                onUpdate={(newValue) =>
+                  handleUpdateItemField(row.index, "quantity_plan", newValue)
+                }
+              />
+              {maxQty != null && (
+                <span className="text-[10px] text-slate-400">
+                  Max dari API SO: {maxQty}
+                </span>
+              )}
+            </div>
           ) : (
             <span>{val}</span>
           );
@@ -582,7 +819,6 @@ const CreateMemo: React.FC = () => {
         accessorKey: "uom_name",
         header: "UOM",
         cell: ({ row, getValue }: any) => {
-          // ✅ 2. BACA DARI row.original, BUKAN DARI state items[] global
           const val = getValue() ?? row.original?.uom_name ?? "";
 
           return !isDetail ? (
@@ -601,7 +837,8 @@ const CreateMemo: React.FC = () => {
           );
         },
       },
-      ...(!isDetail
+      // SUBDIST + item dari Search SO: tidak ada tombol Delete
+      ...(!isDetail && !(isSubdistType && hasSoImportedItems)
         ? [
             {
               accessorKey: "action",
@@ -618,7 +855,7 @@ const CreateMemo: React.FC = () => {
           ]
         : []),
     ],
-    [isDetail, uomList],
+    [isDetail, uomList, isSubdistType, hasSoImportedItems],
   );
 
   const handleReset = () => {
@@ -668,31 +905,6 @@ const CreateMemo: React.FC = () => {
       },
     );
   };
-
-  // const handleApproveMemo = (memoId: string) => {
-  //   const approveMemo = async (memoId: string) => {
-  //     try {
-  //       const res = await fetch(`${EndPoint}outbound-memo/${memoId}/approved`, {
-  //         method: "POST",
-  //         headers: {
-  //           "Content-Type": "application/json",
-  //           Authorization: `Bearer ${token}`,
-  //         },
-  //       });
-  //       const data = await res.json();
-  //       if (res.ok) {
-  //         showSuccessToast("Memo approved successfully");
-  //         navigate("/memo");
-  //       } else {
-  //         showErrorToast(data?.message || "Failed to approve memo");
-  //       }
-  //     } catch (err) {
-  //       showErrorToast("Network error approving memo");
-  //     }
-  //   };
-
-  //   approveMemo(memoId);
-  // };
 
   const handleApproveMemo = async (memoId: string) => {
     try {
@@ -759,6 +971,96 @@ const CreateMemo: React.FC = () => {
         return;
       }
 
+      // =========================================================
+      // Validasi akses SO untuk Memo SUBDIST berdasarkan Org Login
+      // - Login CWH     → ORGANIZATION_CODE_FROM harus CWH
+      // - Login NON_CWH → ORGANIZATION_CODE_FROM harus NON_CWH
+      // - SO harus tipe SO SUB-DIST
+      // =========================================================
+      const normalize = (value?: string | null) =>
+        String(value || "")
+          .trim()
+          .toUpperCase()
+          .replace(/\s+/g, " ");
+
+      const loginOrgName = normalize(orgName);
+      const isLoginCwh = loginOrgName === "CWH" || loginOrgName.includes("CWH");
+
+      const soType = normalize(headerInfo?.soType);
+      const organizationCodeFrom = normalize(headerInfo?.organizationCodeFrom);
+
+      const isSoSubdistType =
+        soType === "SO SUB-DIST" ||
+        soType.includes("SUB-DIST") ||
+        soType.includes("SUBDIST");
+
+      if (!isSoSubdistType) {
+        await showMemoSoValidationSwal({
+          title: "SO SUBDIST Tidak Valid",
+          message:
+            "Memo SUBDIST hanya boleh memproses SO dengan tipe SO SUB-DIST.",
+          headerInfo,
+          expectedLabel: "SO Type (Wajib)",
+          expectedValue: "SO SUB-DIST",
+          orgName,
+          soNo: soSearchNumber,
+        });
+        setSoHeaderData(null);
+        setItems([]);
+        return;
+      }
+
+      if (isLoginCwh) {
+        if (organizationCodeFrom !== "CWH") {
+          await showMemoSoValidationSwal({
+            title: "Subinventory Tidak Sesuai",
+            message:
+              "Organisasi anda adalah CWH. Anda hanya dapat memproses SO Memo dengan Organization Code From = CWH.",
+            headerInfo,
+            expectedLabel: "Organization Code From (Wajib)",
+            expectedValue: "CWH",
+            orgName,
+            soNo: soSearchNumber,
+          });
+          setSoHeaderData(null);
+          setItems([]);
+          return;
+        }
+      } else {
+        const isNonCwhSubinv =
+          organizationCodeFrom === "NON_CWH" ||
+          organizationCodeFrom === "NON-CWH" ||
+          organizationCodeFrom === "NON CWH";
+
+        if (!isNonCwhSubinv) {
+          await showMemoSoValidationSwal({
+            title: "Subinventory Tidak Sesuai",
+            message: `Login cabang (${orgName || "-"}). Anda hanya dapat memproses SO Memo dengan Organization Code From = NON_CWH.`,
+            headerInfo,
+            expectedLabel: "Organization Code From (Wajib)",
+            expectedValue: "NON_CWH",
+            orgName,
+            soNo: soSearchNumber,
+          });
+          setSoHeaderData(null);
+          setItems([]);
+          return;
+        }
+      }
+
+      const expectedOrganizationCodeFrom = isLoginCwh ? "CWH" : "NON_CWH";
+      const validResult = await showMemoSoValidationSuccessSwal({
+        headerInfo,
+        expectedLabel: "Organization Code From (Wajib)",
+        expectedValue: expectedOrganizationCodeFrom,
+        orgName,
+        soNo: soSearchNumber,
+      });
+
+      if (!validResult.isConfirmed) {
+        return;
+      }
+
       if (headerInfo) {
         setSoHeaderData(headerInfo);
         methods.setValue("ship_to", headerInfo.locationShip || "", {
@@ -770,15 +1072,20 @@ const CreateMemo: React.FC = () => {
       }
 
       // Mapping hasil SO ke format ItemRow table
-      const mappedItems: ItemRow[] = soItems.map((it: any) => ({
-        item_id: String(it.item_id),
-        item_name: it.sku || "Unknown Item",
-        quantity_plan: Number(it.qty),
-        uom: it.uom,
-        uom_name: it.uom,
-        classification_name: "",
-        notes: `Imported from SO: ${soSearchNumber}`,
-      }));
+      const mappedItems: ItemRow[] = soItems.map((it: any) => {
+        const soQty = Number(it.qty ?? it.qty_plan ?? 0);
+        return {
+          item_id: String(it.item_id),
+          item_name: it.sku || "Unknown Item",
+          quantity_plan: soQty,
+          uom: it.uom,
+          uom_name: it.uom,
+          classification_name: "",
+          notes: `Imported from SO: ${soSearchNumber}`,
+          from_so: true,
+          max_quantity_plan: soQty,
+        };
+      });
 
       setItems(mappedItems);
       showSuccessToast(
@@ -802,8 +1109,14 @@ const CreateMemo: React.FC = () => {
             ? formatDateIndo(soHeaderData.orderedDate)
             : "-",
         },
-        { label: "Subinventory From", value: soHeaderData.subinventoryFrom },
-        { label: "Subinventory To", value: soHeaderData.subinventoryTo },
+        {
+          label: "Organization Code From",
+          value: soHeaderData.organizationCodeFrom,
+        },
+        {
+          label: "Organization Code To",
+          value: soHeaderData.organizationCodeTo,
+        },
         { label: "Location Bill", value: soHeaderData.locationBill },
         { label: "Location Ship", value: soHeaderData.locationShip },
         { label: "Organization", value: soHeaderData.orgName },
@@ -955,17 +1268,10 @@ const CreateMemo: React.FC = () => {
               >
                 + Add Item
               </Button>
-              {!hasTypeOutbound ? (
+              {isAmoType && !hasAmoOrganizationName && (
                 <span className="text-[11px] text-rose-600 font-medium">
-                  Pilih Type Outbound terlebih dahulu.
+                  Pilih destination AMO agar Organization Name terisi.
                 </span>
-              ) : (
-                isAmoType &&
-                !hasAmoOrganizationName && (
-                  <span className="text-[11px] text-rose-600 font-medium">
-                    Pilih destination AMO agar Organization Name terisi.
-                  </span>
-                )
               )}
             </div>
           )}
@@ -991,20 +1297,21 @@ const CreateMemo: React.FC = () => {
             variant="secondary"
             startIcon={<FaCheck />}
             onClick={methods.handleSubmit(onFinalSubmit)}
-            disabled={items.length === 0 || !canProceedAddItem}
+            disabled={items.length === 0}
           >
             {isEdit ? "Update Memo" : "Confirm Memo"}
           </Button>
         </div>
       )}
 
-      {/* MODAL — AMO: hanya buka jika Organization Name terisi */}
+      {/* MODAL */}
       <ModalAddItem
-        open={openModal && canProceedAddItem}
+        open={openModal}
         onClose={() => setOpenModal(false)}
         onSubmit={handleAddItem}
-        organizationName={isAmoType ? amoOrganizationName : undefined}
-        requireOrganizationName={isAmoType}
+        organizationName={
+          typeOutbound?.value === "AMO" ? amoOrganizationName : undefined
+        }
       />
     </div>
   );

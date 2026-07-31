@@ -10,6 +10,7 @@ import ConfirmationModal from "./component/Modal/InboundConfirmModal";
 import { FaPlus, FaRedoAlt } from "react-icons/fa";
 import { UseFormReturn, useWatch } from "react-hook-form";
 import { FormValues } from "./component/formTypes";
+import { filterActiveDeliveryOrders } from "./component/Helper/sjStatusHelpers";
 import { useEffect, useState, useRef } from "react";
 import ScanHistory from "./component/Tabs/ScanHistory";
 import { useStoreMasterSupplier } from "../../../../DynamicAPI/stores/Store/MasterStore";
@@ -235,26 +236,30 @@ const SubmitSection = ({
       name: "deliveryOrders",
     }) || [];
 
+  const activeDeliveryOrders = filterActiveDeliveryOrders(deliveryOrders);
+
   const mainFields = methods.watch();
 
-  const normalizedDONumbers = deliveryOrders
+  const normalizedDONumbers = activeDeliveryOrders
     .map((doItem: any) => (doItem?.do_no || "").trim().toUpperCase())
     .filter(Boolean);
 
   const hasDuplicateDO =
     new Set(normalizedDONumbers).size !== normalizedDONumbers.length;
 
-  const hasNoDO = deliveryOrders.every((doItem: any) => !doItem.do_no?.trim());
+  const hasNoDO =
+    activeDeliveryOrders.length === 0 ||
+    activeDeliveryOrders.every((doItem: any) => !doItem.do_no?.trim());
 
-  const hasMultiplePO = deliveryOrders.some(
+  const hasMultiplePO = activeDeliveryOrders.some(
     (doItem: any) => doItem.pos?.length > 1,
   );
 
-  const hasDOWithoutPO = deliveryOrders.some(
+  const hasDOWithoutPO = activeDeliveryOrders.some(
     (doItem: any) => !doItem.pos || doItem.pos.length === 0,
   );
 
-  const hasPOWithoutItem = deliveryOrders.some((doItem: any) =>
+  const hasPOWithoutItem = activeDeliveryOrders.some((doItem: any) =>
     doItem.pos?.some((po: any) => {
       // Cek apakah items ada dan panjangnya lebih dari 0
       return !po.items || po.items.length === 0;
@@ -552,7 +557,7 @@ export default function InboundPlanningFormView(props: Props) {
         <ConfirmationModal
           isOpen={isConfirmOpen}
           onClose={() => setIsConfirmOpen(false)}
-          onSubmit={methods.handleSubmit(onFinalSubmit)}
+          onSubmit={() => onFinalSubmit(previewData)}
           formData={previewData}
           inbAddToReceiveNo={inbAddToReceiveNo}
         />

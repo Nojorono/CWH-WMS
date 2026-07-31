@@ -159,44 +159,6 @@ const AdjustTable = ({
     });
   };
 
-  // const handleDelete = async (id: string) => {
-  //   showConfirmDialog(
-  //     async () => {
-  //       try {
-  //         if (!token) return;
-
-  //         const url = `${EndPoint}outbound-memo/${id}/cancelled`;
-  //         const res = await fetch(url, {
-  //           method: "POST",
-  //           headers: {
-  //             Authorization: `Bearer ${token}`,
-  //             "Content-Type": "application/json",
-  //           },
-  //         });
-
-  //         if (res.ok && fetchUsingPagination) {
-  //           fetchUsingPagination({
-  //             page: currentPage,
-  //             limit: pageSize,
-  //             search: globalFilter || "",
-  //             status: filteredStatus || "",
-  //             sortOrder: "DESC",
-  //           });
-  //         }
-  //       } catch (error) {
-  //         console.error("Error cancelling memo:", error);
-  //       }
-  //     },
-  //     {
-  //       title: "Cancel Memo",
-  //       text: "Apakah Anda yakin ingin membatalkan memo ini?",
-  //       icon: "warning",
-  //       confirmButtonText: "Ya, Cancel Memo!",
-  //       cancelButtonText: "Tidak, Batalkan",
-  //     },
-  //   );
-  // };
-
   const handleDelete = async (id: string) => {
   showConfirmDialog(
     async () => {
@@ -242,6 +204,7 @@ const AdjustTable = ({
   const columns: ColumnDef<MemoData>[] = useMemo(
     () => [
       { accessorKey: "outbound_memo_number", header: "Memo No" },
+      { accessorKey: "so_number", header: "SO No" },
       {
         accessorKey: "has_do",
         header: "Has DO",

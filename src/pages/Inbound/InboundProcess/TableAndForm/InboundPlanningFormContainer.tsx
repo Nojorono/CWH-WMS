@@ -3,10 +3,15 @@ import { useForm, useFieldArray, FormProvider } from "react-hook-form";
 import { useLocation, useNavigate } from "react-router";
 import { FormValues } from "./component/formTypes";
 import { useStoreInboundGoodStock } from "../../../../DynamicAPI/stores/Store/MasterStore";
-import { showErrorToast } from "../../../../components/toast";
+import { showErrorToast, showSuccessToast } from "../../../../components/toast";
 import InboundPlanningFormView from "./InboundPlanningFormView";
 import { mapDetailToFormValues } from "./component/Helper/mapperData";
 import { mapToPayload } from "./component/Helper/mapperFinalPayload";
+import Swal from "sweetalert2";
+import {
+  filterActiveDeliveryOrders,
+  isCancelledDeliveryOrder,
+} from "./component/Helper/sjStatusHelpers";
 
 // --- Default empty values
 const emptyFormValues: FormValues = {
@@ -132,12 +137,20 @@ export default function InboundPlanningFormContainer() {
 
     const values = getValues();
     const deliveryOrders = values.deliveryOrders || [];
+    const activeDeliveryOrders = filterActiveDeliveryOrders(deliveryOrders);
+    const cancelledSJ = deliveryOrders.filter(isCancelledDeliveryOrder);
 
     // =========================
-    // 1) VALIDASI: minimal 1 SJ
+    // 1) VALIDASI: minimal 1 SJ aktif (bukan CANCELLED)
     // =========================
-    if (deliveryOrders.length === 0) {
-      showErrorToast("Minimal 1 Nomor SJ harus diisi.");
+    if (activeDeliveryOrders.length === 0) {
+      if (cancelledSJ.length > 0) {
+        showErrorToast(
+          "Semua SJ berstatus CANCELLED. Tidak ada data yang bisa disubmit sebagai Inbound Plan.",
+        );
+      } else {
+        showErrorToast("Minimal 1 Nomor SJ harus diisi.");
+      }
       return;
     }
 
@@ -147,11 +160,12 @@ export default function InboundPlanningFormContainer() {
     // Normalisasi: trim + uppercase agar "sj001" dan " SJ001 " dianggap sama
     const doNoMap = new Map<string, number[]>();
 
-    deliveryOrders.forEach((doItem, index) => {
+    activeDeliveryOrders.forEach((doItem) => {
+      const originalIndex = deliveryOrders.indexOf(doItem);
       const key = (doItem?.do_no || "").trim().toUpperCase();
       if (!key) return;
       if (!doNoMap.has(key)) doNoMap.set(key, []);
-      doNoMap.get(key)!.push(index);
+      doNoMap.get(key)!.push(originalIndex);
     });
 
     const duplicateGroups = [...doNoMap.entries()].filter(
@@ -167,9 +181,9 @@ export default function InboundPlanningFormContainer() {
     }
 
     // ============================================
-    // 3) VALIDASI existing DO -> PO -> Item (tetap)
+    // 3) VALIDASI existing DO -> PO -> Item (hanya SJ aktif)
     // ============================================
-    for (const [i, doItem] of deliveryOrders.entries()) {
+    for (const [i, doItem] of activeDeliveryOrders.entries()) {
       const doNo = (doItem.do_no || "").trim();
 
       if (!doNo || !doItem.date) {
@@ -212,19 +226,109 @@ export default function InboundPlanningFormContainer() {
       }
     }
 
+    const openPreviewWithActiveOrders = (formValues: FormValues) => {
+      const submitReadyOrders = filterActiveDeliveryOrders(
+        formValues.deliveryOrders || [],
+      );
+
+      if (submitReadyOrders.length === 0) {
+        showErrorToast(
+          "Tidak ada SJ aktif yang bisa dibawa ke Preview & Submit.",
+        );
+        return;
+      }
+
+      setPreviewData({
+        ...formValues,
+        deliveryOrders: submitReadyOrders,
+      });
+      setIsConfirmOpen(true);
+    };
+
     // ============================================
-    // 4) Kalau semua valid -> lanjut preview
+    // 4) OPSI KHUSUS: jika ada SJ berstatus CANCELLED
     // ============================================
-    setPreviewData(values);
-    setIsConfirmOpen(true);
+    if (cancelledSJ.length > 0) {
+      const cancelledList = cancelledSJ
+        .map((doItem) => (doItem.do_no || "").trim())
+        .filter(Boolean)
+        .join(", ");
+
+      const result = await Swal.fire({
+        icon: "warning",
+        title: "Ditemukan SJ CANCELLED",
+        html: `Ada <b>${cancelledSJ.length}</b> SJ berstatus CANCELLED${
+          cancelledList ? ` (${cancelledList})` : ""
+        }.<br/><br/>SJ CANCELLED <b>tidak akan</b> dibawa ke Preview & Submit.<br/>Pilih tindakan untuk SJ CANCELLED pada form:`,
+        showDenyButton: true,
+        showCancelButton: true,
+        confirmButtonText: "Biarkan sebagai historical",
+        denyButtonText: "Discard dari form",
+        cancelButtonText: "Kembali",
+        confirmButtonColor: "#2563eb",
+        denyButtonColor: "#dc2626",
+      });
+
+      if (result.isDismissed && !result.isDenied && !result.isConfirmed) {
+        return;
+      }
+
+      if (result.isDenied) {
+        const discardedLabels = cancelledSJ
+          .map((doItem) => (doItem.do_no || "").trim())
+          .filter(Boolean);
+
+        const cancelledIndices = deliveryOrders
+          .map((doItem, index) =>
+            isCancelledDeliveryOrder(doItem) ? index : -1,
+          )
+          .filter((index) => index >= 0)
+          .sort((a, b) => b - a);
+
+        cancelledIndices.forEach((index) => remove(index));
+
+        if (discardedLabels.length === 1) {
+          showSuccessToast(
+            `Berhasil discard SJ CANCELLED: ${discardedLabels[0]}`,
+          );
+        } else if (discardedLabels.length > 1) {
+          showSuccessToast(
+            `Berhasil discard ${discardedLabels.length} SJ CANCELLED: ${discardedLabels.join(", ")}`,
+          );
+        } else {
+          showSuccessToast(
+            `Berhasil discard ${cancelledSJ.length} SJ CANCELLED dari form.`,
+          );
+        }
+
+        openPreviewWithActiveOrders(getValues());
+        return;
+      }
+    }
+
+    // ============================================
+    // 5) Kalau semua valid -> lanjut preview (hanya SJ aktif)
+    // ============================================
+    openPreviewWithActiveOrders(values);
   };
 
   // SUBMIT CREATE OR UPDATE INBOUND PLANING
   const onFinalSubmit = async (data: FormValues) => {
+    const submitData: FormValues = {
+      ...data,
+      deliveryOrders: filterActiveDeliveryOrders(data.deliveryOrders || []),
+    };
 
-    console.log('data: ', data);
-    
-    let payload = mapToPayload(data, {
+    if (submitData.deliveryOrders.length === 0) {
+      showErrorToast(
+        "Tidak ada SJ aktif untuk disubmit. SJ CANCELLED tidak ikut dikirim.",
+      );
+      return;
+    }
+
+    console.log("data: ", submitData);
+
+    let payload = mapToPayload(submitData, {
       includeStatus: !isEditMode,
       isUpdate: isEditMode,
     });
@@ -267,12 +371,12 @@ export default function InboundPlanningFormContainer() {
     const id = dataInbound?.id;
     let apiAction = null;
 
-    if (isCreateMode) {      
+    if (isCreateMode) {
       apiAction = () => createData(payload);
-    } else if (isEditMode && id) {      
-      console.log('payload update: ', payload);
-      console.log('id: ', id);
-      
+    } else if (isEditMode && id) {
+      console.log("payload update: ", payload);
+      console.log("id: ", id);
+
       apiAction = () => updateData(id, payload);
     } else if (isAddToReceiveMode && id) {
       const addToReceivePayload = {

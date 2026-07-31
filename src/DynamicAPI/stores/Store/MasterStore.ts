@@ -50,7 +50,8 @@ import {
     ShipConfirmService,
     DepartementService,
     ShipConfirmServiceByDO,
-    SubWarehouseWithBinsService
+    SubWarehouseWithBinsService,
+    OpeningStockBalanceService
 } from "../../services/Service/MasterService";
 
 import { Uom, CreateUom, UpdateUom } from "../../types/UomTypes";
@@ -95,8 +96,10 @@ import { IRintegration } from "../../types/IRintegrationType.ts";
 import { ShipConfirmOutboundDO, Memo, MemoItem } from "../../types/ShipConfirmType.ts";
 import { InventorySelisihItem } from "../../types/InventorySelisih.ts";
 
-import {Department, CreateDepartment, UpdateDepartment } from '../../types/DepartementType.ts'
+import { Department, CreateDepartment, UpdateDepartment } from '../../types/DepartementType.ts'
 import { SubWarehouseWithBins } from "../../types/SubwarehouseWithBins.ts";
+import { CreateOpeningStockBalance, OpeningStockBalance, UpdateOpeningStockBalance } from "../../types/OpeningStockBalance.ts";
+
 
 
 // Daftar semua store di sini
@@ -353,4 +356,10 @@ export const useStoreInventorySelisih = createCrudStore<InventorySelisihItem, nu
 export const useStoreSubWarehouseWithBins = createCrudStore<SubWarehouseWithBins, null, null>({
     name: "SubWarehouseWithBins",
     service: SubWarehouseWithBinsService,
+});
+
+
+export const useStoreOpeningStockBalance = createCrudStore<OpeningStockBalance, CreateOpeningStockBalance, UpdateOpeningStockBalance>({
+    name: "OpeningStockBalance",
+    service: OpeningStockBalanceService,
 });

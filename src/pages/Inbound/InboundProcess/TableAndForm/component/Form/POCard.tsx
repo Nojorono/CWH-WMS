@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { useFormContext, useFieldArray, useWatch, Controller } from "react-hook-form";
 import { FormValues } from "../formTypes";
-import { inputCls } from "../constants";
+import { inputCls, getLockedFieldCls } from "../constants";
 import ItemTable from "../Table/ItemTable";
 import AddItemModal from "../Modal/AddItemModal";
 import Button from "../../../../../../components/ui/button/Button";
@@ -12,10 +12,136 @@ import {
   useStoreUom,
 } from "../../../../../../DynamicAPI/stores/Store/MasterStore";
 import { showErrorToast } from "../../../../../../components/toast";
+import Swal from "sweetalert2";
+import { usePersistAuthStore } from "../../../../../../API/store/AuthStore/PersistAuthStore";
 import {
   POsearchService,
   SOsearchService,
 } from "../../../../../../DynamicAPI/services/Service/";
+import { SOHeaderInfo } from "../../../../../../DynamicAPI/types/searchSO";
+
+const escapeHtml = (value?: string | null) =>
+  String(value ?? "-")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+
+const buildSoValidationSwalHtml = ({
+  message,
+  headerInfo,
+  expectedOrganizationCodeTo,
+  orgName,
+  soNo,
+}: {
+  message: string;
+  headerInfo?: SOHeaderInfo | null;
+  expectedOrganizationCodeTo: string;
+  orgName?: string;
+  soNo?: string;
+}) => {
+  const rows: Array<{ label: string; value?: string | null; highlight?: boolean }> =
+    [
+      { label: "Nomor SO", value: soNo || headerInfo?.orderNumber?.toString() },
+      { label: "User Current Organization Name", value: orgName },
+      { label: "SO Type", value: headerInfo?.soType },
+      { label: "Organization Code From", value: headerInfo?.organizationCodeFrom },
+      { label: "Organization Code To", value: headerInfo?.organizationCodeTo },
+    ];
+
+  const tableRows = rows
+    .map(
+      (row) => `
+        <tr>
+          <td style="padding:8px 12px;border-bottom:1px solid #e2e8f0;font-size:12px;color:#64748b;font-weight:600;white-space:nowrap;width:42%;">
+            ${escapeHtml(row.label)}
+          </td>
+          <td style="padding:8px 12px;border-bottom:1px solid #e2e8f0;font-size:12px;color:${row.highlight ? "#1d4ed8" : "#0f172a"};font-weight:${row.highlight ? "700" : "600"};">
+            ${escapeHtml(row.value)}
+          </td>
+        </tr>
+      `,
+    )
+    .join("");
+
+  return `
+    <p style="text-align:left;font-size:13px;color:#334155;line-height:1.55;margin:0 0 14px;">
+      ${escapeHtml(message)}
+    </p>
+    <div style="border:1px solid #e2e8f0;border-radius:10px;overflow:hidden;text-align:left;">
+      <table style="width:100%;border-collapse:collapse;background:#ffffff;">
+        <thead>
+          <tr>
+            <th style="padding:10px 12px;text-align:left;font-size:11px;color:#475569;background:#f8fafc;border-bottom:1px solid #e2e8f0;text-transform:uppercase;letter-spacing:0.04em;">
+              Field
+            </th>
+            <th style="padding:10px 12px;text-align:left;font-size:11px;color:#475569;background:#f8fafc;border-bottom:1px solid #e2e8f0;text-transform:uppercase;letter-spacing:0.04em;">
+              Value
+            </th>
+          </tr>
+        </thead>
+        <tbody>${tableRows}</tbody>
+      </table>
+    </div>
+  `;
+};
+
+const showSoValidationSwal = async ({
+  message,
+  headerInfo,
+  expectedOrganizationCodeTo,
+  orgName,
+  soNo,
+}: {
+  message: string;
+  headerInfo?: SOHeaderInfo | null;
+  expectedOrganizationCodeTo: string;
+  orgName?: string;
+  soNo?: string;
+}) => {
+  await Swal.fire({
+    icon: "warning",
+    title: "Subinventory Tidak Sesuai",
+    html: buildSoValidationSwalHtml({
+      message,
+      headerInfo,
+      expectedOrganizationCodeTo,
+      orgName,
+      soNo,
+    }),
+    confirmButtonText: "Mengerti",
+    confirmButtonColor: "#3085d6",
+    width: 620,
+  });
+};
+
+const showSoValidationSuccessSwal = async ({
+  headerInfo,
+  expectedOrganizationCodeTo,
+  orgName,
+  soNo,
+}: {
+  headerInfo?: SOHeaderInfo | null;
+  expectedOrganizationCodeTo: string;
+  orgName?: string;
+  soNo?: string;
+}) => {
+  return Swal.fire({
+    icon: "success",
+    title: "SO Valid untuk Inbound",
+    html: buildSoValidationSwalHtml({
+      message:
+        "Nomor SO telah tervalidasi dan memenuhi kriteria Inbound. Klik OK untuk lanjut mapping item ke tabel SKU.",
+      headerInfo,
+      expectedOrganizationCodeTo,
+      orgName,
+      soNo,
+    }),
+    confirmButtonText: "OK, Lanjutkan",
+    confirmButtonColor: "#16a34a",
+    width: 620,
+  });
+};
 
 export default function POCard({
   doIndex,
@@ -30,6 +156,7 @@ export default function POCard({
   dataPO,
   isDOChecked,
   isPOValidated,
+  isCancelledSJ = false,
 }: {
   doIndex: number;
   posIndex: number;
@@ -43,9 +170,12 @@ export default function POCard({
   dataPO?: any;
   isDOChecked?: boolean;
   isPOValidated?: boolean;
+  isCancelledSJ?: boolean;
 }) {
   const { fetchAll, list } = useStoreItem();
   const { fetchAll: fetchAllUom, list: uomList } = useStoreUom();
+  const user = usePersistAuthStore((state) => state.user);
+  const orgName = user?.userDetail?.organization?.organization_name;
   const { control, register, getValues, setValue, trigger } =
     useFormContext<FormValues>();
 
@@ -130,14 +260,14 @@ export default function POCard({
 
   const isPOFieldDisabled =
     isDetailMode ||
+    isCancelledSJ ||
     (!isEditMode && !isCreateMode && !isAddToReceiveMode) ||
     (isCreateMode && !isDOChecked);
 
-  const canAddItem = !isDetailMode && isDOChecked;
+  const canAddItem = !isDetailMode && isDOChecked && !isCancelledSJ;
   // const cantAddManualAddItem = !isDOChecked || isSuratJalanValidated || isPOValidated;
 
-  const getDisabledCls = (disabled: boolean) =>
-    disabled ? "bg-gray-100 text-gray-500 cursor-not-allowed" : "bg-white";
+  const getDisabledCls = (disabled: boolean) => getLockedFieldCls(disabled);
 
   // ✅ SEARCH PO
   const handleSearchPO = async () => {
@@ -196,7 +326,73 @@ export default function POCard({
 
     setLoading(true);
     try {
-      const { vendorName, items } = await SOsearchService(soNo, list, uomList);
+      const { vendorName, items, headerInfo } = await SOsearchService(
+        soNo,
+        list,
+        uomList,
+      );
+
+      if (!items || items.length === 0) {
+        showErrorToast(
+          `Data SO ${soNo} tidak ditemukan atau item tidak terdaftar di master data.`,
+        );
+        replaceItems([]);
+        return;
+      }
+
+      // =========================================================
+      // Validasi akses SO Inbound berdasarkan Org Login
+      // - Login CWH   → ORGANIZATION_CODE_TO harus CWH
+      // - Login Cabang → ORGANIZATION_CODE_TO harus sama dengan org yang login
+      // =========================================================
+      const normalize = (value?: string | null) =>
+        String(value || "")
+          .trim()
+          .toUpperCase()
+          .replace(/\s+/g, " ");
+
+      const loginOrgName = normalize(orgName);
+      const isLoginCwh =
+        loginOrgName === "CWH" || loginOrgName.includes("CWH");
+
+      const organizationCodeTo = normalize(headerInfo?.organizationCodeTo);
+      const expectedOrganizationCodeTo = isLoginCwh ? "CWH" : orgName || "-";
+
+      if (isLoginCwh) {
+        if (organizationCodeTo !== "CWH") {
+          await showSoValidationSwal({
+            message:
+              "Organisasi anda adalah CWH. Anda hanya dapat memproses SO Inbound dengan Organization Code To CWH.",
+            headerInfo,
+            expectedOrganizationCodeTo: "CWH",
+            orgName,
+            soNo,
+          });
+          replaceItems([]);
+          return;
+        }
+      } else if (organizationCodeTo !== loginOrgName) {
+        await showSoValidationSwal({
+          message: `Login cabang (${orgName || "-"}). SO Inbound hanya boleh diproses jika Organization Code To sama dengan organisasi yang sedang login.`,
+          headerInfo,
+          expectedOrganizationCodeTo,
+          orgName,
+          soNo,
+        });
+        replaceItems([]);
+        return;
+      }
+
+      const validResult = await showSoValidationSuccessSwal({
+        headerInfo,
+        expectedOrganizationCodeTo,
+        orgName,
+        soNo,
+      });
+
+      if (!validResult.isConfirmed) {
+        return;
+      }
 
       if (vendorName) {
         setValue(
@@ -224,7 +420,9 @@ export default function POCard({
   };
 
   return (
-    <div className="relative border rounded-md p-3 bg-slate-50">
+    <div
+      className={`relative border rounded-md p-3 bg-slate-50 ${isCancelledSJ ? "cursor-not-allowed" : ""}`}
+    >
       {loading && (
         <div className="absolute inset-0 flex items-center justify-center bg-white/70 z-50 rounded-md">
           <span className="animate-spin rounded-full h-8 w-8 border-t-2 border-blue-500"></span>
@@ -244,7 +442,7 @@ export default function POCard({
           </label>
           <div className="flex gap-2">
             <input
-              className={`${inputCls} ${getDisabledCls(isPOFieldDisabled ?? false)} flex-1`}
+              className={`${inputCls} ${getDisabledCls(isPOFieldDisabled ?? false)} disabled:cursor-not-allowed flex-1`}
               {...register(
                 `deliveryOrders.${doIndex}.pos.${posIndex}.${normalizedInbType === "PO" ? "po_no" : "so_no"}` as any,
               )}
@@ -277,7 +475,7 @@ export default function POCard({
             }
             rules={{
               validate: (value) => {
-                if (isDetailMode) return true;
+                if (isDetailMode || isCancelledSJ) return true;
 
                 const principal = getValues(
                   `deliveryOrders.${doIndex}.pos.${posIndex}.principal` as any,
@@ -294,7 +492,9 @@ export default function POCard({
                 <label className="flex items-center justify-between gap-2 text-xs text-slate-600 mb-1">
                   <span>
                     Nama Pengirim{" "}
-                    {!isDetailMode && <span className="text-red-500">*</span>}
+                    {!isDetailMode && !isCancelledSJ && (
+                      <span className="text-red-500">*</span>
+                    )}
                   </span>
                   {fieldState.error && (
                     <span className="text-xs text-red-500 shrink-0">
@@ -303,11 +503,12 @@ export default function POCard({
                   )}
                 </label>
                 <input
-                  className={`${inputCls} w-full ${getDisabledCls(isDetailMode ?? false)} ${
+                  className={`${inputCls} w-full ${getDisabledCls(isDetailMode || isCancelledSJ)} disabled:cursor-not-allowed ${
                     fieldState.error ? "border-red-500" : ""
                   }`}
                   value={field.value || principalWatch || ""}
-                  readOnly={isDetailMode ?? false}
+                  readOnly={isDetailMode || isCancelledSJ}
+                  disabled={isCancelledSJ}
                   onChange={(e) => {
                     const val = e.target.value.toUpperCase();
                     field.onChange(val);
@@ -324,7 +525,9 @@ export default function POCard({
                     );
                   }}
                   placeholder={
-                    isDetailMode ? "" : "Ketik manual jika tidak muncul..."
+                    isDetailMode || isCancelledSJ
+                      ? ""
+                      : "Ketik manual jika tidak muncul..."
                   }
                 />
               </>
@@ -333,7 +536,7 @@ export default function POCard({
         </div>
 
         {/* Actions */}
-        {!isDetailMode && (
+        {!isDetailMode && !isCancelledSJ && (
           <div className="flex gap-2 justify-end">
             {canAddItem && (
               <Button
@@ -366,7 +569,9 @@ export default function POCard({
         )}
       </div>
 
-      <div className="mt-3 overflow-x-auto">
+      <div
+        className={`mt-3 overflow-x-auto ${isCancelledSJ ? "cursor-not-allowed" : ""}`}
+      >
         <ItemTable
           items={itemFields}
           itemsPath={`deliveryOrders.${doIndex}.pos.${posIndex}.items`}
@@ -379,7 +584,7 @@ export default function POCard({
         />
       </div>
 
-      {!isDetailMode && (
+      {!isDetailMode && !isCancelledSJ && (
         <AddItemModal
           isOpen={isOpen}
           onClose={() => setIsOpen(false)}

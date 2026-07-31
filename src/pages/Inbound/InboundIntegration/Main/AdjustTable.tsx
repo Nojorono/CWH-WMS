@@ -21,18 +21,26 @@ import { showErrorToast, showSuccessToast } from "../../../../components/toast";
 import Button from "../../../../components/ui/button/Button";
 
 const AdjustTable = ({ globalFilter, setGlobalFilter, filteredIO }: any) => {
-  const { fetchAll, list, pagination, isLoading } =
+  const { fetchUsingPagination, list, pagination, isLoading } =
     useStoreInboundIntegration();
 
   const [pageIndex, setPageIndex] = useState(0);
-  const [pageSize, setPageSize] = useState(25);
+  const [pageSize, setPageSize] = useState(10);
   const [pollingDoIds, setPollingDoIds] = useState<Record<string, boolean>>(
     {},
   );
 
+  const refreshList = useCallback(async () => {
+    if (!fetchUsingPagination) return;
+    await fetchUsingPagination({
+      page: pageIndex + 1,
+      limit: pageSize,
+    });
+  }, [fetchUsingPagination, pageIndex, pageSize]);
+
   useEffect(() => {
-    fetchAll();
-  }, [fetchAll]);
+    refreshList();
+  }, [refreshList]);
 
   const handlePollStatus = useCallback(
     async (inboundDoId?: string | null) => {
@@ -47,7 +55,7 @@ const AdjustTable = ({ globalFilter, setGlobalFilter, filteredIO }: any) => {
           `${EndPoint}inbound-integration/polling/inbound-do/${inboundDoId}`,
         );
         showSuccessToast("Polling status berhasil. Data sedang diperbarui.");
-        await fetchAll();
+        await refreshList();
       } catch (error: any) {
         showErrorToast(
           error?.response?.data?.message ||
@@ -62,7 +70,7 @@ const AdjustTable = ({ globalFilter, setGlobalFilter, filteredIO }: any) => {
         });
       }
     },
-    [fetchAll],
+    [refreshList],
   );
 
   const filteredData = useMemo(() => {
@@ -70,14 +78,14 @@ const AdjustTable = ({ globalFilter, setGlobalFilter, filteredIO }: any) => {
 
     let result = [...list];
 
-    // 1. Filter berdasarkan Organization ID (filteredIO)
+    // Filter Organization (client-side)
     if (filteredIO) {
       result = result.filter(
         (item: any) => item.organization_id === filteredIO,
       );
     }
 
-    // 2. Filter berdasarkan Global Search (Opsional jika ingin client-side search juga)
+    // Search client-side pada data page pagination yang aktif
     if (globalFilter) {
       const lowerFilter = globalFilter.toLowerCase();
       result = result.filter(
@@ -193,24 +201,28 @@ const AdjustTable = ({ globalFilter, setGlobalFilter, filteredIO }: any) => {
         cell: ({ row }) => {
           const inboundDoId = row.original.inbound_do_id;
           const isPolling = Boolean(inboundDoId && pollingDoIds[inboundDoId]);
+          const syncStatus = String(row.original.status || "").toUpperCase();
+          const isSuccess = syncStatus === "S" || syncStatus === "SUCCESS";
 
           return (
             <Button
               type="button"
               size="xsm"
               variant="action"
-              disabled={!inboundDoId || isPolling}
+              disabled={!inboundDoId || isPolling || isSuccess}
               onClick={() => handlePollStatus(inboundDoId)}
               startIcon={
                 <FaSync className={`size-3 ${isPolling ? "animate-spin" : ""}`} />
               }
               title={
-                inboundDoId
-                  ? "Poll status ke DB"
-                  : "Inbound DO ID tidak tersedia"
+                !inboundDoId
+                  ? "Inbound DO ID tidak tersedia"
+                  : isSuccess
+                    ? "Status sudah SUCCESS"
+                    : "Poll status ke DB"
               }
             >
-              {isPolling ? "Polling..." : "Poll Status"}
+              {isSuccess ? "Done" : isPolling ? "Polling..." : "Poll Status"}
             </Button>
           );
         },

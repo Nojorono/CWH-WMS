@@ -31,7 +31,7 @@ export async function SOsearchService(
         },
     });
     const json = response.data;
-    const data = json.data.data[0];
+    const data = json?.data?.data?.[0];
     if (!data) throw new Error(`SO ${soNo} tidak ditemukan.`);
 
     const vendorName = data.ORG_NAME?.toUpperCase() ?? "";
@@ -56,6 +56,7 @@ export async function SOsearchService(
                 uom: normalizeUom(it.ORDER_QUANTITY_UOM || "DUS", uomList),
                 id: String(master.id),
                 line_number: Number(it.SO_LINE_NUMBER),
+                released_status: it.RELEASED_STATUS ?? "",
             } satisfies ItemForm;
         })
         .filter(Boolean) as ItemForm[];
@@ -67,8 +68,14 @@ export async function SOsearchService(
         orgName: data.ORG_NAME,
         status: data.STATUS,
         orderNumber: data.ORDER_NUMBER,
-        subinventoryFrom: data.SUBINVENTORY_FROM,
-        subinventoryTo: data.SUBINVENTORY_TO,
+        organizationId: data.ORGANIZATION_ID,
+        transactionType: data.TRANSACTION_TYPE,
+        organizationIdFrom: data.ORGANIZATION_ID_FROM,
+        organizationCodeFrom: data.ORGANIZATION_CODE_FROM,
+        organizationIdTo: data.ORGANIZATION_ID_TO,
+        organizationCodeTo: data.ORGANIZATION_CODE_TO,
+        createdBy: data.CREATED_BY,
+        createdDate: data.CREATED_DATE,
         locationBill: data.LOCATION_BILL,
         locationShip: data.LOCATON_SHIP,
         invoiceToAddress: data.INVOICE_TO_ADDRESS1,

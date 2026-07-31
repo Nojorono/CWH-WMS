@@ -159,6 +159,7 @@ export interface OutboundDo {
     id: string;
     outbound_do_number: string;
     origin: string;
+    delivery_category?: string;
     status: string;
     outbound_type: string;
     delivery_date: string;

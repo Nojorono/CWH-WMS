@@ -3,10 +3,9 @@ import {
   FaChevronDown,
   FaChevronRight,
   FaTruck,
-  FaExclamationTriangle,
   FaSync,
 } from "react-icons/fa";
-import { ColumnDef } from "@tanstack/react-table";
+import { ColumnDef, ExpandedState } from "@tanstack/react-table";
 import StatusBadge from "../../../../../common/statusBadge";
 import { STATUS_MAP_INTEGRATION_OUTBOUND } from "../../../../../constants/statusMaps";
 import { useStoreShipConfirm } from "../../../../../DynamicAPI/stores/Store/MasterStore";
@@ -17,25 +16,50 @@ import { OutboundDoUI } from "../../../../../DynamicAPI/types/ShipConfirmType";
 import { ShipConfirmRowDetail } from "../component/ShipConfirmRowDetail";
 import { mapShipConfirmLogList } from "../Helper/mappinganUI";
 import Button from "../../../../../components/ui/button/Button";
-import axiosInstance from "../../../../../DynamicAPI/AxiosInstance";
 import {
-  showErrorToast,
-  showSuccessToast,
-} from "../../../../../components/toast";
+  AMO_MUTASI_TRANSACTION_TYPE,
+  SUBDIST_PICK_RELEASE_TRANSACTION_TYPE,
+  SUBDIST_SHIP_CONFIRM_TRANSACTION_TYPE,
+  buildDeliveryPollKey,
+  getPollButtonLabel,
+  resolveOutboundTypeFromTransactionType,
+  useOutboundDeliveryPollStatus,
+} from "../Hook/useOutboundDeliveryPollStatus";
 
 const OutboundShipConfirmTable = ({
   globalFilter,
   setGlobalFilter,
   filteredIO,
 }: any) => {
-  const { fetchAll, list, pagination, isLoading } = useStoreShipConfirm();
+  const { fetchUsingPagination, list, pagination, isLoading } =
+    useStoreShipConfirm();
   const [pageIndex, setPageIndex] = useState(0);
-  const [pageSize, setPageSize] = useState(25);
-  const [pollingMap, setPollingMap] = useState<Record<string, boolean>>({});
+  const [pageSize, setPageSize] = useState(10);
+  const [expanded, setExpanded] = useState<ExpandedState>({});
+
+  const {
+    pollingMap,
+    pollStatus,
+    getPollResult,
+    isPollingKey,
+  } = useOutboundDeliveryPollStatus({
+    onSuccess: async () => {
+      if (fetchUsingPagination) {
+        await fetchUsingPagination({
+          page: pageIndex + 1,
+          limit: pageSize,
+        });
+      }
+    },
+  });
 
   useEffect(() => {
-    fetchAll();
-  }, [fetchAll]);
+    if (!fetchUsingPagination) return;
+    fetchUsingPagination({
+      page: pageIndex + 1,
+      limit: pageSize,
+    });
+  }, [fetchUsingPagination, pageIndex, pageSize]);
 
   const filteredData = useMemo(() => {
     if (!list || list.length === 0) return [];
@@ -48,6 +72,7 @@ const OutboundShipConfirmTable = ({
         (doItem: any) => doItem.organization_id === filteredIO,
       );
     }
+    // Search client-side pada data page pagination yang aktif
     if (globalFilter) {
       const lowerFilter = globalFilter.toLowerCase();
       result = result.filter((doItem: any) =>
@@ -60,34 +85,27 @@ const OutboundShipConfirmTable = ({
   const handlePollStatus = async (
     outboundDoId?: string,
     transactionType?: string,
+    rowId?: string,
   ) => {
-    if (!outboundDoId) {
-      showErrorToast("Outbound DO ID tidak ditemukan.");
-      return;
+    if (!outboundDoId) return;
+
+    if (rowId) {
+      setExpanded((prev) => {
+        const current = typeof prev === "object" && prev !== null ? prev : {};
+        return { ...current, [rowId]: true };
+      });
     }
 
-    const txType = transactionType || "Outbound GS Mutasi SO Internal";
-    const pollKey = `${outboundDoId}::${txType}`;
+    const txType = transactionType || AMO_MUTASI_TRANSACTION_TYPE;
+    const outboundType = resolveOutboundTypeFromTransactionType(txType);
 
-    setPollingMap((prev) => ({ ...prev, [pollKey]: true }));
-    try {
-      await axiosInstance.get(
-        `outbound-integration-deliveries/poll-status/outbound-do/${outboundDoId}`,
-        {
-          params: { transaction_type: txType },
-        },
-      );
-      showSuccessToast("Poll status outbound integration berhasil.");
-      await fetchAll();
-    } catch (error: any) {
-      const msg =
-        error?.response?.data?.message ||
-        error?.message ||
-        "Gagal poll status outbound integration.";
-      showErrorToast(msg);
-    } finally {
-      setPollingMap((prev) => ({ ...prev, [pollKey]: false }));
-    }
+    // Poll transaction_type baris log (AMO / Pick Release / Ship Confirm).
+    // outboundType tetap diinfer agar mapping 3 tipe tetap konsisten.
+    await pollStatus({
+      outboundDoId,
+      transactionType: txType,
+      outboundType: outboundType || undefined,
+    });
   };
 
   const columns: ColumnDef<OutboundDoUI>[] = useMemo(
@@ -154,8 +172,6 @@ const OutboundShipConfirmTable = ({
         id: "ship_confirm_status",
         cell: ({ row }) => {
           const doData = row.original as any;
-
-          // 🔹 TERIMA BERSIH: Tinggal render data hasil komputasi mapper helper
           return (
             <div className="flex flex-col items-start gap-1">
               <div className="flex items-center gap-1.5">
@@ -218,27 +234,75 @@ const OutboundShipConfirmTable = ({
           const outboundDoId = (doData?.outbound_do_id ||
             doData?.real_do_id) as string | undefined;
           const txType =
-            doData?.log_transaction_type || "Outbound GS Mutasi SO Internal";
-          const pollKey = `${outboundDoId}::${txType}`;
-          const isPolling = Boolean(pollingMap[pollKey]);
-          const isSuccess = doData?.computed_status === "S";
+            doData?.log_transaction_type || AMO_MUTASI_TRANSACTION_TYPE;
+          const pollKey = buildDeliveryPollKey(outboundDoId || "", txType);
+          const isPolling = outboundDoId ? isPollingKey(pollKey) : false;
+
+          const integrationData =
+            doData.outbound_memos?.[0]?.outbound_memo_items?.[0]
+              ?.integration_data;
+          const isSuccessStatus = (status?: string | null) => {
+            const normalized = String(status || "").toUpperCase();
+            return normalized === "S" || normalized === "SUCCESS";
+          };
+          const isPickReleaseSuccess = isSuccessStatus(
+            integrationData?.pick_release_status,
+          );
+          const isShipConfirmSuccess = isSuccessStatus(
+            integrationData?.ship_confirm_status,
+          );
+          const isPollDone =
+            txType === SUBDIST_PICK_RELEASE_TRANSACTION_TYPE
+              ? isPickReleaseSuccess
+              : txType === SUBDIST_SHIP_CONFIRM_TRANSACTION_TYPE
+                ? isShipConfirmSuccess
+                : isShipConfirmSuccess || isPickReleaseSuccess;
+
+          const pollDoneTitle =
+            txType === SUBDIST_PICK_RELEASE_TRANSACTION_TYPE
+              ? "Pick Release sudah SUCCESS"
+              : txType === SUBDIST_SHIP_CONFIRM_TRANSACTION_TYPE
+                ? "Ship Confirm sudah SUCCESS"
+                : "Integrasi sudah SUCCESS";
+
+          const pollDoneLabel =
+            txType === SUBDIST_PICK_RELEASE_TRANSACTION_TYPE
+              ? "Done Pick Release"
+              : txType === SUBDIST_SHIP_CONFIRM_TRANSACTION_TYPE
+                ? "Done Ship Confirm"
+                : "Done";
 
           return (
-            <Button
-              type="button"
-              variant="action"
-              size="xsm"
-              disabled={!outboundDoId}
-              onClick={() => handlePollStatus(outboundDoId, txType)}
-              startIcon={<FaSync className={isPolling ? "animate-spin" : ""} />}
-            >
-              {isPolling ? "Polling..." : "Poll Status"}
-            </Button>
+            <div onClick={(e) => e.stopPropagation()}>
+              <Button
+                type="button"
+                variant="action"
+                size="xsm"
+                disabled={!outboundDoId || isPolling || isPollDone}
+                onClick={() =>
+                  handlePollStatus(outboundDoId, txType, row.id)
+                }
+                startIcon={
+                  <FaSync className={isPolling ? "animate-spin" : ""} />
+                }
+                title={
+                  !outboundDoId
+                    ? "Outbound DO ID tidak tersedia"
+                    : isPollDone
+                      ? pollDoneTitle
+                      : "Poll status integrasi delivery"
+                }
+              >
+                {isPollDone
+                  ? pollDoneLabel
+                  : getPollButtonLabel(txType, isPolling)}
+              </Button>
+            </div>
           );
         },
       },
     ],
-    [pollingMap],
+    [isPollingKey, pollingMap],
   );
 
   return (
@@ -247,14 +311,26 @@ const OutboundShipConfirmTable = ({
       <ExpandableTableComponent
         data={filteredData}
         columns={columns}
-        renderRowDetails={(row) => (
-          <ShipConfirmRowDetail doData={row.original} />
-        )}
+        renderRowDetails={(row) => {
+          const doData = row.original as any;
+          const outboundDoId = doData?.outbound_do_id || doData?.real_do_id;
+          const txType =
+            doData?.log_transaction_type || AMO_MUTASI_TRANSACTION_TYPE;
+          return (
+            <ShipConfirmRowDetail
+              doData={row.original}
+              pollResult={getPollResult(outboundDoId, txType)}
+            />
+          );
+        }}
         globalFilter={globalFilter}
         setGlobalFilter={setGlobalFilter}
         pageSize={pageSize}
         pageIndex={pageIndex}
         totalPages={pagination?.totalPages || 0}
+        expanded={expanded}
+        onExpandedChange={setExpanded}
+        getRowId={(row) => String(row.id)}
         onPageChange={(page: number, size: number) => {
           setPageIndex(page);
           setPageSize(size);

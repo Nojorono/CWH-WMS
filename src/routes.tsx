@@ -74,6 +74,7 @@ import {
   OutboundSales,
 } from "./utils/PagesComponent";
 import IntegrationMonitoringPage from "./pages/DOsuggestion/IntegrationLog";
+import OpeningStockUploadPage from "./pages/OpeningStockBalance";
 
 const DefaultPage = () => (
   <div className="flex items-center justify-center h-full">
@@ -168,6 +169,7 @@ export function AppRoutes() {
       "/do_suggestion": <DOsuggestionMain />,
       "/outbound_sales": <OutboundSales />,
       "/do_su_log_integration": <IntegrationMonitoringPage />,
+      "/opening_stock_upload": <OpeningStockUploadPage />,
     };
     return map[path] || <DefaultPage />;
   }

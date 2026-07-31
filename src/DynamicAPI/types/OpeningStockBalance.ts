@@ -100,6 +100,7 @@ export interface OpeningStockBalance {
 
   code: string;
   document?: string | null;
+  file_name?: string | null;
   organization_id: string;
   period_date: string;
   week_number?: number | null;

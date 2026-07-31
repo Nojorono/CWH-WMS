@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   FaChevronDown,
   FaChevronRight,
@@ -10,7 +10,7 @@ import {
   FaFingerprint,
   FaSync,
 } from "react-icons/fa";
-import { ColumnDef } from "@tanstack/react-table";
+import { ColumnDef, ExpandedState } from "@tanstack/react-table";
 import StatusBadge from "../../../../../common/statusBadge";
 import { STATUS_MAP_INTEGRATION_OUTBOUND } from "../../../../../constants/statusMaps";
 import { useStoreIRIntegration } from "../../../../../DynamicAPI/stores/Store/MasterStore";
@@ -19,35 +19,162 @@ import ExpandableTableComponent from "../component/Table";
 import { formatDateTimeIndo } from "../../../../../helper/FormatDateTime";
 import Button from "../../../../../components/ui/button/Button";
 import axiosInstance from "../../../../../DynamicAPI/AxiosInstance";
-import { showErrorToast, showSuccessToast } from "../../../../../components/toast";
+import { showErrorToast } from "../../../../../components/toast";
 
-const OutboundAdjustTable = ({
+type PollMemoResult = {
+  outbound_memo_id?: string | null;
+  status?: string | null;
+  reason?: string | null;
+};
+
+type PollResultView = {
+  status?: string | null;
+  reason?: string | null;
+  outbound_do_id?: string | null;
+  has_error?: boolean;
+  updated_count?: number | null;
+  error?: string | null;
+  memos?: PollMemoResult[];
+  stages?: {
+    ir?: string | null;
+    io?: string | null;
+    oi?: string | null;
+    ir_message?: string | null;
+    io_message?: string | null;
+    oi_message?: string | null;
+  };
+  items?: Array<{
+    ir_number?: string | null;
+    so_number?: string | null;
+    iface_status_ir?: string | null;
+    iface_status_io?: string | null;
+    iface_status_oi?: string | null;
+    iface_message_ir?: string | null;
+    iface_message_io?: string | null;
+    iface_message_oi?: string | null;
+  }>;
+};
+
+const normalizePollPayload = (payload: any): PollResultView => {
+  const data =
+    payload?.data?.memos || payload?.data?.status
+      ? payload.data
+      : payload?.data?.data?.memos || payload?.data?.data?.status
+        ? payload.data.data
+        : (payload?.data ?? payload ?? {});
+
+  const rawMemos = Array.isArray(data?.memos)
+    ? data.memos
+    : Array.isArray(payload?.memos)
+      ? payload.memos
+      : Array.isArray(payload?.data?.memos)
+        ? payload.data.memos
+        : [];
+
+  const memos: PollMemoResult[] = rawMemos.map((memo: any) => ({
+    outbound_memo_id:
+      memo.outbound_memo_id ?? memo.memo_id ?? memo.id ?? null,
+    status: memo.status ?? null,
+    reason: memo.reason ?? memo.message ?? null,
+  }));
+
+  const rows: any[] = Array.isArray(data.ir_reqs)
+    ? data.ir_reqs
+    : Array.isArray(data.outbound_integration_ir_reqs)
+      ? data.outbound_integration_ir_reqs
+      : Array.isArray(data.items)
+        ? data.items
+        : [];
+
+  return {
+    status: data.status ?? data.iface_status_ir ?? null,
+    reason:
+      data.reason ??
+      data.iface_message_ir ??
+      data.message ??
+      payload?.message ??
+      null,
+    outbound_do_id: data.outbound_do_id ?? null,
+    has_error: Boolean(data.has_error),
+    updated_count: data.deliveries_updated ?? data.updated_count ?? null,
+    memos,
+    stages: {
+      ir: data.iface_status_ir ?? null,
+      io: data.iface_status_io ?? null,
+      oi: data.iface_status_oi ?? null,
+      ir_message: data.iface_message_ir ?? null,
+      io_message: data.iface_message_io ?? null,
+      oi_message: data.iface_message_oi ?? null,
+    },
+    items: rows.map((item) => ({
+      ir_number: item.ir_number,
+      so_number: item.so_number,
+      iface_status_ir: item.iface_status_ir,
+      iface_status_io: item.iface_status_io,
+      iface_status_oi: item.iface_status_oi,
+      iface_message_ir: item.iface_message_ir,
+      iface_message_io: item.iface_message_io,
+      iface_message_oi: item.iface_message_oi,
+    })),
+  };
+};
+
+const pollStatusClass = (status?: string | null) => {
+  const s = (status || "").toUpperCase();
+  if (s === "S" || s === "SUCCESS") return "text-emerald-700 bg-emerald-50 border-emerald-200";
+  if (s === "E" || s === "ERROR") return "text-red-700 bg-red-50 border-red-200";
+  if (s === "U" || s === "PENDING") return "text-amber-700 bg-amber-50 border-amber-200";
+  return "text-slate-600 bg-slate-50 border-slate-200";
+};
+
+const pollStatusLabel = (status?: string | null) => {
+  const s = (status || "-").toUpperCase();
+  if (s === "S" || s === "SUCCESS") return "SUCCESS";
+  if (s === "E" || s === "ERROR") return "ERROR";
+  if (s === "U" || s === "PENDING") return "PENDING";
+  return s || "-";
+};
+
+const IRSOTable = ({
   globalFilter,
   setGlobalFilter,
   filteredIO,
 }: any) => {
-  const { fetchAll, list, pagination, isLoading } = useStoreIRIntegration();
+  const { fetchUsingPagination, list, pagination, isLoading } =
+    useStoreIRIntegration();
   const [pageIndex, setPageIndex] = useState(0);
-  const [pageSize, setPageSize] = useState(25);
+  const [pageSize, setPageSize] = useState(10);
   const [pollingMap, setPollingMap] = useState<Record<string, boolean>>({});
+  const [pollResultMap, setPollResultMap] = useState<
+    Record<string, PollResultView>
+  >({});
+  const [expanded, setExpanded] = useState<ExpandedState>({});
+
+  const refreshList = useCallback(async () => {
+    if (!fetchUsingPagination) return;
+    await fetchUsingPagination({
+      page: pageIndex + 1,
+      limit: pageSize,
+    });
+  }, [fetchUsingPagination, pageIndex, pageSize]);
 
   useEffect(() => {
-    fetchAll();
-  }, [fetchAll]);  
+    refreshList();
+  }, [refreshList]);
 
   const filteredData = useMemo(() => {
     if (!list) return [];
 
     let result = [...list];
 
-    // 1. Filter berdasarkan Organization ID (filteredIO)
+    // Filter Organization (client-side)
     if (filteredIO) {
       result = result.filter(
         (item: any) => item.organization_id === filteredIO,
       );
     }
 
-    // 2. Filter berdasarkan Global Search
+    // Search client-side pada data page pagination yang aktif
     if (globalFilter) {
       const lowerFilter = globalFilter.toLowerCase();
       result = result.filter(
@@ -62,25 +189,43 @@ const OutboundAdjustTable = ({
     return result;
   }, [list, filteredIO, globalFilter]);
 
-  const handlePollIRSO = async (outboundDoId?: string) => {
+  const handlePollIRSO = async (outboundDoId?: string, rowId?: string) => {
     if (!outboundDoId) {
       showErrorToast("Outbound DO ID tidak ditemukan.");
       return;
     }
 
+    // Auto-expand baris agar hasil poll langsung terlihat
+    if (rowId) {
+      setExpanded((prev) => {
+        const current = typeof prev === "object" && prev !== null ? prev : {};
+        return { ...current, [rowId]: true };
+      });
+    }
+
     setPollingMap((prev) => ({ ...prev, [outboundDoId]: true }));
     try {
-      await axiosInstance.get(
+      const response = await axiosInstance.get(
         `outbound-integration-ir-req/poll-status/outbound-do/${outboundDoId}`,
       );
-      showSuccessToast("Poll status IR/SO berhasil diproses.");
-      await fetchAll();
+      const result = normalizePollPayload(response?.data);
+      setPollResultMap((prev) => ({ ...prev, [outboundDoId]: result }));
+      await refreshList();
     } catch (error: any) {
       const msg =
         error?.response?.data?.message ||
         error?.message ||
         "Gagal poll status IR/SO.";
       showErrorToast(msg);
+      setPollResultMap((prev) => ({
+        ...prev,
+        [outboundDoId]: {
+          status: "ERROR",
+          has_error: true,
+          error: msg,
+          reason: msg,
+        },
+      }));
     } finally {
       setPollingMap((prev) => ({ ...prev, [outboundDoId]: false }));
     }
@@ -207,17 +352,41 @@ const OutboundAdjustTable = ({
         cell: ({ row }) => {
           const outboundDoId = row.original?.outbound_do_id as string | undefined;
           const isPolling = outboundDoId ? pollingMap[outboundDoId] : false;
+          const irStatus = String(row.original.iface_status_ir || "").toUpperCase();
+          const isIrSuccess = irStatus === "S" || irStatus === "SUCCESS";
+          const hasSoNumber = Boolean(
+            String(row.original.so_number || "").trim(),
+          );
+          const isPollLocked = isIrSuccess && hasSoNumber;
+
           return (
-            <Button
-              type="button"
-              variant="action"
-              size="xsm"
-              onClick={() => handlePollIRSO(outboundDoId)}
-              disabled={Boolean(isPolling) || !outboundDoId}
-              startIcon={<FaSync className={isPolling ? "animate-spin" : ""} />}
-            >
-              {isPolling ? "Polling..." : "Poll IR/SO"}
-            </Button>
+            <div onClick={(e) => e.stopPropagation()}>
+              <Button
+                type="button"
+                variant="action"
+                size="xsm"
+                onClick={() => handlePollIRSO(outboundDoId, row.id)}
+                disabled={Boolean(isPolling) || !outboundDoId || isPollLocked}
+                startIcon={
+                  <FaSync className={isPolling ? "animate-spin" : ""} />
+                }
+                title={
+                  !outboundDoId
+                    ? "Outbound DO ID tidak tersedia"
+                    : isPollLocked
+                      ? "IR sudah SUCCESS dan SO number tersedia"
+                      : isIrSuccess && !hasSoNumber
+                        ? "IR SUCCESS tetapi SO number belum ada — poll masih diperlukan"
+                        : "Poll status IR/SO"
+                }
+              >
+                {isPollLocked
+                  ? "Done"
+                  : isPolling
+                    ? "Polling..."
+                    : "Poll IR/SO"}
+              </Button>
+            </div>
           );
         },
       },
@@ -227,9 +396,197 @@ const OutboundAdjustTable = ({
 
   const renderRowDetails = (row: any) => {
     const data = row.original;
+    const pollResult = data.outbound_do_id
+      ? pollResultMap[data.outbound_do_id]
+      : undefined;
+
     return (
       <div className="p-6 bg-[#f8fafc] border-x-4 border-l-blue-500">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+          {/* Hasil poll IR/SO */}
+          <div className="md:col-span-3 bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+            <div className="flex items-center justify-between gap-3 mb-3 border-b pb-2">
+              <h4 className="flex items-center gap-2 text-indigo-700 font-bold text-xs uppercase tracking-widest">
+                <FaSync /> Hasil Poll IR/SO
+              </h4>
+              {pollResult?.status && (
+                <span
+                  className={`text-[10px] font-extrabold px-2 py-0.5 rounded border ${pollStatusClass(pollResult.status)}`}
+                >
+                  {pollStatusLabel(pollResult.status)}
+                </span>
+              )}
+            </div>
+
+            {!pollResult ? (
+              <p className="text-[12px] text-slate-400 italic">
+                Belum ada hasil poll. Klik tombol <b>Poll IR/SO</b> untuk melihat
+                status dan detail per memo.
+              </p>
+            ) : (
+              <div className="space-y-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-[12px]">
+                  <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
+                    <span className="text-[10px] uppercase tracking-wider text-slate-400 font-semibold">
+                      Status
+                    </span>
+                    <div className="mt-1 flex items-center gap-2">
+                      <span
+                        className={`text-[11px] font-extrabold px-2 py-0.5 rounded border ${pollStatusClass(pollResult.status)}`}
+                      >
+                        {pollStatusLabel(pollResult.status)}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
+                    <span className="text-[10px] uppercase tracking-wider text-slate-400 font-semibold">
+                      Outbound DO ID
+                    </span>
+                    <p
+                      className="mt-1 font-mono text-[11px] text-slate-700 break-all"
+                      title={pollResult.outbound_do_id || data.outbound_do_id}
+                    >
+                      {pollResult.outbound_do_id || data.outbound_do_id || "-"}
+                    </p>
+                  </div>
+                </div>
+
+                {pollResult.reason && (
+                  <div className="rounded-lg border border-amber-100 bg-amber-50/70 px-3 py-2">
+                    <span className="text-[10px] uppercase tracking-wider text-amber-600 font-semibold">
+                      Reason
+                    </span>
+                    <p className="mt-1 text-[12px] text-slate-700">
+                      {pollResult.reason}
+                    </p>
+                  </div>
+                )}
+
+                {pollResult.error && (
+                  <p className="text-[12px] text-red-600 font-medium">
+                    {pollResult.error}
+                  </p>
+                )}
+
+                {(pollResult.memos?.length ?? 0) > 0 ? (
+                  <div className="rounded-xl border border-indigo-100 bg-indigo-50/40 p-3">
+                    <span className="text-[10px] uppercase tracking-wider text-indigo-600 font-bold mb-2 block">
+                      Memos ({pollResult.memos!.length})
+                    </span>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      {pollResult.memos!.map((memo, index) => (
+                        <div
+                          key={`${memo.outbound_memo_id || "memo"}-${index}`}
+                          className="rounded-lg border border-indigo-100 bg-white p-3 shadow-sm"
+                        >
+                          <div className="flex items-start justify-between gap-2 mb-2">
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                              Memo #{index + 1}
+                            </span>
+                            <span
+                              className={`shrink-0 text-[10px] font-extrabold px-2 py-0.5 rounded border ${pollStatusClass(memo.status)}`}
+                            >
+                              {pollStatusLabel(memo.status)}
+                            </span>
+                          </div>
+
+                          <div className="space-y-2 text-[11px]">
+                            <div>
+                              <span className="block text-[9px] uppercase tracking-wider text-slate-400 font-semibold">
+                                outbound_memo_id
+                              </span>
+                              <p
+                                className="font-mono text-slate-800 break-all"
+                                title={memo.outbound_memo_id || undefined}
+                              >
+                                {memo.outbound_memo_id || "-"}
+                              </p>
+                            </div>
+                            <div>
+                              <span className="block text-[9px] uppercase tracking-wider text-slate-400 font-semibold">
+                                status
+                              </span>
+                              <p className="font-semibold text-slate-700">
+                                {pollStatusLabel(memo.status)}
+                              </p>
+                            </div>
+                            <div>
+                              <span className="block text-[9px] uppercase tracking-wider text-slate-400 font-semibold">
+                                reason
+                              </span>
+                              <p className="text-slate-600 leading-snug">
+                                {memo.reason || "-"}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="rounded-lg border border-dashed border-slate-200 bg-slate-50 px-3 py-2">
+                    <p className="text-[11px] text-slate-400 italic">
+                      Tidak ada data <b>memos</b> pada hasil poll.
+                    </p>
+                  </div>
+                )}
+
+                {(pollResult.items?.length ?? 0) > 0 && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {pollResult.items!.map((item, index) => (
+                      <div
+                        key={`${item.ir_number || "ir"}-${index}`}
+                        className="rounded-lg border border-slate-200 bg-slate-50 p-3"
+                      >
+                        <div className="text-[11px] font-bold text-slate-700 mb-2">
+                          #{index + 1} — IR: {item.ir_number || "-"} | SO:{" "}
+                          {item.so_number || "-"}
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          <MiniStatus
+                            label="IR"
+                            status={item.iface_status_ir || "-"}
+                          />
+                          <MiniStatus
+                            label="IO"
+                            status={item.iface_status_io || "-"}
+                          />
+                          <MiniStatus
+                            label="OI"
+                            status={item.iface_status_oi || "-"}
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {!pollResult.memos?.length &&
+                  !pollResult.items?.length &&
+                  (pollResult.stages?.ir ||
+                    pollResult.stages?.io ||
+                    pollResult.stages?.oi) && (
+                    <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                      <div className="flex flex-wrap gap-2">
+                        <MiniStatus
+                          label="IR"
+                          status={pollResult.stages?.ir || "-"}
+                        />
+                        <MiniStatus
+                          label="IO"
+                          status={pollResult.stages?.io || "-"}
+                        />
+                        <MiniStatus
+                          label="OI"
+                          status={pollResult.stages?.oi || "-"}
+                        />
+                      </div>
+                    </div>
+                  )}
+              </div>
+            )}
+          </div>
+
           {/* Card 1: Technical & System IDs */}
           <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm relative overflow-hidden group">
             <div className="absolute top-0 right-0 p-3 text-slate-100 group-hover:text-blue-50 transition-colors">
@@ -484,6 +841,9 @@ const OutboundAdjustTable = ({
         pageSize={pageSize}
         pageIndex={pageIndex}
         totalPages={pagination?.totalPages || 0}
+        expanded={expanded}
+        onExpandedChange={setExpanded}
+        getRowId={(row) => String(row.id)}
         onPageChange={(page: number, size: number) => {
           setPageIndex(page);
           setPageSize(size);
@@ -525,4 +885,4 @@ const MiniStatus = ({ label, status }: { label: string; status: string }) => (
   </div>
 );
 
-export default OutboundAdjustTable;
+export default IRSOTable;

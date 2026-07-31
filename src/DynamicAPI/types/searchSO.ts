@@ -13,6 +13,7 @@ export type ItemForm = {
     quantity_inspection?: any;
     line_number?: number;
     classification_id?: string;
+    released_status?: string;
 };
 
 export type POSForm = {
@@ -61,8 +62,17 @@ export interface SOHeaderInfo {
     orgName: string;
     status: string;
     orderNumber: number;
-    subinventoryFrom: string;
-    subinventoryTo: string;
+
+    // Field API terbaru
+    organizationId?: number;
+    transactionType?: string;
+    organizationIdFrom?: number;
+    organizationCodeFrom?: string;
+    organizationIdTo?: number;
+    organizationCodeTo?: string;
+    createdBy?: number;
+    createdDate?: string;
+
     locationBill: string;
     locationShip: string;
     invoiceToAddress: string;

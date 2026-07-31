@@ -174,6 +174,11 @@ const AdjustTableTransactionPicking = ({
         ),
       },
       { accessorKey: "outbound_type", header: "Type" },
+      {
+        accessorKey: "delivery_category",
+        header: "Delivery Category",
+        cell: ({ row }) => row.original.delivery_category || "-",
+      },
       { accessorKey: "origin", header: "Origin" },
       {
         accessorKey: "delivery_date",
@@ -205,6 +210,8 @@ const AdjustTableTransactionPicking = ({
         cell: ({ row }) => {
           const { status, outbound_type, id, seal_number } = row.original;
           const isPickReleaseDone = actions.pickReleaseStatusMap[id] === true;
+          const isPickReleaseLocked =
+            actions.pickReleaseLockedMap[id] === true || isPickReleaseDone;
           const isShipConfirmDone = shipConfirmStatusMap[id] === true;
           const hasSealNumber = Boolean(seal_number?.trim());
           const canAction = ["SUPERVISOR", "MANAGER", "superadmin"].includes(
@@ -248,9 +255,9 @@ const AdjustTableTransactionPicking = ({
               onClick: () => actions.handlePickRelease(row.original),
               visible:
                 outbound_type === "SUBDIST" && status === "APPROVED_LOAD",
-              disabled: !hasSealNumber || isPickReleaseDone,
+              disabled: !hasSealNumber || isPickReleaseLocked,
               className:
-                hasSealNumber && !isPickReleaseDone
+                hasSealNumber && !isPickReleaseLocked
                   ? "text-indigo-600"
                   : "text-slate-400",
             },

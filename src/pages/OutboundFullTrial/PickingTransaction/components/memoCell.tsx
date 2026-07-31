@@ -1,7 +1,9 @@
+import { useCallback, useEffect, useMemo } from "react";
 import { FaSync, FaExclamationCircle } from "react-icons/fa";
 import StatusBadge from "../../../../common/statusBadge";
 import { STATUS_MAP_INTEGRATION_OUTBOUND } from "../../../../constants/statusMaps";
 import Button from "../../../../components/ui/button/Button";
+import { useStoreItem } from "../../../../DynamicAPI/stores/Store/MasterStore";
 import { useAmoIntegrationPollStatus } from "../Hook/useAmoIntegrationPollStatus";
 import {
   AmoIntegrationDeliveryRow,
@@ -11,7 +13,11 @@ import {
 interface MemoItem {
   id: string;
   item_id?: string;
-  item?: { sku?: string; description?: string };
+  item?: {
+    sku?: string;
+    description?: string;
+    inventory_item_id?: string | number | null;
+  };
   quantity_plan: number;
   uom: string;
   assigned_gate_load?: Array<{
@@ -160,8 +166,13 @@ const IntegrationStatusChip = ({ status }: { status?: string | null }) => {
 // 2. DELIVERY CARD - Disesuaikan agar horizontal seperti video
 const DeliveryIntegrationCard = ({
   row,
+  resolveItemDisplay,
 }: {
   row: AmoIntegrationDeliveryRow;
+  resolveItemDisplay: (row: AmoIntegrationDeliveryRow) => {
+    sku: string;
+    description: string;
+  };
 }) => {
   const errors = [
     row.create_delivery_message,
@@ -170,13 +181,18 @@ const DeliveryIntegrationCard = ({
     row.ship_confirm_message,
   ].filter(Boolean);
 
+  const { sku, description } = resolveItemDisplay(row);
+
   return (
     <div className="flex flex-col gap-2 py-2 border-t border-slate-100 mt-2 pt-3">
       <div className="flex items-center gap-6">
         {row.outbound_memo_item && (
-          <div className="w-48 text-xs font-semibold text-slate-700">
-            {row.outbound_memo_item.item?.sku || "SKU N/A"}
-            <span className="text-[10px] block text-slate-400 mt-0.5 line-clamp-1">
+          <div className="w-56 text-xs font-semibold text-slate-700">
+            <span className="font-mono text-indigo-700">{sku}</span>
+            <span className="text-[10px] block text-slate-500 mt-0.5 line-clamp-2">
+              {description}
+            </span>
+            <span className="text-[10px] block text-slate-400 mt-0.5">
               Plan: {row.outbound_memo_item.quantity_plan}{" "}
               {row.outbound_memo_item.uom}
             </span>
@@ -239,6 +255,72 @@ const MemoCell = ({
   outboundDoStatus,
   sealNumber,
 }: MemoCellProps) => {
+  const { list: masterItems, fetchAll: fetchAllItems } = useStoreItem();
+
+  useEffect(() => {
+    if ((masterItems?.length ?? 0) === 0) {
+      fetchAllItems();
+    }
+  }, [fetchAllItems, masterItems?.length]);
+
+  const { itemById, itemByInventoryId } = useMemo(() => {
+    const byId = new Map<string, any>();
+    const byInventoryId = new Map<string, any>();
+
+    (masterItems || []).forEach((item: any) => {
+      if (item?.id) {
+        byId.set(String(item.id), item);
+      }
+      if (item?.inventory_item_id != null && item.inventory_item_id !== "") {
+        byInventoryId.set(String(item.inventory_item_id), item);
+      }
+    });
+
+    return { itemById: byId, itemByInventoryId: byInventoryId };
+  }, [masterItems]);
+
+  const resolveItemDisplay = useCallback(
+    (row: AmoIntegrationDeliveryRow, memoItems: MemoItem[] = []) => {
+      const rowAny = row as any;
+      const memoItemFromRow = row.outbound_memo_item;
+      const linkedMemoItem =
+        memoItems.find(
+          (item) =>
+            item.id === rowAny.outbound_memo_item_id ||
+            item.item_id === memoItemFromRow?.item_id,
+        ) ?? null;
+
+      const inventoryItemId =
+        rowAny.iso_inventory_item_id ??
+        rowAny.inventory_item_id ??
+        (memoItemFromRow as any)?.inventory_item_id ??
+        (linkedMemoItem?.item as any)?.inventory_item_id;
+
+      const itemId = memoItemFromRow?.item_id ?? linkedMemoItem?.item_id;
+
+      const masterItem =
+        (itemId ? itemById.get(String(itemId)) : undefined) ||
+        (inventoryItemId
+          ? itemByInventoryId.get(String(inventoryItemId))
+          : undefined);
+
+      const sku =
+        masterItem?.sku ||
+        memoItemFromRow?.item?.sku ||
+        linkedMemoItem?.item?.sku ||
+        "SKU N/A";
+
+      const description =
+        masterItem?.description ||
+        memoItemFromRow?.item?.description ||
+        linkedMemoItem?.item?.description ||
+        "-";
+
+      return { sku, description };
+    },
+    [itemById, itemByInventoryId],
+  );
+
   const isPollableType =
     (outboundType === "AMO" || outboundType === "SUBDIST") &&
     Boolean(outboundDoId);
@@ -442,7 +524,16 @@ const MemoCell = ({
                     Delivery Status Details
                   </span>
                   {deliveries.map((row) => (
-                    <DeliveryIntegrationCard key={row.id} row={row} />
+                    <DeliveryIntegrationCard
+                      key={row.id}
+                      row={row}
+                      resolveItemDisplay={(deliveryRow) =>
+                        resolveItemDisplay(
+                          deliveryRow,
+                          memo.outbound_memo_items ?? [],
+                        )
+                      }
+                    />
                   ))}
                 </div>
               ) : (

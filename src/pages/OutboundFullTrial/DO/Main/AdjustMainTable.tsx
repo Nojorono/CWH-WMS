@@ -41,6 +41,7 @@ type MemoData = {
   driverPhone: string;
   status: string;
   outboundType: string;
+  deliveryCategory: string;
   deliveryDate: string;
   memoId: string[];
   outboundMemos: OutboundMemo[];
@@ -67,6 +68,7 @@ const matchesDoSearch = (item: any, filter: string) => {
 
   const memoTexts = (item.outbound_memos || []).flatMap((memo: any) => [
     memo.outbound_memo_number,
+    memo.so_number,
     memo.destination,
     memo.ship_to,
     memo.origin,
@@ -96,7 +98,15 @@ const matchesDoSearch = (item: any, filter: string) => {
 };
 
 // --- KOMPONEN MEMO CELL SEBAGAI SUB-COMPONENT (Expanded Row) ---
-const MemoCell = ({ memos }: { memos: any[] }) => {
+const MemoCell = ({
+  memos,
+  outboundType,
+}: {
+  memos: any[];
+  outboundType?: string;
+}) => {
+  const isSubdistDo = String(outboundType || "").toUpperCase() === "SUBDIST";
+
   if (!memos || memos.length === 0) {
     return (
       <div className="p-4 text-center">
@@ -128,6 +138,12 @@ const MemoCell = ({ memos }: { memos: any[] }) => {
 
             // Mapping item memo untuk pencarian assigned_gate_load / pallet loading
             const memoItems = memo.outbound_memo_items || [];
+            const isSubdistMemo =
+              isSubdistDo ||
+              String(memo.type || "").toUpperCase() === "SUBDIST";
+            const soNumber = memo.so_number != null && memo.so_number !== ""
+              ? String(memo.so_number)
+              : null;
 
             const totalSKU = pickings.length;
             const scannedSKUCount = pickings.filter((tp: any) => {
@@ -197,6 +213,21 @@ const MemoCell = ({ memos }: { memos: any[] }) => {
                       Total {totalSKU} SKU
                     </span>
                   </div>
+
+                  {/* SO Number — field di dalam card memo (SUBDIST) */}
+                  {isSubdistMemo && (
+                    <div className="flex items-center gap-2 text-[11px] border-t border-slate-200/50 pt-1.5">
+                      <span className="text-[8px] font-black uppercase tracking-widest text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-100 shrink-0">
+                        SO Number
+                      </span>
+                      <span
+                        className="font-mono font-bold text-emerald-800 tracking-tight"
+                        title={soNumber || undefined}
+                      >
+                        {soNumber || "-"}
+                      </span>
+                    </div>
+                  )}
 
                   {/* Ship To Address (Inline & Compact) */}
                   {memo.ship_to && (
@@ -445,8 +476,6 @@ const AdjustTableDO = ({
     filteredTypeOutbound,
   });
 
-  console.log("list data DO", list);
-
   const handlePageChange = (newPageIndex: number, newSize: number) => {
     const newParams = new URLSearchParams(searchParams);
     newParams.set("page", (newPageIndex + 1).toString());
@@ -575,7 +604,6 @@ const AdjustTableDO = ({
       { accessorKey: "outboundDoNumber", header: "DO Number" },
       { accessorKey: "outboundType", header: "Type Outbound" },
       { accessorKey: "origin", header: "Origin" },
-      // UBAH KOLOM MEMO MENJADI SLIM
       {
         accessorKey: "outboundMemos",
         header: "Memo Count",
@@ -685,6 +713,7 @@ const AdjustTableDO = ({
     driverPhone: item.driver_phone || "-",
     status: item.status || "PENDING",
     outboundType: item.outbound_type || "",
+    deliveryCategory: item.delivery_category || "-",
     deliveryDate: new Date(item.delivery_date).toLocaleDateString("en-GB"),
     memoId: item.memo_id || [],
     outboundMemosDetailed: item.outbound_memos || [],
@@ -713,7 +742,10 @@ const AdjustTableDO = ({
         totalPages={pagination.totalPages}
         onPageChange={handlePageChange}
         renderSubComponent={({ row }) => (
-          <MemoCell memos={row.original.outboundMemosDetailed} />
+          <MemoCell
+            memos={row.original.outboundMemosDetailed}
+            outboundType={row.original.outboundType}
+          />
         )}
       />
     </div>
