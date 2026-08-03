@@ -16,6 +16,7 @@ import {
   InventoryVisibilityItem,
 } from "../../../DynamicAPI/types/InventoryVisibilty";
 import Button from "../../../components/ui/button/Button";
+import Select from "../../../components/form/Select";
 import { FaEye, FaSync } from "react-icons/fa";
 import ActIndicator from "../../../components/ui/activityIndicator";
 import PalletHistoryModal from "../components/PalletHistoryModal";
@@ -32,6 +33,8 @@ const InventoryVisibility: React.FC = () => {
 
   const [expanded, setExpanded] = useState({});
   const [globalFilter, setGlobalFilter] = useState("");
+  const [skuFilter, setSkuFilter] = useState("");
+  const [uomFilter, setUomFilter] = useState("");
 
   useEffect(() => {
     fetchAll();
@@ -51,6 +54,36 @@ const InventoryVisibility: React.FC = () => {
 
     return list;
   }, [list]);
+
+  const skuOptions = useMemo(
+    () =>
+      [...new Set((currentData?.items || []).map((item) => item.sku).filter(Boolean))]
+        .sort((a, b) => a.localeCompare(b))
+        .map((sku) => ({ value: sku, label: sku })),
+    [currentData],
+  );
+
+  const uomOptions = useMemo(
+    () =>
+      [...new Set((currentData?.items || []).map((item) => item.uom).filter(Boolean))]
+        .sort((a, b) => a.localeCompare(b))
+        .map((uom) => ({ value: uom, label: uom })),
+    [currentData],
+  );
+
+  const filteredItems = useMemo(() => {
+    let items = currentData?.items || [];
+
+    if (skuFilter) {
+      items = items.filter((item) => item.sku === skuFilter);
+    }
+
+    if (uomFilter) {
+      items = items.filter((item) => item.uom === uomFilter);
+    }
+
+    return items;
+  }, [currentData, skuFilter, uomFilter]);
 
   const columnHelper = createColumnHelper<InventoryVisibilityItem>();
 
@@ -196,7 +229,7 @@ const InventoryVisibility: React.FC = () => {
   );
 
   const table = useReactTable({
-    data: currentData?.items || [],
+    data: filteredItems,
     columns,
     state: {
       expanded,
@@ -271,21 +304,21 @@ const InventoryVisibility: React.FC = () => {
           value={currentData.summary.total_items}
           color="blue"
         />
-        <StatItem
+        {/* <StatItem
           label="Total Quantity"
           value={summaryTotalQuantity}
           color="indigo"
-        />
+        /> */}
         <StatItem
           label="Total Booked Outbound"
           value={summaryBookedQuantity}
           color="orange"
         />
-        <StatItem
+        {/* <StatItem
           label="Total Available"
           value={summaryAvailableQuantity}
           color="emerald"
-        />
+        /> */}
         <StatItem
           label="Pending Booking Items"
           value={currentData.summary.items_with_pending_bookings}
@@ -309,21 +342,64 @@ const InventoryVisibility: React.FC = () => {
       {isRefreshing && <ActIndicator />}
 
       {/* FILTER SEARCH */}
-      <div className="mb-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="relative w-full md:w-96">
-          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
-            🔍
-          </span>
-          <input
-            value={globalFilter ?? ""}
-            onChange={(e) => setGlobalFilter(e.target.value)}
-            placeholder="Search SKU or Product Name..."
-            className="w-full pl-10 pr-4 py-2 bg-white border border-slate-200 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm"
-          />
-        </div>
-        <div className="text-[10px] font-bold text-slate-400 uppercase">
-          Showing {table.getRowModel().rows.length} of{" "}
-          {currentData.items.length} Items
+      <div className="mb-4 flex flex-col gap-3">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+          <div className="flex flex-col md:flex-row gap-3 w-full lg:w-auto">
+            <div className="relative w-full md:w-72">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
+                🔍
+              </span>
+              <input
+                value={globalFilter ?? ""}
+                onChange={(e) => setGlobalFilter(e.target.value)}
+                placeholder="Search SKU or Product Name..."
+                className="w-full pl-10 pr-4 py-2 bg-white border border-slate-200 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm"
+              />
+            </div>
+
+            <Select
+              options={[
+                { value: "", label: "All Existing SKU" },
+                ...skuOptions,
+              ]}
+              value={skuFilter}
+              onChange={(val) => setSkuFilter(val || "")}
+              placeholder="All Existing SKU"
+              width="224px"
+              className="w-full md:w-56 text-sm"
+            />
+
+            <Select
+              options={[
+                { value: "", label: "All UOM" },
+                ...uomOptions,
+              ]}
+              value={uomFilter}
+              onChange={(val) => setUomFilter(val || "")}
+              placeholder="All UOM"
+              width="160px"
+              className="w-full md:w-40 text-sm"
+            />
+
+            {(skuFilter || uomFilter || globalFilter) && (
+              <button
+                type="button"
+                onClick={() => {
+                  setSkuFilter("");
+                  setUomFilter("");
+                  setGlobalFilter("");
+                }}
+                className="px-3 py-2 text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-lg transition-colors"
+              >
+                Reset Filter
+              </button>
+            )}
+          </div>
+
+          <div className="text-[10px] font-bold text-slate-400 uppercase shrink-0">
+            Showing {table.getRowModel().rows.length} of {filteredItems.length}{" "}
+            Filtered / {currentData.items.length} Items
+          </div>
         </div>
       </div>
 

@@ -19,6 +19,9 @@ export const STATUS_MAP_INBOUND: StatusMap = {
   READY_INTEGRATION: 'info',
   INTEGRATED: 'success',
   FAILED: 'error',
+  CANCELLED: 'error',
+  PROCESSING: 'warning',
+  TIMEOUT: 'error',
 };
 
 export const STATUS_MAP_INTEGRATION_INBOUND: StatusMap = {

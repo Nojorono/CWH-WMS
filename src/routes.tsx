@@ -72,6 +72,7 @@ import {
   ShipConfirmLog,
   GenerateDO,
   OutboundSales,
+  BTBPage,
 } from "./utils/PagesComponent";
 import IntegrationMonitoringPage from "./pages/DOsuggestion/IntegrationLog";
 import OpeningStockUploadPage from "./pages/OpeningStockBalance";
@@ -170,6 +171,7 @@ export function AppRoutes() {
       "/outbound_sales": <OutboundSales />,
       "/do_su_log_integration": <IntegrationMonitoringPage />,
       "/opening_stock_upload": <OpeningStockUploadPage />,
+      "/btb": <BTBPage />,
     };
     return map[path] || <DefaultPage />;
   }

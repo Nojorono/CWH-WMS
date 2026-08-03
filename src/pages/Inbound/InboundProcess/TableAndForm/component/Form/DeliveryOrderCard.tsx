@@ -32,7 +32,7 @@ import { useDOValidation } from "../Helper/useDOValidation";
 import { useNavigate } from "react-router-dom";
 import { FaCircleXmark } from "react-icons/fa6";
 import { showConfirmDialog } from "../../../../../../components/swal-confirm";
-import { cancelSJservice } from "../Helper/cancelSJservice";
+import { cancelSJService } from "../../../services";
 import { isCancelledDeliveryOrder } from "../Helper/sjStatusHelpers";
 
 export default function DeliveryOrderCard({
@@ -234,7 +234,7 @@ export default function DeliveryOrderCard({
     showConfirmDialog(
       async () => {
         try {
-          const result = await cancelSJservice(idDO);
+          const result = await cancelSJService(idDO);
           if (result?.success === true) {
             navigate("/inbound_planning");
           } else {

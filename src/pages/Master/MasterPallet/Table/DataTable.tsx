@@ -163,16 +163,6 @@ const DataTable = () => {
           ),
       },
       {
-        accessorKey: "isFull",
-        header: "Is Full",
-        cell: ({ row }: { row: { original: any } }) =>
-          row.original.isFull ? (
-            <span className="text-amber-600 font-semibold">Full</span>
-          ) : (
-            <span className="text-blue-600">Not Full</span>
-          ),
-      },
-      {
         accessorKey: "uom",
         header: "UOM",
         cell: ({ row }: { row: { original: any } }) => {

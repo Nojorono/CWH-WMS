@@ -9,7 +9,6 @@ interface Option {
 interface SelectProps {
   options: Option[];
   placeholder?: string;
-  // Ubah tipe data agar bisa menerima string atau array string
   onChange: (value: any) => void; 
   className?: string;
   value?: string | string[]; // Bisa string tunggal atau array
