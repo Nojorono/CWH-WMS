@@ -84,6 +84,8 @@ import IntegrationMonitoringPage from '../pages/DOsuggestion/IntegrationLog/inde
 import BTBPage from "../pages/DOsuggestion/BTB/index";
 import OpeningStockUploadPage from "../pages/OpeningStockBalance";
 
+// OUTBOUND SALESMAN
+import OutboundSalesman from "../pages/OutboundSalesman";
 
 export {
   // DASHBOARD
@@ -161,5 +163,8 @@ export {
   OutboundSales,
   IntegrationMonitoringPage,
   BTBPage,
+
   OpeningStockUploadPage,
+  
+  OutboundSalesman,
 };

@@ -84,12 +84,10 @@ export const CalculationSubTable = ({
               <tr>
                 <th className="px-5 py-3">SKU</th>
                 <th className="px-5 py-3 text-right">Stock on Hand</th>
-                <th className="px-5 py-3 text-right">Request</th>
+                <th className="px-5 py-3 text-right">Qty Suggestion</th>
                 <th className="px-5 py-3 text-right">Contrib %</th>
                 <th className="px-5 py-3 text-right">Status</th>
                 <th className="px-5 py-3 text-right">Final Qty</th>
-                {/* <th className="px-5 py-3 text-right">BTB Qty</th>
-                <th className="px-5 py-3 text-right">Prepared Qty</th> */}
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -118,7 +116,8 @@ export const CalculationSubTable = ({
                     </td>
                     <td className="px-5 py-3 text-right">{item.soh}</td>
                     <td className="px-5 py-3 text-right">
-                      {item.item_qty_submitted}
+                      {/* {item.item_qty_submitted} */}
+                      {item.item_qty_suggestion}
                     </td>
                     <td className="px-5 py-3 text-right text-blue-600 font-semibold">
                       {item.contribution_percentage}%
@@ -133,12 +132,6 @@ export const CalculationSubTable = ({
                     <td className="px-5 py-3 text-right font-bold text-slate-800">
                       {item.item_qty_final}
                     </td>
-                    {/* <td className="px-5 py-3 text-right font-bold text-slate-800">
-                      {item.qty_btb}
-                    </td>
-                    <td className="px-5 py-3 text-right font-bold text-slate-800">
-                      {item.prepared_qty}
-                    </td> */}
                   </tr>
                 );
               })}

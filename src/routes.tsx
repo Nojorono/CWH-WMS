@@ -73,6 +73,7 @@ import {
   GenerateDO,
   OutboundSales,
   BTBPage,
+  OutboundSalesman,
 } from "./utils/PagesComponent";
 import IntegrationMonitoringPage from "./pages/DOsuggestion/IntegrationLog";
 import OpeningStockUploadPage from "./pages/OpeningStockBalance";
@@ -167,10 +168,10 @@ export function AppRoutes() {
       "/inbound_integration_log": <InboundIntegration />,
       "/ir_integration_log": <IRintegrationLog />,
       "/outbound_integration_log": <ShipConfirmLog />,
-      "/do_suggestion": <DOsuggestionMain />,
-      "/outbound_sales": <OutboundSales />,
       "/do_su_log_integration": <IntegrationMonitoringPage />,
       "/opening_stock_upload": <OpeningStockUploadPage />,
+      "/do_suggestion": <DOsuggestionMain />,
+      "/outbound_sales": <OutboundSalesman />,
       "/btb": <BTBPage />,
     };
     return map[path] || <DefaultPage />;
