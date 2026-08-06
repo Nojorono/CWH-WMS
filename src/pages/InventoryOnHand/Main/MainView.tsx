@@ -11,8 +11,6 @@ import {
   getSortedRowModel,
 } from "@tanstack/react-table";
 import { useStoreInventorySelisih } from "../../../DynamicAPI/stores/Store/MasterStore";
-import Button from "../../../components/ui/button/Button";
-import { FaSync } from "react-icons/fa";
 import ActIndicator from "../../../components/ui/activityIndicator";
 import { InventorySelisihItem } from "../../../DynamicAPI/types/InventorySelisih";
 
@@ -185,33 +183,6 @@ const InventoryVisibility: React.FC = () => {
 
   return (
     <div className="p-6 bg-slate-50 min-h-screen">
-      {/* SUMMARY DASHBOARD */}
-      {/* <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        <StatItem label="Total SKU" value={summary.total_items} color="blue" />
-        <StatItem
-          label="Total Quantity Selisih"
-          value={summary.total_quantity}
-          color="rose"
-        />
-        <StatItem
-          label="Total Transaction Lines"
-          value={summary.total_lines}
-          color="indigo"
-        />
-
-        <div className="flex justify-end items-center md:col-span-3 mt-2">
-          <Button
-            variant="action"
-            size="sm"
-            onClick={handleRefresh}
-            disabled={isRefreshing}
-            className={isRefreshing ? "opacity-75 cursor-not-allowed" : ""}
-          >
-            <FaSync className={`mr-2 ${isRefreshing ? "animate-spin" : ""}`} />
-            {isRefreshing ? "Refreshing..." : "Refresh Data"}
-          </Button>
-        </div>
-      </div> */}
 
       {isRefreshing && <ActIndicator />}
 
@@ -237,13 +208,13 @@ const InventoryVisibility: React.FC = () => {
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
-            <thead className="bg-rose-500 text-white text-lg">
+            <thead className="bg-orange-500 text-white text-lg">
               {table.getHeaderGroups().map((hg) => (
                 <tr key={hg.id}>
                   {hg.headers.map((header) => (
                     <th
                       key={header.id}
-                      className="px-6 py-4 text-[14px] font-black text-white-400 uppercase tracking-widest cursor-pointer hover:bg-rose-600 transition-colors"
+                      className="px-6 py-4 text-[14px] font-black text-white-400 uppercase tracking-widest cursor-pointer hover:bg-orange-600 transition-colors"
                       onClick={header.column.getToggleSortingHandler()}
                     >
                       {flexRender(

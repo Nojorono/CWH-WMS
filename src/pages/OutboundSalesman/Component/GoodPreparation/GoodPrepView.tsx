@@ -21,6 +21,8 @@ import { BaseTable } from "../../../DOsuggestion/OutboundSales/component/BaseTab
 import BTBTotalBreakdown from "../../../DOsuggestion/OutboundSales/component/BTBTotalBreakdown";
 import { PrintAllSKU } from "../../../DOsuggestion/OutboundSales/component/PrintAllSKU";
 import { PrintPreviewModal } from "../../../DOsuggestion/OutboundSales/component/PrintPreviewModal";
+import { SKUSummaryPanel } from "../../../DOsuggestion/OutboundSales/component/SKUSummaryPanel";
+import { useGetStockOnHand } from "../../../DOsuggestion/OutboundSales/hook/useGetStockOnHand";
 import { btbService } from "../../Services/BTBService";
 import { callplanService } from "../../Services/CallplanService";
 import { BTB, BTBDetail } from "../../types/BTBtypes";
@@ -51,6 +53,22 @@ const hasQtyRevision = (revision: string | number | null | undefined) => {
   const raw = String(revision).trim();
   if (raw === "") return false;
   return !Number.isNaN(Number(raw));
+};
+
+const getItemKey = (item: {
+  inventory_item_id?: string | number | null;
+  item_code?: string | null;
+  sku?: string | null;
+  item_number?: string | null;
+}) => {
+  if (
+    item.inventory_item_id !== undefined &&
+    item.inventory_item_id !== null &&
+    String(item.inventory_item_id).trim() !== ""
+  ) {
+    return String(item.inventory_item_id).trim();
+  }
+  return String(item.item_code || item.sku || item.item_number || "").trim();
 };
 
 const LoadingOverlay = ({
@@ -87,6 +105,7 @@ const PrepDetailTable = ({
   unmatchedDetails = [],
   header,
   onSaveAdjustments,
+  highlightedSku,
 }: {
   callplanId: string;
   details: EnrichedDetail[];
@@ -99,9 +118,13 @@ const PrepDetailTable = ({
       approvalUrl: string | null;
     },
   ) => Promise<boolean>;
+  highlightedSku?: string;
 }) => {
   const { list: itemList } = useStoreItem();
   const [isAdjustOpen, setIsAdjustOpen] = useState(false);
+  const normalizedHighlightSku = String(highlightedSku || "")
+    .trim()
+    .toLowerCase();
 
   const showQtyRevisionCol = useMemo(
     () => details.some((d) => hasQtyRevision(d.item_qty_revision)),
@@ -128,7 +151,18 @@ const PrepDetailTable = ({
           topUpQty: Math.max(0, final - btb),
         };
       })
-      .sort((a, b) => a.itemName.localeCompare(b.itemName));
+      .sort((a, b) => {
+        if (normalizedHighlightSku) {
+          const aMatch = String(a.item_code || "")
+            .toLowerCase()
+            .includes(normalizedHighlightSku);
+          const bMatch = String(b.item_code || "")
+            .toLowerCase()
+            .includes(normalizedHighlightSku);
+          if (aMatch !== bMatch) return aMatch ? -1 : 1;
+        }
+        return a.itemName.localeCompare(b.itemName);
+      });
 
     const excess = unmatchedDetails
       .map((u: BTBDetail) => ({
@@ -142,7 +176,7 @@ const PrepDetailTable = ({
       .sort((a, b) => a.itemName.localeCompare(b.itemName));
 
     return { pickList: picked, excessList: excess };
-  }, [details, unmatchedDetails, itemList]);
+  }, [details, unmatchedDetails, itemList, normalizedHighlightSku]);
 
   const colSpan = showQtyRevisionCol ? 7 : 6;
 
@@ -197,10 +231,19 @@ const PrepDetailTable = ({
                 </tr>
               ) : (
                 pickList.map((item, i) => (
+                  (() => {
+                    const itemSku = String(item.item_code || "").toLowerCase();
+                    const isHighlightedBySku =
+                      normalizedHighlightSku.length > 0 &&
+                      itemSku.includes(normalizedHighlightSku);
+
+                    return (
                   <tr
                     key={item.id || i}
                     className={
-                      item.finalQty === 0
+                      isHighlightedBySku
+                        ? "bg-yellow-100 ring-1 ring-yellow-300 hover:bg-yellow-100"
+                        : item.finalQty === 0
                         ? "bg-red-50 text-red-700 hover:bg-red-100"
                         : item.qtyRevision !== null
                           ? "bg-orange-50/60 hover:bg-orange-50"
@@ -216,10 +259,19 @@ const PrepDetailTable = ({
                     </td>
                     <td
                       className={`px-3 py-2 font-medium ${
-                        item.finalQty === 0 ? "text-red-700" : "text-slate-800"
+                        isHighlightedBySku
+                          ? "text-yellow-900"
+                          : item.finalQty === 0
+                            ? "text-red-700"
+                            : "text-slate-800"
                       }`}
                     >
                       {item.itemName}
+                      {isHighlightedBySku && (
+                        <span className="ml-2 rounded border border-yellow-400 bg-yellow-200 px-1.5 py-0.5 text-[10px] font-bold uppercase text-yellow-900">
+                          match
+                        </span>
+                      )}
                     </td>
                     <td
                       className={`px-3 py-2 text-center ${
@@ -261,6 +313,8 @@ const PrepDetailTable = ({
                       {item.topUpQty}
                     </td>
                   </tr>
+                    );
+                  })()
                 ))
               )}
             </tbody>
@@ -360,6 +414,7 @@ function GoodPrepView({
   const { list: itemList, fetchAll: fetchItems } = useStoreItem();
 
   const [prepCallplans, setPrepCallplans] = useState<Callplan[]>(callplans);
+  const [globalFilter, setGlobalFilter] = useState("");
   const [isPrintAllOpen, setIsPrintAllOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedToPrint, setSelectedToPrint] =
@@ -370,6 +425,10 @@ function GoodPrepView({
   const [isBTBSuccess, setIsBTBSuccess] = useState(false);
   const [errBTB, setErrBTB] = useState<string | null>(null);
   const [isSavingAdjust, setIsSavingAdjust] = useState(false);
+  const { data: stockList, isLoading: isSohLoading } = useGetStockOnHand({
+    org: String(organization_name),
+    sub: "KECIL",
+  });
 
   useEffect(() => {
     setPrepCallplans(callplans);
@@ -508,8 +567,8 @@ function GoodPrepView({
         updated_by: callplan.created_by,
         spb_date: callplan.spb_date,
         spb_number: callplan.spb_number,
-        // approval_url: payload.approvalUrl,
         lines,
+        // approval_url: payload.approvalUrl,
       };
 
       await updateDO(updatePayload);
@@ -684,6 +743,79 @@ function GoodPrepView({
     );
   }, [enrichedData, itemList]);
 
+  const skuSummary = useMemo(() => {
+    const stockMap = new Map<string, number>();
+    const metaMap = new Map<
+      string,
+      { sku: string; item_code: string; item_description: string; createdAt: string | null }
+    >();
+
+    (Array.isArray(stockList) ? stockList : []).forEach((item: any) => {
+      const key = getItemKey(item);
+      if (!key) return;
+      const qty = Number(item.quantity || 0);
+      stockMap.set(key, (stockMap.get(key) || 0) + qty);
+      if (!metaMap.has(key)) {
+        const sku = String(item.sku || item.item_code || item.item_number || "").trim();
+        metaMap.set(key, {
+          sku: sku || key,
+          item_code: String(item.item_code || sku || key),
+          item_description: String(item.item_description || item.description || "-"),
+          createdAt: item.createdAt || item.created_at || null,
+        });
+      }
+    });
+
+    const reqMap = new Map<string, number>();
+    prepCallplans.forEach((cp) => {
+      (cp.details || []).forEach((detail) => {
+        const key = getItemKey({
+          inventory_item_id: detail.inventory_item_id,
+          item_code: detail.item_code,
+        });
+        if (!key) return;
+        const finalQty = Number(detail.item_qty_final ?? detail.item_qty_submitted ?? 0) || 0;
+        reqMap.set(key, (reqMap.get(key) || 0) + finalQty);
+        if (!metaMap.has(key)) {
+          metaMap.set(key, {
+            sku: String(detail.item_code || key),
+            item_code: String(detail.item_code || key),
+            item_description:
+              itemList?.find((m: any) => m.sku === detail.item_code)?.description || "-",
+            createdAt: null,
+          });
+        }
+      });
+    });
+
+    const keys = [...new Set([...stockMap.keys(), ...reqMap.keys()])];
+    return keys.map((key) => {
+      const meta = metaMap.get(key);
+      return {
+        sku: meta?.sku || key,
+        item_code: meta?.item_code || meta?.sku || key,
+        item_description: meta?.item_description || "-",
+        createdAt: meta?.createdAt || null,
+        soh: stockMap.get(key) || 0,
+        totalRequest: reqMap.get(key) || 0, // compare terhadap Final Qty
+      };
+    });
+  }, [stockList, prepCallplans, itemList]);
+
+  const sohStatusCount = useMemo(() => {
+    let available = 0;
+    let less = 0;
+    let noStock = 0;
+
+    skuSummary.forEach((s) => {
+      if (s.soh <= 0) noStock += 1;
+      else if (s.soh < s.totalRequest) less += 1;
+      else available += 1;
+    });
+
+    return { available, less, noStock };
+  }, [skuSummary]);
+
   const columns: ColumnDef<EnrichedCallplan>[] = useMemo(
     () => [
       { accessorKey: "spb_number", header: "SPB Number" },
@@ -816,8 +948,30 @@ function GoodPrepView({
         </button>
       </div>
 
+      <div className="space-y-2">
+        <div className="flex flex-wrap items-center gap-2 text-[11px] font-semibold">
+          <span className="rounded border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-emerald-700">
+            Available: {sohStatusCount.available}
+          </span>
+          <span className="rounded border border-amber-200 bg-amber-50 px-2.5 py-1 text-amber-700">
+            Less Stock: {sohStatusCount.less}
+          </span>
+          <span className="rounded border border-red-200 bg-red-50 px-2.5 py-1 text-red-700">
+            No Stock: {sohStatusCount.noStock}
+          </span>
+          {isSohLoading && (
+            <span className="rounded border border-slate-200 bg-slate-50 px-2.5 py-1 text-slate-600">
+              Memuat SOH...
+            </span>
+          )}
+        </div>
+        <SKUSummaryPanel summary={skuSummary} onSearchChange={setGlobalFilter} />
+      </div>
+
       <BaseTable
         data={showLoading ? [] : enrichedData}
+        globalFilter={globalFilter}
+        setGlobalFilter={setGlobalFilter}
         columns={columns}
         isExpandable
         renderSubComponent={(row: EnrichedCallplan) => (
@@ -855,6 +1009,7 @@ function GoodPrepView({
               details={row.details || []}
               unmatchedDetails={row.unmatchedBTBDetails || []}
               onSaveAdjustments={handleSaveAdjustments}
+              highlightedSku={globalFilter}
               header={{
                 callplanNumber: row.callplan_number || row.spb_number,
                 salesName: row.sales_name,
