@@ -1,5 +1,5 @@
 import axiosInstance from "../../../DynamicAPI/AxiosInstance";
-import { Callplan } from "./types";
+import { Callplan } from "../types/CallplanTypes";
 
 export interface GetCallplansParams {
   dateStart: string;

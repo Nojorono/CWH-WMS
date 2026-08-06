@@ -13,12 +13,16 @@ import {
 import { ActionMenu } from "../../../OutboundFullTrial/PickingTransaction/components";
 import { usePersistAuthStore } from "../../../../API/store/AuthStore/PersistAuthStore";
 import { useStoreItem } from "../../../../DynamicAPI/stores/Store/MasterStore";
+import Swal from "sweetalert2";
 import { showErrorToast, showSuccessToast } from "../../../../components/toast";
+import { updateDO } from "../../../../API/services/DOsuggestionServices/postDOsuggestion";
+import { DOSuggestionPayload } from "../../../../API/types/DOsuggestion";
 import { BaseTable } from "../../../DOsuggestion/OutboundSales/component/BaseTable";
 import BTBTotalBreakdown from "../../../DOsuggestion/OutboundSales/component/BTBTotalBreakdown";
 import { PrintAllSKU } from "../../../DOsuggestion/OutboundSales/component/PrintAllSKU";
 import { PrintPreviewModal } from "../../../DOsuggestion/OutboundSales/component/PrintPreviewModal";
 import { btbService } from "../../Services/BTBService";
+import { callplanService } from "../../Services/CallplanService";
 import { BTB, BTBDetail } from "../../types/BTBtypes";
 import { Callplan, CallplanDetail } from "../../types/CallplanTypes";
 import { GoodPrepViewProps } from "../../types/flow";
@@ -31,6 +35,7 @@ type EnrichedDetail = CallplanDetail & {
   finalQty?: number;
   btbQty?: number;
   topUpQty?: number;
+  qtyRevision?: number | null;
 };
 
 type EnrichedCallplan = Omit<Callplan, "details"> & {
@@ -39,6 +44,13 @@ type EnrichedCallplan = Omit<Callplan, "details"> & {
   rawBTBDetails: BTBDetail[];
   btbNumber: string | null;
   btbDate: string | null;
+};
+
+const hasQtyRevision = (revision: string | number | null | undefined) => {
+  if (revision === null || revision === undefined) return false;
+  const raw = String(revision).trim();
+  if (raw === "") return false;
+  return !Number.isNaN(Number(raw));
 };
 
 const LoadingOverlay = ({
@@ -70,16 +82,31 @@ const LoadingOverlay = ({
 };
 
 const PrepDetailTable = ({
+  callplanId,
   details,
   unmatchedDetails = [],
   header,
+  onSaveAdjustments,
 }: {
+  callplanId: string;
   details: EnrichedDetail[];
   unmatchedDetails?: BTBDetail[];
   header?: AdjustQtyHeader;
+  onSaveAdjustments: (
+    callplanId: string,
+    payload: {
+      items: AdjustQtyItem[];
+      approvalUrl: string | null;
+    },
+  ) => Promise<boolean>;
 }) => {
   const { list: itemList } = useStoreItem();
   const [isAdjustOpen, setIsAdjustOpen] = useState(false);
+
+  const showQtyRevisionCol = useMemo(
+    () => details.some((d) => hasQtyRevision(d.item_qty_revision)),
+    [details],
+  );
 
   const { pickList, excessList } = useMemo(() => {
     const picked = details
@@ -87,12 +114,16 @@ const PrepDetailTable = ({
         const final = Number(d.item_qty_final ?? d.item_qty_submitted) || 0;
         const suggestion = Number(d.item_qty_suggestion) || 0;
         const btb = Number(d.qty_btb) || 0;
+        const qtyRevision = hasQtyRevision(d.item_qty_revision)
+          ? Number(d.item_qty_revision)
+          : null;
         const master = itemList?.find((m: any) => m.sku === d.item_code);
         return {
           ...d,
           itemName: master?.description || d.item_code,
           suggestionQty: suggestion,
           finalQty: final,
+          qtyRevision,
           btbQty: btb,
           topUpQty: Math.max(0, final - btb),
         };
@@ -113,12 +144,19 @@ const PrepDetailTable = ({
     return { pickList: picked, excessList: excess };
   }, [details, unmatchedDetails, itemList]);
 
+  const colSpan = showQtyRevisionCol ? 7 : 6;
+
   return (
     <div className="grid grid-cols-1 gap-6 border-t bg-slate-50 p-4 lg:grid-cols-2">
       <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
         <div className="flex items-center justify-between gap-2 border-b bg-emerald-50 px-4 py-3">
           <div className="text-xs font-bold uppercase text-slate-700">
             Picking List (Top Up) {pickList.length} Items
+            {showQtyRevisionCol && (
+              <span className="ml-2 rounded bg-orange-100 px-1.5 py-0.5 text-[10px] font-bold normal-case text-orange-700">
+                Qty Revision
+              </span>
+            )}
           </div>
           <button
             type="button"
@@ -136,6 +174,11 @@ const PrepDetailTable = ({
                 <th className="px-3 py-2">Item</th>
                 <th className="px-3 py-2 text-center">Qty Suggestion</th>
                 <th className="px-3 py-2 text-center">Qty Final</th>
+                {showQtyRevisionCol && (
+                  <th className="px-3 py-2 text-center text-orange-600">
+                    Qty Revision
+                  </th>
+                )}
                 <th className="px-3 py-2 text-center">Qty BTB</th>
                 <th className="px-3 py-2 text-center text-emerald-600">
                   Top Up
@@ -146,7 +189,7 @@ const PrepDetailTable = ({
               {pickList.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={6}
+                    colSpan={colSpan}
                     className="px-3 py-6 text-center italic text-slate-400"
                   >
                     Tidak ada item pick list
@@ -159,7 +202,9 @@ const PrepDetailTable = ({
                     className={
                       item.finalQty === 0
                         ? "bg-red-50 text-red-700 hover:bg-red-100"
-                        : "hover:bg-slate-50"
+                        : item.qtyRevision !== null
+                          ? "bg-orange-50/60 hover:bg-orange-50"
+                          : "hover:bg-slate-50"
                     }
                   >
                     <td
@@ -190,6 +235,15 @@ const PrepDetailTable = ({
                     >
                       {item.finalQty}
                     </td>
+                    {showQtyRevisionCol && (
+                      <td className="px-3 py-2 text-center font-bold text-orange-600">
+                        {item.qtyRevision !== null
+                          ? item.qtyRevision > 0
+                            ? `+${item.qtyRevision}`
+                            : item.qtyRevision
+                          : "-"}
+                      </td>
+                    )}
                     <td
                       className={`px-3 py-2 text-center ${
                         item.finalQty === 0 ? "text-red-500" : "text-blue-600"
@@ -199,7 +253,9 @@ const PrepDetailTable = ({
                     </td>
                     <td
                       className={`px-3 py-2 text-center font-bold ${
-                        item.finalQty === 0 ? "text-red-600" : "text-emerald-600"
+                        item.finalQty === 0
+                          ? "text-red-600"
+                          : "text-emerald-600"
                       }`}
                     >
                       {item.topUpQty}
@@ -262,40 +318,48 @@ const PrepDetailTable = ({
           id: String(item.id),
           name: item.itemName || item.item_code,
           sku: item.item_code,
-          qtySuggestion: Number(item.suggestionQty ?? item.item_qty_suggestion) || 0,
+          qtySuggestion:
+            Number(item.suggestionQty ?? item.item_qty_suggestion) || 0,
           qtyAwal: Number(item.finalQty) || 0,
           adjustment: 0,
         }))}
         onClose={() => setIsAdjustOpen(false)}
-        onSave={({ items: adjustedItems, approvalUrl }) => {
-          console.log("SPB adjustment payload", {
-            items: adjustedItems,
-            approvalUrl,
-          });
-          showSuccessToast(
-            `Adjustment tersimpan sementara (${adjustedItems.length} item)`,
-          );
-          setIsAdjustOpen(false);
+        onSave={async ({ items: adjustedItems, approvalUrl }) => {
+          try {
+            const saved = await onSaveAdjustments(callplanId, {
+              items: adjustedItems,
+              approvalUrl,
+            });
+            // Tutup modal hanya jika BE sukses; error → tetap open
+            if (saved === true) {
+              setIsAdjustOpen(false);
+              return true;
+            }
+            return false;
+          } catch {
+            return false;
+          }
         }}
       />
     </div>
   );
 };
 
-function GoodPrepView({ callplans, onBack }: GoodPrepViewProps) {
-  console.log("callplans on Good preparation", callplans);
-
+function GoodPrepView({
+  callplans,
+  onBack,
+  onCallplansUpdated,
+}: GoodPrepViewProps) {
   const { user } = usePersistAuthStore.getState();
   const organization_id =
-    user?.userDetail?.organizationId ||
-    callplans[0]?.organization_id ||
-    "";
+    user?.userDetail?.organizationId || callplans[0]?.organization_id || "";
   const organization_name =
     user?.userDetail?.organization?.organization_name ||
     callplans[0]?.organization?.organization_name ||
     "";
   const { list: itemList, fetchAll: fetchItems } = useStoreItem();
 
+  const [prepCallplans, setPrepCallplans] = useState<Callplan[]>(callplans);
   const [isPrintAllOpen, setIsPrintAllOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedToPrint, setSelectedToPrint] =
@@ -305,10 +369,17 @@ function GoodPrepView({ callplans, onBack }: GoodPrepViewProps) {
   const [isBTBLoading, setIsBTBLoading] = useState(false);
   const [isBTBSuccess, setIsBTBSuccess] = useState(false);
   const [errBTB, setErrBTB] = useState<string | null>(null);
+  const [isSavingAdjust, setIsSavingAdjust] = useState(false);
+
+  useEffect(() => {
+    setPrepCallplans(callplans);
+  }, [callplans]);
 
   const targetDate = useMemo(() => {
-    return callplans[0]?.callplan_date_start || dayjs().format("YYYY-MM-DD");
-  }, [callplans]);
+    return (
+      prepCallplans[0]?.callplan_date_start || dayjs().format("YYYY-MM-DD")
+    );
+  }, [prepCallplans]);
 
   const btbDateLabel = useMemo(
     () => dayjs(targetDate).format("YYYY-MM-DD"),
@@ -318,12 +389,148 @@ function GoodPrepView({ callplans, onBack }: GoodPrepViewProps) {
   const salesNikList = useMemo(() => {
     return [
       ...new Set(
-        callplans
+        prepCallplans
           .map((cp) => cp.sales_nik?.trim())
           .filter((nik): nik is string => Boolean(nik)),
       ),
     ];
-  }, [callplans]);
+  }, [prepCallplans]);
+
+  const refetchPrepCallplans = async (): Promise<Callplan[]> => {
+    if (!organization_id || !targetDate) return prepCallplans;
+    const fresh = await callplanService.getCallplans({
+      dateStart: targetDate,
+      organizationId: organization_id,
+      status: "FINAL",
+    });
+    setPrepCallplans(fresh);
+    onCallplansUpdated?.(fresh);
+    return fresh;
+  };
+
+  const handleSaveAdjustments = async (
+    callplanId: string,
+    payload: {
+      items: AdjustQtyItem[];
+      approvalUrl: string | null;
+    },
+  ): Promise<boolean> => {
+    const callplan = prepCallplans.find((cp) => cp.id === callplanId);
+    if (!callplan) {
+      showErrorToast("Callplan tidak ditemukan");
+      return false;
+    }
+
+    const changedItems = payload.items.filter((item) => item.adjustment !== 0);
+    if (changedItems.length === 0) {
+      showErrorToast("Tidak ada perubahan qty untuk disimpan");
+      return false;
+    }
+
+    if (!payload.approvalUrl) {
+      showErrorToast("File approval wajib ter-upload sebelum menyimpan");
+      return false;
+    }
+
+    const confirm = await Swal.fire({
+      title: "Konfirmasi Perubahan Qty?",
+      text: `${changedItems.length} item akan diupdate ke server, lalu data GoodPrep di-refresh.`,
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "Ya, Simpan",
+      cancelButtonText: "Batal",
+      confirmButtonColor: "#F26522",
+      cancelButtonColor: "#6b7280",
+      reverseButtons: true,
+      didOpen: () => {
+        const container = Swal.getContainer();
+        if (container) container.style.zIndex = "100000";
+      },
+    });
+
+    if (!confirm.isConfirmed) return false;
+
+    setIsSavingAdjust(true);
+    try {
+      // Pola sama useSubmitDOSuggestion: revision = nilai +/- , final = qty hasil
+      // Hanya kirim line yang berubah; update via updateDO (bukan batch)
+      const detailById = new Map(
+        (callplan.details || []).map((d) => [d.id, d]),
+      );
+
+      const lines = changedItems
+        .map((item) => {
+          const detail = detailById.get(item.id);
+          if (!detail) return null;
+
+          const finalQty = item.qtyAwal + item.adjustment;
+
+          return {
+            id: detail.id,
+            item_code: detail.item_code,
+            inventory_item_id: detail.inventory_item_id,
+            item_qty_suggestion: Number(detail.item_qty_suggestion || 0),
+            item_qty_revision: item.adjustment,
+            item_qty_submitted: Number(detail.item_qty_submitted || 0),
+            item_qty_final: finalQty,
+            contribution_percentage: Number(
+              detail.contribution_percentage || 0,
+            ),
+            item_uom: detail.item_uom,
+          };
+        })
+        .filter((line): line is NonNullable<typeof line> => line !== null);
+
+      if (lines.length === 0) {
+        showErrorToast("Detail item yang diubah tidak ditemukan");
+        return false;
+      }
+
+      const updatePayload: DOSuggestionPayload & {
+        sales_spv_nik?: string;
+        spb_date?: string;
+        spb_number?: string;
+        approval_url?: string | null;
+      } = {
+        id: callplan.id,
+        organization_id: callplan.organization_id,
+        callplan_number: callplan.callplan_number,
+        callplan_date_start: callplan.callplan_date_start,
+        callplan_date_end: callplan.callplan_date_end,
+        route_number: callplan.route_number,
+        trip_type: callplan.trip_type,
+        sales_nik: callplan.sales_nik,
+        sales_name: callplan.sales_name,
+        sales_spv: callplan.sales_spv,
+        sales_spv_nik: callplan.sales_spv_nik,
+        status: "FINAL",
+        created_by: callplan.created_by,
+        updated_by: callplan.created_by,
+        spb_date: callplan.spb_date,
+        spb_number: callplan.spb_number,
+        // approval_url: payload.approvalUrl,
+        lines,
+      };
+
+      await updateDO(updatePayload);
+      await refetchPrepCallplans();
+
+      showSuccessToast(
+        `Qty berhasil diupdate (${changedItems.length} item). Data GoodPrep telah disegarkan.`,
+      );
+      return true;
+    } catch (error) {
+      console.error("Gagal simpan adjustment qty:", error);
+      showErrorToast(
+        error instanceof Error
+          ? error.message
+          : "Gagal menyimpan perubahan qty ke server",
+      );
+      return false;
+    } finally {
+      setIsSavingAdjust(false);
+    }
+  };
 
   useEffect(() => {
     fetchItems();
@@ -403,8 +610,7 @@ function GoodPrepView({ callplans, onBack }: GoodPrepViewProps) {
       const matchedDetails: EnrichedDetail[] = (doc.details || []).map(
         (detail: CallplanDetail) => {
           const matchingBtbItem = btbDetails.find(
-            (b: BTBDetail) =>
-              b.item_code?.trim() === detail.item_code?.trim(),
+            (b: BTBDetail) => b.item_code?.trim() === detail.item_code?.trim(),
           );
           return {
             ...detail,
@@ -426,7 +632,7 @@ function GoodPrepView({ callplans, onBack }: GoodPrepViewProps) {
         btbDate: btbForSalesman?.btb_date || null,
       };
     });
-  }, [callplans, BTBdata]);
+  }, [prepCallplans, BTBdata]);
 
   const aggregatedPickList = useMemo(() => {
     const summary: Record<
@@ -597,7 +803,7 @@ function GoodPrepView({ callplans, onBack }: GoodPrepViewProps) {
             <span>Goods Preparation</span>
           </div>
           <p className="mt-2 text-xs text-slate-500">
-            SPB FINAL: <strong>{callplans.length}</strong> · Callplan Date:{" "}
+            SPB FINAL: <strong>{prepCallplans.length}</strong> · Callplan Date:{" "}
             <strong>{targetDate}</strong> · BTB sync untuk Print & Top Up
           </p>
         </div>
@@ -645,8 +851,10 @@ function GoodPrepView({ callplans, onBack }: GoodPrepViewProps) {
             />
 
             <PrepDetailTable
+              callplanId={row.id}
               details={row.details || []}
               unmatchedDetails={row.unmatchedBTBDetails || []}
+              onSaveAdjustments={handleSaveAdjustments}
               header={{
                 callplanNumber: row.callplan_number || row.spb_number,
                 salesName: row.sales_name,
@@ -658,7 +866,6 @@ function GoodPrepView({ callplans, onBack }: GoodPrepViewProps) {
             />
           </div>
         )}
-        
         headerActions={
           <div className="flex w-full min-w-full flex-1 items-center gap-4">
             <div>
@@ -717,9 +924,10 @@ function GoodPrepView({ callplans, onBack }: GoodPrepViewProps) {
         data={aggregatedPickList}
         targetDate={targetDate}
         organizationName={String(organization_name)}
-        spbCount={callplans.length}
+        spbCount={prepCallplans.length}
         callplanNumber={
-          callplans[0]?.callplan_number || `CP-${targetDate.replace(/-/g, "")}`
+          prepCallplans[0]?.callplan_number ||
+          `CP-${targetDate.replace(/-/g, "")}`
         }
       />
     </div>

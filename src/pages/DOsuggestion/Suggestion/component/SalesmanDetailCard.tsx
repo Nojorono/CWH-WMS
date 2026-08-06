@@ -25,8 +25,6 @@ export default function SalesmanDetailCard({
 }: SalesmanDetailCardProps) {
   const isSubmitted = status === "SUBMITTED";
 
-  console.log("salesData", salesData);
-
   return (
     <div className="bg-white rounded-xl border border-slate-200 shadow-sm mb-6 overflow-hidden">
       {/* SECTION 1: TOP HEADER (Salesman & Status) */}

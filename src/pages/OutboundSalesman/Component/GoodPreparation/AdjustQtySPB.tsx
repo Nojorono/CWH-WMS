@@ -41,7 +41,7 @@ type AdjustQtySPBProps = {
     items: AdjustQtyItem[];
     approvalFile: File | null;
     approvalUrl: string | null;
-  }) => void;
+  }) => boolean | void | Promise<boolean | void>;
 };
 
 export default function AdjustQtySPB({
@@ -59,11 +59,14 @@ export default function AdjustQtySPB({
   const [approvalUrl, setApprovalUrl] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     approvalUrlRef.current = approvalUrl;
   }, [approvalUrl]);
 
+  // Reset hanya saat modal dibuka/ditutup — jangan reset saat parent re-render
+  // (mis. isSavingAdjust) supaya form & approval tetap ada jika BE error.
   useEffect(() => {
     if (isOpen) {
       isSavedRef.current = false;
@@ -78,6 +81,7 @@ export default function AdjustQtySPB({
       approvalUrlRef.current = null;
       setIsUploading(false);
       setIsClosing(false);
+      setIsSaving(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
       return;
     }
@@ -90,7 +94,8 @@ export default function AdjustQtySPB({
       });
       approvalUrlRef.current = null;
     }
-  }, [isOpen, sourceItems]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- hanya sync saat isOpen berubah
+  }, [isOpen]);
 
   const clearLocalFileState = () => {
     setApprovalFile(null);
@@ -164,14 +169,30 @@ export default function AdjustQtySPB({
     }
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!isApprovalReady) {
       showErrorToast("Upload form approval ke S3 dulu sebelum menyimpan");
       return;
     }
-    // Tandai tersimpan agar close tidak menghapus file S3
-    isSavedRef.current = true;
-    onSave?.({ items, approvalFile, approvalUrl });
+    const hasChanges = items.some((item) => item.adjustment !== 0);
+    if (!hasChanges) {
+      showErrorToast("Tidak ada perubahan qty untuk disimpan");
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      // Hanya tandai saved + biarkan parent tutup modal jika return true (sukses BE)
+      const result = await onSave?.({ items, approvalFile, approvalUrl });
+      if (result === true) {
+        isSavedRef.current = true;
+      }
+    } catch (err) {
+      console.error("Gagal simpan adjustment:", err);
+      // Modal tetap terbuka; user tutup sendiri
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const tableColumns: TableColumn[] = [
@@ -424,7 +445,7 @@ export default function AdjustQtySPB({
           <button
             type="button"
             onClick={handleClose}
-            disabled={isUploading || isClosing}
+            disabled={isUploading || isClosing || isSaving}
             className="rounded border border-slate-300 px-6 py-2 font-semibold text-slate-600 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {isClosing ? "Membersihkan..." : "Batal"}
@@ -432,11 +453,11 @@ export default function AdjustQtySPB({
           <button
             type="button"
             onClick={handleSave}
-            disabled={!isApprovalReady || isUploading}
+            disabled={!isApprovalReady || isUploading || isSaving}
             className="flex items-center space-x-2 rounded bg-orange-500 px-6 py-2 font-semibold text-white transition-colors hover:bg-orange-600 disabled:cursor-not-allowed disabled:bg-slate-300"
           >
             <FaSave className="size-4" />
-            <span>Simpan Perubahan</span>
+            <span>{isSaving ? "Menyimpan..." : "Simpan Perubahan"}</span>
           </button>
         </div>
       </div>

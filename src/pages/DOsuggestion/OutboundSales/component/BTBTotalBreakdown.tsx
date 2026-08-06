@@ -21,9 +21,6 @@ const BTBTotalBreakdown = ({
 }: BTBTotalBreakdownProps) => {
   const { fetchAll, list: itemList } = useStoreItem();
 
-  console.log("DATA BTB", data);
-
-
   useEffect(() => {
     fetchAll();
   }, [fetchAll]);

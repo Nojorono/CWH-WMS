@@ -110,6 +110,7 @@ function Index() {
         <GoodPrepView
           callplans={callplansForPrep}
           onBack={handleBackToSubmitted}
+          onCallplansUpdated={setCallplansForPrep}
         />
       )}
     </div>

@@ -38,4 +38,6 @@ export type CalculationViewProps = {
 export type GoodPrepViewProps = {
   callplans: Callplan[];
   onBack: () => void;
+  /** Sync callplan terbaru setelah Adjust Qty tersimpan ke server */
+  onCallplansUpdated?: (callplans: Callplan[]) => void;
 };
