@@ -10,7 +10,7 @@ import {
   FaArrowRight,
 } from "react-icons/fa";
 import { usePersistAuthStore } from "../../../../API/store/AuthStore/PersistAuthStore";
-import { Callplan } from "../../Services/types";
+import { Callplan } from "../../types/CallplanTypes";
 import { callplanService } from "../../Services/CallplanService";
 import { SPBViewProps } from "../../types/flow";
 import dayjs from "dayjs";
@@ -37,15 +37,25 @@ export default function SPBview({
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [showBypass, setShowBypass] = useState(false);
-  const [bypassDate, setBypassDate] = useState(() => {
+  // Draft = pilihan di picker (belum diterapkan)
+  // Applied = baru dipakai API/UI setelah klik Apply Bypass
+  const [draftBypassDate, setDraftBypassDate] = useState(() => {
     const saved = localStorage.getItem("OSM_BYPASS_DATETIME");
     if (saved) return saved.split(" ")[0];
     return getInitialBypassState().date;
   });
-  const [bypassTime, setBypassTime] = useState(() => {
+  const [draftBypassTime, setDraftBypassTime] = useState(() => {
     const saved = localStorage.getItem("OSM_BYPASS_DATETIME");
     if (saved?.split(" ")[1]) return saved.split(" ")[1];
     return getInitialBypassState().time;
+  });
+  const [appliedBypassDate, setAppliedBypassDate] = useState(() => {
+    if (localStorage.getItem("OSM_BYPASS_ACTIVE") !== "true") return "";
+    return localStorage.getItem("OSM_BYPASS_DATETIME")?.split(" ")[0] || "";
+  });
+  const [appliedBypassTime, setAppliedBypassTime] = useState(() => {
+    if (localStorage.getItem("OSM_BYPASS_ACTIVE") !== "true") return "";
+    return localStorage.getItem("OSM_BYPASS_DATETIME")?.split(" ")[1] || "";
   });
   const [bypassActive, setBypassActive] = useState(
     () => localStorage.getItem("OSM_BYPASS_ACTIVE") === "true",
@@ -54,18 +64,20 @@ export default function SPBview({
   const flatpickrRef = useRef<flatpickr.Instance | null>(null);
 
   const targetCallplanDate = useMemo(() => {
-    if (bypassActive && bypassDate) {
-      return bypassDate;
+    if (bypassActive && appliedBypassDate) {
+      return appliedBypassDate;
     }
     return dayjs().add(1, "day").format("YYYY-MM-DD");
-  }, [bypassActive, bypassDate]);
+  }, [bypassActive, appliedBypassDate]);
 
   const displayCurrentTime = useMemo(() => {
-    if (bypassActive && bypassDate && bypassTime) {
-      return dayjs(`${bypassDate} ${bypassTime}`).format("DD MMM YYYY - HH:mm");
+    if (bypassActive && appliedBypassDate && appliedBypassTime) {
+      return dayjs(`${appliedBypassDate} ${appliedBypassTime}`).format(
+        "DD MMM YYYY - HH:mm",
+      );
     }
     return dayjs().format("DD MMM YYYY - HH:mm");
-  }, [bypassActive, bypassDate, bypassTime]);
+  }, [bypassActive, appliedBypassDate, appliedBypassTime]);
 
   const fetchCallplans = async () => {
     if (!organization_id) return;
@@ -114,13 +126,14 @@ export default function SPBview({
       enableSeconds: false,
       time_24hr: true,
       dateFormat: "Y-m-d H:i",
-      defaultDate: `${bypassDate} ${bypassTime}`,
+      defaultDate: `${draftBypassDate} ${draftBypassTime}`,
       onChange: (_, dateStr) => {
+        // Hanya update draft — data API/UI belum berubah sampai Apply
         if (!dateStr) return;
         const picked = dayjs(dateStr);
         if (picked.isValid()) {
-          setBypassDate(picked.format("YYYY-MM-DD"));
-          setBypassTime(picked.format("HH:mm"));
+          setDraftBypassDate(picked.format("YYYY-MM-DD"));
+          setDraftBypassTime(picked.format("HH:mm"));
         }
       },
     });
@@ -133,9 +146,14 @@ export default function SPBview({
   }, [showBypass]);
 
   const handleApplyBypass = () => {
-    if (!bypassDate) return;
+    if (!draftBypassDate) return;
     localStorage.setItem("OSM_BYPASS_ACTIVE", "true");
-    localStorage.setItem("OSM_BYPASS_DATETIME", `${bypassDate} ${bypassTime}`);
+    localStorage.setItem(
+      "OSM_BYPASS_DATETIME",
+      `${draftBypassDate} ${draftBypassTime}`,
+    );
+    setAppliedBypassDate(draftBypassDate);
+    setAppliedBypassTime(draftBypassTime);
     setBypassActive(true);
   };
 
@@ -145,9 +163,12 @@ export default function SPBview({
     localStorage.removeItem("OSM_BYPASS_ACTIVE");
     localStorage.removeItem("OSM_BYPASS_DATETIME");
     setBypassActive(false);
-    setBypassDate(resetDate);
-    setBypassTime(resetTime);
-    flatpickrRef.current?.setDate(`${resetDate} ${resetTime}`, true);
+    setAppliedBypassDate("");
+    setAppliedBypassTime("");
+    setDraftBypassDate(resetDate);
+    setDraftBypassTime(resetTime);
+    // false = jangan fire onChange (hindari side-effect)
+    flatpickrRef.current?.setDate(`${resetDate} ${resetTime}`, false);
   };
 
   const toggleRow = (id: string) => {
@@ -208,7 +229,7 @@ export default function SPBview({
               <input
                 ref={bypassDateTimeRef}
                 type="text"
-                defaultValue={`${bypassDate} ${bypassTime}`}
+                defaultValue={`${draftBypassDate} ${draftBypassTime}`}
                 className="w-56 rounded border border-yellow-300 bg-white px-2 py-1.5 text-sm"
                 placeholder="Select date & time"
               />
@@ -233,11 +254,18 @@ export default function SPBview({
               <>
                 Bypass aktif · API & UI memakai target callplan:{" "}
                 <strong>{targetCallplanDate}</strong>
+                {draftBypassDate !== appliedBypassDate ||
+                draftBypassTime !== appliedBypassTime
+                  ? ` · Draft belum di-Apply: ${draftBypassDate} ${draftBypassTime}`
+                  : ""}
               </>
             ) : (
               <>
                 Bypass nonaktif · target callplan otomatis H+1:{" "}
                 <strong>{targetCallplanDate}</strong>
+                {" · "}
+                Pilih tanggal lalu klik <strong>Apply Bypass</strong> untuk
+                menerapkan.
               </>
             )}
           </p>
@@ -374,11 +402,11 @@ export default function SPBview({
         </div>
         <div>
           <div className="text-xs font-semibold text-gray-500 mb-1">
-            Target Callplan Date
+            Actual Target Callplan Date
           </div>
           <div className="font-bold text-blue-600">{targetCallplanDate}</div>
         </div>
-        <div>
+        {/* <div>
           <div className="text-xs font-semibold text-gray-500 mb-1">
             Calculate Allowed
           </div>
@@ -393,7 +421,7 @@ export default function SPBview({
           <div className={`font-bold ${printAllowedClass}`}>
             {printAllowedLabel}
           </div>
-        </div>
+        </div> */}
       </div>
 
       {/* Data Table */}

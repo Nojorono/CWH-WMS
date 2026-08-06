@@ -1,4 +1,4 @@
-import { Callplan } from "../Services/types";
+import { Callplan } from "./CallplanTypes";
 
 export type OutboundSalesmanStep =
   | "SUBMITTED"

@@ -12,7 +12,7 @@ import { CalculationSubTable } from "../../../DOsuggestion/OutboundSales/compone
 import { SKUSummaryPanel } from "../../../DOsuggestion/OutboundSales/component/SKUSummaryPanel";
 import { useAllocationCalculation } from "../../../DOsuggestion/OutboundSales/hook/useAllocationCalculation";
 import { useGetStockOnHand } from "../../../DOsuggestion/OutboundSales/hook/useGetStockOnHand";
-import { Callplan } from "../../Services/types";
+import { Callplan } from "../../types/CallplanTypes";
 import { CalculationViewProps } from "../../types/flow";
 
 function StockCalculationView({
@@ -146,29 +146,28 @@ function StockCalculationView({
               })),
             };
 
-            // await updateBatchDO(bulkPayload);
-            // showSuccessToast(
-            //   `Berhasil mengirim batch ${batchCount} dengan ${batch.length} SPB`,
-            // );
+            await updateBatchDO(bulkPayload);
+            showSuccessToast(
+              `Berhasil mengirim batch ${batchCount} dengan ${batch.length} SPB`,
+            );
 
             console.log("bulkPayload", bulkPayload);
-
           }
 
-          // // Map hasil kalkulasi → Callplan (status FINAL + item_qty_final)
-          // const prepCallplans: Callplan[] = rows.map((row) => ({
-          //   ...row,
-          //   status: "FINAL",
-          //   details: (row.details || []).map((d: any) => ({
-          //     ...d,
-          //     item_qty_final: String(d.item_qty_final ?? 0),
-          //     contribution_percentage: String(
-          //       d.contribution_percentage ?? "0",
-          //     ),
-          //   })),
-          // }));
+          // Map hasil kalkulasi → Callplan (status FINAL + item_qty_final)
+          const prepCallplans: Callplan[] = rows.map((row) => ({
+            ...row,
+            status: "FINAL",
+            details: (row.details || []).map((d: any) => ({
+              ...d,
+              item_qty_final: String(d.item_qty_final ?? 0),
+              contribution_percentage: String(
+                d.contribution_percentage ?? "0",
+              ),
+            })),
+          }));
 
-          // onProceedToPreparation(prepCallplans);
+          onProceedToPreparation(prepCallplans);
         } catch (error) {
           console.error("Gagal bulk insert kalkulasi:", error);
           showErrorToast("Gagal menyimpan hasil kalkulasi ke server");

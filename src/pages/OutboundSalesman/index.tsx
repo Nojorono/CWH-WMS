@@ -2,7 +2,7 @@ import React, { useCallback, useState } from "react";
 import SPBview from "./Component/SPB/SPBView";
 import CalculationView from "./Component/Calculation/CalculationView";
 import GoodPrepView from "./Component/GoodPreparation/GoodPrepView";
-import { Callplan } from "./Services/types";
+import { Callplan } from "./types/CallplanTypes";
 import { OutboundSalesmanStep } from "./types/flow";
 
 /**
@@ -77,6 +77,7 @@ function Index() {
     setCurrentStep("SUBMITTED");
   }, []);
 
+  
   return (
     <div className="relative min-h-screen bg-gray-50">
       {isTransitioning && (

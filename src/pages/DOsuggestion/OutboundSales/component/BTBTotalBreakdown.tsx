@@ -7,6 +7,7 @@ interface BTBItemData {
   item_code?: string;
   QTY_BTB?: string | number;
   qty_btb?: string | number;
+  btb_qty?: string | number;
 }
 
 interface BTBTotalBreakdownProps {
@@ -35,7 +36,7 @@ const BTBTotalBreakdown = ({
     data.forEach((item) => {
       // Handle perbedaan penamaan key dari API berbeda
       const sku = item.PRODUCT_SKU || item.item_code;
-      const qty = Number(item.QTY_BTB || item.qty_btb) || 0;
+      const qty = Number(item.QTY_BTB || item.qty_btb || item.btb_qty) || 0;
 
       if (!sku) return;
 

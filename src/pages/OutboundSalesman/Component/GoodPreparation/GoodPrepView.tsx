@@ -1,21 +1,33 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { ColumnDef } from "@tanstack/react-table";
 import dayjs from "dayjs";
-import { FaArrowLeft, FaDownload, FaPrint } from "react-icons/fa";
+import {
+  FaArrowLeft,
+  FaDownload,
+  FaEdit,
+  FaExchangeAlt,
+  FaFileAlt,
+  FaPrint,
+  FaSyncAlt,
+} from "react-icons/fa";
+import { ActionMenu } from "../../../OutboundFullTrial/PickingTransaction/components";
 import { usePersistAuthStore } from "../../../../API/store/AuthStore/PersistAuthStore";
 import { useStoreItem } from "../../../../DynamicAPI/stores/Store/MasterStore";
-import { showErrorToast } from "../../../../components/toast";
+import { showErrorToast, showSuccessToast } from "../../../../components/toast";
 import { BaseTable } from "../../../DOsuggestion/OutboundSales/component/BaseTable";
 import BTBTotalBreakdown from "../../../DOsuggestion/OutboundSales/component/BTBTotalBreakdown";
 import { PrintAllSKU } from "../../../DOsuggestion/OutboundSales/component/PrintAllSKU";
 import { PrintPreviewModal } from "../../../DOsuggestion/OutboundSales/component/PrintPreviewModal";
-import { useGetBTB } from "../../../DOsuggestion/OutboundSales/hook/useGetBTB";
-import { Callplan, CallplanDetail } from "../../Services/types";
+import { btbService } from "../../Services/BTBService";
+import { BTB, BTBDetail } from "../../types/BTBtypes";
+import { Callplan, CallplanDetail } from "../../types/CallplanTypes";
 import { GoodPrepViewProps } from "../../types/flow";
+import AdjustQtySPB, { AdjustQtyHeader, AdjustQtyItem } from "./AdjustQtySPB";
 
 type EnrichedDetail = CallplanDetail & {
   qty_btb: number;
   itemName?: string;
+  suggestionQty?: number;
   finalQty?: number;
   btbQty?: number;
   topUpQty?: number;
@@ -23,8 +35,8 @@ type EnrichedDetail = CallplanDetail & {
 
 type EnrichedCallplan = Omit<Callplan, "details"> & {
   details: EnrichedDetail[];
-  unmatchedBTBDetails: any[];
-  rawBTBDetails: any[];
+  unmatchedBTBDetails: BTBDetail[];
+  rawBTBDetails: BTBDetail[];
   btbNumber: string | null;
   btbDate: string | null;
 };
@@ -44,7 +56,9 @@ const LoadingOverlay = ({
           <div className="absolute size-12 rounded-full border-4 border-slate-100 border-t-orange-600 animate-spin" />
         </div>
         <div className="text-center">
-          <h3 className="text-sm font-bold text-slate-800">Sinkronisasi Data</h3>
+          <h3 className="text-sm font-bold text-slate-800">
+            Sinkronisasi Data
+          </h3>
           <p className="mt-1 text-[11px] font-semibold text-slate-500">
             Mengambil data BTB Tanggal:{" "}
             <span className="text-orange-600">{btbDate}</span>
@@ -58,22 +72,26 @@ const LoadingOverlay = ({
 const PrepDetailTable = ({
   details,
   unmatchedDetails = [],
+  header,
 }: {
   details: EnrichedDetail[];
-  unmatchedDetails?: any[];
+  unmatchedDetails?: BTBDetail[];
+  header?: AdjustQtyHeader;
 }) => {
   const { list: itemList } = useStoreItem();
+  const [isAdjustOpen, setIsAdjustOpen] = useState(false);
 
   const { pickList, excessList } = useMemo(() => {
     const picked = details
-      .filter((d) => Number(d.item_qty_final ?? d.item_qty_submitted) > 0)
       .map((d) => {
         const final = Number(d.item_qty_final ?? d.item_qty_submitted) || 0;
+        const suggestion = Number(d.item_qty_suggestion) || 0;
         const btb = Number(d.qty_btb) || 0;
         const master = itemList?.find((m: any) => m.sku === d.item_code);
         return {
           ...d,
           itemName: master?.description || d.item_code,
+          suggestionQty: suggestion,
           finalQty: final,
           btbQty: btb,
           topUpQty: Math.max(0, final - btb),
@@ -82,14 +100,13 @@ const PrepDetailTable = ({
       .sort((a, b) => a.itemName.localeCompare(b.itemName));
 
     const excess = unmatchedDetails
-      .map((u) => ({
+      .map((u: BTBDetail) => ({
         ...u,
         itemName:
-          itemList?.find((m: any) => m.sku === (u.PRODUCT_SKU || u.item_code))
-            ?.description ||
-          u.PRODUCT_NAME ||
+          itemList?.find((m: any) => m.sku === u.item_code)?.description ||
+          u.item_name ||
           u.item_code,
-        btbQty: Number(u.QTY_BTB || u.qty_btb) || 0,
+        btbQty: Number(u.btb_qty) || 0,
       }))
       .sort((a, b) => a.itemName.localeCompare(b.itemName));
 
@@ -99,8 +116,17 @@ const PrepDetailTable = ({
   return (
     <div className="grid grid-cols-1 gap-6 border-t bg-slate-50 p-4 lg:grid-cols-2">
       <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
-        <div className="border-b bg-emerald-50 px-4 py-3 text-xs font-bold uppercase text-slate-700">
-          Picking List (Top Up) {pickList.length} Items
+        <div className="flex items-center justify-between gap-2 border-b bg-emerald-50 px-4 py-3">
+          <div className="text-xs font-bold uppercase text-slate-700">
+            Picking List (Top Up) {pickList.length} Items
+          </div>
+          <button
+            type="button"
+            onClick={() => setIsAdjustOpen(true)}
+            className="inline-flex items-center gap-1.5 rounded border border-emerald-300 bg-white px-2.5 py-1 text-[11px] font-bold uppercase text-emerald-700 transition-colors hover:bg-emerald-100"
+          >
+            <FaEdit size={11} /> Adjust Qty
+          </button>
         </div>
         <div className="max-h-72 overflow-auto">
           <table className="w-full text-left text-xs">
@@ -108,16 +134,19 @@ const PrepDetailTable = ({
               <tr>
                 <th className="px-3 py-2">No</th>
                 <th className="px-3 py-2">Item</th>
+                <th className="px-3 py-2 text-center">Qty Suggestion</th>
                 <th className="px-3 py-2 text-center">Qty Final</th>
                 <th className="px-3 py-2 text-center">Qty BTB</th>
-                <th className="px-3 py-2 text-center text-emerald-600">Top Up</th>
+                <th className="px-3 py-2 text-center text-emerald-600">
+                  Top Up
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {pickList.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={5}
+                    colSpan={6}
                     className="px-3 py-6 text-center italic text-slate-400"
                   >
                     Tidak ada item pick list
@@ -125,18 +154,54 @@ const PrepDetailTable = ({
                 </tr>
               ) : (
                 pickList.map((item, i) => (
-                  <tr key={item.id || i} className="hover:bg-slate-50">
-                    <td className="px-3 py-2 font-medium text-slate-800">
+                  <tr
+                    key={item.id || i}
+                    className={
+                      item.finalQty === 0
+                        ? "bg-red-50 text-red-700 hover:bg-red-100"
+                        : "hover:bg-slate-50"
+                    }
+                  >
+                    <td
+                      className={`px-3 py-2 font-medium ${
+                        item.finalQty === 0 ? "text-red-700" : "text-slate-800"
+                      }`}
+                    >
                       {i + 1}
                     </td>
-                    <td className="px-3 py-2 font-medium text-slate-800">
+                    <td
+                      className={`px-3 py-2 font-medium ${
+                        item.finalQty === 0 ? "text-red-700" : "text-slate-800"
+                      }`}
+                    >
                       {item.itemName}
                     </td>
-                    <td className="px-3 py-2 text-center">{item.finalQty}</td>
-                    <td className="px-3 py-2 text-center text-blue-600">
+                    <td
+                      className={`px-3 py-2 text-center ${
+                        item.finalQty === 0 ? "font-bold text-red-600" : ""
+                      }`}
+                    >
+                      {item.item_qty_suggestion}
+                    </td>
+                    <td
+                      className={`px-3 py-2 text-center ${
+                        item.finalQty === 0 ? "font-bold text-red-600" : ""
+                      }`}
+                    >
+                      {item.finalQty}
+                    </td>
+                    <td
+                      className={`px-3 py-2 text-center ${
+                        item.finalQty === 0 ? "text-red-500" : "text-blue-600"
+                      }`}
+                    >
                       {item.btbQty}
                     </td>
-                    <td className="px-3 py-2 text-center font-bold text-emerald-600">
+                    <td
+                      className={`px-3 py-2 text-center font-bold ${
+                        item.finalQty === 0 ? "text-red-600" : "text-emerald-600"
+                      }`}
+                    >
                       {item.topUpQty}
                     </td>
                   </tr>
@@ -189,14 +254,46 @@ const PrepDetailTable = ({
           </table>
         </div>
       </div>
+
+      <AdjustQtySPB
+        isOpen={isAdjustOpen}
+        header={header}
+        items={pickList.map((item) => ({
+          id: String(item.id),
+          name: item.itemName || item.item_code,
+          sku: item.item_code,
+          qtySuggestion: Number(item.suggestionQty ?? item.item_qty_suggestion) || 0,
+          qtyAwal: Number(item.finalQty) || 0,
+          adjustment: 0,
+        }))}
+        onClose={() => setIsAdjustOpen(false)}
+        onSave={({ items: adjustedItems, approvalUrl }) => {
+          console.log("SPB adjustment payload", {
+            items: adjustedItems,
+            approvalUrl,
+          });
+          showSuccessToast(
+            `Adjustment tersimpan sementara (${adjustedItems.length} item)`,
+          );
+          setIsAdjustOpen(false);
+        }}
+      />
     </div>
   );
 };
 
 function GoodPrepView({ callplans, onBack }: GoodPrepViewProps) {
+  console.log("callplans on Good preparation", callplans);
+
   const { user } = usePersistAuthStore.getState();
+  const organization_id =
+    user?.userDetail?.organizationId ||
+    callplans[0]?.organization_id ||
+    "";
   const organization_name =
-    user?.userDetail?.organization?.organization_name || "";
+    user?.userDetail?.organization?.organization_name ||
+    callplans[0]?.organization?.organization_name ||
+    "";
   const { list: itemList, fetchAll: fetchItems } = useStoreItem();
 
   const [isPrintAllOpen, setIsPrintAllOpen] = useState(false);
@@ -204,12 +301,13 @@ function GoodPrepView({ callplans, onBack }: GoodPrepViewProps) {
   const [selectedToPrint, setSelectedToPrint] =
     useState<EnrichedCallplan | null>(null);
   const [showLoading, setShowLoading] = useState(true);
+  const [BTBdata, setBTBdata] = useState<BTB[]>([]);
+  const [isBTBLoading, setIsBTBLoading] = useState(false);
+  const [isBTBSuccess, setIsBTBSuccess] = useState(false);
+  const [errBTB, setErrBTB] = useState<string | null>(null);
 
   const targetDate = useMemo(() => {
-    return (
-      callplans[0]?.callplan_date_start ||
-      dayjs().format("YYYY-MM-DD")
-    );
+    return callplans[0]?.callplan_date_start || dayjs().format("YYYY-MM-DD");
   }, [callplans]);
 
   const btbDateLabel = useMemo(
@@ -217,28 +315,65 @@ function GoodPrepView({ callplans, onBack }: GoodPrepViewProps) {
     [targetDate],
   );
 
-  const {
-    data: BTBdata,
-    isLoading: isBTBLoading,
-    error: errBTB,
-    isSuccess: isBTBSuccess,
-  } = useGetBTB(
-    {
-      CABANG: String(organization_name),
-      CALL_PLAN_START_DATE: targetDate,
-    },
-    {
-      enabled: !!(organization_name && targetDate && callplans.length > 0),
-    },
-  );
+  const salesNikList = useMemo(() => {
+    return [
+      ...new Set(
+        callplans
+          .map((cp) => cp.sales_nik?.trim())
+          .filter((nik): nik is string => Boolean(nik)),
+      ),
+    ];
+  }, [callplans]);
 
   useEffect(() => {
     fetchItems();
   }, [fetchItems]);
 
   useEffect(() => {
-    if (errBTB) showErrorToast(errBTB);
-  }, [errBTB]);
+    const fetchBTB = async () => {
+      if (!salesNikList.length || !targetDate) {
+        setBTBdata([]);
+        setIsBTBSuccess(false);
+        return;
+      }
+
+      setIsBTBLoading(true);
+      setErrBTB(null);
+      setIsBTBSuccess(false);
+
+      try {
+        const results = await Promise.all(
+          salesNikList.map((sales_nik) =>
+            btbService.getBTB({
+              page: 1,
+              limit: 100,
+              sortOrder: "DESC",
+              sales_nik,
+              organization_id: organization_id || undefined,
+              date_from: targetDate,
+              date_to: targetDate,
+            }),
+          ),
+        );
+
+        const merged = results.flatMap((r) => r.data);
+        setBTBdata(merged);
+        setIsBTBSuccess(true);
+      } catch (error) {
+        console.error("Gagal fetch BTB:", error);
+        const message =
+          error instanceof Error ? error.message : "Gagal mengambil data BTB";
+        setErrBTB(message);
+        setBTBdata([]);
+        setIsBTBSuccess(false);
+        showErrorToast(message);
+      } finally {
+        setIsBTBLoading(false);
+      }
+    };
+
+    fetchBTB();
+  }, [salesNikList, targetDate, organization_id]);
 
   useEffect(() => {
     if (isBTBLoading) {
@@ -249,7 +384,7 @@ function GoodPrepView({ callplans, onBack }: GoodPrepViewProps) {
     return () => clearTimeout(timer);
   }, [isBTBLoading]);
 
-  const isBTBEmpty = isBTBSuccess && (!BTBdata || BTBdata.length === 0);
+  const isBTBEmpty = isBTBSuccess && BTBdata.length === 0;
   const isPrintDisabled = !isBTBSuccess || isBTBEmpty;
 
   /** Rekonsiliasi SPB FINAL (callplans) × BTB per salesman */
@@ -257,30 +392,29 @@ function GoodPrepView({ callplans, onBack }: GoodPrepViewProps) {
     if (!callplans.length) return [];
 
     return callplans.map((doc) => {
-      const btbForSalesman = BTBdata?.find(
-        (b) => b.SALES_NIK?.trim() === doc.sales_nik?.trim(),
+      const btbForSalesman = BTBdata.find(
+        (b) => b.sales_nik?.trim() === doc.sales_nik?.trim(),
       );
       const btbDetails = btbForSalesman?.details || [];
       const doSkuSet = new Set(
-        (doc.details || []).map((d) => d.item_code?.trim()),
+        (doc.details || []).map((d: CallplanDetail) => d.item_code?.trim()),
       );
 
       const matchedDetails: EnrichedDetail[] = (doc.details || []).map(
-        (detail) => {
+        (detail: CallplanDetail) => {
           const matchingBtbItem = btbDetails.find(
-            (b: any) =>
-              (b.PRODUCT_SKU || b.item_code)?.trim() ===
-              detail.item_code?.trim(),
+            (b: BTBDetail) =>
+              b.item_code?.trim() === detail.item_code?.trim(),
           );
           return {
             ...detail,
-            qty_btb: matchingBtbItem ? Number(matchingBtbItem.QTY_BTB) || 0 : 0,
+            qty_btb: matchingBtbItem ? Number(matchingBtbItem.btb_qty) || 0 : 0,
           };
         },
       );
 
       const unmatchedBTBDetails = btbDetails.filter(
-        (b: any) => !doSkuSet.has((b.PRODUCT_SKU || b.item_code)?.trim()),
+        (b: BTBDetail) => !doSkuSet.has(b.item_code?.trim()),
       );
 
       return {
@@ -288,8 +422,8 @@ function GoodPrepView({ callplans, onBack }: GoodPrepViewProps) {
         details: matchedDetails,
         unmatchedBTBDetails,
         rawBTBDetails: btbDetails,
-        btbNumber: btbForSalesman?.BTB_NUMBER || null,
-        btbDate: btbForSalesman?.TANGGAL_BTB || null,
+        btbNumber: btbForSalesman?.btb_number || null,
+        btbDate: btbForSalesman?.btb_date || null,
       };
     });
   }, [callplans, BTBdata]);
@@ -358,25 +492,50 @@ function GoodPrepView({ callplans, onBack }: GoodPrepViewProps) {
         header: "Action",
         cell: ({ row }) => {
           const rowData = row.original;
-          return (
-            <div className="flex items-center gap-2 whitespace-nowrap">
-              <button
-                type="button"
-                onClick={() => {
-                  setSelectedToPrint(rowData);
-                  setIsModalOpen(true);
-                }}
-                disabled={isPrintDisabled}
-                className={`flex items-center gap-1.5 rounded px-3 py-1.5 text-xs font-bold text-white transition-colors ${
-                  isPrintDisabled
-                    ? "cursor-not-allowed bg-slate-200 text-slate-400"
-                    : "bg-blue-600 hover:bg-blue-700"
-                }`}
-              >
-                <FaPrint size={11} /> Print SPB
-              </button>
-            </div>
-          );
+          const actionList = [
+            {
+              label: "Print SPB",
+              icon: FaPrint,
+              onClick: () => {
+                setSelectedToPrint(rowData);
+                setIsModalOpen(true);
+              },
+              disabled: isPrintDisabled,
+              className: isPrintDisabled ? "text-slate-400" : "text-blue-600",
+            },
+            {
+              label: "Print BKB",
+              icon: FaFileAlt,
+              onClick: () => {
+                showSuccessToast(
+                  `Print BKB (${rowData.spb_number || rowData.callplan_number}) — coming soon`,
+                );
+              },
+              className: "text-indigo-600",
+            },
+            {
+              label: "Integrate Meta",
+              icon: FaSyncAlt,
+              onClick: () => {
+                showSuccessToast(
+                  `Integrate Meta (${rowData.spb_number || rowData.callplan_number}) — coming soon`,
+                );
+              },
+              className: "text-emerald-600",
+            },
+            {
+              label: "Interface to DMS",
+              icon: FaExchangeAlt,
+              onClick: () => {
+                showSuccessToast(
+                  `Interface to DMS (${rowData.spb_number || rowData.callplan_number}) — coming soon`,
+                );
+              },
+              className: "text-orange-600",
+            },
+          ];
+
+          return <ActionMenu actions={actionList} />;
         },
       },
     ],
@@ -386,7 +545,7 @@ function GoodPrepView({ callplans, onBack }: GoodPrepViewProps) {
   const handleExportSummary = () => {
     // Ringkas: export CSV lokal (tanpa dependency Excel hook DO Suggestion)
     const rows = [
-      ["SKU", "Item Name", "Qty Final", "Qty BTB", "Top Up", "UOM"],
+      ["SKU", "Item Name", "Qty SPB", "Qty BTB", "Top Up", "UOM"],
       ...aggregatedPickList.map((r) => [
         r.item_code,
         r.itemName,
@@ -488,9 +647,18 @@ function GoodPrepView({ callplans, onBack }: GoodPrepViewProps) {
             <PrepDetailTable
               details={row.details || []}
               unmatchedDetails={row.unmatchedBTBDetails || []}
+              header={{
+                callplanNumber: row.callplan_number || row.spb_number,
+                salesName: row.sales_name,
+                salesNik: row.sales_nik,
+                spvName: row.sales_spv,
+                spvNik: row.sales_spv_nik,
+                status: row.status,
+              }}
             />
           </div>
         )}
+        
         headerActions={
           <div className="flex w-full min-w-full flex-1 items-center gap-4">
             <div>
@@ -551,8 +719,7 @@ function GoodPrepView({ callplans, onBack }: GoodPrepViewProps) {
         organizationName={String(organization_name)}
         spbCount={callplans.length}
         callplanNumber={
-          callplans[0]?.callplan_number ||
-          `CP-${targetDate.replace(/-/g, "")}`
+          callplans[0]?.callplan_number || `CP-${targetDate.replace(/-/g, "")}`
         }
       />
     </div>
