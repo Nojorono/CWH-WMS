@@ -25,9 +25,6 @@ export const PrintPreviewModal = ({
   const isIntegrated = ["SUCCESS", "INTEGRATED"].includes(status);
   const buttonLabel = isIntegrated ? "Re-Print Struk" : "Cetak Struk";
 
-  console.log("DATA SPB", data);
-  console.log("unmatchBTB", unmatchBTB);
-
   const { fetchAll, list: itemList } = useStoreItem();
   useEffect(() => {
     fetchAll();

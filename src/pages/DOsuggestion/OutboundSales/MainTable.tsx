@@ -66,7 +66,6 @@ const MainTable = () => {
 
   const [currentStep, setCurrentStep] = useState<Step>("SUBMITTED");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("SUBMITTED");
-  const [calculatedResults, setCalculatedResults] = useState<any[]>([]);
 
   // 2. FETCHING DATA
   const {
@@ -243,7 +242,6 @@ const MainTable = () => {
             data={dataForCalculation as any}
             params={paramGetBTB}
             onProceed={async (results) => {
-              setCalculatedResults(results);
               setCurrentStep("PREPARATION");
               setStatusFilter("FINAL");
             }}

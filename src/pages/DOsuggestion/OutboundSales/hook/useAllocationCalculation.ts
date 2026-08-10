@@ -71,7 +71,7 @@ export const useAllocationCalculation = (
          * 2. Build Request Map (Menggunakan Unique Key)
          * ======================================
          */
-        const totalSubmittedPerSku = flatSalesmanList
+        const totalSuggestedPerSku = flatSalesmanList
             .flatMap((salesman) => salesman.details)
             .reduce(
                 (acc, detail) => {
@@ -79,7 +79,7 @@ export const useAllocationCalculation = (
                     if (!key) return acc;
 
                     registerSkuMeta(key, detail);
-                    acc[key] = (acc[key] || 0) + safeParse(detail.item_qty_submitted);
+                    acc[key] = (acc[key] || 0) + safeParse(detail.item_qty_suggestion);
 
                     return acc;
                 },
@@ -94,7 +94,7 @@ export const useAllocationCalculation = (
         const uniqueKeys = [
             ...new Set([
                 ...Object.keys(sohMap),
-                ...Object.keys(totalSubmittedPerSku),
+                ...Object.keys(totalSuggestedPerSku),
             ]),
         ];
 
@@ -105,7 +105,7 @@ export const useAllocationCalculation = (
             return {
                 sku,
                 soh: sohMap[key] || 0,
-                totalRequest: totalSubmittedPerSku[key] || 0,
+                totalRequest: totalSuggestedPerSku[key] || 0,
                 item_code: meta?.item_code || sku,
                 item_number: meta?.item_number || "-",
                 item_description: meta?.item_description || "-",
@@ -127,13 +127,13 @@ export const useAllocationCalculation = (
                     const sku = resolveSku(detail);
                     const key = getItemKey(detail); // Gunakan key unik untuk matching
 
-                    const submitted = safeParse(detail.item_qty_submitted);
+                    const suggested = safeParse(detail.item_qty_suggestion);
                     const qtyBtb = safeParse(detail.qty_btb || 0);
 
-                    const totalReq = totalSubmittedPerSku[key] || 0;
+                    const totalReq = totalSuggestedPerSku[key] || 0;
                     const soh = sohMap[key] || 0;
 
-                    const contribution = totalReq > 0 ? submitted / totalReq : 0;
+                    const contribution = totalReq > 0 ? suggested / totalReq : 0;
 
                     let finalQty = 0;
                     let allocationStatus = "NORMAL";
@@ -142,7 +142,7 @@ export const useAllocationCalculation = (
                         finalQty = 0;
                         allocationStatus = "NO_STOCK";
                     } else if (soh >= totalReq) {
-                        finalQty = submitted;
+                        finalQty = suggested;
                         allocationStatus = "AVAILABLE";
                     } else {
                         finalQty = Math.round(contribution * soh);
