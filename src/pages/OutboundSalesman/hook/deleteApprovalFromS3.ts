@@ -1,5 +1,5 @@
-import axiosInstance from "../../../../API/services/AxiosInstance";
-import { S3EndPoint } from "../../../../utils/EndPoint";
+import axiosInstance from "../../../API/services/AxiosInstance";
+import { S3EndPoint } from "../../../utils/EndPoint";
 
 /** Hapus file approval dari S3 berdasarkan URL publik hasil upload */
 export async function deleteApprovalFromS3(fileUrl: string): Promise<void> {

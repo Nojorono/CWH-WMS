@@ -1,8 +1,8 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { FaSave, FaTimes, FaUpload } from "react-icons/fa";
 import { showErrorToast, showSuccessToast } from "../../../../components/toast";
-import { deleteApprovalFromS3 } from "./deleteApprovalFromS3";
-import { uploadApprovalToS3 } from "./uploadApprovalToS3";
+import { deleteApprovalFromS3 } from "../../hook/deleteApprovalFromS3";
+import { uploadApprovalToS3 } from "../../hook/uploadApprovalToS3";
 
 export type AdjustQtyItem = {
   id: string;

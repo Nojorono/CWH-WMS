@@ -1,25 +1,33 @@
 import React, { useMemo, useEffect, useState } from "react";
-import { 
-  FaEdit, 
-  FaExclamationTriangle, 
-  FaTimes, 
-  FaCheckCircle, 
-  FaSpinner, 
+import {
+  FaEdit,
+  FaExclamationTriangle,
+  FaTimes,
+  FaCheckCircle,
+  FaSpinner,
   FaBoxOpen,
-  FaArrowRight
+  FaArrowRight,
 } from "react-icons/fa";
+import Swal from "sweetalert2";
 
 export type SohCheckLine = {
   id: string;
+  callplanId: string;
+  spbNumber: string;
+  salesName: string;
   sku: string;
   itemName: string;
+  qtySuggestion: number;
   qtySpb: number;
   soh: number;
-  status: "AVAILABLE" | "LESS_STOCK" | "NO_STOCK";
+  status: "AVAILABLE" | "LESS_STOCK" | "NO_STOCK" | "NOT_NEEDED";
 };
 
 type IntegrateSOHCheckModalProps = {
   isOpen: boolean;
+  /** Mode global: cek semua SPB sekaligus */
+  mode?: "global" | "single";
+  spbCount?: number;
   callplanNumber?: string;
   salesName?: string;
   lines: SohCheckLine[];
@@ -34,26 +42,48 @@ const statusBadge = (status: SohCheckLine["status"]) => {
   if (status === "AVAILABLE") {
     return {
       label: "Available",
-      badgeClass: "bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-600/20",
+      badgeClass:
+        "bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-600/20",
+      rowClass: "hover:bg-slate-50/50 transition-colors duration-200",
+    };
+  }
+  if (status === "NOT_NEEDED") {
+    return {
+      label: "Tidak Dibutuhkan",
+      badgeClass:
+        "bg-slate-100 text-slate-600 ring-1 ring-inset ring-slate-500/20",
       rowClass: "hover:bg-slate-50/50 transition-colors duration-200",
     };
   }
   if (status === "LESS_STOCK") {
     return {
       label: "Less Stock",
-      badgeClass: "bg-amber-50 text-amber-700 ring-1 ring-inset ring-amber-600/20",
-      rowClass: "bg-amber-50/30 hover:bg-amber-50/60 transition-colors duration-200",
+      badgeClass:
+        "bg-amber-500 text-white ring-2 ring-amber-600/40 shadow-sm",
+      rowClass:
+        "bg-amber-100 hover:bg-amber-200/80 border-l-4 border-l-amber-500 font-medium transition-colors duration-200",
+    };
+  }
+  if (status === "NO_STOCK") {
+    return {
+      label: "No Stock",
+      badgeClass: "bg-rose-50 text-rose-700 ring-1 ring-inset ring-rose-600/20",
+      rowClass:
+        "bg-rose-50/30 hover:bg-rose-50/60 transition-colors duration-200",
     };
   }
   return {
-    label: "No Stock",
-    badgeClass: "bg-rose-50 text-rose-700 ring-1 ring-inset ring-rose-600/20",
-    rowClass: "bg-rose-50/30 hover:bg-rose-50/60 transition-colors duration-200",
+    label: "Available",
+    badgeClass:
+      "bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-600/20",
+    rowClass: "hover:bg-slate-50/50 transition-colors duration-200",
   };
 };
 
 export default function IntegrateSOHCheckModal({
   isOpen,
+  mode = "single",
+  spbCount = 1,
   callplanNumber,
   salesName,
   lines,
@@ -73,21 +103,76 @@ export default function IntegrateSOHCheckModal({
     }
   }, [isOpen]);
 
-  const issueCount = useMemo(
-    () => lines.filter((l) => l.status !== "AVAILABLE").length,
-    [lines]
+  // LESS_STOCK → wajib adjust; Integrate diblok
+  const lessStockLines = useMemo(
+    () => lines.filter((l) => l.status === "LESS_STOCK"),
+    [lines],
   );
-  const hasIssue = issueCount > 0;
+  const hasLessStock = lessStockLines.length > 0;
 
+  const isGlobal = mode === "global";
+  const lessStockSpbLabels = useMemo(() => {
+    const labels = [
+      ...new Set(
+        lessStockLines.map((l) => l.spbNumber).filter(Boolean),
+      ),
+    ];
+    return labels.join(", ");
+  }, [lessStockLines]);
+
+  // No Stock & Less Stock selalu di baris atas; group by SPB di global mode
   const sortedLines = useMemo(() => {
-    const priority = (s: SohCheckLine["status"]) =>
-      s === "NO_STOCK" ? 0 : s === "LESS_STOCK" ? 1 : 2;
+    const priority = (s: SohCheckLine["status"]) => {
+      if (s === "NO_STOCK") return 0;
+      if (s === "LESS_STOCK") return 1;
+      if (s === "AVAILABLE") return 2;
+      return 3; // NOT_NEEDED
+    };
     return [...lines].sort((a, b) => {
       const p = priority(a.status) - priority(b.status);
       if (p !== 0) return p;
+      if (isGlobal) {
+        const spbCmp = a.spbNumber.localeCompare(b.spbNumber);
+        if (spbCmp !== 0) return spbCmp;
+      }
+      const selisihA = a.soh - a.qtySpb;
+      const selisihB = b.soh - b.qtySpb;
+      if (selisihA !== selisihB) return selisihA - selisihB;
       return a.itemName.localeCompare(b.itemName);
     });
-  }, [lines]);
+  }, [lines, isGlobal]);
+
+  const handleProceedClick = async () => {
+    // Guard: ada LESS_STOCK → jangan lanjut
+    if (hasLessStock) return;
+
+    const spbLabel = isGlobal
+      ? `Semua SPB (${spbCount})`
+      : callplanNumber || "SPB ini";
+    const confirm = await Swal.fire({
+      title: "Konfirmasi Integrasi?",
+      html: isGlobal
+        ? `Apakah benar akan dilakukan <strong>Integrate Meta</strong> untuk <strong>${spbCount} SPB</strong>?`
+        : `Apakah benar akan dilakukan <strong>Integrate Meta</strong> untuk SPB<br/><strong>${spbLabel}</strong>${
+            salesName ? ` (${salesName})` : ""
+          }?`,
+      icon: "question",
+      showCancelButton: true,
+      confirmButtonText: "Ya, Lanjutkan",
+      cancelButtonText: "Tidak",
+      confirmButtonColor: "#059669",
+      cancelButtonColor: "#6b7280",
+      reverseButtons: true,
+      didOpen: () => {
+        const container = Swal.getContainer();
+        if (container) container.style.zIndex = "100000";
+      },
+    });
+
+    // Tidak → stay di modal cek integrasi
+    if (!confirm.isConfirmed) return;
+    onProceed();
+  };
 
   if (!isOpen) return null;
 
@@ -106,14 +191,32 @@ export default function IntegrateSOHCheckModal({
         <div className="flex items-center justify-between border-b border-slate-100 px-6 py-5">
           <div className="flex flex-col gap-1">
             <h2 className="text-xl font-semibold tracking-tight text-slate-900">
-              Validasi SOH vs QTY SPB
+              {isGlobal
+                ? "Validasi SOH vs Qty SPB (Semua SPB)"
+                : "Validasi SOH vs QTY SPB"}
             </h2>
-            <div className="flex items-center gap-2 text-sm font-medium text-slate-500">
-              <span className="inline-flex items-center rounded-md bg-slate-100 px-2 py-0.5 text-slate-700">
-                {callplanNumber || "No Callplan"}
-              </span>
-              <span className="text-slate-300">•</span>
-              <span>{salesName || "Unknown Sales"}</span>
+            <div className="flex flex-wrap items-center gap-2 text-sm font-medium text-slate-500">
+              {isGlobal ? (
+                <>
+                  <span className="inline-flex items-center rounded-md bg-slate-100 px-2 py-0.5 text-slate-700">
+                    {spbCount} SPB FINAL
+                  </span>
+                  {callplanNumber && (
+                    <>
+                      <span className="text-slate-300">•</span>
+                      <span>Dipicu dari: {callplanNumber}</span>
+                    </>
+                  )}
+                </>
+              ) : (
+                <>
+                  <span className="inline-flex items-center rounded-md bg-slate-100 px-2 py-0.5 text-slate-700">
+                    {callplanNumber || "No Callplan"}
+                  </span>
+                  <span className="text-slate-300">•</span>
+                  <span>{salesName || "Unknown Sales"}</span>
+                </>
+              )}
             </div>
           </div>
           <button
@@ -134,17 +237,30 @@ export default function IntegrateSOHCheckModal({
                 Memuat data Stock On Hand secara real-time...
               </p>
             </div>
-          ) : hasIssue ? (
-            <div className="flex items-start gap-3 rounded-xl border border-amber-200/60 bg-amber-50 px-4 py-3 shadow-sm">
+          ) : hasLessStock ? (
+            <div className="flex items-start gap-3 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 shadow-sm">
               <div className="mt-0.5 rounded-full bg-amber-100 p-1">
                 <FaExclamationTriangle className="text-amber-600" size={14} />
               </div>
-              <div className="flex flex-col">
+              <div className="flex flex-col gap-1">
                 <p className="text-sm font-semibold text-amber-900">
-                  Ditemukan {issueCount} SKU yang melebihi atau tidak tersedia di SOH
+                  {isGlobal
+                    ? "Integrate Meta diblokir untuk semua SPB"
+                    : "Integrate Meta tidak bisa dilanjutkan"}
                 </p>
-                <p className="mt-0.5 text-xs font-medium text-amber-700/80">
-                  Harap sesuaikan kuantitas SPB (Adjust Qty) terlebih dahulu sebelum melanjutkan integrasi ke Meta.
+                <p className="text-xs font-medium text-amber-800">
+                  {lessStockLines.length} item Less Stock — Qty SPB melebihi SOH.
+                  {isGlobal && lessStockSpbLabels && (
+                    <>
+                      {" "}
+                      SPB terdampak:{" "}
+                      <span className="font-bold">{lessStockSpbLabels}</span>
+                    </>
+                  )}
+                </p>
+                <p className="text-xs font-medium text-amber-700/80">
+                  Sesuaikan Qty SPB pada SPB terkait agar tidak melebihi SOH,
+                  lalu coba Integrate lagi.
                 </p>
               </div>
             </div>
@@ -155,10 +271,12 @@ export default function IntegrateSOHCheckModal({
               </div>
               <div className="flex flex-col">
                 <p className="text-sm font-semibold text-emerald-900">
-                  Semua SKU Tersedia
+                  {isGlobal
+                    ? "Semua SPB siap Integrate Meta"
+                    : "Tidak ada SKU Less Stock"}
                 </p>
                 <p className="mt-0.5 text-xs font-medium text-emerald-700/80">
-                  Kuantitas SPB tervalidasi dengan Stock On Hand. Siap untuk proses selanjutnya.
+                  Qty SPB vs SOH sudah sesuai untuk seluruh item.
                 </p>
               </div>
             </div>
@@ -174,11 +292,19 @@ export default function IntegrateSOHCheckModal({
                   <th className="px-4 py-3 text-center text-[11px] font-semibold tracking-wider text-slate-500 uppercase">
                     No
                   </th>
+                  {isGlobal && (
+                    <th className="px-4 py-3 text-[11px] font-semibold tracking-wider text-slate-500 uppercase">
+                      SPB
+                    </th>
+                  )}
                   <th className="px-4 py-3 text-[11px] font-semibold tracking-wider text-slate-500 uppercase">
                     Item Name
                   </th>
                   <th className="px-4 py-3 text-[11px] font-semibold tracking-wider text-slate-500 uppercase">
                     SKU
+                  </th>
+                  <th className="px-4 py-3 text-center text-[11px] font-semibold tracking-wider text-slate-500 uppercase">
+                    Qty Suggestion
                   </th>
                   <th className="px-4 py-3 text-center text-[11px] font-semibold tracking-wider text-slate-500 uppercase">
                     Qty SPB
@@ -198,14 +324,14 @@ export default function IntegrateSOHCheckModal({
                 {sortedLines.length === 0 ? (
                   <tr>
                     <td
-                      colSpan={7}
+                      colSpan={isGlobal ? 9 : 8}
                       className="px-4 py-16 text-center text-sm text-slate-400"
                     >
                       <div className="flex flex-col items-center justify-center gap-3">
                         <div className="rounded-full bg-slate-50 p-4">
                           <FaBoxOpen size={24} className="text-slate-300" />
                         </div>
-                        <p>Tidak ada item pada SPB ini</p>
+                        <p>Tidak ada item pada SPB</p>
                       </div>
                     </td>
                   </tr>
@@ -213,17 +339,30 @@ export default function IntegrateSOHCheckModal({
                   sortedLines.map((line, idx) => {
                     const badge = statusBadge(line.status);
                     const selisih = line.soh - line.qtySpb;
-                    
+
                     return (
-                      <tr key={line.id} className={`group ${badge.rowClass}`}>
+                      <tr key={`${line.callplanId}-${line.id}`} className={`group ${badge.rowClass}`}>
                         <td className="px-4 py-3.5 text-center font-medium text-slate-400 group-hover:text-slate-500">
                           {idx + 1}
                         </td>
+                        {isGlobal && (
+                          <td className="px-4 py-3.5">
+                            <div className="font-semibold text-slate-800">
+                              {line.spbNumber}
+                            </div>
+                            <div className="text-[10px] text-slate-500">
+                              {line.salesName}
+                            </div>
+                          </td>
+                        )}
                         <td className="px-4 py-3.5 font-medium text-slate-900">
                           {line.itemName}
                         </td>
                         <td className="px-4 py-3.5 font-mono text-xs text-slate-500">
                           {line.sku}
+                        </td>
+                        <td className="px-4 py-3.5 text-center text-sm font-semibold text-slate-600">
+                          {line.qtySuggestion}
                         </td>
                         <td className="px-4 py-3.5 text-center text-sm font-semibold text-slate-700">
                           {line.qtySpb}
@@ -252,7 +391,7 @@ export default function IntegrateSOHCheckModal({
           </div>
         </div>
 
-        {/* Footer Actions */}
+        {/* Footer Actions — selalu 3 tombol */}
         <div className="flex items-center justify-end gap-3 border-t border-slate-100 bg-slate-50/50 px-6 py-5">
           <button
             type="button"
@@ -261,27 +400,33 @@ export default function IntegrateSOHCheckModal({
           >
             Kembali
           </button>
-          
-          {hasIssue ? (
-            <button
-              type="button"
-              onClick={onAdjust}
-              className="inline-flex items-center gap-2 rounded-xl bg-amber-500 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-amber-600 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2"
-            >
-              <FaEdit size={14} /> 
-              Adjust Qty SPB
-            </button>
-          ) : (
-            <button
-              type="button"
-              onClick={onProceed}
-              disabled={isSohLoading || sortedLines.length === 0}
-              className="group inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:shadow-none"
-            >
-              Lanjut Integrate Meta
-              <FaArrowRight size={12} className="transition-transform group-hover:translate-x-0.5" />
-            </button>
-          )}
+
+          <button
+            type="button"
+            onClick={onAdjust}
+            className="inline-flex items-center gap-2 rounded-xl bg-amber-500 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-amber-600 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2"
+          >
+            <FaEdit size={14} />
+            Adjust Qty SPB
+          </button>
+
+          <button
+            type="button"
+            onClick={handleProceedClick}
+            disabled={isSohLoading || hasLessStock}
+            title={
+              hasLessStock
+                ? "Ada SKU Less Stock — wajib Adjust Qty dulu"
+                : undefined
+            }
+            className="group inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:shadow-none"
+          >
+            Lanjut Integrate Meta
+            <FaArrowRight
+              size={12}
+              className="transition-transform group-hover:translate-x-0.5"
+            />
+          </button>
         </div>
       </div>
     </div>

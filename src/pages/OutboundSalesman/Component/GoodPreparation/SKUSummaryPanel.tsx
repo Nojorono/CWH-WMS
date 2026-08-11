@@ -1,5 +1,5 @@
 import dayjs from "dayjs";
-import React, { useState, useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import { FaRotate } from "react-icons/fa6";
 import { formatDateTimeIndo } from "../../../../helper/FormatDateTime";
 
@@ -8,7 +8,6 @@ interface SKUSummaryPanelProps {
   onSearchChange: (val: string) => void;
 }
 
-// Fungsi helper diletakkan di luar definisi komponen utama
 /** Status kartu: SPB > SOH → Less Stock; SPB === 0 & SOH === 0 → No Stock */
 const getStockStatus = (item: {
   soh?: number;
@@ -28,10 +27,8 @@ const getItemCardConfig = (item: any) => {
     item.item_description !== "undefined"
   );
 
-  // Kasus 1: Item belum terdaftar
   if (!isRegistered) {
     return {
-      isRegistered: false,
       cardClass: "bg-slate-50 border-slate-300 border-dashed",
       label: "Not Registered",
       colorClass: "bg-slate-100 text-slate-700",
@@ -43,10 +40,8 @@ const getItemCardConfig = (item: any) => {
 
   const stockStatus = getStockStatus(item);
 
-  // Kasus 2: NO STOCK — hanya jika SOH === 0 dan SPB === 0
   if (stockStatus === "NO_STOCK") {
     return {
-      isRegistered: true,
       cardClass: "bg-red-50/50 border-red-200",
       label: "No Stock",
       colorClass: "bg-red-100 text-red-700",
@@ -56,10 +51,8 @@ const getItemCardConfig = (item: any) => {
     };
   }
 
-  // Kasus 3: AVAILABLE — SOH >= SPB
   if (stockStatus === "AVAILABLE") {
     return {
-      isRegistered: true,
       cardClass: "bg-emerald-50 border-emerald-200",
       label: "Available",
       colorClass: "bg-white text-emerald-500",
@@ -69,9 +62,7 @@ const getItemCardConfig = (item: any) => {
     };
   }
 
-  // Kasus 4: LESS STOCK — SPB > SOH
   return {
-    isRegistered: true,
     cardClass: "bg-amber-50/50 border-amber-200",
     label: "Less Stock",
     colorClass: "bg-amber-100 text-amber-700",
@@ -80,7 +71,6 @@ const getItemCardConfig = (item: any) => {
     showDate: true,
   };
 };
-
 
 export const SKUSummaryPanel = ({
   summary,
@@ -106,20 +96,19 @@ export const SKUSummaryPanel = ({
       );
     }
 
-    if (filter === "LESS_STOCK")
-      // SPB > SOH
+    if (filter === "LESS_STOCK") {
       data = data.filter(
         (s) => s.item_description && getStockStatus(s) === "LESS_STOCK",
       );
-    else if (filter === "AVAILABLE")
+    } else if (filter === "AVAILABLE") {
       data = data.filter(
         (s) => s.item_description && getStockStatus(s) === "AVAILABLE",
       );
-    else if (filter === "NO_STOCK")
-      // Hanya SOH === 0 & SPB === 0
+    } else if (filter === "NO_STOCK") {
       data = data.filter(
         (s) => s.item_description && getStockStatus(s) === "NO_STOCK",
       );
+    }
 
     return data.sort((a, b) => {
       const getPriority = (s: any) => {
@@ -134,20 +123,20 @@ export const SKUSummaryPanel = ({
   }, [summary, filter, search]);
 
   const handleCardClick = (sku: string) => {
-    setSearch(sku); // Update input di panel
-    onSearchChange(sku); // Trigger filter di parent (BaseTable)
+    setSearch(sku);
+    onSearchChange(sku);
   };
 
   return (
     <div className="mb-6 space-y-4">
-      <div className="flex flex-col sm:flex-row justify-between gap-4">
+      <div className="flex flex-col justify-between gap-4 sm:flex-row">
         <div className="relative w-full sm:w-64">
           <input
             type="text"
             placeholder="Cari SKU..."
             value={search}
             onChange={handleInputChange}
-            className="w-full px-4 py-2 text-xs border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-400"
+            className="w-full rounded-lg border border-slate-200 px-4 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-slate-400"
           />
           {search && (
             <button
@@ -155,7 +144,7 @@ export const SKUSummaryPanel = ({
                 setSearch("");
                 onSearchChange("");
               }}
-              className="absolute right-3 top-2 text-slate-400 hover:text-red-500"
+              className="absolute top-2 right-3 text-slate-400 hover:text-red-500"
             >
               <FaRotate />
             </button>
@@ -167,10 +156,11 @@ export const SKUSummaryPanel = ({
             <button
               key={tab}
               onClick={() => setFilter(tab)}
-              className={`px-3 py-1.5 text-[10px] font-bold rounded-lg border transition-all ${filter === tab
-                ? "bg-slate-800 text-white"
-                : "bg-white text-slate-600 border-slate-200"
-                }`}
+              className={`rounded-lg border px-3 py-1.5 text-[10px] font-bold transition-all ${
+                filter === tab
+                  ? "bg-slate-800 text-white"
+                  : "border-slate-200 bg-white text-slate-600"
+              }`}
             >
               {tab.replace("_", " ")}
             </button>
@@ -179,26 +169,25 @@ export const SKUSummaryPanel = ({
       </div>
 
       <div className="overflow-x-auto pb-4">
-        <div className="flex flex-wrap gap-3 max-h-70 overflow-y-auto pr-2 custom-scrollbar">
+        <div className="custom-scrollbar flex max-h-70 flex-wrap gap-3 overflow-y-auto pr-2">
           {filteredData.map((item) => {
-            // Panggil config helper
             const config = getItemCardConfig(item);
 
             return (
               <div
                 key={item.sku}
                 onClick={() => handleCardClick(item.sku)}
-                className={`p-4 w-72 rounded-xl border shadow-sm transition-all duration-200 cursor-pointer hover:shadow-md hover:scale-[1.02] ${config.cardClass}`}
+                className={`w-72 cursor-pointer rounded-xl border p-4 shadow-sm transition-all duration-200 hover:scale-[1.02] hover:shadow-md ${config.cardClass}`}
               >
-                {/* Header: SKU & Status */}
-                <div className="flex justify-between items-start mb-4">
-                  <div className="flex flex-col truncate mr-2 w-full">
-                    <span className="text-[14px] uppercase tracking-wider font-bold text-slate-500">
+                <div className="mb-4 flex items-start justify-between">
+                  <div className="mr-2 flex w-full flex-col truncate">
+                    <span className="text-[14px] font-bold tracking-wider text-slate-500 uppercase">
                       {item.sku}
                     </span>
 
-                    {/* Menampilkan deskripsi secara bersih */}
-                    <span className={`text-[11px] leading-tight truncate ${config.descriptionClass}`}>
+                    <span
+                      className={`truncate text-[11px] leading-tight ${config.descriptionClass}`}
+                    >
                       {config.description}
                     </span>
 
@@ -213,10 +202,9 @@ export const SKUSummaryPanel = ({
                   </div>
                 </div>
 
-                {/* Metrics Section */}
-                <div className="grid grid-cols-2 gap-2 mt-3 pt-3 border-t border-slate-100">
+                <div className="mt-3 grid grid-cols-2 gap-2 border-t border-slate-100 pt-3">
                   <div>
-                    <p className="text-[9px] uppercase tracking-wider text-slate-400 font-medium">
+                    <p className="text-[9px] font-medium tracking-wider text-slate-400 uppercase">
                       Stock on Hand
                     </p>
                     <p className="text-sm font-bold text-slate-800">
@@ -225,7 +213,7 @@ export const SKUSummaryPanel = ({
                   </div>
 
                   <div className="text-right">
-                    <p className="text-[9px] uppercase tracking-wider text-slate-400 font-medium">
+                    <p className="text-[9px] font-medium tracking-wider text-slate-400 uppercase">
                       Total Qty SPB
                     </p>
                     <p className="text-sm font-bold text-slate-800">
@@ -241,3 +229,4 @@ export const SKUSummaryPanel = ({
     </div>
   );
 };
+
