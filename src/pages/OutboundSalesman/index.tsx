@@ -4,6 +4,7 @@ import CalculationView from "./Component/Calculation/CalculationView";
 import GoodPrepView from "./Component/GoodPreparation/GoodPrepView";
 import { Callplan } from "./types/CallplanTypes";
 import { OutboundSalesmanStep } from "./types/flow";
+import { showErrorToast } from "../../components/toast";
 
 /**
  * Outbound Salesman – clean step flow
@@ -25,7 +26,7 @@ function Index() {
       );
 
       if (submitted.length === 0) {
-        alert("Tidak ada SPB berstatus SUBMITTED yang siap untuk dikalkulasi.");
+        showErrorToast("Tidak ada SPB berstatus SUBMITTED yang siap untuk dikalkulasi.");
         return;
       }
 
@@ -48,7 +49,7 @@ function Index() {
         finalList.length > 0 ? finalList : source.length > 0 ? source : [];
 
       if (prepList.length === 0) {
-        alert("Tidak ada SPB FINAL yang siap untuk Print / perhitungan BTB.");
+        showErrorToast("Tidak ada SPB FINAL yang siap untuk Print / perhitungan BTB.");
         return;
       }
 
@@ -64,7 +65,7 @@ function Index() {
         setCurrentStep("PREPARATION");
       } catch (error) {
         console.error("Gagal menuju Goods Preparation:", error);
-        alert("Gagal menyiapkan halaman Goods Preparation.");
+        showErrorToast("Gagal menyiapkan halaman Goods Preparation.");
       } finally {
         setIsTransitioning(false);
         setTransitionLabel("");

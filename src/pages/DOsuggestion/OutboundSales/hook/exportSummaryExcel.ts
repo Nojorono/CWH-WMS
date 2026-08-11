@@ -1,5 +1,6 @@
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
+import { showErrorToast } from "../../../../components/toast";
 
 export const exportSummaryToExcel = (
     enrichedData: any[],
@@ -8,7 +9,7 @@ export const exportSummaryToExcel = (
     sohData?: any[] // 🚀 Parameter Baru untuk Data SOH
 ) => {
     if (!enrichedData || enrichedData.length === 0) {
-        alert("Tidak ada data untuk diexport!");
+        showErrorToast("Tidak ada data untuk diexport!");
         return;
     }
 

@@ -10,6 +10,7 @@ import { useOpeningStockStore } from "../../DynamicAPI/services/Service/OpeningS
 import { usePersistAuthStore } from "../../API/store/AuthStore/PersistAuthStore";
 import DatePicker from "../../components/form/date-picker";
 import OpeningStockListPage from "./ViewTable/OpeningStockListPage";
+import { showSuccessToast } from "../../components/toast";
 
 export default function OpeningStockUploadPage() {
   // Ambil state dan action dari Zustand Store
@@ -93,7 +94,7 @@ export default function OpeningStockUploadPage() {
     });
 
     if (result) {
-      alert(`Berhasil unggah! Dokumen Opening Stock: ${result.code}`);
+      showSuccessToast(`Berhasil unggah! Dokumen Opening Stock: ${result.code}`);
       setSelectedFile(null);
     }
   };
