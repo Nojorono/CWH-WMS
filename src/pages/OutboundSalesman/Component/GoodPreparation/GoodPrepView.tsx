@@ -29,6 +29,9 @@ import { BTB, BTBDetail } from "../../types/BTBtypes";
 import { Callplan, CallplanDetail } from "../../types/CallplanTypes";
 import { GoodPrepViewProps } from "../../types/flow";
 import AdjustQtySPB, { AdjustQtyHeader, AdjustQtyItem } from "./AdjustQtySPB";
+import IntegrateSOHCheckModal, {
+  SohCheckLine,
+} from "./IntegrateSOHCheckModal";
 
 type EnrichedDetail = CallplanDetail & {
   qty_btb: number;
@@ -425,6 +428,11 @@ function GoodPrepView({
   const [isBTBSuccess, setIsBTBSuccess] = useState(false);
   const [errBTB, setErrBTB] = useState<string | null>(null);
   const [isSavingAdjust, setIsSavingAdjust] = useState(false);
+  const [sohCheckTarget, setSohCheckTarget] = useState<EnrichedCallplan | null>(
+    null,
+  );
+  const [adjustFromIntegrate, setAdjustFromIntegrate] =
+    useState<EnrichedCallplan | null>(null);
   const { data: stockList, isLoading: isSohLoading } = useGetStockOnHand({
     org: String(organization_name),
     sub: "KECIL",
@@ -483,11 +491,6 @@ function GoodPrepView({
     const changedItems = payload.items.filter((item) => item.adjustment !== 0);
     if (changedItems.length === 0) {
       showErrorToast("Tidak ada perubahan qty untuk disimpan");
-      return false;
-    }
-
-    if (!payload.approvalUrl) {
-      showErrorToast("File approval wajib ter-upload sebelum menyimpan");
       return false;
     }
 
@@ -572,11 +575,34 @@ function GoodPrepView({
       };
 
       await updateDO(updatePayload);
-      await refetchPrepCallplans();
+      const fresh = await refetchPrepCallplans();
 
       showSuccessToast(
         `Qty berhasil diupdate (${changedItems.length} item). Data GoodPrep telah disegarkan.`,
       );
+
+      // Jika Adjust dari alur Integrate Meta → buka ulang panel cek SOH
+      if (adjustFromIntegrate?.id === callplanId) {
+        const refreshed = fresh.find((cp) => cp.id === callplanId);
+        // Tutup adjust dulu; SOH check dibuka setelah return true (isSavedRef set)
+        queueMicrotask(() => {
+          setAdjustFromIntegrate(null);
+          if (refreshed) {
+            setSohCheckTarget({
+              ...refreshed,
+              details: (refreshed.details || []).map((d) => ({
+                ...d,
+                qty_btb: 0,
+              })),
+              unmatchedBTBDetails: [],
+              rawBTBDetails: [],
+              btbNumber: null,
+              btbDate: null,
+            });
+          }
+        });
+      }
+
       return true;
     } catch (error) {
       console.error("Gagal simpan adjustment qty:", error);
@@ -816,6 +842,57 @@ function GoodPrepView({
     return { available, less, noStock };
   }, [skuSummary]);
 
+  const sohMap = useMemo(() => {
+    const map = new Map<string, number>();
+    (Array.isArray(stockList) ? stockList : []).forEach((item: any) => {
+      const key = getItemKey(item);
+      if (!key) return;
+      map.set(key, (map.get(key) || 0) + Number(item.quantity || 0));
+    });
+    return map;
+  }, [stockList]);
+
+  const buildSohCheckLines = (doc: EnrichedCallplan | Callplan): SohCheckLine[] => {
+    return (doc.details || []).map((detail) => {
+      const key = getItemKey({
+        inventory_item_id: detail.inventory_item_id,
+        item_code: detail.item_code,
+      });
+      const qtySpb =
+        Number(detail.item_qty_final ?? detail.item_qty_submitted ?? 0) || 0;
+      const soh = sohMap.get(key) || 0;
+      const status: SohCheckLine["status"] =
+        soh <= 0
+          ? "NO_STOCK"
+          : soh < qtySpb
+            ? "LESS_STOCK"
+            : "AVAILABLE";
+      const itemName =
+        itemList?.find((m: any) => m.sku === detail.item_code)?.description ||
+        detail.item_code;
+
+      return {
+        id: detail.id,
+        sku: detail.item_code,
+        itemName,
+        qtySpb,
+        soh,
+        status,
+      };
+    });
+  };
+
+  const sohCheckLines = useMemo(() => {
+    if (!sohCheckTarget) return [];
+    // Prefer latest enriched/prep data for this callplan
+    const latest =
+      enrichedData.find((cp) => cp.id === sohCheckTarget.id) ||
+      prepCallplans.find((cp) => cp.id === sohCheckTarget.id) ||
+      sohCheckTarget;
+    return buildSohCheckLines(latest);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sohCheckTarget, enrichedData, prepCallplans, sohMap, itemList]);
+
   const columns: ColumnDef<EnrichedCallplan>[] = useMemo(
     () => [
       { accessorKey: "spb_number", header: "SPB Number" },
@@ -855,9 +932,7 @@ function GoodPrepView({
               label: "Integrate Meta",
               icon: FaSyncAlt,
               onClick: () => {
-                showSuccessToast(
-                  `Integrate Meta (${rowData.spb_number || rowData.callplan_number}) — coming soon`,
-                );
+                setSohCheckTarget(rowData);
               },
               className: "text-emerald-600",
             },
@@ -1084,6 +1159,73 @@ function GoodPrepView({
           prepCallplans[0]?.callplan_number ||
           `CP-${targetDate.replace(/-/g, "")}`
         }
+      />
+
+      <IntegrateSOHCheckModal
+        isOpen={Boolean(sohCheckTarget)}
+        callplanNumber={
+          sohCheckTarget?.spb_number || sohCheckTarget?.callplan_number
+        }
+        salesName={sohCheckTarget?.sales_name}
+        lines={sohCheckLines}
+        isSohLoading={isSohLoading}
+        onClose={() => setSohCheckTarget(null)}
+        onAdjust={() => {
+          if (!sohCheckTarget) return;
+          setAdjustFromIntegrate(sohCheckTarget);
+          setSohCheckTarget(null);
+        }}
+        onProceed={() => {
+          const label =
+            sohCheckTarget?.spb_number || sohCheckTarget?.callplan_number;
+          setSohCheckTarget(null);
+          showSuccessToast(`Integrate Meta (${label}) — coming soon`);
+        }}
+      />
+
+      <AdjustQtySPB
+        isOpen={Boolean(adjustFromIntegrate)}
+        header={{
+          callplanNumber:
+            adjustFromIntegrate?.callplan_number ||
+            adjustFromIntegrate?.spb_number,
+          salesName: adjustFromIntegrate?.sales_name,
+          salesNik: adjustFromIntegrate?.sales_nik,
+          spvName: adjustFromIntegrate?.sales_spv,
+          spvNik: adjustFromIntegrate?.sales_spv_nik,
+          status: adjustFromIntegrate?.status,
+        }}
+        items={(adjustFromIntegrate?.details || []).map((d) => {
+          const final = Number(d.item_qty_final ?? d.item_qty_submitted) || 0;
+          return {
+            id: String(d.id),
+            name:
+              itemList?.find((m: any) => m.sku === d.item_code)?.description ||
+              d.item_code,
+            sku: d.item_code,
+            qtySuggestion: Number(d.item_qty_suggestion) || 0,
+            qtyAwal: final,
+            adjustment: 0,
+          };
+        })}
+        onClose={() => {
+          // Batal adjust → kembali ke panel cek SOH
+          const target = adjustFromIntegrate;
+          setAdjustFromIntegrate(null);
+          if (target) setSohCheckTarget(target);
+        }}
+        onSave={async ({ items, approvalUrl }) => {
+          if (!adjustFromIntegrate) return false;
+          try {
+            const saved = await handleSaveAdjustments(adjustFromIntegrate.id, {
+              items,
+              approvalUrl,
+            });
+            return saved === true;
+          } catch {
+            return false;
+          }
+        }}
       />
     </div>
   );

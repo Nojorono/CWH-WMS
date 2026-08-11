@@ -74,6 +74,7 @@ import {
   OutboundSales,
   BTBPage,
   OutboundSalesman,
+  MoveOrderSelisih,
 } from "./utils/PagesComponent";
 import IntegrationMonitoringPage from "./pages/DOsuggestion/IntegrationLog";
 import OpeningStockUploadPage from "./pages/OpeningStockBalance";
@@ -173,6 +174,7 @@ export function AppRoutes() {
       "/do_suggestion": <DOsuggestionMain />,
       "/outbound_sales": <OutboundSalesman />,
       "/btb": <BTBPage />,
+      "/move_order_selisih": <MoveOrderSelisih />,
     };
     return map[path] || <DefaultPage />;
   }
