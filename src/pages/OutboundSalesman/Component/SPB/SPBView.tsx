@@ -14,6 +14,7 @@ import { Callplan } from "../../types/CallplanTypes";
 import { callplanService } from "../../Services/CallplanService";
 import { SPBViewProps } from "../../types/flow";
 import dayjs from "dayjs";
+import { showErrorToast } from "../../../../components/toast";
 
 const getInitialBypassState = () => {
   const now = dayjs();
@@ -96,7 +97,7 @@ export default function SPBview({
       console.error("Error fetching callplans:", error);
       setCallplans([]);
       setExpandedRows({});
-      alert("Gagal mengambil data callplan");
+      showErrorToast("Gagal mengambil data callplan");
     } finally {
       setIsLoading(false);
     }

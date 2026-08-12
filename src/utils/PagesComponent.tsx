@@ -86,6 +86,7 @@ import OpeningStockUploadPage from "../pages/OpeningStockBalance";
 
 // OUTBOUND SALESMAN
 import OutboundSalesman from "../pages/OutboundSalesman";
+import MoveOrderSelisih from "../pages/MoveOrderSelisih";
 
 export {
   // DASHBOARD
@@ -165,6 +166,8 @@ export {
   BTBPage,
 
   OpeningStockUploadPage,
-  
+
   OutboundSalesman,
+  
+  MoveOrderSelisih,
 };

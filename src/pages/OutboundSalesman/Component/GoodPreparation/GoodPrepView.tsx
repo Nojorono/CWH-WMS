@@ -1,10 +1,9 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { ColumnDef } from "@tanstack/react-table";
 import dayjs from "dayjs";
 import {
   FaArrowLeft,
   FaDownload,
-  FaEdit,
   FaExchangeAlt,
   FaFileAlt,
   FaPrint,
@@ -21,14 +20,19 @@ import { BaseTable } from "../../../DOsuggestion/OutboundSales/component/BaseTab
 import BTBTotalBreakdown from "../../../DOsuggestion/OutboundSales/component/BTBTotalBreakdown";
 import { PrintAllSKU } from "../../../DOsuggestion/OutboundSales/component/PrintAllSKU";
 import { PrintPreviewModal } from "../../../DOsuggestion/OutboundSales/component/PrintPreviewModal";
-import { SKUSummaryPanel } from "../../../DOsuggestion/OutboundSales/component/SKUSummaryPanel";
-import { useGetStockOnHand } from "../../../DOsuggestion/OutboundSales/hook/useGetStockOnHand";
+import { useRealTimeSOH } from "../../hook/useRealTimeSOH";
 import { btbService } from "../../Services/BTBService";
 import { callplanService } from "../../Services/CallplanService";
+import { integrateService } from "../../Services/IntegrateService";
 import { BTB, BTBDetail } from "../../types/BTBtypes";
 import { Callplan, CallplanDetail } from "../../types/CallplanTypes";
 import { GoodPrepViewProps } from "../../types/flow";
-import AdjustQtySPB, { AdjustQtyHeader, AdjustQtyItem } from "./AdjustQtySPB";
+import AdjustQtySPB, { AdjustQtyItem } from "./AdjustQtySPB";
+import IntegrateSOHCheckModal, { SohCheckLine } from "./IntegrateSOHCheckModal";
+import { IntegrateBlockAlert } from "./IntegrateBlockAlert";
+import { LoadingOverlay } from "./LoadingOverlay";
+import { PrepDetailTable } from "./PrepDetailTable";
+import { SKUSummaryPanel } from "./SKUSummaryPanel";
 
 type EnrichedDetail = CallplanDetail & {
   qty_btb: number;
@@ -48,13 +52,6 @@ type EnrichedCallplan = Omit<Callplan, "details"> & {
   btbDate: string | null;
 };
 
-const hasQtyRevision = (revision: string | number | null | undefined) => {
-  if (revision === null || revision === undefined) return false;
-  const raw = String(revision).trim();
-  if (raw === "") return false;
-  return !Number.isNaN(Number(raw));
-};
-
 const getItemKey = (item: {
   inventory_item_id?: string | number | null;
   item_code?: string | null;
@@ -71,334 +68,6 @@ const getItemKey = (item: {
   return String(item.item_code || item.sku || item.item_number || "").trim();
 };
 
-const LoadingOverlay = ({
-  visible,
-  btbDate,
-}: {
-  visible: boolean;
-  btbDate: string;
-}) => {
-  if (!visible) return null;
-  return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-white/60 backdrop-blur-sm">
-      <div className="flex flex-col items-center gap-4 p-8">
-        <div className="relative size-12">
-          <div className="absolute size-12 rounded-full border-4 border-slate-100 border-t-orange-600 animate-spin" />
-        </div>
-        <div className="text-center">
-          <h3 className="text-sm font-bold text-slate-800">
-            Sinkronisasi Data
-          </h3>
-          <p className="mt-1 text-[11px] font-semibold text-slate-500">
-            Mengambil data BTB Tanggal:{" "}
-            <span className="text-orange-600">{btbDate}</span>
-          </p>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-const PrepDetailTable = ({
-  callplanId,
-  details,
-  unmatchedDetails = [],
-  header,
-  onSaveAdjustments,
-  highlightedSku,
-}: {
-  callplanId: string;
-  details: EnrichedDetail[];
-  unmatchedDetails?: BTBDetail[];
-  header?: AdjustQtyHeader;
-  onSaveAdjustments: (
-    callplanId: string,
-    payload: {
-      items: AdjustQtyItem[];
-      approvalUrl: string | null;
-    },
-  ) => Promise<boolean>;
-  highlightedSku?: string;
-}) => {
-  const { list: itemList } = useStoreItem();
-  const [isAdjustOpen, setIsAdjustOpen] = useState(false);
-  const normalizedHighlightSku = String(highlightedSku || "")
-    .trim()
-    .toLowerCase();
-
-  const showQtyRevisionCol = useMemo(
-    () => details.some((d) => hasQtyRevision(d.item_qty_revision)),
-    [details],
-  );
-
-  const { pickList, excessList } = useMemo(() => {
-    const picked = details
-      .map((d) => {
-        const final = Number(d.item_qty_final ?? d.item_qty_submitted) || 0;
-        const suggestion = Number(d.item_qty_suggestion) || 0;
-        const btb = Number(d.qty_btb) || 0;
-        const qtyRevision = hasQtyRevision(d.item_qty_revision)
-          ? Number(d.item_qty_revision)
-          : null;
-        const master = itemList?.find((m: any) => m.sku === d.item_code);
-        return {
-          ...d,
-          itemName: master?.description || d.item_code,
-          suggestionQty: suggestion,
-          finalQty: final,
-          qtyRevision,
-          btbQty: btb,
-          topUpQty: Math.max(0, final - btb),
-        };
-      })
-      .sort((a, b) => {
-        if (normalizedHighlightSku) {
-          const aMatch = String(a.item_code || "")
-            .toLowerCase()
-            .includes(normalizedHighlightSku);
-          const bMatch = String(b.item_code || "")
-            .toLowerCase()
-            .includes(normalizedHighlightSku);
-          if (aMatch !== bMatch) return aMatch ? -1 : 1;
-        }
-        return a.itemName.localeCompare(b.itemName);
-      });
-
-    const excess = unmatchedDetails
-      .map((u: BTBDetail) => ({
-        ...u,
-        itemName:
-          itemList?.find((m: any) => m.sku === u.item_code)?.description ||
-          u.item_name ||
-          u.item_code,
-        btbQty: Number(u.btb_qty) || 0,
-      }))
-      .sort((a, b) => a.itemName.localeCompare(b.itemName));
-
-    return { pickList: picked, excessList: excess };
-  }, [details, unmatchedDetails, itemList, normalizedHighlightSku]);
-
-  const colSpan = showQtyRevisionCol ? 7 : 6;
-
-  return (
-    <div className="grid grid-cols-1 gap-6 border-t bg-slate-50 p-4 lg:grid-cols-2">
-      <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
-        <div className="flex items-center justify-between gap-2 border-b bg-emerald-50 px-4 py-3">
-          <div className="text-xs font-bold uppercase text-slate-700">
-            Picking List (Top Up) {pickList.length} Items
-            {showQtyRevisionCol && (
-              <span className="ml-2 rounded bg-orange-100 px-1.5 py-0.5 text-[10px] font-bold normal-case text-orange-700">
-                Qty Revision
-              </span>
-            )}
-          </div>
-          <button
-            type="button"
-            onClick={() => setIsAdjustOpen(true)}
-            className="inline-flex items-center gap-1.5 rounded border border-emerald-300 bg-white px-2.5 py-1 text-[11px] font-bold uppercase text-emerald-700 transition-colors hover:bg-emerald-100"
-          >
-            <FaEdit size={11} /> Adjust Qty
-          </button>
-        </div>
-        <div className="max-h-72 overflow-auto">
-          <table className="w-full text-left text-xs">
-            <thead className="sticky top-0 bg-emerald-50 text-slate-500">
-              <tr>
-                <th className="px-3 py-2">No</th>
-                <th className="px-3 py-2">Item</th>
-                <th className="px-3 py-2 text-center">Qty Suggestion</th>
-                <th className="px-3 py-2 text-center">Qty Final</th>
-                {showQtyRevisionCol && (
-                  <th className="px-3 py-2 text-center text-orange-600">
-                    Qty Revision
-                  </th>
-                )}
-                <th className="px-3 py-2 text-center">Qty BTB</th>
-                <th className="px-3 py-2 text-center text-emerald-600">
-                  Top Up
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {pickList.length === 0 ? (
-                <tr>
-                  <td
-                    colSpan={colSpan}
-                    className="px-3 py-6 text-center italic text-slate-400"
-                  >
-                    Tidak ada item pick list
-                  </td>
-                </tr>
-              ) : (
-                pickList.map((item, i) => (
-                  (() => {
-                    const itemSku = String(item.item_code || "").toLowerCase();
-                    const isHighlightedBySku =
-                      normalizedHighlightSku.length > 0 &&
-                      itemSku.includes(normalizedHighlightSku);
-
-                    return (
-                  <tr
-                    key={item.id || i}
-                    className={
-                      isHighlightedBySku
-                        ? "bg-yellow-100 ring-1 ring-yellow-300 hover:bg-yellow-100"
-                        : item.finalQty === 0
-                        ? "bg-red-50 text-red-700 hover:bg-red-100"
-                        : item.qtyRevision !== null
-                          ? "bg-orange-50/60 hover:bg-orange-50"
-                          : "hover:bg-slate-50"
-                    }
-                  >
-                    <td
-                      className={`px-3 py-2 font-medium ${
-                        item.finalQty === 0 ? "text-red-700" : "text-slate-800"
-                      }`}
-                    >
-                      {i + 1}
-                    </td>
-                    <td
-                      className={`px-3 py-2 font-medium ${
-                        isHighlightedBySku
-                          ? "text-yellow-900"
-                          : item.finalQty === 0
-                            ? "text-red-700"
-                            : "text-slate-800"
-                      }`}
-                    >
-                      {item.itemName}
-                      {isHighlightedBySku && (
-                        <span className="ml-2 rounded border border-yellow-400 bg-yellow-200 px-1.5 py-0.5 text-[10px] font-bold uppercase text-yellow-900">
-                          match
-                        </span>
-                      )}
-                    </td>
-                    <td
-                      className={`px-3 py-2 text-center ${
-                        item.finalQty === 0 ? "font-bold text-red-600" : ""
-                      }`}
-                    >
-                      {item.item_qty_suggestion}
-                    </td>
-                    <td
-                      className={`px-3 py-2 text-center ${
-                        item.finalQty === 0 ? "font-bold text-red-600" : ""
-                      }`}
-                    >
-                      {item.finalQty}
-                    </td>
-                    {showQtyRevisionCol && (
-                      <td className="px-3 py-2 text-center font-bold text-orange-600">
-                        {item.qtyRevision !== null
-                          ? item.qtyRevision > 0
-                            ? `+${item.qtyRevision}`
-                            : item.qtyRevision
-                          : "-"}
-                      </td>
-                    )}
-                    <td
-                      className={`px-3 py-2 text-center ${
-                        item.finalQty === 0 ? "text-red-500" : "text-blue-600"
-                      }`}
-                    >
-                      {item.btbQty}
-                    </td>
-                    <td
-                      className={`px-3 py-2 text-center font-bold ${
-                        item.finalQty === 0
-                          ? "text-red-600"
-                          : "text-emerald-600"
-                      }`}
-                    >
-                      {item.topUpQty}
-                    </td>
-                  </tr>
-                    );
-                  })()
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <div className="overflow-hidden rounded-lg border border-rose-200 bg-white shadow-sm">
-        <div className="border-b border-rose-100 bg-rose-50 px-4 py-3 text-xs font-bold uppercase text-rose-700">
-          Unmatched BTB SKU
-        </div>
-        <div className="max-h-72 overflow-auto">
-          <table className="w-full text-left text-xs">
-            <thead className="sticky top-0 bg-rose-50 text-rose-600">
-              <tr>
-                <th className="px-3 py-2">No</th>
-                <th className="px-3 py-2">Item</th>
-                <th className="px-3 py-2 text-center">Qty</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-rose-50">
-              {excessList.length === 0 ? (
-                <tr>
-                  <td
-                    colSpan={3}
-                    className="px-3 py-6 text-center italic text-slate-400"
-                  >
-                    Tidak ada unmatched BTB
-                  </td>
-                </tr>
-              ) : (
-                excessList.map((item, i) => (
-                  <tr key={i} className="hover:bg-rose-50">
-                    <td className="px-3 py-2 font-medium text-slate-800">
-                      {i + 1}
-                    </td>
-                    <td className="px-3 py-2 font-medium text-slate-800">
-                      {item.itemName}
-                    </td>
-                    <td className="px-3 py-2 text-center font-bold text-rose-600">
-                      {item.btbQty}
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <AdjustQtySPB
-        isOpen={isAdjustOpen}
-        header={header}
-        items={pickList.map((item) => ({
-          id: String(item.id),
-          name: item.itemName || item.item_code,
-          sku: item.item_code,
-          qtySuggestion:
-            Number(item.suggestionQty ?? item.item_qty_suggestion) || 0,
-          qtyAwal: Number(item.finalQty) || 0,
-          adjustment: 0,
-        }))}
-        onClose={() => setIsAdjustOpen(false)}
-        onSave={async ({ items: adjustedItems, approvalUrl }) => {
-          try {
-            const saved = await onSaveAdjustments(callplanId, {
-              items: adjustedItems,
-              approvalUrl,
-            });
-            // Tutup modal hanya jika BE sukses; error → tetap open
-            if (saved === true) {
-              setIsAdjustOpen(false);
-              return true;
-            }
-            return false;
-          } catch {
-            return false;
-          }
-        }}
-      />
-    </div>
-  );
-};
-
 function GoodPrepView({
   callplans,
   onBack,
@@ -407,6 +76,7 @@ function GoodPrepView({
   const { user } = usePersistAuthStore.getState();
   const organization_id =
     user?.userDetail?.organizationId || callplans[0]?.organization_id || "";
+  const organization_code = user?.userDetail?.organization?.organization_code;
   const organization_name =
     user?.userDetail?.organization?.organization_name ||
     callplans[0]?.organization?.organization_name ||
@@ -425,10 +95,25 @@ function GoodPrepView({
   const [isBTBSuccess, setIsBTBSuccess] = useState(false);
   const [errBTB, setErrBTB] = useState<string | null>(null);
   const [isSavingAdjust, setIsSavingAdjust] = useState(false);
-  const { data: stockList, isLoading: isSohLoading } = useGetStockOnHand({
-    org: String(organization_name),
-    sub: "KECIL",
-  });
+  const [isIntegrating, setIsIntegrating] = useState(false);
+  const [isIntegrateModalOpen, setIsIntegrateModalOpen] = useState(false);
+  const [integrateTriggerSpb, setIntegrateTriggerSpb] =
+    useState<EnrichedCallplan | null>(null);
+  const [adjustFromIntegrate, setAdjustFromIntegrate] =
+    useState<EnrichedCallplan | null>(null);
+  const tableContainerRef = useRef<HTMLDivElement | null>(null);
+
+  const { data: stockList, meta: sohMeta, isLoading: isSohLoading } = useRealTimeSOH(
+    organization_name ? { organization_name } : null,
+  );
+
+  const sohFetchedAtLabel = useMemo(() => {
+    const raw = String(sohMeta?.timestamp || sohMeta?.fetchedAt || "");
+    if (!raw) return "-";
+    const parsed = dayjs(raw);
+    if (!parsed.isValid()) return raw;
+    return parsed.format("DD MMM YYYY HH:mm:ss");
+  }, [sohMeta?.timestamp, sohMeta?.fetchedAt]);
 
   useEffect(() => {
     setPrepCallplans(callplans);
@@ -483,11 +168,6 @@ function GoodPrepView({
     const changedItems = payload.items.filter((item) => item.adjustment !== 0);
     if (changedItems.length === 0) {
       showErrorToast("Tidak ada perubahan qty untuk disimpan");
-      return false;
-    }
-
-    if (!payload.approvalUrl) {
-      showErrorToast("File approval wajib ter-upload sebelum menyimpan");
       return false;
     }
 
@@ -572,11 +252,20 @@ function GoodPrepView({
       };
 
       await updateDO(updatePayload);
-      await refetchPrepCallplans();
+      const fresh = await refetchPrepCallplans();
 
       showSuccessToast(
         `Qty berhasil diupdate (${changedItems.length} item). Data GoodPrep telah disegarkan.`,
       );
+
+      // Jika Adjust dari alur Integrate Meta → buka ulang panel cek global
+      if (adjustFromIntegrate?.id === callplanId) {
+        queueMicrotask(() => {
+          setAdjustFromIntegrate(null);
+          setIsIntegrateModalOpen(true);
+        });
+      }
+
       return true;
     } catch (error) {
       console.error("Gagal simpan adjustment qty:", error);
@@ -743,11 +432,40 @@ function GoodPrepView({
     );
   }, [enrichedData, itemList]);
 
+  /** Ranking SPB saat search SKU: SKU match dengan Qty Final terbesar tampil di atas */
+  const rankedEnrichedData = useMemo(() => {
+    const keyword = String(globalFilter || "").trim().toLowerCase();
+    if (!keyword) return enrichedData;
+
+    const getMatchFinalQty = (doc: EnrichedCallplan) =>
+      (doc.details || []).reduce((sum, detail) => {
+        const sku = String(detail.item_code || "").toLowerCase();
+        if (!sku.includes(keyword)) return sum;
+        const finalQty =
+          Number(detail.item_qty_final ?? detail.item_qty_submitted ?? 0) || 0;
+        return sum + finalQty;
+      }, 0);
+
+    return [...enrichedData].sort((a, b) => {
+      const qtyA = getMatchFinalQty(a);
+      const qtyB = getMatchFinalQty(b);
+      if (qtyA !== qtyB) return qtyB - qtyA;
+      const spbA = String(a.spb_number || a.callplan_number || "");
+      const spbB = String(b.spb_number || b.callplan_number || "");
+      return spbA.localeCompare(spbB);
+    });
+  }, [enrichedData, globalFilter]);
+
   const skuSummary = useMemo(() => {
     const stockMap = new Map<string, number>();
     const metaMap = new Map<
       string,
-      { sku: string; item_code: string; item_description: string; createdAt: string | null }
+      {
+        sku: string;
+        item_code: string;
+        item_description: string;
+        createdAt: string | null;
+      }
     >();
 
     (Array.isArray(stockList) ? stockList : []).forEach((item: any) => {
@@ -756,11 +474,15 @@ function GoodPrepView({
       const qty = Number(item.quantity || 0);
       stockMap.set(key, (stockMap.get(key) || 0) + qty);
       if (!metaMap.has(key)) {
-        const sku = String(item.sku || item.item_code || item.item_number || "").trim();
+        const sku = String(
+          item.sku || item.item_code || item.item_number || "",
+        ).trim();
         metaMap.set(key, {
           sku: sku || key,
           item_code: String(item.item_code || sku || key),
-          item_description: String(item.item_description || item.description || "-"),
+          item_description: String(
+            item.item_description || item.description || "-",
+          ),
           createdAt: item.createdAt || item.created_at || null,
         });
       }
@@ -774,14 +496,16 @@ function GoodPrepView({
           item_code: detail.item_code,
         });
         if (!key) return;
-        const finalQty = Number(detail.item_qty_final ?? detail.item_qty_submitted ?? 0) || 0;
+        const finalQty =
+          Number(detail.item_qty_final ?? detail.item_qty_submitted ?? 0) || 0;
         reqMap.set(key, (reqMap.get(key) || 0) + finalQty);
         if (!metaMap.has(key)) {
           metaMap.set(key, {
             sku: String(detail.item_code || key),
             item_code: String(detail.item_code || key),
             item_description:
-              itemList?.find((m: any) => m.sku === detail.item_code)?.description || "-",
+              itemList?.find((m: any) => m.sku === detail.item_code)
+                ?.description || "-",
             createdAt: null,
           });
         }
@@ -808,13 +532,148 @@ function GoodPrepView({
     let noStock = 0;
 
     skuSummary.forEach((s) => {
-      if (s.soh <= 0) noStock += 1;
-      else if (s.soh < s.totalRequest) less += 1;
+      const soh = Number(s.soh) || 0;
+      const spb = Number(s.totalRequest) || 0;
+      if (soh === 0 && spb === 0) noStock += 1;
+      else if (spb > soh) less += 1;
       else available += 1;
     });
 
     return { available, less, noStock };
   }, [skuSummary]);
+
+  const sohMap = useMemo(() => {
+    const map = new Map<string, number>();
+    (Array.isArray(stockList) ? stockList : []).forEach((item: any) => {
+      const key = getItemKey(item);
+      if (!key) return;
+      map.set(key, (map.get(key) || 0) + Number(item.quantity || 0));
+    });
+    return map;
+  }, [stockList]);
+
+  const buildSohCheckLine = (
+    doc: EnrichedCallplan | Callplan,
+    detail: CallplanDetail,
+  ): SohCheckLine => {
+    const key = getItemKey({
+      inventory_item_id: detail.inventory_item_id,
+      item_code: detail.item_code,
+    });
+    const qtySpb =
+      Number(detail.item_qty_final ?? detail.item_qty_submitted ?? 0) || 0;
+    const soh = sohMap.get(key) || 0;
+    const status: SohCheckLine["status"] =
+      qtySpb === 0 && soh === 0
+        ? "NO_STOCK"
+        : qtySpb === 0
+          ? "NOT_NEEDED"
+          : qtySpb > soh
+            ? "LESS_STOCK"
+            : "AVAILABLE";
+    const itemName =
+      itemList?.find((m: any) => m.sku === detail.item_code)?.description ||
+      detail.item_code;
+
+    return {
+      id: detail.id,
+      callplanId: doc.id,
+      spbNumber: doc.spb_number || doc.callplan_number || "-",
+      salesName: doc.sales_name || "-",
+      sku: detail.item_code,
+      itemName,
+      qtySuggestion: Number(detail.item_qty_suggestion || 0) || 0,
+      qtySpb,
+      soh,
+      status,
+    };
+  };
+
+  /** Cek SOH vs Qty SPB untuk seluruh cabang (blokir Integrate di halaman utama) */
+  const globalIntegrateLines = useMemo(() => {
+    const source = enrichedData.length ? enrichedData : prepCallplans;
+    return source.flatMap((doc) =>
+      (doc.details || []).map((detail) =>
+        buildSohCheckLine(doc, detail as CallplanDetail),
+      ),
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [enrichedData, prepCallplans, sohMap, itemList]);
+
+  const globalHasLessStock = useMemo(
+    () => globalIntegrateLines.some((l) => l.status === "LESS_STOCK"),
+    [globalIntegrateLines],
+  );
+
+  const branchLessStockSpbList = useMemo(() => {
+    return [
+      ...new Set(
+        globalIntegrateLines
+          .filter((l) => l.status === "LESS_STOCK")
+          .map((l) => l.spbNumber)
+          .filter(Boolean),
+      ),
+    ];
+  }, [globalIntegrateLines]);
+
+  /** POV modal: hanya SPB yang sedang dipilih */
+  const singleIntegrateLines = useMemo(() => {
+    if (!integrateTriggerSpb) return [];
+    const latest =
+      enrichedData.find((cp) => cp.id === integrateTriggerSpb.id) ||
+      prepCallplans.find((cp) => cp.id === integrateTriggerSpb.id) ||
+      integrateTriggerSpb;
+    return (latest.details || []).map((detail) =>
+      buildSohCheckLine(latest, detail as CallplanDetail),
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [integrateTriggerSpb, enrichedData, prepCallplans, sohMap, itemList]);
+
+  const handleIntegrateToMetaPerSpb = async () => {
+    if (!integrateTriggerSpb?.id) {
+      showErrorToast("SPB target integrasi tidak ditemukan");
+      return;
+    }
+
+    setIsIntegrating(true);
+    try {
+      await integrateService.integrateToMetaGit(integrateTriggerSpb.id);
+      const spbLabel =
+        integrateTriggerSpb.spb_number || integrateTriggerSpb.callplan_number;
+      showSuccessToast(`Integrate Meta berhasil untuk SPB ${spbLabel}`);
+      await refetchPrepCallplans();
+    } catch (error: unknown) {
+      const message =
+        (error as { response?: { data?: { message?: string } } })?.response
+          ?.data?.message ||
+        (error as Error)?.message ||
+        "Gagal melakukan Integrate Meta";
+      showErrorToast(message);
+    } finally {
+      setIsIntegrating(false);
+    }
+  };
+
+  const handleFocusSpbFromAlert = (spbNumber: string) => {
+    if (!spbNumber) return;
+    setGlobalFilter(spbNumber);
+
+    window.setTimeout(() => {
+      const container = tableContainerRef.current;
+      if (!container) return;
+
+      const targetCell = Array.from(container.querySelectorAll("td")).find((td) =>
+        (td.textContent || "").toLowerCase().includes(spbNumber.toLowerCase()),
+      );
+      const targetRow = targetCell?.closest("tr") as HTMLTableRowElement | null;
+      if (!targetRow) return;
+
+      targetRow.scrollIntoView({ behavior: "smooth", block: "center" });
+
+      const rowIsExpanded = targetRow.className.includes("bg-slate-50");
+      if (!rowIsExpanded) targetRow.click();
+    }, 150);
+  };
 
   const columns: ColumnDef<EnrichedCallplan>[] = useMemo(
     () => [
@@ -855,11 +714,13 @@ function GoodPrepView({
               label: "Integrate Meta",
               icon: FaSyncAlt,
               onClick: () => {
-                showSuccessToast(
-                  `Integrate Meta (${rowData.spb_number || rowData.callplan_number}) — coming soon`,
-                );
+                setIntegrateTriggerSpb(rowData);
+                setIsIntegrateModalOpen(true);
               },
-              className: "text-emerald-600",
+              disabled: globalHasLessStock,
+              className: globalHasLessStock
+                ? "text-slate-400"
+                : "text-emerald-600",
             },
             {
               label: "Interface to DMS",
@@ -877,7 +738,7 @@ function GoodPrepView({
         },
       },
     ],
-    [isPrintDisabled],
+    [isPrintDisabled, globalHasLessStock],
   );
 
   const handleExportSummary = () => {
@@ -924,58 +785,103 @@ function GoodPrepView({
 
   return (
     <div className="min-h-screen space-y-4 bg-gray-50 p-6 font-sans">
-      <LoadingOverlay visible={showLoading} btbDate={btbDateLabel} />
+      <LoadingOverlay
+        visible={showLoading || isIntegrating}
+        btbDate={btbDateLabel}
+        title={isIntegrating ? "Integrate Meta" : "Sinkronisasi Data"}
+        subtitle={
+          isIntegrating
+            ? `Mengirim SPB ${integrateTriggerSpb?.spb_number || integrateTriggerSpb?.callplan_number || "-"} ke Meta...`
+            : undefined
+        }
+      />
 
-      <div className="mb-2 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-xl font-bold text-gray-800">Goods Preparation</h1>
-          <div className="mt-1 flex gap-2 text-sm text-gray-500">
-            <span>Home</span>
-            <span>&gt;</span>
-            <span>Goods Preparation</span>
+      <div className="mb-3 rounded-2xl border border-slate-200/80 bg-white/90 p-4 shadow-sm ring-1 ring-slate-100 backdrop-blur-sm sm:p-5">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <p className="text-[11px] font-semibold tracking-[0.14em] text-slate-400 uppercase">
+              Outbound Salesman
+            </p>
+            <h1 className="mt-1 text-2xl font-bold tracking-tight text-slate-800">
+              Goods Preparation
+            </h1>
+            <div className="mt-3 flex flex-wrap items-center gap-2 text-[11px] font-semibold">
+              <span className="rounded-full border border-indigo-200 bg-indigo-50 px-3 py-1 text-indigo-700">
+                Total SPB: {prepCallplans.length}
+              </span>
+              <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-slate-600">
+                Callplan Date: {targetDate}
+              </span>
+              <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-emerald-700">
+                BTB sync untuk Print & Top Up
+              </span>
+            </div>
           </div>
-          <p className="mt-2 text-xs text-slate-500">
-            SPB FINAL: <strong>{prepCallplans.length}</strong> · Callplan Date:{" "}
-            <strong>{targetDate}</strong> · BTB sync untuk Print & Top Up
-          </p>
+          <button
+            type="button"
+            onClick={onBack}
+            className="inline-flex items-center justify-center gap-2 rounded-xl border border-orange-300 bg-white px-4 py-2 text-sm font-semibold text-orange-600 shadow-sm transition-all hover:-translate-y-0.5 hover:border-orange-400 hover:bg-orange-50 hover:shadow"
+          >
+            <FaArrowLeft size={12} /> Back to SPB
+          </button>
         </div>
-        <button
-          type="button"
-          onClick={onBack}
-          className="flex items-center justify-center gap-2 rounded border border-orange-500 px-4 py-1.5 text-sm font-semibold text-orange-600 transition-colors hover:bg-orange-50"
-        >
-          <FaArrowLeft size={12} /> Back to SPB
-        </button>
       </div>
 
-      <div className="space-y-2">
-        <div className="flex flex-wrap items-center gap-2 text-[11px] font-semibold">
-          <span className="rounded border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-emerald-700">
-            Available: {sohStatusCount.available}
-          </span>
-          <span className="rounded border border-amber-200 bg-amber-50 px-2.5 py-1 text-amber-700">
-            Less Stock: {sohStatusCount.less}
-          </span>
-          <span className="rounded border border-red-200 bg-red-50 px-2.5 py-1 text-red-700">
-            No Stock: {sohStatusCount.noStock}
-          </span>
+      <div className="space-y-3 rounded-2xl border border-slate-200/80 bg-white/90 p-4 shadow-sm ring-1 ring-slate-100 sm:p-5">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <p className="text-[11px] font-semibold tracking-[0.14em] text-slate-400 uppercase">
+              Section SOH
+            </p>
+            <h2 className="mt-1 text-lg font-bold tracking-tight text-slate-800">
+              Stock On Hand Monitoring
+            </h2>
+            <p className="mt-1 text-[11px] text-slate-500">
+              Timestamp SOH:{" "}
+              <span className="font-semibold text-slate-700">{sohFetchedAtLabel}</span>
+            </p>
+          </div>
           {isSohLoading && (
-            <span className="rounded border border-slate-200 bg-slate-50 px-2.5 py-1 text-slate-600">
+            <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-[11px] font-semibold text-slate-600">
               Memuat SOH...
             </span>
           )}
         </div>
-        <SKUSummaryPanel summary={skuSummary} onSearchChange={setGlobalFilter} />
+
+        <div className="flex flex-wrap items-center gap-2 text-[11px] font-semibold">
+          <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-emerald-700">
+            SKU Available: {sohStatusCount.available}
+          </span>
+          <span className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-amber-700">
+            SKU Less Stock: {sohStatusCount.less}
+          </span>
+          <span className="rounded-full border border-red-200 bg-red-50 px-3 py-1 text-red-700">
+            SKU No Stock: {sohStatusCount.noStock}
+          </span>
+        </div>
+
+        <SKUSummaryPanel
+          summary={skuSummary}
+          onSearchChange={setGlobalFilter}
+        />
+
+        {globalHasLessStock && (
+          <IntegrateBlockAlert
+            spbNumbers={branchLessStockSpbList}
+            onSelectSpb={handleFocusSpbFromAlert}
+          />
+        )}
       </div>
 
-      <BaseTable
-        data={showLoading ? [] : enrichedData}
-        globalFilter={globalFilter}
-        setGlobalFilter={setGlobalFilter}
-        columns={columns}
-        isExpandable
-        renderSubComponent={(row: EnrichedCallplan) => (
-          <div className="flex flex-col gap-4 border-b border-slate-200 bg-slate-50/50 p-2">
+      <div ref={tableContainerRef}>
+        <BaseTable
+          data={showLoading ? [] : rankedEnrichedData}
+          globalFilter={globalFilter}
+          setGlobalFilter={setGlobalFilter}
+          columns={columns}
+          isExpandable
+          renderSubComponent={(row: EnrichedCallplan) => (
+            <div className="flex flex-col gap-4 border-b border-slate-200 bg-slate-50/50 p-2">
             {(row.btbNumber || row.btbDate) && (
               <div className="flex flex-wrap items-center gap-6 rounded-lg border border-slate-200 bg-white p-3 shadow-xs">
                 <div className="flex items-center gap-2">
@@ -1019,10 +925,10 @@ function GoodPrepView({
                 status: row.status,
               }}
             />
-          </div>
-        )}
-        headerActions={
-          <div className="flex w-full min-w-full flex-1 items-center gap-4">
+            </div>
+          )}
+          headerActions={
+            <div className="flex w-full min-w-full flex-1 items-center gap-4">
             <div>
               {(errBTB || isBTBEmpty) && (
                 <span className="flex w-fit items-center whitespace-nowrap rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-bold text-red-600 shadow-sm">
@@ -1061,9 +967,10 @@ function GoodPrepView({
                 <FaPrint /> Print All Picklists
               </button>
             </div>
-          </div>
-        }
-      />
+            </div>
+          }
+        />
+      </div>
 
       <PrintPreviewModal
         isOpen={isModalOpen}
@@ -1084,6 +991,82 @@ function GoodPrepView({
           prepCallplans[0]?.callplan_number ||
           `CP-${targetDate.replace(/-/g, "")}`
         }
+      />
+
+      <IntegrateSOHCheckModal
+        isOpen={isIntegrateModalOpen}
+        mode="single"
+        callplanNumber={
+          integrateTriggerSpb?.spb_number ||
+          integrateTriggerSpb?.callplan_number
+        }
+        salesName={integrateTriggerSpb?.sales_name}
+        lines={singleIntegrateLines}
+        isSohLoading={isSohLoading}
+        onClose={() => {
+          setIsIntegrateModalOpen(false);
+          setIntegrateTriggerSpb(null);
+        }}
+        onAdjust={() => {
+          if (!integrateTriggerSpb) return;
+          const target =
+            enrichedData.find((cp) => cp.id === integrateTriggerSpb.id) ||
+            integrateTriggerSpb;
+          setAdjustFromIntegrate(target);
+          setIsIntegrateModalOpen(false);
+        }}
+        onProceed={async () => {
+          setIsIntegrateModalOpen(false);
+          await handleIntegrateToMetaPerSpb();
+          setIntegrateTriggerSpb(null);
+        }}
+      />
+
+      <AdjustQtySPB
+        isOpen={Boolean(adjustFromIntegrate)}
+        header={{
+          callplanNumber:
+            adjustFromIntegrate?.callplan_number ||
+            adjustFromIntegrate?.spb_number,
+          salesName: adjustFromIntegrate?.sales_name,
+          salesNik: adjustFromIntegrate?.sales_nik,
+          spvName: adjustFromIntegrate?.sales_spv,
+          spvNik: adjustFromIntegrate?.sales_spv_nik,
+          status: adjustFromIntegrate?.status,
+        }}
+        items={(adjustFromIntegrate?.details || []).map((d) => {
+          const final = Number(d.item_qty_final ?? d.item_qty_submitted) || 0;
+          return {
+            id: String(d.id),
+            name:
+              itemList?.find((m: any) => m.sku === d.item_code)?.description ||
+              d.item_code,
+            sku: d.item_code,
+            qtySuggestion: Number(d.item_qty_suggestion) || 0,
+            qtyAwal: final,
+            adjustment: 0,
+          };
+        })}
+        onClose={() => {
+          const target = adjustFromIntegrate;
+          setAdjustFromIntegrate(null);
+          if (target) {
+            setIntegrateTriggerSpb(target);
+            setIsIntegrateModalOpen(true);
+          }
+        }}
+        onSave={async ({ items, approvalUrl }) => {
+          if (!adjustFromIntegrate) return false;
+          try {
+            const saved = await handleSaveAdjustments(adjustFromIntegrate.id, {
+              items,
+              approvalUrl,
+            });
+            return saved === true;
+          } catch {
+            return false;
+          }
+        }}
       />
     </div>
   );

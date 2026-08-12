@@ -1,8 +1,8 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { FaSave, FaTimes, FaUpload } from "react-icons/fa";
 import { showErrorToast, showSuccessToast } from "../../../../components/toast";
-import { deleteApprovalFromS3 } from "./deleteApprovalFromS3";
-import { uploadApprovalToS3 } from "./uploadApprovalToS3";
+import { deleteApprovalFromS3 } from "../../hook/deleteApprovalFromS3";
+import { uploadApprovalToS3 } from "../../hook/uploadApprovalToS3";
 
 export type AdjustQtyItem = {
   id: string;
@@ -170,10 +170,6 @@ export default function AdjustQtySPB({
   };
 
   const handleSave = async () => {
-    if (!isApprovalReady) {
-      showErrorToast("Upload form approval ke S3 dulu sebelum menyimpan");
-      return;
-    }
     const hasChanges = items.some((item) => item.adjustment !== 0);
     if (!hasChanges) {
       showErrorToast("Tidak ada perubahan qty untuk disimpan");
@@ -236,13 +232,8 @@ export default function AdjustQtySPB({
           type="number"
           value={item.adjustment === 0 ? "" : item.adjustment}
           placeholder="0"
-          disabled={!isApprovalReady}
           onChange={(e) => handleAdjustmentChange(item.id, e.target.value)}
-          className={`w-20 rounded border-2 py-1.5 text-center font-bold outline-none transition-all ${
-            isApprovalReady
-              ? "border-orange-300 text-slate-800 focus:border-orange-500 focus:ring-2 focus:ring-orange-200"
-              : "cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400"
-          }`}
+          className="w-20 rounded border-2 border-orange-300 py-1.5 text-center font-bold text-slate-800 outline-none transition-all focus:border-orange-500 focus:ring-2 focus:ring-orange-200"
         />
       ),
     },
@@ -318,11 +309,12 @@ export default function AdjustQtySPB({
 
         <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
           <h2 className="mb-1 text-lg font-bold">
-            Upload Form Approval SPV Sales
+            Upload Form Approval SPV Sales{" "}
+            <span className="text-sm font-medium text-slate-400">(Opsional)</span>
           </h2>
           <p className="mb-4 text-sm text-slate-500">
-            Step 1: Upload form approval dulu. Setelah file ter-upload, kolom
-            Adjustment baru bisa diisi. Format: PDF/JPG/PNG, maks 1MB.
+            Upload form approval opsional. Anda bisa langsung adjust qty tanpa
+            upload. Format: PDF/JPG/PNG, maks 1MB.
           </p>
 
           <input
@@ -349,15 +341,10 @@ export default function AdjustQtySPB({
             </p>
             <p className="mt-1 text-xs text-slate-400">
               {isApprovalReady
-                ? "Upload S3 berhasil — Adjustment sudah bisa diisi"
-                : "PDF, JPG, atau PNG — maks. 1MB"}
+                ? "Upload S3 berhasil"
+                : "PDF, JPG, atau PNG — maks. 1MB (opsional)"}
             </p>
           </button>
-
-          <p className="mt-3 text-sm text-red-500">
-            *Upload form approval wajib dilakukan terlebih dahulu sebelum
-            melakukan adjustment qty.
-          </p>
         </div>
 
         <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
@@ -366,11 +353,6 @@ export default function AdjustQtySPB({
               <h2 className="font-bold text-slate-800">
                 Detail Item & Final Qty
               </h2>
-              {!isApprovalReady && (
-                <p className="mt-0.5 text-xs font-medium text-orange-600">
-                  Upload approval ke S3 dulu untuk mengaktifkan kolom Adjustment
-                </p>
-              )}
             </div>
             <div className="flex space-x-6 text-sm">
               <p className="text-slate-600">
@@ -453,7 +435,7 @@ export default function AdjustQtySPB({
           <button
             type="button"
             onClick={handleSave}
-            disabled={!isApprovalReady || isUploading || isSaving}
+            disabled={isUploading || isSaving}
             className="flex items-center space-x-2 rounded bg-orange-500 px-6 py-2 font-semibold text-white transition-colors hover:bg-orange-600 disabled:cursor-not-allowed disabled:bg-slate-300"
           >
             <FaSave className="size-4" />

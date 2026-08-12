@@ -1,6 +1,6 @@
-import axiosInstance from "../../../../API/services/AxiosInstance";
-import { showErrorToast } from "../../../../components/toast";
-import { S3EndPoint } from "../../../../utils/EndPoint";
+import axiosInstance from "../../../API/services/AxiosInstance";
+import { showErrorToast } from "../../../components/toast";
+import { S3EndPoint } from "../../../utils/EndPoint";
 
 const MAX_FILE_SIZE = 1 * 1024 * 1024;
 

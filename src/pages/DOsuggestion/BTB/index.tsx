@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { BtbDetail, DUMMY_BTB_DETAIL } from "./dummyData";
+import { showErrorToast } from "../../../components/toast";
 
 const BtbSearch = () => {
   const [searchInput, setSearchInput] = useState("");
@@ -9,7 +10,7 @@ const BtbSearch = () => {
   // Simulasi pemanggilan API
   const handleSearch = () => {
     if (!searchInput.trim()) {
-      alert("Harap masukkan Callplan Number!");
+      showErrorToast("Harap masukkan Callplan Number!");
       return;
     }
 
