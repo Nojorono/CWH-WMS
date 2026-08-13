@@ -1,20 +1,14 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import flatpickr from "flatpickr";
 import "flatpickr/dist/flatpickr.min.css";
-import {
-  FaInfoCircle,
-  FaSyncAlt,
-  FaChevronDown,
-  FaChevronRight,
-  FaChevronLeft,
-  FaArrowRight,
-} from "react-icons/fa";
+import { FaInfoCircle, FaSyncAlt, FaArrowRight } from "react-icons/fa";
 import { usePersistAuthStore } from "../../../../API/store/AuthStore/PersistAuthStore";
 import { Callplan } from "../../types/CallplanTypes";
 import { callplanService } from "../../Services/CallplanService";
 import { SPBViewProps } from "../../types/flow";
 import dayjs from "dayjs";
 import { showErrorToast } from "../../../../components/toast";
+import SPBTable from "./SPBTable";
 
 const getInitialBypassState = () => {
   const now = dayjs();
@@ -187,12 +181,6 @@ export default function SPBview({
     statusFilter === "SUBMITTED" && submittedCount > 0 && !isLoading;
   const canProceedToPreparation =
     statusFilter === "FINAL" && finalCount > 0 && !isLoading;
-  const calculateAllowedLabel = statusFilter === "FINAL" ? "DONE" : "YES";
-  const calculateAllowedClass =
-    statusFilter === "FINAL" ? "text-emerald-600" : "text-blue-600";
-  const printAllowedLabel = statusFilter === "FINAL" ? "YES" : "NO";
-  const printAllowedClass =
-    statusFilter === "FINAL" ? "text-emerald-600" : "text-red-600";
 
   const totalItems = callplans.length;
   const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
@@ -210,7 +198,7 @@ export default function SPBview({
       {/* Header & Breadcrumb */}
       <div className="mb-4">
         <h1 className="text-xl font-bold text-gray-800">SPB Submitted</h1>
-        <div className="text-sm text-gray-500 mt-1 flex gap-2">
+        <div className="mt-1 flex gap-2 text-sm text-gray-500">
           <span>Home</span>
           <span>&gt;</span>
           <span>SPB Submitted</span>
@@ -219,7 +207,7 @@ export default function SPBview({
 
       {showBypass && (
         <div className="mb-4 rounded-lg border border-yellow-200 bg-yellow-50 p-4 shadow-sm">
-          <div className="mb-2 text-xs font-bold uppercase tracking-wide text-yellow-800">
+          <div className="mb-2 text-xs font-bold tracking-wide text-yellow-800 uppercase">
             Bypass Mode (QA Tool)
           </div>
           <div className="flex flex-wrap items-end gap-3">
@@ -274,11 +262,11 @@ export default function SPBview({
       )}
 
       {/* Info Alert Box */}
-      <div className="bg-blue-50/50 border border-blue-100 rounded-lg p-5 mb-6 shadow-sm">
+      <div className="mb-6 rounded-lg border border-blue-100 bg-blue-50/50 p-5 shadow-sm">
         <div className="flex items-start gap-3">
-          <FaInfoCircle className="text-blue-500 mt-1" size={20} />
-          <div className="text-sm text-gray-700 w-full">
-            <h3 className="font-bold text-blue-700 text-base mb-2">
+          <FaInfoCircle className="mt-1 text-blue-500" size={20} />
+          <div className="w-full text-sm text-gray-700">
+            <h3 className="mb-2 text-base font-bold text-blue-700">
               Informasi Penarikan & Kalkulasi Stock On Hand (SOH)
             </h3>
             <p className="mb-2">
@@ -286,7 +274,7 @@ export default function SPBview({
               <strong>{targetCallplanDate}</strong>
               {bypassActive ? " (via Bypass)" : " (proses dilakukan pada H-1)"}:
             </p>
-            <ul className="list-disc pl-5 mb-3 space-y-1">
+            <ul className="mb-3 list-disc space-y-1 pl-5">
               <li>
                 <strong>Tarik Data SOH Manual:</strong> Hanya dibuka pada pukul{" "}
                 <strong>09:00 - 10:00 WIB</strong> di hari H-1.
@@ -304,14 +292,14 @@ export default function SPBview({
               </li>
             </ul>
 
-            <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-2 rounded-md mb-4 flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-green-500"></div>
+            <div className="mb-4 flex items-center gap-2 rounded-md border border-green-200 bg-green-50 px-4 py-2 text-green-700">
+              <div className="h-2 w-2 rounded-full bg-green-500"></div>
               Data SOH sudah ter-generate pada pukul{" "}
               <strong>04 Aug 2026 - 08:27</strong>.
             </div>
 
-            <p className="font-semibold mb-1">Panduan Filter Status:</p>
-            <ul className="list-disc pl-5 space-y-1">
+            <p className="mb-1 font-semibold">Panduan Filter Status:</p>
+            <ul className="list-disc space-y-1 pl-5">
               <li>
                 Pilih filter status <strong>SUBMITTED</strong> untuk memproses
                 data SPB baru yang siap dicocokkan (Kalkulasi) dengan stok fisik
@@ -329,9 +317,9 @@ export default function SPBview({
       </div>
 
       {/* Filter Bar */}
-      <div className="bg-white border border-gray-200 rounded-lg p-4 mb-4 flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center shadow-sm">
-        <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
-          <h2 className="font-bold text-lg text-gray-800">
+      <div className="mb-4 flex flex-col gap-3 rounded-lg border border-gray-200 bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
+          <h2 className="text-lg font-bold text-gray-800">
             SPB {statusFilter}
           </h2>
           <div className="flex items-center gap-2">
@@ -339,7 +327,7 @@ export default function SPBview({
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="border border-gray-300 rounded px-3 py-1.5 text-sm bg-white focus:outline-none focus:border-blue-500"
+              className="rounded border border-gray-300 bg-white px-3 py-1.5 text-sm focus:border-blue-500 focus:outline-none"
             >
               <option value="SUBMITTED">SUBMITTED</option>
               <option value="FINAL">FINAL</option>
@@ -347,11 +335,11 @@ export default function SPBview({
           </div>
         </div>
 
-        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+        <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
           <button
             onClick={fetchCallplans}
             disabled={isLoading}
-            className="bg-white border border-orange-500 text-orange-600 hover:bg-orange-50 disabled:opacity-50 px-4 py-2 rounded flex items-center justify-center gap-2 text-sm font-medium transition-colors"
+            className="flex items-center justify-center gap-2 rounded border border-orange-500 bg-white px-4 py-2 text-sm font-medium text-orange-600 transition-colors hover:bg-orange-50 disabled:opacity-50"
           >
             <FaSyncAlt size={14} className={isLoading ? "animate-spin" : ""} />
             Refresh Data
@@ -362,7 +350,7 @@ export default function SPBview({
               type="button"
               onClick={() => onProceedToCalculation(callplans)}
               disabled={!canProceedToCalculation}
-              className="bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300 disabled:cursor-not-allowed text-white px-4 py-2 rounded flex items-center justify-center gap-2 text-sm font-semibold transition-colors"
+              className="flex items-center justify-center gap-2 rounded bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-slate-300"
               title={
                 canProceedToCalculation
                   ? "Lanjut ke halaman Calculation (SOH + rumus)"
@@ -379,7 +367,7 @@ export default function SPBview({
               type="button"
               onClick={() => onProceedToPreparation(callplans)}
               disabled={!canProceedToPreparation}
-              className="bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-300 disabled:cursor-not-allowed text-white px-4 py-2 rounded flex items-center justify-center gap-2 text-sm font-semibold transition-colors"
+              className="flex items-center justify-center gap-2 rounded bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-slate-300"
               title={
                 canProceedToPreparation
                   ? "Lanjut ke Goods Preparation (Print & BTB)"
@@ -394,291 +382,33 @@ export default function SPBview({
       </div>
 
       {/* Status Summary */}
-      <div className="bg-white border border-gray-200 rounded-lg p-4 mb-6 shadow-sm flex gap-8">
+      <div className="mb-6 flex gap-8 rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
         <div>
-          <div className="text-xs font-semibold text-gray-500 mb-1">
+          <div className="mb-1 text-xs font-semibold text-gray-500">
             {bypassActive ? "Simulated Time" : "Current Time"}
           </div>
           <div className="font-bold text-gray-800">{displayCurrentTime}</div>
         </div>
         <div>
-          <div className="text-xs font-semibold text-gray-500 mb-1">
+          <div className="mb-1 text-xs font-semibold text-gray-500">
             Actual Target Callplan Date
           </div>
           <div className="font-bold text-blue-600">{targetCallplanDate}</div>
         </div>
-        {/* <div>
-          <div className="text-xs font-semibold text-gray-500 mb-1">
-            Calculate Allowed
-          </div>
-          <div className={`font-bold ${calculateAllowedClass}`}>
-            {calculateAllowedLabel}
-          </div>
-        </div>
-        <div>
-          <div className="text-xs font-semibold text-gray-500 mb-1">
-            Print Allowed
-          </div>
-          <div className={`font-bold ${printAllowedClass}`}>
-            {printAllowedLabel}
-          </div>
-        </div> */}
       </div>
 
-      {/* Data Table */}
-      <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm text-left">
-            <thead className="bg-orange-500 text-white text-xs uppercase">
-              <tr>
-                <th className="px-4 py-3 w-10"></th>
-                <th className="px-4 py-3 font-semibold tracking-wide">
-                  CALLPLAN NUMBER
-                </th>
-                <th className="px-4 py-3 font-semibold tracking-wide">
-                  NIK SALES
-                </th>
-                <th className="px-4 py-3 font-semibold tracking-wide">
-                  NAMA SALES
-                </th>
-                <th className="px-4 py-3 font-semibold tracking-wide">
-                  NAMA SPV
-                </th>
-                <th className="px-4 py-3 font-semibold tracking-wide">
-                  NIK SPV
-                </th>
-                <th className="px-4 py-3 font-semibold tracking-wide">
-                  TOTAL SKU
-                </th>
-                <th className="px-4 py-3 font-semibold tracking-wide">
-                  START DATE
-                </th>
-                <th className="px-4 py-3 font-semibold tracking-wide">
-                  END DATE
-                </th>
-                <th className="px-4 py-3 font-semibold tracking-wide">
-                  STATUS
-                </th>
-              </tr>
-            </thead>
-
-            {isLoading ? (
-              <tbody>
-                <tr>
-                  <td colSpan={10} className="text-center py-8 text-gray-500">
-                    Memuat data Callplan...
-                  </td>
-                </tr>
-              </tbody>
-            ) : callplans.length === 0 ? (
-              <tbody>
-                <tr>
-                  <td colSpan={10} className="text-center py-8 text-gray-500">
-                    Tidak ada data Callplan untuk status {statusFilter}.
-                  </td>
-                </tr>
-              </tbody>
-            ) : (
-              paginatedCallplans.map((row) => (
-                <tbody
-                  key={row.id}
-                  className="border-b border-gray-100 last:border-0"
-                >
-                  {/* Main Row */}
-                  <tr
-                    className={`hover:bg-gray-50 cursor-pointer ${
-                      expandedRows[row.id] ? "bg-gray-50" : ""
-                    }`}
-                    onClick={() => toggleRow(row.id)}
-                  >
-                    <td className="px-4 py-4 text-orange-500">
-                      {expandedRows[row.id] ? (
-                        <FaChevronDown size={14} />
-                      ) : (
-                        <FaChevronRight size={14} />
-                      )}
-                    </td>
-                    <td className="px-4 py-4 text-gray-600">
-                      {row.callplan_number}
-                    </td>
-                    <td className="px-4 py-4 text-gray-600">{row.sales_nik}</td>
-                    <td className="px-4 py-4 text-gray-800 font-medium">
-                      {row.sales_name}
-                    </td>
-                    <td className="px-4 py-4 text-gray-600">{row.sales_spv}</td>
-                    <td className="px-4 py-4 text-gray-600">
-                      {row.sales_spv_nik}
-                    </td>
-                    <td className="px-4 py-4 text-gray-800">
-                      {row.details?.length || 0}
-                    </td>
-                    <td className="px-4 py-4 text-gray-600">
-                      {row.callplan_date_start}
-                    </td>
-                    <td className="px-4 py-4 text-gray-600">
-                      {row.callplan_date_end}
-                    </td>
-                    <td className="px-4 py-4 font-semibold text-gray-700">
-                      {row.status}
-                    </td>
-                  </tr>
-
-                  {/* Expanded Details Row */}
-                  {expandedRows[row.id] && (
-                    <tr>
-                      <td
-                        colSpan={10}
-                        className="px-8 py-6 bg-white border-t border-gray-100"
-                      >
-                        {/* Summary Cards */}
-                        <div className="flex gap-4 mb-6">
-                          <div className="flex-1 bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
-                            <div className="text-xs font-semibold text-blue-400 mb-2 uppercase">
-                              Total SKU SPB
-                            </div>
-                            <div className="text-2xl font-bold text-gray-800">
-                              {row.details?.length || 0}{" "}
-                              <span className="text-sm font-normal text-gray-500">
-                                Item
-                              </span>
-                            </div>
-                          </div>
-                          <div className="flex-1 bg-blue-50 border border-blue-100 rounded-lg p-4 shadow-sm">
-                            <div className="text-xs font-semibold text-blue-500 mb-2 uppercase">
-                              Total Qty SPB
-                            </div>
-                            <div className="text-2xl font-bold text-blue-600">
-                              {row.details
-                                ?.reduce(
-                                  (acc, curr) =>
-                                    acc + Number(curr.item_qty_suggestion),
-                                  0,
-                                )
-                                .toLocaleString("id-ID") || 0}{" "}
-                              <span className="text-sm font-normal text-blue-500">
-                                BKS
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Inner Detail Table — max ~10 rows visible, scroll if more */}
-                        {row.details && row.details.length > 0 ? (
-                          <div className="border border-gray-200 rounded-lg overflow-hidden">
-                            <div className="max-h-[488px] overflow-y-auto">
-                              <table className="w-full text-sm text-left">
-                                <thead className="sticky top-0 z-10 bg-gray-50 text-gray-500 text-xs font-semibold uppercase border-b border-gray-200">
-                                  <tr>
-                                    <th className="px-6 py-3 w-16">NO</th>
-                                    <th className="px-6 py-3">ITEM NAME</th>
-                                    <th className="px-6 py-3">SKU</th>
-                                    <th className="px-6 py-3 text-right">
-                                      QTY SUGGESTION
-                                    </th>
-                                  </tr>
-                                </thead>
-                                <tbody className="divide-y divide-gray-100">
-                                  {row.details.map((detail, index) => (
-                                    <tr
-                                      key={detail.id}
-                                      className="hover:bg-gray-50"
-                                    >
-                                      <td className="px-6 py-3 text-gray-500">
-                                        {index + 1}
-                                      </td>
-                                      <td className="px-6 py-3 font-medium text-gray-800">
-                                        {detail.item_code}
-                                      </td>
-                                      <td className="px-6 py-3 text-gray-400">
-                                        {detail.item_code}
-                                      </td>
-                                      <td className="px-6 py-3 font-bold text-gray-800 text-right">
-                                        {detail.item_qty_suggestion}
-                                      </td>
-                                    </tr>
-                                  ))}
-                                </tbody>
-                                <tfoot className="sticky bottom-0 z-10 bg-gray-50 border-t border-gray-200">
-                                  <tr>
-                                    <td
-                                      colSpan={3}
-                                      className="px-6 py-3 text-right font-bold text-gray-600 uppercase text-xs"
-                                    >
-                                      TOTAL
-                                    </td>
-                                    <td className="px-6 py-3 text-right font-bold text-blue-600">
-                                      {row.details
-                                        .reduce(
-                                          (acc, curr) =>
-                                            acc +
-                                            Number(curr.item_qty_suggestion),
-                                          0,
-                                        )
-                                        .toLocaleString("id-ID")}
-                                    </td>
-                                  </tr>
-                                </tfoot>
-                              </table>
-                            </div>
-                          </div>
-                        ) : (
-                          <div className="text-center p-4 border border-gray-200 rounded-lg text-gray-500">
-                            Tidak ada detail SKU untuk Callplan ini.
-                          </div>
-                        )}
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              ))
-            )}
-          </table>
-        </div>
-        {!isLoading && totalItems > 0 && (
-          <div className="flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3">
-            <div className="text-sm text-gray-500">
-              Showing {startIndex + 1}-{Math.min(endIndex, totalItems)} of{" "}
-              {totalItems} items
-            </div>
-
-            <div className="flex items-center gap-4">
-              <select
-                value={pageSize}
-                onChange={(e) => setPageSize(Number(e.target.value))}
-                className="rounded border border-gray-300 bg-white px-2 py-1 text-sm focus:outline-none"
-              >
-                <option value={10}>Show 10</option>
-                <option value={20}>Show 20</option>
-                <option value={50}>Show 50</option>
-              </select>
-
-              <div className="flex items-center gap-2 text-sm font-semibold text-gray-600">
-                <button
-                  type="button"
-                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                  disabled={safeCurrentPage === 1}
-                  className="text-gray-400 hover:text-gray-600 disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  <FaChevronLeft size={12} />
-                </button>
-                <span>
-                  Page {safeCurrentPage} of {totalPages}
-                </span>
-                <button
-                  type="button"
-                  onClick={() =>
-                    setCurrentPage((p) => Math.min(totalPages, p + 1))
-                  }
-                  disabled={safeCurrentPage === totalPages}
-                  className="text-gray-400 hover:text-gray-600 disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  <FaChevronRight size={12} />
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
+      <SPBTable
+        data={paginatedCallplans}
+        isLoading={isLoading}
+        statusFilter={statusFilter}
+        expandedRows={expandedRows}
+        onToggleRow={toggleRow}
+        currentPage={safeCurrentPage}
+        pageSize={pageSize}
+        totalItems={totalItems}
+        onPageChange={setCurrentPage}
+        onPageSizeChange={setPageSize}
+      />
     </div>
   );
 }
