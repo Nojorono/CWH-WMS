@@ -1,0 +1,158 @@
+import type { ReactNode } from "react";
+import { Callplan, CallplanDetail } from "../../types/CallplanTypes";
+
+export type ColumnAlign = "left" | "right" | "center";
+
+export type DynamicColumn<T> = {
+  id: string;
+  header: string;
+  /** Set false untuk hide tanpa hapus definisi */
+  visible?: boolean;
+  align?: ColumnAlign;
+  headerClassName?: string;
+  cellClassName?: string;
+  /** Ambil nilai dari row; jika tidak diisi, pakai row[id] */
+  getValue?: (row: T, index?: number) => ReactNode;
+};
+
+export type SummaryCardConfig = {
+  id: string;
+  label: string;
+  unit?: string;
+  tone?: "default" | "blue";
+  getValue: (row: Callplan) => ReactNode;
+};
+
+const alignClass = (align: ColumnAlign = "left") => {
+  if (align === "right") return "text-right";
+  if (align === "center") return "text-center";
+  return "text-left";
+};
+
+export const getAlignClass = alignClass;
+
+/**
+ * Kolom master SPB/Callplan.
+ * Tambah/kurang field cukup ubah array ini (atau set visible: false).
+ */
+export const SPB_MASTER_COLUMNS: DynamicColumn<Callplan>[] = [
+  {
+    id: "callplan_number",
+    header: "Callplan Number",
+    cellClassName: "text-gray-600",
+  },
+  {
+    id: "sales_nik",
+    header: "NIK Sales",
+    cellClassName: "text-gray-600",
+  },
+  {
+    id: "sales_name",
+    header: "Nama Sales",
+    cellClassName: "text-gray-800 font-medium",
+  },
+  {
+    id: "sales_spv",
+    header: "Nama SPV",
+    visible: false,
+    cellClassName: "text-gray-600",
+  },
+  {
+    id: "sales_spv_nik",
+    header: "NIK SPV",
+    visible: false,
+    cellClassName: "text-gray-600",
+  },
+  {
+    id: "total_sku",
+    header: "Total SKU",
+    cellClassName: "text-gray-800",
+    getValue: (row) => row.details?.length || 0,
+  },
+  {
+    id: "callplan_date_start",
+    header: "Start Date",
+    cellClassName: "text-gray-600",
+  },
+  {
+    id: "callplan_date_end",
+    header: "End Date",
+    cellClassName: "text-gray-600",
+  },
+  {
+    id: "status",
+    header: "Status",
+    cellClassName: "font-semibold text-gray-700",
+  },
+];
+
+/**
+ * Kolom detail expand (SKU lines).
+ */
+export const SPB_DETAIL_COLUMNS: DynamicColumn<CallplanDetail>[] = [
+  {
+    id: "no",
+    header: "No",
+    headerClassName: "w-16",
+    cellClassName: "text-gray-500",
+    getValue: (_row, index = 0) => index + 1,
+  },
+  {
+    id: "item_name",
+    header: "Item Name",
+    cellClassName: "font-medium text-gray-800",
+    // Sementara pakai item_code sampai mapping master item tersedia
+    getValue: (row) => row.item_code,
+  },
+  {
+    id: "item_code",
+    header: "SKU",
+    cellClassName: "text-gray-400",
+  },
+  {
+    id: "item_qty_suggestion",
+    header: "Qty Suggestion",
+    align: "right",
+    cellClassName: "font-bold text-gray-800",
+  },
+];
+
+/**
+ * Summary card di area expand.
+ */
+export const SPB_DETAIL_SUMMARY_CARDS: SummaryCardConfig[] = [
+  {
+    id: "total_sku",
+    label: "Total SKU SPB",
+    unit: "Item",
+    tone: "default",
+    getValue: (row) => row.details?.length || 0,
+  },
+  {
+    id: "total_qty",
+    label: "Total Qty SPB",
+    unit: "BKS",
+    tone: "blue",
+    getValue: (row) =>
+      (
+        row.details?.reduce(
+          (acc, curr) => acc + Number(curr.item_qty_suggestion || 0),
+          0,
+        ) || 0
+      ).toLocaleString("id-ID"),
+  },
+];
+
+export const resolveCellValue = <T extends Record<string, any>>(
+  column: DynamicColumn<T>,
+  row: T,
+  index?: number,
+): ReactNode => {
+  if (column.getValue) return column.getValue(row, index);
+  const raw = row[column.id as keyof T];
+  if (raw === null || raw === undefined || raw === "") return "-";
+  return raw as ReactNode;
+};
+
+export const getVisibleColumns = <T>(columns: DynamicColumn<T>[]) =>
+  columns.filter((col) => col.visible !== false);

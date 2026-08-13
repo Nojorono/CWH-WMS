@@ -23,8 +23,8 @@ export const IntegrateBlockAlert = ({
             Integrate Meta Sementara Dikunci
           </p>
           <p className="mt-0.5 text-xs text-amber-800">
-            Ada SPB dengan Qty SPB lebih besar dari SOH. User perlu menyesuaikan
-            Qty SPB pada dokumen berikut:
+            Total Qty Final seluruh SPB di cabang melebihi SOH untuk sebagian
+            SKU. Sesuaikan Qty Final pada SPB berikut (klik untuk buka detail):
           </p>
           <div className="mt-2 flex flex-wrap gap-1.5">
             {spbNumbers.map((spb) => (

@@ -552,6 +552,42 @@ function GoodPrepView({
     return map;
   }, [stockList]);
 
+  /**
+   * Penjagaan cabang: total Qty Final seluruh SPB per SKU vs SOH.
+   * Contoh ABC12: total SPB 604 > SOH 601 → Less Stock cabang,
+   * meskipun Qty tiap SPB sendiri masih di bawah SOH.
+   */
+  const branchOversoldSkus = useMemo(() => {
+    return new Set(
+      skuSummary
+        .filter((s) => Number(s.totalRequest || 0) > Number(s.soh || 0))
+        .map((s) => String(s.sku || s.item_code || "").trim().toLowerCase())
+        .filter(Boolean),
+    );
+  }, [skuSummary]);
+
+  const globalHasLessStock = branchOversoldSkus.size > 0;
+
+  /** SPB yang ikut menyumbang SKU Less Stock di level cabang */
+  const branchLessStockSpbList = useMemo(() => {
+    if (!branchOversoldSkus.size) return [];
+    const source = enrichedData.length ? enrichedData : prepCallplans;
+    return [
+      ...new Set(
+        source
+          .filter((doc) =>
+            (doc.details || []).some((detail) =>
+              branchOversoldSkus.has(
+                String(detail.item_code || "").trim().toLowerCase(),
+              ),
+            ),
+          )
+          .map((doc) => doc.spb_number || doc.callplan_number || "-")
+          .filter(Boolean),
+      ),
+    ];
+  }, [branchOversoldSkus, enrichedData, prepCallplans]);
+
   const buildSohCheckLine = (
     doc: EnrichedCallplan | Callplan,
     detail: CallplanDetail,
@@ -563,12 +599,15 @@ function GoodPrepView({
     const qtySpb =
       Number(detail.item_qty_final ?? detail.item_qty_submitted ?? 0) || 0;
     const soh = sohMap.get(key) || 0;
+    const skuKey = String(detail.item_code || "").trim().toLowerCase();
+    // LESS_STOCK jika Qty Final SPB ini > SOH, ATAU SKU sudah oversold di level cabang
+    const isBranchOversold = branchOversoldSkus.has(skuKey);
     const status: SohCheckLine["status"] =
       qtySpb === 0 && soh === 0
         ? "NO_STOCK"
         : qtySpb === 0
           ? "NOT_NEEDED"
-          : qtySpb > soh
+          : qtySpb > soh || isBranchOversold
             ? "LESS_STOCK"
             : "AVAILABLE";
     const itemName =
@@ -589,33 +628,6 @@ function GoodPrepView({
     };
   };
 
-  /** Cek SOH vs Qty SPB untuk seluruh cabang (blokir Integrate di halaman utama) */
-  const globalIntegrateLines = useMemo(() => {
-    const source = enrichedData.length ? enrichedData : prepCallplans;
-    return source.flatMap((doc) =>
-      (doc.details || []).map((detail) =>
-        buildSohCheckLine(doc, detail as CallplanDetail),
-      ),
-    );
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [enrichedData, prepCallplans, sohMap, itemList]);
-
-  const globalHasLessStock = useMemo(
-    () => globalIntegrateLines.some((l) => l.status === "LESS_STOCK"),
-    [globalIntegrateLines],
-  );
-
-  const branchLessStockSpbList = useMemo(() => {
-    return [
-      ...new Set(
-        globalIntegrateLines
-          .filter((l) => l.status === "LESS_STOCK")
-          .map((l) => l.spbNumber)
-          .filter(Boolean),
-      ),
-    ];
-  }, [globalIntegrateLines]);
-
   /** POV modal: hanya SPB yang sedang dipilih */
   const singleIntegrateLines = useMemo(() => {
     if (!integrateTriggerSpb) return [];
@@ -627,7 +639,14 @@ function GoodPrepView({
       buildSohCheckLine(latest, detail as CallplanDetail),
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [integrateTriggerSpb, enrichedData, prepCallplans, sohMap, itemList]);
+  }, [
+    integrateTriggerSpb,
+    enrichedData,
+    prepCallplans,
+    sohMap,
+    itemList,
+    branchOversoldSkus,
+  ]);
 
   const handleIntegrateToMetaPerSpb = async () => {
     if (!integrateTriggerSpb?.id) {
@@ -680,8 +699,8 @@ function GoodPrepView({
       { accessorKey: "spb_number", header: "SPB Number" },
       { accessorKey: "sales_name", header: "Sales Name" },
       { accessorKey: "sales_nik", header: "Sales NIK" },
-      { accessorKey: "sales_spv", header: "Supervisor" },
-      { accessorKey: "sales_spv_nik", header: "Supervisor NIK" },
+      // { accessorKey: "sales_spv", header: "Supervisor" },
+      // { accessorKey: "sales_spv_nik", header: "Supervisor NIK" },
       { accessorKey: "callplan_date_start", header: "Start Date" },
       { accessorKey: "callplan_date_end", header: "End Date" },
       {
@@ -714,6 +733,12 @@ function GoodPrepView({
               label: "Integrate Meta",
               icon: FaSyncAlt,
               onClick: () => {
+                if (globalHasLessStock) {
+                  showErrorToast(
+                    "Integrate Meta dikunci — total Qty Final cabang melebihi SOH",
+                  );
+                  return;
+                }
                 setIntegrateTriggerSpb(rowData);
                 setIsIntegrateModalOpen(true);
               },
