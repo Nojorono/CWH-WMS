@@ -10,10 +10,22 @@ import dayjs from "dayjs";
 import { showErrorToast } from "../../../../components/toast";
 import SPBTable from "./SPBTable";
 
+const TODAY = () => dayjs().format("YYYY-MM-DD");
+const H_PLUS_1 = () => dayjs().add(1, "day").format("YYYY-MM-DD");
+
 const getInitialBypassState = () => {
   const now = dayjs();
   return {
-    date: now.add(1, "day").format("YYYY-MM-DD"),
+    date: TODAY(), // default picker: DateNow
+    time: now.format("HH:mm"),
+  };
+};
+
+/** Reset target: selalu H+1 (besok) */
+const getResetBypassState = () => {
+  const now = dayjs();
+  return {
+    date: H_PLUS_1(),
     time: now.format("HH:mm"),
   };
 };
@@ -31,17 +43,23 @@ export default function SPBview({
   const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>({});
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
-  const [showBypass, setShowBypass] = useState(false);
   // Draft = pilihan di picker (belum diterapkan)
-  // Applied = baru dipakai API/UI setelah klik Apply Bypass
+  // Applied = baru dipakai API/UI setelah klik Terapkan
+  // Default selalu DateNow (YYYY-MM-DD); localStorage hanya jika bypass aktif
   const [draftBypassDate, setDraftBypassDate] = useState(() => {
-    const saved = localStorage.getItem("OSM_BYPASS_DATETIME");
-    if (saved) return saved.split(" ")[0];
-    return getInitialBypassState().date;
+    if (localStorage.getItem("OSM_BYPASS_ACTIVE") === "true") {
+      const saved = localStorage.getItem("OSM_BYPASS_DATETIME")?.split(" ")[0];
+      if (saved && /^\d{4}-\d{2}-\d{2}$/.test(saved) && dayjs(saved).isValid()) {
+        return saved;
+      }
+    }
+    return TODAY();
   });
   const [draftBypassTime, setDraftBypassTime] = useState(() => {
-    const saved = localStorage.getItem("OSM_BYPASS_DATETIME");
-    if (saved?.split(" ")[1]) return saved.split(" ")[1];
+    if (localStorage.getItem("OSM_BYPASS_ACTIVE") === "true") {
+      const saved = localStorage.getItem("OSM_BYPASS_DATETIME")?.split(" ")[1];
+      if (saved) return saved;
+    }
     return getInitialBypassState().time;
   });
   const [appliedBypassDate, setAppliedBypassDate] = useState(() => {
@@ -62,7 +80,8 @@ export default function SPBview({
     if (bypassActive && appliedBypassDate) {
       return appliedBypassDate;
     }
-    return dayjs().add(1, "day").format("YYYY-MM-DD");
+    // Belum Terapkan → default otomatis H+1
+    return H_PLUS_1();
   }, [bypassActive, appliedBypassDate]);
 
   const displayCurrentTime = useMemo(() => {
@@ -102,30 +121,17 @@ export default function SPBview({
   }, [organization_id, statusFilter, targetCallplanDate]);
 
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === "b") {
-        e.preventDefault();
-        setShowBypass((prev) => !prev);
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, []);
-
-  useEffect(() => {
-    if (!showBypass || !bypassDateTimeRef.current) return;
+    if (!bypassDateTimeRef.current) return;
 
     const fp = flatpickr(bypassDateTimeRef.current, {
-      enableTime: true,
-      enableSeconds: false,
-      time_24hr: true,
-      dateFormat: "Y-m-d H:i",
-      defaultDate: `${draftBypassDate} ${draftBypassTime}`,
-      onChange: (_, dateStr) => {
-        // Hanya update draft — data API/UI belum berubah sampai Apply
-        if (!dateStr) return;
-        const picked = dayjs(dateStr);
+      enableTime: false,
+      dateFormat: "Y-m-d", // tampilan: 2026-08-04
+      defaultDate: draftBypassDate,
+      allowInput: false,
+      onChange: (selectedDates) => {
+        // Hanya update draft — data API/UI belum berubah sampai Terapkan
+        if (!selectedDates?.[0]) return;
+        const picked = dayjs(selectedDates[0]);
         if (picked.isValid()) {
           setDraftBypassDate(picked.format("YYYY-MM-DD"));
           setDraftBypassTime(picked.format("HH:mm"));
@@ -138,7 +144,9 @@ export default function SPBview({
       fp.destroy();
       flatpickrRef.current = null;
     };
-  }, [showBypass]);
+    // Init sekali; perubahan tanggal di-handle via onChange
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleApplyBypass = () => {
     if (!draftBypassDate) return;
@@ -153,7 +161,8 @@ export default function SPBview({
   };
 
   const handleResetBypass = () => {
-    const { date: resetDate, time: resetTime } = getInitialBypassState();
+    // Reset ke H+1: hari ini 2026-08-14 → 2026-08-15
+    const { date: resetDate, time: resetTime } = getResetBypassState();
 
     localStorage.removeItem("OSM_BYPASS_ACTIVE");
     localStorage.removeItem("OSM_BYPASS_DATETIME");
@@ -163,7 +172,7 @@ export default function SPBview({
     setDraftBypassDate(resetDate);
     setDraftBypassTime(resetTime);
     // false = jangan fire onChange (hindari side-effect)
-    flatpickrRef.current?.setDate(`${resetDate} ${resetTime}`, false);
+    flatpickrRef.current?.setDate(resetDate, false);
   };
 
   const toggleRow = (id: string) => {
@@ -205,64 +214,8 @@ export default function SPBview({
         </div>
       </div>
 
-      {showBypass && (
-        <div className="mb-4 rounded-lg border border-yellow-200 bg-yellow-50 p-4 shadow-sm">
-          <div className="mb-2 text-xs font-bold tracking-wide text-yellow-800 uppercase">
-            Bypass Mode (QA Tool)
-          </div>
-          <div className="flex flex-wrap items-end gap-3">
-            <div>
-              <label className="mb-1 block text-xs font-semibold text-yellow-900">
-                Pilih Tanggal & Jam Simulasi
-              </label>
-              <input
-                ref={bypassDateTimeRef}
-                type="text"
-                defaultValue={`${draftBypassDate} ${draftBypassTime}`}
-                className="w-56 rounded border border-yellow-300 bg-white px-2 py-1.5 text-sm"
-                placeholder="Select date & time"
-              />
-            </div>
-            <button
-              type="button"
-              onClick={handleApplyBypass}
-              className="rounded bg-yellow-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-yellow-700"
-            >
-              Apply Bypass
-            </button>
-            <button
-              type="button"
-              onClick={handleResetBypass}
-              className="rounded bg-red-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-red-700"
-            >
-              Reset
-            </button>
-          </div>
-          <p className="mt-2 text-xs text-yellow-800">
-            {bypassActive ? (
-              <>
-                Bypass aktif · API & UI memakai target callplan:{" "}
-                <strong>{targetCallplanDate}</strong>
-                {draftBypassDate !== appliedBypassDate ||
-                draftBypassTime !== appliedBypassTime
-                  ? ` · Draft belum di-Apply: ${draftBypassDate} ${draftBypassTime}`
-                  : ""}
-              </>
-            ) : (
-              <>
-                Bypass nonaktif · target callplan otomatis H+1:{" "}
-                <strong>{targetCallplanDate}</strong>
-                {" · "}
-                Pilih tanggal lalu klik <strong>Apply Bypass</strong> untuk
-                menerapkan.
-              </>
-            )}
-          </p>
-        </div>
-      )}
-
       {/* Info Alert Box */}
-      <div className="mb-6 rounded-lg border border-blue-100 bg-blue-50/50 p-5 shadow-sm">
+      {/* <div className="mb-6 rounded-lg border border-blue-100 bg-blue-50/50 p-5 shadow-sm">
         <div className="flex items-start gap-3">
           <FaInfoCircle className="mt-1 text-blue-500" size={20} />
           <div className="w-full text-sm text-gray-700">
@@ -272,7 +225,10 @@ export default function SPBview({
             <p className="mb-2">
               Untuk mempersiapkan data SPB kunjungan tanggal{" "}
               <strong>{targetCallplanDate}</strong>
-              {bypassActive ? " (via Bypass)" : " (proses dilakukan pada H-1)"}:
+              {bypassActive
+                ? " (tanggal yang dipilih)"
+                : " (proses dilakukan pada H-1)"}
+              :
             </p>
             <ul className="mb-3 list-disc space-y-1 pl-5">
               <li>
@@ -314,6 +270,60 @@ export default function SPBview({
             </ul>
           </div>
         </div>
+      </div> */}
+
+      {/* Select Date — fitur pilih tanggal callplan untuk get SPB */}
+      <div className="mb-4 rounded-lg border border-blue-200 bg-blue-50 p-4 shadow-sm">
+        <div className="mb-2 text-xs font-bold tracking-wide text-blue-800 uppercase">
+          Pilih Tanggal Callplan
+        </div>
+        <div className="flex flex-wrap items-end gap-3">
+          <div>
+            <label className="mb-1 block text-xs font-semibold text-blue-900">
+              Tanggal Callplan
+            </label>
+            <input
+              ref={bypassDateTimeRef}
+              type="text"
+              readOnly
+              defaultValue={draftBypassDate}
+              className="w-56 cursor-pointer rounded border border-blue-300 bg-white px-2 py-1.5 text-sm"
+              placeholder="Pilih tanggal"
+            />
+          </div>
+          <button
+            type="button"
+            onClick={handleApplyBypass}
+            className="rounded bg-blue-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-blue-700"
+          >
+            Terapkan
+          </button>
+          <button
+            type="button"
+            onClick={handleResetBypass}
+            className="rounded border border-slate-300 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-50"
+          >
+            Reset ke H+1
+          </button>
+        </div>
+        <p className="mt-2 text-xs text-blue-800">
+          {bypassActive ? (
+            <>
+              Tanggal aktif untuk get SPB: <strong>{targetCallplanDate}</strong>
+              {draftBypassDate !== appliedBypassDate
+                ? ` · Draft belum diterapkan: ${draftBypassDate}`
+                : ""}
+            </>
+          ) : (
+            <>
+              Belum memilih tanggal khusus · target callplan otomatis H+1:{" "}
+              <strong>{targetCallplanDate}</strong>
+              {" · "}
+              Pilih tanggal lalu klik <strong>Terapkan</strong> untuk memuat
+              data SPB.
+            </>
+          )}
+        </p>
       </div>
 
       {/* Filter Bar */}
@@ -385,7 +395,7 @@ export default function SPBview({
       <div className="mb-6 flex gap-8 rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
         <div>
           <div className="mb-1 text-xs font-semibold text-gray-500">
-            {bypassActive ? "Simulated Time" : "Current Time"}
+            {bypassActive ? "Selected Date Time" : "Current Time"}
           </div>
           <div className="font-bold text-gray-800">{displayCurrentTime}</div>
         </div>
