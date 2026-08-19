@@ -40,6 +40,7 @@ export const STATUS_MAP_INTEGRATION_OUTBOUND: StatusMap = {
   READY: 'secondary',
   S: 'success',
   E: 'error',
+  P: 'warning',
   SUCCESS: 'success',
   ERROR: 'error',
   FAILED: 'error',

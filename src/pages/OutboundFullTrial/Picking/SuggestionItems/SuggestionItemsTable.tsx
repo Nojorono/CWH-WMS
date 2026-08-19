@@ -646,9 +646,8 @@ export const SuggestionItemsTable: React.FC<TableProps> = ({
       enableSorting: false,
       cell: ({ row }) => {
         const item = row.original;
-        // Gabungkan semua bin_name unik dari suggested_locations
         const bins = (item.suggested_locations ?? [])
-          .map((loc: any) => loc.bin_name)
+          .map((loc: any) => loc.bin_code)
           .filter(Boolean);
         const uniqueBins = Array.from(new Set(bins));
         return <span>{uniqueBins.length ? uniqueBins.join(", ") : "-"}</span>;
