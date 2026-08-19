@@ -353,9 +353,6 @@ const CreateMemo: React.FC = () => {
     loading: loadingCustomer,
   } = useCustomerByOutboundType(typeOutbound, methods);
 
-  console.log("customerList", customerList);
-  console.log("customerRaw", customerRaw);
-
   // ✅ Watch selected_destination
   const selectedCustomer = methods.watch("selected_destination");
 

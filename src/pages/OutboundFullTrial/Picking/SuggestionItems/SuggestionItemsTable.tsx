@@ -628,16 +628,14 @@ export const SuggestionItemsTable: React.FC<TableProps> = ({
       },
     },
     {
-      id: "warehouse_sub_name",
+      id: "warehouse_sub_code",
       header: "Zone",
       enableSorting: false,
       cell: ({ row }) => {
         const item = row.original;
-        // Gabungkan semua warehouse_sub_name unik dari suggested_locations
         const zones = (item.suggested_locations ?? [])
-          .map((loc: any) => loc.warehouse_sub_name)
+          .map((loc: any) => loc.warehouse_sub_code)
           .filter(Boolean);
-        // Hilangkan duplikat
         const uniqueZones = Array.from(new Set(zones));
         return <span>{uniqueZones.length ? uniqueZones.join(", ") : "-"}</span>;
       },
