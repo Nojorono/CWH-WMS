@@ -209,27 +209,6 @@ export const SuggestionItemsTable: React.FC<TableProps> = ({
     RawSuggestion[]
   >([]);
 
-  // const normalizeItems = (items: Item[]): Item[] => {
-  //   const result: Item[] = [];
-
-  //   items.forEach((item) => {
-  //     item.suggested_locations?.forEach((loc, idx) => {
-  //       result.push({
-  //         ...item,
-  //         suggested_locations: [loc], // 🔥 PENTING
-  //         _localId: genLocalId(),
-  //         _isManual: false,
-  //         qty_pick: Math.min(
-  //           item.required_quantity ?? 0,
-  //           loc.available_quantity ?? 0
-  //         ),
-  //       });
-  //     });
-  //   });
-
-  //   return result;
-  // };
-
   const normalizeItems = (items: Item[]): Item[] => {
     const result: Item[] = [];
 

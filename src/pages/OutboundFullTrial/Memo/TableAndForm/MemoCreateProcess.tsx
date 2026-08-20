@@ -916,17 +916,27 @@ const CreateMemo: React.FC = () => {
     }
   };
 
-  const handleRejectedMemo = async (memoId: string) => {
-    try {
-      await axiosInstance.post(`outbound-memo/${memoId}/cancelled`);
-
-      showSuccessToast("Memo rejected successfully");
-      navigate("/memo");
-    } catch (error: any) {
-      console.error("Error rejecting memo via axiosInstance:", error);
-      const errorMsg = error.response?.data?.message || "Failed to reject memo";
-      showErrorToast(errorMsg);
-    }
+  const handleRejectedMemo = (memoId: string) => {
+    showConfirmDialog(
+      async () => {
+        try {
+          await axiosInstance.post(`outbound-memo/${memoId}/cancelled`);
+          showSuccessToast("Memo rejected successfully");
+          navigate("/memo");
+        } catch (error: any) {
+          console.error("Error rejecting memo via axiosInstance:", error);
+          const errorMsg =
+            error.response?.data?.message || "Failed to reject memo";
+          showErrorToast(errorMsg);
+        }
+      },
+      {
+        title: "Reject Memo?",
+        text: "Memo akan direject dan status diubah menjadi cancelled.",
+        icon: "warning",
+        confirmButtonText: "Ya, Reject!",
+      },
+    );
   };
 
   if (isLoading && (isEdit || isDetail)) {
@@ -1173,7 +1183,7 @@ const CreateMemo: React.FC = () => {
 
               <Button
                 type="button"
-                variant="primary"
+                variant="action"
                 onClick={() => handleApproveMemo(memoId)}
               >
                 Approve Memo
