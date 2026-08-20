@@ -17,6 +17,16 @@ export const integrateService = {
     return response.data;
   },
 
+  /** POST /do-suggestion/{id}/integrate/kecil — untuk VOID_NEED_ACTION */
+  integrateToKecil: async (
+    doSuggestionId: string,
+  ): Promise<IntegrateMetaGitResponse> => {
+    const response = await axiosInstance.post<IntegrateMetaGitResponse>(
+      `do-suggestion/${doSuggestionId}/integrate/kecil`,
+    );
+    return response.data;
+  },
+
   integrateAllToMetaGit: async (
     doSuggestionIds: string[],
   ): Promise<

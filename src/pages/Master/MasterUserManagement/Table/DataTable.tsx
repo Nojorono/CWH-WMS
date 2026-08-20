@@ -13,10 +13,10 @@ import {
 import { useRoleStore } from "../../../../API/store/MasterStore";
 import { UserVerifyService } from "../../../../DynamicAPI/services/Service/UserVerifyService";
 import { showErrorToast, showSuccessToast } from "../../../../components/toast";
+import { showConfirmDialog } from "../../../../components/swal-confirm";
 import { usePersistAuthStore } from "../../../../API/store/AuthStore/PersistAuthStore";
 import Select from "../../../../components/form/Select";
 import axiosInstance from "../../../../DynamicAPI/AxiosInstance";
-import { log } from "node:console";
 
 const DataTable = () => {
   const { list: userData, createData, updateData, fetchAll } = useStoreUser();
@@ -478,14 +478,24 @@ const DataTable = () => {
     );
   }, [mappedUserData, selectedOrganization]);
 
-  const handleDelete = async (id: any) => {
-    try {
-      // Melakukan request DELETE ke endpoint yang Anda tentukan
-      await axiosInstance.delete(`/user/${id}/hard`);
-      console.log(`User dengan ID ${id} berhasil dihapus.`);
-    } catch (error) {
-      console.error("Gagal menghapus data:", error);
-    }
+  const handleDelete = (id: any) => {
+    showConfirmDialog(
+      async () => {
+        try {
+          await axiosInstance.delete(`/user/${id}/hard`);
+          showSuccessToast("User berhasil dihapus");
+        } catch (error) {
+          console.error("Gagal menghapus data:", error);
+          showErrorToast("Gagal menghapus user");
+        }
+      },
+      {
+        title: "Hapus User?",
+        text: "Data user akan dihapus secara permanen dan tidak dapat dikembalikan.",
+        icon: "warning",
+        confirmButtonText: "Ya, Hapus!",
+      },
+    );
   };
 
   return (

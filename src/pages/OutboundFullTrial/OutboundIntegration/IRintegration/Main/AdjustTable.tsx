@@ -332,7 +332,7 @@ const IRSOTable = ({
         ),
       },
       {
-        header: "IR Sync Status",
+        header: "Status",
         accessorKey: "iface_status_ir",
         cell: ({ row }) => {
 

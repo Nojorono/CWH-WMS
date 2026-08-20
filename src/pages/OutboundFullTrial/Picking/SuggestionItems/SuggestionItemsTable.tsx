@@ -234,6 +234,8 @@ export const SuggestionItemsTable: React.FC<TableProps> = ({
     const result: Item[] = [];
 
     items.forEach((item) => {
+      if (Number(item.remaining_quantity_needed ?? 0) === 0) return;
+
       if (item.suggested_locations && item.suggested_locations.length > 0) {
         item.suggested_locations.forEach((loc, idx) => {
           result.push({

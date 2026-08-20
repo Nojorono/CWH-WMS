@@ -5,7 +5,9 @@ import { formatDateIndo } from "../../../../../../helper/FormatDate";
 export const useCompactRows = (suggestionItems: SuggestedItem[]) => {
 
   return useMemo<CompactPickingRow[]>(() => {
-    return suggestionItems.flatMap((item) => {
+    return suggestionItems
+      .filter((item) => Number(item.remaining_quantity_needed ?? 0) !== 0)
+      .flatMap((item) => {
       if (item.suggested_locations.length === 0) {
         return [
           {
