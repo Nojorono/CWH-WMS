@@ -358,7 +358,6 @@ export const useStoreSubWarehouseWithBins = createCrudStore<SubWarehouseWithBins
     service: SubWarehouseWithBinsService,
 });
 
-
 export const useStoreOpeningStockBalance = createCrudStore<OpeningStockBalance, CreateOpeningStockBalance, UpdateOpeningStockBalance>({
     name: "OpeningStockBalance",
     service: OpeningStockBalanceService,

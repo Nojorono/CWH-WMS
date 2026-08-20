@@ -135,6 +135,31 @@ const pollStatusLabel = (status?: string | null) => {
   return s || "-";
 };
 
+const normalizeIfaceStatus = (status?: string | null) =>
+  String(status || "").trim().toUpperCase();
+
+const isIfaceSuccess = (status?: string | null) => {
+  const s = normalizeIfaceStatus(status);
+  return s === "S" || s === "SUCCESS";
+};
+
+const isIfaceError = (status?: string | null) => {
+  const s = normalizeIfaceStatus(status);
+  return s === "E" || s === "ERROR" || s === "FAILED";
+};
+
+/** IR + IO + OI: all S → S, any E → E, otherwise P */
+const getCombinedIfaceStatus = (
+  ir?: string | null,
+  io?: string | null,
+  oi?: string | null,
+): "S" | "E" | "P" => {
+  const statuses = [ir, io, oi];
+  if (statuses.some(isIfaceError)) return "E";
+  if (statuses.every(isIfaceSuccess)) return "S";
+  return "P";
+};
+
 const IRSOTable = ({
   globalFilter,
   setGlobalFilter,
@@ -307,16 +332,24 @@ const IRSOTable = ({
         ),
       },
       {
-        header: "IR Sync Status",
+        header: "Status",
         accessorKey: "iface_status_ir",
-        cell: ({ row }) => (
-          <StatusBadge
-            status={row.original.iface_status_ir}
-            colorMap={STATUS_MAP_INTEGRATION_OUTBOUND || {}} // Fallback jika map belum ada
-            variant="solid"
-            size="sm"
-          />
-        ),
+        cell: ({ row }) => {
+
+          const combinedStatus = getCombinedIfaceStatus(
+            row.original.iface_status_ir,
+            row.original.iface_status_io,
+            row.original.iface_status_oi,
+          ); 
+          return (
+            <StatusBadge
+              status={combinedStatus}
+              colorMap={STATUS_MAP_INTEGRATION_OUTBOUND || {}}
+              variant="solid"
+              size="sm"
+            />
+          );
+        },
       },
       {
         header: "Created Date",
@@ -878,7 +911,15 @@ const MiniStatus = ({ label, status }: { label: string; status: string }) => (
   <div className="flex items-center gap-1 bg-slate-50 border border-slate-200 px-1.5 py-0.5 rounded">
     <span className="text-[9px] font-bold text-slate-500">{label}:</span>
     <span
-      className={`text-[10px] font-extrabold ${status === "S" ? "text-green-600" : status === "E" ? "text-red-600" : "text-slate-400"}`}
+      className={`text-[10px] font-extrabold ${
+        status === "S"
+          ? "text-green-600"
+          : status === "E"
+            ? "text-red-600"
+            : status === "P"
+              ? "text-amber-600"
+              : "text-slate-400"
+      }`}
     >
       {status || "-"}
     </span>

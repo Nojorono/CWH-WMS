@@ -10,6 +10,7 @@ import StatusBadge from "../../../common/statusBadge";
 import { STATUS_MAP_PUTAWAY } from "../../../constants/statusMaps";
 import ActIndicator from "../../../components/ui/activityIndicator";
 import TableComponent from "../../../components/tables/ActionTable/TableComponent";
+import { showConfirmDialog } from "../../../components/swal-confirm";
 
 type AdjustTableProps = {
   globalFilter?: string;
@@ -55,8 +56,17 @@ const AdjustTable = ({
     });
   };
 
-  const handleDelete = async (id: any) => {
-    await deleteData(id);
+  const handleDelete = (id: any) => {
+    showConfirmDialog(
+      async () => {
+        await deleteData(id);
+      },
+      {
+        title: "Hapus Data?",
+        text: "Data akan dihapus secara permanen dan tidak dapat dikembalikan.",
+        confirmButtonText: "Ya, Hapus!",
+      },
+    );
   };
   
 

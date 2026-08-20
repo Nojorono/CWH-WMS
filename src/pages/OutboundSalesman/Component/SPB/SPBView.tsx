@@ -214,64 +214,6 @@ export default function SPBview({
         </div>
       </div>
 
-      {/* Info Alert Box */}
-      {/* <div className="mb-6 rounded-lg border border-blue-100 bg-blue-50/50 p-5 shadow-sm">
-        <div className="flex items-start gap-3">
-          <FaInfoCircle className="mt-1 text-blue-500" size={20} />
-          <div className="w-full text-sm text-gray-700">
-            <h3 className="mb-2 text-base font-bold text-blue-700">
-              Informasi Penarikan & Kalkulasi Stock On Hand (SOH)
-            </h3>
-            <p className="mb-2">
-              Untuk mempersiapkan data SPB kunjungan tanggal{" "}
-              <strong>{targetCallplanDate}</strong>
-              {bypassActive
-                ? " (tanggal yang dipilih)"
-                : " (proses dilakukan pada H-1)"}
-              :
-            </p>
-            <ul className="mb-3 list-disc space-y-1 pl-5">
-              <li>
-                <strong>Tarik Data SOH Manual:</strong> Hanya dibuka pada pukul{" "}
-                <strong>09:00 - 10:00 WIB</strong> di hari H-1.
-              </li>
-              <li>
-                <strong>Tarik Data SOH Otomatis:</strong> Setelah melewati pukul{" "}
-                <strong>10:00 WIB</strong>, sistem akan secara otomatis menarik
-                data SOH apabila Anda belum sempat menariknya secara manual.
-              </li>
-              <li>
-                Setelah data SOH tersedia (baik ditarik secara manual maupun
-                otomatis), Anda tetap dapat melakukan kalkulasi dan men-submit
-                hasilnya kapan saja untuk merubah status SPB dari{" "}
-                <strong>SUBMITTED</strong> menjadi <strong>FINAL</strong>.
-              </li>
-            </ul>
-
-            <div className="mb-4 flex items-center gap-2 rounded-md border border-green-200 bg-green-50 px-4 py-2 text-green-700">
-              <div className="h-2 w-2 rounded-full bg-green-500"></div>
-              Data SOH sudah ter-generate pada pukul{" "}
-              <strong>04 Aug 2026 - 08:27</strong>.
-            </div>
-
-            <p className="mb-1 font-semibold">Panduan Filter Status:</p>
-            <ul className="list-disc space-y-1 pl-5">
-              <li>
-                Pilih filter status <strong>SUBMITTED</strong> untuk memproses
-                data SPB baru yang siap dicocokkan (Kalkulasi) dengan stok fisik
-                (SOH).
-              </li>
-              <li>
-                Pilih filter status <strong>FINAL</strong> untuk melihat daftar
-                SPB yang telah selesai dikalkulasi dan langsung lanjut ke{" "}
-                <strong>Goods Preparation</strong> (Print dokumen & perhitungan
-                BTB).
-              </li>
-            </ul>
-          </div>
-        </div>
-      </div> */}
-
       {/* Select Date — fitur pilih tanggal callplan untuk get SPB */}
       <div className="mb-4 rounded-lg border border-blue-200 bg-blue-50 p-4 shadow-sm">
         <div className="mb-2 text-xs font-bold tracking-wide text-blue-800 uppercase">
@@ -341,6 +283,8 @@ export default function SPBview({
             >
               <option value="SUBMITTED">SUBMITTED</option>
               <option value="FINAL">FINAL</option>
+              <option value="VOID">VOID</option>
+              <option value="VOID_NEED_ACTION">VOID_NEED_ACTION</option>
             </select>
           </div>
         </div>
@@ -418,6 +362,7 @@ export default function SPBview({
         totalItems={totalItems}
         onPageChange={setCurrentPage}
         onPageSizeChange={setPageSize}
+        onVoidActionComplete={fetchCallplans}
       />
     </div>
   );

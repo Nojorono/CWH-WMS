@@ -209,31 +209,12 @@ export const SuggestionItemsTable: React.FC<TableProps> = ({
     RawSuggestion[]
   >([]);
 
-  // const normalizeItems = (items: Item[]): Item[] => {
-  //   const result: Item[] = [];
-
-  //   items.forEach((item) => {
-  //     item.suggested_locations?.forEach((loc, idx) => {
-  //       result.push({
-  //         ...item,
-  //         suggested_locations: [loc], // 🔥 PENTING
-  //         _localId: genLocalId(),
-  //         _isManual: false,
-  //         qty_pick: Math.min(
-  //           item.required_quantity ?? 0,
-  //           loc.available_quantity ?? 0
-  //         ),
-  //       });
-  //     });
-  //   });
-
-  //   return result;
-  // };
-
   const normalizeItems = (items: Item[]): Item[] => {
     const result: Item[] = [];
 
     items.forEach((item) => {
+      if (Number(item.remaining_quantity_needed ?? 0) === 0) return;
+
       if (item.suggested_locations && item.suggested_locations.length > 0) {
         item.suggested_locations.forEach((loc, idx) => {
           result.push({
@@ -628,16 +609,14 @@ export const SuggestionItemsTable: React.FC<TableProps> = ({
       },
     },
     {
-      id: "warehouse_sub_name",
+      id: "warehouse_sub_code",
       header: "Zone",
       enableSorting: false,
       cell: ({ row }) => {
         const item = row.original;
-        // Gabungkan semua warehouse_sub_name unik dari suggested_locations
         const zones = (item.suggested_locations ?? [])
-          .map((loc: any) => loc.warehouse_sub_name)
+          .map((loc: any) => loc.warehouse_sub_code)
           .filter(Boolean);
-        // Hilangkan duplikat
         const uniqueZones = Array.from(new Set(zones));
         return <span>{uniqueZones.length ? uniqueZones.join(", ") : "-"}</span>;
       },
@@ -648,9 +627,8 @@ export const SuggestionItemsTable: React.FC<TableProps> = ({
       enableSorting: false,
       cell: ({ row }) => {
         const item = row.original;
-        // Gabungkan semua bin_name unik dari suggested_locations
         const bins = (item.suggested_locations ?? [])
-          .map((loc: any) => loc.bin_name)
+          .map((loc: any) => loc.bin_code)
           .filter(Boolean);
         const uniqueBins = Array.from(new Set(bins));
         return <span>{uniqueBins.length ? uniqueBins.join(", ") : "-"}</span>;

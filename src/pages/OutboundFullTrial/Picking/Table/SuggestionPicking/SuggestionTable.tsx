@@ -179,7 +179,12 @@ const SuggestionTable: React.FC<SuggestionTableProps> = ({
           </div>
         ) : (
           <PickingRowsTable
-            compactRows={suggestions.flatMap((suggestion) => {
+            compactRows={suggestions
+              .filter(
+                (suggestion) =>
+                  Number(suggestion.remaining_quantity_needed ?? 0) !== 0,
+              )
+              .flatMap((suggestion) => {
               if (suggestion.suggested_locations.length > 0) {
                 return suggestion.suggested_locations.map((location: any) => ({
                   note: suggestion.notes,

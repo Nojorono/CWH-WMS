@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef, useCallback } from "react";
 import { ColumnDef } from "@tanstack/react-table";
 import { useMoveOrderIntegration } from "./hook/useMoveOrderIntegration";
 import { MoveOrderIntegrationHeader } from "../../../API/types/DOsuggestionIntegration";
@@ -71,6 +71,25 @@ const IntegrationMonitoringPage = () => {
     source_system: "WMS",
   });
 
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleRefresh = useCallback(() => {
+    if (isRefreshing || isLoading) return;
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+
+    setIsRefreshing(true);
+    debounceRef.current = setTimeout(async () => {
+      try {
+        await refetch();
+      } finally {
+        setTimeout(() => setIsRefreshing(false), 600);
+      }
+    }, 300);
+  }, [isRefreshing, isLoading, refetch]);
+
+  const refreshBusy = isRefreshing || isLoading;
+
   const columns = useMemo<ColumnDef<MoveOrderIntegrationHeader>[]>(
     () => [
       {
@@ -128,17 +147,15 @@ const IntegrationMonitoringPage = () => {
           <div className="flex items-center gap-3">
             {/* Tombol Refresh */}
             <button
-              onClick={() => {
-                refetch();
-              }}
-              disabled={isLoading}
-              className={`flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-lg shadow-sm text-sm font-medium text-slate-700 hover:bg-slate-50 transition-all ${isLoading ? "opacity-50 cursor-not-allowed" : ""}`}
+              onClick={handleRefresh}
+              disabled={refreshBusy}
+              className={`flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-lg shadow-sm text-sm font-medium text-slate-700 hover:bg-slate-50 active:scale-95 transition-all duration-200 ${refreshBusy ? "opacity-50 cursor-not-allowed" : ""}`}
             >
               <FaSyncAlt
-                className={`${isLoading ? "animate-spin" : ""}`}
+                className={`transition-transform duration-500 ${refreshBusy ? "animate-spin" : ""}`}
                 size={14}
               />
-              {isLoading ? "Memuat..." : "Refresh"}
+              {refreshBusy ? "Memuat..." : "Refresh"}
             </button>
 
             {/* Filter */}

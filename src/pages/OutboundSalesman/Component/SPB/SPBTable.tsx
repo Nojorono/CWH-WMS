@@ -1,8 +1,9 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   FaChevronDown,
   FaChevronLeft,
   FaChevronRight,
+  FaSync,
 } from "react-icons/fa";
 import { Callplan } from "../../types/CallplanTypes";
 import {
@@ -15,6 +16,8 @@ import {
   DynamicColumn,
   SummaryCardConfig,
 } from "./spbTableConfig";
+import { integrateService } from "../../Services/IntegrateService";
+import { showErrorToast } from "../../../../components/toast";
 
 type SPBTableProps = {
   data: Callplan[];
@@ -31,6 +34,8 @@ type SPBTableProps = {
   masterColumns?: DynamicColumn<Callplan>[];
   detailColumns?: DynamicColumn<any>[];
   summaryCards?: SummaryCardConfig[];
+  /** Callback setelah void action berhasil (misal refetch) */
+  onVoidActionComplete?: () => void;
 };
 
 export default function SPBTable({
@@ -47,7 +52,32 @@ export default function SPBTable({
   masterColumns = SPB_MASTER_COLUMNS,
   detailColumns = SPB_DETAIL_COLUMNS,
   summaryCards = SPB_DETAIL_SUMMARY_CARDS,
+  onVoidActionComplete,
 }: SPBTableProps) {
+  const [voidLoadingIds, setVoidLoadingIds] = useState<Record<string, boolean>>({});
+
+  const handleVoidAction = async (row: Callplan) => {
+    const id = row.id;
+    if (!id || voidLoadingIds[id]) return;
+
+    console.log("id", id);
+    
+    // setVoidLoadingIds((prev) => ({ ...prev, [id]: true }));
+    // try {
+    //   await integrateService.integrateToKecil(id);
+    //   onVoidActionComplete?.();
+    // } catch (err: unknown) {
+    //   const msg =
+    //     (err as { response?: { data?: { message?: string } } })?.response?.data
+    //       ?.message ||
+    //     (err as Error)?.message ||
+    //     "Gagal memproses void action";
+    //   showErrorToast(msg);
+    // } finally {
+    //   setVoidLoadingIds((prev) => ({ ...prev, [id]: false }));
+    // }
+  };
+
   const visibleMaster = getVisibleColumns(masterColumns);
   const visibleDetail = getVisibleColumns(detailColumns);
   const colSpan = visibleMaster.length + 1; // + expander
@@ -126,7 +156,26 @@ export default function SPBTable({
                         key={col.id}
                         className={`px-4 py-4 ${getAlignClass(col.align)} ${col.cellClassName || ""}`}
                       >
-                        {resolveCellValue(col, row)}
+                        {col.id === "action" &&
+                        String(row.status || "").toUpperCase() === "VOID_NEED_ACTION" ? (
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleVoidAction(row);
+                            }}
+                            disabled={voidLoadingIds[row.id]}
+                            className="flex items-center gap-1.5 rounded bg-red-600 px-3 py-1.5 text-xs font-bold text-white transition-colors hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
+                          >
+                            <FaSync
+                              size={10}
+                              className={voidLoadingIds[row.id] ? "animate-spin" : ""}
+                            />
+                            {voidLoadingIds[row.id] ? "Processing..." : "Void Action"}
+                          </button>
+                        ) : (
+                          resolveCellValue(col, row)
+                        )}
                       </td>
                     ))}
                   </tr>

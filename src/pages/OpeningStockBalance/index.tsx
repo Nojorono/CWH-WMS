@@ -32,6 +32,8 @@ export default function OpeningStockUploadPage() {
     user?.userDetail?.organization?.organization_name ||
     user?.userDetail?.organization?.organization_code ||
     "";
+  const roleName = user?.role?.name;
+  const isManager = roleName === "MANAGER";
 
   // State internal untuk Form Metadata
   const [periodDate, setPeriodDate] = useState(
@@ -104,7 +106,7 @@ export default function OpeningStockUploadPage() {
       {/* ==========================================
        * GLOBAL LOADING OVERLAY BLOCKER
        * ========================================== */}
-      {isUploading && (
+      {!isManager && isUploading && (
         <div className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-slate-900/60 backdrop-blur-sm pointer-events-auto select-none">
           <div className="bg-white px-8 py-6 rounded-xl shadow-xl border border-slate-100 flex flex-col items-center space-y-4 max-w-sm text-center animate-in fade-in zoom-in-95 duration-200">
             <FaSpinner className="w-10 h-10 text-blue-600 animate-spin" />
@@ -122,6 +124,7 @@ export default function OpeningStockUploadPage() {
       )}
 
       {/* Konten Utama Page */}
+      {!isManager && (
       <div className="max-w-8xl mx-auto p-6 space-y-6">
         {/* Header Halaman */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between border-b border-slate-200 pb-5">
@@ -369,8 +372,9 @@ export default function OpeningStockUploadPage() {
           </div>
         </form>
       </div>
+      )}
 
-      <OpeningStockListPage />
+      {isManager && <OpeningStockListPage />}
     </div>
   );
 }
