@@ -32,6 +32,22 @@ export const OpeningStockBalanceService = {
         });
         return response.data;
     },
+
+    /** POST /opening-balance-stock/{id}/confirmed */
+    confirmOpeningStock: async (id: string): Promise<OpeningStockBalance> => {
+        const response = await axiosInstance.post(
+            `/opening-balance-stock/${id}/confirmed`,
+        );
+        return response.data?.data ?? response.data;
+    },
+
+    /** POST /opening-balance-stock/{id}/cancelled */
+    cancelOpeningStock: async (id: string): Promise<OpeningStockBalance> => {
+        const response = await axiosInstance.post(
+            `/opening-balance-stock/${id}/cancelled`,
+        );
+        return response.data?.data ?? response.data;
+    },
 };
 
 /* ==========================================================================

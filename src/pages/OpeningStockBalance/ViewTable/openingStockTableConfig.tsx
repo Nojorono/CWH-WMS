@@ -45,8 +45,7 @@ export const getStatusBadgeClass = (status: string) => {
 
 export const getRowDetailItems = (
   row: OpeningStockListRow,
-): OpeningStockDetailRow[] =>
-  row.openingBalanceStockItems ?? row.items ?? [];
+): OpeningStockDetailRow[] => row.openingBalanceStockItems ?? row.items ?? [];
 
 /**
  * Kolom header document.
@@ -68,7 +67,8 @@ export const OPENING_STOCK_MASTER_COLUMNS: DynamicColumn<OpeningStockListRow>[] 
       id: "week_number",
       header: "Week",
       cellClassName: "font-medium",
-      getValue: (row) => (row.week_number != null ? `W-${row.week_number}` : "-"),
+      getValue: (row) =>
+        row.week_number != null ? `W-${row.week_number}` : "-",
     },
     {
       id: "source",
@@ -98,6 +98,12 @@ export const OPENING_STOCK_MASTER_COLUMNS: DynamicColumn<OpeningStockListRow>[] 
       getValue: (row) => (
         <span className={getStatusBadgeClass(row.status)}>{row.status}</span>
       ),
+    },
+    // Tambahkan action untuk approve dan reject
+    {
+      id: "action",
+      header: "Action",
+      align: "center",
     },
   ];
 

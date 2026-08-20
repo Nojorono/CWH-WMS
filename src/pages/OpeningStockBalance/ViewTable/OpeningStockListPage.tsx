@@ -1,8 +1,14 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { FaSearch } from "react-icons/fa";
-import { useOpeningStockStore } from "../../../DynamicAPI/services/Service/OpeningStockBalanceService";
+import {
+  OpeningStockBalanceService,
+  useOpeningStockStore,
+} from "../../../DynamicAPI/services/Service/OpeningStockBalanceService";
 import { usePersistAuthStore } from "../../../API/store/AuthStore/PersistAuthStore";
+import { showErrorToast, showSuccessToast } from "../../../components/toast";
+import { showConfirmDialog } from "../../../components/swal-confirm";
 import OpeningStockTable from "./OpeningStockTable";
+import { OpeningStockListRow } from "./openingStockTableConfig";
 
 export default function OpeningStockListPage() {
   const { data, meta, isLoading, fetchOpeningStockList } =
@@ -19,22 +25,88 @@ export default function OpeningStockListPage() {
   const [page, setPage] = useState(1);
   const [limit] = useState(10);
   const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>({});
+  const [actionLoadingIds, setActionLoadingIds] = useState<
+    Record<string, "confirm" | "cancel" | undefined>
+  >({});
+
+  const refetchList = useCallback(() => {
+    if (!organizationId) return;
+    fetchOpeningStockList({
+      search: search || undefined,
+      status: status || undefined,
+      source: source || undefined,
+      organization_id: organizationId,
+      page,
+      limit,
+    });
+  }, [
+    organizationId,
+    search,
+    status,
+    source,
+    page,
+    limit,
+    fetchOpeningStockList,
+  ]);
 
   useEffect(() => {
-    if (organizationId) {
-      fetchOpeningStockList({
-        search: search || undefined,
-        status: status || undefined,
-        source: source || undefined,
-        organization_id: organizationId,
-        page,
-        limit,
-      });
-    }
-  }, [search, status, source, page, organizationId]);
+    refetchList();
+  }, [refetchList]);
 
   const toggleRow = (id: string) => {
     setExpandedRows((prev) => ({ ...prev, [id]: !prev[id] }));
+  };
+
+  const runAction = async (
+    row: OpeningStockListRow,
+    action: "confirm" | "cancel",
+  ) => {
+    if (actionLoadingIds[row.id]) return;
+
+    setActionLoadingIds((prev) => ({ ...prev, [row.id]: action }));
+    try {
+      if (action === "confirm") {
+        await OpeningStockBalanceService.confirmOpeningStock(row.id);
+        showSuccessToast("Opening stock berhasil di-approve");
+      } else {
+        await OpeningStockBalanceService.cancelOpeningStock(row.id);
+        showSuccessToast("Opening stock berhasil di-reject");
+      }
+      refetchList();
+    } catch (err: unknown) {
+      const message =
+        (err as { response?: { data?: { message?: string } } })?.response?.data
+          ?.message ||
+        (err as Error)?.message ||
+        "Gagal memproses action";
+      showErrorToast(message);
+    } finally {
+      setActionLoadingIds((prev) => ({ ...prev, [row.id]: undefined }));
+    }
+  };
+
+  const handleConfirm = (row: OpeningStockListRow) => {
+    showConfirmDialog(
+      () => runAction(row, "confirm"),
+      {
+        title: "Approve Opening Stock?",
+        text: `Konfirmasi dokumen ${row.code || row.id} menjadi CONFIRMED.`,
+        confirmButtonText: "Ya, Approve!",
+        confirmButtonColor: "#059669",
+      },
+    );
+  };
+
+  const handleCancel = (row: OpeningStockListRow) => {
+    showConfirmDialog(
+      () => runAction(row, "cancel"),
+      {
+        title: "Reject Opening Stock?",
+        text: `Batalkan dokumen ${row.code || row.id} menjadi CANCELLED.`,
+        confirmButtonText: "Ya, Reject!",
+        confirmButtonColor: "#d33",
+      },
+    );
   };
 
   return (
@@ -129,6 +201,9 @@ export default function OpeningStockListPage() {
         onToggleRow={toggleRow}
         meta={meta}
         onPageChange={setPage}
+        onConfirm={handleConfirm}
+        onCancel={handleCancel}
+        actionLoadingIds={actionLoadingIds}
       />
     </div>
   );

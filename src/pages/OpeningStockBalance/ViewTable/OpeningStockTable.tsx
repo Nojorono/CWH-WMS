@@ -2,8 +2,10 @@ import React from "react";
 import {
   FaChevronDown,
   FaChevronUp,
+  FaCheck,
   FaLayerGroup,
   FaSpinner,
+  FaTimes,
 } from "react-icons/fa";
 import { PaginationMeta } from "../../../DynamicAPI/services/Service/OpeningStockBalanceService";
 import {
@@ -25,8 +27,67 @@ type OpeningStockTableProps = {
   onToggleRow: (id: string) => void;
   meta?: PaginationMeta | null;
   onPageChange: (page: number) => void;
+  onConfirm?: (row: OpeningStockListRow) => void;
+  onCancel?: (row: OpeningStockListRow) => void;
+  actionLoadingIds?: Record<string, "confirm" | "cancel" | undefined>;
   masterColumns?: DynamicColumn<OpeningStockListRow>[];
   detailColumns?: DynamicColumn<OpeningStockDetailRow>[];
+};
+
+const OpeningStockActionCell = ({
+  row,
+  loading,
+  onConfirm,
+  onCancel,
+}: {
+  row: OpeningStockListRow;
+  loading?: "confirm" | "cancel";
+  onConfirm?: (row: OpeningStockListRow) => void;
+  onCancel?: (row: OpeningStockListRow) => void;
+}) => {
+  const isBusy = Boolean(loading);
+  const canAct = String(row.status || "").toUpperCase() === "DRAFT";
+
+  if (!canAct) {
+    return (
+      <span className="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-slate-400">
+        No action
+      </span>
+    );
+  }
+
+  return (
+    <div className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200/80 bg-gradient-to-b from-white to-slate-50 p-1 shadow-sm">
+      <button
+        type="button"
+        disabled={isBusy}
+        onClick={() => onConfirm?.(row)}
+        title="Approve opening stock"
+        className="group inline-flex min-w-[92px] items-center justify-center gap-1.5 rounded-lg bg-gradient-to-b from-emerald-500 to-emerald-600 px-3 py-1.5 text-[11px] font-bold text-white shadow-sm ring-1 ring-emerald-600/20 transition-all hover:-translate-y-0.5 hover:from-emerald-600 hover:to-emerald-700 hover:shadow-md active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0"
+      >
+        {loading === "confirm" ? (
+          <FaSpinner className="h-3 w-3 animate-spin" />
+        ) : (
+          <FaCheck className="h-3 w-3 transition-transform group-hover:scale-110" />
+        )}
+        Approve
+      </button>
+      <button
+        type="button"
+        disabled={isBusy}
+        onClick={() => onCancel?.(row)}
+        title="Reject opening stock"
+        className="group inline-flex min-w-[92px] items-center justify-center gap-1.5 rounded-lg border border-rose-200 bg-white px-3 py-1.5 text-[11px] font-bold text-rose-600 shadow-sm transition-all hover:-translate-y-0.5 hover:border-rose-300 hover:bg-rose-50 hover:text-rose-700 hover:shadow-md active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0"
+      >
+        {loading === "cancel" ? (
+          <FaSpinner className="h-3 w-3 animate-spin text-rose-500" />
+        ) : (
+          <FaTimes className="h-3 w-3 transition-transform group-hover:scale-110" />
+        )}
+        Reject
+      </button>
+    </div>
+  );
 };
 
 export default function OpeningStockTable({
@@ -36,6 +97,9 @@ export default function OpeningStockTable({
   onToggleRow,
   meta,
   onPageChange,
+  onConfirm,
+  onCancel,
+  actionLoadingIds = {},
   masterColumns = OPENING_STOCK_MASTER_COLUMNS,
   detailColumns = OPENING_STOCK_DETAIL_COLUMNS,
 }: OpeningStockTableProps) {
@@ -109,8 +173,22 @@ export default function OpeningStockTable({
                               ? String(row.file_name || "")
                               : undefined
                           }
+                          onClick={
+                            col.id === "action"
+                              ? (e) => e.stopPropagation()
+                              : undefined
+                          }
                         >
-                          {resolveCellValue(col, row)}
+                          {col.id === "action" ? (
+                            <OpeningStockActionCell
+                              row={row}
+                              loading={actionLoadingIds[row.id]}
+                              onConfirm={onConfirm}
+                              onCancel={onCancel}
+                            />
+                          ) : (
+                            resolveCellValue(col, row)
+                          )}
                         </td>
                       ))}
                     </tr>
