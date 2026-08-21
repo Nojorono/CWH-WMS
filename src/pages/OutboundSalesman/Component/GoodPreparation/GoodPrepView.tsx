@@ -33,6 +33,9 @@ import { IntegrateBlockAlert } from "./IntegrateBlockAlert";
 import { LoadingOverlay } from "./LoadingOverlay";
 import { PrepDetailTable } from "./PrepDetailTable";
 import { SKUSummaryPanel } from "./SKUSummaryPanel";
+import PermintaanBarang, {
+  PermintaanBarangRow,
+} from "../Report/PermintaanBarang";
 
 type EnrichedDetail = CallplanDetail & {
   qty_btb: number;
@@ -86,6 +89,7 @@ function GoodPrepView({
   const [prepCallplans, setPrepCallplans] = useState<Callplan[]>(callplans);
   const [globalFilter, setGlobalFilter] = useState("");
   const [isPrintAllOpen, setIsPrintAllOpen] = useState(false);
+  const [isPermintaanOpen, setIsPermintaanOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedToPrint, setSelectedToPrint] =
     useState<EnrichedCallplan | null>(null);
@@ -430,6 +434,51 @@ function GoodPrepView({
     return Object.values(summary).sort((a, b) =>
       a.itemName.localeCompare(b.itemName),
     );
+  }, [enrichedData, itemList]);
+
+  /** Data Form Permintaan Gudang: Final DO = Submitted QTY; Sisa = BTB; Top Up = Submitted - BTB */
+  const permintaanReportRows = useMemo((): PermintaanBarangRow[] => {
+    const summary: Record<
+      string,
+      {
+        code: string;
+        name: string;
+        sisaBarang: number;
+        finalDo: number;
+        topUp: number;
+      }
+    > = {};
+
+    enrichedData.forEach((doc) => {
+      doc.details.forEach((d) => {
+        const submitted = Number(d.item_qty_submitted) || 0;
+        const btb = Number(d.qty_btb) || 0;
+        if (submitted <= 0 && btb <= 0) return;
+
+        const sku = d.item_code || "";
+        const invId = d.inventory_item_id || "";
+        const key = `${sku}_${invId}`;
+        const master = itemList?.find((m: any) => m.sku === sku);
+        const itemName = master?.description || d.itemName || sku;
+        const topUp = submitted - btb;
+
+        if (summary[key]) {
+          summary[key].sisaBarang += btb;
+          summary[key].finalDo += submitted;
+          summary[key].topUp += topUp;
+        } else {
+          summary[key] = {
+            code: sku,
+            name: itemName,
+            sisaBarang: btb,
+            finalDo: submitted,
+            topUp,
+          };
+        }
+      });
+    });
+
+    return Object.values(summary).sort((a, b) => a.name.localeCompare(b.name));
   }, [enrichedData, itemList]);
 
   /** Ranking SPB saat search SKU: SKU match dengan Qty Final terbesar tampil di atas */
@@ -981,6 +1030,19 @@ function GoodPrepView({
 
               <button
                 type="button"
+                onClick={() => setIsPermintaanOpen(true)}
+                disabled={isPrintDisabled}
+                className={`flex items-center gap-2 rounded-lg px-4 py-2 text-xs font-semibold shadow-sm transition-colors ${
+                  isPrintDisabled
+                    ? "cursor-not-allowed bg-slate-200 text-slate-400"
+                    : "border border-slate-300 bg-white text-slate-600 hover:bg-slate-50"
+                }`}
+              >
+                <FaFileAlt /> Permintaan Gudang
+              </button>
+
+              {/* <button
+                type="button"
                 onClick={() => setIsPrintAllOpen(true)}
                 disabled={isPrintDisabled}
                 className={`flex items-center gap-2 rounded-lg px-4 py-2 text-xs font-semibold shadow-sm transition-colors ${
@@ -990,7 +1052,7 @@ function GoodPrepView({
                 }`}
               >
                 <FaPrint /> Print All Picklists
-              </button>
+              </button> */}
             </div>
             </div>
           }
@@ -1017,6 +1079,16 @@ function GoodPrepView({
           `CP-${targetDate.replace(/-/g, "")}`
         }
       />
+
+      {isPermintaanOpen && (
+        <PermintaanBarang
+          onClose={() => setIsPermintaanOpen(false)}
+          organizationName={String(organization_name || "-")}
+          requestDate={dayjs().format("YYYY-MM-DD")}
+          doDate={targetDate}
+          rows={permintaanReportRows}
+        />
+      )}
 
       <IntegrateSOHCheckModal
         isOpen={isIntegrateModalOpen}

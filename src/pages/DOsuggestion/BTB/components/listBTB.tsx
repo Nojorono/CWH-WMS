@@ -138,7 +138,7 @@ const ListBTB = () => {
 
         <div>
           <label className="block text-xs font-bold text-slate-600 mb-1.5 uppercase tracking-wider">
-            Date From *
+            Date *
           </label>
           <input
             ref={dateInputRef}

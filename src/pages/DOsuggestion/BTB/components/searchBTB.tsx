@@ -2,12 +2,19 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import flatpickr from "flatpickr";
 import "flatpickr/dist/flatpickr.min.css";
 import Swal from "sweetalert2";
+import { FaCheck, FaTimes } from "react-icons/fa";
+import Button from "../../../../components/ui/button/Button";
 import { showErrorToast, showSuccessToast } from "../../../../components/toast";
 import { showConfirmDialog } from "../../../../components/swal-confirm";
 import { usePersistAuthStore } from "../../../../API/store/AuthStore/PersistAuthStore";
 import { createBTB } from "../services/BTBservice";
 import { applyBTB, searchBTB } from "../services/searchBTB";
 import { BTBSearchResult, CreateBTBPayload } from "../services/types";
+import {
+  BTB_SEARCH_DETAIL_COLUMNS,
+  getAlignClass,
+  getVisibleColumns,
+} from "./btbSearchDetailTableConfig";
 
 const BtbSearch = () => {
   const user = usePersistAuthStore((state) => state.user);
@@ -123,6 +130,11 @@ const BtbSearch = () => {
   const showResult = Boolean(btbDetail);
   const items = btbDetail?.btb_details ?? [];
   const skuCount = items.length;
+  const detailColumns = useMemo(
+    () => getVisibleColumns(BTB_SEARCH_DETAIL_COLUMNS),
+    [],
+  );
+  const detailColSpan = detailColumns.length;
 
   const totalQty = useMemo(
     () => items.reduce((sum, item) => sum + Number(item.btb_qty || 0), 0),
@@ -173,6 +185,7 @@ const BtbSearch = () => {
           const result = await createBTB(
             buildCreatePayload(btbDetail, status),
           );
+          
           if (!result.success) {
             showErrorToast(result.message);
             return;
@@ -212,7 +225,7 @@ const BtbSearch = () => {
 
   return (
     <div className="p-4 md:p-8 text-slate-800 bg-slate-50 min-h-screen font-sans">
-      <div className="max-w-4xl mx-auto space-y-6">
+      <div className=" mx-auto space-y-6">
         {/* KOTAK PENCARIAN */}
         <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -430,25 +443,21 @@ const BtbSearch = () => {
                   <table className="w-full text-left text-sm">
                     <thead className="text-slate-500 border-b border-slate-200 bg-white sticky top-0 z-10 shadow-sm">
                       <tr>
-                        <th className="px-4 py-3 font-semibold w-12 bg-white">
-                          No
-                        </th>
-                        <th className="px-4 py-3 font-semibold bg-white">
-                          Item Name
-                        </th>
-                        <th className="px-4 py-3 font-semibold bg-white">
-                          SKU
-                        </th>
-                        <th className="px-4 py-3 font-semibold text-right bg-white">
-                          Qty
-                        </th>
+                        {detailColumns.map((col) => (
+                          <th
+                            key={col.id}
+                            className={`px-4 py-3 font-semibold bg-white ${getAlignClass(col.align)} ${col.widthClassName || ""} ${col.headerClassName || ""}`}
+                          >
+                            {col.header}
+                          </th>
+                        ))}
                       </tr>
                     </thead>
                     <tbody className="text-slate-700 bg-white">
                       {items.length === 0 ? (
                         <tr>
                           <td
-                            colSpan={4}
+                            colSpan={detailColSpan}
                             className="px-4 py-8 text-center text-slate-400 italic"
                           >
                             Tidak ada item
@@ -464,18 +473,16 @@ const BtbSearch = () => {
                                 : ""
                             }
                           >
-                            <td className="px-4 py-3 text-slate-400">
-                              {index + 1}
-                            </td>
-                            <td className="px-4 py-3 font-semibold">
-                              {item.item_name}
-                            </td>
-                            <td className="px-4 py-3 text-slate-400">
-                              {item.item_code}
-                            </td>
-                            <td className="px-4 py-3 text-right font-bold text-[#F97316]">
-                              {item.btb_qty} {item.btb_uom}
-                            </td>
+                            {detailColumns.map((col) => (
+                              <td
+                                key={col.id}
+                                className={`px-4 py-3 ${getAlignClass(col.align)} ${col.cellClassName || ""}`}
+                              >
+                                {col.getValue
+                                  ? col.getValue(item, index)
+                                  : "-"}
+                              </td>
+                            ))}
                           </tr>
                         ))
                       )}
@@ -485,66 +492,32 @@ const BtbSearch = () => {
               </div>
 
               <div className="border border-[#F97316] rounded-lg p-5 bg-white">
-                <h3 className="font-bold text-slate-700 mb-4 text-center">
+                <h3 className="font-bold text-slate-700 mb-4 text-center sm:text-left">
                   Apakah data BTB ini sudah sesuai dengan fisik barang?
                 </h3>
                 <div className="flex flex-col sm:flex-row gap-4">
-                  <button
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    className="flex-1"
+                    disabled={isConfirming}
                     onClick={() => handleSubmitBTB("APPLIED")}
-                    type="button"
-                    disabled={isConfirming}
-                    className="flex-1 border border-slate-300 rounded-lg py-2.5 flex items-center justify-center gap-2 text-slate-600 font-semibold hover:bg-slate-50 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                    startIcon={<FaCheck />}
                   >
-                    {isConfirming ? (
-                      <span>Menyimpan...</span>
-                    ) : (
-                      <>
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          className="h-5 w-5 text-slate-400"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="M5 13l4 4L19 7"
-                          />
-                        </svg>
-                        Sesuai
-                      </>
-                    )}
-                  </button>
-                  <button
+                    {isConfirming ? "Menyimpan..." : "Sesuai"}
+                  </Button>
+                  <Button
                     type="button"
+                    variant="danger"
+                    size="sm"
+                    className="flex-1"
+                    disabled={isConfirming}
                     onClick={() => handleSubmitBTB("DRAFT")}
-                    disabled={isConfirming}
-                    className="flex-1 border border-slate-300 rounded-lg py-2.5 flex items-center justify-center gap-2 text-slate-600 font-semibold hover:bg-slate-50 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                    startIcon={<FaTimes />}
                   >
-                    {isConfirming ? (
-                      <span>Menyimpan...</span>
-                    ) : (
-                      <>
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          className="h-5 w-5 text-slate-400"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"
-                          />
-                        </svg>
-                        Tidak Sesuai
-                      </>
-                    )}
-                  </button>
+                    {isConfirming ? "Menyimpan..." : "Tidak Sesuai"}
+                  </Button>
                 </div>
               </div>
             </div>
