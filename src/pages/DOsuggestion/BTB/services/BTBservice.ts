@@ -42,11 +42,11 @@ type ApiErrorBody = {
 
 const MANDATORY_PARAM_KEYS: (keyof Pick<
   GetBTBPaginationParams,
-  "page" | "limit" | "sortOrder"
->)[] = ["page", "limit", "sortOrder"];
+  "page" | "limit" | "status"
+>)[] = ["page", "limit", "status"];
 
 const OPTIONAL_PARAM_KEYS: (keyof GetBTBPaginationParams)[] = [
-  "status",
+  "sortOrder",
   "organization_id",
   "organization_code",
   "sales_nik",
@@ -157,15 +157,19 @@ const normalizeCreateResponse = (payload: unknown): BTB | null => {
 export const BTBservices = {
   /**
    * GET /btb
-   * Wajib: page, limit, sortOrder
-   * Opsional: status, organization_id, sales_nik, sales_spv_nik, date_from, date_to, dll.
+   * Wajib: page, limit, status
+   * Opsional: sortOrder, organization_id, sales_nik, sales_spv_nik, date_from, date_to, dll.
    *
    * Contoh:
-   * /btb?page=1&limit=10&sortOrder=DESC&status=DRAFT&organization_id=12345
+   * /btb?page=1&limit=10&status=DRAFT&sortOrder=DESC
    */
   getBTB: async (
     params: GetBTBPaginationParams,
   ): Promise<BTBServiceResult<GetBTBPaginationResult>> => {
+    if (!params.page || !params.limit || !params.status?.toString().trim()) {
+      return fail("Parameter wajib: page, limit, dan status");
+    }
+
     try {
       const response = await axiosInstance.get<GetBTBResponse>("/btb", {
         params: buildBTBQueryParams(params),

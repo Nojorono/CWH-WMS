@@ -1,5 +1,5 @@
 /** Status BTB dari API */
-export type BTBStatus = "DRAFT" | "SUBMITTED" | "FINAL" | string;
+export type BTBStatus = "DRAFT" | "APPLIED" | string;
 
 /** Baris detail item pada BTB (search / pagination) */
 export interface BTBDetail {
@@ -115,16 +115,16 @@ export interface GetBTBResponse {
   path: string;
 }
 
-/** Query params GET BTB pagination — wajib: page, limit, sortOrder */
+/** Query params GET BTB pagination — wajib: page, limit, status */
 export interface GetBTBPaginationParams {
   page: number;
   limit: number;
-  sortOrder: "ASC" | "DESC";
+  status: BTBStatus;
+  sortOrder?: "ASC" | "DESC";
   sales_nik?: string;
   sales_spv_nik?: string;
   organization_id?: string;
   organization_code?: string;
-  status?: BTBStatus;
   date_from?: string;
   date_to?: string;
   btb_number?: string;

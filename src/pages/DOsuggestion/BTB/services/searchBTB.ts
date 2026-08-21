@@ -9,6 +9,7 @@ export type { SearchBTBParams, BTBSearchResult };
  * https://staging-api.nna-id.com/api/wms/v1/btb?...
  */
 const BTB_SEARCH_URL = `${DoSuggestionService}/api/wms/v1/btb`;
+const BTB_APPLIED_URL = `${DoSuggestionService}/api/wms/v1/btb/applied`;
 
 const BTB_SEARCH_HEADERS = {
   "Content-Type": "application/json",
@@ -16,9 +17,6 @@ const BTB_SEARCH_HEADERS = {
   "x-dms-app-id": import.meta.env.VITE_DMS_APP_ID,
   "x-dms-app-secret": import.meta.env.VITE_DMS_APP_SECRET,
 };
-
-console.log("BTB_SEARCH_URL", BTB_SEARCH_URL);
-console.log("BTB_SEARCH_HEADERS", BTB_SEARCH_HEADERS);
 
 
 type ApiErrorBody = {
@@ -121,7 +119,7 @@ const normalizeItem = (
 
 export const btbSearchService = {
   /**
-   * GET /api/wms/v1/btb (via DoSuggestionService / Vite proxy)
+   * GET /api/wms/v1/btb (via DoSuggestionService)
    * Wajib: sales_nik, call_plan_number, call_plan_start_date
    * Headers: Content-Type, Accept, x-dms-app-id, x-dms-app-secret
    */
@@ -144,7 +142,37 @@ export const btbSearchService = {
       throw new Error(message);
     }
   },
+
+  /**
+   * POST /api/wms/v1/btb/applied
+   * Body: { btb_number }
+   */
+  applyBTB: async (btb_number: string): Promise<void> => {
+    const number = btb_number?.trim();
+    if (!number) {
+      throw new Error("btb_number wajib diisi");
+    }
+
+    try {
+      await axios.post(
+        BTB_APPLIED_URL,
+        { btb_number: number },
+        {
+          headers: { ...BTB_SEARCH_HEADERS },
+          maxRedirects: 0,
+        },
+      );
+    } catch (error) {
+      const message = parseBTBApiError(
+        error,
+        "Gagal mengirim BTB applied ke DoSuggestion",
+      );
+      console.error("[btbSearchService.applyBTB]", message, error);
+      throw new Error(message);
+    }
+  },
 };
 
 /** Alias singkat */
 export const searchBTB = btbSearchService.searchBTB;
+export const applyBTB = btbSearchService.applyBTB;

@@ -6,7 +6,7 @@ import { showErrorToast, showSuccessToast } from "../../../../components/toast";
 import { showConfirmDialog } from "../../../../components/swal-confirm";
 import { usePersistAuthStore } from "../../../../API/store/AuthStore/PersistAuthStore";
 import { createBTB } from "../services/BTBservice";
-import { searchBTB } from "../services/searchBTB";
+import { applyBTB, searchBTB } from "../services/searchBTB";
 import { BTBSearchResult, CreateBTBPayload } from "../services/types";
 
 const BtbSearch = () => {
@@ -130,7 +130,10 @@ const BtbSearch = () => {
   );
   const totalUom = items[0]?.btb_uom || "BKS";
 
-  const buildCreatePayload = (data: BTBSearchResult): CreateBTBPayload => ({
+  const buildCreatePayload = (
+    data: BTBSearchResult,
+    status: "APPLIED" | "DRAFT",
+  ): CreateBTBPayload => ({
     btb_number: data.btb_number,
     btb_date: data.btb_date,
     organization_code: data.organization_code,
@@ -139,7 +142,7 @@ const BtbSearch = () => {
     sales_name: data.sales_name,
     sales_spv_nik: data.sales_spv_nik,
     sales_spv_name: data.sales_spv_name,
-    status: "DRAFT",
+    status,
     created_by: actorNik,
     updated_by: actorNik,
     details: (data.btb_details ?? []).map((item) => ({
@@ -154,26 +157,37 @@ const BtbSearch = () => {
     })),
   });
 
-  const handleConfirm = () => {
+  const handleSubmitBTB = (status: "APPLIED" | "DRAFT") => {
     if (!btbDetail) {
       showErrorToast("Tidak ada data BTB untuk dikonfirmasi");
       return;
     }
     if (isConfirming) return;
 
-    console.log(buildCreatePayload(btbDetail));
-    
+    const isApplied = status === "APPLIED";
 
     showConfirmDialog(
       async () => {
         setIsConfirming(true);
         try {
-          const result = await createBTB(buildCreatePayload(btbDetail));
+          const result = await createBTB(
+            buildCreatePayload(btbDetail, status),
+          );
           if (!result.success) {
             showErrorToast(result.message);
             return;
           }
-          showSuccessToast(result.message || "BTB berhasil disimpan");
+
+          if (isApplied) {
+            await applyBTB(btbDetail.btb_number);
+          }
+
+          showSuccessToast(
+            result.message ||
+              (isApplied
+                ? "BTB berhasil disimpan sebagai APPLIED"
+                : "BTB berhasil disimpan sebagai DRAFT (UNAPPLIED)"),
+          );
           setBtbDetail(null);
         } catch (error: unknown) {
           const message =
@@ -184,8 +198,10 @@ const BtbSearch = () => {
         }
       },
       {
-        title: "Konfirmasi BTB?",
-        text: "Data BTB akan disimpan sebagai DRAFT. Lanjutkan?",
+        title: isApplied ? "Konfirmasi Sesuai?" : "Konfirmasi Tidak Sesuai?",
+        text: isApplied
+          ? "Data BTB akan disimpan dengan status APPLIED. Lanjutkan?"
+          : "Data BTB akan disimpan dengan status DRAFT (UNAPPLIED). Lanjutkan?",
         icon: "question",
         confirmButtonText: "Ya, Simpan",
         cancelButtonText: "Batal",
@@ -474,7 +490,7 @@ const BtbSearch = () => {
                 </h3>
                 <div className="flex flex-col sm:flex-row gap-4">
                   <button
-                    onClick={handleConfirm}
+                    onClick={() => handleSubmitBTB("APPLIED")}
                     type="button"
                     disabled={isConfirming}
                     className="flex-1 border border-slate-300 rounded-lg py-2.5 flex items-center justify-center gap-2 text-slate-600 font-semibold hover:bg-slate-50 transition disabled:opacity-50 disabled:cursor-not-allowed"
@@ -501,28 +517,34 @@ const BtbSearch = () => {
                       </>
                     )}
                   </button>
-                  <div className="flex-1 relative">
-                    <button
-                      type="button"
-                      className="w-full border border-slate-300 rounded-lg py-2.5 flex items-center justify-center gap-2 text-slate-600 font-semibold hover:bg-slate-50 transition"
-                    >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="h-5 w-5 text-slate-400"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"
-                        />
-                      </svg>
-                      Tidak Sesuai
-                    </button>
-                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleSubmitBTB("DRAFT")}
+                    disabled={isConfirming}
+                    className="flex-1 border border-slate-300 rounded-lg py-2.5 flex items-center justify-center gap-2 text-slate-600 font-semibold hover:bg-slate-50 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isConfirming ? (
+                      <span>Menyimpan...</span>
+                    ) : (
+                      <>
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="h-5 w-5 text-slate-400"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"
+                          />
+                        </svg>
+                        Tidak Sesuai
+                      </>
+                    )}
+                  </button>
                 </div>
               </div>
             </div>
