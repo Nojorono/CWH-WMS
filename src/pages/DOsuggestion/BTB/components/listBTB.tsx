@@ -76,6 +76,7 @@ const ListBTB = () => {
         limit,
         status,
         date_from: dateFrom.trim(),
+        date_to: dateFrom.trim(),
         sortOrder: "DESC",
       });
 
