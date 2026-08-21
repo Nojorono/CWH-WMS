@@ -19,6 +19,7 @@ export type DynamicColumn<T> = {
 
 /** Response API kadang pakai openingBalanceStockItems / total_items */
 export type OpeningStockListRow = OpeningStockBalance & {
+  id: string;
   total_items?: number;
   openingBalanceStockItems?: OpeningStockBalanceItem[];
 };

@@ -2,6 +2,7 @@ import React, { useEffect, useState, useCallback } from "react";
 import { FaSearch } from "react-icons/fa";
 import {
   OpeningStockBalanceService,
+  parseOpeningStockApiError,
   useOpeningStockStore,
 } from "../../../DynamicAPI/services/Service/OpeningStockBalanceService";
 import { usePersistAuthStore } from "../../../API/store/AuthStore/PersistAuthStore";
@@ -75,10 +76,9 @@ export default function OpeningStockListPage() {
       refetchList();
     } catch (err: unknown) {
       const message =
-        (err as { response?: { data?: { message?: string } } })?.response?.data
-          ?.message ||
-        (err as Error)?.message ||
-        "Gagal memproses action";
+        err instanceof Error
+          ? err.message
+          : parseOpeningStockApiError(err, "Gagal memproses action");
       showErrorToast(message);
     } finally {
       setActionLoadingIds((prev) => ({ ...prev, [row.id]: undefined }));
@@ -104,7 +104,6 @@ export default function OpeningStockListPage() {
         title: "Reject Opening Stock?",
         text: `Batalkan dokumen ${row.code || row.id} menjadi CANCELLED.`,
         confirmButtonText: "Ya, Reject!",
-        confirmButtonColor: "#d33",
       },
     );
   };
