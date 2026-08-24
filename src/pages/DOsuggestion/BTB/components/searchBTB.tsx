@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import flatpickr from "flatpickr";
 import "flatpickr/dist/flatpickr.min.css";
 import Swal from "sweetalert2";
-import { FaCheck, FaTimes } from "react-icons/fa";
+import { FaCheck } from "react-icons/fa";
 import Button from "../../../../components/ui/button/Button";
 import { showErrorToast, showSuccessToast } from "../../../../components/toast";
 import { showConfirmDialog } from "../../../../components/swal-confirm";
@@ -142,10 +142,7 @@ const BtbSearch = () => {
   );
   const totalUom = items[0]?.btb_uom || "BKS";
 
-  const buildCreatePayload = (
-    data: BTBSearchResult,
-    status: "APPLIED" | "DRAFT",
-  ): CreateBTBPayload => ({
+  const buildCreatePayload = (data: BTBSearchResult): CreateBTBPayload => ({
     btb_number: data.btb_number,
     btb_date: data.btb_date,
     organization_code: data.organization_code,
@@ -154,7 +151,7 @@ const BtbSearch = () => {
     sales_name: data.sales_name,
     sales_spv_nik: data.sales_spv_nik,
     sales_spv_name: data.sales_spv_name,
-    status,
+    status: "APPLIED",
     created_by: actorNik,
     updated_by: actorNik,
     details: (data.btb_details ?? []).map((item) => ({
@@ -169,37 +166,28 @@ const BtbSearch = () => {
     })),
   });
 
-  const handleSubmitBTB = (status: "APPLIED" | "DRAFT") => {
+  const handleApplyBTB = () => {
     if (!btbDetail) {
       showErrorToast("Tidak ada data BTB untuk dikonfirmasi");
       return;
     }
     if (isConfirming) return;
 
-    const isApplied = status === "APPLIED";
-
     showConfirmDialog(
       async () => {
         setIsConfirming(true);
         try {
-          const result = await createBTB(
-            buildCreatePayload(btbDetail, status),
-          );
-          
+          const result = await createBTB(buildCreatePayload(btbDetail));
+
           if (!result.success) {
             showErrorToast(result.message);
             return;
           }
 
-          if (isApplied) {
-            await applyBTB(btbDetail.btb_number);
-          }
+          await applyBTB(btbDetail.btb_number);
 
           showSuccessToast(
-            result.message ||
-              (isApplied
-                ? "BTB berhasil disimpan sebagai APPLIED"
-                : "BTB berhasil disimpan sebagai DRAFT (UNAPPLIED)"),
+            result.message || "BTB berhasil disimpan sebagai APPLIED",
           );
           setBtbDetail(null);
         } catch (error: unknown) {
@@ -211,16 +199,28 @@ const BtbSearch = () => {
         }
       },
       {
-        title: isApplied ? "Konfirmasi Sesuai?" : "Konfirmasi Tidak Sesuai?",
-        text: isApplied
-          ? "Data BTB akan disimpan dengan status APPLIED. Lanjutkan?"
-          : "Data BTB akan disimpan dengan status DRAFT (UNAPPLIED). Lanjutkan?",
+        title: "Konfirmasi APPLIED?",
+        text: "Data BTB akan disimpan dengan status APPLIED. Lanjutkan?",
         icon: "question",
         confirmButtonText: "Ya, Simpan",
         cancelButtonText: "Batal",
         confirmButtonColor: "#F97316",
       },
     );
+  };
+
+  const handleCancelBTB = async () => {
+    await Swal.fire({
+      icon: "info",
+      title: "Perbaiki Data BTB",
+      text: "Perbaiki data BTB melalui DMS",
+      confirmButtonText: "Mengerti",
+      confirmButtonColor: "#F97316",
+      didOpen: () => {
+        const container = Swal.getContainer();
+        if (container) container.style.zIndex = "100000";
+      },
+    });
   };
 
   return (
@@ -495,28 +495,25 @@ const BtbSearch = () => {
                 <h3 className="font-bold text-slate-700 mb-4 text-center sm:text-left">
                   Apakah data BTB ini sudah sesuai dengan fisik barang?
                 </h3>
-                <div className="flex flex-col sm:flex-row gap-4">
+                <div className="flex flex-wrap justify-end gap-2">
                   <Button
                     type="button"
-                    variant="secondary"
-                    size="sm"
-                    className="flex-1"
+                    variant="outline"
+                    size="xsm"
                     disabled={isConfirming}
-                    onClick={() => handleSubmitBTB("APPLIED")}
-                    startIcon={<FaCheck />}
+                    onClick={handleCancelBTB}
                   >
-                    {isConfirming ? "Menyimpan..." : "Sesuai"}
+                    Batal
                   </Button>
                   <Button
                     type="button"
-                    variant="danger"
-                    size="sm"
-                    className="flex-1"
+                    variant="secondary"
+                    size="xsm"
                     disabled={isConfirming}
-                    onClick={() => handleSubmitBTB("DRAFT")}
-                    startIcon={<FaTimes />}
+                    onClick={handleApplyBTB}
+                    startIcon={<FaCheck />}
                   >
-                    {isConfirming ? "Menyimpan..." : "Tidak Sesuai"}
+                    {isConfirming ? "Menyimpan..." : "APPLIED"}
                   </Button>
                 </div>
               </div>

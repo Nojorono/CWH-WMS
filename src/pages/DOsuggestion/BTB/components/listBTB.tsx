@@ -3,31 +3,16 @@ import flatpickr from "flatpickr";
 import "flatpickr/dist/flatpickr.min.css";
 import { showErrorToast } from "../../../../components/toast";
 import { getBTBPagination } from "../services/BTBservice";
-import { BTB, BTBMeta, BTBStatus } from "../services/types";
+import { BTB, BTBMeta } from "../services/types";
 
-const STATUS_OPTIONS: { value: BTBStatus; label: string }[] = [
-  { value: "DRAFT", label: "UNAPPLIED" },
-  { value: "APPLIED", label: "APPLIED" },
-];
+const BTB_LIST_STATUS = "APPLIED" as const;
 const LIMIT_OPTIONS = [10, 20, 50, 100];
 
 const todayYmd = () => new Date().toISOString().slice(0, 10);
 
-const formatStatusLabel = (status?: string) => {
-  const value = (status || "").toUpperCase();
-  if (value === "DRAFT") return "UNAPPLIED";
-  return value || "-";
-};
-
-const statusBadgeClass = (status?: string) => {
-  const value = (status || "").toUpperCase();
-  if (value === "DRAFT") return "bg-slate-100 text-slate-700";
-  if (value === "APPLIED") return "bg-blue-50 text-blue-700";
-  return "bg-orange-50 text-orange-700";
-};
+const statusBadgeClass = () => "bg-blue-50 text-blue-700";
 
 const ListBTB = () => {
-  const [status, setStatus] = useState<BTBStatus>("DRAFT");
   const [dateFrom, setDateFrom] = useState(todayYmd);
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
@@ -74,7 +59,7 @@ const ListBTB = () => {
       const result = await getBTBPagination({
         page,
         limit,
-        status,
+        status: BTB_LIST_STATUS,
         date_from: dateFrom.trim(),
         date_to: dateFrom.trim(),
         sortOrder: "DESC",
@@ -98,7 +83,7 @@ const ListBTB = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [page, limit, status, dateFrom]);
+  }, [page, limit, dateFrom]);
 
   useEffect(() => {
     fetchList();
@@ -115,27 +100,7 @@ const ListBTB = () => {
 
   return (
     <div className="space-y-4">
-      <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm grid grid-cols-1 sm:grid-cols-3 gap-4 items-end">
-        <div>
-          <label className="block text-xs font-bold text-slate-600 mb-1.5 uppercase tracking-wider">
-            Status *
-          </label>
-          <select
-            value={status}
-            onChange={(e) => {
-              setStatus(e.target.value as BTBStatus);
-              setPage(1);
-            }}
-            className="w-full text-sm px-3 py-2.5 border border-slate-300 rounded-lg bg-white focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
-          >
-            {STATUS_OPTIONS.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
-        </div>
-
+      <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm grid grid-cols-1 sm:grid-cols-2 gap-4 items-end">
         <div>
           <label className="block text-xs font-bold text-slate-600 mb-1.5 uppercase tracking-wider">
             Date *
@@ -194,7 +159,7 @@ const ListBTB = () => {
                     colSpan={8}
                     className="px-4 py-10 text-center text-slate-400 italic"
                   >
-                    Tidak ada data BTB untuk status {formatStatusLabel(status)}
+                    Tidak ada data BTB APPLIED untuk tanggal {dateFrom}
                   </td>
                 </tr>
               ) : (
@@ -258,11 +223,9 @@ const ListBTB = () => {
                         </td>
                         <td className="px-4 py-3">
                           <span
-                            className={`inline-flex px-2.5 py-1 rounded-full text-xs font-bold ${statusBadgeClass(
-                              row.status,
-                            )}`}
+                            className={`inline-flex px-2.5 py-1 rounded-full text-xs font-bold ${statusBadgeClass()}`}
                           >
-                            {formatStatusLabel(row.status || status)}
+                            {BTB_LIST_STATUS}
                           </span>
                         </td>
                       </tr>
