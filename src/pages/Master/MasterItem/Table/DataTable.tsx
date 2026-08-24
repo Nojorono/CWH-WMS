@@ -5,12 +5,11 @@ import Label from "../../../../components/form/Label";
 import Button from "../../../../components/ui/button/Button";
 import { useDebounce } from "../../../../helper/useDebounce";
 import DynamicTable from "../../../../components/wms-components/DynamicTable";
-import {
-  useStoreItem,
-  useStoreIo,
-} from "../../../../DynamicAPI/stores/Store/MasterStore";
+  import {
+    useStoreItem,
+    useStoreIo,
+  } from "../../../../DynamicAPI/stores/Store/MasterStore";
 import { showErrorToast, showSuccessToast } from "../../../../components/toast";
-import { EndPoint } from "../../../../utils/EndPoint";
 import { showConfirmDialog } from "../../../../components/swal-confirm";
 import axiosInstance from "../../../../DynamicAPI/AxiosInstance";
 
@@ -22,6 +21,7 @@ const DataTable = () => {
     deleteData,
     fetchAll,
   } = useStoreItem();
+  
   const { fetchAll: fetchAllIo, list: ioList } = useStoreIo();
 
   const [search, setSearch] = useState("");
