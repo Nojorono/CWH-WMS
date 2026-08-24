@@ -2,18 +2,8 @@ import React, { useMemo, useState } from "react";
 import { FaEdit } from "react-icons/fa";
 import { useStoreItem } from "../../../../DynamicAPI/stores/Store/MasterStore";
 import { BTBDetail } from "../../types/BTBtypes";
-import { CallplanDetail } from "../../types/CallplanTypes";
 import AdjustQtySPB, { AdjustQtyHeader, AdjustQtyItem } from "./AdjustQtySPB";
-
-type EnrichedDetail = CallplanDetail & {
-  qty_btb: number;
-  itemName?: string;
-  suggestionQty?: number;
-  finalQty?: number;
-  btbQty?: number;
-  topUpQty?: number;
-  qtyRevision?: number | null;
-};
+import { EnrichedDetail } from "./types";
 
 const hasQtyRevision = (revision: string | number | null | undefined) => {
   if (revision === null || revision === undefined) return false;
