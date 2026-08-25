@@ -3,6 +3,13 @@ import { FaEdit } from "react-icons/fa";
 import { useStoreItem } from "../../../../DynamicAPI/stores/Store/MasterStore";
 import { BTBDetail } from "../../types/BTBtypes";
 import AdjustQtySPB, { AdjustQtyHeader, AdjustQtyItem } from "./AdjustQtySPB";
+import {
+  getAlignClass,
+  getPickListRowClassName,
+  getVisiblePickListColumns,
+  PREP_PICK_LIST_COLUMNS,
+  type PickListRow,
+} from "./prepPickListTableConfig";
 import { EnrichedDetail } from "./types";
 
 const hasQtyRevision = (revision: string | number | null | undefined) => {
@@ -37,15 +44,25 @@ export const PrepDetailTable = ({
 }: PrepDetailTableProps) => {
   const { list: itemList } = useStoreItem();
   const [isAdjustOpen, setIsAdjustOpen] = useState(false);
-  const normalizedHighlightSku = String(highlightedSku || "").trim().toLowerCase();
+  const normalizedHighlightSku = String(highlightedSku || "")
+    .trim()
+    .toLowerCase();
 
   const showQtyRevisionCol = useMemo(
     () => details.some((d) => hasQtyRevision(d.item_qty_revision)),
     [details],
   );
 
+  const visiblePickListColumns = useMemo(
+    () =>
+      getVisiblePickListColumns(PREP_PICK_LIST_COLUMNS, {
+        showQtyRevision: showQtyRevisionCol,
+      }),
+    [showQtyRevisionCol],
+  );
+
   const { pickList, excessList } = useMemo(() => {
-    const picked = details
+    const picked: PickListRow[] = details
       .map((d) => {
         const final = Number(d.item_qty_final ?? d.item_qty_submitted) || 0;
         const suggestion = Number(d.item_qty_suggestion) || 0;
@@ -73,7 +90,6 @@ export const PrepDetailTable = ({
             .toLowerCase()
             .includes(normalizedHighlightSku);
           if (aMatch !== bMatch) return aMatch ? -1 : 1;
-          // Jika sama-sama match SKU yang dicari, tampilkan Qty terbesar lebih dulu.
           if (aMatch && bMatch) {
             const aQty = Number(a.finalQty ?? 0);
             const bQty = Number(b.finalQty ?? 0);
@@ -96,8 +112,6 @@ export const PrepDetailTable = ({
 
     return { pickList: picked, excessList: excess };
   }, [details, unmatchedDetails, itemList, normalizedHighlightSku]);
-
-  const colSpan = showQtyRevisionCol ? 7 : 6;
 
   return (
     <div className="grid grid-cols-1 gap-6 border-t bg-slate-50 p-4 lg:grid-cols-2">
@@ -123,26 +137,23 @@ export const PrepDetailTable = ({
           <table className="w-full text-left text-xs">
             <thead className="sticky top-0 bg-emerald-50 text-slate-500">
               <tr>
-                <th className="px-3 py-2">No</th>
-                <th className="px-3 py-2">Item</th>
-                <th className="px-3 py-2 text-center">Qty Suggestion</th>
-                <th className="px-3 py-2 text-center">Qty Final</th>
-                {showQtyRevisionCol && (
-                  <th className="px-3 py-2 text-center text-orange-600">
-                    Qty Revision
+                {visiblePickListColumns.map((col) => (
+                  <th
+                    key={col.id}
+                    className={`px-3 py-2 ${getAlignClass(col.align)} ${
+                      col.widthClassName || ""
+                    } ${col.headerClassName || ""}`}
+                  >
+                    {col.header}
                   </th>
-                )}
-                <th className="px-3 py-2 text-center">Qty BTB</th>
-                <th className="px-3 py-2 text-center text-emerald-600">
-                  Top Up
-                </th>
+                ))}
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {pickList.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={colSpan}
+                    colSpan={visiblePickListColumns.length}
                     className="px-3 py-6 text-center italic text-slate-400"
                   >
                     Tidak ada item pick list
@@ -151,83 +162,26 @@ export const PrepDetailTable = ({
               ) : (
                 pickList.map((item, i) => {
                   const itemSku = String(item.item_code || "").toLowerCase();
-                  const isHighlightedBySku =
+                  const isHighlighted =
                     normalizedHighlightSku.length > 0 &&
                     itemSku.includes(normalizedHighlightSku);
+                  const ctx = { index: i, isHighlighted };
 
                   return (
                     <tr
                       key={item.id || i}
-                      className={
-                        isHighlightedBySku
-                          ? "bg-yellow-100 ring-1 ring-yellow-300 hover:bg-yellow-100"
-                          : item.finalQty === 0
-                            ? "bg-red-50 text-red-700 hover:bg-red-100"
-                            : item.qtyRevision !== null
-                              ? "bg-orange-50/60 hover:bg-orange-50"
-                              : "hover:bg-slate-50"
-                      }
+                      className={getPickListRowClassName(item, isHighlighted)}
                     >
-                      <td
-                        className={`px-3 py-2 font-medium ${
-                          item.finalQty === 0 ? "text-red-700" : "text-slate-800"
-                        }`}
-                      >
-                        {i + 1}
-                      </td>
-                      <td
-                        className={`px-3 py-2 font-medium ${
-                          isHighlightedBySku
-                            ? "text-yellow-900"
-                            : item.finalQty === 0
-                              ? "text-red-700"
-                              : "text-slate-800"
-                        }`}
-                      >
-                        {item.itemName}
-                        {isHighlightedBySku && (
-                          <span className="ml-2 rounded border border-yellow-400 bg-yellow-200 px-1.5 py-0.5 text-[10px] font-bold uppercase text-yellow-900">
-                            match
-                          </span>
-                        )}
-                      </td>
-                      <td
-                        className={`px-3 py-2 text-center ${
-                          item.finalQty === 0 ? "font-bold text-red-600" : ""
-                        }`}
-                      >
-                        {item.item_qty_suggestion}
-                      </td>
-                      <td
-                        className={`px-3 py-2 text-center ${
-                          item.finalQty === 0 ? "font-bold text-red-600" : ""
-                        }`}
-                      >
-                        {item.finalQty}
-                      </td>
-                      {showQtyRevisionCol && (
-                        <td className="px-3 py-2 text-center font-bold text-orange-600">
-                          {item.qtyRevision !== null
-                            ? item.qtyRevision > 0
-                              ? `+${item.qtyRevision}`
-                              : item.qtyRevision
-                            : "-"}
+                      {visiblePickListColumns.map((col) => (
+                        <td
+                          key={col.id}
+                          className={`${getAlignClass(col.align)} ${
+                            col.getCellClassName?.(item, ctx) || "px-3 py-2"
+                          }`}
+                        >
+                          {col.getValue(item, ctx)}
                         </td>
-                      )}
-                      <td
-                        className={`px-3 py-2 text-center ${
-                          item.finalQty === 0 ? "text-red-500" : "text-blue-600"
-                        }`}
-                      >
-                        {item.btbQty}
-                      </td>
-                      <td
-                        className={`px-3 py-2 text-center font-bold ${
-                          item.finalQty === 0 ? "text-red-600" : "text-emerald-600"
-                        }`}
-                      >
-                        {item.topUpQty}
-                      </td>
+                      ))}
                     </tr>
                   );
                 })
@@ -287,7 +241,8 @@ export const PrepDetailTable = ({
           id: String(item.id),
           name: item.itemName || item.item_code,
           sku: item.item_code,
-          qtySuggestion: Number(item.suggestionQty ?? item.item_qty_suggestion) || 0,
+          qtySuggestion:
+            Number(item.suggestionQty ?? item.item_qty_suggestion) || 0,
           qtyAwal: Number(item.finalQty) || 0,
           adjustment: 0,
         }))}
@@ -311,4 +266,3 @@ export const PrepDetailTable = ({
     </div>
   );
 };
-

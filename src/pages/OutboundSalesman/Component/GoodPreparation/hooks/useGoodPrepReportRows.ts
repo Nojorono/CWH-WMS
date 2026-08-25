@@ -51,6 +51,7 @@ export const useGoodPrepReportRows = ({
   enrichedData,
   itemList,
 }: UseGoodPrepReportRowsParams) => {
+
   const permintaanReportRows = useMemo((): PermintaanBarangRow[] => {
     const summary: Record<
       string,
@@ -70,12 +71,15 @@ export const useGoodPrepReportRows = ({
         const btb = Number(d.qty_btb) || 0;
         if (submitted <= 0 && btb <= 0) return;
 
+        // Top Up minus → masuk Form Retur, bukan Permintaan
+        const qtyDelta = submitted - btb;
+        if (qtyDelta < 0) return;
+
         const sku = d.item_code || "";
         const invId = d.inventory_item_id || "";
         const key = `${sku}_${invId}`;
         const master = itemList?.find((m: any) => m.sku === sku);
         const itemName = master?.description || d.itemName || sku;
-        const qtyDelta = submitted - btb;
 
         if (summary[key]) {
           summary[key].sisaBarang += btb;
@@ -95,6 +99,7 @@ export const useGoodPrepReportRows = ({
     });
 
     return Object.values(summary)
+      .filter((row) => Number(row.finalDo) > 0 && Number(row.qtyDelta) >= 0)
       .map((row) => withUomConversion(row, itemList))
       .sort((a, b) => a.name.localeCompare(b.name));
   }, [enrichedData, itemList]);
@@ -106,6 +111,7 @@ export const useGoodPrepReportRows = ({
         code: string;
         name: string;
         inventoryItemId: string;
+        sisaBarang: number;
         finalDo: number;
         qtyDelta: number;
       }
@@ -113,12 +119,36 @@ export const useGoodPrepReportRows = ({
 
     enrichedData.forEach((doc) => {
       doc.details.forEach((d) => {
+        const submitted = Number(d.item_qty_submitted) || 0;
+        const finalQty =
+          Number(d.item_qty_final ?? d.item_qty_submitted) || 0;
+        const btb = Number(d.qty_btb) || 0;
+        const submittedMinusBtb = submitted - btb;
+        const finalMinusBtb = finalQty - btb;
+
         const revisionRaw = String(d.item_qty_revision ?? "").trim();
         const revision = Number(revisionRaw);
-        if (!revisionRaw || Number.isNaN(revision) || revision >= 0) return;
+        const hasNegativeRevision =
+          Boolean(revisionRaw) && !Number.isNaN(revision) && revision < 0;
 
-        const finalDo = Number(d.item_qty_final ?? d.item_qty_submitted) || 0;
-        const qtyDelta = Math.abs(revision);
+        // Prioritas Form Retur:
+        // 1) submitted - BTB < 0 → qty Retur = |submitted - BTB| (alur bisnis utama)
+        // 2) revision < 0 → HANYA jika Final - BTB juga minus
+        //    (jika Final - BTB tidak minus, revision digugurkan = kemungkinan testing)
+        let qtyDelta = 0;
+        let finalDo = submitted;
+
+        if (submittedMinusBtb < 0) {
+          qtyDelta = Math.abs(submittedMinusBtb);
+          finalDo = submitted;
+        } else if (hasNegativeRevision) {
+          if (finalMinusBtb >= 0) return;
+          qtyDelta = Math.abs(finalMinusBtb);
+          finalDo = finalQty;
+        } else {
+          return;
+        }
+
         const sku = d.item_code || "";
         const invId = d.inventory_item_id || "";
         const key = `${sku}_${invId}`;
@@ -126,6 +156,7 @@ export const useGoodPrepReportRows = ({
         const itemName = master?.description || d.itemName || sku;
 
         if (summary[key]) {
+          summary[key].sisaBarang += btb;
           summary[key].finalDo += finalDo;
           summary[key].qtyDelta += qtyDelta;
         } else {
@@ -133,6 +164,7 @@ export const useGoodPrepReportRows = ({
             code: sku,
             name: itemName,
             inventoryItemId: String(invId),
+            sisaBarang: btb,
             finalDo,
             qtyDelta,
           };
@@ -141,9 +173,8 @@ export const useGoodPrepReportRows = ({
     });
 
     return Object.values(summary)
-      .map((row) =>
-        withUomConversion({ ...row, sisaBarang: null }, itemList),
-      )
+      .filter((row) => Number(row.qtyDelta) > 0)
+      .map((row) => withUomConversion(row, itemList))
       .sort((a, b) => a.name.localeCompare(b.name));
   }, [enrichedData, itemList]);
 
@@ -163,9 +194,10 @@ export const useGoodPrepReportRows = ({
       doc.details.forEach((d) => {
         const revisionRaw = String(d.item_qty_revision ?? "").trim();
         const revision = Number(revisionRaw);
+        // Form Tambahan: hanya SKU dengan revision (+)
         if (!revisionRaw || Number.isNaN(revision) || revision <= 0) return;
 
-        const finalDo = Number(d.item_qty_final ?? d.item_qty_submitted) || 0;
+        const finalDo = Number(d.item_qty_submitted) || 0;
         const qtyDelta = revision;
         const sku = d.item_code || "";
         const invId = d.inventory_item_id || "";
@@ -189,6 +221,7 @@ export const useGoodPrepReportRows = ({
     });
 
     return Object.values(summary)
+      .filter((row) => Number(row.finalDo) > 0)
       .map((row) =>
         withUomConversion({ ...row, sisaBarang: null }, itemList),
       )
