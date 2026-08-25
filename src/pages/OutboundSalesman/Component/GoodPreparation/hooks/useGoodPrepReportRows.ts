@@ -1,7 +1,10 @@
 import { useMemo } from "react";
-import { PermintaanBarangRow } from "../../Report/PermintaanBarang";
-import { ReturBarangRow } from "../../Report/ReturBarang";
-import { TambahanBarangRow } from "../../Report/TambahanBarang";
+import {
+  GudangFormRow,
+  PermintaanBarangRow,
+  ReturBarangRow,
+  TambahanBarangRow,
+} from "../../Report/GudangForm";
 import {
   convertTopUpBksToCaseBalSlopPack,
   findMasterItemBySkuAndInventory,
@@ -11,6 +14,37 @@ import { EnrichedCallplan } from "../types";
 type UseGoodPrepReportRowsParams = {
   enrichedData: EnrichedCallplan[];
   itemList: any[] | undefined;
+};
+
+const withUomConversion = (
+  row: {
+    code: string;
+    name: string;
+    inventoryItemId: string;
+    sisaBarang: number | null;
+    finalDo: number;
+    qtyDelta: number;
+  },
+  itemList: any[] | undefined,
+): GudangFormRow => {
+  const master = findMasterItemBySkuAndInventory(
+    Array.isArray(itemList) ? itemList : [],
+    row.code,
+    row.inventoryItemId,
+  );
+  const converted = convertTopUpBksToCaseBalSlopPack(row.qtyDelta, master);
+
+  return {
+    code: row.code,
+    name: row.name,
+    sisaBarang: row.sisaBarang,
+    finalDo: row.finalDo,
+    qtyDelta: row.qtyDelta,
+    caseQty: converted.caseQty,
+    balQty: converted.balQty,
+    slopQty: converted.slopQty,
+    packQty: converted.packQty,
+  };
 };
 
 export const useGoodPrepReportRows = ({
@@ -26,7 +60,7 @@ export const useGoodPrepReportRows = ({
         inventoryItemId: string;
         sisaBarang: number;
         finalDo: number;
-        topUp: number;
+        qtyDelta: number;
       }
     > = {};
 
@@ -41,12 +75,12 @@ export const useGoodPrepReportRows = ({
         const key = `${sku}_${invId}`;
         const master = itemList?.find((m: any) => m.sku === sku);
         const itemName = master?.description || d.itemName || sku;
-        const topUp = submitted - btb;
+        const qtyDelta = submitted - btb;
 
         if (summary[key]) {
           summary[key].sisaBarang += btb;
           summary[key].finalDo += submitted;
-          summary[key].topUp += topUp;
+          summary[key].qtyDelta += qtyDelta;
         } else {
           summary[key] = {
             code: sku,
@@ -54,33 +88,14 @@ export const useGoodPrepReportRows = ({
             inventoryItemId: String(invId),
             sisaBarang: btb,
             finalDo: submitted,
-            topUp,
+            qtyDelta,
           };
         }
       });
     });
 
     return Object.values(summary)
-      .map((row) => {
-        const master = findMasterItemBySkuAndInventory(
-          Array.isArray(itemList) ? itemList : [],
-          row.code,
-          row.inventoryItemId,
-        );
-        const converted = convertTopUpBksToCaseBalSlopPack(row.topUp, master);
-
-        return {
-          code: row.code,
-          name: row.name,
-          sisaBarang: row.sisaBarang,
-          finalDo: row.finalDo,
-          topUp: row.topUp,
-          caseQty: converted.caseQty,
-          balQty: converted.balQty,
-          slopQty: converted.slopQty,
-          packQty: converted.packQty,
-        };
-      })
+      .map((row) => withUomConversion(row, itemList))
       .sort((a, b) => a.name.localeCompare(b.name));
   }, [enrichedData, itemList]);
 
@@ -92,7 +107,7 @@ export const useGoodPrepReportRows = ({
         name: string;
         inventoryItemId: string;
         finalDo: number;
-        qtyRetur: number;
+        qtyDelta: number;
       }
     > = {};
 
@@ -103,7 +118,7 @@ export const useGoodPrepReportRows = ({
         if (!revisionRaw || Number.isNaN(revision) || revision >= 0) return;
 
         const finalDo = Number(d.item_qty_final ?? d.item_qty_submitted) || 0;
-        const retur = Math.abs(revision);
+        const qtyDelta = Math.abs(revision);
         const sku = d.item_code || "";
         const invId = d.inventory_item_id || "";
         const key = `${sku}_${invId}`;
@@ -112,39 +127,23 @@ export const useGoodPrepReportRows = ({
 
         if (summary[key]) {
           summary[key].finalDo += finalDo;
-          summary[key].qtyRetur += retur;
+          summary[key].qtyDelta += qtyDelta;
         } else {
           summary[key] = {
             code: sku,
             name: itemName,
             inventoryItemId: String(invId),
             finalDo,
-            qtyRetur: retur,
+            qtyDelta,
           };
         }
       });
     });
 
     return Object.values(summary)
-      .map((row) => {
-        const master = findMasterItemBySkuAndInventory(
-          Array.isArray(itemList) ? itemList : [],
-          row.code,
-          row.inventoryItemId,
-        );
-        const converted = convertTopUpBksToCaseBalSlopPack(row.qtyRetur, master);
-
-        return {
-          code: row.code,
-          name: row.name,
-          finalDo: row.finalDo,
-          qtyRetur: row.qtyRetur,
-          caseQty: converted.caseQty,
-          balQty: converted.balQty,
-          slopQty: converted.slopQty,
-          packQty: converted.packQty,
-        };
-      })
+      .map((row) =>
+        withUomConversion({ ...row, sisaBarang: null }, itemList),
+      )
       .sort((a, b) => a.name.localeCompare(b.name));
   }, [enrichedData, itemList]);
 
@@ -156,7 +155,7 @@ export const useGoodPrepReportRows = ({
         name: string;
         inventoryItemId: string;
         finalDo: number;
-        qtyTambahan: number;
+        qtyDelta: number;
       }
     > = {};
 
@@ -167,7 +166,7 @@ export const useGoodPrepReportRows = ({
         if (!revisionRaw || Number.isNaN(revision) || revision <= 0) return;
 
         const finalDo = Number(d.item_qty_final ?? d.item_qty_submitted) || 0;
-        const tambahan = revision;
+        const qtyDelta = revision;
         const sku = d.item_code || "";
         const invId = d.inventory_item_id || "";
         const key = `${sku}_${invId}`;
@@ -176,42 +175,23 @@ export const useGoodPrepReportRows = ({
 
         if (summary[key]) {
           summary[key].finalDo += finalDo;
-          summary[key].qtyTambahan += tambahan;
+          summary[key].qtyDelta += qtyDelta;
         } else {
           summary[key] = {
             code: sku,
             name: itemName,
             inventoryItemId: String(invId),
             finalDo,
-            qtyTambahan: tambahan,
+            qtyDelta,
           };
         }
       });
     });
 
     return Object.values(summary)
-      .map((row) => {
-        const master = findMasterItemBySkuAndInventory(
-          Array.isArray(itemList) ? itemList : [],
-          row.code,
-          row.inventoryItemId,
-        );
-        const converted = convertTopUpBksToCaseBalSlopPack(
-          row.qtyTambahan,
-          master,
-        );
-
-        return {
-          code: row.code,
-          name: row.name,
-          finalDo: row.finalDo,
-          qtyTambahan: row.qtyTambahan,
-          caseQty: converted.caseQty,
-          balQty: converted.balQty,
-          slopQty: converted.slopQty,
-          packQty: converted.packQty,
-        };
-      })
+      .map((row) =>
+        withUomConversion({ ...row, sisaBarang: null }, itemList),
+      )
       .sort((a, b) => a.name.localeCompare(b.name));
   }, [enrichedData, itemList]);
 

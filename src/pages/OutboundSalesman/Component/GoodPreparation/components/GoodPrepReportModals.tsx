@@ -1,10 +1,9 @@
 import React from "react";
 import dayjs from "dayjs";
-import PermintaanBarang, {
-  PermintaanBarangRow,
-} from "../../Report/PermintaanBarang";
-import ReturBarang, { ReturBarangRow } from "../../Report/ReturBarang";
-import TambahanBarang, { TambahanBarangRow } from "../../Report/TambahanBarang";
+import {
+  GudangFormModal,
+  GudangFormRow,
+} from "../../Report/GudangForm";
 
 type GoodPrepReportModalsProps = {
   organizationName: string;
@@ -12,9 +11,9 @@ type GoodPrepReportModalsProps = {
   isPermintaanOpen: boolean;
   isReturOpen: boolean;
   isTambahanOpen: boolean;
-  permintaanReportRows: PermintaanBarangRow[];
-  returReportRows: ReturBarangRow[];
-  tambahanReportRows: TambahanBarangRow[];
+  permintaanReportRows: GudangFormRow[];
+  returReportRows: GudangFormRow[];
+  tambahanReportRows: GudangFormRow[];
   onClosePermintaan: () => void;
   onCloseRetur: () => void;
   onCloseTambahan: () => void;
@@ -33,33 +32,38 @@ export const GoodPrepReportModals = ({
   onCloseRetur,
   onCloseTambahan,
 }: GoodPrepReportModalsProps) => {
+  const today = dayjs().format("YYYY-MM-DD");
+
   return (
     <>
       {isPermintaanOpen && (
-        <PermintaanBarang
+        <GudangFormModal
+          variant="permintaan"
           onClose={onClosePermintaan}
           organizationName={organizationName}
-          requestDate={dayjs().format("YYYY-MM-DD")}
+          formDate={today}
           doDate={targetDate}
           rows={permintaanReportRows}
         />
       )}
 
       {isReturOpen && (
-        <ReturBarang
+        <GudangFormModal
+          variant="retur"
           onClose={onCloseRetur}
           organizationName={organizationName}
-          returDate={dayjs().format("YYYY-MM-DD")}
+          formDate={today}
           doDate={targetDate}
           rows={returReportRows}
         />
       )}
 
       {isTambahanOpen && (
-        <TambahanBarang
+        <GudangFormModal
+          variant="tambahan"
           onClose={onCloseTambahan}
           organizationName={organizationName}
-          tambahanDate={dayjs().format("YYYY-MM-DD")}
+          formDate={today}
           doDate={targetDate}
           rows={tambahanReportRows}
         />
