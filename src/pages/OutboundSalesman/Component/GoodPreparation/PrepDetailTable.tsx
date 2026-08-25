@@ -114,8 +114,8 @@ export const PrepDetailTable = ({
   }, [details, unmatchedDetails, itemList, normalizedHighlightSku]);
 
   return (
-    <div className="grid grid-cols-1 gap-6 border-t bg-slate-50 p-4 lg:grid-cols-2">
-      <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+    <div className="grid grid-cols-1 gap-6 border-t bg-slate-50 p-4 lg:grid-cols-[minmax(0,1fr)_minmax(14rem,25rem)]">
+      <div className="min-w-0 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
         <div className="flex items-center justify-between gap-2 border-b bg-emerald-50 px-4 py-3">
           <div className="text-xs font-bold uppercase text-slate-700">
             Picking List (Top Up) {pickList.length} Items
@@ -191,17 +191,17 @@ export const PrepDetailTable = ({
         </div>
       </div>
 
-      <div className="overflow-hidden rounded-lg border border-rose-200 bg-white shadow-sm">
+      <div className="w-full overflow-hidden rounded-lg border border-rose-200 bg-white shadow-sm">
         <div className="border-b border-rose-100 bg-rose-50 px-4 py-3 text-xs font-bold uppercase text-rose-700">
-          Unmatched BTB SKU
+          {excessList.length} Items SPB yang tidak ada dalam BTB
         </div>
         <div className="max-h-72 overflow-auto">
-          <table className="w-full text-left text-xs">
+          <table className="w-full table-fixed text-left text-xs">
             <thead className="sticky top-0 bg-rose-50 text-rose-600">
               <tr>
-                <th className="px-3 py-2">No</th>
-                <th className="px-3 py-2">Item</th>
-                <th className="px-3 py-2 text-center">Qty</th>
+                <th className="w-10 px-2 py-2">No</th>
+                <th className="px-2 py-2">Item</th>
+                <th className="w-14 px-2 py-2 text-center">Qty</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-rose-50">
@@ -217,13 +217,16 @@ export const PrepDetailTable = ({
               ) : (
                 excessList.map((item, i) => (
                   <tr key={i} className="hover:bg-rose-50">
-                    <td className="px-3 py-2 font-medium text-slate-800">
+                    <td className="px-2 py-2 font-medium text-slate-800">
                       {i + 1}
                     </td>
-                    <td className="px-3 py-2 font-medium text-slate-800">
+                    <td
+                      className="truncate px-2 py-2 font-medium text-slate-800"
+                      title={item.itemName}
+                    >
                       {item.itemName}
                     </td>
-                    <td className="px-3 py-2 text-center font-bold text-rose-600">
+                    <td className="px-2 py-2 text-center font-bold text-rose-600">
                       {item.btbQty}
                     </td>
                   </tr>
