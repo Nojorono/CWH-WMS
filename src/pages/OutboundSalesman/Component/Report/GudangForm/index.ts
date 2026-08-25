@@ -1,5 +1,7 @@
 export { default as GudangFormModal } from "./GudangFormModal";
 export type { GudangFormModalProps } from "./GudangFormModal";
+export { GudangFormSheet } from "./GudangFormSheet";
+export type { GudangFormSheetProps } from "./GudangFormSheet";
 export { GudangFormTable } from "./GudangFormTable";
 export { GUDANG_FORM_CONFIG } from "./config";
 export type { GudangFormConfig } from "./config";

@@ -61,7 +61,7 @@ export const GoodPrepHeaderActions = ({
               : "border border-slate-300 bg-white text-slate-600 hover:bg-slate-50"
           }`}
         >
-          <FaFileAlt /> Permintaan Gudang
+          <FaFileAlt /> Form Permintaan Gudang
         </button>
 
         <button

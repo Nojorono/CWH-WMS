@@ -1,9 +1,6 @@
 import React from "react";
 import dayjs from "dayjs";
-import {
-  GudangFormModal,
-  GudangFormRow,
-} from "../../Report/GudangForm";
+import { GudangFormModal, GudangFormRow } from "../../Report/GudangForm";
 
 type GoodPrepReportModalsProps = {
   organizationName: string;
