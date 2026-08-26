@@ -4,12 +4,9 @@ import svgr from "vite-plugin-svgr";
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "");
-  const dmsAppId = env.VITE_DMS_APP_ID || "dms-gen3-wms";
-  const dmsAppSecret =
-    env.VITE_DMS_APP_SECRET ||
-    "AElodThMJubzV8mL9et0j8bU27r7sEwGvequLIbeVN5YqDRo";
-  const dmsTarget =
-    env.VITE_DO_SUGGESTION_SERVICE || "https://staging-api.nna-id.com";
+  const dmsAppId = env.VITE_DMS_APP_ID;
+  const dmsAppSecret = env.VITE_DMS_APP_SECRET;
+  const dmsTarget = env.VITE_DO_SUGGESTION_SERVICE;
 
   return {
     plugins: [
