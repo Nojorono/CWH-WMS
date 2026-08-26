@@ -24,6 +24,7 @@ type PrepDetailTableProps = {
   details: EnrichedDetail[];
   unmatchedDetails?: BTBDetail[];
   header?: AdjustQtyHeader;
+  isAdjustDisabled?: boolean;
   onSaveAdjustments: (
     callplanId: string,
     payload: {
@@ -39,6 +40,7 @@ export const PrepDetailTable = ({
   details,
   unmatchedDetails = [],
   header,
+  isAdjustDisabled = false,
   onSaveAdjustments,
   highlightedSku,
 }: PrepDetailTableProps) => {
@@ -128,7 +130,17 @@ export const PrepDetailTable = ({
           <button
             type="button"
             onClick={() => setIsAdjustOpen(true)}
-            className="inline-flex items-center gap-1.5 rounded border border-emerald-300 bg-white px-2.5 py-1 text-[11px] font-bold uppercase text-emerald-700 transition-colors hover:bg-emerald-100"
+            disabled={isAdjustDisabled}
+            title={
+              isAdjustDisabled
+                ? "Tidak bisa Adjust — data BTB cabang belum tersedia"
+                : undefined
+            }
+            className={`inline-flex items-center gap-1.5 rounded border px-2.5 py-1 text-[11px] font-bold uppercase transition-colors ${
+              isAdjustDisabled
+                ? "cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400"
+                : "border-emerald-300 bg-white text-emerald-700 hover:bg-emerald-100"
+            }`}
           >
             <FaEdit size={11} /> Adjust Qty
           </button>

@@ -26,12 +26,13 @@ export const useGoodPrepEnrichedData = ({
 
       const matchedDetails: EnrichedDetail[] = (doc.details || []).map(
         (detail: CallplanDetail) => {
-          const matchingBtbItem = btbDetails.find(
-            (b: BTBDetail) => b.item_code?.trim() === detail.item_code?.trim(),
-          );
+          const sku = detail.item_code?.trim();
+          const qtyBtb = btbDetails
+            .filter((b: BTBDetail) => b.item_code?.trim() === sku)
+            .reduce((sum, b) => sum + (Number(b.btb_qty) || 0), 0);
           return {
             ...detail,
-            qty_btb: matchingBtbItem ? Number(matchingBtbItem.btb_qty) || 0 : 0,
+            qty_btb: qtyBtb,
           };
         },
       );

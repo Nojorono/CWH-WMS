@@ -8,6 +8,7 @@ import { AdjustQtyItem } from "../AdjustQtySPB";
 type GoodPrepExpandedRowProps = {
   row: EnrichedCallplan;
   globalFilter: string;
+  isAdjustDisabled?: boolean;
   onSaveAdjustments: (
     callplanId: string,
     payload: {
@@ -20,6 +21,7 @@ type GoodPrepExpandedRowProps = {
 export const GoodPrepExpandedRow = ({
   row,
   globalFilter,
+  isAdjustDisabled = false,
   onSaveAdjustments,
 }: GoodPrepExpandedRowProps) => {
   return (
@@ -54,6 +56,7 @@ export const GoodPrepExpandedRow = ({
         callplanId={row.id}
         details={row.details || []}
         unmatchedDetails={row.unmatchedBTBDetails || []}
+        isAdjustDisabled={isAdjustDisabled}
         onSaveAdjustments={onSaveAdjustments}
         highlightedSku={globalFilter}
         header={{

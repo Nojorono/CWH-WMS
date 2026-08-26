@@ -1,7 +1,13 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { ColumnDef } from "@tanstack/react-table";
 import dayjs from "dayjs";
-import { FaExchangeAlt, FaFileAlt, FaPrint, FaSyncAlt } from "react-icons/fa";
+import {
+  FaExchangeAlt,
+  FaExclamationTriangle,
+  FaFileAlt,
+  FaPrint,
+  FaSyncAlt,
+} from "react-icons/fa";
 import { ActionMenu } from "../../../OutboundFullTrial/PickingTransaction/components";
 import { usePersistAuthStore } from "../../../../API/store/AuthStore/PersistAuthStore";
 import { useStoreItem } from "../../../../DynamicAPI/stores/Store/MasterStore";
@@ -27,6 +33,7 @@ import {
   useGoodPrepCallplans,
   useGoodPrepEnrichedData,
   useGoodPrepReportRows,
+  useGoodPrepReturSource,
   useGoodPrepSoh,
 } from "./hooks";
 
@@ -37,10 +44,17 @@ function GoodPrepView({
 }: GoodPrepViewProps) {
   const { user } = usePersistAuthStore.getState();
   const organization_id =
-    user?.userDetail?.organizationId || callplans[0]?.organization_id || "";
+    callplans[0]?.organization_id ||
+    user?.userDetail?.organizationId ||
+    "";
   const organization_name =
     user?.userDetail?.organization?.organization_name ||
     callplans[0]?.organization?.organization_name ||
+    "";
+  const organization_code =
+    callplans[0]?.organization?.organization_name ||
+    callplans[0]?.organization?.organization_code ||
+    user?.userDetail?.organization?.organization_name ||
     "";
   const { list: itemList, fetchAll: fetchItems } = useStoreItem();
 
@@ -68,8 +82,6 @@ function GoodPrepView({
   const {
     prepCallplans,
     targetDate,
-    btbDateLabel,
-    salesNikList,
     refetchPrepCallplans,
   } = useGoodPrepCallplans({
     callplans,
@@ -83,11 +95,13 @@ function GoodPrepView({
     showLoading,
     isBTBEmpty,
     isPrintDisabled,
+    btbLastDateLabel,
   } = useGoodPrepBtbSync({
-    salesNikList,
-    targetDate,
     organizationId: organization_id || undefined,
+    organizationCode: organization_code || undefined,
   });
+
+  const effectiveBtbDateLabel = btbLastDateLabel || "latest";
 
   useEffect(() => {
     fetchItems();
@@ -96,6 +110,13 @@ function GoodPrepView({
   const { enrichedData } = useGoodPrepEnrichedData({
     prepCallplans,
     btbData: BTBdata,
+  });
+
+  const { returEnrichedData } = useGoodPrepReturSource({
+    organizationId: organization_id,
+    targetDate,
+    btbData: BTBdata,
+    enabled: Boolean(organization_id && targetDate && !showLoading),
   });
 
   const {
@@ -169,6 +190,7 @@ function GoodPrepView({
   const { permintaanReportRows, returReportRows, tambahanReportRows } =
     useGoodPrepReportRows({
       enrichedData,
+      returEnrichedData,
       itemList: Array.isArray(itemList) ? itemList : [],
     });
 
@@ -244,8 +266,9 @@ function GoodPrepView({
         cell: ({ row }) => {
           const rowData = row.original;
           const isAlreadyIntegrated = rowData.move_order_integration != null;
+          const isActionsLocked = isPrintDisabled;
           const isIntegrateDisabled =
-            globalHasLessStock || isAlreadyIntegrated;
+            isActionsLocked || globalHasLessStock || isAlreadyIntegrated;
           const actionList = [
             {
               label: "Print SPB",
@@ -254,8 +277,8 @@ function GoodPrepView({
                 setSelectedToPrint(rowData);
                 setIsModalOpen(true);
               },
-              disabled: isPrintDisabled,
-              className: isPrintDisabled ? "text-slate-400" : "text-blue-600",
+              disabled: isActionsLocked,
+              className: isActionsLocked ? "text-slate-400" : "text-blue-600",
             },
             {
               label: "Print BKB",
@@ -265,12 +288,19 @@ function GoodPrepView({
                   `Print BKB (${rowData.spb_number || rowData.callplan_number}) — coming soon`,
                 );
               },
-              className: "text-indigo-600",
+              disabled: isActionsLocked,
+              className: isActionsLocked ? "text-slate-400" : "text-indigo-600",
             },
             {
               label: "Integrate Meta",
               icon: FaSyncAlt,
               onClick: () => {
+                if (isActionsLocked) {
+                  showErrorToast(
+                    "Tidak bisa proses — data BTB cabang belum tersedia",
+                  );
+                  return;
+                }
                 if (isAlreadyIntegrated) {
                   showErrorToast(
                     "Dokumen SPB sudah berhasil di-integrasikan sebelumnya",
@@ -298,7 +328,8 @@ function GoodPrepView({
                   `Interface to DMS (${rowData.spb_number || rowData.callplan_number}) — coming soon`,
                 );
               },
-              className: "text-orange-600",
+              disabled: isActionsLocked,
+              className: isActionsLocked ? "text-slate-400" : "text-orange-600",
             },
           ];
 
@@ -350,11 +381,13 @@ function GoodPrepView({
       } as any)
     : null;
 
+  const isBtbUnavailable = isBTBEmpty || Boolean(errBTB);
+
   return (
     <div className="min-h-screen space-y-4 bg-gray-50 p-6 font-sans">
       <LoadingOverlay
         visible={showLoading || isIntegrating}
-        btbDate={btbDateLabel}
+        btbDate={effectiveBtbDateLabel}
         title={isIntegrating ? "Integrate Meta" : "Sinkronisasi Data"}
         subtitle={
           isIntegrating
@@ -368,6 +401,27 @@ function GoodPrepView({
         targetDate={targetDate}
         onBack={onBack}
       />
+
+      {!showLoading && isBtbUnavailable ? (
+        <div className="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-amber-900 shadow-sm">
+          <FaExclamationTriangle
+            className="mt-0.5 shrink-0 text-amber-600"
+            size={18}
+            aria-hidden
+          />
+          <div>
+            <p className="text-sm font-semibold">
+              {errBTB
+                ? "DWH Error: Data BTB gagal ditarik"
+                : `Belum ada data BTB terbaru untuk perhitungan Top Up${organization_name ? ` di cabang ${organization_name}` : ""}`}
+            </p>
+            <p className="mt-0.5 text-xs text-amber-800/90">
+              Table tetap bisa dilihat, tetapi Adjust Qty, Integrate Meta, Summary,
+              dan print form dikunci sampai data BTB cabang tersedia.
+            </p>
+          </div>
+        </div>
+      ) : null}
 
       <GoodPrepSohSection
         sohFetchedAtLabel={sohFetchedAtLabel}
@@ -391,14 +445,12 @@ function GoodPrepView({
             <GoodPrepExpandedRow
               row={row}
               globalFilter={globalFilter}
+              isAdjustDisabled={isPrintDisabled}
               onSaveAdjustments={handleSaveAdjustments}
             />
           )}
           headerActions={
             <GoodPrepHeaderActions
-              errBTB={errBTB}
-              isBTBEmpty={isBTBEmpty}
-              btbDateLabel={btbDateLabel}
               isPrintDisabled={isPrintDisabled}
               returCount={returReportRows.length}
               onExportSummary={handleExportSummary}
