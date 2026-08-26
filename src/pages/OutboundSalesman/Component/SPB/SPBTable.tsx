@@ -59,23 +59,21 @@ export default function SPBTable({
   const handleVoidAction = async (row: Callplan) => {
     const id = row.id;
     if (!id || voidLoadingIds[id]) return;
-
-    console.log("id", id);
     
-    // setVoidLoadingIds((prev) => ({ ...prev, [id]: true }));
-    // try {
-    //   await integrateService.integrateToKecil(id);
-    //   onVoidActionComplete?.();
-    // } catch (err: unknown) {
-    //   const msg =
-    //     (err as { response?: { data?: { message?: string } } })?.response?.data
-    //       ?.message ||
-    //     (err as Error)?.message ||
-    //     "Gagal memproses void action";
-    //   showErrorToast(msg);
-    // } finally {
-    //   setVoidLoadingIds((prev) => ({ ...prev, [id]: false }));
-    // }
+    setVoidLoadingIds((prev) => ({ ...prev, [id]: true }));
+    try {
+      await integrateService.integrateToKecil(id);
+      onVoidActionComplete?.();
+    } catch (err: unknown) {
+      const msg =
+        (err as { response?: { data?: { message?: string } } })?.response?.data
+          ?.message ||
+        (err as Error)?.message ||
+        "Gagal memproses void action";
+      showErrorToast(msg);
+    } finally {
+      setVoidLoadingIds((prev) => ({ ...prev, [id]: false }));
+    }
   };
 
   const visibleMaster = getVisibleColumns(masterColumns);

@@ -60,5 +60,7 @@ export interface Callplan {
     updated_by: string | null;
     spb_date: string;
     spb_number: string;
+    /** null = belum integrate Meta; non-null = sudah pernah di-integrate */
+    move_order_integration?: unknown | null;
     details: CallplanDetail[];
 }

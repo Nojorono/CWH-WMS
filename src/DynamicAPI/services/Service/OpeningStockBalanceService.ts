@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import axios from 'axios';
 import {
     OpeningStockBalance,
     CreateOpeningStockBalance,
@@ -6,6 +7,74 @@ import {
 } from '../../types/OpeningStockBalance.ts';
 import { createCrudService } from '../CreateCrudService';
 import axiosInstance from '../../AxiosInstance';
+
+type ApiErrorBody = {
+    message?: string | string[];
+    error?: string;
+    statusCode?: number;
+};
+
+/** Normalisasi pesan error API (string | string[] | error field) */
+export const parseOpeningStockApiError = (
+    error: unknown,
+    fallback = 'Terjadi kesalahan',
+): string => {
+    if (axios.isAxiosError(error)) {
+        const data = error.response?.data as ApiErrorBody | undefined;
+
+        if (Array.isArray(data?.message) && data.message.length > 0) {
+            return data.message.join('\n');
+        }
+
+        if (typeof data?.message === 'string' && data.message.trim()) {
+            return data.message;
+        }
+
+        if (typeof data?.error === 'string' && data.error.trim()) {
+            return data.error;
+        }
+
+        return error.message || fallback;
+    }
+
+    if (error instanceof Error && error.message) {
+        return error.message;
+    }
+
+    return fallback;
+};
+
+const throwOpeningStockApiError = (error: unknown, fallback: string): never => {
+    const message = parseOpeningStockApiError(error, fallback);
+    console.error(`[OpeningStockBalanceService] ${fallback}:`, message, error);
+    throw new Error(message);
+};
+
+const parseBlobErrorMessage = async (
+    blob: Blob,
+    fallback: string,
+): Promise<string> => {
+    try {
+        const text = await blob.text();
+        const parsed = JSON.parse(text) as ApiErrorBody;
+
+        if (Array.isArray(parsed.message) && parsed.message.length > 0) {
+            return parsed.message.join('\n');
+        }
+
+        if (typeof parsed.message === 'string' && parsed.message.trim()) {
+            return parsed.message;
+        }
+
+        if (typeof parsed.error === 'string' && parsed.error.trim()) {
+            return parsed.error;
+        }
+    } catch {
+        // ignore parse failure
+    }
+
+    return fallback;
+};
 
 /* ==========================================================================
  * SERVICE INTEGRATION (API CALLS)
@@ -17,36 +86,59 @@ export const OpeningStockBalanceService = {
 
     // Download template Excel langsung sebagai Blob dari API
     downloadTemplate: async (): Promise<Blob> => {
-        const response = await axiosInstance.get("/opening-balance-stock/template/excel", {
-            responseType: "blob",
-        });
-        return response.data;
+        try {
+            const response = await axiosInstance.get("/opening-balance-stock/template/excel", {
+                responseType: "blob",
+            });
+            return response.data;
+        } catch (error) {
+            if (axios.isAxiosError(error) && error.response?.data instanceof Blob) {
+                const message = await parseBlobErrorMessage(
+                    error.response.data,
+                    "Gagal mengunduh template",
+                );
+                throw new Error(message);
+            }
+            return throwOpeningStockApiError(error, "Gagal mengunduh template");
+        }
     },
 
     // Upload Excel menggunakan form-data beserta metadata header-nya
     uploadExcel: async (formData: FormData): Promise<OpeningStockBalance> => {
-        const response = await axiosInstance.post("/opening-balance-stock/upload-excel", formData, {
-            headers: {
-                "Content-Type": "multipart/form-data",
-            },
-        });
-        return response.data;
+        try {
+            const response = await axiosInstance.post("/opening-balance-stock/upload-excel", formData, {
+                headers: {
+                    "Content-Type": "multipart/form-data",
+                },
+            });
+            return response.data?.data ?? response.data;
+        } catch (error) {
+            return throwOpeningStockApiError(error, "Gagal mengunggah berkas Excel");
+        }
     },
 
     /** POST /opening-balance-stock/{id}/confirmed */
     confirmOpeningStock: async (id: string): Promise<OpeningStockBalance> => {
-        const response = await axiosInstance.post(
-            `/opening-balance-stock/${id}/confirmed`,
-        );
-        return response.data?.data ?? response.data;
+        try {
+            const response = await axiosInstance.post(
+                `/opening-balance-stock/${id}/confirmed`,
+            );
+            return response.data?.data ?? response.data;
+        } catch (error) {
+            return throwOpeningStockApiError(error, "Gagal mengonfirmasi opening stock");
+        }
     },
 
     /** POST /opening-balance-stock/{id}/cancelled */
     cancelOpeningStock: async (id: string): Promise<OpeningStockBalance> => {
-        const response = await axiosInstance.post(
-            `/opening-balance-stock/${id}/cancelled`,
-        );
-        return response.data?.data ?? response.data;
+        try {
+            const response = await axiosInstance.post(
+                `/opening-balance-stock/${id}/cancelled`,
+            );
+            return response.data?.data ?? response.data;
+        } catch (error) {
+            return throwOpeningStockApiError(error, "Gagal membatalkan opening stock");
+        }
     },
 };
 
@@ -115,16 +207,15 @@ export const useOpeningStockStore = create<OpeningStockState>((set) => ({
             link.click();
             link.remove();
             window.URL.revokeObjectURL(url);
-        } catch (err: any) {
+        } catch (err: unknown) {
             let errorMessage = "Gagal mengunduh template";
-            if (err.response?.data instanceof Blob) {
-                const text = await err.response.data.text();
-                try {
-                    const parsed = JSON.parse(text);
-                    errorMessage = parsed.message || errorMessage;
-                } catch (_) { }
+            if (axios.isAxiosError(err) && err.response?.data instanceof Blob) {
+                errorMessage = await parseBlobErrorMessage(
+                    err.response.data,
+                    errorMessage,
+                );
             } else {
-                errorMessage = err?.response?.data?.message || err?.message || errorMessage;
+                errorMessage = parseOpeningStockApiError(err, errorMessage);
             }
             set({ error: errorMessage });
         } finally {
@@ -149,8 +240,11 @@ export const useOpeningStockStore = create<OpeningStockState>((set) => ({
 
             const result = await OpeningStockBalanceService.uploadExcel(formData);
             return result;
-        } catch (err: any) {
-            const errorMessage = err?.response?.data?.message || err?.message || "Gagal mengunggah berkas Excel";
+        } catch (err: unknown) {
+            const errorMessage = parseOpeningStockApiError(
+                err,
+                "Gagal mengunggah berkas Excel",
+            );
             set({ error: errorMessage });
             return null;
         } finally {
@@ -169,8 +263,11 @@ export const useOpeningStockStore = create<OpeningStockState>((set) => ({
                     meta: response.data.meta,
                 });
             }
-        } catch (err: any) {
-            const errorMessage = err?.response?.data?.message || err?.message || "Gagal mengambil data opening stock";
+        } catch (err: unknown) {
+            const errorMessage = parseOpeningStockApiError(
+                err,
+                "Gagal mengambil data opening stock",
+            );
             set({ error: errorMessage });
         } finally {
             set({ isLoading: false });
