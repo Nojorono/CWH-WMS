@@ -47,6 +47,7 @@ export const GoodPrepSohSection = ({
             <span className="font-semibold text-slate-700">{sohFetchedAtLabel}</span>
           </p>
         </div>
+        
         {isSohLoading && (
           <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-[11px] font-semibold text-slate-600">
             Memuat SOH...

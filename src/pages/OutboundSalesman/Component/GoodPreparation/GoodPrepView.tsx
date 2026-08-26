@@ -243,6 +243,9 @@ function GoodPrepView({
         header: "Action",
         cell: ({ row }) => {
           const rowData = row.original;
+          const isAlreadyIntegrated = rowData.move_order_integration != null;
+          const isIntegrateDisabled =
+            globalHasLessStock || isAlreadyIntegrated;
           const actionList = [
             {
               label: "Print SPB",
@@ -268,6 +271,12 @@ function GoodPrepView({
               label: "Integrate Meta",
               icon: FaSyncAlt,
               onClick: () => {
+                if (isAlreadyIntegrated) {
+                  showErrorToast(
+                    "Dokumen SPB sudah berhasil di-integrasikan sebelumnya",
+                  );
+                  return;
+                }
                 if (globalHasLessStock) {
                   showErrorToast(
                     "Integrate Meta dikunci — total Qty Final cabang melebihi SOH",
@@ -276,8 +285,8 @@ function GoodPrepView({
                 }
                 openIntegrateModal(rowData);
               },
-              disabled: globalHasLessStock,
-              className: globalHasLessStock
+              disabled: isIntegrateDisabled,
+              className: isIntegrateDisabled
                 ? "text-slate-400"
                 : "text-emerald-600",
             },
