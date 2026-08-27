@@ -42,7 +42,7 @@ export const GoodPrepHeaderActions = ({
         <button
           type="button"
           onClick={onOpenPermintaan}
-          disabled={isPrintDisabled}
+          // disabled={isPrintDisabled}
           title={
             isPrintDisabled
               ? "Dikunci — data BTB cabang belum tersedia"
@@ -78,7 +78,7 @@ export const GoodPrepHeaderActions = ({
         <button
           type="button"
           onClick={onOpenTambahan}
-          disabled={isPrintDisabled}
+          // disabled={isPrintDisabled}
           title={
             isPrintDisabled
               ? "Dikunci — data BTB cabang belum tersedia"
