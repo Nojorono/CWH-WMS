@@ -2,9 +2,6 @@ import React from "react";
 import { FaDownload, FaFileAlt } from "react-icons/fa";
 
 type GoodPrepHeaderActionsProps = {
-  errBTB: string | null;
-  isBTBEmpty: boolean;
-  btbDateLabel: string;
   isPrintDisabled: boolean;
   returCount: number;
   onExportSummary: () => void;
@@ -14,9 +11,6 @@ type GoodPrepHeaderActionsProps = {
 };
 
 export const GoodPrepHeaderActions = ({
-  errBTB,
-  isBTBEmpty,
-  btbDateLabel,
   isPrintDisabled,
   returCount,
   onExportSummary,
@@ -26,22 +20,16 @@ export const GoodPrepHeaderActions = ({
 }: GoodPrepHeaderActionsProps) => {
   return (
     <div className="flex w-full min-w-full flex-1 items-center gap-4">
-      <div>
-        {(errBTB || isBTBEmpty) && (
-          <span className="flex w-fit items-center whitespace-nowrap rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-bold text-red-600 shadow-sm">
-            <span className="mr-2">⚠️</span>
-            {errBTB
-              ? "DWH Error: Data BTB gagal ditarik"
-              : `Data BTB tgl ${btbDateLabel} dari DWH masih belum tersedia!`}
-          </span>
-        )}
-      </div>
-
-      <div className="ml-auto flex items-center gap-2">
+      <div className="ml-auto flex flex-wrap items-center gap-2">
         <button
           type="button"
           onClick={onExportSummary}
           disabled={isPrintDisabled}
+          title={
+            isPrintDisabled
+              ? "Dikunci — data BTB cabang belum tersedia"
+              : undefined
+          }
           className={`flex items-center gap-2 rounded-lg px-4 py-2 text-xs font-semibold shadow-sm transition-colors ${
             isPrintDisabled
               ? "cursor-not-allowed bg-slate-200 text-slate-400"
@@ -55,6 +43,11 @@ export const GoodPrepHeaderActions = ({
           type="button"
           onClick={onOpenPermintaan}
           disabled={isPrintDisabled}
+          title={
+            isPrintDisabled
+              ? "Dikunci — data BTB cabang belum tersedia"
+              : undefined
+          }
           className={`flex items-center gap-2 rounded-lg px-4 py-2 text-xs font-semibold shadow-sm transition-colors ${
             isPrintDisabled
               ? "cursor-not-allowed bg-slate-200 text-slate-400"
@@ -68,6 +61,11 @@ export const GoodPrepHeaderActions = ({
           type="button"
           onClick={onOpenRetur}
           disabled={isPrintDisabled || returCount === 0}
+          title={
+            isPrintDisabled
+              ? "Dikunci — data BTB cabang belum tersedia"
+              : undefined
+          }
           className={`flex items-center gap-2 rounded-lg px-4 py-2 text-xs font-semibold shadow-sm transition-colors ${
             isPrintDisabled || returCount === 0
               ? "cursor-not-allowed bg-slate-200 text-slate-400"
@@ -81,6 +79,11 @@ export const GoodPrepHeaderActions = ({
           type="button"
           onClick={onOpenTambahan}
           disabled={isPrintDisabled}
+          title={
+            isPrintDisabled
+              ? "Dikunci — data BTB cabang belum tersedia"
+              : undefined
+          }
           className={`flex items-center gap-2 rounded-lg px-4 py-2 text-xs font-semibold shadow-sm transition-colors ${
             isPrintDisabled
               ? "cursor-not-allowed bg-slate-200 text-slate-400"

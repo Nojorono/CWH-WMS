@@ -120,6 +120,13 @@ export const SPB_DETAIL_COLUMNS: DynamicColumn<CallplanDetail>[] = [
     align: "right",
     cellClassName: "font-bold text-gray-800",
   },
+  {
+    id: "item_qty_void",
+    header: "Qty Void",
+    visible: false,
+    align: "right",
+    cellClassName: "font-bold text-red-600",
+  },
 ];
 
 /**

@@ -27,6 +27,7 @@ export interface CallplanDetail {
     item_code: string;
     inventory_item_id: string;
     item_qty_suggestion: string;
+    item_qty_void?: string | null;
     item_qty_revision: string | null;
     item_qty_submitted: string;
     item_qty_final: string | null;

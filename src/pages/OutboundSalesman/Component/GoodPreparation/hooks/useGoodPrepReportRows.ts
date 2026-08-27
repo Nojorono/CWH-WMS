@@ -13,6 +13,8 @@ import { EnrichedCallplan } from "../types";
 
 type UseGoodPrepReportRowsParams = {
   enrichedData: EnrichedCallplan[];
+  /** Sumber Form Retur (Get All SPB). Fallback ke enrichedData jika kosong. */
+  returEnrichedData?: EnrichedCallplan[];
   itemList: any[] | undefined;
 };
 
@@ -49,8 +51,11 @@ const withUomConversion = (
 
 export const useGoodPrepReportRows = ({
   enrichedData,
+  returEnrichedData,
   itemList,
 }: UseGoodPrepReportRowsParams) => {
+  // Form Retur pakai Get All SPB bila disediakan; selain itu fallback FINAL
+  const returSource = returEnrichedData ?? enrichedData;
 
   const permintaanReportRows = useMemo((): PermintaanBarangRow[] => {
     const summary: Record<
@@ -117,7 +122,11 @@ export const useGoodPrepReportRows = ({
       }
     > = {};
 
-    enrichedData.forEach((doc) => {
+    // Form Retur: Get All SPB (FINAL|VOID) + prioritas logic
+    returSource.forEach((doc) => {
+      const docStatus = String(doc.status || "").toUpperCase();
+      const isVoidDoc = docStatus === "VOID";
+
       doc.details.forEach((d) => {
         const submitted = Number(d.item_qty_submitted) || 0;
         const finalQty =
@@ -132,19 +141,33 @@ export const useGoodPrepReportRows = ({
           Boolean(revisionRaw) && !Number.isNaN(revision) && revision < 0;
 
         // Prioritas Form Retur:
-        // 1) submitted - BTB < 0 → qty Retur = |submitted - BTB| (alur bisnis utama)
+        // 0) VOID — item void harus diretur
+        //    |void| WAJIB diambil dari item_qty_void pada dokumen status VOID
+        //    ada BTB  → Retur = |void| + BTB
+        //    tanpa BTB → Retur = |void|
+        // 1) submitted - BTB < 0 → Retur = |submitted - BTB| (FINAL, bisnis utama)
         // 2) revision < 0 → HANYA jika Final - BTB juga minus
-        //    (jika Final - BTB tidak minus, revision digugurkan = kemungkinan testing)
         let qtyDelta = 0;
         let finalDo = submitted;
+        let sisaBarang = btb;
 
-        if (submittedMinusBtb < 0) {
+        if (isVoidDoc) {
+          const voidQtyRaw = Number((d as any).item_qty_void);
+          const voidQty = Number.isNaN(voidQtyRaw) ? 0 : Math.abs(voidQtyRaw);
+          if (voidQty <= 0 && btb <= 0) return;
+          qtyDelta = btb > 0 ? voidQty + btb : voidQty;
+          finalDo = voidQty;
+          sisaBarang = btb > 0 ? btb : 0;
+          if (qtyDelta <= 0) return;
+        } else if (submittedMinusBtb < 0) {
           qtyDelta = Math.abs(submittedMinusBtb);
           finalDo = submitted;
+          sisaBarang = btb;
         } else if (hasNegativeRevision) {
           if (finalMinusBtb >= 0) return;
           qtyDelta = Math.abs(finalMinusBtb);
           finalDo = finalQty;
+          sisaBarang = btb;
         } else {
           return;
         }
@@ -156,7 +179,7 @@ export const useGoodPrepReportRows = ({
         const itemName = master?.description || d.itemName || sku;
 
         if (summary[key]) {
-          summary[key].sisaBarang += btb;
+          summary[key].sisaBarang += sisaBarang;
           summary[key].finalDo += finalDo;
           summary[key].qtyDelta += qtyDelta;
         } else {
@@ -164,7 +187,7 @@ export const useGoodPrepReportRows = ({
             code: sku,
             name: itemName,
             inventoryItemId: String(invId),
-            sisaBarang: btb,
+            sisaBarang,
             finalDo,
             qtyDelta,
           };
@@ -176,7 +199,7 @@ export const useGoodPrepReportRows = ({
       .filter((row) => Number(row.qtyDelta) > 0)
       .map((row) => withUomConversion(row, itemList))
       .sort((a, b) => a.name.localeCompare(b.name));
-  }, [enrichedData, itemList]);
+  }, [returSource, itemList]);
 
   const tambahanReportRows = useMemo((): TambahanBarangRow[] => {
     const summary: Record<

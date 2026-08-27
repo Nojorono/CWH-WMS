@@ -77,7 +77,13 @@ export default function SPBTable({
   };
 
   const visibleMaster = getVisibleColumns(masterColumns);
-  const visibleDetail = getVisibleColumns(detailColumns);
+  const visibleDetail = getVisibleColumns(
+    detailColumns.map((col) =>
+      col.id === "item_qty_void"
+        ? { ...col, visible: statusFilter === "VOID" }
+        : col,
+    ),
+  );
   const colSpan = visibleMaster.length + 1; // + expander
 
   const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
@@ -86,7 +92,9 @@ export default function SPBTable({
   const endIndex = startIndex + pageSize;
 
   const getDetailTotal = (row: Callplan) => {
-    const qtyCol = visibleDetail.find((c) => c.id === "item_qty_suggestion");
+    const totalColumnId =
+      statusFilter === "VOID" ? "item_qty_void" : "item_qty_suggestion";
+    const qtyCol = visibleDetail.find((c) => c.id === totalColumnId);
     if (!qtyCol) return null;
     return (row.details || []).reduce((acc, curr) => {
       const value = resolveCellValue(qtyCol, curr);
@@ -264,7 +272,11 @@ export default function SPBTable({
                                   ))}
                                 </tbody>
                                 {visibleDetail.some(
-                                  (c) => c.id === "item_qty_suggestion",
+                                  (c) =>
+                                    c.id ===
+                                    (statusFilter === "VOID"
+                                      ? "item_qty_void"
+                                      : "item_qty_suggestion"),
                                 ) && (
                                   <tfoot className="sticky bottom-0 z-10 border-t border-gray-200 bg-gray-50">
                                     <tr>

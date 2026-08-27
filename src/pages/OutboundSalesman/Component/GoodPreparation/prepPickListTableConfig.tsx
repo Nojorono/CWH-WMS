@@ -97,13 +97,13 @@ export const PREP_PICK_LIST_COLUMNS: PrepPickListColumn[] = [
     getCellClassName: (row) => qtyCellClass(row),
     getValue: (row) => row.item_qty_suggestion,
   },
-  {
-    id: "qty_submitted",
-    header: "Qty Submitted",
-    align: "center",
-    getCellClassName: (row) => qtyCellClass(row),
-    getValue: (row) => row.item_qty_submitted,
-  },
+  // {
+  //   id: "qty_submitted",
+  //   header: "Qty Submitted",
+  //   align: "center",
+  //   getCellClassName: (row) => qtyCellClass(row),
+  //   getValue: (row) => row.item_qty_submitted,
+  // },
   {
     id: "qty_final",
     header: "Qty Final",

@@ -4,6 +4,7 @@ import { Callplan } from "../types/CallplanTypes";
 export interface GetCallplansParams {
   dateStart: string;
   organizationId: string;
+  /** Jika diisi, filter status. Jika di-omit → Get All SPB tanpa filter status. */
   status?: string;
 }
 
@@ -29,16 +30,26 @@ const normalizeCallplans = (payload: unknown): Callplan[] => {
 };
 
 export const callplanService = {
+  /**
+   * GET /do-suggestion/callplan/date-start/:date/organization/:orgId
+   * - dengan `status` → filter status
+   * - tanpa `status` → semua SPB (FINAL, SUBMITTED, VOID, dll.)
+   */
   getCallplans: async ({
     dateStart,
     organizationId,
-    status = "SUBMITTED",
+    status,
   }: GetCallplansParams): Promise<Callplan[]> => {
     const response = await axiosInstance.get(
       `/do-suggestion/callplan/date-start/${dateStart}/organization/${organizationId}`,
-      { params: { status } },
+      status ? { params: { status } } : undefined,
     );
 
     return normalizeCallplans(response.data);
   },
+
+  /** Alias: Get All SPB by date + org (tanpa filter status) */
+  getAllCallplansByDateOrg: async (
+    params: Omit<GetCallplansParams, "status">,
+  ): Promise<Callplan[]> => callplanService.getCallplans(params),
 };
