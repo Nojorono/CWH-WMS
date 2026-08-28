@@ -33,8 +33,6 @@ const InventoryVisibility: React.FC = () => {
     fetchData();
   }, [fetchUsingParam]);
 
-  console.log("LIST DATA", list);
-
   // Ekstraksi array data dari list API
   const itemsData = useMemo<InventorySelisihItem[]>(() => {
     return Array.isArray(list) ? list : [];

@@ -122,17 +122,15 @@ export const useGoodPrepReportRows = ({
       }
     > = {};
 
-    // Form Retur: Get All SPB (FINAL|VOID) + prioritas logic
+    // Form Retur: Get All SPB (FINAL|VOID)
     returSource.forEach((doc) => {
       const docStatus = String(doc.status || "").toUpperCase();
       const isVoidDoc = docStatus === "VOID";
 
       doc.details.forEach((d) => {
-        const submitted = Number(d.item_qty_submitted) || 0;
         const finalQty =
           Number(d.item_qty_final ?? d.item_qty_submitted) || 0;
         const btb = Number(d.qty_btb) || 0;
-        const submittedMinusBtb = submitted - btb;
         const finalMinusBtb = finalQty - btb;
 
         const revisionRaw = String(d.item_qty_revision ?? "").trim();
@@ -140,37 +138,38 @@ export const useGoodPrepReportRows = ({
         const hasNegativeRevision =
           Boolean(revisionRaw) && !Number.isNaN(revision) && revision < 0;
 
+        const voidQtyRaw = Number(
+          (d as { item_qty_void?: string | null }).item_qty_void,
+        );
+        const voidQty = Number.isNaN(voidQtyRaw) ? 0 : Math.abs(voidQtyRaw);
+
         // Prioritas Form Retur:
-        // 0) VOID — item void harus diretur
-        //    |void| WAJIB diambil dari item_qty_void pada dokumen status VOID
-        //    ada BTB  → Retur = |void| + BTB
-        //    tanpa BTB → Retur = |void|
-        // 1) submitted - BTB < 0 → Retur = |submitted - BTB| (FINAL, bisnis utama)
-        // 2) revision < 0 → HANYA jika Final - BTB juga minus
+        // 0) VOID → hanya |item_qty_void|; BTB diabaikan
+        // 1) FINAL: final − BTB < 0 → Retur = |final − BTB|, Final DO = final
+        // 2) FINAL: revision < 0 → Retur = |revisi|, Final DO = |revisi|
         let qtyDelta = 0;
-        let finalDo = submitted;
-        let sisaBarang = btb;
+        let finalDo = 0;
+        let sisaBarang = 0;
 
         if (isVoidDoc) {
-          const voidQtyRaw = Number((d as any).item_qty_void);
-          const voidQty = Number.isNaN(voidQtyRaw) ? 0 : Math.abs(voidQtyRaw);
-          if (voidQty <= 0 && btb <= 0) return;
-          qtyDelta = btb > 0 ? voidQty + btb : voidQty;
+          if (voidQty <= 0) return;
+          sisaBarang = 0;
           finalDo = voidQty;
-          sisaBarang = btb > 0 ? btb : 0;
-          if (qtyDelta <= 0) return;
-        } else if (submittedMinusBtb < 0) {
-          qtyDelta = Math.abs(submittedMinusBtb);
-          finalDo = submitted;
-          sisaBarang = btb;
-        } else if (hasNegativeRevision) {
-          if (finalMinusBtb >= 0) return;
+          qtyDelta = voidQty;
+        } else if (finalMinusBtb < 0) {
           qtyDelta = Math.abs(finalMinusBtb);
           finalDo = finalQty;
           sisaBarang = btb;
+        } else if (hasNegativeRevision) {
+          qtyDelta = Math.abs(revision);
+          finalDo = Math.abs(revision);
+          sisaBarang = 0;
+          if (qtyDelta <= 0) return;
         } else {
           return;
         }
+
+        if (qtyDelta <= 0) return;
 
         const sku = d.item_code || "";
         const invId = d.inventory_item_id || "";

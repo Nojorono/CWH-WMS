@@ -5,7 +5,7 @@ export default function InventoryOnHand() {
   return (
     <div>
       <PageBreadcrumb breadcrumbs={[{ title: "Inventory On Hand" }]} />
-      <MainView />
+      {/* <MainView /> */}
     </div>
   );
 }
