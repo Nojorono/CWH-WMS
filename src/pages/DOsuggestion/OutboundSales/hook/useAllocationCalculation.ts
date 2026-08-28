@@ -20,10 +20,42 @@ const getItemKey = (item: any): string => {
     return resolveSku(item) || "";
 };
 
+export type AllocationCalculationOptions = {
+    /** Hanya SPB yang lolos filter ini yang ikut alokasi SOH proporsional */
+    shouldAllocate?: (salesman: any) => boolean;
+};
+
+const passthroughDetail = (detail: any, sohMap: Record<string, number>) => {
+    const sku = resolveSku(detail);
+    const key = getItemKey(detail);
+    const submitted = safeParse(detail.item_qty_submitted);
+    const qtyBtb = safeParse(detail.qty_btb || 0);
+
+    return {
+        ...detail,
+        resolved_sku: sku,
+        soh: sohMap[key] || 0,
+        contribution_percentage:
+            detail.contribution_percentage != null &&
+            detail.contribution_percentage !== ""
+                ? String(detail.contribution_percentage)
+                : "100.00",
+        allocation_status: "ORIGINAL",
+        item_qty_final: submitted,
+        qty_btb: qtyBtb,
+        prepared_qty: Math.max(0, submitted - qtyBtb),
+    };
+};
+
+const defaultShouldAllocate = () => true;
+
 export const useAllocationCalculation = (
     data: GroupedSPBData[],
     stockList: any[],
+    options?: AllocationCalculationOptions,
 ) => {
+    const shouldAllocate = options?.shouldAllocate ?? defaultShouldAllocate;
+
     return useMemo(() => {
         if (!Array.isArray(stockList) || !data) {
             return {
@@ -72,6 +104,7 @@ export const useAllocationCalculation = (
          * ======================================
          */
         const totalSuggestedPerSku = flatSalesmanList
+            .filter(shouldAllocate)
             .flatMap((salesman) => salesman.details)
             .reduce(
                 (acc, detail) => {
@@ -124,6 +157,10 @@ export const useAllocationCalculation = (
             details: salesman.details
                 .filter((detail) => resolveSku(detail))
                 .map((detail) => {
+                    if (!shouldAllocate(salesman)) {
+                        return passthroughDetail(detail, sohMap);
+                    }
+
                     const sku = resolveSku(detail);
                     const key = getItemKey(detail); // Gunakan key unik untuk matching
 
@@ -168,5 +205,5 @@ export const useAllocationCalculation = (
             calculatedData,
             skuSummary,
         };
-    }, [data, stockList]);
+    }, [data, stockList, shouldAllocate]);
 };

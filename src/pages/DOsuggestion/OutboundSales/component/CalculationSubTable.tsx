@@ -50,6 +50,10 @@ export const STATUS_CONFIG: Record<string, { label: string; class: string }> = {
     label: "Empty",
     class: "text-red-600 bg-red-50 border-red-200",
   },
+  ORIGINAL: {
+    label: "As Submitted",
+    class: "text-slate-600 bg-slate-50 border-slate-200",
+  },
 };
 
 export const CalculationSubTable = ({
