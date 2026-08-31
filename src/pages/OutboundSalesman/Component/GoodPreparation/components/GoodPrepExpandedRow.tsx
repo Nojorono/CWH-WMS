@@ -1,7 +1,7 @@
 import React from "react";
 import dayjs from "dayjs";
 import BTBTotalBreakdown from "../../../../DOsuggestion/OutboundSales/component/BTBTotalBreakdown";
-import { EnrichedCallplan } from "../types";
+import { EnrichedCallplan, isSpbIntegratedToMeta } from "../types";
 import { PrepDetailTable } from "../PrepDetailTable";
 import { AdjustQtyItem } from "../AdjustQtySPB";
 
@@ -24,6 +24,14 @@ export const GoodPrepExpandedRow = ({
   isAdjustDisabled = false,
   onSaveAdjustments,
 }: GoodPrepExpandedRowProps) => {
+  const isIntegrated = isSpbIntegratedToMeta(row);
+  const adjustDisabled = isAdjustDisabled || isIntegrated;
+  const adjustDisabledTitle = isIntegrated
+    ? "Tidak bisa Adjust — SPB sudah di-integrate ke Meta"
+    : isAdjustDisabled
+      ? "Tidak bisa Adjust — data BTB cabang belum tersedia"
+      : undefined;
+
   return (
     <div className="flex flex-col gap-4 border-b border-slate-200 bg-slate-50/50 p-2">
       {(row.btbNumber || row.btbDate) && (
@@ -56,7 +64,8 @@ export const GoodPrepExpandedRow = ({
         callplanId={row.id}
         details={row.details || []}
         unmatchedDetails={row.unmatchedBTBDetails || []}
-        isAdjustDisabled={isAdjustDisabled}
+        isAdjustDisabled={adjustDisabled}
+        adjustDisabledTitle={adjustDisabledTitle}
         onSaveAdjustments={onSaveAdjustments}
         highlightedSku={globalFilter}
         header={{
