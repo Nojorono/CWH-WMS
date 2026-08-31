@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import dayjs from "dayjs";
 import { FaArrowLeft, FaArrowRight, FaCalculator } from "react-icons/fa";
 import { usePersistAuthStore } from "../../../../API/store/AuthStore/PersistAuthStore";
@@ -14,6 +14,7 @@ import { useAllocationCalculation } from "../../../DOsuggestion/OutboundSales/ho
 import { useGetStockOnHand } from "../../../DOsuggestion/OutboundSales/hook/useGetStockOnHand";
 import { Callplan } from "../../types/CallplanTypes";
 import { CalculationViewProps } from "../../types/flow";
+import { shouldApplyAllocationCalculation } from "./calculationMoType";
 
 function StockCalculationView({
   callplans,
@@ -64,9 +65,16 @@ function StockCalculationView({
     ];
   }, [callplans]);
 
+  const shouldAllocateForCalc = useCallback(
+    (salesman: { mo_type?: string | null }) =>
+      shouldApplyAllocationCalculation(salesman.mo_type),
+    [],
+  );
+
   const { calculatedData, skuSummary } = useAllocationCalculation(
     groupedForCalc,
     Array.isArray(stockList) ? stockList : [],
+    { shouldAllocate: shouldAllocateForCalc },
   );
 
   const runCalculate = () => {
@@ -124,24 +132,31 @@ function StockCalculationView({
                 spb_date: salesman.spb_date,
                 spb_number: salesman.spb_number,
                 lines: (salesman.details || []).map(
-                  (detail: any, index: number) => ({
-                    // item_qty_submitted disamakan dengan hasil final kalkulasi
-                    // agar data yang tersimpan konsisten dengan output allocation.
-                    id: detail.id,
-                    item_code: detail.item_code,
-                    inventory_item_id: detail.inventory_item_id,
-                    item_qty_suggestion: Number(
-                      detail.item_qty_suggestion || 0,
-                    ),
-                    item_qty_revision: detail.item_qty_revision,
-                    item_qty_submitted: Number(detail.item_qty_final || 0),
-                    item_qty_final: Number(detail.item_qty_final || 0),
-                    contribution_percentage: Number(
-                      detail.contribution_percentage || 0,
-                    ),
-                    item_uom: detail.item_uom,
-                    line_number: index + 1,
-                  }),
+                  (detail: any, index: number) => {
+                    const useAllocation = shouldApplyAllocationCalculation(
+                      salesman.mo_type,
+                    );
+                    const finalQty = useAllocation
+                      ? Number(detail.item_qty_final || 0)
+                      : Number(detail.item_qty_submitted || 0);
+
+                    return {
+                      id: detail.id,
+                      item_code: detail.item_code,
+                      inventory_item_id: detail.inventory_item_id,
+                      item_qty_suggestion: Number(
+                        detail.item_qty_suggestion || 0,
+                      ),
+                      item_qty_revision: detail.item_qty_revision,
+                      item_qty_submitted: finalQty,
+                      item_qty_final: finalQty,
+                      contribution_percentage: Number(
+                        detail.contribution_percentage || 0,
+                      ),
+                      item_uom: detail.item_uom,
+                      line_number: index + 1,
+                    };
+                  },
                 ),
               })),
             };
@@ -150,21 +165,27 @@ function StockCalculationView({
             showSuccessToast(
               `Berhasil mengirim batch ${batchCount} dengan ${batch.length} SPB`,
             );
-
-            console.log("bulkPayload", bulkPayload);
           }
 
           // Map hasil kalkulasi → Callplan (status FINAL + item_qty_final)
           const prepCallplans: Callplan[] = rows.map((row) => ({
             ...row,
             status: "FINAL",
-            details: (row.details || []).map((d: any) => ({
-              ...d,
-              item_qty_final: String(d.item_qty_final ?? 0),
-              contribution_percentage: String(
-                d.contribution_percentage ?? "0",
-              ),
-            })),
+            details: (row.details || []).map((d: any) => {
+              const useAllocation = shouldApplyAllocationCalculation(row.mo_type);
+              const finalQty = useAllocation
+                ? String(d.item_qty_final ?? 0)
+                : String(d.item_qty_submitted ?? 0);
+
+              return {
+                ...d,
+                item_qty_final: finalQty,
+                item_qty_submitted: finalQty,
+                contribution_percentage: String(
+                  d.contribution_percentage ?? "0",
+                ),
+              };
+            }),
           }));
 
           onProceedToPreparation(prepCallplans);
@@ -189,13 +210,8 @@ function StockCalculationView({
     <div className="min-h-screen bg-[#F8FAFC] p-6 font-sans">
       <div className="mb-4">
         <h1 className="text-xl font-bold text-gray-800">
-          Stock on Hand & Calculation
+          Stock on Hand & Calculation SPB
         </h1>
-        <div className="mt-1 flex gap-2 text-sm text-gray-500">
-          <span>Home</span>
-          <span>&gt;</span>
-          <span>Stock on Hand & Calculation</span>
-        </div>
         <p className="mt-2 text-xs text-slate-500">
           Memproses <strong>{callplans.length}</strong> SPB berstatus SUBMITTED
           · Callplan Date: <strong>{targetDate}</strong>
@@ -204,7 +220,6 @@ function StockCalculationView({
 
       <div className="mb-6 flex items-center justify-between rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
         <h2 className="text-lg font-bold text-gray-800">
-          Stock on Hand & Calculation
         </h2>
         <button
           type="button"
@@ -294,6 +309,7 @@ function StockCalculationView({
             setGlobalFilter={setGlobalFilter}
             columns={[
               { accessorKey: "spb_number", header: "SPB Number" },
+              { accessorKey: "mo_type", header: "MO Type" },
               { accessorKey: "sales_name", header: "Nama Sales" },
               { accessorKey: "sales_nik", header: "NIK Sales" },
               {

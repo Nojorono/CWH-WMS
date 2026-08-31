@@ -53,10 +53,30 @@ export const aggregateBtbDetailsBySku = (
 };
 
 /**
- * Satu BTB per sales_nik: ambil yang btb_date terbaru
- * (tie-break: createdAt terbaru), lalu aggregate detail per SKU.
+ * Satu BTB per sales_nik:
+ * prioritas status APPLIED > DRAFT > lainnya,
+ * lalu btb_date terbaru (tie-break: createdAt).
  */
 export const normalizeBtbForGoodPrep = (rows: BTB[]): BTB[] => {
+  const getStatusRank = (status?: string) => {
+    const s = String(status || "").toUpperCase();
+    if (s === "APPLIED") return 2;
+    if (s === "DRAFT") return 1;
+    return 0;
+  };
+
+  const shouldReplace = (current: BTB, next: BTB) => {
+    const rankDiff = getStatusRank(next.status) - getStatusRank(current.status);
+    if (rankDiff !== 0) return rankDiff > 0;
+
+    const currentDate = dayjs(current.btb_date);
+    const nextDate = dayjs(next.btb_date);
+    if (nextDate.isAfter(currentDate, "day")) return true;
+    if (nextDate.isBefore(currentDate, "day")) return false;
+
+    return dayjs(next.createdAt).isAfter(dayjs(current.createdAt));
+  };
+
   const byNik = new Map<string, BTB>();
 
   rows.forEach((row) => {
@@ -64,23 +84,7 @@ export const normalizeBtbForGoodPrep = (rows: BTB[]): BTB[] => {
     if (!nik) return;
 
     const current = byNik.get(nik);
-    if (!current) {
-      byNik.set(nik, row);
-      return;
-    }
-
-    const currentDate = dayjs(current.btb_date);
-    const nextDate = dayjs(row.btb_date);
-
-    if (nextDate.isAfter(currentDate, "day")) {
-      byNik.set(nik, row);
-      return;
-    }
-
-    if (
-      nextDate.isSame(currentDate, "day") &&
-      dayjs(row.createdAt).isAfter(dayjs(current.createdAt))
-    ) {
+    if (!current || shouldReplace(current, row)) {
       byNik.set(nik, row);
     }
   });

@@ -19,6 +19,8 @@ export interface BTB {
   btb_date: string;
   organization_code: string;
   organization_id?: string;
+  call_plan_number?: string;
+  call_plan_start_date?: string;
   sales_nik: string;
   sales_name: string;
   sales_spv_nik: string;

@@ -20,16 +20,31 @@ export const useGoodPrepEnrichedData = ({
         (b) => b.sales_nik?.trim() === doc.sales_nik?.trim(),
       );
       const btbDetails = btbForSalesman?.details || [];
+
+      const qtyBySku = new Map<string, number>();
+      const qtyByInvId = new Map<string, number>();
+      btbDetails.forEach((b: BTBDetail) => {
+        const sku = String(b.item_code || "").trim().toUpperCase();
+        const invId = String(b.inventory_item_id || "").trim();
+        const qty = Number(b.btb_qty) || 0;
+        if (sku) qtyBySku.set(sku, (qtyBySku.get(sku) || 0) + qty);
+        if (invId) qtyByInvId.set(invId, (qtyByInvId.get(invId) || 0) + qty);
+      });
+
       const doSkuSet = new Set(
-        (doc.details || []).map((d: CallplanDetail) => d.item_code?.trim()),
+        (doc.details || []).map((d: CallplanDetail) =>
+          String(d.item_code || "").trim().toUpperCase(),
+        ),
       );
 
       const matchedDetails: EnrichedDetail[] = (doc.details || []).map(
         (detail: CallplanDetail) => {
-          const sku = detail.item_code?.trim();
-          const qtyBtb = btbDetails
-            .filter((b: BTBDetail) => b.item_code?.trim() === sku)
-            .reduce((sum, b) => sum + (Number(b.btb_qty) || 0), 0);
+          const sku = String(detail.item_code || "").trim().toUpperCase();
+          const invId = String(detail.inventory_item_id || "").trim();
+          let qtyBtb = qtyBySku.get(sku) || 0;
+          if (qtyBtb <= 0 && invId) {
+            qtyBtb = qtyByInvId.get(invId) || 0;
+          }
           return {
             ...detail,
             qty_btb: qtyBtb,
@@ -37,9 +52,15 @@ export const useGoodPrepEnrichedData = ({
         },
       );
 
-      const unmatchedBTBDetails = btbDetails.filter(
-        (b: BTBDetail) => !doSkuSet.has(b.item_code?.trim()),
-      );
+      const unmatchedBTBDetails = btbDetails.filter((b: BTBDetail) => {
+        const sku = String(b.item_code || "").trim().toUpperCase();
+        const invId = String(b.inventory_item_id || "").trim();
+        const inSpbBySku = doSkuSet.has(sku);
+        const inSpbByInv = (doc.details || []).some(
+          (d) => String(d.inventory_item_id || "").trim() === invId && invId,
+        );
+        return !inSpbBySku && !inSpbByInv;
+      });
 
       return {
         ...doc,
