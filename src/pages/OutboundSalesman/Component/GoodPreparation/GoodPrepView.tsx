@@ -18,7 +18,7 @@ import { PrintPreviewModal } from "../../../DOsuggestion/OutboundSales/component
 import { useRealTimeSOH } from "../../hook/useRealTimeSOH";
 import { GoodPrepViewProps } from "../../types/flow";
 import { LoadingOverlay } from "./LoadingOverlay";
-import { EnrichedCallplan } from "./types";
+import { EnrichedCallplan, isSpbIntegratedToMeta } from "./types";
 import {
   GoodPrepExpandedRow,
   GoodPrepHeaderActions,
@@ -265,7 +265,7 @@ function GoodPrepView({
         header: "Action",
         cell: ({ row }) => {
           const rowData = row.original;
-          const isAlreadyIntegrated = rowData.move_order_integration != null;
+          const isAlreadyIntegrated = isSpbIntegratedToMeta(rowData);
           const isActionsLocked = isPrintDisabled;
           const isIntegrateDisabled =
             isActionsLocked || globalHasLessStock || isAlreadyIntegrated;

@@ -6,7 +6,7 @@ import { DOSuggestionPayload } from "../../../../../API/types/DOsuggestion";
 import { integrateService } from "../../../Services/IntegrateService";
 import { Callplan } from "../../../types/CallplanTypes";
 import { AdjustQtyItem } from "../AdjustQtySPB";
-import { EnrichedCallplan } from "../types";
+import { EnrichedCallplan, isSpbIntegratedToMeta } from "../types";
 
 type UseGoodPrepActionsParams = {
   prepCallplans: Callplan[];
@@ -37,6 +37,11 @@ export const useGoodPrepActions = ({
     const callplan = prepCallplans.find((cp) => cp.id === callplanId);
     if (!callplan) {
       showErrorToast("Callplan tidak ditemukan");
+      return false;
+    }
+
+    if (isSpbIntegratedToMeta(callplan)) {
+      showErrorToast("Tidak bisa Adjust — SPB sudah di-integrate ke Meta");
       return false;
     }
 
@@ -192,6 +197,10 @@ export const useGoodPrepActions = ({
 
   const goToAdjustFromIntegrate = () => {
     if (!integrateTriggerSpb) return;
+    if (isSpbIntegratedToMeta(integrateTriggerSpb)) {
+      showErrorToast("Tidak bisa Adjust — SPB sudah di-integrate ke Meta");
+      return;
+    }
     const target =
       enrichedData.find((cp) => cp.id === integrateTriggerSpb.id) ||
       integrateTriggerSpb;

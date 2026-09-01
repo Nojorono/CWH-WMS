@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef, useCallback } from "react";
+import { useState, useMemo, useRef, useCallback, useEffect } from "react";
 import { ColumnDef } from "@tanstack/react-table";
 import { useMoveOrderIntegration } from "./hook/useMoveOrderIntegration";
 import { MoveOrderIntegrationHeader } from "../../../API/types/DOsuggestionIntegration";
@@ -12,6 +12,7 @@ import {
   FaSyncAlt,
 } from "react-icons/fa";
 import { formatDateTimeIndo } from "../../../helper/FormatDateTime";
+import { useStoreItem } from "../../../DynamicAPI/stores/Store/MasterStore";
 
 // Komponen Badge dengan Pesan Informatif
 const StatusBadge = ({
@@ -59,6 +60,12 @@ const IntegrationMonitoringPage = () => {
     "INTEGRATED" | "ERROR" | "TIMEOUT" | ""
   >("");
 
+  const { list: itemList, fetchAll: fetchAllItem } = useStoreItem();
+
+  useEffect(() => {
+    fetchAllItem();
+  }, []);
+
   const {
     data: response,
     isLoading,
@@ -89,6 +96,23 @@ const IntegrationMonitoringPage = () => {
   }, [isRefreshing, isLoading, refetch]);
 
   const refreshBusy = isRefreshing || isLoading;
+
+  const itemByInventoryId = useMemo(() => {
+    const map = new Map<
+      string,
+      { sku: string; item_number?: string | null; description: string }
+    >();
+    (Array.isArray(itemList) ? itemList : []).forEach((item) => {
+      const key = String(item.inventory_item_id ?? "").trim();
+      if (!key) return;
+      map.set(key, {
+        sku: item.sku,
+        item_number: item.item_number,
+        description: item.description,
+      });
+    });
+    return map;
+  }, [itemList]);
 
   const columns = useMemo<ColumnDef<MoveOrderIntegrationHeader>[]>(
     () => [
@@ -199,16 +223,43 @@ const IntegrationMonitoringPage = () => {
                   {data.lines.length} items)
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {data.lines.map((line: any) => (
+                  {data.lines.map((line: any) => {
+                    const invKey = String(line.inventory_item_id ?? "").trim();
+                    const master = invKey
+                      ? itemByInventoryId.get(invKey)
+                      : undefined;
+
+                    return (
                     <div
                       key={line.id}
                       className="p-4 bg-white rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow"
                     >
-                      <div className="flex justify-between items-start mb-3">
-                        <span className="text-[10px] font-bold bg-slate-100 px-2 py-0.5 rounded text-slate-600">
-                          ITEM ID: {line.inventory_item_id}
-                        </span>
-                        <span className="text-xs font-bold text-indigo-600">
+                      <div className="flex justify-between items-start gap-3 mb-3">
+                        <div className="min-w-0">
+                          {master ? (
+                            <>
+                              <p className="text-sm font-bold text-slate-900 truncate">
+                                {master.sku}
+                              </p>
+                              <p className="text-[11px] font-medium text-slate-500 truncate">
+                                {master.item_number || "-"}
+                              </p>
+                              <p className="text-[10px] text-slate-400 truncate mt-0.5">
+                                {master.description}
+                              </p>
+                            </>
+                          ) : (
+                            <span className="text-[10px] font-bold bg-slate-100 px-2 py-0.5 rounded text-slate-600">
+                              ITEM ID: {line.inventory_item_id || "-"}
+                            </span>
+                          )}
+                          {master && (
+                            <span className="inline-block mt-1 text-[10px] font-medium text-slate-400">
+                              ID: {line.inventory_item_id}
+                            </span>
+                          )}
+                        </div>
+                        <span className="shrink-0 text-xs font-bold text-indigo-600">
                           {line.quantity} {line.uom_code}
                         </span>
                       </div>
@@ -228,7 +279,8 @@ const IntegrationMonitoringPage = () => {
                         </div>
                       </div>
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             );

@@ -25,6 +25,7 @@ type PrepDetailTableProps = {
   unmatchedDetails?: BTBDetail[];
   header?: AdjustQtyHeader;
   isAdjustDisabled?: boolean;
+  adjustDisabledTitle?: string;
   onSaveAdjustments: (
     callplanId: string,
     payload: {
@@ -41,6 +42,7 @@ export const PrepDetailTable = ({
   unmatchedDetails = [],
   header,
   isAdjustDisabled = false,
+  adjustDisabledTitle,
   onSaveAdjustments,
   highlightedSku,
 }: PrepDetailTableProps) => {
@@ -133,7 +135,8 @@ export const PrepDetailTable = ({
             disabled={isAdjustDisabled}
             title={
               isAdjustDisabled
-                ? "Tidak bisa Adjust — data BTB cabang belum tersedia"
+                ? adjustDisabledTitle ||
+                  "Tidak bisa Adjust — data BTB cabang belum tersedia"
                 : undefined
             }
             className={`inline-flex items-center gap-1.5 rounded border px-2.5 py-1 text-[11px] font-bold uppercase transition-colors ${

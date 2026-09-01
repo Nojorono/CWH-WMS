@@ -1,6 +1,11 @@
 import { BTBDetail } from "../../types/BTBtypes";
 import { Callplan, CallplanDetail } from "../../types/CallplanTypes";
 
+/** null = belum integrate Meta; non-null = sudah pernah di-integrate */
+export const isSpbIntegratedToMeta = (
+  callplan: Pick<Callplan, "move_order_integration"> | null | undefined,
+): boolean => callplan?.move_order_integration != null;
+
 export type EnrichedDetail = CallplanDetail & {
   qty_btb: number;
   itemName?: string;

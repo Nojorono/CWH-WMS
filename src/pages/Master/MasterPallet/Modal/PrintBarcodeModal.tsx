@@ -26,11 +26,11 @@ const clamp = (val: number, min: number, max: number) =>
   Math.min(Math.max(val, min), max);
 
 const PRESETS = [
-  { label: "10×10 cm", w: 10, h: 10, code: 8, lbl: 2 },
-  { label: "8×8 cm", w: 8, h: 8, code: 6.5, lbl: 1.5 },
-  { label: "10×6 cm", w: 10, h: 6, code: 4.5, lbl: 1.5 },
-  { label: "A6 (10.5×14.8)", w: 10.5, h: 14.8, code: 9, lbl: 2 },
-  { label: "Custom", w: null, h: null, code: null, lbl: null },
+  { label: "10×10 cm", w: 10, h: 10, code: 8, lbl: 2, fontPt: 14 },
+  { label: "8×8 cm", w: 8, h: 8, code: 6.5, lbl: 1.5, fontPt: 12 },
+  { label: "10×6 cm", w: 10, h: 6, code: 4.5, lbl: 1.5, fontPt: 11 },
+  { label: "A6 (10.5×14.8)", w: 10.5, h: 14.8, code: 9, lbl: 2, fontPt: 14 },
+  { label: "Custom", w: null, h: null, code: null, lbl: null, fontPt: null },
 ] as const;
 
 const PrintBarcodeModal: React.FC<Props> = ({
@@ -44,6 +44,7 @@ const PrintBarcodeModal: React.FC<Props> = ({
   const [stickerH, setStickerH] = useState(10);
   const [codeSize, setCodeSize] = useState(8);
   const [labelH, setLabelH] = useState(2);
+  const [labelFontPt, setLabelFontPt] = useState(14);
   const [activePreset, setActivePreset] = useState<string>("10×10 cm");
   const [isExporting, setIsExporting] = useState(false);
   const [exportProgress, setExportProgress] = useState(0);
@@ -61,6 +62,7 @@ const PrintBarcodeModal: React.FC<Props> = ({
       setStickerH(10);
       setCodeSize(8);
       setLabelH(2);
+      setLabelFontPt(14);
       setGlobalCopies(4);
       setPerItemCopies({});
       setActiveTab("settings");
@@ -72,7 +74,11 @@ const PrintBarcodeModal: React.FC<Props> = ({
 
   const safeCodeSize = clamp(codeSize, 1, Math.min(stickerW, stickerH) - 0.5);
   const safeLabelH = clamp(labelH, 0.5, stickerH - safeCodeSize);
+  const safeLabelFontPt = clamp(labelFontPt, 6, 48);
   const codeSizePx = safeCodeSize * CM_TO_PX;
+  /** Skala font preview mockup agar proporsional dengan ukuran stiker di layar */
+  const previewLabelFontPx =
+    (safeLabelFontPt / 72) * 96 * (25 / CM_TO_PX);
 
   const getCopies = (itemId: string | number) =>
     perItemCopies[itemId] ?? globalCopies;
@@ -95,7 +101,7 @@ const PrintBarcodeModal: React.FC<Props> = ({
       page-break-after: always;
     }
     .sticker .code-area svg { width: ${safeCodeSize}cm !important; height: ${safeCodeSize}cm !important; }
-    .sticker .label-area p { margin: 0; font-size: 14pt; font-weight: bold; text-align: center; }
+    .sticker .label-area p { margin: 0; font-size: ${safeLabelFontPt}pt; font-weight: bold; text-align: center; }
   `;
 
   const handlePrint = () => {
@@ -160,6 +166,39 @@ const PrintBarcodeModal: React.FC<Props> = ({
       setIsExporting(false);
     }
   };
+
+  const PtInput = ({ label, value, onChange, min, max, step = 1 }: any) => (
+    <div className="flex flex-col gap-1">
+      <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+        {label}
+      </label>
+      <div className="flex items-center gap-1">
+        <button
+          type="button"
+          onClick={() => onChange(clamp(value - step, min, max))}
+          className="w-8 h-8 rounded bg-gray-100 border text-gray-600 font-bold"
+        >
+          -
+        </button>
+        <input
+          type="number"
+          value={value}
+          onChange={(e) =>
+            onChange(clamp(parseFloat(e.target.value) || min, min, max))
+          }
+          className="w-14 text-center border rounded h-8 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none"
+        />
+        <button
+          type="button"
+          onClick={() => onChange(clamp(value + step, min, max))}
+          className="w-8 h-8 rounded bg-gray-100 border text-gray-600 font-bold"
+        >
+          +
+        </button>
+        <span className="text-[10px] font-semibold text-slate-400">pt</span>
+      </div>
+    </div>
+  );
 
   const CmInput = ({ label, value, onChange, min, max, step = 0.5 }: any) => (
     <div className="flex flex-col gap-1">
@@ -338,6 +377,7 @@ const PrintBarcodeModal: React.FC<Props> = ({
                           setStickerH(p.h!);
                           setCodeSize(p.code!);
                           setLabelH(p.lbl!);
+                          if (p.fontPt) setLabelFontPt(p.fontPt);
                         }
                         setActivePreset(p.label);
                       }}
@@ -399,6 +439,16 @@ const PrintBarcodeModal: React.FC<Props> = ({
                     min={0.5}
                     max={stickerH - safeCodeSize}
                   />
+                  <PtInput
+                    label="Font Pallet Code"
+                    value={safeLabelFontPt}
+                    onChange={(v: number) => {
+                      setLabelFontPt(v);
+                      setActivePreset("Custom");
+                    }}
+                    min={6}
+                    max={48}
+                  />
                 </div>
               </div>
             </div>
@@ -448,8 +498,8 @@ const PrintBarcodeModal: React.FC<Props> = ({
                     style={{ height: `${(safeLabelH / stickerH) * 100}%` }}
                   >
                     <p
-                      className="font-mono font-bold text-slate-900"
-                      style={{ fontSize: `${stickerW * 1.5}px` }}
+                      className="font-mono font-bold text-slate-900 text-center leading-tight"
+                      style={{ fontSize: `${previewLabelFontPx}px` }}
                     >
                       {items[0]?.pallet_code || "SAMPLE"}
                     </p>
@@ -460,9 +510,9 @@ const PrintBarcodeModal: React.FC<Props> = ({
                   <p className="text-sm font-bold text-slate-700">
                     {stickerW} x {stickerH} cm
                   </p>
-                  <p className="text-[10px] text-slate-400 font-medium italic">
+                  {/* <p className="text-[10px] text-slate-400 font-medium italic">
                     Data dummy digunakan untuk simulasi visual
-                  </p>
+                  </p> */}
                 </div>
               </div>
             </div>
@@ -521,9 +571,13 @@ const PrintBarcodeModal: React.FC<Props> = ({
                   }}
                 >
                   <p
-                    style={{ margin: 0, fontSize: "14pt", fontWeight: "bold" }}
+                    style={{
+                      margin: 0,
+                      fontSize: `${safeLabelFontPt}pt`,
+                      fontWeight: "bold",
+                    }}
                   >
-                    {useQRCode ? item.pallet_code : item.pallet_code}
+                    {item.pallet_code}
                   </p>
                 </div>
               </div>
