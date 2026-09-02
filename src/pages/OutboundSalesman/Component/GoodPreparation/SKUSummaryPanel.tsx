@@ -3,9 +3,13 @@ import React, { useMemo, useState } from "react";
 import { FaRotate } from "react-icons/fa6";
 import { formatDateTimeIndo } from "../../../../helper/FormatDateTime";
 
+export type SkuSummaryFilter = "ALL" | "AVAILABLE" | "LESS_STOCK" | "NO_STOCK";
+
 interface SKUSummaryPanelProps {
   summary: any[];
   onSearchChange: (val: string) => void;
+  filter?: SkuSummaryFilter;
+  onFilterChange?: (filter: SkuSummaryFilter) => void;
 }
 
 /** Status kartu: SPB > SOH → Less Stock; SPB === 0 & SOH === 0 → No Stock */
@@ -75,8 +79,17 @@ const getItemCardConfig = (item: any) => {
 export const SKUSummaryPanel = ({
   summary,
   onSearchChange,
+  filter: filterProp,
+  onFilterChange,
 }: SKUSummaryPanelProps) => {
-  const [filter, setFilter] = useState("AVAILABLE");
+  const [internalFilter, setInternalFilter] =
+    useState<SkuSummaryFilter>("AVAILABLE");
+  const filter = filterProp ?? internalFilter;
+
+  const setFilter = (next: SkuSummaryFilter) => {
+    if (onFilterChange) onFilterChange(next);
+    else setInternalFilter(next);
+  };
   const [search, setSearch] = useState("");
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -151,8 +164,9 @@ export const SKUSummaryPanel = ({
           )}
         </div>
 
-        <div className="flex gap-2">
-          {["ALL", "AVAILABLE", "LESS_STOCK", "NO_STOCK"].map((tab) => (
+        {/* <div className="flex gap-2">
+          {(["ALL", "AVAILABLE", "LESS_STOCK", "NO_STOCK"] as const).map(
+            (tab) => (
             <button
               key={tab}
               onClick={() => setFilter(tab)}
@@ -164,8 +178,9 @@ export const SKUSummaryPanel = ({
             >
               {tab.replace("_", " ")}
             </button>
-          ))}
-        </div>
+          ),
+          )}
+        </div> */}
       </div>
 
       <div className="overflow-x-auto pb-4">

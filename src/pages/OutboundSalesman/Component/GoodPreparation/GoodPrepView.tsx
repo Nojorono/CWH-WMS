@@ -292,7 +292,7 @@ function GoodPrepView({
               className: isActionsLocked ? "text-slate-400" : "text-indigo-600",
             },
             {
-              label: "Integrate Meta",
+              label: "Integrate Meta & DMS",
               icon: FaSyncAlt,
               onClick: () => {
                 if (isActionsLocked) {
@@ -319,17 +319,6 @@ function GoodPrepView({
               className: isIntegrateDisabled
                 ? "text-slate-400"
                 : "text-emerald-600",
-            },
-            {
-              label: "Interface to DMS",
-              icon: FaExchangeAlt,
-              onClick: () => {
-                showSuccessToast(
-                  `Interface to DMS (${rowData.spb_number || rowData.callplan_number}) — coming soon`,
-                );
-              },
-              disabled: isActionsLocked,
-              className: isActionsLocked ? "text-slate-400" : "text-orange-600",
             },
           ];
 
@@ -388,10 +377,10 @@ function GoodPrepView({
       <LoadingOverlay
         visible={showLoading || isIntegrating}
         btbDate={effectiveBtbDateLabel}
-        title={isIntegrating ? "Integrate Meta" : "Sinkronisasi Data"}
+        title={isIntegrating ? "Integrate Meta & DMS" : "Sinkronisasi Data"}
         subtitle={
           isIntegrating
-            ? `Mengirim SPB ${integrateTriggerSpb?.spb_number || integrateTriggerSpb?.callplan_number || "-"} ke Meta...`
+            ? `Mengirim SPB ${integrateTriggerSpb?.spb_number || integrateTriggerSpb?.callplan_number || "-"} ke Meta & DMS...`
             : undefined
         }
       />

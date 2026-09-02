@@ -4,6 +4,10 @@ import { showErrorToast, showSuccessToast } from "../../../../../components/toas
 import { updateDO } from "../../../../../API/services/DOsuggestionServices/postDOsuggestion";
 import { DOSuggestionPayload } from "../../../../../API/types/DOsuggestion";
 import { integrateService } from "../../../Services/IntegrateService";
+import {
+  integrateDmsService,
+  parseIntegrateDmsError,
+} from "../../../Services/IntegrateDMSservice";
 import { Callplan } from "../../../types/CallplanTypes";
 import { AdjustQtyItem } from "../AdjustQtySPB";
 import { EnrichedCallplan, isSpbIntegratedToMeta } from "../types";
@@ -160,18 +164,47 @@ export const useGoodPrepActions = ({
     }
   };
 
-  const handleIntegrateToMetaPerSpb = async () => {
+  const resolveIntegrateCallplan = (): Callplan | null => {
+    if (!integrateTriggerSpb?.id) return null;
+    return (
+      prepCallplans.find((cp) => cp.id === integrateTriggerSpb.id) ||
+      enrichedData.find((cp) => cp.id === integrateTriggerSpb.id) ||
+      integrateTriggerSpb
+    );
+  };
+
+  const handleIntegratePerSpb = async () => {
     if (!integrateTriggerSpb?.id) {
       showErrorToast("SPB target integrasi tidak ditemukan");
       return;
     }
 
+    const callplan = resolveIntegrateCallplan();
+    if (!callplan) {
+      showErrorToast("Data SPB untuk integrasi tidak ditemukan");
+      return;
+    }
+
+    const spbLabel =
+      integrateTriggerSpb.spb_number || integrateTriggerSpb.callplan_number;
+
     setIsIntegrating(true);
     try {
       await integrateService.integrateToMetaGit(integrateTriggerSpb.id);
-      const spbLabel =
-        integrateTriggerSpb.spb_number || integrateTriggerSpb.callplan_number;
-      showSuccessToast(`Integrate Meta berhasil untuk SPB ${spbLabel}`);
+
+      try {
+        await integrateDmsService.integrateBkbFromCallplan(callplan);
+      } catch (dmsError) {
+        await refetchPrepCallplans();
+        showErrorToast(
+          `Integrate Meta berhasil, tetapi DMS gagal untuk SPB ${spbLabel}: ${parseIntegrateDmsError(dmsError)}`,
+        );
+        return;
+      }
+
+      showSuccessToast(
+        `Integrate Meta & DMS berhasil untuk SPB ${spbLabel}`,
+      );
       await refetchPrepCallplans();
     } catch (error: unknown) {
       const message =
@@ -219,7 +252,7 @@ export const useGoodPrepActions = ({
 
   const proceedIntegrate = async () => {
     setIsIntegrateModalOpen(false);
-    await handleIntegrateToMetaPerSpb();
+    await handleIntegratePerSpb();
     setIntegrateTriggerSpb(null);
   };
 

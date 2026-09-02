@@ -183,6 +183,7 @@ export const SKUSummaryPanel = ({
           {filteredData.map((item) => {
             // Panggil config helper
             const config = getItemCardConfig(item);
+            const isLessStock = getStockStatus(item) === "LESS_STOCK";
 
             return (
               <div
@@ -214,7 +215,11 @@ export const SKUSummaryPanel = ({
                 </div>
 
                 {/* Metrics Section */}
-                <div className="grid grid-cols-2 gap-2 mt-3 pt-3 border-t border-slate-100">
+                <div
+                  className={`grid gap-2 mt-3 pt-3 border-t border-slate-100 ${
+                    isLessStock ? "grid-cols-3" : "grid-cols-2"
+                  }`}
+                >
                   <div>
                     <p className="text-[9px] uppercase tracking-wider text-slate-400 font-medium">
                       Stock on Hand
@@ -224,7 +229,7 @@ export const SKUSummaryPanel = ({
                     </p>
                   </div>
 
-                  <div className="text-right">
+                  <div className={isLessStock ? "" : "text-right"}>
                     <p className="text-[9px] uppercase tracking-wider text-slate-400 font-medium">
                       Total Qty SPB
                     </p>
@@ -232,6 +237,17 @@ export const SKUSummaryPanel = ({
                       {item.totalRequest.toLocaleString()}
                     </p>
                   </div>
+
+                  {isLessStock && (
+                    <div className="text-right">
+                      <p className="text-[9px] uppercase tracking-wider text-amber-600 font-medium">
+                        Qty by Contrib
+                      </p>
+                      <p className="text-sm font-bold text-amber-700">
+                        {Number(item.totalQtyByContribute || 0).toLocaleString()}
+                      </p>
+                    </div>
+                  )}
                 </div>
               </div>
             );

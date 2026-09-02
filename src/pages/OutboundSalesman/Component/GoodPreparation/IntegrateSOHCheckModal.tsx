@@ -152,8 +152,8 @@ export default function IntegrateSOHCheckModal({
     const confirm = await Swal.fire({
       title: "Konfirmasi Integrasi?",
       html: isGlobal
-        ? `Apakah benar akan dilakukan <strong>Integrate Meta</strong> untuk <strong>${spbCount} SPB</strong>?`
-        : `Apakah benar akan dilakukan <strong>Integrate Meta</strong> untuk SPB<br/><strong>${spbLabel}</strong>${
+        ? `Apakah benar akan dilakukan <strong>Integrate Meta & DMS</strong> untuk <strong>${spbCount} SPB</strong>?`
+        : `Apakah benar akan dilakukan <strong>Integrate Meta & DMS</strong> untuk SPB<br/><strong>${spbLabel}</strong>${
             salesName ? ` (${salesName})` : ""
           }?`,
       icon: "question",
@@ -421,7 +421,7 @@ export default function IntegrateSOHCheckModal({
             }
             className="group inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:shadow-none"
           >
-            Lanjut Integrate Meta
+            Lanjut Integrate Meta & DMS
             <FaArrowRight
               size={12}
               className="transition-transform group-hover:translate-x-0.5"
