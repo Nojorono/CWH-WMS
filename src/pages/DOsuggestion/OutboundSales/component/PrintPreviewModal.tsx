@@ -88,7 +88,8 @@ export const PrintPreviewModal = ({
         return {
           ...item,
           calculated_btb: btbQty,
-          calculated_top_up: topUpValue > 0 ? topUpValue : 0, // Menampilkan top-up 0
+          calculated_top_up:
+            topUpValue > 0 ? `+${topUpValue}` : topUpValue,
           item_description: itemName,
           is_unmatched: false,
         };

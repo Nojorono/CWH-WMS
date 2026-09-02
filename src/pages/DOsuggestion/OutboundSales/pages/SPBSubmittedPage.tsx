@@ -167,6 +167,11 @@ export const SPBSubmittedPage = ({
   const columns = useMemo<ColumnDef<any>[]>(
     () => [
       { accessorKey: "callplan_number", header: "Callplan Number" },
+      {
+        accessorKey: "spb_number",
+        header: "SPB Number",
+        cell: ({ row }) => row.original.spb_number || "-",
+      },
       { accessorKey: "sales_nik", header: "NIK Sales" },
       { accessorKey: "sales_name", header: "Nama Sales" },
       { accessorKey: "sales_spv_name", header: "Nama SPV" },
