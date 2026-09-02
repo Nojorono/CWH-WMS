@@ -176,7 +176,7 @@ export const PrintPreviewModal = ({
                     BTB
                   </th>
                   <th className="py-2 w-[24%] font-bold text-right align-bottom">
-                    TOP UP
+                    SISA BTB
                   </th>
                 </tr>
               </thead>

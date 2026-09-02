@@ -157,7 +157,7 @@ function GoodPrepView({
         if (final <= 0) return;
 
         const btb = Number(d.qty_btb) || 0;
-        const topUp = Math.max(0, final - btb);
+        const topUp = final - btb;
         const sku = d.item_code || "";
         const invId = d.inventory_item_id || "";
         const key = `${sku}_${invId}`;
@@ -292,7 +292,7 @@ function GoodPrepView({
               className: isActionsLocked ? "text-slate-400" : "text-indigo-600",
             },
             {
-              label: "Integrate Meta",
+              label: "Integrate Meta & DMS",
               icon: FaSyncAlt,
               onClick: () => {
                 if (isActionsLocked) {
@@ -320,17 +320,6 @@ function GoodPrepView({
                 ? "text-slate-400"
                 : "text-emerald-600",
             },
-            {
-              label: "Interface to DMS",
-              icon: FaExchangeAlt,
-              onClick: () => {
-                showSuccessToast(
-                  `Interface to DMS (${rowData.spb_number || rowData.callplan_number}) — coming soon`,
-                );
-              },
-              disabled: isActionsLocked,
-              className: isActionsLocked ? "text-slate-400" : "text-orange-600",
-            },
           ];
 
           return <ActionMenu actions={actionList} />;
@@ -348,7 +337,7 @@ function GoodPrepView({
         r.itemName,
         String(r.finalQty),
         String(r.btbQty),
-        String(r.topUpQty),
+        String(r.topUpQty > 0 ? `+${r.topUpQty}` : r.topUpQty),
         r.item_uom || "BKS",
       ]),
     ];
@@ -388,10 +377,10 @@ function GoodPrepView({
       <LoadingOverlay
         visible={showLoading || isIntegrating}
         btbDate={effectiveBtbDateLabel}
-        title={isIntegrating ? "Integrate Meta" : "Sinkronisasi Data"}
+        title={isIntegrating ? "Integrate Meta & DMS" : "Sinkronisasi Data"}
         subtitle={
           isIntegrating
-            ? `Mengirim SPB ${integrateTriggerSpb?.spb_number || integrateTriggerSpb?.callplan_number || "-"} ke Meta...`
+            ? `Mengirim SPB ${integrateTriggerSpb?.spb_number || integrateTriggerSpb?.callplan_number || "-"} ke Meta & DMS...`
             : undefined
         }
       />
