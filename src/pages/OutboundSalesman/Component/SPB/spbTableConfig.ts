@@ -42,6 +42,11 @@ export const SPB_MASTER_COLUMNS: DynamicColumn<Callplan>[] = [
     cellClassName: "text-gray-600",
   },
   {
+    id: "spb_number",
+    header: "SPB Number",
+    cellClassName: "text-gray-600",
+  },
+  {
     id: "sales_nik",
     header: "NIK Sales",
     cellClassName: "text-gray-600",
