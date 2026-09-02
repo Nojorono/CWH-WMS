@@ -44,11 +44,118 @@ export type IntegrateDmsBkbResponse = {
     data?: unknown;
 };
 
-type ApiErrorBody = {
+type DmsValidationIssue = {
+    path?: string;
+    message?: string;
+    code?: string;
+};
+
+type DmsApiErrorDetails = {
+    formErrors?: string[];
+    fieldErrors?: Record<string, string[] | string>;
+    issues?: DmsValidationIssue[];
+};
+
+type DmsApiErrorBody = {
+    success?: boolean;
     message?: string | string[];
     error?: string;
     code?: string;
     statusCode?: number;
+    details?: DmsApiErrorDetails;
+};
+
+const uniqueMessages = (messages: string[]) =>
+    [...new Set(messages.map((msg) => msg.trim()).filter(Boolean))];
+
+const normalizeFieldErrors = (
+    fieldErrors?: Record<string, string[] | string>,
+): string[] => {
+    if (!fieldErrors) return [];
+
+    return Object.entries(fieldErrors).flatMap(([field, errors]) => {
+        const list = Array.isArray(errors) ? errors : [errors];
+        return list
+            .map((msg) => String(msg || "").trim())
+            .filter(Boolean)
+            .map((msg) => `• ${field}: ${msg}`);
+    });
+};
+
+const normalizeIssues = (issues?: DmsValidationIssue[]): string[] => {
+    if (!issues?.length) return [];
+
+    return issues
+        .map((issue) => {
+            const path = String(issue.path || "field").trim();
+            const message = String(issue.message || "Invalid").trim();
+            const code = issue.code ? ` (${issue.code})` : "";
+            return `• ${path}: ${message}${code}`;
+        })
+        .filter(Boolean);
+};
+
+/** Format body error DMS BKB menjadi teks yang mudah dibaca user. */
+export const formatDmsApiErrorBody = (data: DmsApiErrorBody): string => {
+    const parts: string[] = [];
+
+    const mainMessage = Array.isArray(data.message)
+        ? data.message.join(", ")
+        : String(data.message || "").trim();
+
+    if (mainMessage) {
+        parts.push(
+            data.code && data.code !== mainMessage
+                ? `${mainMessage} [${data.code}]`
+                : mainMessage,
+        );
+    } else if (data.code) {
+        parts.push(`[${data.code}]`);
+    }
+
+    const details = data.details;
+    if (details) {
+        (details.formErrors || []).forEach((err) => {
+            const text = String(err || "").trim();
+            if (text) parts.push(`• ${text}`);
+        });
+
+        const issueLines = normalizeIssues(details.issues);
+        if (issueLines.length > 0) {
+            parts.push(...issueLines);
+        } else {
+            parts.push(...normalizeFieldErrors(details.fieldErrors));
+        }
+    }
+
+    if (typeof data.error === "string" && data.error.trim()) {
+        parts.push(data.error.trim());
+    }
+
+    return uniqueMessages(parts).join("\n");
+};
+
+export const parseIntegrateDmsError = (
+    error: unknown,
+    fallback = "Gagal integrasi ke DMS (BKB)",
+): string => {
+    if (axios.isAxiosError(error)) {
+        const data = error.response?.data as DmsApiErrorBody | undefined;
+
+        if (data && typeof data === "object") {
+            const formatted = formatDmsApiErrorBody(data);
+            if (formatted) return formatted;
+        }
+
+        if (typeof error.message === "string" && error.message.trim()) {
+            return error.message;
+        }
+
+        return fallback;
+    }
+
+    if (error instanceof Error && error.message) return error.message;
+    return fallback;
 };
 
 const toNumber = (value: unknown, fallback = 0): number => {
@@ -88,7 +195,7 @@ const mapDetailToDmsLine = (
  */
 export const mapCallplanToDmsBkbPayload = (
     callplan: Callplan,
-): IntegrateDmsBkbPayload => {
+): any => {
     const organizationCode =
         callplan.organization?.organization_code ||
         callplan.organization?.organization_name ||
@@ -135,31 +242,8 @@ export const mapCallplanToDmsBkbPayload = (
         sales_spv_nik: "-",
         spb_date: toDateOnly(callplan.spb_date),
         spb_number: callplan.spb_number.trim(),
-        lines,
+        // lines,
     };
-};
-
-export const parseIntegrateDmsError = (
-    error: unknown,
-    fallback = "Gagal integrasi ke DMS (BKB)",
-): string => {
-    if (axios.isAxiosError(error)) {
-        const data = error.response?.data as ApiErrorBody | undefined;
-
-        if (Array.isArray(data?.message) && data.message.length > 0) {
-            return data.message.join("\n");
-        }
-        if (typeof data?.message === "string" && data.message.trim()) {
-            return data.message;
-        }
-        if (typeof data?.error === "string" && data.error.trim()) {
-            return data.error;
-        }
-        return error.message || fallback;
-    }
-
-    if (error instanceof Error && error.message) return error.message;
-    return fallback;
 };
 
 const debugIntegrateDms = (label: string, data?: unknown) => {

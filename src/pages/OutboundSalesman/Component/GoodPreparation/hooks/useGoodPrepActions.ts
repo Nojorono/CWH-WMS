@@ -190,29 +190,31 @@ export const useGoodPrepActions = ({
 
     setIsIntegrating(true);
     try {
-      await integrateService.integrateToMetaGit(integrateTriggerSpb.id);
+      await integrateDmsService.integrateBkbFromCallplan(callplan);
 
       try {
-        await integrateDmsService.integrateBkbFromCallplan(callplan);
-      } catch (dmsError) {
+        await integrateService.integrateToMetaGit(integrateTriggerSpb.id);
+      } catch (metaError) {
         await refetchPrepCallplans();
+        const message =
+          (metaError as { response?: { data?: { message?: string } } })
+            ?.response?.data?.message ||
+          (metaError as Error)?.message ||
+          "Gagal melakukan Integrate Meta";
         showErrorToast(
-          `Integrate Meta berhasil, tetapi DMS gagal untuk SPB ${spbLabel}: ${parseIntegrateDmsError(dmsError)}`,
+          `Integrate DMS berhasil, tetapi Meta gagal untuk SPB ${spbLabel}: ${message}`,
         );
         return;
       }
 
       showSuccessToast(
-        `Integrate Meta & DMS berhasil untuk SPB ${spbLabel}`,
+        `Integrate DMS & Meta berhasil untuk SPB ${spbLabel}`,
       );
       await refetchPrepCallplans();
     } catch (error: unknown) {
-      const message =
-        (error as { response?: { data?: { message?: string } } })?.response
-          ?.data?.message ||
-        (error as Error)?.message ||
-        "Gagal melakukan Integrate Meta";
-      showErrorToast(message);
+      showErrorToast(
+        `Integrate DMS gagal untuk SPB ${spbLabel}: ${parseIntegrateDmsError(error)}`,
+      );
     } finally {
       setIsIntegrating(false);
     }

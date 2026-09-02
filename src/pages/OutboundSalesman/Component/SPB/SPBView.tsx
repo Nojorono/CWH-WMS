@@ -9,6 +9,7 @@ import { SPBViewProps } from "../../types/flow";
 import dayjs from "dayjs";
 import { showErrorToast } from "../../../../components/toast";
 import SPBTable from "./SPBTable";
+import { SortDirection, sortCallplans } from "./spbTableConfig";
 
 const TODAY = () => dayjs().format("YYYY-MM-DD");
 const H_PLUS_1 = () => dayjs().add(1, "day").format("YYYY-MM-DD");
@@ -43,6 +44,8 @@ export default function SPBview({
   const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>({});
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
+  const [sortKey, setSortKey] = useState("callplan_date_start");
+  const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
   // Draft = pilihan di picker (belum diterapkan)
   // Applied = baru dipakai API/UI setelah klik Terapkan
   // Default selalu DateNow (YYYY-MM-DD); localStorage hanya jika bypass aktif
@@ -191,16 +194,21 @@ export default function SPBview({
   const canProceedToPreparation =
     statusFilter === "FINAL" && finalCount > 0 && !isLoading;
 
-  const totalItems = callplans.length;
+  const sortedCallplans = useMemo(
+    () => sortCallplans(callplans, sortKey, sortDirection),
+    [callplans, sortKey, sortDirection],
+  );
+
+  const totalItems = sortedCallplans.length;
   const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
   const safeCurrentPage = Math.min(currentPage, totalPages);
   const startIndex = (safeCurrentPage - 1) * pageSize;
   const endIndex = startIndex + pageSize;
-  const paginatedCallplans = callplans.slice(startIndex, endIndex);
+  const paginatedCallplans = sortedCallplans.slice(startIndex, endIndex);
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [statusFilter, pageSize, totalItems]);
+  }, [statusFilter, pageSize, totalItems, sortKey, sortDirection]);
 
   return (
     <div className="min-h-screen bg-gray-50 p-6 font-sans">
@@ -362,7 +370,13 @@ export default function SPBview({
         totalItems={totalItems}
         onPageChange={setCurrentPage}
         onPageSizeChange={setPageSize}
-        onVoidActionComplete={fetchCallplans}
+        sortKey={sortKey}
+        sortDirection={sortDirection}
+        onSortChange={(nextKey, nextDirection) => {
+          setSortKey(nextKey);
+          setSortDirection(nextDirection);
+        }}
+        onVoidActionComplete={() => setStatusFilter("VOID")}
       />
     </div>
   );
