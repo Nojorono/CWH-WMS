@@ -72,7 +72,7 @@ const PrepDetailTable = ({
           itemName: master?.description || d.item_code,
           finalQty: final,
           btbQty: btb,
-          topUpQty: Math.max(0, final - btb),
+          topUpQty: final - btb,
         };
       })
       .sort((a, b) => a.itemName.localeCompare(b.itemName));
@@ -106,7 +106,7 @@ const PrepDetailTable = ({
               <th className="px-3 py-2">Item</th>
               <th className="px-3 py-2 text-center">Qty Final</th>
               <th className="px-3 py-2 text-center">Qty BTB</th>
-              <th className="px-3 py-2 text-center text-emerald-600">Top Up</th>
+              <th className="px-3 py-2 text-center text-emerald-600">Sisa BTB</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
@@ -122,8 +122,16 @@ const PrepDetailTable = ({
                 <td className="px-3 py-2 text-center text-blue-600">
                   {item.btbQty}
                 </td>
-                <td className="px-3 py-2 text-center font-bold text-emerald-600">
-                  {item.topUpQty > 0 ? `${item.topUpQty}` : "0"}
+                <td
+                  className={`px-3 py-2 text-center font-bold ${
+                    item.topUpQty > 0
+                      ? "text-emerald-600"
+                      : item.topUpQty < 0
+                        ? "text-blue-600"
+                        : "text-slate-500"
+                  }`}
+                >
+                  {item.topUpQty > 0 ? `+${item.topUpQty}` : item.topUpQty}
                 </td>
               </tr>
             ))}
@@ -338,7 +346,7 @@ export const GoodsPreparationPage = ({
         if (final <= 0) return;
 
         const btb = Number(d.qty_btb) || 0;
-        const topUp = Math.max(0, final - btb);
+        const topUp = final - btb;
         const sku = d.item_code || "";
         const invId = d.inventory_item_id || ""; // Membaca inventory_item_id dari JSON payload detail
         const key = `${sku}_${invId}`; // Pengelompokan berdasarkan SKU dan Inventory Item ID

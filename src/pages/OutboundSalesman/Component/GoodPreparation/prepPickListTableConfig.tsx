@@ -140,11 +140,23 @@ export const PREP_PICK_LIST_COLUMNS: PrepPickListColumn[] = [
     header: "Top Up",
     align: "center",
     headerClassName: "text-emerald-600",
-    getCellClassName: (row) =>
-      `px-3 py-2 text-center font-bold ${
-        row.finalQty === 0 ? "text-red-600" : "text-emerald-600"
-      }`,
-    getValue: (row) => row.topUpQty,
+    getCellClassName: (row) => {
+      if (row.finalQty === 0) {
+        return "px-3 py-2 text-center font-bold text-red-600";
+      }
+      if (row.topUpQty > 0) {
+        return "px-3 py-2 text-center font-bold text-emerald-600";
+      }
+      if (row.topUpQty < 0) {
+        return "px-3 py-2 text-center font-bold text-blue-600";
+      }
+      return "px-3 py-2 text-center font-bold text-slate-500";
+    },
+    getValue: (row) => {
+      const value = Number(row.topUpQty) || 0;
+      if (value > 0) return `+${value}`;
+      return value;
+    },
   },
 ];
 

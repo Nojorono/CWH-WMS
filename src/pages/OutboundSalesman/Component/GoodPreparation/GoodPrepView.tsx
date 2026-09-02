@@ -157,7 +157,7 @@ function GoodPrepView({
         if (final <= 0) return;
 
         const btb = Number(d.qty_btb) || 0;
-        const topUp = Math.max(0, final - btb);
+        const topUp = final - btb;
         const sku = d.item_code || "";
         const invId = d.inventory_item_id || "";
         const key = `${sku}_${invId}`;
@@ -337,7 +337,7 @@ function GoodPrepView({
         r.itemName,
         String(r.finalQty),
         String(r.btbQty),
-        String(r.topUpQty),
+        String(r.topUpQty > 0 ? `+${r.topUpQty}` : r.topUpQty),
         r.item_uom || "BKS",
       ]),
     ];

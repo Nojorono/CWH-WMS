@@ -82,7 +82,8 @@ export const PrepDetailTable = ({
           finalQty: final,
           qtyRevision,
           btbQty: btb,
-          topUpQty: Math.max(0, final - btb),
+          /** (+) kurang → top up gudang, (−) lebih → sisa BTB dikembalikan */
+          topUpQty: final - btb,
         };
       })
       .sort((a, b) => {
