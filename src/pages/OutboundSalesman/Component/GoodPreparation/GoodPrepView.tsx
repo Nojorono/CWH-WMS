@@ -187,10 +187,59 @@ function GoodPrepView({
     );
   }, [enrichedData, itemList]);
 
+  /** Sales punya BTB cabang tapi tidak ada SPB di Good Prep hari ini */
+  const btbWithoutSpbSales = useMemo(() => {
+    const spbNikSet = new Set(
+      prepCallplans
+        .map((cp) => String(cp.sales_nik || "").trim())
+        .filter(Boolean),
+    );
+
+    return BTBdata
+      .map((btb) => {
+        const salesNik = String(btb.sales_nik || "").trim();
+        if (!salesNik || spbNikSet.has(salesNik)) return null;
+
+        const details = Array.isArray(btb.details) ? btb.details : [];
+        const mappedDetails = details
+          .map((d) => ({
+            itemCode: String(d.item_code || "").trim(),
+            itemName: String(d.item_name || d.item_code || "").trim() || "-",
+            inventoryItemId: String(d.inventory_item_id || "").trim(),
+            qty: Number(d.btb_qty) || 0,
+            uom: String(d.btb_uom || "BKS").trim() || "BKS",
+          }))
+          .filter((d) => d.itemCode && d.qty > 0)
+          .sort((a, b) => a.itemName.localeCompare(b.itemName));
+
+        const totalQty = mappedDetails.reduce((sum, d) => sum + d.qty, 0);
+
+        return {
+          salesNik,
+          salesName: String(btb.sales_name || "").trim() || "-",
+          btbNumber: String(btb.btb_number || "").trim() || "-",
+          btbDate: btb.btb_date || null,
+          skuCount: mappedDetails.length,
+          totalQty,
+          details: mappedDetails,
+        };
+      })
+      .filter((row): row is NonNullable<typeof row> => row !== null)
+      .sort((a, b) => a.salesName.localeCompare(b.salesName));
+  }, [BTBdata, prepCallplans]);
+
   const { permintaanReportRows, returReportRows, tambahanReportRows } =
     useGoodPrepReportRows({
       enrichedData,
       returEnrichedData,
+      orphanBtbLines: btbWithoutSpbSales.flatMap((sales) =>
+        sales.details.map((d) => ({
+          itemCode: d.itemCode,
+          itemName: d.itemName,
+          inventoryItemId: d.inventoryItemId,
+          qty: d.qty,
+        })),
+      ),
       itemList: Array.isArray(itemList) ? itemList : [],
     });
 
@@ -394,8 +443,8 @@ function GoodPrepView({
                 : `Belum ada data BTB terbaru untuk perhitungan Top Up${organization_name ? ` di cabang ${organization_name}` : ""}`}
             </p>
             <p className="mt-0.5 text-xs text-amber-800/90">
-              Table tetap bisa dilihat, tetapi Adjust Qty, Integrate Meta, Summary,
-              dan print form dikunci sampai data BTB cabang tersedia.
+              Table dan action tetap bisa dipakai. Perhitungan Top Up / Sisa BTB
+              memakai qty BTB = 0 sampai data BTB cabang tersedia.
             </p>
           </div>
         </div>
@@ -408,6 +457,7 @@ function GoodPrepView({
         skuSummary={skuSummary}
         globalHasLessStock={globalHasLessStock}
         branchLessStockSpbList={branchLessStockSpbList}
+        btbWithoutSpbSales={btbWithoutSpbSales}
         onSearchChange={setGlobalFilter}
         onSelectSpb={handleFocusSpbFromAlert}
       />

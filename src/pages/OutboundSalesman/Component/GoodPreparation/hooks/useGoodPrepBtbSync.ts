@@ -75,10 +75,8 @@ export const useGoodPrepBtbSync = ({
     () => isBTBSuccess && btbData.length === 0,
     [isBTBSuccess, btbData.length],
   );
-  const isPrintDisabled = useMemo(
-    () => !isBTBSuccess || isBTBEmpty,
-    [isBTBSuccess, isBTBEmpty],
-  );
+  // BTB kosong / belum ada tidak mengunci action — hitungan pakai qty_btb = 0
+  const isPrintDisabled = false;
 
   return {
     btbData,

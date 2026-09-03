@@ -244,7 +244,8 @@ export const GoodsPreparationPage = ({
   );
 
   const isBTBEmpty = isBTBSuccess && (!BTBdata || BTBdata.length === 0);
-  const isPrintDisabled = !isBTBSuccess || isBTBEmpty;
+  const isPrintDisabled = false;
+  // const isPrintDisabled = !isBTBSuccess || isBTBEmpty;
 
   // Tombol global disabled jika BTB gagal, kosong, atau Callplan lampau
   const isGlobalPrintDisabled = isPrintDisabled || isCallPlanBeforeBTB;

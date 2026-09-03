@@ -1,4 +1,5 @@
 import React, { useRef, useState } from "react";
+import { BtbWithoutSpbAlert, BtbWithoutSpbSales } from "../BtbWithoutSpbAlert";
 import { IntegrateBlockAlert } from "../IntegrateBlockAlert";
 import {
   SKUSummaryPanel,
@@ -21,6 +22,7 @@ type GoodPrepSohSectionProps = {
   skuSummary: SkuSummaryItem[];
   globalHasLessStock: boolean;
   branchLessStockSpbList: string[];
+  btbWithoutSpbSales?: BtbWithoutSpbSales[];
   onSearchChange: (value: string) => void;
   onSelectSpb: (spbNumber: string) => void;
 };
@@ -66,6 +68,7 @@ export const GoodPrepSohSection = ({
   skuSummary,
   globalHasLessStock,
   branchLessStockSpbList,
+  btbWithoutSpbSales = [],
   onSearchChange,
   onSelectSpb,
 }: GoodPrepSohSectionProps) => {
@@ -139,6 +142,8 @@ export const GoodPrepSohSection = ({
           onSelectSpb={onSelectSpb}
         />
       )}
+
+      <BtbWithoutSpbAlert items={btbWithoutSpbSales} />
     </div>
   );
 };
