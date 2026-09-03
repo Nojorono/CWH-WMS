@@ -75,8 +75,7 @@ export const useGoodPrepActions = ({
 
     setIsSavingAdjust(true);
     try {
-      // Pola sama useSubmitDOSuggestion: revision = nilai +/- , final = qty hasil
-      // Hanya kirim line yang berubah; update via updateDO (bukan batch)
+      // Pola: revision kumulatif (existing + adjustment baru), final = qty saat ini + adjustment
       const detailById = new Map(
         (callplan.details || []).map((d) => [d.id, d]),
       );
@@ -86,6 +85,8 @@ export const useGoodPrepActions = ({
           const detail = detailById.get(item.id);
           if (!detail) return null;
 
+          const existingRevision = Number(detail.item_qty_revision) || 0;
+          const totalRevision = existingRevision + item.adjustment;
           const finalQty = item.qtyAwal + item.adjustment;
 
           return {
@@ -93,7 +94,7 @@ export const useGoodPrepActions = ({
             item_code: detail.item_code,
             inventory_item_id: detail.inventory_item_id,
             item_qty_suggestion: Number(detail.item_qty_suggestion || 0),
-            item_qty_revision: item.adjustment,
+            item_qty_revision: totalRevision,
             item_qty_submitted: Number(detail.item_qty_submitted || 0),
             item_qty_final: finalQty,
             contribution_percentage: Number(

@@ -64,6 +64,11 @@ export const GoodPrepWorkflowModals = ({
         }}
         items={(adjustFromIntegrate?.details || []).map((d) => {
           const final = Number(d.item_qty_final ?? d.item_qty_submitted) || 0;
+          const revisionRaw = String(d.item_qty_revision ?? "").trim();
+          const qtyRevision =
+            revisionRaw !== "" && !Number.isNaN(Number(revisionRaw))
+              ? Number(revisionRaw)
+              : null;
           return {
             id: String(d.id),
             name:
@@ -71,7 +76,9 @@ export const GoodPrepWorkflowModals = ({
               d.item_code,
             sku: d.item_code,
             qtySuggestion: Number(d.item_qty_suggestion) || 0,
+            qtySubmitted: Number(d.item_qty_submitted) || 0,
             qtyAwal: final,
+            qtyRevision,
             adjustment: 0,
           };
         })}

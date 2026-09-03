@@ -10,9 +10,20 @@ export type AdjustQtyItem = {
   sku: string;
   kategori?: string;
   qtySuggestion: number;
+  qtySubmitted: number;
   qtyAwal: number;
+  qtyRevision?: number | null;
   adjustment: number;
 };
+
+const formatQtyRevision = (qtyRevision?: number | null) => {
+  if (qtyRevision === null || qtyRevision === undefined) return "-";
+  if (qtyRevision > 0) return `+${qtyRevision}`;
+  return String(qtyRevision);
+};
+
+const getTotalRevision = (item: AdjustQtyItem) =>
+  (Number(item.qtyRevision) || 0) + (Number(item.adjustment) || 0);
 
 export type AdjustQtyHeader = {
   callplanNumber?: string;
@@ -218,10 +229,33 @@ export default function AdjustQtySPB({
       className: "font-bold text-slate-800",
     },
     {
+      header: "QTY SUBMITTED",
+      key: "qtySubmitted",
+      align: "center",
+      className: "font-bold text-slate-800",
+    },
+    {
       header: "QTY FINAL",
       key: "qtyAwal",
       align: "center",
       className: "font-bold text-slate-800",
+    },
+    {
+      header: "QTY REVISION",
+      key: "qtyRevision",
+      align: "center",
+      className: "font-bold text-orange-600",
+      render: (item) => {
+        const hasAdjustment = Number(item.adjustment) !== 0;
+        if (!hasAdjustment) return formatQtyRevision(item.qtyRevision);
+
+        const total = getTotalRevision(item);
+        return (
+          <span className="inline-flex flex-col items-center leading-tight">
+            <span>{formatQtyRevision(total)}</span>
+          </span>
+        );
+      },
     },
     {
       header: "ADJUSTMENT (+/-)",

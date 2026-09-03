@@ -122,10 +122,13 @@ export const useGoodPrepReportRows = ({
       }
     > = {};
 
-    // Form Retur: Get All SPB (FINAL|VOID)
+    // Form Retur: Get All SPB (FINAL | VOID | VOID_NEED_ACTION)
     returSource.forEach((doc) => {
       const docStatus = String(doc.status || "").toUpperCase();
-      const isVoidDoc = docStatus === "VOID";
+      // VOID = belum integrate Meta; VOID_NEED_ACTION = sudah integrate lalu di-VOID
+      // Isi data sama → handling retur sama
+      const isVoidDoc =
+        docStatus === "VOID" || docStatus === "VOID_NEED_ACTION";
 
       doc.details.forEach((d) => {
         const finalQty =
@@ -144,7 +147,7 @@ export const useGoodPrepReportRows = ({
         const voidQty = Number.isNaN(voidQtyRaw) ? 0 : Math.abs(voidQtyRaw);
 
         // Prioritas Form Retur:
-        // 0) VOID → hanya |item_qty_void|; BTB diabaikan
+        // 0) VOID / VOID_NEED_ACTION → |void| + |revision| (jika revision < 0); BTB diabaikan
         // 1) FINAL: final − BTB < 0 → Retur = |final − BTB|, Final DO = final
         // 2) FINAL: revision < 0 → Retur = |revisi|, Final DO = |revisi|
         let qtyDelta = 0;
@@ -152,10 +155,11 @@ export const useGoodPrepReportRows = ({
         let sisaBarang = 0;
 
         if (isVoidDoc) {
-          if (voidQty <= 0) return;
+          const revisionAbs = hasNegativeRevision ? Math.abs(revision) : 0;
+          qtyDelta = voidQty + revisionAbs;
+          if (qtyDelta <= 0) return;
           sisaBarang = 0;
-          finalDo = voidQty;
-          qtyDelta = voidQty;
+          finalDo = qtyDelta;
         } else if (finalMinusBtb < 0) {
           qtyDelta = Math.abs(finalMinusBtb);
           finalDo = finalQty;
