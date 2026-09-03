@@ -11,7 +11,7 @@ import {
 } from "../../Report/hook/SKUconvertion";
 import { EnrichedCallplan } from "../types";
 
-/** Line BTB sales tanpa SPB → seluruh qty masuk Form Retur */
+/** Line BTB ekstra ke Form Retur: orphan (tanpa SPB) atau SKU BTB unmatched SPB */
 export type OrphanBtbReturLine = {
   itemCode: string;
   itemName: string;
@@ -23,7 +23,7 @@ type UseGoodPrepReportRowsParams = {
   enrichedData: EnrichedCallplan[];
   /** Sumber Form Retur (report/retur API). Fallback ke enrichedData jika kosong. */
   returEnrichedData?: EnrichedCallplan[];
-  /** BTB sales tanpa SPB — qty penuh di-retur */
+  /** BTB orphan / unmatched SPB — qty penuh di-retur */
   orphanBtbLines?: OrphanBtbReturLine[];
   itemList: any[] | undefined;
 };
@@ -209,7 +209,7 @@ export const useGoodPrepReportRows = ({
       });
     });
 
-    // BTB tanpa SPB: sales wajib retur seluruh stok BTB
+    // BTB orphan (tanpa SPB) + BTB SKU unmatched SPB → retur penuh
     orphanBtbLines.forEach((line) => {
       const qty = Number(line.qty) || 0;
       if (qty <= 0) return;

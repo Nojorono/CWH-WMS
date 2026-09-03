@@ -165,12 +165,14 @@ const buildCallplanUpdatePayload = (
 /**
  * BTB yang masuk logic Retur:
  * - orphan (sales tanpa SPB di Good Prep) dengan qty > 0
- * - atau sales yang punya line FINAL dengan final − BTB < 0 (top-up minus)
+ * - sales yang punya line FINAL dengan final − BTB < 0 (top-up minus)
+ * - sales yang punya BTB SKU unmatched (ada di BTB, tidak di SPB)
  */
 export const collectBtbsForReturPatch = (
   btbData: BTB[],
   returSource: EnrichedCallplan[],
   prepCallplans: Callplan[],
+  prepEnriched: EnrichedCallplan[] = [],
 ): BTB[] => {
   const spbNikSet = new Set(
     prepCallplans
@@ -179,18 +181,30 @@ export const collectBtbsForReturPatch = (
   );
 
   const topUpReturNiks = new Set<string>();
-  returSource.forEach((doc) => {
-    if (isVoidStatus(doc.status)) return;
-    const nik = String(doc.sales_nik || "").trim();
-    if (!nik) return;
+  const unmatchedBtbNiks = new Set<string>();
 
-    (doc.details || []).forEach((d) => {
-      const finalQty =
-        Number(d.item_qty_final ?? d.item_qty_submitted) || 0;
-      const btbQty = Number(d.qty_btb) || 0;
-      if (finalQty - btbQty < 0) topUpReturNiks.add(nik);
+  const collectFromDocs = (docs: EnrichedCallplan[]) => {
+    docs.forEach((doc) => {
+      const nik = String(doc.sales_nik || "").trim();
+      if (!nik) return;
+
+      const hasUnmatched = (doc.unmatchedBTBDetails || []).some(
+        (d) => Number(d.btb_qty) > 0,
+      );
+      if (hasUnmatched) unmatchedBtbNiks.add(nik);
+
+      if (isVoidStatus(doc.status)) return;
+      (doc.details || []).forEach((d) => {
+        const finalQty =
+          Number(d.item_qty_final ?? d.item_qty_submitted) || 0;
+        const btbQty = Number(d.qty_btb) || 0;
+        if (finalQty - btbQty < 0) topUpReturNiks.add(nik);
+      });
     });
-  });
+  };
+
+  collectFromDocs(returSource);
+  collectFromDocs(prepEnriched);
 
   const selected: BTB[] = [];
   const seenIds = new Set<string>();
@@ -204,7 +218,8 @@ export const collectBtbsForReturPatch = (
 
     const isOrphan = !spbNikSet.has(nik);
     const isTopUpRetur = topUpReturNiks.has(nik);
-    if (!isOrphan && !isTopUpRetur) return;
+    const isUnmatchedBtb = unmatchedBtbNiks.has(nik);
+    if (!isOrphan && !isTopUpRetur && !isUnmatchedBtb) return;
 
     seenIds.add(btb.id);
     selected.push(btb);
@@ -243,7 +258,12 @@ export const runGudangPrintMarkUpdates = async (args: {
 
   const btbs =
     mode === "retur"
-      ? collectBtbsForReturPatch(btbData, returSource, prepCallplans)
+      ? collectBtbsForReturPatch(
+          btbData,
+          returSource,
+          prepCallplans,
+          prepEnriched,
+        )
       : [];
 
   if (payloads.length === 0 && btbs.length === 0) {

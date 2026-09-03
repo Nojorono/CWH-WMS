@@ -209,7 +209,7 @@ export const PrepDetailTable = ({
 
       <div className="w-full overflow-hidden rounded-lg border border-rose-200 bg-white shadow-sm">
         <div className="border-b border-rose-100 bg-rose-50 px-4 py-3 text-xs font-bold uppercase text-rose-700">
-          {excessList.length} Items SPB yang tidak ada dalam BTB
+          {excessList.length} Items BTB yang tidak ada dalam SPB
         </div>
         <div className="max-h-72 overflow-auto">
           <table className="w-full table-fixed text-left text-xs">
@@ -227,7 +227,7 @@ export const PrepDetailTable = ({
                     colSpan={3}
                     className="px-3 py-6 text-center italic text-slate-400"
                   >
-                    Tidak ada unmatched BTB
+                    Tidak ada BTB unmatched
                   </td>
                 </tr>
               ) : (
