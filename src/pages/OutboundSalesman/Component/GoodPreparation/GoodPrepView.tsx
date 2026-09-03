@@ -271,7 +271,7 @@ function GoodPrepView({
             isActionsLocked || globalHasLessStock || isAlreadyIntegrated;
           const actionList = [
             {
-              label: "Print SPB",
+              label: "Print BKB",
               icon: FaPrint,
               onClick: () => {
                 setSelectedToPrint(rowData);
@@ -279,17 +279,6 @@ function GoodPrepView({
               },
               disabled: isActionsLocked,
               className: isActionsLocked ? "text-slate-400" : "text-blue-600",
-            },
-            {
-              label: "Print BKB",
-              icon: FaFileAlt,
-              onClick: () => {
-                showSuccessToast(
-                  `Print BKB (${rowData.spb_number || rowData.callplan_number}) — coming soon`,
-                );
-              },
-              disabled: isActionsLocked,
-              className: isActionsLocked ? "text-slate-400" : "text-indigo-600",
             },
             {
               label: "Integrate Meta & DMS",

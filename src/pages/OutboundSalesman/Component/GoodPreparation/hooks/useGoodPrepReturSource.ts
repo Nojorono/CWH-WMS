@@ -12,72 +12,11 @@ type UseGoodPrepReturSourceParams = {
   enabled?: boolean;
 };
 
-const getCallplanDocKey = (cp: Callplan) => {
-  const key =
-    String(cp.callplan_number || "").trim() ||
-    String(cp.spb_number || "").trim() ||
-    String(cp.id || "").trim();
-  return key.toUpperCase();
-};
-
-/** VOID dianggap valid untuk menang jika minimal 1 line punya item_qty_void > 0 */
-const hasVoidQtyValue = (cp: Callplan) =>
-  (cp.details || []).some((d) => {
-    const raw = Number(
-      (d as { item_qty_void?: string | null }).item_qty_void,
-    );
-    return !Number.isNaN(raw) && Math.abs(raw) > 0;
-  });
-
-const statusPriority = (cp: Callplan) => {
-  const s = String(cp.status || "").toUpperCase();
-  // VOID / VOID_NEED_ACTION menang atas FINAL HANYA jika qty void ada value
-  const isVoidLike = s === "VOID" || s === "VOID_NEED_ACTION";
-  if (isVoidLike && hasVoidQtyValue(cp)) return 2;
-  if (isVoidLike) return 0; // void-like tanpa qty void → kalah dari FINAL
-  if (s === "FINAL") return 1;
-  return 0;
-};
-
 /**
- * 1 nomor Callplan/SPB hanya 1 dokumen.
- * Jika muncul ganda (FINAL + VOID / duplikat):
- * VOID menang hanya bila item_qty_void ada value; selain itu FINAL.
- */
-const dedupeCallplansByNumber = (rows: Callplan[]): Callplan[] => {
-  const map = new Map<string, Callplan>();
-
-  rows.forEach((cp) => {
-    const key = getCallplanDocKey(cp);
-    if (!key) return;
-
-    const existing = map.get(key);
-    if (!existing) {
-      map.set(key, cp);
-      return;
-    }
-
-    const nextPriority = statusPriority(cp);
-    const prevPriority = statusPriority(existing);
-    if (nextPriority > prevPriority) {
-      map.set(key, cp);
-      return;
-    }
-    if (nextPriority < prevPriority) return;
-
-    // Status sama → ambil yang updatedAt lebih baru
-    const nextUpdated = Date.parse(String(cp.updatedAt || "")) || 0;
-    const prevUpdated = Date.parse(String(existing.updatedAt || "")) || 0;
-    if (nextUpdated >= prevUpdated) map.set(key, cp);
-  });
-
-  return Array.from(map.values());
-};
-
-/**
- * Sumber khusus Form Retur:
- * Get All SPB by date + org → filter status FINAL | VOID | VOID_NEED_ACTION →
- * dedupe per nomor Callplan → enrich BTB.
+ * Sumber Form Retur:
+ * GET /do-suggestion/report/retur?callplanDateStart=...
+ * (data SPB sudah dibentuk BE), lalu enrich BTB cara lama:
+ * match sales_nik → per SKU item_code, fallback inventory_item_id.
  */
 export const useGoodPrepReturSource = ({
   organizationId,
@@ -98,33 +37,20 @@ export const useGoodPrepReturSource = ({
 
     let cancelled = false;
 
-    const fetchAll = async () => {
+    const fetchRetur = async () => {
       setIsReturSourceLoading(true);
       setReturSourceError(null);
       try {
-        const data = await callplanService.getAllCallplansByDateOrg({
-          dateStart: targetDate,
-          organizationId,
-        });
-        // Form Retur: FINAL + VOID + VOID_NEED_ACTION, lalu dedupe per nomor Callplan/SPB
-        const filtered = data.filter((cp) => {
-          const status = String(cp.status || "").toUpperCase();
-          return (
-            status === "FINAL" ||
-            status === "VOID" ||
-            status === "VOID_NEED_ACTION"
-          );
-        });
-        const deduped = dedupeCallplansByNumber(filtered);
-        if (!cancelled) setReturCallplans(deduped);
+        const data = await callplanService.getReturReport(targetDate);
+        if (!cancelled) setReturCallplans(data);
       } catch (error) {
-        console.error("Gagal fetch Get All SPB untuk Form Retur:", error);
+        console.error("Gagal fetch report retur:", error);
         if (!cancelled) {
           setReturCallplans([]);
           setReturSourceError(
             error instanceof Error
               ? error.message
-              : "Gagal mengambil data SPB untuk Form Retur",
+              : "Gagal mengambil data Form Retur",
           );
         }
       } finally {
@@ -132,7 +58,7 @@ export const useGoodPrepReturSource = ({
       }
     };
 
-    fetchAll();
+    fetchRetur();
     return () => {
       cancelled = true;
     };

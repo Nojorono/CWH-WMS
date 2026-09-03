@@ -42,6 +42,8 @@ export type IntegrateDmsBkbResponse = {
     status?: string;
     message?: string;
     data?: unknown;
+    /** true jika DMS bilang sudah BKB_ISSUED — dianggap sukses */
+    alreadyIssued?: boolean;
 };
 
 type DmsValidationIssue = {
@@ -156,6 +158,24 @@ export const parseIntegrateDmsError = (
 
     if (error instanceof Error && error.message) return error.message;
     return fallback;
+};
+
+/**
+ * CONFLICT + BKB_ISSUED = SPB sudah pernah issue BKB di DMS.
+ * Dianggap sukses agar alur lanjut ke Integrate Meta.
+ */
+export const isDmsBkbAlreadyIssued = (error: unknown): boolean => {
+    if (!axios.isAxiosError(error)) return false;
+
+    const data = error.response?.data as DmsApiErrorBody | undefined;
+    if (!data || typeof data !== "object") return false;
+
+    const code = String(data.code || "").toUpperCase();
+    const message = Array.isArray(data.message)
+        ? data.message.join(" ")
+        : String(data.message || "");
+
+    return code === "CONFLICT" && /BKB_ISSUED/i.test(message);
 };
 
 const toNumber = (value: unknown, fallback = 0): number => {
@@ -296,6 +316,30 @@ export const integrateDmsService = {
             } else {
                 debugIntegrateDms("POST error", error);
             }
+
+            // Sudah pernah BKB di DMS → anggap sukses, lanjut ke Meta
+            if (isDmsBkbAlreadyIssued(error)) {
+                const data = axios.isAxiosError(error)
+                    ? (error.response?.data as DmsApiErrorBody | undefined)
+                    : undefined;
+                const message = Array.isArray(data?.message)
+                    ? data.message.join(", ")
+                    : String(
+                          data?.message ||
+                              "SPB already BKB_ISSUED on DMS",
+                      );
+
+                debugIntegrateDms("POST already issued — treat as success", {
+                    message,
+                });
+
+                return {
+                    status: "BKB_ISSUED",
+                    message,
+                    alreadyIssued: true,
+                };
+            }
+
             throw error;
         }
     },
