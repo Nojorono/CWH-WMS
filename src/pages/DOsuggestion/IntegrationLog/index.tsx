@@ -195,7 +195,7 @@ const IntegrationMonitoringPage = () => {
       },
       {
         id: "actions",
-        header: "Aksi",
+        header: "Action",
         cell: ({ row }) => {
           const id = row.original.id;
           const status = String(row.original.iface_status || "").toUpperCase();

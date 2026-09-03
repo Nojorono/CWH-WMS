@@ -84,4 +84,16 @@ export const btbService = {
         const response = await axiosInstance.get<BTBResponse>("/btb/last-date-insert");
         return normalizeBTBResponse(response.data);
     },
+
+    /**
+     * PATCH /btb/:id
+     * Menandai BTB sudah di-print Form Retur.
+     */
+    updateBTBStatus: async (
+        id: string,
+        payload: { status: string; updated_by: string },
+    ): Promise<unknown> => {
+        const response = await axiosInstance.patch(`/btb/${id}`, payload);
+        return response.data;
+    },
 };
