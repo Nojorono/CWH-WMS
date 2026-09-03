@@ -122,7 +122,7 @@ export const useGoodPrepReportRows = ({
       }
     > = {};
 
-    // Form Retur: Get All SPB (FINAL | VOID | VOID_NEED_ACTION)
+    // Form Retur: API /do-suggestion/report/retur (+ enrich BTB)
     returSource.forEach((doc) => {
       const docStatus = String(doc.status || "").toUpperCase();
       // VOID = belum integrate Meta; VOID_NEED_ACTION = sudah integrate lalu di-VOID

@@ -52,4 +52,15 @@ export const callplanService = {
   getAllCallplansByDateOrg: async (
     params: Omit<GetCallplansParams, "status">,
   ): Promise<Callplan[]> => callplanService.getCallplans(params),
+
+  /**
+   * GET /do-suggestion/report/retur?callplanDateStart=YYYY-MM-DD
+   * Data SPB untuk Form Retur sudah dibentuk di BE (FINAL / VOID / VOID_NEED_ACTION).
+   */
+  getReturReport: async (callplanDateStart: string): Promise<Callplan[]> => {
+    const response = await axiosInstance.get("/do-suggestion/report/retur", {
+      params: { callplanDateStart },
+    });
+    return normalizeCallplans(response.data);
+  },
 };
