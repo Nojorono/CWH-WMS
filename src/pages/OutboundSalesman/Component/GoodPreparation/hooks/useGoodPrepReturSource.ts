@@ -31,9 +31,10 @@ const hasVoidQtyValue = (cp: Callplan) =>
 
 const statusPriority = (cp: Callplan) => {
   const s = String(cp.status || "").toUpperCase();
-  // VOID menang atas FINAL HANYA jika qty void ada value
-  if (s === "VOID" && hasVoidQtyValue(cp)) return 2;
-  if (s === "VOID") return 0; // VOID tanpa qty void → kalah dari FINAL
+  // VOID / VOID_NEED_ACTION menang atas FINAL HANYA jika qty void ada value
+  const isVoidLike = s === "VOID" || s === "VOID_NEED_ACTION";
+  if (isVoidLike && hasVoidQtyValue(cp)) return 2;
+  if (isVoidLike) return 0; // void-like tanpa qty void → kalah dari FINAL
   if (s === "FINAL") return 1;
   return 0;
 };
@@ -75,7 +76,7 @@ const dedupeCallplansByNumber = (rows: Callplan[]): Callplan[] => {
 
 /**
  * Sumber khusus Form Retur:
- * Get All SPB by date + org → filter status FINAL | VOID →
+ * Get All SPB by date + org → filter status FINAL | VOID | VOID_NEED_ACTION →
  * dedupe per nomor Callplan → enrich BTB.
  */
 export const useGoodPrepReturSource = ({
@@ -105,10 +106,14 @@ export const useGoodPrepReturSource = ({
           dateStart: targetDate,
           organizationId,
         });
-        // Form Retur: hanya FINAL + VOID, lalu dedupe per nomor Callplan/SPB
+        // Form Retur: FINAL + VOID + VOID_NEED_ACTION, lalu dedupe per nomor Callplan/SPB
         const filtered = data.filter((cp) => {
           const status = String(cp.status || "").toUpperCase();
-          return status === "FINAL" || status === "VOID";
+          return (
+            status === "FINAL" ||
+            status === "VOID" ||
+            status === "VOID_NEED_ACTION"
+          );
         });
         const deduped = dedupeCallplansByNumber(filtered);
         if (!cancelled) setReturCallplans(deduped);

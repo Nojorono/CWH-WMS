@@ -262,7 +262,9 @@ export const PrepDetailTable = ({
           sku: item.item_code,
           qtySuggestion:
             Number(item.suggestionQty ?? item.item_qty_suggestion) || 0,
+          qtySubmitted: Number(item.item_qty_submitted) || 0,
           qtyAwal: Number(item.finalQty) || 0,
+          qtyRevision: item.qtyRevision,
           adjustment: 0,
         }))}
         onClose={() => setIsAdjustOpen(false)}

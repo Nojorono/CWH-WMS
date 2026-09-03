@@ -195,7 +195,7 @@ const mapDetailToDmsLine = (
  */
 export const mapCallplanToDmsBkbPayload = (
     callplan: Callplan,
-): any => {
+): IntegrateDmsBkbPayload => {
     const organizationCode =
         callplan.organization?.organization_code ||
         callplan.organization?.organization_name ||
@@ -242,7 +242,7 @@ export const mapCallplanToDmsBkbPayload = (
         sales_spv_nik: "-",
         spb_date: toDateOnly(callplan.spb_date),
         spb_number: callplan.spb_number.trim(),
-        // lines,
+        lines,
     };
 };
 
