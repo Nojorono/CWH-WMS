@@ -105,61 +105,64 @@ export const PrintBkbModal = ({
     if (!isOpen || !data) return [];
     const masters = Array.isArray(itemList) ? itemList : [];
 
-    const matched = (data.details || []).map((item: any) => {
+    type SortableRow = BkbPrintRow & { _sortNick: string; _sortBrand: string };
+
+    // Logic sama Form Permintaan: submitted + BTB → Top Up; Perhitungan = submitted
+    // Kolom ADJUSTMENT DO (Tambah / Retur / Diterima) selalu kosong
+    const matched: SortableRow[] = [];
+    (data.details || []).forEach((item: any) => {
       const sku = String(item.item_code || "").trim();
       const invId = item.inventory_item_id;
       const master = findMasterItemBySkuAndInventory(masters, sku, invId);
       const btb = Number(item.qty_btb) || 0;
-      const finalQty = Number(item.item_qty_final ?? item.item_qty_submitted) || 0;
-      const topUp = finalQty - btb;
-      const revisionRaw = String(item.item_qty_revision ?? "").trim();
-      const revision = Number(revisionRaw);
-      const hasRevision = revisionRaw !== "" && !Number.isNaN(revision);
+      const submitted = Number(item.item_qty_submitted) || 0;
+      if (submitted <= 0 && btb <= 0) return;
 
-      return {
+      // Top Up minus → tidak masuk permintaan; di BKB Top Up dikosongkan
+      const topUpQty = submitted - btb;
+
+      matched.push({
         id: String(item.id || sku),
         nick: String(master?.item_number || "").trim() || "-",
         brand: sku || "-",
-        sisaBarang: formatBalSlopPack(btb, master),
-        topUp: topUp > 0 ? formatBalSlopPack(topUp, master) : "",
-        perhitungan: formatBalSlopPack(finalQty, master),
+        showNick: true,
+        sisaBarang: btb > 0 ? formatBalSlopPack(btb, master) : "",
+        topUp: topUpQty > 0 ? formatBalSlopPack(topUpQty, master) : "",
+        perhitungan:
+          submitted > 0 ? formatBalSlopPack(submitted, master) : "",
         diterimaDo: "",
-        tambah:
-          hasRevision && revision > 0
-            ? formatBalSlopPack(revision, master)
-            : "",
-        retur:
-          hasRevision && revision < 0
-            ? formatBalSlopPack(Math.abs(revision), master)
-            : topUp < 0
-              ? formatBalSlopPack(Math.abs(topUp), master)
-              : "",
+        tambah: "",
+        retur: "",
         diterimaAdj: "",
         _sortNick: String(master?.item_number || "zzzz"),
         _sortBrand: sku,
-      };
+      });
     });
 
-    const unmatched = (unmatchBTB || []).map((item: any, idx: number) => {
+    // BTB tanpa match SPB: tampilkan sisa saja (Adjustment tetap kosong)
+    const unmatched: SortableRow[] = [];
+    (unmatchBTB || []).forEach((item: any, idx: number) => {
       const sku = String(item.item_code || item.PRODUCT_SKU || "").trim();
       const invId = item.inventory_item_id;
       const master = findMasterItemBySkuAndInventory(masters, sku, invId);
       const btb = Number(item.btb_qty ?? item.QTY_BTB ?? item.qty_btb) || 0;
+      if (btb <= 0) return;
 
-      return {
+      unmatched.push({
         id: `unmatch-${sku || idx}`,
         nick: String(master?.item_number || "").trim() || "-",
         brand: sku || "-",
+        showNick: true,
         sisaBarang: formatBalSlopPack(btb, master),
         topUp: "",
         perhitungan: "",
         diterimaDo: "",
         tambah: "",
-        retur: formatBalSlopPack(btb, master),
+        retur: "",
         diterimaAdj: "",
         _sortNick: String(master?.item_number || "zzzz"),
         _sortBrand: sku,
-      };
+      });
     });
 
     const sorted = [...matched, ...unmatched].sort((a, b) => {
