@@ -191,7 +191,9 @@ export const useGoodPrepActions = ({
 
     setIsIntegrating(true);
     try {
-      await integrateDmsService.integrateBkbFromCallplan(callplan);
+      const dmsResult =
+        await integrateDmsService.integrateBkbFromCallplan(callplan);
+      const dmsAlreadyIssued = Boolean(dmsResult?.alreadyIssued);
 
       try {
         await integrateService.integrateToMetaGit(integrateTriggerSpb.id);
@@ -203,13 +205,17 @@ export const useGoodPrepActions = ({
           (metaError as Error)?.message ||
           "Gagal melakukan Integrate Meta";
         showErrorToast(
-          `Integrate DMS berhasil, tetapi Meta gagal untuk SPB ${spbLabel}: ${message}`,
+          dmsAlreadyIssued
+            ? `DMS sudah BKB_ISSUED, tetapi Meta gagal untuk SPB ${spbLabel}: ${message}`
+            : `Integrate DMS berhasil, tetapi Meta gagal untuk SPB ${spbLabel}: ${message}`,
         );
         return;
       }
 
       showSuccessToast(
-        `Integrate DMS & Meta berhasil untuk SPB ${spbLabel}`,
+        dmsAlreadyIssued
+          ? `DMS sudah BKB_ISSUED, Integrate Meta berhasil untuk SPB ${spbLabel}`
+          : `Integrate DMS & Meta berhasil untuk SPB ${spbLabel}`,
       );
       await refetchPrepCallplans();
     } catch (error: unknown) {
