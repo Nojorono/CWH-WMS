@@ -60,7 +60,7 @@ export const GoodPrepHeaderActions = ({
         <button
           type="button"
           onClick={onOpenRetur}
-          disabled={isPrintDisabled || returCount === 0}
+          disabled={isPrintDisabled}
           title={
             isPrintDisabled
               ? "Dikunci — data BTB cabang belum tersedia"

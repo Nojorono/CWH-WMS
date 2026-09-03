@@ -14,7 +14,6 @@ import { useStoreItem } from "../../../../DynamicAPI/stores/Store/MasterStore";
 import { showErrorToast, showSuccessToast } from "../../../../components/toast";
 import { BaseTable } from "../../../DOsuggestion/OutboundSales/component/BaseTable";
 import { PrintAllSKU } from "../../../DOsuggestion/OutboundSales/component/PrintAllSKU";
-import { PrintPreviewModal } from "../../../DOsuggestion/OutboundSales/component/PrintPreviewModal";
 import { useRealTimeSOH } from "../../hook/useRealTimeSOH";
 import { GoodPrepViewProps } from "../../types/flow";
 import { LoadingOverlay } from "./LoadingOverlay";
@@ -26,6 +25,7 @@ import {
   GoodPrepReportModals,
   GoodPrepSohSection,
   GoodPrepWorkflowModals,
+  PrintBkbModal,
 } from "./components";
 import {
   useGoodPrepActions,
@@ -440,11 +440,10 @@ function GoodPrepView({
         />
       </div>
 
-      <PrintPreviewModal
+      <PrintBkbModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         data={printModalData}
-        integrationInfo={null}
         unmatchBTB={selectedToPrint?.unmatchedBTBDetails || []}
       />
 
