@@ -14,10 +14,11 @@ import {
   SPB_DETAIL_SUMMARY_CARDS,
   SPB_MASTER_COLUMNS,
   DynamicColumn,
+  SortDirection,
   SummaryCardConfig,
 } from "./spbTableConfig";
 import { integrateService } from "../../Services/IntegrateService";
-import { showErrorToast } from "../../../../components/toast";
+import { showErrorToast, showSuccessToast } from "../../../../components/toast";
 
 type SPBTableProps = {
   data: Callplan[];
@@ -30,6 +31,9 @@ type SPBTableProps = {
   totalItems: number;
   onPageChange: (page: number) => void;
   onPageSizeChange: (size: number) => void;
+  sortKey?: string;
+  sortDirection?: SortDirection;
+  onSortChange?: (sortKey: string, direction: SortDirection) => void;
   /** Override kolom master jika perlu (opsional) */
   masterColumns?: DynamicColumn<Callplan>[];
   detailColumns?: DynamicColumn<any>[];
@@ -49,11 +53,15 @@ export default function SPBTable({
   totalItems,
   onPageChange,
   onPageSizeChange,
+  sortKey,
+  sortDirection = "asc",
+  onSortChange,
   masterColumns = SPB_MASTER_COLUMNS,
   detailColumns = SPB_DETAIL_COLUMNS,
   summaryCards = SPB_DETAIL_SUMMARY_CARDS,
   onVoidActionComplete,
 }: SPBTableProps) {
+
   const [voidLoadingIds, setVoidLoadingIds] = useState<Record<string, boolean>>({});
 
   const handleVoidAction = async (row: Callplan) => {
@@ -63,6 +71,10 @@ export default function SPBTable({
     setVoidLoadingIds((prev) => ({ ...prev, [id]: true }));
     try {
       await integrateService.integrateToKecil(id);
+      const spbLabel = row.spb_number || row.callplan_number || id;
+      showSuccessToast(
+        `Void Action berhasil untuk SPB ${spbLabel}. Memuat data VOID...`,
+      );
       onVoidActionComplete?.();
     } catch (err: unknown) {
       const msg =
@@ -74,6 +86,17 @@ export default function SPBTable({
     } finally {
       setVoidLoadingIds((prev) => ({ ...prev, [id]: false }));
     }
+  };
+
+  const handleSort = (columnId: string) => {
+    if (!onSortChange) return;
+
+    if (sortKey === columnId) {
+      onSortChange(columnId, sortDirection === "asc" ? "desc" : "asc");
+      return;
+    }
+
+    onSortChange(columnId, "asc");
   };
 
   const visibleMaster = getVisibleColumns(masterColumns);
@@ -109,14 +132,33 @@ export default function SPBTable({
           <thead className="bg-orange-500 text-xs uppercase text-white">
             <tr>
               <th className="w-10 px-4 py-3" />
-              {visibleMaster.map((col) => (
-                <th
-                  key={col.id}
-                  className={`px-4 py-3 font-semibold tracking-wide ${getAlignClass(col.align)} ${col.headerClassName || ""}`}
-                >
-                  {col.header}
-                </th>
-              ))}
+              {visibleMaster.map((col) => {
+                const isSortable = Boolean(col.sortable && onSortChange);
+                const isActive = sortKey === col.id;
+
+                return (
+                  <th
+                    key={col.id}
+                    onClick={
+                      isSortable ? () => handleSort(col.id) : undefined
+                    }
+                    className={`px-4 py-3 font-semibold tracking-wide ${getAlignClass(col.align)} ${col.headerClassName || ""} ${
+                      isSortable
+                        ? "cursor-pointer select-none hover:bg-orange-600"
+                        : ""
+                    }`}
+                  >
+                    <span className="inline-flex items-center gap-1">
+                      {col.header}
+                      {isSortable && isActive && (
+                        <span className="text-[10px]">
+                          {sortDirection === "asc" ? "▲" : "▼"}
+                        </span>
+                      )}
+                    </span>
+                  </th>
+                );
+              })}
             </tr>
           </thead>
 

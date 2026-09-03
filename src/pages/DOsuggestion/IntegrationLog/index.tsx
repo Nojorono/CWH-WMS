@@ -2,6 +2,7 @@ import { useState, useMemo, useRef, useCallback, useEffect } from "react";
 import { ColumnDef } from "@tanstack/react-table";
 import { useMoveOrderIntegration } from "./hook/useMoveOrderIntegration";
 import { MoveOrderIntegrationHeader } from "../../../API/types/DOsuggestionIntegration";
+import { pollMoveOrderIntegration } from "../../../API/services/DOsuggestionServices/integrationMetaService";
 import { DataTable } from "./component/Table";
 import {
   FaFilter,
@@ -13,6 +14,7 @@ import {
 } from "react-icons/fa";
 import { formatDateTimeIndo } from "../../../helper/FormatDateTime";
 import { useStoreItem } from "../../../DynamicAPI/stores/Store/MasterStore";
+import { showErrorToast, showSuccessToast } from "../../../components/toast";
 
 // Komponen Badge dengan Pesan Informatif
 const StatusBadge = ({
@@ -79,7 +81,47 @@ const IntegrationMonitoringPage = () => {
   });
 
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [pollingIds, setPollingIds] = useState<Record<string, boolean>>({});
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handlePollIntegration = useCallback(
+    async (id: string) => {
+      if (!id) return;
+
+      let alreadyPolling = false;
+      setPollingIds((prev) => {
+        if (prev[id]) {
+          alreadyPolling = true;
+          return prev;
+        }
+        return { ...prev, [id]: true };
+      });
+      if (alreadyPolling) return;
+
+      try {
+        await pollMoveOrderIntegration(id);
+        showSuccessToast("Polling integrasi berhasil. Data sedang diperbarui.");
+        await refetch();
+      } catch (error: unknown) {
+        const err = error as {
+          response?: { data?: { message?: string } };
+          message?: string;
+        };
+        showErrorToast(
+          err?.response?.data?.message ||
+            err?.message ||
+            "Gagal melakukan polling integrasi.",
+        );
+      } finally {
+        setPollingIds((prev) => {
+          const next = { ...prev };
+          delete next[id];
+          return next;
+        });
+      }
+    },
+    [refetch],
+  );
 
   const handleRefresh = useCallback(() => {
     if (isRefreshing || isLoading) return;
@@ -151,8 +193,44 @@ const IntegrationMonitoringPage = () => {
           />
         ),
       },
+      {
+        id: "actions",
+        header: "Aksi",
+        cell: ({ row }) => {
+          const id = row.original.id;
+          const status = String(row.original.iface_status || "").toUpperCase();
+          const isPolling = Boolean(pollingIds[id]);
+
+          if (status !== "ERROR") {
+            return <span className="text-xs text-slate-300">-</span>;
+          }
+
+          return (
+            <button
+              type="button"
+              disabled={!id || isPolling}
+              onClick={(event) => {
+                event.stopPropagation();
+                handlePollIntegration(id);
+              }}
+              title="Polling status integrasi ke server"
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-semibold transition-all ${
+                isPolling
+                  ? "border-slate-200 bg-slate-50 text-slate-400 cursor-not-allowed"
+                  : "border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 active:scale-95"
+              }`}
+            >
+              <FaSyncAlt
+                size={11}
+                className={isPolling ? "animate-spin" : ""}
+              />
+              {isPolling ? "Polling..." : "Poll"}
+            </button>
+          );
+        },
+      },
     ],
-    [],
+    [handlePollIntegration, pollingIds],
   );
 
   return (
@@ -164,7 +242,7 @@ const IntegrationMonitoringPage = () => {
               Monitoring Integrasi
             </h1>
             <p className="text-sm text-slate-500">
-              Pusat kontrol dan pantauan sinkronisasi data.
+              Pusat kontrol dan pantauan integraasi data ke Meta.
             </p>
           </div>
 

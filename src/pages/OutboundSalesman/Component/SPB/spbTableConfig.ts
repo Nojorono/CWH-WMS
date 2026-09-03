@@ -3,11 +3,15 @@ import { Callplan, CallplanDetail } from "../../types/CallplanTypes";
 
 export type ColumnAlign = "left" | "right" | "center";
 
+export type SortDirection = "asc" | "desc";
+
 export type DynamicColumn<T> = {
   id: string;
   header: string;
   /** Set false untuk hide tanpa hapus definisi */
   visible?: boolean;
+  /** Bisa di-sort dari header tabel master */
+  sortable?: boolean;
   align?: ColumnAlign;
   headerClassName?: string;
   cellClassName?: string;
@@ -39,21 +43,25 @@ export const SPB_MASTER_COLUMNS: DynamicColumn<Callplan>[] = [
   {
     id: "callplan_number",
     header: "Callplan Number",
+    sortable: true,
     cellClassName: "text-gray-600",
   },
   {
     id: "spb_number",
     header: "SPB Number",
+    sortable: true,
     cellClassName: "text-gray-600",
   },
   {
     id: "sales_nik",
     header: "NIK Sales",
+    sortable: true,
     cellClassName: "text-gray-600",
   },
   {
     id: "sales_name",
     header: "Nama Sales",
+    sortable: true,
     cellClassName: "text-gray-800 font-medium",
   },
   {
@@ -77,6 +85,7 @@ export const SPB_MASTER_COLUMNS: DynamicColumn<Callplan>[] = [
   {
     id: "callplan_date_start",
     header: "Start Date",
+    sortable: true,
     cellClassName: "text-gray-600",
   },
   {
@@ -173,3 +182,41 @@ export const resolveCellValue = <T extends Record<string, any>>(
 
 export const getVisibleColumns = <T>(columns: DynamicColumn<T>[]) =>
   columns.filter((col) => col.visible !== false);
+
+const getCallplanSortValue = (row: Callplan, sortKey: string): string | number => {
+  if (sortKey === "total_sku") {
+    return row.details?.length || 0;
+  }
+
+  const raw = row[sortKey as keyof Callplan];
+  if (raw === null || raw === undefined) return "";
+
+  if (sortKey === "callplan_date_start") {
+    return String(raw);
+  }
+
+  return String(raw).toLowerCase();
+};
+
+export const sortCallplans = (
+  rows: Callplan[],
+  sortKey: string,
+  direction: SortDirection,
+): Callplan[] => {
+  const multiplier = direction === "asc" ? 1 : -1;
+
+  return [...rows].sort((a, b) => {
+    const av = getCallplanSortValue(a, sortKey);
+    const bv = getCallplanSortValue(b, sortKey);
+
+    if (typeof av === "number" && typeof bv === "number") {
+      return (av - bv) * multiplier;
+    }
+
+    const aStr = String(av);
+    const bStr = String(bv);
+    if (aStr < bStr) return -1 * multiplier;
+    if (aStr > bStr) return 1 * multiplier;
+    return 0;
+  });
+};

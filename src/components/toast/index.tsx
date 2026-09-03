@@ -28,7 +28,7 @@ export const showToast = (message: string) => {
 export const showErrorToast = (errorMessage: string) => {
     toast.error(errorMessage, {
         position: "top-right",
-        autoClose: 5000,
+        autoClose: errorMessage.includes("\n") ? 10000 : 5000,
         hideProgressBar: false,
         closeOnClick: true,
         pauseOnHover: true,
@@ -36,7 +36,7 @@ export const showErrorToast = (errorMessage: string) => {
         progress: undefined,
         theme: "dark",
         transition: Bounce,
-        style: { zIndex: 9999 }, // Ensure the toast appears on top
+        style: { zIndex: 9999, whiteSpace: "pre-line" },
     });
 };
 

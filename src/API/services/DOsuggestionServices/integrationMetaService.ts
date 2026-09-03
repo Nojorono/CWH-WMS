@@ -22,3 +22,10 @@ export const getMoveOrderIntegration = async (
         throw error;
     }
 };
+
+export const pollMoveOrderIntegration = async (id: string) => {
+    const response = await axiosInstance.get(
+        `/move-order-integration/polling/${id}`,
+    );
+    return response.data;
+};
