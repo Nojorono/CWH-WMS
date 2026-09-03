@@ -1,8 +1,13 @@
 import { Item } from "../../../../../DynamicAPI/types/ItemTypes";
 
-type MasterItemForConversion = Pick<
+export type MasterItemForConversion = Pick<
   Item,
-  "sku" | "inventory_item_id" | "bal_per_dus" | "press_per_bal" | "bks_per_press"
+  | "sku"
+  | "inventory_item_id"
+  | "item_number"
+  | "bal_per_dus"
+  | "press_per_bal"
+  | "bks_per_press"
 >;
 
 export type SKUConversionResult = {
