@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { showErrorToast } from "../../../../../components/toast";
 import { btbService } from "../../../Services/BTBService";
 import { BTB } from "../../../types/BTBtypes";
@@ -25,42 +25,50 @@ export const useGoodPrepBtbSync = ({
   const [showLoading, setShowLoading] = useState(true);
   const [btbLastDateLabel, setBtbLastDateLabel] = useState<string | null>(null);
 
-  useEffect(() => {
-    const fetchBTB = async () => {
+  const refetchBtb = useCallback(async (options?: { silent?: boolean }) => {
+    const silent = Boolean(options?.silent);
+    if (!silent) {
       setIsBTBLoading(true);
-      setErrBTB(null);
       setIsBTBSuccess(false);
+    }
+    setErrBTB(null);
 
-      try {
-        const result = await btbService.getBTBLastDateInsert();
-        // Label tanggal dari response API (bukan tanggal callplan/SPB)
-        setBtbLastDateLabel(getLatestBtbDateLabel(result.data));
+    try {
+      const result = await btbService.getBTBLastDateInsert();
+      setBtbLastDateLabel(getLatestBtbDateLabel(result.data));
 
-        // Filter cabang saja — matching sales_nik dilakukan saat enrich per SPB
-        const filtered = result.data.filter(
-          (row) =>
-            matchesBtbOrganization(row, organizationId) ||
-            matchesBtbOrganization(row, organizationCode),
-        );
+      const filtered = result.data.filter(
+        (row) =>
+          matchesBtbOrganization(row, organizationId) ||
+          matchesBtbOrganization(row, organizationCode),
+      );
 
-        setBtbData(normalizeBtbForGoodPrep(filtered));
-        setIsBTBSuccess(true);
-      } catch (error) {
-        console.error("Gagal fetch BTB (last-date-insert):", error);
-        const message =
-          error instanceof Error ? error.message : "Gagal mengambil data BTB";
-        setErrBTB(message);
+      const normalized = normalizeBtbForGoodPrep(filtered);
+      setBtbData(normalized);
+      setIsBTBSuccess(true);
+      return normalized;
+    } catch (error) {
+      console.error("Gagal fetch BTB (last-date-insert):", error);
+      const message =
+        error instanceof Error ? error.message : "Gagal mengambil data BTB";
+      setErrBTB(message);
+      if (!silent) {
         setBtbData([]);
         setBtbLastDateLabel(null);
         setIsBTBSuccess(false);
-        showErrorToast(message);
-      } finally {
-        setIsBTBLoading(false);
       }
-    };
-
-    fetchBTB();
+      showErrorToast(message);
+      throw error;
+    } finally {
+      if (!silent) setIsBTBLoading(false);
+    }
   }, [organizationId, organizationCode]);
+
+  useEffect(() => {
+    void refetchBtb().catch(() => {
+      // toast sudah di refetchBtb
+    });
+  }, [refetchBtb]);
 
   useEffect(() => {
     if (isBTBLoading) {
@@ -87,5 +95,6 @@ export const useGoodPrepBtbSync = ({
     isBTBEmpty,
     isPrintDisabled,
     btbLastDateLabel,
+    refetchBtb,
   };
 };

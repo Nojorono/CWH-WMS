@@ -92,25 +92,6 @@ export const BtbWithoutSpbAlert = ({ items }: BtbWithoutSpbAlertProps) => {
               </p>
             </div>
           </div>
-
-          {/* <div className="flex shrink-0 items-center gap-2 self-start">
-            <button
-              type="button"
-              onClick={expandAll}
-              disabled={allExpanded}
-              className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 shadow-sm transition-colors hover:bg-slate-50 hover:text-slate-900 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              Buka Semua
-            </button>
-            <button
-              type="button"
-              onClick={collapseAll}
-              disabled={!Object.values(expandedNiks).some(Boolean)}
-              className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 shadow-sm transition-colors hover:bg-slate-50 hover:text-slate-900 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              Tutup Semua
-            </button>
-          </div> */}
         </div>
       </div>
 

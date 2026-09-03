@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { callplanService } from "../../../Services/CallplanService";
 import { Callplan } from "../../../types/CallplanTypes";
 import { BTB } from "../../../types/BTBtypes";
@@ -27,6 +27,33 @@ export const useGoodPrepReturSource = ({
   const [returCallplans, setReturCallplans] = useState<Callplan[]>([]);
   const [isReturSourceLoading, setIsReturSourceLoading] = useState(false);
   const [returSourceError, setReturSourceError] = useState<string | null>(null);
+
+  const refetchReturSource = useCallback(async () => {
+    if (!enabled || !organizationId || !targetDate) {
+      setReturCallplans([]);
+      setReturSourceError(null);
+      return [];
+    }
+
+    setIsReturSourceLoading(true);
+    setReturSourceError(null);
+    try {
+      const data = await callplanService.getReturReport(targetDate);
+      setReturCallplans(data);
+      return data;
+    } catch (error) {
+      console.error("Gagal fetch report retur:", error);
+      setReturCallplans([]);
+      setReturSourceError(
+        error instanceof Error
+          ? error.message
+          : "Gagal mengambil data Form Retur",
+      );
+      throw error;
+    } finally {
+      setIsReturSourceLoading(false);
+    }
+  }, [enabled, organizationId, targetDate]);
 
   useEffect(() => {
     if (!enabled || !organizationId || !targetDate) {
@@ -74,5 +101,6 @@ export const useGoodPrepReturSource = ({
     returEnrichedData,
     isReturSourceLoading,
     returSourceError,
+    refetchReturSource,
   };
 };

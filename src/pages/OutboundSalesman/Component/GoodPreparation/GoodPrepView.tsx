@@ -96,6 +96,7 @@ function GoodPrepView({
     isBTBEmpty,
     isPrintDisabled,
     btbLastDateLabel,
+    refetchBtb,
   } = useGoodPrepBtbSync({
     organizationId: organization_id || undefined,
     organizationCode: organization_code || undefined,
@@ -112,7 +113,7 @@ function GoodPrepView({
     btbData: BTBdata,
   });
 
-  const { returEnrichedData } = useGoodPrepReturSource({
+  const { returEnrichedData, refetchReturSource } = useGoodPrepReturSource({
     organizationId: organization_id,
     targetDate,
     btbData: BTBdata,
@@ -521,6 +522,13 @@ function GoodPrepView({
         onClosePermintaan={() => setIsPermintaanOpen(false)}
         onCloseRetur={() => setIsReturOpen(false)}
         onCloseTambahan={() => setIsTambahanOpen(false)}
+        returEnrichedData={returEnrichedData}
+        enrichedData={enrichedData}
+        prepCallplans={prepCallplans}
+        btbData={BTBdata}
+        refetchPrepCallplans={refetchPrepCallplans}
+        refetchReturSource={refetchReturSource}
+        refetchBtb={refetchBtb}
       />
 
       <GoodPrepWorkflowModals
