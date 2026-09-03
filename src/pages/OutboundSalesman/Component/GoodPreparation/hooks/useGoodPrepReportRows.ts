@@ -11,10 +11,20 @@ import {
 } from "../../Report/hook/SKUconvertion";
 import { EnrichedCallplan } from "../types";
 
+/** Line BTB sales tanpa SPB → seluruh qty masuk Form Retur */
+export type OrphanBtbReturLine = {
+  itemCode: string;
+  itemName: string;
+  inventoryItemId: string;
+  qty: number;
+};
+
 type UseGoodPrepReportRowsParams = {
   enrichedData: EnrichedCallplan[];
-  /** Sumber Form Retur (Get All SPB). Fallback ke enrichedData jika kosong. */
+  /** Sumber Form Retur (report/retur API). Fallback ke enrichedData jika kosong. */
   returEnrichedData?: EnrichedCallplan[];
+  /** BTB sales tanpa SPB — qty penuh di-retur */
+  orphanBtbLines?: OrphanBtbReturLine[];
   itemList: any[] | undefined;
 };
 
@@ -52,9 +62,10 @@ const withUomConversion = (
 export const useGoodPrepReportRows = ({
   enrichedData,
   returEnrichedData,
+  orphanBtbLines = [],
   itemList,
 }: UseGoodPrepReportRowsParams) => {
-  // Form Retur pakai Get All SPB bila disediakan; selain itu fallback FINAL
+  // Form Retur pakai report/retur bila disediakan; selain itu fallback enrichedData
   const returSource = returEnrichedData ?? enrichedData;
 
   const permintaanReportRows = useMemo((): PermintaanBarangRow[] => {
@@ -198,11 +209,40 @@ export const useGoodPrepReportRows = ({
       });
     });
 
+    // BTB tanpa SPB: sales wajib retur seluruh stok BTB
+    orphanBtbLines.forEach((line) => {
+      const qty = Number(line.qty) || 0;
+      if (qty <= 0) return;
+
+      const sku = String(line.itemCode || "").trim();
+      const invId = String(line.inventoryItemId || "").trim();
+      if (!sku) return;
+
+      const key = `${sku}_${invId}`;
+      const master = itemList?.find((m: any) => m.sku === sku);
+      const itemName =
+        master?.description || line.itemName || sku;
+
+      if (summary[key]) {
+        summary[key].sisaBarang += qty;
+        summary[key].qtyDelta += qty;
+      } else {
+        summary[key] = {
+          code: sku,
+          name: itemName,
+          inventoryItemId: invId,
+          sisaBarang: qty,
+          finalDo: 0,
+          qtyDelta: qty,
+        };
+      }
+    });
+
     return Object.values(summary)
       .filter((row) => Number(row.qtyDelta) > 0)
       .map((row) => withUomConversion(row, itemList))
       .sort((a, b) => a.name.localeCompare(b.name));
-  }, [returSource, itemList]);
+  }, [returSource, orphanBtbLines, itemList]);
 
   const tambahanReportRows = useMemo((): TambahanBarangRow[] => {
     const summary: Record<
