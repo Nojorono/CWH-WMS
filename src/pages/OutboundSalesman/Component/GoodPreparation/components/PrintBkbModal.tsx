@@ -107,8 +107,8 @@ export const PrintBkbModal = ({
 
     type SortableRow = BkbPrintRow & { _sortNick: string; _sortBrand: string };
 
-    // Logic sama Form Permintaan: submitted + BTB → Top Up; Perhitungan = submitted
-    // Kolom ADJUSTMENT DO (Tambah / Retur / Diterima) selalu kosong
+    // Sisa Barang = BTB; Perhitungan = Qty Submitted; Top Up = submitted − BTB
+    // Semua dikonversi Bal.Slop.Pack. ADJUSTMENT DO selalu kosong.
     const matched: SortableRow[] = [];
     (data.details || []).forEach((item: any) => {
       const sku = String(item.item_code || "").trim();
@@ -118,8 +118,13 @@ export const PrintBkbModal = ({
       const submitted = Number(item.item_qty_submitted) || 0;
       if (submitted <= 0 && btb <= 0) return;
 
-      // Top Up minus → tidak masuk permintaan; di BKB Top Up dikosongkan
       const topUpQty = submitted - btb;
+      const topUpFmt =
+        topUpQty === 0
+          ? ""
+          : topUpQty < 0
+            ? `-${formatBalSlopPack(Math.abs(topUpQty), master)}`
+            : formatBalSlopPack(topUpQty, master);
 
       matched.push({
         id: String(item.id || sku),
@@ -127,7 +132,7 @@ export const PrintBkbModal = ({
         brand: sku || "-",
         showNick: true,
         sisaBarang: btb > 0 ? formatBalSlopPack(btb, master) : "",
-        topUp: topUpQty > 0 ? formatBalSlopPack(topUpQty, master) : "",
+        topUp: topUpFmt,
         perhitungan:
           submitted > 0 ? formatBalSlopPack(submitted, master) : "",
         diterimaDo: "",
