@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { Callplan, CallplanDetail } from "../../../types/CallplanTypes";
 import { SohCheckLine } from "../IntegrateSOHCheckModal";
-import { EnrichedCallplan } from "../types";
+import { EnrichedCallplan, isSpbIntegratedToMeta } from "../types";
 import { getItemKey } from "../utils/getItemKey";
 
 type UseGoodPrepSohParams = {
@@ -53,6 +53,9 @@ export const useGoodPrepSoh = ({
 
     const reqMap = new Map<string, number>();
     prepCallplans.forEach((cp) => {
+      // SPB sudah integrate Meta → SOH sudah terpotong, jangan dihitung lagi
+      if (isSpbIntegratedToMeta(cp)) return;
+
       (cp.details || []).forEach((detail) => {
         const key = getItemKey({
           inventory_item_id: detail.inventory_item_id,
@@ -84,7 +87,7 @@ export const useGoodPrepSoh = ({
         item_description: meta?.item_description || "-",
         createdAt: meta?.createdAt || null,
         soh: stockMap.get(key) || 0,
-        totalRequest: reqMap.get(key) || 0, // compare terhadap Final Qty
+        totalRequest: reqMap.get(key) || 0, // Σ Final SPB belum integrate Meta
       };
     });
   }, [stockList, prepCallplans, itemList]);
@@ -116,9 +119,8 @@ export const useGoodPrepSoh = ({
   }, [stockList]);
 
   /**
-   * Penjagaan cabang: total Qty Final seluruh SPB per SKU vs SOH.
-   * Contoh ABC12: total SPB 604 > SOH 601 → Less Stock cabang,
-   * meskipun Qty tiap SPB sendiri masih di bawah SOH.
+   * Penjagaan cabang: total Qty Final SPB yang BELUM integrate Meta vs SOH.
+   * SPB sudah Meta tidak dihitung (SOH sudah terpotong).
    */
   const branchOversoldSkus = useMemo(() => {
     return new Set(
@@ -131,20 +133,21 @@ export const useGoodPrepSoh = ({
 
   const globalHasLessStock = branchOversoldSkus.size > 0;
 
-  /** SPB yang ikut menyumbang SKU Less Stock di level cabang */
+  /** SPB belum Meta yang ikut menyumbang SKU Less Stock di level cabang */
   const branchLessStockSpbList = useMemo(() => {
     if (!branchOversoldSkus.size) return [];
     const source = enrichedData.length ? enrichedData : prepCallplans;
     return [
       ...new Set(
         source
-          .filter((doc) =>
-            (doc.details || []).some((detail) =>
+          .filter((doc) => {
+            if (isSpbIntegratedToMeta(doc)) return false;
+            return (doc.details || []).some((detail) =>
               branchOversoldSkus.has(
                 String(detail.item_code || "").trim().toLowerCase(),
               ),
-            ),
-          )
+            );
+          })
           .map((doc) => doc.spb_number || doc.callplan_number || "-")
           .filter(Boolean),
       ),

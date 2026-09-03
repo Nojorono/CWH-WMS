@@ -3,7 +3,6 @@ import { FaDownload, FaFileAlt } from "react-icons/fa";
 
 type GoodPrepHeaderActionsProps = {
   isPrintDisabled: boolean;
-  returCount: number;
   onExportSummary: () => void;
   onOpenPermintaan: () => void;
   onOpenRetur: () => void;
@@ -12,7 +11,6 @@ type GoodPrepHeaderActionsProps = {
 
 export const GoodPrepHeaderActions = ({
   isPrintDisabled,
-  returCount,
   onExportSummary,
   onOpenPermintaan,
   onOpenRetur,
@@ -60,16 +58,14 @@ export const GoodPrepHeaderActions = ({
         <button
           type="button"
           onClick={onOpenRetur}
-          disabled={isPrintDisabled || returCount === 0}
+          disabled={isPrintDisabled}
           title={
             isPrintDisabled
               ? "Dikunci — data BTB cabang belum tersedia"
-              : returCount === 0
-                ? "Tidak ada data retur"
-                : undefined
+              : undefined
           }
           className={`flex items-center gap-2 rounded-lg px-4 py-2 text-xs font-semibold shadow-sm transition-colors ${
-            isPrintDisabled || returCount === 0
+            isPrintDisabled
               ? "cursor-not-allowed bg-slate-200 text-slate-400"
               : "border border-red-300 bg-white text-red-600 hover:bg-red-50"
           }`}

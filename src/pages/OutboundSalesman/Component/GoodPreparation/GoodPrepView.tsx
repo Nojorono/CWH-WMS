@@ -480,7 +480,6 @@ function GoodPrepView({
           headerActions={
             <GoodPrepHeaderActions
               isPrintDisabled={isPrintDisabled}
-              returCount={returReportRows.length}
               onExportSummary={handleExportSummary}
               onOpenPermintaan={() => setIsPermintaanOpen(true)}
               onOpenRetur={() => setIsReturOpen(true)}
