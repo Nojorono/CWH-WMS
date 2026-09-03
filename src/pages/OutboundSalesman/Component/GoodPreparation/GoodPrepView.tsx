@@ -229,18 +229,69 @@ function GoodPrepView({
       .sort((a, b) => a.salesName.localeCompare(b.salesName));
   }, [BTBdata, prepCallplans]);
 
-  const { permintaanReportRows, returReportRows, tambahanReportRows } =
-    useGoodPrepReportRows({
-      enrichedData,
-      returEnrichedData,
-      orphanBtbLines: btbWithoutSpbSales.flatMap((sales) =>
-        sales.details.map((d) => ({
+  /** BTB orphan + BTB unmatched SPB → ikut Form Retur (qty penuh) */
+  const returExtraBtbLines = useMemo(() => {
+    type Line = {
+      itemCode: string;
+      itemName: string;
+      inventoryItemId: string;
+      qty: number;
+    };
+    const lines: Line[] = [];
+    const seenDetailKeys = new Set<string>();
+
+    const pushUnmatched = (docs: EnrichedCallplan[]) => {
+      docs.forEach((doc) => {
+        const salesNik = String(doc.sales_nik || "").trim();
+        (doc.unmatchedBTBDetails || []).forEach((d) => {
+          const sku = String(d.item_code || "").trim();
+          const invId = String(d.inventory_item_id || "").trim();
+          const qty = Number(d.btb_qty) || 0;
+          if (!sku || qty <= 0) return;
+
+          const detailKey =
+            String(d.id || "").trim() ||
+            `${salesNik}|${sku}|${invId}`;
+          if (seenDetailKeys.has(detailKey)) return;
+          seenDetailKeys.add(detailKey);
+
+          lines.push({
+            itemCode: sku,
+            itemName: String(d.item_name || sku).trim() || sku,
+            inventoryItemId: invId,
+            qty,
+          });
+        });
+      });
+    };
+
+    // BTB tanpa SPB (sales orphan)
+    btbWithoutSpbSales.forEach((sales) => {
+      sales.details.forEach((d) => {
+        const detailKey = `${sales.salesNik}|${d.itemCode}|${d.inventoryItemId}`;
+        if (seenDetailKeys.has(detailKey)) return;
+        seenDetailKeys.add(detailKey);
+        lines.push({
           itemCode: d.itemCode,
           itemName: d.itemName,
           inventoryItemId: d.inventoryItemId,
           qty: d.qty,
-        })),
-      ),
+        });
+      });
+    });
+
+    // BTB SKU yang tidak ada di SPB (panel unmatched)
+    pushUnmatched(returEnrichedData);
+    pushUnmatched(enrichedData);
+
+    return lines;
+  }, [btbWithoutSpbSales, returEnrichedData, enrichedData]);
+
+  const { permintaanReportRows, returReportRows, tambahanReportRows } =
+    useGoodPrepReportRows({
+      enrichedData,
+      returEnrichedData,
+      orphanBtbLines: returExtraBtbLines,
       itemList: Array.isArray(itemList) ? itemList : [],
     });
 
