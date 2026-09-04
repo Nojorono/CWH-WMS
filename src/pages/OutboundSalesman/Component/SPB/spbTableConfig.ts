@@ -53,6 +53,13 @@ export const SPB_MASTER_COLUMNS: DynamicColumn<Callplan>[] = [
     cellClassName: "text-gray-600",
   },
   {
+    id: "mo_type",
+    header: "MO Type",
+    sortable: true,
+    cellClassName: "text-gray-600",
+    getValue: (row) => row.mo_type?.trim() || "-",
+  },
+  {
     id: "sales_nik",
     header: "NIK Sales",
     sortable: true,
