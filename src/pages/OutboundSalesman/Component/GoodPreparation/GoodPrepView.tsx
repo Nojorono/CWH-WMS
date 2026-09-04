@@ -357,6 +357,11 @@ function GoodPrepView({
   const columns: ColumnDef<EnrichedCallplan>[] = useMemo(
     () => [
       { accessorKey: "spb_number", header: "SPB Number" },
+      {
+        accessorKey: "mo_type",
+        header: "MO Type",
+        cell: ({ row }) => row.original.mo_type?.trim() || "-",
+      },
       { accessorKey: "sales_name", header: "Sales Name" },
       { accessorKey: "sales_nik", header: "Sales NIK" },
       { accessorKey: "callplan_date_start", header: "Start Date" },

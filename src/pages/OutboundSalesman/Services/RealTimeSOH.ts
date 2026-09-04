@@ -161,8 +161,10 @@ export const realTimeSOHService = {
       throw new Error("organization_code wajib diisi untuk get Realtime SOH");
     }
 
+    // Endpoint on-hand-meta sering >10s; axiosInstance default timeout 10s → ECONNABORTED
     const response = await axiosInstance.get(REALTIME_SOH_PATH, {
       params: buildQueryParams(params),
+      timeout: 90000,
     });
 
     return normalizeResponse(response.data);
