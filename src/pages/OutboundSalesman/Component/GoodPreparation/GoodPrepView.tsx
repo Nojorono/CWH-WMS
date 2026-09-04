@@ -532,6 +532,8 @@ function GoodPrepView({
           headerActions={
             <GoodPrepHeaderActions
               isPrintDisabled={isPrintDisabled}
+              hasReturData={returReportRows.length > 0}
+              hasTambahanData={tambahanReportRows.length > 0}
               onExportSummary={handleExportSummary}
               onOpenPermintaan={() => setIsPermintaanOpen(true)}
               onOpenRetur={() => setIsReturOpen(true)}

@@ -3,6 +3,10 @@ import { FaDownload, FaFileAlt } from "react-icons/fa";
 
 type GoodPrepHeaderActionsProps = {
   isPrintDisabled: boolean;
+  /** Ada baris Form Retur */
+  hasReturData?: boolean;
+  /** Ada baris Form Tambahan */
+  hasTambahanData?: boolean;
   onExportSummary: () => void;
   onOpenPermintaan: () => void;
   onOpenRetur: () => void;
@@ -11,11 +15,16 @@ type GoodPrepHeaderActionsProps = {
 
 export const GoodPrepHeaderActions = ({
   isPrintDisabled,
+  hasReturData = true,
+  hasTambahanData = true,
   onExportSummary,
   onOpenPermintaan,
   onOpenRetur,
   onOpenTambahan,
 }: GoodPrepHeaderActionsProps) => {
+  const isReturDisabled = isPrintDisabled || !hasReturData;
+  const isTambahanDisabled = isPrintDisabled || !hasTambahanData;
+
   return (
     <div className="flex w-full min-w-full flex-1 items-center gap-4">
       <div className="ml-auto flex flex-wrap items-center gap-2">
@@ -58,14 +67,16 @@ export const GoodPrepHeaderActions = ({
         <button
           type="button"
           onClick={onOpenRetur}
-          disabled={isPrintDisabled}
+          disabled={isReturDisabled}
           title={
             isPrintDisabled
               ? "Dikunci — data BTB cabang belum tersedia"
-              : undefined
+              : !hasReturData
+                ? "Tidak ada data Form Retur"
+                : undefined
           }
           className={`flex items-center gap-2 rounded-lg px-4 py-2 text-xs font-semibold shadow-sm transition-colors ${
-            isPrintDisabled
+            isReturDisabled
               ? "cursor-not-allowed bg-slate-200 text-slate-400"
               : "border border-red-300 bg-white text-red-600 hover:bg-red-50"
           }`}
@@ -76,14 +87,16 @@ export const GoodPrepHeaderActions = ({
         <button
           type="button"
           onClick={onOpenTambahan}
-          disabled={isPrintDisabled}
+          disabled={isTambahanDisabled}
           title={
             isPrintDisabled
               ? "Dikunci — data BTB cabang belum tersedia"
-              : undefined
+              : !hasTambahanData
+                ? "Tidak ada data Form Tambahan"
+                : undefined
           }
           className={`flex items-center gap-2 rounded-lg px-4 py-2 text-xs font-semibold shadow-sm transition-colors ${
-            isPrintDisabled
+            isTambahanDisabled
               ? "cursor-not-allowed bg-slate-200 text-slate-400"
               : "border border-emerald-300 bg-white text-emerald-600 hover:bg-emerald-50"
           }`}
