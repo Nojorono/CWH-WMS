@@ -99,8 +99,8 @@ const MainTable = () => {
             <div
               className="mt-3"
               title={
-                NIK && NIK.includes("NON")
-                  ? "User dengan NIK NON Employee tidak bisa create Memo"
+                !NIK || NIK.includes("NON")
+                  ? "User tanpa NIK atau NIK NON Employee tidak bisa create Memo"
                   : ""
               }
             >
@@ -109,7 +109,7 @@ const MainTable = () => {
                 variant="primary"
                 startIcon={<FaPlus className="size-5" />}
                 onClick={handleCreate}
-                disabled={!!(NIK && NIK.includes("NON"))}
+                disabled={!NIK || NIK.includes("NON")}
               >
                 Create Memo
               </Button>

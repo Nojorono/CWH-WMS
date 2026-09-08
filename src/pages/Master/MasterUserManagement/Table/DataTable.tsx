@@ -32,6 +32,7 @@ const DataTable = () => {
   const [isCreateModalOpen, setCreateModalOpen] = useState(false);
 
   const [userType, setUserType] = useState<"EMPLOYEE" | "NON" | "">("");
+  const [selectedDepartementId, setSelectedDepartementId] = useState("");
   const [isNikVerified, setIsNikVerified] = useState(false);
   const [nikLoading, setNikLoading] = useState(false);
   const [nikInput, setNikInput] = useState("");
@@ -85,6 +86,18 @@ const DataTable = () => {
     );
   }, [deptList]);
 
+  /** External + Supply Chain Management → role terbatas */
+  const isExternalSupplyChain = useMemo(() => {
+    if (userType !== "NON" || !selectedDepartementId) return false;
+    const dept = deptList?.find(
+      (d: any) => String(d.id) === String(selectedDepartementId),
+    );
+    const deptName = String(dept?.departement_name || "")
+      .trim()
+      .toLowerCase();
+    return deptName === "supply chain management";
+  }, [userType, selectedDepartementId, deptList]);
+
   const PWD_REGEX = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/;
 
   const formFields = useMemo(
@@ -100,6 +113,7 @@ const DataTable = () => {
         validation: { required: "Pilih tipe user terlebih dahulu" },
         onChange: (val: any) => {
           setUserType(val);
+          setSelectedDepartementId("");
           setIsNikVerified(false);
           setNikInput("");
           setVerifiedEmployeeId("");
@@ -198,6 +212,9 @@ const DataTable = () => {
         label: "Departement Id",
         type: "select",
         options: deptOptions,
+        onChange: (val: any) => {
+          setSelectedDepartementId(String(val ?? ""));
+        },
         hiddenWhen: (values: any) => {
           if (values.id) return false;
           return (
@@ -213,10 +230,18 @@ const DataTable = () => {
         options:
           roles
             ?.filter((role: any) => {
+              const name = String(role?.name || "").trim().toUpperCase();
+
+              // NIK External + Departement Supply Chain Management
+              // → hanya HELPER & DRIVER_FORKLIFT
+              if (isExternalSupplyChain) {
+                return name === "HELPER" || name === "DRIVER_FORKLIFT";
+              }
+
               if (roleName === "superadmin") {
                 return true;
               }
-              return role.name !== "superadmin";
+              return name !== "SUPERADMIN";
             })
             .map((role: any) => ({
               label: role.name,
@@ -348,9 +373,13 @@ const DataTable = () => {
     ],
     [
       roles,
+      roleName,
+      userType,
+      isExternalSupplyChain,
       gateZoneOptions,
       gateRoleId,
       IoList,
+      deptOptions,
       isNikVerified,
       nikLoading,
       nikInput,
@@ -531,6 +560,7 @@ const DataTable = () => {
             size="sm"
             onClick={() => {
               setUserType("");
+              setSelectedDepartementId("");
               setIsNikVerified(false);
               setNikInput("");
               setCreateModalOpen(true);
