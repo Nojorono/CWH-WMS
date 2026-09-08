@@ -11,7 +11,7 @@ import {
 import { ColumnDef } from "@tanstack/react-table";
 import StatusBadge from "../../../../common/statusBadge";
 import { STATUS_MAP_INTEGRATION_INBOUND } from "../../../../constants/statusMaps";
-import { useStoreInboundIntegration } from "../../../../DynamicAPI/stores/Store/MasterStore";
+import { useStoreInboundIntegration, useStoreItem } from "../../../../DynamicAPI/stores/Store/MasterStore";
 import ActIndicator from "../../../../components/ui/activityIndicator";
 import ExpandableTableComponent from "../component/Table";
 import { formatDateTimeIndo } from "../../../../helper/FormatDateTime";
@@ -23,6 +23,7 @@ import Button from "../../../../components/ui/button/Button";
 const AdjustTable = ({ globalFilter, setGlobalFilter, filteredIO }: any) => {
   const { fetchUsingPagination, list, pagination, isLoading } =
     useStoreInboundIntegration();
+  const { list: itemList, fetchAll: fetchItems } = useStoreItem();
 
   const [pageIndex, setPageIndex] = useState(0);
   const [pageSize, setPageSize] = useState(10);
@@ -41,6 +42,28 @@ const AdjustTable = ({ globalFilter, setGlobalFilter, filteredIO }: any) => {
   useEffect(() => {
     refreshList();
   }, [refreshList]);
+
+  useEffect(() => {
+    fetchItems();
+  }, [fetchItems]);
+
+  /** Lookup master item by inventory_item_id */
+  const itemByInvId = useMemo(() => {
+    const map = new Map<
+      string,
+      { sku: string; description: string; item_number?: string | null }
+    >();
+    (Array.isArray(itemList) ? itemList : []).forEach((item: any) => {
+      const invId = String(item?.inventory_item_id ?? "").trim();
+      if (!invId) return;
+      map.set(invId, {
+        sku: String(item?.sku || item?.item_number || "").trim(),
+        description: String(item?.description || "").trim(),
+        item_number: item?.item_number,
+      });
+    });
+    return map;
+  }, [itemList]);
 
   const handlePollStatus = useCallback(
     async (inboundDoId?: string | null) => {
@@ -325,7 +348,7 @@ const AdjustTable = ({ globalFilter, setGlobalFilter, filteredIO }: any) => {
                       PO & Line
                     </th>
                     <th className="px-4 py-2 text-left font-bold uppercase tracking-tighter">
-                      Inventory Item
+                      Item / SKU
                     </th>
                     <th className="px-4 py-2 text-center font-bold uppercase tracking-tighter">
                       Quantity
@@ -358,8 +381,45 @@ const AdjustTable = ({ globalFilter, setGlobalFilter, filteredIO }: any) => {
                             ID: {line.iface_line_id}
                           </div>
                         </td>
-                        <td className="px-4 py-3 font-mono text-slate-600">
-                          {line.inventory_item_id}
+                        <td className="px-4 py-3">
+                          {(() => {
+                            const invId = String(
+                              line.inventory_item_id ?? "",
+                            ).trim();
+                            const master = invId
+                              ? itemByInvId.get(invId)
+                              : undefined;
+                            const sku =
+                              master?.sku ||
+                              master?.item_number ||
+                              line.item_code ||
+                              line.sku ||
+                              "-";
+                            const description =
+                              master?.description ||
+                              line.item_description ||
+                              line.description ||
+                              "";
+
+                            return (
+                              <div className="min-w-[140px]">
+                                <div className="font-bold text-slate-800">
+                                  {sku}
+                                </div>
+                                {description ? (
+                                  <div
+                                    className="text-[10px] text-slate-500 leading-snug line-clamp-2"
+                                    title={description}
+                                  >
+                                    {description}
+                                  </div>
+                                ) : null}
+                                <div className="mt-0.5 font-mono text-[15px] text-slate-500">
+                                  Inventory Item Id {invId || "-"}
+                                </div>
+                              </div>
+                            );
+                          })()}
                         </td>
                         <td className="px-4 py-3 text-center">
                           <span className="font-bold text-slate-800 text-xs">
