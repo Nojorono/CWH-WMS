@@ -87,6 +87,7 @@ import OpeningStockUploadPage from "../pages/OpeningStockBalance";
 // OUTBOUND SALESMAN
 import OutboundSalesman from "../pages/OutboundSalesman";
 import MoveOrderSelisih from "../pages/MoveOrderSelisih";
+import LaporanHarianStock from "../pages/OutboundSalesman/Component/LaporanHarianStock";
 
 export {
   // DASHBOARD
@@ -168,6 +169,8 @@ export {
   OpeningStockUploadPage,
 
   OutboundSalesman,
-  
+  LaporanHarianStock,
+  // MainTabDOsgsReport,
+
   MoveOrderSelisih,
 };

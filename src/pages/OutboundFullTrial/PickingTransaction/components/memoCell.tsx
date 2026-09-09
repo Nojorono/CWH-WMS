@@ -324,7 +324,9 @@ const MemoCell = ({
   const isPollableType =
     (outboundType === "AMO" || outboundType === "SUBDIST") &&
     Boolean(outboundDoId);
+    
   const hasSealNumber = Boolean(sealNumber?.trim());
+
   const canPoll =
     isPollableType &&
     outboundDoStatus === "APPROVED_LOAD" &&

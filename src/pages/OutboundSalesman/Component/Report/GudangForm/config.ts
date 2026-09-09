@@ -5,6 +5,8 @@ export type GudangFormConfig = {
   formTitle: string;
   dateLabel: string;
   groupHeader: string;
+  /** Label kolom Final DO / Qty Adjustment */
+  finalDoLabel: string;
   deltaLabel: string;
   emptyText: string;
   /** Warna qty delta & konversi UOM */
@@ -18,6 +20,7 @@ export const GUDANG_FORM_CONFIG: Record<GudangFormVariant, GudangFormConfig> = {
     formTitle: "Form PERMINTAAN ke Gudang Utama",
     dateLabel: "Hari / Tanggal permintaan",
     groupHeader: "Form PERMINTAAN ke Gudang Utama",
+    finalDoLabel: "Final DO",
     deltaLabel: "Top Up",
     emptyText: "Tidak ada data permintaan",
     accentClass: "text-blue-500",
@@ -28,6 +31,7 @@ export const GUDANG_FORM_CONFIG: Record<GudangFormVariant, GudangFormConfig> = {
     formTitle: "Form RETUR ke Gudang Utama",
     dateLabel: "Hari / Tanggal Retur",
     groupHeader: "Form Retur ke Gudang Utama",
+    finalDoLabel: "Qty Adjustment",
     deltaLabel: "Retur",
     emptyText: "Tidak ada data retur",
     accentClass: "text-red-500",
@@ -38,6 +42,7 @@ export const GUDANG_FORM_CONFIG: Record<GudangFormVariant, GudangFormConfig> = {
     formTitle: "Form TAMBAHAN ke Gudang Utama",
     dateLabel: "Hari / Tanggal Tambahan",
     groupHeader: "Form Tambahan ke Gudang Utama",
+    finalDoLabel: "Qty Adjustment",
     deltaLabel: "Tambahan",
     emptyText: "Tidak ada data tambahan",
     accentClass: "text-emerald-500",

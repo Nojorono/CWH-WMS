@@ -1,6 +1,9 @@
 import React, { useRef, useState } from "react";
 import { useReactToPrint } from "react-to-print";
+import dayjs from "dayjs";
 import Swal from "sweetalert2";
+import { showErrorToast } from "../../../../../components/toast";
+import { downloadElementAsA4Pdf } from "../utils/downloadElementAsA4Pdf";
 import { GUDANG_FORM_CONFIG } from "./config";
 import { GudangFormSheet } from "./GudangFormSheet";
 import { GUDANG_FORM_PRINT_PAGE_STYLE } from "./printStyles";
@@ -14,8 +17,8 @@ export type GudangFormModalProps = {
   doDate?: string;
   rows?: GudangFormRow[];
   /**
-   * Untuk retur/tambahan: Confirm → jalankan update (return true) → baru print.
-   * Permintaan: biarkan undefined (print langsung).
+   * Untuk retur/tambahan: Confirm → jalankan update (return true) → baru print + PDF.
+   * Permintaan: confirm saja lalu print + PDF.
    */
   onBeforePrint?: (
     setProgress: (text: string) => void,
@@ -26,20 +29,23 @@ export type GudangFormModalProps = {
   updatingLabel?: string;
 };
 
-const CONFIRM_COPY: Partial<
-  Record<
-    GudangFormVariant,
-    { title: string; text: string; confirmText: string }
-  >
+const CONFIRM_COPY: Record<
+  GudangFormVariant,
+  { title: string; text: string; confirmText: string }
 > = {
+  permintaan: {
+    title: "Konfirmasi Print Form Permintaan?",
+    text: "Akan mencetak form dan mengunduh PDF backup secara otomatis. Lanjutkan?",
+    confirmText: "Ya, Print",
+  },
   retur: {
     title: "Konfirmasi Print Form Retur?",
-    text: "Apakah Anda yakin ingin mencetak form retur ini?",
+    text: "Data akan di-update, lalu form dicetak dan PDF backup diunduh. Lanjutkan?",
     confirmText: "Ya, Print",
   },
   tambahan: {
     title: "Konfirmasi Print Form Tambahan?",
-    text: "Apakah Anda yakin ingin mencetak form tambahan ini?",
+    text: "Data akan di-update, lalu form dicetak dan PDF backup diunduh. Lanjutkan?",
     confirmText: "Ya, Print",
   },
 };
@@ -69,19 +75,42 @@ const GudangFormModal = ({
     },
   });
 
-  const runPrintFlow = async () => {
-    if (!onBeforePrint) {
-      handlePrint();
-      return;
-    }
+  const downloadPdfBackup = async () => {
+    const el = printRef.current;
+    if (!el) return;
+    const stamp = dayjs().format("YYYYMMDD_HHmmss");
+    const fileName = `${config.formTitle}_${stamp}`;
+    await downloadElementAsA4Pdf(el, fileName, {
+      orientation: "portrait",
+      marginMm: 10,
+    });
+  };
 
+  /** Print Windows + unduh PDF A4 secara paralel */
+  const printAndDownloadPdf = async () => {
+    setProgressText("Menyiapkan print & unduhan PDF backup…");
+    // Buka dialog print segera (tidak menunggu PDF)
+    handlePrint();
+    try {
+      await downloadPdfBackup();
+    } catch (error) {
+      console.error("Gagal unduh PDF form gudang:", error);
+      showErrorToast(
+        error instanceof Error
+          ? error.message
+          : "Gagal mengunduh PDF backup. Print tetap berjalan.",
+      );
+    }
+  };
+
+  const runPrintFlow = async () => {
     const copy = CONFIRM_COPY[variant];
     const confirm = await Swal.fire({
-      title: copy?.title || "Konfirmasi Print?",
-      text: copy?.text || "Lanjutkan print form ini?",
+      title: copy.title,
+      text: copy.text,
       icon: "warning",
       showCancelButton: true,
-      confirmButtonText: copy?.confirmText || "Ya, Print",
+      confirmButtonText: copy.confirmText,
       cancelButtonText: "Batal",
       confirmButtonColor: "#F26522",
       cancelButtonColor: "#6b7280",
@@ -97,10 +126,11 @@ const GudangFormModal = ({
     setIsUpdating(true);
     setProgressText(updatingLabel);
     try {
-      const ok = await onBeforePrint(setProgressText);
-      if (!ok) return;
-      // Update sukses → buka dialog print Windows
-      handlePrint();
+      if (onBeforePrint) {
+        const ok = await onBeforePrint(setProgressText);
+        if (!ok) return;
+      }
+      await printAndDownloadPdf();
     } finally {
       setIsUpdating(false);
     }
@@ -117,7 +147,7 @@ const GudangFormModal = ({
               </div>
               <div>
                 <h3 className="text-sm font-bold text-slate-800">
-                  Menyiapkan Print
+                  Menyiapkan Print & PDF
                 </h3>
                 <p className="mt-1 max-w-sm text-[11px] font-semibold text-slate-500">
                   {progressText}

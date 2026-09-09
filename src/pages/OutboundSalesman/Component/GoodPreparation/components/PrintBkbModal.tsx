@@ -1,14 +1,18 @@
-import React, { useEffect, useMemo, useRef } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useReactToPrint } from "react-to-print";
 import { FaPrint, FaTimes } from "react-icons/fa";
 import dayjs from "dayjs";
 import "dayjs/locale/id";
+import Swal from "sweetalert2";
 import {
   convertTopUpBksToCaseBalSlopPack,
   findMasterItemBySkuAndInventory,
   type MasterItemForConversion,
 } from "../../Report/hook/SKUconvertion";
 import { useStoreItem } from "../../../../../DynamicAPI/stores/Store/MasterStore";
+import { showErrorToast } from "../../../../../components/toast";
+import { downloadElementAsA4Pdf } from "../../Report/utils/downloadElementAsA4Pdf";
+import { BKB_PRINT_PAGE_STYLE } from "../../Report/GudangForm/printStyles";
 
 type PrintBkbModalProps = {
   isOpen: boolean;
@@ -79,6 +83,7 @@ export const PrintBkbModal = ({
 }: PrintBkbModalProps) => {
   const printRef = useRef<HTMLDivElement>(null);
   const { fetchAll, list: itemList } = useStoreItem();
+  const [isPreparing, setIsPreparing] = useState(false);
 
   useEffect(() => {
     if (isOpen) fetchAll();
@@ -87,19 +92,60 @@ export const PrintBkbModal = ({
   const handlePrint = useReactToPrint({
     contentRef: printRef,
     documentTitle: `BKB_${data?.spb_number || "Document"}`,
-    pageStyle: `
-      @page { size: A4 landscape; margin: 8mm; }
-      @media print {
-        html, body {
-          margin: 0 !important;
-          padding: 0 !important;
-          background: white !important;
-          -webkit-print-color-adjust: exact !important;
-          print-color-adjust: exact !important;
-        }
-      }
-    `,
+    pageStyle: BKB_PRINT_PAGE_STYLE,
   });
+
+  const runPrintFlow = async () => {
+    if (isPreparing) return;
+
+    const confirm = await Swal.fire({
+      title: "Konfirmasi Print BKB?",
+      text: "Akan mencetak BKB (A4) dan mengunduh PDF backup secara otomatis. Lanjutkan?",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "Ya, Print",
+      cancelButtonText: "Batal",
+      confirmButtonColor: "#F26522",
+      cancelButtonColor: "#6b7280",
+      reverseButtons: true,
+      didOpen: () => {
+        const container = Swal.getContainer();
+        if (container) container.style.zIndex = "1600000";
+      },
+    });
+
+    if (!confirm.isConfirmed) return;
+
+    const el = printRef.current;
+    if (!el) {
+      showErrorToast("Konten print BKB tidak ditemukan");
+      return;
+    }
+
+    setIsPreparing(true);
+    try {
+      const stamp = dayjs().format("YYYYMMDD_HHmmss");
+      const spb = String(data?.spb_number || "Document").replace(
+        /[^\w.\-]+/g,
+        "_",
+      );
+      // Dialog print + unduh PDF berjalan paralel
+      handlePrint();
+      await downloadElementAsA4Pdf(el, `BKB_${spb}_${stamp}`, {
+        orientation: "landscape",
+        marginMm: 8,
+      });
+    } catch (error) {
+      console.error("Gagal unduh PDF BKB:", error);
+      showErrorToast(
+        error instanceof Error
+          ? error.message
+          : "Gagal mengunduh PDF backup BKB. Print tetap berjalan.",
+      );
+    } finally {
+      setIsPreparing(false);
+    }
+  };
 
   const rows = useMemo((): BkbPrintRow[] => {
     if (!isOpen || !data) return [];
@@ -196,8 +242,18 @@ export const PrintBkbModal = ({
     data.callplan_date_start || data.spb_date || data.preparation_date;
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-sm">
-      <div className="flex max-h-[92vh] w-full max-w-5xl flex-col overflow-hidden rounded-xl bg-white shadow-2xl">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-sm print:hidden">
+      <div className="relative flex max-h-[92vh] w-full max-w-5xl flex-col overflow-hidden rounded-xl bg-white shadow-2xl">
+        {isPreparing && (
+          <div className="absolute inset-0 z-20 flex items-center justify-center bg-white/70 backdrop-blur-sm">
+            <div className="flex flex-col items-center gap-3 text-center">
+              <div className="size-10 animate-spin rounded-full border-4 border-slate-100 border-t-orange-600" />
+              <p className="text-sm font-semibold text-slate-700">
+                Menyiapkan print & PDF backup…
+              </p>
+            </div>
+          </div>
+        )}
         <div className="flex items-center justify-between border-b border-slate-200 bg-slate-50 px-5 py-3">
           <h3 className="flex items-center gap-2 text-sm font-semibold text-slate-800">
             <FaPrint className="text-orange-500" />
@@ -206,22 +262,25 @@ export const PrintBkbModal = ({
           <div className="flex items-center gap-2">
             <button
               type="button"
+              disabled={isPreparing}
               onClick={onClose}
-              className="rounded-md border border-slate-300 bg-white px-4 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
+              className="rounded-md border border-slate-300 bg-white px-4 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
             >
               Cancel
             </button>
             <button
               type="button"
-              onClick={() => handlePrint()}
-              className="inline-flex items-center gap-2 rounded-md bg-orange-500 px-4 py-1.5 text-sm font-medium text-white hover:bg-orange-600"
+              disabled={isPreparing}
+              onClick={() => void runPrintFlow()}
+              className="inline-flex items-center gap-2 rounded-md bg-orange-500 px-4 py-1.5 text-sm font-medium text-white hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-60"
             >
               <FaPrint size={12} /> Print
             </button>
             <button
               type="button"
+              disabled={isPreparing}
               onClick={onClose}
-              className="rounded p-1.5 text-slate-400 hover:bg-slate-200 hover:text-slate-700"
+              className="rounded p-1.5 text-slate-400 hover:bg-slate-200 hover:text-slate-700 disabled:opacity-50"
             >
               <FaTimes size={14} />
             </button>

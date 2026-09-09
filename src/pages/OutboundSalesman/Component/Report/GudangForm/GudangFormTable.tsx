@@ -13,6 +13,20 @@ const th =
 const td =
   "border-2 border-dashed border-gray-800 p-2 print:p-1.5 print:text-[11px]";
 
+/** Acuan panjang nama yang masih nyaman di kolom */
+const SKU_NAME_FIT_LEN = "CLASMILD BLUETEA DUO 16".length;
+
+const getSkuNameTextClass = (name: string) => {
+  const len = String(name || "").trim().length;
+  if (len <= SKU_NAME_FIT_LEN) {
+    return "text-[11px] font-bold leading-snug print:text-[10px]";
+  }
+  if (len <= SKU_NAME_FIT_LEN + 10) {
+    return "text-[10px] font-bold leading-tight print:text-[9px]";
+  }
+  return "text-[9px] font-bold leading-tight print:text-[8px]";
+};
+
 export const GudangFormTable = ({ config, rows }: GudangFormTableProps) => {
   const totals = useMemo(() => {
     return rows.reduce(
@@ -45,12 +59,23 @@ export const GudangFormTable = ({ config, rows }: GudangFormTableProps) => {
   const sisaTotal = totals.hasSisa ? totals.sisaBarang : null;
 
   return (
-    <table className="gudang-form-table w-full border-collapse text-sm print:text-[11px]">
+    <table className="gudang-form-table w-full table-fixed border-collapse text-sm print:text-[11px]">
+      <colgroup>
+        <col className="w-[12%]" />
+        <col className="w-[28%]" />
+        <col className="w-[8%]" />
+        <col className="w-[8%]" />
+        <col className="w-[8%]" />
+        <col className="w-[9%]" />
+        <col className="w-[9%]" />
+        <col className="w-[9%]" />
+        <col className="w-[9%]" />
+      </colgroup>
       <thead>
         <tr>
           <th
             rowSpan={2}
-            className="w-20 border-2 border-dashed border-gray-800 p-2 text-left uppercase print:p-1.5 print:text-[10px]"
+            className="border-2 border-dashed border-gray-800 p-2 text-left uppercase print:p-1.5 print:text-[10px]"
           >
             Kode
           </th>
@@ -58,13 +83,13 @@ export const GudangFormTable = ({ config, rows }: GudangFormTableProps) => {
             rowSpan={2}
             className="border-2 border-dashed border-gray-800 p-2 text-left uppercase print:p-1.5 print:text-[10px]"
           >
-            Jenis Rokok
+            SKU Name
           </th>
           <th
             colSpan={3}
             className="border-2 border-dashed border-gray-800 p-2 text-center uppercase print:p-1.5 print:text-[10px]"
           >
-            Total Pack
+            Total Bks
           </th>
           <th
             colSpan={4}
@@ -74,13 +99,13 @@ export const GudangFormTable = ({ config, rows }: GudangFormTableProps) => {
           </th>
         </tr>
         <tr>
-          <th className={`${th} w-24`}>Sisa barang</th>
-          <th className={`${th} w-24`}>Final DO</th>
-          <th className={`${th} w-24`}>{config.deltaLabel}</th>
-          <th className={`${th} w-20`}>Case</th>
-          <th className={`${th} w-20`}>Bal</th>
-          <th className={`${th} w-20`}>Slop</th>
-          <th className={`${th} w-20`}>Pack</th>
+          <th className={th}>Sisa barang</th>
+          <th className={th}>{config.finalDoLabel}</th>
+          <th className={th}>{config.deltaLabel}</th>
+          <th className={th}>Dus</th>
+          <th className={th}>Bal</th>
+          <th className={th}>Pres</th>
+          <th className={th}>Bks</th>
         </tr>
       </thead>
       <tbody>
@@ -94,37 +119,47 @@ export const GudangFormTable = ({ config, rows }: GudangFormTableProps) => {
             </td>
           </tr>
         ) : (
-          rows.map((row, idx) => (
-            <tr key={`${row.code}-${idx}`} className="break-inside-avoid">
-              <td className={td}>{row.code || "-"}</td>
-              <td className={`${td} font-bold`}>{row.name || "-"}</td>
-              <td
-                className={`${td} text-center ${
-                  row.sisaBarang === null ? "text-slate-400" : "text-blue-600"
-                }`}
-              >
-                {formatQty(row.sisaBarang)}
-              </td>
-              <td className={`${td} text-center text-blue-600`}>
-                {formatQty(row.finalDo)}
-              </td>
-              <td className={`${td} text-center ${config.deltaBoldClass}`}>
-                {formatQty(row.qtyDelta)}
-              </td>
-              <td className={`${td} text-center`}>
-                {formatQty(row.caseQty ?? null)}
-              </td>
-              <td className={`${td} text-center`}>
-                {formatQty(row.balQty ?? null)}
-              </td>
-              <td className={`${td} text-center`}>
-                {formatQty(row.slopQty ?? null)}
-              </td>
-              <td className={`${td} text-center`}>
-                {formatQty(row.packQty ?? null)}
-              </td>
-            </tr>
-          ))
+          rows.map((row, idx) => {
+            const skuName = row.name || "-";
+            return (
+              <tr key={`${row.code}-${idx}`} className="break-inside-avoid">
+                <td className={`${td} break-all`}>{row.code || "-"}</td>
+                <td className={`${td} align-middle`}>
+                  <span
+                    className={`block break-words ${getSkuNameTextClass(skuName)}`}
+                    title={skuName}
+                  >
+                    {skuName}
+                  </span>
+                </td>
+                <td
+                  className={`${td} text-center ${
+                    row.sisaBarang === null ? "text-slate-400" : "text-blue-600"
+                  }`}
+                >
+                  {formatQty(row.sisaBarang)}
+                </td>
+                <td className={`${td} text-center text-blue-600`}>
+                  {formatQty(row.finalDo)}
+                </td>
+                <td className={`${td} text-center ${config.deltaBoldClass}`}>
+                  {formatQty(row.qtyDelta)}
+                </td>
+                <td className={`${td} text-center`}>
+                  {formatQty(row.caseQty ?? null)}
+                </td>
+                <td className={`${td} text-center`}>
+                  {formatQty(row.balQty ?? null)}
+                </td>
+                <td className={`${td} text-center`}>
+                  {formatQty(row.slopQty ?? null)}
+                </td>
+                <td className={`${td} text-center`}>
+                  {formatQty(row.packQty ?? null)}
+                </td>
+              </tr>
+            );
+          })
         )}
 
         <tr className="break-inside-avoid">
