@@ -9,19 +9,14 @@ import {
   FaArrowRight,
 } from "react-icons/fa";
 import Swal from "sweetalert2";
+import {
+  getSohCheckRowClass,
+  getVisibleSohCheckColumns,
+  INTEGRATE_SOH_CHECK_COLUMNS,
+  type SohCheckLine,
+} from "./integrateSohCheckTableConfig";
 
-export type SohCheckLine = {
-  id: string;
-  callplanId: string;
-  spbNumber: string;
-  salesName: string;
-  sku: string;
-  itemName: string;
-  qtySuggestion: number;
-  qtySpb: number;
-  soh: number;
-  status: "AVAILABLE" | "LESS_STOCK" | "NO_STOCK" | "NOT_NEEDED";
-};
+export type { SohCheckLine };
 
 type IntegrateSOHCheckModalProps = {
   isOpen: boolean;
@@ -35,49 +30,6 @@ type IntegrateSOHCheckModalProps = {
   onClose: () => void;
   onAdjust: () => void;
   onProceed: () => void;
-};
-
-// UI Helpers for Badges
-const statusBadge = (status: SohCheckLine["status"]) => {
-  if (status === "AVAILABLE") {
-    return {
-      label: "Available",
-      badgeClass:
-        "bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-600/20",
-      rowClass: "hover:bg-slate-50/50 transition-colors duration-200",
-    };
-  }
-  if (status === "NOT_NEEDED") {
-    return {
-      label: "Tidak Dibutuhkan",
-      badgeClass:
-        "bg-slate-100 text-slate-600 ring-1 ring-inset ring-slate-500/20",
-      rowClass: "hover:bg-slate-50/50 transition-colors duration-200",
-    };
-  }
-  if (status === "LESS_STOCK") {
-    return {
-      label: "Less Stock",
-      badgeClass:
-        "bg-amber-500 text-white ring-2 ring-amber-600/40 shadow-sm",
-      rowClass:
-        "bg-amber-100 hover:bg-amber-200/80 border-l-4 border-l-amber-500 font-medium transition-colors duration-200",
-    };
-  }
-  if (status === "NO_STOCK") {
-    return {
-      label: "No Stock",
-      badgeClass: "bg-rose-50 text-rose-700 ring-1 ring-inset ring-rose-600/20",
-      rowClass:
-        "bg-rose-50/30 hover:bg-rose-50/60 transition-colors duration-200",
-    };
-  }
-  return {
-    label: "Available",
-    badgeClass:
-      "bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-600/20",
-    rowClass: "hover:bg-slate-50/50 transition-colors duration-200",
-  };
 };
 
 export default function IntegrateSOHCheckModal({
@@ -141,6 +93,12 @@ export default function IntegrateSOHCheckModal({
       return a.itemName.localeCompare(b.itemName);
     });
   }, [lines, isGlobal]);
+
+  const visibleColumns = useMemo(
+    () =>
+      getVisibleSohCheckColumns(INTEGRATE_SOH_CHECK_COLUMNS, { isGlobal }),
+    [isGlobal],
+  );
 
   const handleProceedClick = async () => {
     // Guard: ada LESS_STOCK → jangan lanjut
@@ -283,48 +241,30 @@ export default function IntegrateSOHCheckModal({
           )}
         </div>
 
-        {/* Data Table */}
+        {/* Data Table — kolom dinamis via INTEGRATE_SOH_CHECK_COLUMNS */}
         <div className="flex-1 overflow-auto px-6 py-4">
           <div className="overflow-hidden rounded-xl border border-slate-200/60 ring-1 ring-slate-900/5">
             <table className="w-full text-left whitespace-nowrap text-sm">
               <thead className="sticky top-0 z-10 border-b border-slate-200 bg-slate-50/90 backdrop-blur-md">
                 <tr>
-                  <th className="px-4 py-3 text-center text-[11px] font-semibold tracking-wider text-slate-500 uppercase">
-                    No
-                  </th>
-                  {isGlobal && (
-                    <th className="px-4 py-3 text-[11px] font-semibold tracking-wider text-slate-500 uppercase">
-                      SPB
+                  {visibleColumns.map((col) => (
+                    <th
+                      key={col.id}
+                      className={
+                        col.headerClassName ||
+                        "px-4 py-3 text-[11px] font-semibold tracking-wider text-slate-500 uppercase"
+                      }
+                    >
+                      {col.header}
                     </th>
-                  )}
-                  <th className="px-4 py-3 text-[11px] font-semibold tracking-wider text-slate-500 uppercase">
-                    Item Name
-                  </th>
-                  <th className="px-4 py-3 text-[11px] font-semibold tracking-wider text-slate-500 uppercase">
-                    SKU
-                  </th>
-                  <th className="px-4 py-3 text-center text-[11px] font-semibold tracking-wider text-slate-500 uppercase">
-                    Qty Suggestion
-                  </th>
-                  <th className="px-4 py-3 text-center text-[11px] font-semibold tracking-wider text-slate-500 uppercase">
-                    Qty SPB
-                  </th>
-                  <th className="px-4 py-3 text-center text-[11px] font-semibold tracking-wider text-slate-500 uppercase">
-                    SOH
-                  </th>
-                  <th className="px-4 py-3 text-center text-[11px] font-semibold tracking-wider text-slate-500 uppercase">
-                    Selisih
-                  </th>
-                  <th className="px-4 py-3 text-center text-[11px] font-semibold tracking-wider text-slate-500 uppercase">
-                    Status
-                  </th>
+                  ))}
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 bg-white">
                 {sortedLines.length === 0 ? (
                   <tr>
                     <td
-                      colSpan={isGlobal ? 9 : 8}
+                      colSpan={Math.max(1, visibleColumns.length)}
                       className="px-4 py-16 text-center text-sm text-slate-400"
                     >
                       <div className="flex flex-col items-center justify-center gap-3">
@@ -337,51 +277,23 @@ export default function IntegrateSOHCheckModal({
                   </tr>
                 ) : (
                   sortedLines.map((line, idx) => {
-                    const badge = statusBadge(line.status);
-                    const selisih = line.soh - line.qtySpb;
-
+                    const ctx = { index: idx, isGlobal };
                     return (
-                      <tr key={`${line.callplanId}-${line.id}`} className={`group ${badge.rowClass}`}>
-                        <td className="px-4 py-3.5 text-center font-medium text-slate-400 group-hover:text-slate-500">
-                          {idx + 1}
-                        </td>
-                        {isGlobal && (
-                          <td className="px-4 py-3.5">
-                            <div className="font-semibold text-slate-800">
-                              {line.spbNumber}
-                            </div>
-                            <div className="text-[10px] text-slate-500">
-                              {line.salesName}
-                            </div>
-                          </td>
-                        )}
-                        <td className="px-4 py-3.5 font-medium text-slate-900">
-                          {line.itemName}
-                        </td>
-                        <td className="px-4 py-3.5 font-mono text-xs text-slate-500">
-                          {line.sku}
-                        </td>
-                        <td className="px-4 py-3.5 text-center text-sm font-semibold text-slate-600">
-                          {line.qtySuggestion}
-                        </td>
-                        <td className="px-4 py-3.5 text-center text-sm font-semibold text-slate-700">
-                          {line.qtySpb}
-                        </td>
-                        <td className="px-4 py-3.5 text-center text-sm font-semibold text-indigo-600">
-                          {line.soh}
-                        </td>
-                        <td className="px-4 py-3.5 text-center text-sm font-bold">
-                          <span className={selisih < 0 ? "text-rose-600" : "text-emerald-600"}>
-                            {selisih > 0 ? `+${selisih}` : selisih}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3.5 text-center">
-                          <span
-                            className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[10px] font-bold tracking-wide uppercase ${badge.badgeClass}`}
+                      <tr
+                        key={`${line.callplanId}-${line.id}`}
+                        className={`group ${getSohCheckRowClass(line.status)}`}
+                      >
+                        {visibleColumns.map((col) => (
+                          <td
+                            key={col.id}
+                            className={
+                              col.getCellClassName?.(line, ctx) ||
+                              "px-4 py-3.5"
+                            }
                           >
-                            {badge.label}
-                          </span>
-                        </td>
+                            {col.getValue(line, ctx)}
+                          </td>
+                        ))}
                       </tr>
                     );
                   })

@@ -188,6 +188,7 @@ export const useGoodPrepSoh = ({
       sku: detail.item_code,
       itemName,
       qtySuggestion: Number(detail.item_qty_suggestion || 0) || 0,
+      qtySubmitted: Number(detail.item_qty_submitted || 0) || 0,
       qtySpb,
       soh,
       status,

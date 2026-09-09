@@ -57,7 +57,10 @@ const SKUCard = ({
     qty === "" || Number(qty) < 0 || Number(qty) > qtyPicking;
 
   const handleLoadItem = async () => {
-    if (!canEdit || isInvalidQty) return;
+    if (!canEdit || isInvalidQty || submitting) return;
+
+    // Disable segera agar double-klik tidak membuka multi-Swal / double API
+    setSubmitting(true);
 
     const result = await Swal.fire({
       title: "Konfirmasi Simpan",
@@ -68,12 +71,15 @@ const SKUCard = ({
       cancelButtonColor: "#94a3b8",
       confirmButtonText: "Ya, Simpan!",
       cancelButtonText: "Batal",
+      allowOutsideClick: () => !Swal.isLoading(),
     });
 
-    if (!result.isConfirmed) return;
+    if (!result.isConfirmed) {
+      setSubmitting(false);
+      return;
+    }
 
     try {
-      setSubmitting(true);
       const payload = {
         assigned_gate_id: doData.assigned_gate_id,
         outbound_do_id: doData.do_id,
@@ -210,10 +216,12 @@ const SKUCard = ({
               <button
                 onClick={handleLoadItem}
                 disabled={submitting || isInvalidQty}
-                className={`w-full font-black py-5 rounded-2xl transition-all duration-300 flex items-center justify-center gap-3 shadow-lg ${
+                className={`w-full font-black py-5 rounded-2xl transition-all duration-300 flex items-center justify-center gap-3 shadow-lg disabled:cursor-not-allowed ${
                   isInvalidQty
-                    ? "bg-slate-200 text-slate-400 cursor-not-allowed"
-                    : "bg-orange-500 hover:bg-orange-600 text-white shadow-orange-200 active:scale-95"
+                    ? "bg-slate-200 text-slate-400"
+                    : submitting
+                      ? "bg-orange-400 text-white shadow-orange-100"
+                      : "bg-orange-500 hover:bg-orange-600 text-white shadow-orange-200 active:scale-95"
                 }`}
               >
                 {submitting ? (
@@ -249,17 +257,19 @@ const SKUCard = ({
                 <>
                   <button
                     onClick={() => {
+                      if (submitting) return;
                       setIsEditing(false);
                       setQty(existingLoad.quantity_loaded);
                     }}
-                    className="flex-1 bg-slate-100 text-slate-500 font-black py-5 rounded-2xl uppercase tracking-widest text-xs"
+                    disabled={submitting}
+                    className="flex-1 bg-slate-100 text-slate-500 font-black py-5 rounded-2xl uppercase tracking-widest text-xs disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     Batal
                   </button>
                   <button
                     onClick={handleLoadItem}
                     disabled={submitting || isInvalidQty}
-                    className="flex-[2] bg-emerald-600 text-white font-black py-5 rounded-2xl shadow-lg shadow-emerald-100 flex items-center justify-center gap-3"
+                    className="flex-[2] bg-emerald-600 text-white font-black py-5 rounded-2xl shadow-lg shadow-emerald-100 flex items-center justify-center gap-3 disabled:cursor-not-allowed disabled:opacity-80"
                   >
                     {submitting ? (
                       <i className="fas fa-circle-notch fa-spin"></i>
