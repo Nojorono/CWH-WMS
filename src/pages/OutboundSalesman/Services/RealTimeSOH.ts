@@ -22,7 +22,10 @@ const buildQueryParams = (
 ): Record<string, string> => ({
   organization_code: params.organization_code || params.organization_name || "",
   subinventory_code: SUBINVENTORY_CODE,
-  date: dayjs().format("YYYY-MM-DD"),
+  date:
+    params.date && dayjs(params.date).isValid()
+      ? dayjs(params.date).format("YYYY-MM-DD")
+      : dayjs().format("YYYY-MM-DD"),
 });
 
 const normalizeItem = (raw: any): RealTimeSOHItem | null => {

@@ -3,31 +3,25 @@ import { useNavigate } from "react-router-dom";
 import dayjs from "dayjs";
 import "dayjs/locale/id";
 import {
-  FaArrowLeft,
-  FaFileExcel,
-  FaArrowUp,
   FaArrowDown,
+  FaArrowLeft,
+  FaArrowUp,
+  FaFileExcel,
+  FaSyncAlt,
 } from "react-icons/fa";
-import {
-  DUMMY_DO_DATE,
-  DUMMY_INCOMING_ROWS,
-  DUMMY_OUTGOING_ROWS,
-  DUMMY_OVERVIEW_ROWS,
-  DUMMY_SUMMARY,
-} from "./dummyData";
+import { buildMovementLines } from "./buildMovementLines";
+import { formatPack, formatSigned } from "./format";
 import { StockReportTab } from "./types";
+import { useLhsReportData } from "./useLhsReportData";
 
 dayjs.locale("id");
 
-const formatQty = (n: number) =>
-  n.toLocaleString("id-ID", { maximumFractionDigits: 0 });
-
-const formatSignedQty = (n: number) => {
-  const abs = formatQty(Math.abs(n));
-  if (n > 0) return `+${abs}`;
-  if (n < 0) return `-${abs}`;
-  return abs;
-};
+const TABS: { id: StockReportTab; label: string }[] = [
+  { id: "overview", label: "Overview" },
+  { id: "incoming", label: "Incoming" },
+  { id: "outgoing", label: "Outgoing" },
+  { id: "validation", label: "Stock Validation" },
+];
 
 const VarianceBadge = ({ value }: { value: number }) => {
   const isZero = value === 0;
@@ -42,54 +36,33 @@ const VarianceBadge = ({ value }: { value: number }) => {
             : "bg-amber-100 text-amber-700"
       }`}
     >
-      {formatSignedQty(value)}
+      {formatSigned(value)}
     </span>
   );
 };
-
-const TABS: { id: StockReportTab; label: string }[] = [
-  { id: "overview", label: "Overview" },
-  { id: "incoming", label: "Incoming" },
-  { id: "outgoing", label: "Outgoing" },
-  { id: "validation", label: "Stock Validation" },
-];
 
 function LaporanHarianStock() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<StockReportTab>("overview");
 
-  const doDateLabel = useMemo(() => {
-    const d = dayjs(DUMMY_DO_DATE);
-    return d.isValid()
-      ? d.format("ddd, DD MMMM YYYY")
-      : DUMMY_DO_DATE;
-  }, []);
+  /** LHS: selalu current date (Callplan / SPB / SOH) — tanpa pilih tanggal */
+  const reportDate = useMemo(() => dayjs().format("YYYY-MM-DD"), []);
 
-  const overviewTotals = useMemo(() => {
-    return DUMMY_OVERVIEW_ROWS.reduce(
-      (acc, row) => ({
-        stockAwal: acc.stockAwal + row.stockAwal,
-        stockAkhirSystem: acc.stockAkhirSystem + row.stockAkhirSystem,
-        stockFisik: acc.stockFisik + row.stockFisik,
-        metaStock: acc.metaStock + row.metaStock,
-        sohMeta: acc.sohMeta + row.sohMeta,
-        variance: acc.variance + row.variance,
-      }),
-      {
-        stockAwal: 0,
-        stockAkhirSystem: 0,
-        stockFisik: 0,
-        metaStock: 0,
-        sohMeta: 0,
-        variance: 0,
-      },
-    );
-  }, []);
+  const {
+    context,
+    rows,
+    totals,
+    isLoading,
+    error,
+    refetch,
+    salesCount,
+    reportDateLabel,
+  } = useLhsReportData(reportDate);
 
-  const handleExport = () => {
-    // Placeholder — wiring Excel menyusul saat API ready
-    window.alert("Export Excel (dummy) — akan dihubungkan ke API.");
-  };
+  const { incoming, outgoing } = useMemo(
+    () => buildMovementLines(rows),
+    [rows],
+  );
 
   return (
     <div className="min-h-screen bg-slate-50 p-4 sm:p-6">
@@ -101,22 +74,33 @@ function LaporanHarianStock() {
             <span className="font-semibold text-slate-500">(in pack)</span>
           </h1>
           <p className="mt-1 text-sm text-slate-500">
-            Kelola dan tinjau performa barang secara real-time.
+            {context.amoName} · {reportDateLabel}
+            {salesCount > 0 ? ` · ${salesCount} SPB FINAL` : ""}
           </p>
-          <div className="mt-3 inline-flex items-center rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs text-slate-600 shadow-sm">
-            Hari/tgl DO:{" "}
-            <span className="ml-1 font-semibold text-slate-800">
-              {doDateLabel}
-            </span>
-          </div>
+          <p className="mt-1 max-w-2xl text-xs text-slate-400">
+            Data hari ini (current date) · Stock Awal = SOH Calculation · META =
+            SOH latest · SPB FINAL, Retur, BTB, FPPR &amp; Tambahan (1 cabang).
+          </p>
         </div>
-        <button
-          type="button"
-          onClick={() => navigate(-1)}
-          className="inline-flex items-center gap-2 self-start rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50"
-        >
-          <FaArrowLeft size={12} /> Kembali
-        </button>
+
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={() => void refetch()}
+            disabled={isLoading}
+            className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 disabled:opacity-60"
+          >
+            <FaSyncAlt size={12} className={isLoading ? "animate-spin" : ""} />
+            Refresh
+          </button>
+          <button
+            type="button"
+            onClick={() => navigate(-1)}
+            className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50"
+          >
+            <FaArrowLeft size={12} /> Kembali
+          </button>
+        </div>
       </div>
 
       {/* Summary cards */}
@@ -126,9 +110,9 @@ function LaporanHarianStock() {
             Stock Awal
           </p>
           <p className="mt-2 text-2xl font-bold text-slate-800">
-            {formatQty(DUMMY_SUMMARY.stockAwal)}
+            {formatPack(totals.stockAwal, false)}
           </p>
-          <p className="mt-1 text-xs text-slate-500">Total unit awal hari</p>
+          <p className="mt-1 text-xs text-slate-500">Stock On Hand</p>
         </div>
 
         <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
@@ -136,11 +120,11 @@ function LaporanHarianStock() {
             Total Incoming (Terima)
           </p>
           <p className="mt-2 text-2xl font-bold text-emerald-600">
-            {formatSignedQty(DUMMY_SUMMARY.totalIncoming)}
+            {formatSigned(totals.totalTerima)}
           </p>
           <p className="mt-1 flex items-center gap-1 text-xs text-slate-500">
             <FaArrowUp className="text-emerald-500" size={10} />
-            {DUMMY_SUMMARY.incomingTxnCount} transaksi penerimaan
+            BTB + Retur DO + Inbound CWH
           </p>
         </div>
 
@@ -149,24 +133,32 @@ function LaporanHarianStock() {
             Total Outgoing (Keluar)
           </p>
           <p className="mt-2 text-2xl font-bold text-rose-600">
-            {formatSignedQty(-Math.abs(DUMMY_SUMMARY.totalOutgoing))}
+            {formatSigned(-Math.abs(totals.totalKeluar))}
           </p>
           <p className="mt-1 flex items-center gap-1 text-xs text-slate-500">
             <FaArrowDown className="text-rose-500" size={10} />
-            {DUMMY_SUMMARY.outgoingTxnCount} transaksi pengiriman
+            DO MATIC + Add + FPPR
           </p>
         </div>
 
         <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
           <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-            Variance (Selisih Fisik)
+            Variance (Fisik − Akhir)
           </p>
           <p className="mt-2 text-2xl font-bold text-amber-600">
-            {formatSignedQty(DUMMY_SUMMARY.variance)}
+            {formatSigned(totals.variance)}
           </p>
-          <p className="mt-1 text-xs text-slate-500">Requires reconciliation</p>
+          <p className="mt-1 text-xs text-slate-500">
+            Stock Akhir {formatPack(totals.stockAkhir, false)}
+          </p>
         </div>
       </div>
+
+      {error && (
+        <div className="mb-4 rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+          {error}
+        </div>
+      )}
 
       {/* Tabs + Export */}
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
@@ -191,7 +183,9 @@ function LaporanHarianStock() {
         </div>
         <button
           type="button"
-          onClick={handleExport}
+          onClick={() =>
+            window.alert("Export Excel — layout penuh menyusul.")
+          }
           className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700"
         >
           <FaFileExcel size={14} /> Export ke Excel
@@ -199,82 +193,110 @@ function LaporanHarianStock() {
       </div>
 
       {/* Tab panels */}
-      <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+      <div className="relative overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+        {isLoading && (
+          <div className="absolute inset-0 z-40 flex items-center justify-center bg-white/70">
+            <div className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-600 shadow">
+              <FaSyncAlt className="animate-spin" size={14} /> Memuat data…
+            </div>
+          </div>
+        )}
+
         {activeTab === "overview" && (
           <div className="overflow-x-auto">
             <table className="w-full min-w-[900px] text-left text-sm">
               <thead>
                 <tr className="border-b border-slate-200 bg-slate-50 text-[11px] font-bold uppercase tracking-wider text-slate-500">
-                  <th className="px-4 py-3">Kode Material</th>
-                  <th className="px-4 py-3">Material Name</th>
+                  <th className="px-4 py-3">Kode</th>
+                  <th className="px-4 py-3">SKU Name</th>
                   <th className="px-4 py-3 text-right">Stock Awal</th>
-                  <th className="px-4 py-3 text-right">Stock Akhir (System)</th>
-                  <th className="px-4 py-3 text-right">Stock Fisik</th>
-                  <th className="px-4 py-3 text-right">Meta Stock</th>
-                  <th className="px-4 py-3 text-right">SOH (Meta)</th>
+                  <th className="px-4 py-3 text-right text-emerald-700">
+                    Incoming
+                  </th>
+                  <th className="px-4 py-3 text-right text-rose-700">
+                    Outgoing
+                  </th>
+                  <th className="px-4 py-3 text-right">Stock Akhir</th>
+                  <th className="px-4 py-3 text-right">Fisik</th>
+                  <th className="px-4 py-3 text-right">META</th>
                   <th className="px-4 py-3 text-center">Variance</th>
                 </tr>
               </thead>
+              
               <tbody className="divide-y divide-slate-100">
-                {DUMMY_OVERVIEW_ROWS.map((row) => (
+                {rows.map((row) => (
                   <tr key={row.id} className="hover:bg-slate-50/80">
                     <td className="px-4 py-3 font-semibold text-slate-700">
-                      {row.materialCode}
+                      {row.kode}
                     </td>
-                    <td className="px-4 py-3 text-slate-600">
-                      {row.materialName}
+                    <td className="px-4 py-3 text-slate-600">{row.skuName}</td>
+                    <td className="px-4 py-3 text-right tabular-nums text-slate-700">
+                      {formatPack(row.stockAwal, false)}
+                    </td>
+                    <td className="px-4 py-3 text-right font-semibold tabular-nums text-emerald-600">
+                      {formatSigned(row.totalTerima)}
+                    </td>
+                    <td className="px-4 py-3 text-right font-semibold tabular-nums text-rose-600">
+                      {formatSigned(-Math.abs(row.totalKeluar))}
+                    </td>
+                    <td className="px-4 py-3 text-right font-bold tabular-nums text-indigo-700">
+                      {formatPack(row.stockAkhir, false)}
+                    </td>
+                    <td className="px-4 py-3 text-right tabular-nums text-slate-300">
+                      —
                     </td>
                     <td className="px-4 py-3 text-right tabular-nums text-slate-700">
-                      {formatQty(row.stockAwal)}
-                    </td>
-                    <td className="px-4 py-3 text-right tabular-nums text-slate-700">
-                      {formatQty(row.stockAkhirSystem)}
-                    </td>
-                    <td className="px-4 py-3 text-right tabular-nums text-slate-700">
-                      {formatQty(row.stockFisik)}
-                    </td>
-                    <td className="px-4 py-3 text-right tabular-nums text-slate-700">
-                      {formatQty(row.metaStock)}
-                    </td>
-                    <td className="px-4 py-3 text-right tabular-nums text-slate-700">
-                      {formatQty(row.sohMeta)}
+                      {formatPack(row.meta, false)}
                     </td>
                     <td className="px-4 py-3 text-center">
                       <VarianceBadge value={row.variance} />
                     </td>
                   </tr>
                 ))}
+                {rows.length === 0 && !isLoading && (
+                  <tr>
+                    <td
+                      colSpan={9}
+                      className="px-4 py-12 text-center text-sm text-slate-400"
+                    >
+                      Tidak ada data untuk tanggal / cabang ini.
+                    </td>
+                  </tr>
+                )}
               </tbody>
-              <tfoot>
-                <tr className="bg-orange-500 text-white">
-                  <td
-                    colSpan={2}
-                    className="px-4 py-3 text-xs font-bold uppercase tracking-wide"
-                  >
-                    Total All (Pack)
-                  </td>
-                  <td className="px-4 py-3 text-right font-bold tabular-nums">
-                    {formatQty(overviewTotals.stockAwal)}
-                  </td>
-                  <td className="px-4 py-3 text-right font-bold tabular-nums">
-                    {formatQty(overviewTotals.stockAkhirSystem)}
-                  </td>
-                  <td className="px-4 py-3 text-right font-bold tabular-nums">
-                    {formatQty(overviewTotals.stockFisik)}
-                  </td>
-                  <td className="px-4 py-3 text-right font-bold tabular-nums">
-                    {formatQty(overviewTotals.metaStock)}
-                  </td>
-                  <td className="px-4 py-3 text-right font-bold tabular-nums">
-                    {formatQty(overviewTotals.sohMeta)}
-                  </td>
-                  <td className="px-4 py-3 text-center">
-                    <span className="inline-flex min-w-[2.5rem] items-center justify-center rounded-full bg-rose-700/90 px-2.5 py-0.5 text-xs font-bold text-white">
-                      {formatSignedQty(overviewTotals.variance)}
-                    </span>
-                  </td>
-                </tr>
-              </tfoot>
+              {rows.length > 0 && (
+                <tfoot>
+                  <tr className="bg-orange-500 text-white">
+                    <td
+                      colSpan={2}
+                      className="px-4 py-3 text-xs font-bold uppercase tracking-wide"
+                    >
+                      Total All (Pack)
+                    </td>
+                    <td className="px-4 py-3 text-right font-bold tabular-nums">
+                      {formatPack(totals.stockAwal, false)}
+                    </td>
+                    <td className="px-4 py-3 text-right font-bold tabular-nums">
+                      {formatSigned(totals.totalTerima)}
+                    </td>
+                    <td className="px-4 py-3 text-right font-bold tabular-nums">
+                      {formatSigned(-Math.abs(totals.totalKeluar))}
+                    </td>
+                    <td className="px-4 py-3 text-right font-bold tabular-nums">
+                      {formatPack(totals.stockAkhir, false)}
+                    </td>
+                    <td className="px-4 py-3 text-right text-white/70">—</td>
+                    <td className="px-4 py-3 text-right font-bold tabular-nums">
+                      {formatPack(totals.meta, false)}
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      <span className="inline-flex min-w-[2.5rem] items-center justify-center rounded-full bg-rose-700/90 px-2.5 py-0.5 text-xs font-bold text-white">
+                        {formatSigned(totals.variance)}
+                      </span>
+                    </td>
+                  </tr>
+                </tfoot>
+              )}
             </table>
           </div>
         )}
@@ -284,37 +306,41 @@ function LaporanHarianStock() {
             <table className="w-full min-w-[700px] text-left text-sm">
               <thead>
                 <tr className="border-b border-slate-200 bg-slate-50 text-[11px] font-bold uppercase tracking-wider text-slate-500">
-                  <th className="px-4 py-3">Doc Number</th>
-                  <th className="px-4 py-3">Kode Material</th>
-                  <th className="px-4 py-3">Material Name</th>
+                  <th className="px-4 py-3">Kode</th>
+                  <th className="px-4 py-3">SKU Name</th>
                   <th className="px-4 py-3 text-right">Qty</th>
                   <th className="px-4 py-3">UOM</th>
                   <th className="px-4 py-3">Source</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {DUMMY_INCOMING_ROWS.map((row) => (
+                {incoming.map((row) => (
                   <tr key={row.id} className="hover:bg-slate-50/80">
-                    <td className="px-4 py-3 font-medium text-blue-700">
-                      {row.docNumber}
-                    </td>
                     <td className="px-4 py-3 font-semibold text-slate-700">
-                      {row.materialCode}
+                      {row.kode}
                     </td>
-                    <td className="px-4 py-3 text-slate-600">
-                      {row.materialName}
-                    </td>
+                    <td className="px-4 py-3 text-slate-600">{row.skuName}</td>
                     <td className="px-4 py-3 text-right font-semibold tabular-nums text-emerald-600">
-                      +{formatQty(row.qty)}
+                      +{formatPack(row.qty, false)}
                     </td>
-                    <td className="px-4 py-3 text-slate-500">{row.uom}</td>
+                    <td className="px-4 py-3 text-slate-500">PACK</td>
                     <td className="px-4 py-3 text-slate-600">{row.source}</td>
                   </tr>
                 ))}
+                {incoming.length === 0 && !isLoading && (
+                  <tr>
+                    <td
+                      colSpan={5}
+                      className="px-4 py-12 text-center text-sm text-slate-400"
+                    >
+                      Tidak ada pergerakan incoming.
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
             <p className="border-t border-slate-100 px-4 py-3 text-xs text-slate-400">
-              Data dummy Incoming — akan diganti response API.
+              Source: Central (Inbound CWH) · Retur DO · BTB
             </p>
           </div>
         )}
@@ -324,51 +350,92 @@ function LaporanHarianStock() {
             <table className="w-full min-w-[700px] text-left text-sm">
               <thead>
                 <tr className="border-b border-slate-200 bg-slate-50 text-[11px] font-bold uppercase tracking-wider text-slate-500">
-                  <th className="px-4 py-3">Doc Number</th>
-                  <th className="px-4 py-3">Kode Material</th>
-                  <th className="px-4 py-3">Material Name</th>
+                  <th className="px-4 py-3">Kode</th>
+                  <th className="px-4 py-3">SKU Name</th>
                   <th className="px-4 py-3 text-right">Qty</th>
                   <th className="px-4 py-3">UOM</th>
-                  <th className="px-4 py-3">Destination</th>
+                  <th className="px-4 py-3">Source</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {DUMMY_OUTGOING_ROWS.map((row) => (
+                {outgoing.map((row) => (
                   <tr key={row.id} className="hover:bg-slate-50/80">
-                    <td className="px-4 py-3 font-medium text-blue-700">
-                      {row.docNumber}
-                    </td>
                     <td className="px-4 py-3 font-semibold text-slate-700">
-                      {row.materialCode}
+                      {row.kode}
                     </td>
-                    <td className="px-4 py-3 text-slate-600">
-                      {row.materialName}
-                    </td>
+                    <td className="px-4 py-3 text-slate-600">{row.skuName}</td>
                     <td className="px-4 py-3 text-right font-semibold tabular-nums text-rose-600">
-                      -{formatQty(row.qty)}
+                      -{formatPack(row.qty, false)}
                     </td>
-                    <td className="px-4 py-3 text-slate-500">{row.uom}</td>
-                    <td className="px-4 py-3 text-slate-600">
-                      {row.destination}
-                    </td>
+                    <td className="px-4 py-3 text-slate-500">PACK</td>
+                    <td className="px-4 py-3 text-slate-600">{row.source}</td>
                   </tr>
                 ))}
+                {outgoing.length === 0 && !isLoading && (
+                  <tr>
+                    <td
+                      colSpan={5}
+                      className="px-4 py-12 text-center text-sm text-slate-400"
+                    >
+                      Tidak ada pergerakan outgoing.
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
             <p className="border-t border-slate-100 px-4 py-3 text-xs text-slate-400">
-              Data dummy Outgoing — akan diganti response API.
+              Source: Manual DO (FPPR) · Relokasi · DO MATIC · Add DO MATIC
             </p>
           </div>
         )}
 
         {activeTab === "validation" && (
-          <div className="px-6 py-16 text-center">
-            <p className="text-sm font-semibold text-slate-700">
-              Stock Validation
-            </p>
-            <p className="mt-2 text-xs text-slate-400">
-              Placeholder tab — form/validasi fisik akan ditambahkan setelah
-              kontrak API tersedia.
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[700px] text-left text-sm">
+              <thead>
+                <tr className="border-b border-slate-200 bg-slate-50 text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                  <th className="px-4 py-3">Kode</th>
+                  <th className="px-4 py-3">SKU Name</th>
+                  <th className="px-4 py-3 text-right">Stock Akhir</th>
+                  <th className="px-4 py-3 text-right">Fisik</th>
+                  <th className="px-4 py-3 text-right">META</th>
+                  <th className="px-4 py-3 text-center">VAR</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {rows.map((row) => (
+                  <tr key={row.id} className="hover:bg-slate-50/80">
+                    <td className="px-4 py-3 font-semibold text-slate-700">
+                      {row.kode}
+                    </td>
+                    <td className="px-4 py-3 text-slate-600">{row.skuName}</td>
+                    <td className="px-4 py-3 text-right tabular-nums text-indigo-700">
+                      {formatPack(row.stockAkhir, false)}
+                    </td>
+                    <td className="px-4 py-3 text-right text-slate-300">—</td>
+                    <td className="px-4 py-3 text-right tabular-nums">
+                      {formatPack(row.meta, false)}
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      <VarianceBadge value={row.variance} />
+                    </td>
+                  </tr>
+                ))}
+                {rows.length === 0 && !isLoading && (
+                  <tr>
+                    <td
+                      colSpan={6}
+                      className="px-4 py-12 text-center text-sm text-slate-400"
+                    >
+                      Tidak ada data validasi.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+            <p className="border-t border-slate-100 px-4 py-3 text-xs text-slate-400">
+              Fisik masih dikosongkan · VAR = Fisik − Stock Akhir · META = SOH
+              latest (sama Good Prep)
             </p>
           </div>
         )}

@@ -15,12 +15,16 @@ interface ApiResponse<T> {
 interface GetStockParams {
     organization_code: string;
     subinventory_code: string;
+    /** YYYY-MM-DD — default: hari ini */
+    date?: string;
 }
 
 export const getStockOnHand = async (params: GetStockParams): Promise<StockOnHand[]> => {
 
-    // Menggunakan tanggal hari ini (now)
-    const sohDate = dayjs().format('YYYY-MM-DD');
+    const sohDate =
+        params.date && dayjs(params.date).isValid()
+            ? dayjs(params.date).format("YYYY-MM-DD")
+            : dayjs().format("YYYY-MM-DD");
 
     try {
         const response = await axiosInstance.get<ApiResponse<StockOnHand[]>>(
