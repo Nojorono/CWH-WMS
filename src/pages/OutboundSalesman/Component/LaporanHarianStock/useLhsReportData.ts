@@ -13,10 +13,8 @@ import {
   matchesBtbOrganization,
   normalizeBtbForGoodPrep,
 } from "../GoodPreparation/utils/normalizeBtbForGoodPrep";
-import { useGoodPrepEnrichedData } from "../GoodPreparation/hooks/useGoodPrepEnrichedData";
 import { getItemKey } from "../GoodPreparation/utils/getItemKey";
-import { buildLhsRows, skuKey } from "./buildLhsRows";
-import { computeRows, sumRows } from "./compute";
+import { buildLhsRows, computeRows, skuKey, sumRows } from "./logic";
 import { LhsReportContext } from "./types";
 
 const SUBINVENTORY = "KECIL";
@@ -48,10 +46,11 @@ const filterCallplansByOrg = (
 };
 
 /**
- * Ambil data LHS 1 cabang:
- * - Stock Awal: SOH Calculation (`/outbound-sales/on-hand`) — sama Calculation SPB
- * - META: SOH latest Good Prep (`/outbound-sales/on-hand-meta` / useRealTimeSOH)
- * - SPB FINAL semua sales cabang + Retur + BTB
+ * Ambil data LHS 1 cabang (current date):
+ * - Stock Awal: SOH Calculation
+ * - META: SOH latest Good Prep
+ * - Incoming: Retur/SPB (final−submitted jika −) + BTB
+ * - Outgoing: Manual DO (FPPR submitted) + DO MATIC (submitted) + Add (revision +)
  */
 export const useLhsReportData = (reportDate: string) => {
   const user = usePersistAuthStore((s) => s.user);
@@ -85,7 +84,6 @@ export const useLhsReportData = (reportDate: string) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [finalCallplans, setFinalCallplans] = useState<Callplan[]>([]);
-  const [returCallplans, setReturCallplans] = useState<Callplan[]>([]);
   const [btbList, setBtbList] = useState<BTB[]>([]);
   const [stockAwalByKey, setStockAwalByKey] = useState<Map<string, number>>(
     () => new Map(),
@@ -107,7 +105,6 @@ export const useLhsReportData = (reportDate: string) => {
   const refetch = useCallback(async () => {
     if (!context.organizationId || !reportDate) {
       setFinalCallplans([]);
-      setReturCallplans([]);
       setBtbList([]);
       setError("Organisasi user tidak ditemukan.");
       return;
@@ -125,48 +122,38 @@ export const useLhsReportData = (reportDate: string) => {
         );
       }
 
-      const [finalRaw, returRaw, btbRaw, sohCalc, sohMeta] =
-        await Promise.all([
-          callplanService.getCallplans({
-            dateStart: reportDate,
-            organizationId: context.organizationId,
-            status: "FINAL",
-          }),
-          callplanService.getReturReport(reportDate),
-          btbService.getBTBLastDateInsert(),
-          getStockOnHand({
+      const [finalRaw, btbRaw, sohCalc, sohMeta] = await Promise.all([
+        callplanService.getCallplans({
+          dateStart: reportDate,
+          organizationId: context.organizationId,
+          status: "FINAL",
+        }),
+        btbService.getBTBLastDateInsert(),
+        getStockOnHand({
+          organization_code: orgForSoh,
+          subinventory_code: SUBINVENTORY,
+        }).catch((err) => {
+          console.error("SOH Calculation gagal:", err);
+          return [];
+        }),
+        realTimeSOHService
+          .getRealTimeSOH({
+            organization_name: orgForSoh,
             organization_code: orgForSoh,
-            subinventory_code: SUBINVENTORY,
-            // current date (default service) — LHS tidak pilih tanggal
-          }).catch((err) => {
-            console.error("SOH Calculation gagal:", err);
-            return [];
+          })
+          .catch((err) => {
+            console.error("SOH Realtime (META) gagal:", err);
+            return { data: [], meta: null };
           }),
-          // META = SOH latest Good Prep (current date)
-          realTimeSOHService
-            .getRealTimeSOH({
-              organization_name: orgForSoh,
-              organization_code: orgForSoh,
-            })
-            .catch((err) => {
-              console.error("SOH Realtime (META) gagal:", err);
-              return { data: [], meta: null };
-            }),
-        ]);
+      ]);
 
       const finalFiltered = filterCallplansByOrg(
         finalRaw,
         context.organizationId,
         context.organizationCode,
       );
-      const returFiltered = filterCallplansByOrg(
-        returRaw,
-        context.organizationId,
-        context.organizationCode,
-      );
 
       // BTB: sama Good Prep — last-date-insert + filter org
-      // (jangan filter btb_date === callplan date: tanggal BTB sering beda dari callplan)
       const btbFiltered = normalizeBtbForGoodPrep(
         (btbRaw.data || []).filter(
           (row) =>
@@ -235,7 +222,6 @@ export const useLhsReportData = (reportDate: string) => {
       });
 
       setFinalCallplans(finalFiltered);
-      setReturCallplans(returFiltered);
       setBtbList(btbFiltered);
       setStockAwalByKey(awalMap);
       setMetaByKey(metaMap);
@@ -248,7 +234,6 @@ export const useLhsReportData = (reportDate: string) => {
       setError(message);
       showErrorToast(message);
       setFinalCallplans([]);
-      setReturCallplans([]);
       setBtbList([]);
     } finally {
       setIsLoading(false);
@@ -259,15 +244,9 @@ export const useLhsReportData = (reportDate: string) => {
     void refetch();
   }, [refetch]);
 
-  const { enrichedData: returEnriched } = useGoodPrepEnrichedData({
-    prepCallplans: returCallplans,
-    btbData: btbList,
-  });
-
   const rows = useMemo(() => {
     const built = buildLhsRows({
       finalCallplans,
-      returCallplans: returEnriched,
       btbList,
       stockAwalByKey,
       metaByKey,
@@ -278,7 +257,6 @@ export const useLhsReportData = (reportDate: string) => {
     return computeRows(built);
   }, [
     finalCallplans,
-    returEnriched,
     btbList,
     stockAwalByKey,
     metaByKey,

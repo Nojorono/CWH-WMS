@@ -1,9 +1,5 @@
 /** Tab UI V1 (Excel layout menyusul) */
-export type StockReportTab =
-  | "overview"
-  | "incoming"
-  | "outgoing"
-  | "validation";
+export type StockReportTab = "overview" | "incoming" | "outgoing";
 
 /** Baris flat LHS — tanpa SR/NR (dipakai agregasi + nanti Excel) */
 export type LhsStockRow = {
@@ -12,17 +8,20 @@ export type LhsStockRow = {
   skuName: string;
   inventoryItemId: string;
   stockAwal: number;
-  /** Central = Inbound CWH (kosong jika API belum ada) */
-  centralInbound: number;
-  returDo: number;
+  /**
+   * Incoming Retur dari SPB:
+   * |final − submitted| jika (final − submitted) < 0
+   */
+  spb: number;
+  /** Incoming dari BTB (btb_qty) jika ada */
   btb: number;
-  /** Manual DO = FPPR Tambahan (submitted) */
+  /** Manual DO = FPPR Tambahan (submitted qty) */
   manualDo: number;
   /** Relokasi GI — dikosongkan */
   relokasi: number;
   /** DO MATIC = submitted qty SPB FINAL (non-FPPR) */
   doMatic: number;
-  /** Add DO MATIC = revision (+) Form Tambahan */
+  /** Add DO MATIC = Qty Adjustment (+) / item_qty_revision > 0 */
   addDoMatic: number;
   /** Input fisik — dikosongkan dulu */
   fisikAkhir: number | null;

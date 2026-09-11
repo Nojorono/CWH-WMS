@@ -6,13 +6,15 @@ import {
   FaArrowDown,
   FaArrowLeft,
   FaArrowUp,
-  FaFileExcel,
   FaSyncAlt,
 } from "react-icons/fa";
-import { buildMovementLines } from "./buildMovementLines";
-import { formatPack, formatSigned } from "./format";
+import { buildMovementLines, formatPack, formatSigned } from "./logic";
 import { StockReportTab } from "./types";
 import { useLhsReportData } from "./useLhsReportData";
+import OverviewTab from "./components/OverviewTab";
+import IncomingTab from "./components/IncomingTab";
+import OutgoingTab from "./components/OutgoingTab";
+import ExportLhsExcelButton from "./components/ExportLhsExcelButton";
 
 dayjs.locale("id");
 
@@ -20,26 +22,7 @@ const TABS: { id: StockReportTab; label: string }[] = [
   { id: "overview", label: "Overview" },
   { id: "incoming", label: "Incoming" },
   { id: "outgoing", label: "Outgoing" },
-  { id: "validation", label: "Stock Validation" },
 ];
-
-const VarianceBadge = ({ value }: { value: number }) => {
-  const isZero = value === 0;
-  const isNeg = value < 0;
-  return (
-    <span
-      className={`inline-flex min-w-[2.5rem] items-center justify-center rounded-full px-2.5 py-0.5 text-xs font-bold ${
-        isZero
-          ? "bg-emerald-100 text-emerald-700"
-          : isNeg
-            ? "bg-rose-100 text-rose-700"
-            : "bg-amber-100 text-amber-700"
-      }`}
-    >
-      {formatSigned(value)}
-    </span>
-  );
-};
 
 function LaporanHarianStock() {
   const navigate = useNavigate();
@@ -71,7 +54,7 @@ function LaporanHarianStock() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-slate-800 sm:text-3xl">
             Laporan Harian Stock Gudang{" "}
-            <span className="font-semibold text-slate-500">(in pack)</span>
+            <span className="font-semibold text-slate-500">(Bungkus / Bks)</span>
           </h1>
           <p className="mt-1 text-sm text-slate-500">
             {context.amoName} · {reportDateLabel}
@@ -79,7 +62,8 @@ function LaporanHarianStock() {
           </p>
           <p className="mt-1 max-w-2xl text-xs text-slate-400">
             Data hari ini (current date) · Stock Awal = SOH Calculation · META =
-            SOH latest · SPB FINAL, Retur, BTB, FPPR &amp; Tambahan (1 cabang).
+            SOH latest · Incoming: Retur + BTB · Outgoing: DO MATIC / FPPR / Add
+            (1 cabang).
           </p>
         </div>
 
@@ -124,7 +108,7 @@ function LaporanHarianStock() {
           </p>
           <p className="mt-1 flex items-center gap-1 text-xs text-slate-500">
             <FaArrowUp className="text-emerald-500" size={10} />
-            BTB + Retur DO + Inbound CWH
+            BTB + Retur (final−submitted jika −)
           </p>
         </div>
 
@@ -137,7 +121,7 @@ function LaporanHarianStock() {
           </p>
           <p className="mt-1 flex items-center gap-1 text-xs text-slate-500">
             <FaArrowDown className="text-rose-500" size={10} />
-            DO MATIC + Add + FPPR
+            DO MATIC (submitted) + Add + FPPR
           </p>
         </div>
 
@@ -181,15 +165,12 @@ function LaporanHarianStock() {
             );
           })}
         </div>
-        <button
-          type="button"
-          onClick={() =>
-            window.alert("Export Excel — layout penuh menyusul.")
-          }
-          className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700"
-        >
-          <FaFileExcel size={14} /> Export ke Excel
-        </button>
+        <ExportLhsExcelButton
+          rows={rows}
+          amoName={context.amoName}
+          reportDateLabel={reportDateLabel}
+          disabled={isLoading}
+        />
       </div>
 
       {/* Tab panels */}
@@ -203,241 +184,13 @@ function LaporanHarianStock() {
         )}
 
         {activeTab === "overview" && (
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[900px] text-left text-sm">
-              <thead>
-                <tr className="border-b border-slate-200 bg-slate-50 text-[11px] font-bold uppercase tracking-wider text-slate-500">
-                  <th className="px-4 py-3">Kode</th>
-                  <th className="px-4 py-3">SKU Name</th>
-                  <th className="px-4 py-3 text-right">Stock Awal</th>
-                  <th className="px-4 py-3 text-right text-emerald-700">
-                    Incoming
-                  </th>
-                  <th className="px-4 py-3 text-right text-rose-700">
-                    Outgoing
-                  </th>
-                  <th className="px-4 py-3 text-right">Stock Akhir</th>
-                  <th className="px-4 py-3 text-right">Fisik</th>
-                  <th className="px-4 py-3 text-right">META</th>
-                  <th className="px-4 py-3 text-center">Variance</th>
-                </tr>
-              </thead>
-              
-              <tbody className="divide-y divide-slate-100">
-                {rows.map((row) => (
-                  <tr key={row.id} className="hover:bg-slate-50/80">
-                    <td className="px-4 py-3 font-semibold text-slate-700">
-                      {row.kode}
-                    </td>
-                    <td className="px-4 py-3 text-slate-600">{row.skuName}</td>
-                    <td className="px-4 py-3 text-right tabular-nums text-slate-700">
-                      {formatPack(row.stockAwal, false)}
-                    </td>
-                    <td className="px-4 py-3 text-right font-semibold tabular-nums text-emerald-600">
-                      {formatSigned(row.totalTerima)}
-                    </td>
-                    <td className="px-4 py-3 text-right font-semibold tabular-nums text-rose-600">
-                      {formatSigned(-Math.abs(row.totalKeluar))}
-                    </td>
-                    <td className="px-4 py-3 text-right font-bold tabular-nums text-indigo-700">
-                      {formatPack(row.stockAkhir, false)}
-                    </td>
-                    <td className="px-4 py-3 text-right tabular-nums text-slate-300">
-                      —
-                    </td>
-                    <td className="px-4 py-3 text-right tabular-nums text-slate-700">
-                      {formatPack(row.meta, false)}
-                    </td>
-                    <td className="px-4 py-3 text-center">
-                      <VarianceBadge value={row.variance} />
-                    </td>
-                  </tr>
-                ))}
-                {rows.length === 0 && !isLoading && (
-                  <tr>
-                    <td
-                      colSpan={9}
-                      className="px-4 py-12 text-center text-sm text-slate-400"
-                    >
-                      Tidak ada data untuk tanggal / cabang ini.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-              {rows.length > 0 && (
-                <tfoot>
-                  <tr className="bg-orange-500 text-white">
-                    <td
-                      colSpan={2}
-                      className="px-4 py-3 text-xs font-bold uppercase tracking-wide"
-                    >
-                      Total All (Pack)
-                    </td>
-                    <td className="px-4 py-3 text-right font-bold tabular-nums">
-                      {formatPack(totals.stockAwal, false)}
-                    </td>
-                    <td className="px-4 py-3 text-right font-bold tabular-nums">
-                      {formatSigned(totals.totalTerima)}
-                    </td>
-                    <td className="px-4 py-3 text-right font-bold tabular-nums">
-                      {formatSigned(-Math.abs(totals.totalKeluar))}
-                    </td>
-                    <td className="px-4 py-3 text-right font-bold tabular-nums">
-                      {formatPack(totals.stockAkhir, false)}
-                    </td>
-                    <td className="px-4 py-3 text-right text-white/70">—</td>
-                    <td className="px-4 py-3 text-right font-bold tabular-nums">
-                      {formatPack(totals.meta, false)}
-                    </td>
-                    <td className="px-4 py-3 text-center">
-                      <span className="inline-flex min-w-[2.5rem] items-center justify-center rounded-full bg-rose-700/90 px-2.5 py-0.5 text-xs font-bold text-white">
-                        {formatSigned(totals.variance)}
-                      </span>
-                    </td>
-                  </tr>
-                </tfoot>
-              )}
-            </table>
-          </div>
+          <OverviewTab rows={rows} totals={totals} isLoading={isLoading} />
         )}
-
         {activeTab === "incoming" && (
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[700px] text-left text-sm">
-              <thead>
-                <tr className="border-b border-slate-200 bg-slate-50 text-[11px] font-bold uppercase tracking-wider text-slate-500">
-                  <th className="px-4 py-3">Kode</th>
-                  <th className="px-4 py-3">SKU Name</th>
-                  <th className="px-4 py-3 text-right">Qty</th>
-                  <th className="px-4 py-3">UOM</th>
-                  <th className="px-4 py-3">Source</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {incoming.map((row) => (
-                  <tr key={row.id} className="hover:bg-slate-50/80">
-                    <td className="px-4 py-3 font-semibold text-slate-700">
-                      {row.kode}
-                    </td>
-                    <td className="px-4 py-3 text-slate-600">{row.skuName}</td>
-                    <td className="px-4 py-3 text-right font-semibold tabular-nums text-emerald-600">
-                      +{formatPack(row.qty, false)}
-                    </td>
-                    <td className="px-4 py-3 text-slate-500">PACK</td>
-                    <td className="px-4 py-3 text-slate-600">{row.source}</td>
-                  </tr>
-                ))}
-                {incoming.length === 0 && !isLoading && (
-                  <tr>
-                    <td
-                      colSpan={5}
-                      className="px-4 py-12 text-center text-sm text-slate-400"
-                    >
-                      Tidak ada pergerakan incoming.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-            <p className="border-t border-slate-100 px-4 py-3 text-xs text-slate-400">
-              Source: Central (Inbound CWH) · Retur DO · BTB
-            </p>
-          </div>
+          <IncomingTab lines={incoming} isLoading={isLoading} />
         )}
-
         {activeTab === "outgoing" && (
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[700px] text-left text-sm">
-              <thead>
-                <tr className="border-b border-slate-200 bg-slate-50 text-[11px] font-bold uppercase tracking-wider text-slate-500">
-                  <th className="px-4 py-3">Kode</th>
-                  <th className="px-4 py-3">SKU Name</th>
-                  <th className="px-4 py-3 text-right">Qty</th>
-                  <th className="px-4 py-3">UOM</th>
-                  <th className="px-4 py-3">Source</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {outgoing.map((row) => (
-                  <tr key={row.id} className="hover:bg-slate-50/80">
-                    <td className="px-4 py-3 font-semibold text-slate-700">
-                      {row.kode}
-                    </td>
-                    <td className="px-4 py-3 text-slate-600">{row.skuName}</td>
-                    <td className="px-4 py-3 text-right font-semibold tabular-nums text-rose-600">
-                      -{formatPack(row.qty, false)}
-                    </td>
-                    <td className="px-4 py-3 text-slate-500">PACK</td>
-                    <td className="px-4 py-3 text-slate-600">{row.source}</td>
-                  </tr>
-                ))}
-                {outgoing.length === 0 && !isLoading && (
-                  <tr>
-                    <td
-                      colSpan={5}
-                      className="px-4 py-12 text-center text-sm text-slate-400"
-                    >
-                      Tidak ada pergerakan outgoing.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-            <p className="border-t border-slate-100 px-4 py-3 text-xs text-slate-400">
-              Source: Manual DO (FPPR) · Relokasi · DO MATIC · Add DO MATIC
-            </p>
-          </div>
-        )}
-
-        {activeTab === "validation" && (
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[700px] text-left text-sm">
-              <thead>
-                <tr className="border-b border-slate-200 bg-slate-50 text-[11px] font-bold uppercase tracking-wider text-slate-500">
-                  <th className="px-4 py-3">Kode</th>
-                  <th className="px-4 py-3">SKU Name</th>
-                  <th className="px-4 py-3 text-right">Stock Akhir</th>
-                  <th className="px-4 py-3 text-right">Fisik</th>
-                  <th className="px-4 py-3 text-right">META</th>
-                  <th className="px-4 py-3 text-center">VAR</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {rows.map((row) => (
-                  <tr key={row.id} className="hover:bg-slate-50/80">
-                    <td className="px-4 py-3 font-semibold text-slate-700">
-                      {row.kode}
-                    </td>
-                    <td className="px-4 py-3 text-slate-600">{row.skuName}</td>
-                    <td className="px-4 py-3 text-right tabular-nums text-indigo-700">
-                      {formatPack(row.stockAkhir, false)}
-                    </td>
-                    <td className="px-4 py-3 text-right text-slate-300">—</td>
-                    <td className="px-4 py-3 text-right tabular-nums">
-                      {formatPack(row.meta, false)}
-                    </td>
-                    <td className="px-4 py-3 text-center">
-                      <VarianceBadge value={row.variance} />
-                    </td>
-                  </tr>
-                ))}
-                {rows.length === 0 && !isLoading && (
-                  <tr>
-                    <td
-                      colSpan={6}
-                      className="px-4 py-12 text-center text-sm text-slate-400"
-                    >
-                      Tidak ada data validasi.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-            <p className="border-t border-slate-100 px-4 py-3 text-xs text-slate-400">
-              Fisik masih dikosongkan · VAR = Fisik − Stock Akhir · META = SOH
-              latest (sama Good Prep)
-            </p>
-          </div>
+          <OutgoingTab lines={outgoing} isLoading={isLoading} />
         )}
       </div>
     </div>
