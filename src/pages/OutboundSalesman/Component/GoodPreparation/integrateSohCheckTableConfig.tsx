@@ -144,7 +144,7 @@ export const INTEGRATE_SOH_CHECK_COLUMNS: SohCheckColumn[] = [
   },
   {
     id: "qty_spb",
-    header: "Qty SPB",
+    header: "Qty Final",
     align: "center",
     headerClassName:
       "px-4 py-3 text-center text-[11px] font-semibold tracking-wider text-slate-500 uppercase",
@@ -154,7 +154,7 @@ export const INTEGRATE_SOH_CHECK_COLUMNS: SohCheckColumn[] = [
   },
   {
     id: "soh",
-    header: "SOH",
+    header: "Qty On Hand",
     align: "center",
     headerClassName:
       "px-4 py-3 text-center text-[11px] font-semibold tracking-wider text-slate-500 uppercase",

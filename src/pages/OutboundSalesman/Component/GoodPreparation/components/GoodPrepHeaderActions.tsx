@@ -28,7 +28,7 @@ export const GoodPrepHeaderActions = ({
   return (
     <div className="flex w-full min-w-full flex-1 items-center gap-4">
       <div className="ml-auto flex flex-wrap items-center gap-2">
-        <button
+        {/* <button
           type="button"
           onClick={onExportSummary}
           disabled={isPrintDisabled}
@@ -44,7 +44,7 @@ export const GoodPrepHeaderActions = ({
           }`}
         >
           <FaDownload /> Summary
-        </button>
+        </button> */}
 
         <button
           type="button"

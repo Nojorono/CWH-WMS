@@ -1,46 +1,55 @@
-export type StockReportTab =
-  | "overview"
-  | "incoming"
-  | "outgoing"
-  | "validation";
+/** Tab UI V1 (Excel layout menyusul) */
+export type StockReportTab = "overview" | "incoming" | "outgoing";
 
-export type StockReportRow = {
+/** Baris flat LHS — tanpa SR/NR (dipakai agregasi + nanti Excel) */
+export type LhsStockRow = {
   id: string;
-  materialCode: string;
-  materialName: string;
+  kode: string;
+  skuName: string;
+  inventoryItemId: string;
   stockAwal: number;
-  stockAkhirSystem: number;
-  stockFisik: number;
-  metaStock: number;
-  sohMeta: number;
+  /**
+   * Incoming Retur dari SPB:
+   * |final − submitted| jika (final − submitted) < 0
+   */
+  spb: number;
+  /** Incoming dari BTB (btb_qty) jika ada */
+  btb: number;
+  /** Manual DO = FPPR Tambahan (submitted qty) */
+  manualDo: number;
+  /** Relokasi GI — dikosongkan */
+  relokasi: number;
+  /** DO MATIC = submitted qty SPB FINAL (non-FPPR) */
+  doMatic: number;
+  /** Add DO MATIC = Qty Adjustment (+) / item_qty_revision > 0 */
+  addDoMatic: number;
+  /** Input fisik — dikosongkan dulu */
+  fisikAkhir: number | null;
+  /** META = SOH realtime (/on-hand-meta) — sama Good Prep (avail_to_reserve) */
+  meta: number;
+};
+
+export type LhsStockComputed = LhsStockRow & {
+  totalTerima: number;
+  totalKeluar: number;
+  stockAkhir: number;
+  /** Fisik − Stock Akhir (fisik kosong = 0) */
   variance: number;
 };
 
-export type StockReportSummary = {
-  stockAwal: number;
-  totalIncoming: number;
-  incomingTxnCount: number;
-  totalOutgoing: number;
-  outgoingTxnCount: number;
-  variance: number;
+export type LhsReportContext = {
+  amoName: string;
+  organizationId: string;
+  organizationCode: string;
+  reportDate: string;
 };
 
-export type IncomingRow = {
+/** Baris detail Incoming/Outgoing untuk tab V1 */
+export type LhsMovementLine = {
   id: string;
-  docNumber: string;
-  materialCode: string;
-  materialName: string;
+  kode: string;
+  skuName: string;
   qty: number;
-  uom: string;
   source: string;
-};
-
-export type OutgoingRow = {
-  id: string;
-  docNumber: string;
-  materialCode: string;
-  materialName: string;
-  qty: number;
-  uom: string;
-  destination: string;
+  group: "incoming" | "outgoing";
 };

@@ -115,12 +115,22 @@ export default function AdjustQtySPB({
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
+  /** Adjustment (−) tidak boleh melebihi qty submitted (|adj| ≤ qtySubmitted). */
+  const clampAdjustment = (item: AdjustQtyItem, raw: number) => {
+    if (Number.isNaN(raw)) return 0;
+    const submitted = Number(item.qtySubmitted) || 0;
+    if (raw < 0 && Math.abs(raw) > submitted) {
+      return -submitted;
+    }
+    return raw;
+  };
+
   const handleAdjustmentChange = (id: string, value: string) => {
     const numValue = value === "" || value === "-" ? 0 : Number(value);
     setItems((prevItems) =>
       prevItems.map((item) =>
         item.id === id
-          ? { ...item, adjustment: Number.isNaN(numValue) ? 0 : numValue }
+          ? { ...item, adjustment: clampAdjustment(item, numValue) }
           : item,
       ),
     );
@@ -184,6 +194,18 @@ export default function AdjustQtySPB({
     const hasChanges = items.some((item) => item.adjustment !== 0);
     if (!hasChanges) {
       showErrorToast("Tidak ada perubahan qty untuk disimpan");
+      return;
+    }
+
+    const invalidMinus = items.find((item) => {
+      const adj = Number(item.adjustment) || 0;
+      const submitted = Number(item.qtySubmitted) || 0;
+      return adj < 0 && Math.abs(adj) > submitted;
+    });
+    if (invalidMinus) {
+      showErrorToast(
+        `Adjustment (−) tidak boleh lebih dari Qty Submitted (${invalidMinus.qtySubmitted}) untuk SKU ${invalidMinus.sku}`,
+      );
       return;
     }
 
@@ -266,7 +288,9 @@ export default function AdjustQtySPB({
           type="number"
           value={item.adjustment === 0 ? "" : item.adjustment}
           placeholder="0"
+          min={-(Number(item.qtySubmitted) || 0)}
           onChange={(e) => handleAdjustmentChange(item.id, e.target.value)}
+          title={`Adjustment (−) maks. −${Number(item.qtySubmitted) || 0} (Qty Submitted)`}
           className="w-20 rounded border-2 border-orange-300 py-1.5 text-center font-bold text-slate-800 outline-none transition-all focus:border-orange-500 focus:ring-2 focus:ring-orange-200"
         />
       ),

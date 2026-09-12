@@ -8,6 +8,8 @@ export type GetRealTimeSOHParams = {
   organization_code?: string;
   /** Backward compatibility: beberapa caller masih kirim organization_name berisi code (contoh: JAT) */
   organization_name?: string;
+  /** YYYY-MM-DD — default: hari ini */
+  date?: string;
 };
 
 export type RealTimeSOHItem = {
