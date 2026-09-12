@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import dayjs from "dayjs";
-import { callplanService } from "../../../Services/CallplanService";
+import { useOutboundSalesmanCache } from "../../../../../API/store/OutboundSalesmanStore/useOutboundSalesmanCache";
 import { Callplan } from "../../../types/CallplanTypes";
 
 type UseGoodPrepCallplansParams = {
@@ -41,13 +41,17 @@ export const useGoodPrepCallplans = ({
     ];
   }, [prepCallplans]);
 
+  /** Setelah aksi mutasi — selalu force agar data FINAL terbaru */
   const refetchPrepCallplans = async (): Promise<Callplan[]> => {
     if (!organizationId || !targetDate) return prepCallplans;
-    const fresh = await callplanService.getCallplans({
-      dateStart: targetDate,
-      organizationId,
-      status: "FINAL",
-    });
+    const fresh = await useOutboundSalesmanCache.getState().getCallplans(
+      {
+        dateStart: targetDate,
+        organizationId,
+        status: "FINAL",
+      },
+      { force: true },
+    );
     setPrepCallplans(fresh);
     onCallplansUpdated?.(fresh);
     return fresh;

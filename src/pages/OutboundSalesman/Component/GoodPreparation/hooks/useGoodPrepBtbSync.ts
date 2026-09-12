@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useOutboundSalesmanCache } from "../../../../../API/store/OutboundSalesmanStore/useOutboundSalesmanCache";
 import { showErrorToast } from "../../../../../components/toast";
-import { btbService } from "../../../Services/BTBService";
 import { BTB } from "../../../types/BTBtypes";
 import {
   getLatestBtbDateLabel,
@@ -25,47 +25,55 @@ export const useGoodPrepBtbSync = ({
   const [showLoading, setShowLoading] = useState(true);
   const [btbLastDateLabel, setBtbLastDateLabel] = useState<string | null>(null);
 
-  const refetchBtb = useCallback(async (options?: { silent?: boolean }) => {
-    const silent = Boolean(options?.silent);
-    if (!silent) {
-      setIsBTBLoading(true);
-      setIsBTBSuccess(false);
-    }
-    setErrBTB(null);
+  const refetchBtb = useCallback(
+    async (options?: { silent?: boolean; force?: boolean }) => {
+      const silent = Boolean(options?.silent);
+      /** Default force; pass force:false untuk pakai cache (mount awal) */
+      const force = options?.force !== false;
 
-    try {
-      const result = await btbService.getBTBLastDateInsert();
-      setBtbLastDateLabel(getLatestBtbDateLabel(result.data));
-
-      const filtered = result.data.filter(
-        (row) =>
-          matchesBtbOrganization(row, organizationId) ||
-          matchesBtbOrganization(row, organizationCode),
-      );
-
-      const normalized = normalizeBtbForGoodPrep(filtered);
-      setBtbData(normalized);
-      setIsBTBSuccess(true);
-      return normalized;
-    } catch (error) {
-      console.error("Gagal fetch BTB (last-date-insert):", error);
-      const message =
-        error instanceof Error ? error.message : "Gagal mengambil data BTB";
-      setErrBTB(message);
       if (!silent) {
-        setBtbData([]);
-        setBtbLastDateLabel(null);
+        setIsBTBLoading(true);
         setIsBTBSuccess(false);
       }
-      showErrorToast(message);
-      throw error;
-    } finally {
-      if (!silent) setIsBTBLoading(false);
-    }
-  }, [organizationId, organizationCode]);
+      setErrBTB(null);
+
+      try {
+        const result = await useOutboundSalesmanCache
+          .getState()
+          .getBtbLastDateInsert({ force });
+        setBtbLastDateLabel(getLatestBtbDateLabel(result.data));
+
+        const filtered = result.data.filter(
+          (row) =>
+            matchesBtbOrganization(row, organizationId) ||
+            matchesBtbOrganization(row, organizationCode),
+        );
+
+        const normalized = normalizeBtbForGoodPrep(filtered);
+        setBtbData(normalized);
+        setIsBTBSuccess(true);
+        return normalized;
+      } catch (error) {
+        console.error("Gagal fetch BTB (last-date-insert):", error);
+        const message =
+          error instanceof Error ? error.message : "Gagal mengambil data BTB";
+        setErrBTB(message);
+        if (!silent) {
+          setBtbData([]);
+          setBtbLastDateLabel(null);
+          setIsBTBSuccess(false);
+        }
+        showErrorToast(message);
+        throw error;
+      } finally {
+        if (!silent) setIsBTBLoading(false);
+      }
+    },
+    [organizationId, organizationCode],
+  );
 
   useEffect(() => {
-    void refetchBtb().catch(() => {
+    void refetchBtb({ force: false }).catch(() => {
       // toast sudah di refetchBtb
     });
   }, [refetchBtb]);

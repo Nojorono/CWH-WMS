@@ -37,16 +37,24 @@ export const createCrudStore = <TData, TCreate, TUpdate>({
         page: 1, limit: 10, total: 0,
         totalPages: 0
     },
-}: CrudStoreOptions<TData, TCreate, TUpdate>) =>
-    create<{
+}: CrudStoreOptions<TData, TCreate, TUpdate>) => {
+    /** Dedupe in-flight fetchAll (anti-refetch Fase 4) */
+    let fetchAllInFlight: Promise<{ success: boolean; message?: string }> | null =
+        null;
+
+    return create<{
         list: TData[];
         detail: TData | null;
         isLoading: boolean;
         error: string | null;
         currentId: any;
         pagination: PaginationState;
+        /** True setelah fetchAll sukses minimal sekali (untuk skip refetch) */
+        hasFetchedAll: boolean;
 
-        fetchAll: () => Promise<{ success: boolean; message?: string }>;
+        fetchAll: (options?: {
+            force?: boolean;
+        }) => Promise<{ success: boolean; message?: string }>;
         fetchById: (id: any) => Promise<void>;
         createData: (payload: TCreate) => Promise<{ success: boolean; message?: string }>;
         createBulkData?: (payload: { data: TCreate[] }) => Promise<{ success: boolean; message?: string }>;
@@ -58,6 +66,8 @@ export const createCrudStore = <TData, TCreate, TUpdate>({
         resetDetail: () => void;
         setCurrentId: (id: any) => void;
         loadDetail: (id: any) => Promise<void>;
+        /** Reset cache list (mis. setelah logout / ganti org) */
+        invalidateList: () => void;
     }>((set, get) => ({
         list: [],
         detail: null,
@@ -65,37 +75,62 @@ export const createCrudStore = <TData, TCreate, TUpdate>({
         error: null,
         currentId: null,
         pagination,
+        hasFetchedAll: false,
 
-        fetchAll: async () => {
-            set({ isLoading: true, error: null });
-            try {
-                const data = await service.fetchAll();
-                set({ list: data });
-                return { success: true };
-            } catch (err: any) {
-                const msg = err.message || `Failed to fetch ${name}`;
+        fetchAll: async (options) => {
+            const force = Boolean(options?.force);
+            const { hasFetchedAll, error } = get();
 
-                // Cek pesan error persis "Organization ID is required"
-                if (msg === "Organization ID is required") {
-                    console.warn(`[fetchAll] Silent error: ${msg}`);
-                    set({ error: msg });
-                    return { success: false, message: msg };
-                }
-
-                // Error lain tampilkan toast
-                showErrorToast(msg);
-                set({ error: msg });
-                return { success: false, message: msg };
-            } finally {
-                set({ isLoading: false });
+            // Skip network jika cache sudah ada (kecuali force)
+            if (!force && hasFetchedAll && !error) {
+                return { success: true, message: "cached" };
             }
+
+            if (!force && fetchAllInFlight) {
+                return fetchAllInFlight;
+            }
+
+            const run = async () => {
+                set({ isLoading: true, error: null });
+                try {
+                    const data = await service.fetchAll();
+                    set({ list: data, hasFetchedAll: true });
+                    return { success: true as const };
+                } catch (err: any) {
+                    const msg = err.message || `Failed to fetch ${name}`;
+
+                    if (msg === "Organization ID is required") {
+                        console.warn(`[fetchAll] Silent error: ${msg}`);
+                        set({ error: msg });
+                        return { success: false as const, message: msg };
+                    }
+
+                    showErrorToast(msg);
+                    set({ error: msg });
+                    return { success: false as const, message: msg };
+                } finally {
+                    set({ isLoading: false });
+                }
+            };
+
+            fetchAllInFlight = run();
+            try {
+                return await fetchAllInFlight;
+            } finally {
+                fetchAllInFlight = null;
+            }
+        },
+
+        invalidateList: () => {
+            set({ hasFetchedAll: false, list: [], error: null });
+            fetchAllInFlight = null;
         },
 
         fetchUsingParam: async (param: any) => {
             set({ isLoading: true, error: null });
             try {
                 const data = await service.fetchUsingParam(param);
-                set({ list: data });
+                set({ list: data, hasFetchedAll: true });
             } catch (err: any) {
                 const msg = err.message || `Failed to fetch ${name} using param`;
                 showErrorToast(msg);
@@ -158,13 +193,13 @@ export const createCrudStore = <TData, TCreate, TUpdate>({
             try {
                 await service.create(payload);
                 showSuccessToast(`${name} created successfully`);
-                await get().fetchAll();
+                await get().fetchAll({ force: true });
                 return { success: true };
             } catch (err: any) {
                 const msg = err.message || `Failed to create ${name}`;
                 showErrorToast(msg);
                 set({ error: msg });
-                await get().fetchAll();
+                await get().fetchAll({ force: true });
 
                 return { success: false, message: msg };
             } finally {
@@ -203,7 +238,7 @@ export const createCrudStore = <TData, TCreate, TUpdate>({
             try {
                 await service.update(id, payload);
                 showSuccessToast(`${name} updated successfully`);
-                await get().fetchAll();
+                await get().fetchAll({ force: true });
                 // auto-refresh detail after update
                 if (get().currentId === id) {
                     await get().fetchById(id);
@@ -224,7 +259,7 @@ export const createCrudStore = <TData, TCreate, TUpdate>({
             try {
                 await service.delete(id);
                 showSuccessToast(`${name} deleted successfully`);
-                await get().fetchAll();
+                await get().fetchAll({ force: true });
                 if (get().currentId === id) {
                     set({ detail: null, currentId: null });
                 }
@@ -246,4 +281,5 @@ export const createCrudStore = <TData, TCreate, TUpdate>({
             await get().fetchById(id);
         },
     }));
+};
 

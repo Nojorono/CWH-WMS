@@ -11,10 +11,10 @@ import {
 import dayjs from "dayjs";
 import "dayjs/locale/id";
 import { usePersistAuthStore } from "../../../../API/store/AuthStore/PersistAuthStore";
+import { useOutboundSalesmanCache } from "../../../../API/store/OutboundSalesmanStore/useOutboundSalesmanCache";
 import { useStoreItem } from "../../../../DynamicAPI/stores/Store/MasterStore";
 import { showErrorToast, showSuccessToast } from "../../../../components/toast";
 import { Callplan } from "../../types/CallplanTypes";
-import { callplanService } from "../../Services/CallplanService";
 import SPBTable from "../SPB/SPBTable";
 import { SortDirection, sortCallplans } from "../SPB/spbTableConfig";
 import {
@@ -59,7 +59,7 @@ function RekapSPBFinal() {
     fetchItems();
   }, [fetchItems]);
 
-  const fetchFinalSpb = async () => {
+  const fetchFinalSpb = async (options?: { force?: boolean }) => {
     if (!organizationId || !reportDate) {
       setCallplans([]);
       return;
@@ -67,11 +67,14 @@ function RekapSPBFinal() {
 
     setIsLoading(true);
     try {
-      const data = await callplanService.getCallplans({
-        dateStart: reportDate,
-        organizationId: String(organizationId),
-        status: "FINAL",
-      });
+      const data = await useOutboundSalesmanCache.getState().getCallplans(
+        {
+          dateStart: reportDate,
+          organizationId: String(organizationId),
+          status: "FINAL",
+        },
+        { force: options?.force },
+      );
       setCallplans(data);
       setExpandedRows(data[0] ? { [data[0].id]: true } : {});
     } catch (err) {
@@ -268,7 +271,7 @@ function RekapSPBFinal() {
               </span>
               <button
                 type="button"
-                onClick={() => void fetchFinalSpb()}
+                onClick={() => void fetchFinalSpb({ force: true })}
                 disabled={isLoading}
                 className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50 active:scale-95 disabled:opacity-50"
               >
