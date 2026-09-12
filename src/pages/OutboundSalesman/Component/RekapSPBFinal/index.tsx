@@ -157,7 +157,7 @@ function RekapSPBFinal() {
   };
 
   const handleEmailFas = () => {
-    showSuccessToast("Email to FAS — fitur menyusul (API belum tersedia).");
+    showSuccessToast("Email to FAS — coming soon.");
   };
 
 
