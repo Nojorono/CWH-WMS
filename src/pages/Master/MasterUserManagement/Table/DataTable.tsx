@@ -235,7 +235,7 @@ const DataTable = () => {
               // NIK External + Departement Supply Chain Management
               // → hanya HELPER & DRIVER_FORKLIFT
               if (isExternalSupplyChain) {
-                return name === "HELPER" || name === "DRIVER_FORKLIFT";
+                return name === "HELPER" || name === "DRIVER_FORKLIFT" || name === "WH_ADMIN_CABANG";
               }
 
               if (roleName === "superadmin") {
