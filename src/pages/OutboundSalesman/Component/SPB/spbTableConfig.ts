@@ -127,8 +127,7 @@ export const SPB_DETAIL_COLUMNS: DynamicColumn<CallplanDetail>[] = [
     id: "item_name",
     header: "Item Name",
     cellClassName: "font-medium text-gray-800",
-    // Sementara pakai item_code sampai mapping master item tersedia
-    getValue: (row) => row.item_code,
+    // Di-resolve ke master.description di SPBTable
   },
   {
     id: "item_code",
@@ -140,6 +139,30 @@ export const SPB_DETAIL_COLUMNS: DynamicColumn<CallplanDetail>[] = [
     header: "Qty Suggestion",
     align: "right",
     cellClassName: "font-bold text-gray-800",
+  },
+  {
+    id: "item_qty_submitted",
+    header: "Qty Submitted",
+    align: "right",
+    cellClassName: "font-bold text-slate-700",
+    getValue: (row) =>
+      row.item_qty_submitted === null ||
+      row.item_qty_submitted === undefined ||
+      String(row.item_qty_submitted).trim() === ""
+        ? "-"
+        : row.item_qty_submitted,
+  },
+  {
+    id: "item_qty_final",
+    header: "Qty Final",
+    align: "right",
+    cellClassName: "font-bold text-indigo-700",
+    getValue: (row) =>
+      row.item_qty_final === null ||
+      row.item_qty_final === undefined ||
+      String(row.item_qty_final).trim() === ""
+        ? "-"
+        : row.item_qty_final,
   },
   {
     id: "item_qty_void",

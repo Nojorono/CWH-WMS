@@ -76,6 +76,7 @@ import {
   OutboundSalesman,
   MoveOrderSelisih,
   LaporanHarianStock,
+  RekapSPBFinal,
 } from "./utils/PagesComponent";
 import IntegrationMonitoringPage from "./pages/DOsuggestion/IntegrationLog";
 import OpeningStockUploadPage from "./pages/OpeningStockBalance";
@@ -177,6 +178,7 @@ export function AppRoutes() {
       "/btb": <BTBPage />,
       "/move_order_selisih": <MoveOrderSelisih />,
       "/laporan_harian_stock": <LaporanHarianStock />,
+      "/rekap_spb_final": <RekapSPBFinal />,
     };
     return map[path] || <DefaultPage />;
   }

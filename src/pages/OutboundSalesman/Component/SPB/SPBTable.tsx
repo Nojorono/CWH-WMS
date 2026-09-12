@@ -1,11 +1,12 @@
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   FaChevronDown,
   FaChevronLeft,
   FaChevronRight,
   FaSync,
 } from "react-icons/fa";
-import { Callplan } from "../../types/CallplanTypes";
+import { Callplan, CallplanDetail } from "../../types/CallplanTypes";
+import { useStoreItem } from "../../../../DynamicAPI/stores/Store/MasterStore";
 import {
   getAlignClass,
   getVisibleColumns,
@@ -61,8 +62,41 @@ export default function SPBTable({
   summaryCards = SPB_DETAIL_SUMMARY_CARDS,
   onVoidActionComplete,
 }: SPBTableProps) {
+  const { list: itemList, fetchAll: fetchItems } = useStoreItem();
+  const [voidLoadingIds, setVoidLoadingIds] = useState<Record<string, boolean>>(
+    {},
+  );
 
-  const [voidLoadingIds, setVoidLoadingIds] = useState<Record<string, boolean>>({});
+  useEffect(() => {
+    fetchItems();
+  }, [fetchItems]);
+
+  const itemNameBySku = useMemo(() => {
+    const map = new Map<string, string>();
+    (Array.isArray(itemList) ? itemList : []).forEach((m: { sku?: string; description?: string }) => {
+      const sku = String(m.sku || "").trim().toUpperCase();
+      if (!sku) return;
+      const name = String(m.description || "").trim();
+      if (name) map.set(sku, name);
+    });
+    return map;
+  }, [itemList]);
+
+  const resolveDetailCell = (
+    col: DynamicColumn<CallplanDetail>,
+    detail: CallplanDetail,
+    index: number,
+  ) => {
+    if (col.id === "item_name") {
+      const sku = String(detail.item_code || "").trim();
+      return (
+        itemNameBySku.get(sku.toUpperCase()) ||
+        sku ||
+        "-"
+      );
+    }
+    return resolveCellValue(col, detail, index);
+  };
 
   const handleVoidAction = async (row: Callplan) => {
     const id = row.id;
@@ -113,17 +147,6 @@ export default function SPBTable({
   const safeCurrentPage = Math.min(currentPage, totalPages);
   const startIndex = (safeCurrentPage - 1) * pageSize;
   const endIndex = startIndex + pageSize;
-
-  const getDetailTotal = (row: Callplan) => {
-    const totalColumnId =
-      statusFilter === "VOID" ? "item_qty_void" : "item_qty_suggestion";
-    const qtyCol = visibleDetail.find((c) => c.id === totalColumnId);
-    if (!qtyCol) return null;
-    return (row.details || []).reduce((acc, curr) => {
-      const value = resolveCellValue(qtyCol, curr);
-      return acc + (Number(value) || 0);
-    }, 0);
-  };
 
   return (
     <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
@@ -303,7 +326,7 @@ export default function SPBTable({
                                           key={col.id}
                                           className={`px-6 py-3 ${getAlignClass(col.align)} ${col.cellClassName || ""}`}
                                         >
-                                          {resolveCellValue(
+                                          {resolveDetailCell(
                                             col,
                                             detail,
                                             index,
@@ -322,19 +345,7 @@ export default function SPBTable({
                                 ) && (
                                   <tfoot className="sticky bottom-0 z-10 border-t border-gray-200 bg-gray-50">
                                     <tr>
-                                      <td
-                                        colSpan={Math.max(
-                                          1,
-                                          visibleDetail.length - 1,
-                                        )}
-                                        className="px-6 py-3 text-right text-xs font-bold uppercase text-gray-600"
-                                      >
-                                        Total
-                                      </td>
-                                      <td className="px-6 py-3 text-right font-bold text-blue-600">
-                                        {(getDetailTotal(row) || 0).toLocaleString(
-                                          "id-ID",
-                                        )}
+                                      <td>
                                       </td>
                                     </tr>
                                   </tfoot>
