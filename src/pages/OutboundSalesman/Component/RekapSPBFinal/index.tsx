@@ -171,7 +171,7 @@ function RekapSPBFinal() {
               <span className="font-semibold text-slate-500">(Bungkus / Bks)</span>
             </h1>
             <p className="mt-1 text-sm text-slate-500">
-              {amoName} · {reportDateLabel} · Status FINAL saja
+              {amoName} · {reportDateLabel}
             </p>
           </div>
 
