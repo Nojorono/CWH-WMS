@@ -1,5 +1,5 @@
 // NEW CODE
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useFormContext, useFieldArray, useWatch, Controller } from "react-hook-form";
 import { FormValues } from "../formTypes";
 import { inputCls, getLockedFieldCls } from "../constants";
@@ -19,6 +19,7 @@ import {
   SOsearchService,
 } from "../../../../../../DynamicAPI/services/Service/";
 import { SOHeaderInfo } from "../../../../../../DynamicAPI/types/searchSO";
+import { confirmReplaceInboundItems } from "../Helper/confirmReplaceInboundItems";
 
 const escapeHtml = (value?: string | null) =>
   String(value ?? "-")
@@ -181,6 +182,8 @@ export default function POCard({
 
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  /** Nomor PO/SO yang “memiliki” item saat ini — untuk deteksi ganti nomor */
+  const boundDocNoRef = useRef<string>("");
 
   const {
     fields: itemFields,
@@ -219,44 +222,81 @@ export default function POCard({
 
   const resolvedMode = isDetailMode ? "detail" : isEditMode ? "edit" : "create";
 
-  const hasPoOrSoNumber = Boolean(
-    String(
-      normalizedInbType === "PO" ? poNoWatch || "" : soNoWatch || "",
-    ).trim(),
-  );
+  const docNoFieldName =
+    normalizedInbType === "PO" ? ("po_no" as const) : ("so_no" as const);
 
-  // Jika nomor PO/SO ada dan item sudah ter-mapping dari fetch, blokir input manual
+  const docNoLabel =
+    normalizedInbType === "PO"
+      ? "PO"
+      : normalizedInbType === "SO_INTERNAL"
+        ? "SO Internal"
+        : "SO SubDist";
+
+  const currentDocNo = String(
+    normalizedInbType === "PO" ? poNoWatch || "" : soNoWatch || "",
+  ).trim();
+
+  const hasPoOrSoNumber = Boolean(currentDocNo);
+
+  const hasLegacyDbItems = itemFields.some((it: any) =>
+    Boolean((it as any).inbound_item_id),
+  );
+  const docMatchesBound =
+    currentDocNo === String(boundDocNoRef.current || "").trim();
+  /** Blokir manual jika masih ada baris DB lama, atau item hasil search pada nomor yang sama */
   const cantAddManualAddItem =
-    hasPoOrSoNumber && itemFields.length > 0;
+    hasLegacyDbItems ||
+    (hasPoOrSoNumber && docMatchesBound && itemFields.length > 0);
+
+  const posPath = `deliveryOrders.${doIndex}.pos.${posIndex}`;
+
+  const clearPosItemsAndMeta = () => {
+    replaceItems([]);
+    setValue(`${posPath}.vendor_name` as any, "");
+    setValue(`${posPath}.principal` as any, "");
+    setValue(`${posPath}.vendor_id` as any, undefined);
+    setValue(`${posPath}.vendor_site_id` as any, undefined);
+    setValue(`${posPath}.po_date` as any, undefined);
+    setValue(`${posPath}.total_line_items` as any, 0);
+  };
+
+  const countCurrentItems = () => {
+    const items = getValues(`${posPath}.items` as any);
+    return Array.isArray(items) ? items.length : itemFields.length;
+  };
+
+  const confirmIfHasItems = async (contextLabel: string) => {
+    const count = countCurrentItems();
+    if (count <= 0) return true;
+    return confirmReplaceInboundItems({
+      contextLabel,
+      itemCount: count,
+    });
+  };
 
   useEffect(() => {
     fetchAll();
     fetchAllUom();
   }, []);
 
+  // Sync vendor_name dari principal (sekali jika kosong)
   useEffect(() => {
     const path = `deliveryOrders.${doIndex}.pos.${posIndex}`;
-
     const currentPrincipal = getValues(`${path}.principal` as any);
     const currentVendorName = getValues(`${path}.vendor_name` as any);
 
     if (currentPrincipal && !currentVendorName) {
       setValue(`${path}.vendor_name` as any, currentPrincipal);
     }
+  }, [doIndex, posIndex, getValues, setValue, principalWatch]);
 
-    if ((isDetailMode || isEditMode) && dataPO) {
-      const fieldName = "po_no"; // always po_no
-      setValue(`${path}.${fieldName}` as any, dataPO);
-    }
-  }, [
-    isDetailMode,
-    isEditMode,
-    dataPO,
-    setValue,
-    getValues,
-    doIndex,
-    posIndex,
-  ]);
+  // Init bound doc no sekali — JANGAN setValue ulang po_no/so_no di edit
+  // (itu yang bikin nomor tidak bisa diketik / selalu revert)
+  useEffect(() => {
+    if (boundDocNoRef.current) return;
+    const initial = String(dataPO || currentDocNo || "").trim();
+    if (initial) boundDocNoRef.current = initial;
+  }, [dataPO, currentDocNo]);
 
   const isPOFieldDisabled =
     isDetailMode ||
@@ -265,9 +305,45 @@ export default function POCard({
     (isCreateMode && !isDOChecked);
 
   const canAddItem = !isDetailMode && isDOChecked && !isCancelledSJ;
-  // const cantAddManualAddItem = !isDOChecked || isSuratJalanValidated || isPOValidated;
 
   const getDisabledCls = (disabled: boolean) => getLockedFieldCls(disabled);
+
+  const docNoRegister = register(
+    `deliveryOrders.${doIndex}.pos.${posIndex}.${docNoFieldName}` as any,
+  );
+
+  /** Ganti nomor PO/SO saat masih ada item → peringatan, clear atau revert */
+  const handleDocNoBlur = async () => {
+    if (isDetailMode || isCancelledSJ || isPOFieldDisabled) return;
+
+    const next = String(
+      getValues(`${posPath}.${docNoFieldName}` as any) || "",
+    ).trim();
+    const prev = boundDocNoRef.current;
+
+    if (next === prev) return;
+
+    const count = countCurrentItems();
+    if (count <= 0) {
+      boundDocNoRef.current = next;
+      return;
+    }
+
+    const ok = await confirmReplaceInboundItems({
+      contextLabel: `${docNoLabel} ${next || "(kosong)"}`,
+      itemCount: count,
+    });
+
+    if (ok) {
+      clearPosItemsAndMeta();
+      boundDocNoRef.current = next;
+      // Jangan overwrite original_po_no/so_no — dibutuhkan mapper utk hapus item DB lama
+    } else {
+      setValue(`${posPath}.${docNoFieldName}` as any, prev, {
+        shouldDirty: true,
+      });
+    }
+  };
 
   // ✅ SEARCH PO
   const handleSearchPO = async () => {
@@ -275,8 +351,12 @@ export default function POCard({
     const poNo = getValues(
       `deliveryOrders.${doIndex}.pos.${posIndex}.po_no` as any,
     );
-    
+
     if (!poNo) return showErrorToast("Masukkan nomor PO !");
+
+    const ok = await confirmIfHasItems(`search PO ${poNo}`);
+    if (!ok) return;
+
     setLoading(true);
 
     try {
@@ -303,11 +383,16 @@ export default function POCard({
         setValue(`${path}.po_date` as any, isoDate);
       }
       setValue(`${path}.total_line_items` as any, items.length);
-      // Replace penuh dari API (qty & qty_plan ikut ter-reset)
+      // Replace penuh dari API (qty & qty_plan ikut ter-reset) — tidak merge
       replaceItems(items);
+      boundDocNoRef.current = String(poNo).trim();
     } catch (err: any) {
-      replaceItems([]);
-      showErrorToast(err?.message ?? "Gagal fetch detail PO");
+      clearPosItemsAndMeta();
+      boundDocNoRef.current = String(poNo).trim();
+      showErrorToast(
+        err?.message ??
+          "Gagal fetch detail PO. Form dikosongkan — silakan isi item manual jika perlu.",
+      );
     } finally {
       setLoading(false);
     }
@@ -324,6 +409,9 @@ export default function POCard({
         `Masukkan nomor ${normalizedInbType === "SO_INTERNAL" ? "SO Internal" : "SO SubDist"} !`,
       );
 
+    const ok = await confirmIfHasItems(`search ${docNoLabel} ${soNo}`);
+    if (!ok) return;
+
     setLoading(true);
     try {
       const { vendorName, items, headerInfo } = await SOsearchService(
@@ -333,10 +421,11 @@ export default function POCard({
       );
 
       if (!items || items.length === 0) {
+        clearPosItemsAndMeta();
+        boundDocNoRef.current = String(soNo).trim();
         showErrorToast(
-          `Data SO ${soNo} tidak ditemukan atau item tidak terdaftar di master data.`,
+          `Data SO ${soNo} tidak ditemukan atau item tidak terdaftar di master data. Form dikosongkan — silakan isi item manual jika perlu.`,
         );
-        replaceItems([]);
         return;
       }
 
@@ -368,7 +457,8 @@ export default function POCard({
             orgName,
             soNo,
           });
-          replaceItems([]);
+          clearPosItemsAndMeta();
+          boundDocNoRef.current = String(soNo).trim();
           return;
         }
       } else if (organizationCodeTo !== loginOrgName) {
@@ -379,7 +469,8 @@ export default function POCard({
           orgName,
           soNo,
         });
-        replaceItems([]);
+        clearPosItemsAndMeta();
+        boundDocNoRef.current = String(soNo).trim();
         return;
       }
 
@@ -391,6 +482,9 @@ export default function POCard({
       });
 
       if (!validResult.isConfirmed) {
+        // User sudah setuju ganti di awal; batalkan mapping → form kosong (jangan merge lama)
+        clearPosItemsAndMeta();
+        boundDocNoRef.current = String(soNo).trim();
         return;
       }
 
@@ -406,13 +500,15 @@ export default function POCard({
         );
       }
 
-      // Replace penuh dari API (qty & qty_plan ikut ter-reset)
+      // Replace penuh dari API — tidak merge
       replaceItems(items);
+      boundDocNoRef.current = String(soNo).trim();
     } catch (err: any) {
-      replaceItems([]);
+      clearPosItemsAndMeta();
+      boundDocNoRef.current = String(soNo).trim();
       showErrorToast(
         err?.message ??
-          `Gagal fetch detail ${normalizedInbType === "SO_INTERNAL" ? "SO Internal" : "SO SubDist"}`,
+          `Gagal fetch detail ${normalizedInbType === "SO_INTERNAL" ? "SO Internal" : "SO SubDist"}. Form dikosongkan — silakan isi item manual jika perlu.`,
       );
     } finally {
       setLoading(false);
@@ -443,9 +539,11 @@ export default function POCard({
           <div className="flex gap-2">
             <input
               className={`${inputCls} ${getDisabledCls(isPOFieldDisabled ?? false)} disabled:cursor-not-allowed flex-1`}
-              {...register(
-                `deliveryOrders.${doIndex}.pos.${posIndex}.${normalizedInbType === "PO" ? "po_no" : "so_no"}` as any,
-              )}
+              {...docNoRegister}
+              onBlur={async (e) => {
+                docNoRegister.onBlur(e);
+                await handleDocNoBlur();
+              }}
               key={isDOChecked ? "enabled" : "disabled"}
               disabled={isPOFieldDisabled}
             />
@@ -458,7 +556,7 @@ export default function POCard({
                   normalizedInbType === "PO" ? handleSearchPO : handleSearchSO
                 }
                 disabled={isPOFieldDisabled || loading}
-                title={`Search ${normalizedInbType === "PO" ? "PO" : normalizedInbType === "SO_INTERNAL" ? "SO Internal" : "SO SubDist"}`}
+                title={`Search ${docNoLabel}`}
               >
                 <FaSearch />
               </Button>

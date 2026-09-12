@@ -12,6 +12,7 @@ import {
   filterActiveDeliveryOrders,
   isCancelledDeliveryOrder,
 } from "./component/Helper/sjStatusHelpers";
+import { confirmReplaceInboundItems } from "./component/Helper/confirmReplaceInboundItems";
 
 // --- Default empty values
 const emptyFormValues: FormValues = {
@@ -57,7 +58,7 @@ export default function InboundPlanningFormContainer() {
     useStoreInboundGoodStock();
 
   const methods = useForm<FormValues>({ defaultValues: emptyFormValues });
-  const { reset, control, getValues, trigger, handleSubmit } = methods;
+  const { reset, control, getValues, setValue, trigger, handleSubmit } = methods;
 
   const {
     fields: doFields,
@@ -137,8 +138,90 @@ export default function InboundPlanningFormContainer() {
 
     const values = getValues();
     const deliveryOrders = values.deliveryOrders || [];
-    const activeDeliveryOrders = filterActiveDeliveryOrders(deliveryOrders);
-    const cancelledSJ = deliveryOrders.filter(isCancelledDeliveryOrder);
+
+    const inboundTypeRaw = values.inbound_type;
+    const inboundType =
+      typeof inboundTypeRaw === "object"
+        ? (inboundTypeRaw as any)?.value
+        : inboundTypeRaw;
+    const isPOType = inboundType === "PO";
+
+    for (let i = 0; i < deliveryOrders.length; i++) {
+      const doItem = deliveryOrders[i];
+      if (isCancelledDeliveryOrder(doItem)) continue;
+      const posList = doItem.pos || [];
+
+      for (let j = 0; j < posList.length; j++) {
+        const poItem = posList[j] as any;
+        const currentDoc = String(
+          isPOType ? poItem.po_no || "" : poItem.so_no || "",
+        ).trim();
+        const originalDoc = String(
+          isPOType
+            ? poItem.original_po_no || ""
+            : poItem.original_so_no || "",
+        ).trim();
+        const items = Array.isArray(poItem.items) ? poItem.items : [];
+        const docChanged =
+          Boolean(originalDoc) &&
+          Boolean(currentDoc) &&
+          originalDoc !== currentDoc;
+
+        if (!docChanged || items.length === 0) continue;
+
+        const originalIds = new Set(
+          (Array.isArray(poItem.original_inbound_items)
+            ? poItem.original_inbound_items
+            : []
+          ).map((row: any) => String(row?.id || "").trim()).filter(Boolean),
+        );
+
+        const legacyItems = items.filter(
+          (it: any) =>
+            Boolean(it?.inbound_item_id) ||
+            originalIds.has(String(it?.inbound_item_id || "").trim()),
+        );
+        // Saat PO diganti: buang SEMUA item yang punya jejak DB; sisakan murni manual/baru
+        const freshItems = items.filter((it: any) => !it?.inbound_item_id);
+
+        if (legacyItems.length === 0 && freshItems.length === items.length) {
+          // Tidak ada jejak DB di form, tapi nomor berubah — tetap pastikan
+          // original_inbound_items ikut terhapus di payload (mapper).
+          continue;
+        }
+
+        if (legacyItems.length === 0) continue;
+
+        const ok = await confirmReplaceInboundItems({
+          contextLabel: `${isPOType ? "PO" : "SO"} ${currentDoc}`,
+          itemCount: legacyItems.length,
+        });
+
+        if (!ok) return;
+
+        // Buang item DB lama dari form. Replace di DB bergantung BE
+        // (omit item = delete / hard-replace). FE tidak kirim qty:0 (BE tolak).
+        setValue(`deliveryOrders.${i}.pos.${j}.items` as any, freshItems, {
+          shouldDirty: true,
+        });
+
+        if (freshItems.length === 0) {
+          showErrorToast(
+            `Item lama untuk ${isPOType ? "PO" : "SO"} ${originalDoc} telah dihapus. Isi item untuk nomor baru lalu Preview lagi.`,
+          );
+          return;
+        }
+
+        showSuccessToast(
+          `Item lama (${legacyItems.length}) dihapus. Hanya ${freshItems.length} item baru yang dibawa ke preview.`,
+        );
+      }
+    }
+
+    const refreshedValues = getValues();
+    const refreshedOrders = refreshedValues.deliveryOrders || [];
+    const activeDeliveryOrders = filterActiveDeliveryOrders(refreshedOrders);
+    const cancelledSJ = refreshedOrders.filter(isCancelledDeliveryOrder);
 
     // =========================
     // 1) VALIDASI: minimal 1 SJ aktif (bukan CANCELLED)
@@ -309,7 +392,7 @@ export default function InboundPlanningFormContainer() {
     // ============================================
     // 5) Kalau semua valid -> lanjut preview (hanya SJ aktif)
     // ============================================
-    openPreviewWithActiveOrders(values);
+    openPreviewWithActiveOrders(getValues());
   };
 
   // SUBMIT CREATE OR UPDATE INBOUND PLANING
@@ -374,9 +457,6 @@ export default function InboundPlanningFormContainer() {
     if (isCreateMode) {
       apiAction = () => createData(payload);
     } else if (isEditMode && id) {
-      console.log("payload update: ", payload);
-      console.log("id: ", id);
-
       apiAction = () => updateData(id, payload);
     } else if (isAddToReceiveMode && id) {
       const addToReceivePayload = {
