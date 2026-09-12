@@ -28,6 +28,11 @@ interface CrudStoreOptions<TData, TCreate, TUpdate> {
     };
 
     pagination?: PaginationState;
+    /**
+     * Optional TTL untuk cache fetchAll (ms).
+     * Omit / 0 = cache sampai invalidate / force / logout.
+     */
+    cacheTtlMs?: number;
 }
 
 /** Registry agar logout/401 bisa wipe semua CRUD store tanpa import MasterStore (hindari circular). */
@@ -51,6 +56,7 @@ export const createCrudStore = <TData, TCreate, TUpdate>({
         page: 1, limit: 10, total: 0,
         totalPages: 0
     },
+    cacheTtlMs = 0,
 }: CrudStoreOptions<TData, TCreate, TUpdate>) => {
     /** Dedupe in-flight fetchAll (anti-refetch Fase 4) */
     let fetchAllInFlight: Promise<{ success: boolean; message?: string }> | null =
@@ -63,6 +69,12 @@ export const createCrudStore = <TData, TCreate, TUpdate>({
         totalPages: pagination.totalPages,
     };
 
+    const isFetchAllCacheFresh = (listFetchedAt: number | null) => {
+        if (!cacheTtlMs || cacheTtlMs <= 0) return true;
+        if (listFetchedAt == null) return false;
+        return Date.now() - listFetchedAt < cacheTtlMs;
+    };
+
     const store = create<{
         list: TData[];
         detail: TData | null;
@@ -72,6 +84,8 @@ export const createCrudStore = <TData, TCreate, TUpdate>({
         pagination: PaginationState;
         /** True setelah fetchAll sukses minimal sekali (untuk skip refetch) */
         hasFetchedAll: boolean;
+        /** Timestamp fetchAll sukses terakhir (untuk TTL) */
+        listFetchedAt: number | null;
 
         fetchAll: (options?: {
             force?: boolean;
@@ -97,13 +111,19 @@ export const createCrudStore = <TData, TCreate, TUpdate>({
         currentId: null,
         pagination: { ...initialPagination },
         hasFetchedAll: false,
+        listFetchedAt: null,
 
         fetchAll: async (options) => {
             const force = Boolean(options?.force);
-            const { hasFetchedAll, error } = get();
+            const { hasFetchedAll, error, listFetchedAt } = get();
 
-            // Skip network jika cache sudah ada (kecuali force)
-            if (!force && hasFetchedAll && !error) {
+            // Skip network jika cache full-list masih fresh (kecuali force)
+            if (
+                !force &&
+                hasFetchedAll &&
+                !error &&
+                isFetchAllCacheFresh(listFetchedAt)
+            ) {
                 return { success: true, message: "cached" };
             }
 
@@ -115,7 +135,11 @@ export const createCrudStore = <TData, TCreate, TUpdate>({
                 set({ isLoading: true, error: null });
                 try {
                     const data = await service.fetchAll();
-                    set({ list: data, hasFetchedAll: true });
+                    set({
+                        list: data,
+                        hasFetchedAll: true,
+                        listFetchedAt: Date.now(),
+                    });
                     return { success: true as const };
                 } catch (err: any) {
                     const msg = err.message || `Failed to fetch ${name}`;
@@ -145,6 +169,7 @@ export const createCrudStore = <TData, TCreate, TUpdate>({
         invalidateList: () => {
             set({
                 hasFetchedAll: false,
+                listFetchedAt: null,
                 list: [],
                 detail: null,
                 currentId: null,
@@ -159,7 +184,12 @@ export const createCrudStore = <TData, TCreate, TUpdate>({
             set({ isLoading: true, error: null });
             try {
                 const data = await service.fetchUsingParam(param);
-                set({ list: data, hasFetchedAll: true });
+                // Param = filtered list — jangan anggap full fetchAll cached
+                set({
+                    list: data,
+                    hasFetchedAll: false,
+                    listFetchedAt: null,
+                });
             } catch (err: any) {
                 const msg = err.message || `Failed to fetch ${name} using param`;
                 showErrorToast(msg);
@@ -186,7 +216,7 @@ export const createCrudStore = <TData, TCreate, TUpdate>({
                 const total = typeof result?.total === "number" ? result.total : data.length;
                 const totalPages = Math.max(1, Math.ceil(total / limit));
 
-                // ✅ Set state aman
+                // ✅ Set state aman — pagination ≠ full-list cache
                 set({
                     list: data,
                     pagination: { page, limit, total, totalPages },
@@ -250,6 +280,7 @@ export const createCrudStore = <TData, TCreate, TUpdate>({
 
                 await service.createBulk(payload);
                 showSuccessToast(`${name} bulk created successfully`);
+                await get().fetchAll({ force: true });
                 return { success: true };
             } catch (err: any) {
                 const msg = err.message || `Failed to bulk create ${name}`;
