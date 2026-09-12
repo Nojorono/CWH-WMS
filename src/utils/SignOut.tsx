@@ -12,9 +12,11 @@
 
 import { NavigateFunction } from "react-router-dom";
 import { usePersistAuthStore } from "../API/store/AuthStore/PersistAuthStore";
+import { invalidateAllAppCaches } from "../API/utils/invalidateAppCaches";
 
 export const signOut = (navigate: NavigateFunction) => {
   try {
+    invalidateAllAppCaches();
     usePersistAuthStore.getState().resetAuth();
     localStorage.clear();
     sessionStorage.clear();

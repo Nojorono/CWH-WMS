@@ -6,6 +6,7 @@
 import axios from "axios";
 import { EndPoint } from "../../utils/EndPoint";
 import { usePersistAuthStore } from "../store/AuthStore/PersistAuthStore";
+import { invalidateAllAppCaches } from "../utils/invalidateAppCaches";
 
 const axiosInstance = axios.create({
   baseURL: EndPoint,
@@ -38,6 +39,7 @@ axiosInstance.interceptors.response.use(
       error.response &&
       [401, 403].includes(error.response.status)
     ) {
+      invalidateAllAppCaches();
       usePersistAuthStore.getState().resetAuth();
 
       localStorage.clear();

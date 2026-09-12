@@ -30,6 +30,20 @@ interface CrudStoreOptions<TData, TCreate, TUpdate> {
     pagination?: PaginationState;
 }
 
+/** Registry agar logout/401 bisa wipe semua CRUD store tanpa import MasterStore (hindari circular). */
+const crudStoreInvalidators: Array<() => void> = [];
+
+/** Invalidate semua createCrudStore (list/detail/cache flags). Tidak memanggil API. */
+export const invalidateAllCrudStores = () => {
+    crudStoreInvalidators.forEach((invalidate) => {
+        try {
+            invalidate();
+        } catch (err) {
+            console.warn("[invalidateAllCrudStores]", err);
+        }
+    });
+};
+
 export const createCrudStore = <TData, TCreate, TUpdate>({
     name,
     service,
@@ -42,7 +56,14 @@ export const createCrudStore = <TData, TCreate, TUpdate>({
     let fetchAllInFlight: Promise<{ success: boolean; message?: string }> | null =
         null;
 
-    return create<{
+    const initialPagination: PaginationState = {
+        page: pagination.page,
+        limit: pagination.limit,
+        total: pagination.total,
+        totalPages: pagination.totalPages,
+    };
+
+    const store = create<{
         list: TData[];
         detail: TData | null;
         isLoading: boolean;
@@ -74,7 +95,7 @@ export const createCrudStore = <TData, TCreate, TUpdate>({
         isLoading: false,
         error: null,
         currentId: null,
-        pagination,
+        pagination: { ...initialPagination },
         hasFetchedAll: false,
 
         fetchAll: async (options) => {
@@ -122,7 +143,15 @@ export const createCrudStore = <TData, TCreate, TUpdate>({
         },
 
         invalidateList: () => {
-            set({ hasFetchedAll: false, list: [], error: null });
+            set({
+                hasFetchedAll: false,
+                list: [],
+                detail: null,
+                currentId: null,
+                error: null,
+                isLoading: false,
+                pagination: { ...initialPagination },
+            });
             fetchAllInFlight = null;
         },
 
@@ -281,5 +310,8 @@ export const createCrudStore = <TData, TCreate, TUpdate>({
             await get().fetchById(id);
         },
     }));
+
+    crudStoreInvalidators.push(() => store.getState().invalidateList());
+    return store;
 };
 
