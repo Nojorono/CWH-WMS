@@ -384,6 +384,8 @@ export default function SPBTable({
               <option value={10}>Show 10</option>
               <option value={20}>Show 20</option>
               <option value={50}>Show 50</option>
+              <option value={100}>Show 100</option>
+              <option value={200}>Show 200</option>
             </select>
 
             <div className="flex items-center gap-2 text-sm font-semibold text-gray-600">
