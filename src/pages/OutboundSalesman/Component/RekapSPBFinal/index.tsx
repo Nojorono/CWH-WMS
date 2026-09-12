@@ -126,9 +126,36 @@ function RekapSPBFinal() {
     setExpandedRows((prev) => ({ ...prev, [id]: !prev[id] }));
   };
 
+  /** Urutkan detail SKU per SPB sesuai abjad (nama master → fallback SKU) */
+  const callplansWithSortedItems = useMemo(() => {
+    const nameBySku = new Map<string, string>();
+    (Array.isArray(itemList) ? itemList : []).forEach(
+      (m: { sku?: string; description?: string }) => {
+        const sku = String(m.sku || "").trim().toUpperCase();
+        const name = String(m.description || "").trim();
+        if (sku && name) nameBySku.set(sku, name);
+      },
+    );
+
+    const sortKeyOf = (itemCode: string) => {
+      const sku = String(itemCode || "").trim();
+      return (nameBySku.get(sku.toUpperCase()) || sku).toLocaleLowerCase("id");
+    };
+
+    return callplans.map((doc) => ({
+      ...doc,
+      details: [...(doc.details || [])].sort((a, b) =>
+        sortKeyOf(a.item_code).localeCompare(sortKeyOf(b.item_code), "id", {
+          numeric: true,
+          sensitivity: "base",
+        }),
+      ),
+    }));
+  }, [callplans, itemList]);
+
   const sortedCallplans = useMemo(
-    () => sortCallplans(callplans, sortKey, sortDirection),
-    [callplans, sortKey, sortDirection],
+    () => sortCallplans(callplansWithSortedItems, sortKey, sortDirection),
+    [callplansWithSortedItems, sortKey, sortDirection],
   );
 
   const totalItems = sortedCallplans.length;
