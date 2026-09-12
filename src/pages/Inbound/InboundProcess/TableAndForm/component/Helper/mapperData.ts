@@ -102,6 +102,15 @@ export function mapDetailToFormValues(detail: any): FormValues {
 
                     po_no: isPO ? (doItem.inbound_po_number || "") : "",
                     so_no: !isPO ? (doItem.inbound_po_number || "") : "",
+                    original_po_no: isPO ? (doItem.inbound_po_number || "") : "",
+                    original_so_no: !isPO ? (doItem.inbound_po_number || "") : "",
+                    original_inbound_items: (doItem.inbound_items || [])
+                        .map((item: any) => ({
+                            id: String(item.id || "").trim(),
+                            item_id: String(item.item_id || "").trim(),
+                            uom: String(item.uom || "DUS").trim() || "DUS",
+                        }))
+                        .filter((row: { id: string }) => Boolean(row.id)),
 
                     po_date: doItem.inbound_po_date ? new Date(doItem.inbound_po_date).toISOString() : "",
                     flag_validated: !!doItem.flag_validated,
@@ -123,7 +132,8 @@ export function mapDetailToFormValues(detail: any): FormValues {
                         "",
 
                     items: (doItem.inbound_items || []).map((item: any) => ({
-                        id: item.id || "",
+                        // Jangan pakai id DB sebagai id RHF field-array
+                        inbound_item_id: item.id || "",
                         inbound_id: item.inbound_id || doItem.inbound_id || detail.id || "",
                         inbound_do_id: item.inbound_do_id || doItem.id || "",
                         item_id: item.item_id || "",

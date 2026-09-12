@@ -34,6 +34,7 @@ import { FaCircleXmark } from "react-icons/fa6";
 import { showConfirmDialog } from "../../../../../../components/swal-confirm";
 import { cancelSJService } from "../../../services";
 import { isCancelledDeliveryOrder } from "../Helper/sjStatusHelpers";
+import { confirmReplaceInboundItems } from "../Helper/confirmReplaceInboundItems";
 
 export default function DeliveryOrderCard({
   doIndex,
@@ -60,6 +61,7 @@ export default function DeliveryOrderCard({
     control,
     register,
     setValue,
+    getValues,
     watch,
     formState: { errors },
   } = useFormContext<FormValues>();
@@ -75,6 +77,8 @@ export default function DeliveryOrderCard({
   });
 
   const lastValidatedDONo = useRef<string>("");
+  /** SJ yang “memiliki” item saat ini — untuk revert/clear saat nomor diganti */
+  const boundDoNoRef = useRef<string>("");
 
   const {
     doStatus,
@@ -118,8 +122,30 @@ export default function DeliveryOrderCard({
     if ((isDetailMode || isEditMode) && watchedDONo) {
       setIsDOChecked(true);
       lastValidatedDONo.current = watchedDONo;
+      boundDoNoRef.current = String(watchedDONo).trim();
     }
   }, [isDetailMode, isEditMode, watchedDONo, setIsDOChecked]);
+
+  const countDoItems = () => {
+    const pos = getValues(`deliveryOrders.${doIndex}.pos` as any) || [];
+    if (!Array.isArray(pos)) return 0;
+    return pos.reduce((sum: number, p: any) => {
+      const items = Array.isArray(p?.items) ? p.items.length : 0;
+      return sum + items;
+    }, 0);
+  };
+
+  const resetDoPosShell = () => {
+    const isPO = inbType === "PO";
+    replacePos([
+      {
+        ...(isPO ? { po_no: "" } : { so_no: "" }),
+        items: [],
+        vendor_name: "",
+        principal: "",
+      },
+    ]);
+  };
 
   const onCheckDO = async () => {
     if (isDuplicateDO) {
@@ -134,12 +160,55 @@ export default function DeliveryOrderCard({
       return;
     }
 
+    const itemCount = countDoItems();
+    if (itemCount > 0) {
+      const ok = await confirmReplaceInboundItems({
+        contextLabel: `validasi SJ/DO ${watchedDONo || ""}`,
+        itemCount,
+      });
+      if (!ok) return;
+    }
+
     setDoStatus(null);
     setIsDOChecked(false);
-    lastValidatedDONo.current = "";
-
     lastValidatedDONo.current = watchedDONo || "";
-    await handleCheckDO(null);
+    const okValidate = await handleCheckDO(null);
+    if (okValidate) {
+      boundDoNoRef.current = String(watchedDONo || "").trim();
+    }
+  };
+
+  const handleDoNoBlur = async () => {
+    if (isDetailMode || isCancelledSJ) return;
+
+    const next = String(watchedDONo || "").trim();
+    const prev = String(boundDoNoRef.current || "").trim();
+    if (!prev || next === prev) return;
+
+    const itemCount = countDoItems();
+    if (itemCount <= 0) {
+      setDoStatus(null);
+      setIsDOChecked(false);
+      boundDoNoRef.current = next;
+      return;
+    }
+
+    const ok = await confirmReplaceInboundItems({
+      contextLabel: `SJ/DO ${next || "(kosong)"}`,
+      itemCount,
+    });
+
+    if (ok) {
+      resetDoPosShell();
+      setDoStatus(null);
+      setIsDOChecked(false);
+      lastValidatedDONo.current = "";
+      boundDoNoRef.current = next;
+    } else {
+      setValue(`deliveryOrders.${doIndex}.do_no` as any, prev, {
+        shouldDirty: true,
+      });
+    }
   };
 
   useEffect(() => {
@@ -149,7 +218,7 @@ export default function DeliveryOrderCard({
       const handler = setTimeout(() => {
         setDoStatus(null);
         setIsDOChecked(false);
-        lastValidatedDONo.current = "";
+        // Jangan hapus boundDoNoRef di sini — blur/confirm yang clear item
       }, 1000);
       return () => clearTimeout(handler);
     }
@@ -188,6 +257,10 @@ export default function DeliveryOrderCard({
     (!isCreateMode && !isEditMode && !isAddToReceiveMode) || isCancelledSJ;
   const isValidType =
     inbType === "PO" || inbType === "SO_INTERNAL" || inbType === "SO_SUBDIST";
+
+  const doNoRegister = register(`deliveryOrders.${doIndex}.do_no`, {
+    required: "No Surat Jalan wajib diisi",
+  });
 
   const inboundId = watch("id" as any);
   const currentDO = watch(`deliveryOrders.${doIndex}`);
@@ -404,9 +477,11 @@ export default function DeliveryOrderCard({
               </label>
               <div className="flex gap-2 relative">
                 <input
-                  {...register(`deliveryOrders.${doIndex}.do_no`, {
-                    required: "No Surat Jalan wajib diisi",
-                  })}
+                  {...doNoRegister}
+                  onBlur={async (e) => {
+                    doNoRegister.onBlur(e);
+                    await handleDoNoBlur();
+                  }}
                   placeholder="Input DO Number..."
                   className={`${inputCls} !py-1.5 !text-xs flex-1 ${getLockedFieldCls(isInputDisabled)} disabled:cursor-not-allowed ${errors.deliveryOrders?.[doIndex]?.do_no || isDuplicateDO
                     ? "border-red-500"

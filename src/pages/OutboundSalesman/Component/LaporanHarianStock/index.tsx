@@ -70,7 +70,7 @@ function LaporanHarianStock() {
         <div className="flex flex-wrap items-center gap-2">
           <button
             type="button"
-            onClick={() => void refetch()}
+            onClick={() => void refetch({ force: true })}
             disabled={isLoading}
             className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 disabled:opacity-60"
           >

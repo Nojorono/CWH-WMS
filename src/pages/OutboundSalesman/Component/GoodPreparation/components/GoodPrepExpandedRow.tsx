@@ -1,6 +1,6 @@
 import React from "react";
 import dayjs from "dayjs";
-import BTBTotalBreakdown from "../../../../DOsuggestion/OutboundSales/component/BTBTotalBreakdown";
+import BTBTotalBreakdown from "../../../shared/component/BTBTotalBreakdown";
 import { EnrichedCallplan, isSpbIntegratedToMeta } from "../types";
 import { PrepDetailTable } from "../PrepDetailTable";
 import { AdjustQtyItem } from "../AdjustQtySPB";

@@ -1,4 +1,4 @@
-import { updateDO } from "../../../../../API/services/DOsuggestionServices/postDOsuggestion";
+import { updateDO } from "../../../../../API/services/do-suggestion/postDOsuggestion";
 import { btbService } from "../../../Services/BTBService";
 import { BTB } from "../../../types/BTBtypes";
 import { Callplan, CallplanDetail } from "../../../types/CallplanTypes";

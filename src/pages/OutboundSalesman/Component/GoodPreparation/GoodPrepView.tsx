@@ -8,12 +8,12 @@ import {
   FaPrint,
   FaSyncAlt,
 } from "react-icons/fa";
-import { ActionMenu } from "../../../OutboundFullTrial/PickingTransaction/components";
+import { ActionMenu } from "../../../OutboundCWH/PickingTransaction/components";
 import { usePersistAuthStore } from "../../../../API/store/AuthStore/PersistAuthStore";
 import { useStoreItem } from "../../../../DynamicAPI/stores/Store/MasterStore";
 import { showErrorToast, showSuccessToast } from "../../../../components/toast";
-import { BaseTable } from "../../../DOsuggestion/OutboundSales/component/BaseTable";
-import { PrintAllSKU } from "../../../DOsuggestion/OutboundSales/component/PrintAllSKU";
+import { BaseTable } from "../../shared/component/BaseTable";
+import { PrintAllSKU } from "../../shared/component/PrintAllSKU";
 import { useRealTimeSOH } from "../../hook/useRealTimeSOH";
 import { GoodPrepViewProps } from "../../types/flow";
 import { LoadingOverlay } from "./LoadingOverlay";

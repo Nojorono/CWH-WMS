@@ -303,7 +303,7 @@ export default function InboundConfirmModal({
               </div>
 
               <div className="bg-white border border-gray-200 rounded-xl shadow-sm p-4">
-                <h3 className="text-lg font-semibold text-gray-800 mb-3 border-b pb-2 sticky top-0 bg-white z-10">
+                <h3 className="text-lg font-semibold text-gray-800 mb-3 border-b pb-2 sticky top-0 bg-white">
                   Summary per SKU
                 </h3>
 

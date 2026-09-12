@@ -166,6 +166,8 @@ export const useStoreParentMenu = createCrudStore<Menu, CreateMenu, UpdateMenu>(
 export const useStoreItem = createCrudStore<Item, CreateItem, UpdateItem>({
     name: "Item",
     service: ItemService,
+    /** Master Item sering dipakai OSM — refresh otomatis tiap 10 menit */
+    cacheTtlMs: 10 * 60 * 1000,
 });
 
 export const useStoreSupplier = createCrudStore<Supplier, CreateSupplier, UpdateSupplier>({

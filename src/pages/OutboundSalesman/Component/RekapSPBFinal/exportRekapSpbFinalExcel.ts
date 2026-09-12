@@ -65,13 +65,8 @@ const setCell = (
   c: number,
   value: string | number | null,
   style: Record<string, unknown>,
-  formula?: string,
 ) => {
   const addr = XLSX.utils.encode_cell({ r, c });
-  if (formula) {
-    ws[addr] = { t: "n", f: formula, s: style };
-    return;
-  }
   if (value === null || value === undefined || value === "") {
     ws[addr] = { t: "s", v: "", s: style };
     return;
@@ -186,7 +181,7 @@ export const exportRekapSpbFinalExcel = ({
   ws["!merges"] = merges;
 
   const dataStart = 3;
-  const dataEnd = dataStart + callplans.length - 1;
+  const colTotals = skuColumns.map(() => 0);
 
   callplans.forEach((doc, rowIdx) => {
     const r = dataStart + rowIdx;
@@ -223,6 +218,7 @@ export const exportRekapSpbFinalExcel = ({
 
     skuColumns.forEach((sku, idx) => {
       const qty = qtyBySku.get(sku.code) || 0;
+      colTotals[idx] += qty;
       setCell(
         ws,
         r,
@@ -233,10 +229,7 @@ export const exportRekapSpbFinalExcel = ({
     });
   });
 
-  const totalRow = dataEnd + 1;
-  const firstExcelRow = dataStart + 1; // 1-based
-  const lastExcelRow = dataEnd + 1;
-
+  const totalRow = dataStart + callplans.length;
   setCell(ws, totalRow, 0, "", cellStyle({ bg: COLORS.orange }));
   setCell(ws, totalRow, 1, "", cellStyle({ bg: COLORS.orange }));
   setCell(ws, totalRow, 2, "", cellStyle({ bg: COLORS.orange }));
@@ -247,15 +240,13 @@ export const exportRekapSpbFinalExcel = ({
     "TOTAL ALL",
     cellStyle({ bg: COLORS.orange, bold: true, align: "left" }),
   );
-  skuColumns.forEach((_sku, idx) => {
-    const col = XLSX.utils.encode_col(fixedCols + idx);
+  colTotals.forEach((sum, idx) => {
     setCell(
       ws,
       totalRow,
       fixedCols + idx,
-      null,
+      sum,
       cellStyle({ bg: COLORS.orange, bold: true }),
-      `SUM(${col}${firstExcelRow}:${col}${lastExcelRow})`,
     );
   });
 

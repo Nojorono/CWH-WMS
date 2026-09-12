@@ -11,8 +11,8 @@ import {
   FaFileAlt 
 } from "react-icons/fa";
 import { usePersistAuthStore } from "../../../../API/store/AuthStore/PersistAuthStore";
+import { useOutboundSalesmanCache } from "../../../../API/store/OutboundSalesmanStore/useOutboundSalesmanCache";
 import { Callplan } from "../../types/CallplanTypes";
-import { callplanService } from "../../Services/CallplanService";
 import { SPBViewProps } from "../../types/flow";
 import dayjs from "dayjs";
 import { showErrorToast } from "../../../../components/toast";
@@ -113,16 +113,19 @@ export default function SPBView({
     return dayjs().format("DD MMM YYYY - HH:mm");
   }, [bypassActive, appliedBypassDate, appliedBypassTime]);
 
-  const fetchCallplans = async () => {
+  const fetchCallplans = async (options?: { force?: boolean }) => {
     if (!organization_id) return;
 
     setIsLoading(true);
     try {
-      const data = await callplanService.getCallplans({
-        dateStart: targetCallplanDate,
-        organizationId: organization_id,
-        status: statusFilter,
-      });
+      const data = await useOutboundSalesmanCache.getState().getCallplans(
+        {
+          dateStart: targetCallplanDate,
+          organizationId: organization_id,
+          status: statusFilter,
+        },
+        { force: options?.force },
+      );
 
       setCallplans(data);
       setExpandedRows(data[0] ? { [data[0].id]: true } : {});
@@ -137,7 +140,7 @@ export default function SPBView({
   };
 
   useEffect(() => {
-    fetchCallplans();
+    void fetchCallplans();
   }, [organization_id, statusFilter, targetCallplanDate]);
 
   useEffect(() => {
@@ -346,7 +349,7 @@ export default function SPBView({
               </div>
 
               <button
-                onClick={fetchCallplans}
+                onClick={() => void fetchCallplans({ force: true })}
                 disabled={isLoading}
                 className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50 active:scale-95 disabled:opacity-50"
               >
@@ -402,7 +405,12 @@ export default function SPBView({
                 setSortKey(nextKey);
                 setSortDirection(nextDirection);
               }}
-              onVoidActionComplete={() => setStatusFilter("VOID")}
+              onVoidActionComplete={() => {
+                useOutboundSalesmanCache
+                  .getState()
+                  .invalidateCallplans(organization_id, targetCallplanDate);
+                setStatusFilter("VOID");
+              }}
             />
           </div>
         </div>

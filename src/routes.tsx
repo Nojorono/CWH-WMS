@@ -78,7 +78,7 @@ import {
   LaporanHarianStock,
   RekapSPBFinal,
 } from "./utils/PagesComponent";
-import IntegrationMonitoringPage from "./pages/DOsuggestion/IntegrationLog";
+import IntegrationMonitoringPage from "./pages/DOsuggestionV1/IntegrationLog";
 import OpeningStockUploadPage from "./pages/OpeningStockBalance";
 
 const DefaultPage = () => (

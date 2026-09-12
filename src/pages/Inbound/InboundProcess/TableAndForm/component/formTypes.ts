@@ -30,6 +30,8 @@ export interface InboundIntegration {
 // =============================
 export type ItemForm = {
     id: any;
+    /** ID baris inbound_item di DB (bukan id field-array RHF) */
+    inbound_item_id?: string;
     item_id?: any;
     inbound_id?: string;
     inbound_do_id?: string;
@@ -56,6 +58,15 @@ export type POSForm = {
     po_date?: string;
     so_no?: string;
     so_date?: string;
+    /** Snapshot nomor saat load detail — untuk deteksi ganti PO/SO di edit */
+    original_po_no?: string;
+    original_so_no?: string;
+    /** Snapshot baris item DB saat load — untuk soft-delete saat PO/SO diganti */
+    original_inbound_items?: Array<{
+        id: string;
+        item_id: string;
+        uom: string;
+    }>;
     items: ItemForm[];
     flag_validated?: boolean;
     vendor_name?: string;

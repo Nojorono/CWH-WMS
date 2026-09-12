@@ -1,12 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import dayjs from "dayjs";
-import { getStockOnHand } from "../../../../API/services/DOsuggestionServices/StockOnHandService";
 import { usePersistAuthStore } from "../../../../API/store/AuthStore/PersistAuthStore";
+import { useOutboundSalesmanCache } from "../../../../API/store/OutboundSalesmanStore/useOutboundSalesmanCache";
 import { useStoreItem } from "../../../../DynamicAPI/stores/Store/MasterStore";
 import { showErrorToast } from "../../../../components/toast";
-import { callplanService } from "../../Services/CallplanService";
-import { btbService } from "../../Services/BTBService";
-import { realTimeSOHService } from "../../Services/RealTimeSOH";
 import { Callplan } from "../../types/CallplanTypes";
 import { BTB } from "../../types/BTBtypes";
 import {
@@ -102,143 +99,160 @@ export const useLhsReportData = (reportDate: string) => {
     fetchItems();
   }, [fetchItems]);
 
-  const refetch = useCallback(async () => {
-    if (!context.organizationId || !reportDate) {
-      setFinalCallplans([]);
-      setBtbList([]);
-      setError("Organisasi user tidak ditemukan.");
-      return;
-    }
-
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      // Wajib organization_name — sama seperti CalculationView / useGetStockOnHand
-      const orgForSoh = organizationName || context.organizationCode;
-      if (!orgForSoh) {
-        throw new Error(
-          "organization_name tidak ditemukan untuk fetch Stock On Hand",
-        );
+  const refetch = useCallback(
+    async (options?: { force?: boolean }) => {
+      if (!context.organizationId || !reportDate) {
+        setFinalCallplans([]);
+        setBtbList([]);
+        setError("Organisasi user tidak ditemukan.");
+        return;
       }
 
-      const [finalRaw, btbRaw, sohCalc, sohMeta] = await Promise.all([
-        callplanService.getCallplans({
-          dateStart: reportDate,
-          organizationId: context.organizationId,
-          status: "FINAL",
-        }),
-        btbService.getBTBLastDateInsert(),
-        getStockOnHand({
-          organization_code: orgForSoh,
-          subinventory_code: SUBINVENTORY,
-        }).catch((err) => {
-          console.error("SOH Calculation gagal:", err);
-          return [];
-        }),
-        realTimeSOHService
-          .getRealTimeSOH({
-            organization_name: orgForSoh,
-            organization_code: orgForSoh,
-          })
-          .catch((err) => {
-            console.error("SOH Realtime (META) gagal:", err);
-            return { data: [], meta: null };
-          }),
-      ]);
+      setIsLoading(true);
+      setError(null);
 
-      const finalFiltered = filterCallplansByOrg(
-        finalRaw,
-        context.organizationId,
-        context.organizationCode,
-      );
-
-      // BTB: sama Good Prep — last-date-insert + filter org
-      const btbFiltered = normalizeBtbForGoodPrep(
-        (btbRaw.data || []).filter(
-          (row) =>
-            matchesBtbOrganization(row, context.organizationId) ||
-            matchesBtbOrganization(row, context.organizationCode) ||
-            matchesBtbOrganization(row, organizationName),
-        ),
-      );
-
-      const awalMap = new Map<string, number>();
-      const awalBySku = new Map<string, number>();
-      const metaMap = new Map<string, number>();
-      const metaBySku = new Map<string, number>();
-      const names = new Map<string, string>();
-      const kodes = new Map<string, string>();
-
-      sohCalc.forEach((item) => {
-        const sku = String(item.item_code || item.item_number || "").trim();
-        const invId = String(item.inventory_item_id || "").trim();
-        if (!sku && !invId) return;
-        const key = skuKey(sku, invId);
-        const qty = Number(item.quantity) || 0;
-        awalMap.set(key, qty);
-        if (sku) {
-          const s = sku.toUpperCase();
-          awalBySku.set(s, (awalBySku.get(s) || 0) + qty);
-        }
-        kodes.set(key, sku || invId);
-        names.set(key, item.item_description || sku || invId);
-      });
-
-      // META: agregasi sama Good Prep — key = inventory_item_id || item_code
-      // qty sudah di-normalize service ke avail_to_reserve (latest on-hand-meta)
-      (sohMeta.data || []).forEach((item) => {
-        const key = getItemKey(item);
-        if (!key) return;
-        const sku = String(
-          item.item_code || item.sku || item.item_number || "",
-        ).trim();
-        const invId = String(item.inventory_item_id || "").trim();
-        const qty = Number(item.quantity) || 0;
-
-        metaMap.set(key, (metaMap.get(key) || 0) + qty);
-        if (sku) {
-          const s = sku.toUpperCase();
-          metaBySku.set(s, (metaBySku.get(s) || 0) + qty);
-        }
-        // Juga index composite agar buildLhsRows bisa match
-        const composite = skuKey(sku, invId);
-        if (composite && composite !== key) {
-          metaMap.set(composite, (metaMap.get(composite) || 0) + qty);
+      try {
+        // Wajib organization_name — sama seperti CalculationView / useGetStockOnHand
+        const orgForSoh = organizationName || context.organizationCode;
+        if (!orgForSoh) {
+          throw new Error(
+            "organization_name tidak ditemukan untuk fetch Stock On Hand",
+          );
         }
 
-        if (!kodes.has(key)) kodes.set(key, sku || key);
-        if (!names.has(key)) {
-          names.set(key, item.item_description || sku || key);
-        }
-      });
+        const cache = useOutboundSalesmanCache.getState();
+        const force = Boolean(options?.force);
 
-      // Merge fallback SKU ke map utama tanpa membuat baris dobel di builder
-      awalBySku.forEach((qty, sku) => {
-        if (!awalMap.has(sku)) awalMap.set(sku, qty);
-      });
-      metaBySku.forEach((qty, sku) => {
-        if (!metaMap.has(sku)) metaMap.set(sku, qty);
-      });
+        const [finalRaw, btbRaw, sohCalc, sohMeta] = await Promise.all([
+          cache.getCallplans(
+            {
+              dateStart: reportDate,
+              organizationId: context.organizationId,
+              status: "FINAL",
+            },
+            { force },
+          ),
+          cache.getBtbLastDateInsert({ force }),
+          cache
+            .getStockOnHandCached(
+              {
+                organization_code: orgForSoh,
+                subinventory_code: SUBINVENTORY,
+              },
+              { force },
+            )
+            .catch((err) => {
+              console.error("SOH Calculation gagal:", err);
+              return [];
+            }),
+          cache
+            .getRealTimeSOHCached(
+              {
+                organization_name: orgForSoh,
+                organization_code: orgForSoh,
+              },
+              { force },
+            )
+            .catch((err) => {
+              console.error("SOH Realtime (META) gagal:", err);
+              return { data: [], meta: null };
+            }),
+        ]);
 
-      setFinalCallplans(finalFiltered);
-      setBtbList(btbFiltered);
-      setStockAwalByKey(awalMap);
-      setMetaByKey(metaMap);
-      setNameByKey(names);
-      setKodeByKey(kodes);
-    } catch (err) {
-      console.error("Gagal load Laporan Harian Stock:", err);
-      const message =
-        err instanceof Error ? err.message : "Gagal memuat data laporan";
-      setError(message);
-      showErrorToast(message);
-      setFinalCallplans([]);
-      setBtbList([]);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [context, reportDate, organizationName]);
+        const finalFiltered = filterCallplansByOrg(
+          finalRaw,
+          context.organizationId,
+          context.organizationCode,
+        );
+
+        // BTB: sama Good Prep — last-date-insert + filter org
+        const btbFiltered = normalizeBtbForGoodPrep(
+          (btbRaw.data || []).filter(
+            (row) =>
+              matchesBtbOrganization(row, context.organizationId) ||
+              matchesBtbOrganization(row, context.organizationCode) ||
+              matchesBtbOrganization(row, organizationName),
+          ),
+        );
+
+        const awalMap = new Map<string, number>();
+        const awalBySku = new Map<string, number>();
+        const metaMap = new Map<string, number>();
+        const metaBySku = new Map<string, number>();
+        const names = new Map<string, string>();
+        const kodes = new Map<string, string>();
+
+        sohCalc.forEach((item) => {
+          const sku = String(item.item_code || item.item_number || "").trim();
+          const invId = String(item.inventory_item_id || "").trim();
+          if (!sku && !invId) return;
+          const key = skuKey(sku, invId);
+          const qty = Number(item.quantity) || 0;
+          awalMap.set(key, qty);
+          if (sku) {
+            const s = sku.toUpperCase();
+            awalBySku.set(s, (awalBySku.get(s) || 0) + qty);
+          }
+          kodes.set(key, sku || invId);
+          names.set(key, item.item_description || sku || invId);
+        });
+
+        // META: agregasi sama Good Prep — key = inventory_item_id || item_code
+        // qty sudah di-normalize service ke avail_to_reserve (latest on-hand-meta)
+        (sohMeta.data || []).forEach((item) => {
+          const key = getItemKey(item);
+          if (!key) return;
+          const sku = String(
+            item.item_code || item.sku || item.item_number || "",
+          ).trim();
+          const invId = String(item.inventory_item_id || "").trim();
+          const qty = Number(item.quantity) || 0;
+
+          metaMap.set(key, (metaMap.get(key) || 0) + qty);
+          if (sku) {
+            const s = sku.toUpperCase();
+            metaBySku.set(s, (metaBySku.get(s) || 0) + qty);
+          }
+          // Juga index composite agar buildLhsRows bisa match
+          const composite = skuKey(sku, invId);
+          if (composite && composite !== key) {
+            metaMap.set(composite, (metaMap.get(composite) || 0) + qty);
+          }
+
+          if (!kodes.has(key)) kodes.set(key, sku || key);
+          if (!names.has(key)) {
+            names.set(key, item.item_description || sku || key);
+          }
+        });
+
+        // Merge fallback SKU ke map utama tanpa membuat baris dobel di builder
+        awalBySku.forEach((qty, sku) => {
+          if (!awalMap.has(sku)) awalMap.set(sku, qty);
+        });
+        metaBySku.forEach((qty, sku) => {
+          if (!metaMap.has(sku)) metaMap.set(sku, qty);
+        });
+
+        setFinalCallplans(finalFiltered);
+        setBtbList(btbFiltered);
+        setStockAwalByKey(awalMap);
+        setMetaByKey(metaMap);
+        setNameByKey(names);
+        setKodeByKey(kodes);
+      } catch (err) {
+        console.error("Gagal load Laporan Harian Stock:", err);
+        const message =
+          err instanceof Error ? err.message : "Gagal memuat data laporan";
+        setError(message);
+        showErrorToast(message);
+        setFinalCallplans([]);
+        setBtbList([]);
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [context, reportDate, organizationName],
+  );
 
   useEffect(() => {
     void refetch();
