@@ -72,6 +72,7 @@ const ListBTB = () => {
   }, []);
 
   const fetchList = useCallback(async () => {
+
     if (!getAllMode && !dateFrom.trim()) {
       showErrorToast("Harap pilih Date From");
       return;
@@ -123,7 +124,7 @@ const ListBTB = () => {
   const rowKey = (row: BTB, index: number) =>
     row.btb_number || `${row.sales_nik}-${row.btb_date}-${index}`;
 
-  const getDetails = (row: BTB) => row.details ?? row.btb_details ?? [];
+  const getDetails = (row: BTB) => row.details ?? row.btb_details ?? [];  
 
   return (
     <div className="space-y-4">

@@ -11,7 +11,7 @@ import ActIndicator from "../../../../components/ui/activityIndicator";
 import TableComponent from "../../../../components/tables/ActionTable/TableComponent";
 import { showConfirmDialog } from "../../../../components/swal-confirm";
 import { showErrorToast, showSuccessToast } from "../../../../components/toast";
-import { ActionMenu } from "../../../OutboundFullTrial/PickingTransaction/components/actionMenu";
+import { ActionMenu } from "../../../OutboundCWH/PickingTransaction/components/actionMenu";
 import {
   cancelInboundPlanService,
   deleteInboundPlanService,

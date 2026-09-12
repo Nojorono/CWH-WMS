@@ -1,7 +1,7 @@
 import { useCallback, useState } from "react";
 import Swal from "sweetalert2";
 import { showErrorToast, showSuccessToast } from "../../../../../components/toast";
-import { updateDO } from "../../../../../API/services/DOsuggestionServices/postDOsuggestion";
+import { updateDO } from "../../../../../API/services/do-suggestion/postDOsuggestion";
 import { DOSuggestionPayload } from "../../../../../API/types/DOsuggestion";
 import { integrateService } from "../../../Services/IntegrateService";
 import {

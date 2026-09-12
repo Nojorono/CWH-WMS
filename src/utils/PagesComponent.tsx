@@ -56,19 +56,19 @@ import MasterSupplier from "../pages/Master/MasterSupplier";
 import MasterDepartement from '../pages/Master/MasterDepartement'
 
 //OUTBOUND
-import Memo from "../pages/OutboundFullTrial/Memo";
-import MemoProcess from "../pages/OutboundFullTrial/Memo/TableAndForm/MemoCreateProcess";
-import OutboundDO from "../pages/OutboundFullTrial/DO";
-import CreateDO from "../pages/OutboundFullTrial/DO/Main/CreateDO";
-import DetailDO from "../pages/OutboundFullTrial/DO/Main/DetailDO";
-import PickingSuggestion from "../pages/OutboundFullTrial/Picking/Main/PickingSuggestion";
-import PickingTransaction from "../pages/OutboundFullTrial/PickingTransaction";
-import DetachAttachProcess from "../pages/OutboundFullTrial/PickingTransaction/Main/DetachAttach";
-import GateLoading from "../pages/OutboundFullTrial/GateLoading";
-import IRintegrationLog from "../pages/OutboundFullTrial/OutboundIntegration/IRintegration/Main/MainTable"
-import ShipConfirmLog from "../pages/OutboundFullTrial/OutboundIntegration/ShipConfirm/Main/MainTable"
+import Memo from "../pages/OutboundCWH/Memo";
+import MemoProcess from "../pages/OutboundCWH/Memo/TableAndForm/MemoCreateProcess";
+import OutboundDO from "../pages/OutboundCWH/DO";
+import CreateDO from "../pages/OutboundCWH/DO/Main/CreateDO";
+import DetailDO from "../pages/OutboundCWH/DO/Main/DetailDO";
+import PickingSuggestion from "../pages/OutboundCWH/Picking/Main/PickingSuggestion";
+import PickingTransaction from "../pages/OutboundCWH/PickingTransaction";
+import DetachAttachProcess from "../pages/OutboundCWH/PickingTransaction/Main/DetachAttach";
+import GateLoading from "../pages/OutboundCWH/GateLoading";
+import IRintegrationLog from "../pages/OutboundCWH/OutboundIntegration/IRintegration/Main/MainTable"
+import ShipConfirmLog from "../pages/OutboundCWH/OutboundIntegration/ShipConfirm/Main/MainTable"
 
-import PrintSuratJalan from "../pages/OutboundFullTrial/PickingTransaction/Main/PrintSuratJalan/PrintSuratJalan";
+import PrintSuratJalan from "../pages/OutboundCWH/PickingTransaction/Main/PrintSuratJalan/PrintSuratJalan";
 import StockAdjustment from "../pages/StockAdjustment/index";
 
 //Reporting
@@ -76,19 +76,19 @@ import ReportInbound from "../pages/Reporting/Main/ReportInbound";
 import ReportOutbound from "../pages/Reporting/Main/ReportOutbound";
 import Reporting2 from "../pages/Reporting/Main/Report2";
 
-// DO SUGGESTION
-import DOsuggestionMain from '../pages/DOsuggestion/Suggestion/Main/MainTable'
-import GenerateDO from '../pages/DOsuggestion/Suggestion/Main/DetailSuggestionSection'
-import OutboundSales from '../pages/DOsuggestion/OutboundSales/MainTable'
-import IntegrationMonitoringPage from '../pages/DOsuggestion/IntegrationLog/index'
-import BTBPage from "../pages/DOsuggestion/BTB/index";
+// DO SUGGESTION V1 (archive — boleh dihidupkan lagi)
+import DOsuggestionMain from '../pages/DOsuggestionV1/Suggestion/Main/MainTable'
+import GenerateDO from '../pages/DOsuggestionV1/Suggestion/Main/DetailSuggestionSection'
+import OutboundSales from '../pages/DOsuggestionV1/OutboundSales/MainTable'
+import IntegrationMonitoringPage from '../pages/DOsuggestionV1/IntegrationLog/index'
 import OpeningStockUploadPage from "../pages/OpeningStockBalance";
 
-// OUTBOUND SALESMAN
+// OUTBOUND SALESMAN (versi terbaru)
 import OutboundSalesman from "../pages/OutboundSalesman";
 import MoveOrderSelisih from "../pages/MoveOrderSelisih";
 import LaporanHarianStock from "../pages/OutboundSalesman/Component/LaporanHarianStock";
 import RekapSPBFinal from "../pages/OutboundSalesman/Component/RekapSPBFinal";
+import BTBPage from "../pages/OutboundSalesman/BTB/index";
 
 export {
   // DASHBOARD
