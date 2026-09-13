@@ -602,24 +602,22 @@ export default function DeliveryOrderCard({
 
             <div className="space-y-4">
               {posFields.map((posField, posIndex) => (
-                <>
-                  <POCard
-                    key={posField.id}
-                    doIndex={doIndex}
-                    posIndex={posIndex}
-                    removePos={() => removePos(posIndex)}
-                    totalPO={posFields.length}
-                    isEditMode={isEditMode}
-                    isDetailMode={isDetailMode}
-                    isCreateMode={isCreateMode}
-                    isAddToReceiveMode={isAddToReceiveMode}
-                    InbType={inbType}
-                    dataPO={inbType === "PO" ? posField.po_no : posField.so_no}
-                    isDOChecked={isDOChecked}
-                    isPOValidated={!!(posField as any).validation_surat_jalan}
-                    isCancelledSJ={isCancelledSJ}
-                  />
-                </>
+                <POCard
+                  key={posField.id}
+                  doIndex={doIndex}
+                  posIndex={posIndex}
+                  removePos={() => removePos(posIndex)}
+                  totalPO={posFields.length}
+                  isEditMode={isEditMode}
+                  isDetailMode={isDetailMode}
+                  isCreateMode={isCreateMode}
+                  isAddToReceiveMode={isAddToReceiveMode}
+                  InbType={inbType}
+                  dataPO={inbType === "PO" ? posField.po_no : posField.so_no}
+                  isDOChecked={isDOChecked}
+                  isPOValidated={!!(posField as any).validation_surat_jalan}
+                  isCancelledSJ={isCancelledSJ}
+                />
               ))}
             </div>
           </div>

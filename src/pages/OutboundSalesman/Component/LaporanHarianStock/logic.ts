@@ -134,13 +134,13 @@ export const buildMovementLines = (
       });
     };
 
-    pushIn("Retur SPB", r.spb);
+    pushIn("SPB Adjustment (−)", r.spb);
     pushIn("BTB", r.btb);
 
     pushOut("Manual DO (FPPR Tambahan)", r.manualDo);
     pushOut("Relokasi (GI)", r.relokasi);
-    pushOut("DO MATIC (submitted SPB)", r.doMatic);
-    pushOut("Add DO MATIC (adjustment tambahan)", r.addDoMatic);
+    pushOut("SPB Submitted", r.doMatic);
+    pushOut("SPB Adjustment (+)", r.addDoMatic);
   });
 
   return { incoming, outgoing };

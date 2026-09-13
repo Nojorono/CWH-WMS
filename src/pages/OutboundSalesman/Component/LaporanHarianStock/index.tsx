@@ -35,6 +35,8 @@ function LaporanHarianStock() {
     context,
     rows,
     totals,
+    finalCallplans,
+    btbList,
     isLoading,
     error,
     refetch,
@@ -62,7 +64,8 @@ function LaporanHarianStock() {
           </p>
           <p className="mt-1 max-w-2xl text-xs text-slate-400">
             Data hari ini (current date) · Stock Awal = SOH Calculation · META =
-            SOH latest · Incoming: Retur + BTB · Outgoing: DO MATIC / FPPR / Add
+            SOH latest · Incoming: SPB Adj (−) + BTB · Outgoing: SPB Submitted /
+            FPPR / SPB Adj (+)
             (1 cabang).
           </p>
         </div>
@@ -108,7 +111,7 @@ function LaporanHarianStock() {
           </p>
           <p className="mt-1 flex items-center gap-1 text-xs text-slate-500">
             <FaArrowUp className="text-emerald-500" size={10} />
-            BTB + Retur (final−submitted jika −)
+            BTB + SPB Adjustment (−)
           </p>
         </div>
 
@@ -121,7 +124,7 @@ function LaporanHarianStock() {
           </p>
           <p className="mt-1 flex items-center gap-1 text-xs text-slate-500">
             <FaArrowDown className="text-rose-500" size={10} />
-            DO MATIC (submitted) + Add + FPPR
+            SPB Submitted + SPB Adj (+) + FPPR
           </p>
         </div>
 
@@ -167,6 +170,8 @@ function LaporanHarianStock() {
         </div>
         <ExportLhsExcelButton
           rows={rows}
+          finalCallplans={finalCallplans}
+          btbList={btbList}
           amoName={context.amoName}
           reportDateLabel={reportDateLabel}
           disabled={isLoading}

@@ -9,7 +9,7 @@ export type LhsStockRow = {
   inventoryItemId: string;
   stockAwal: number;
   /**
-   * Incoming Retur dari SPB:
+   * Incoming SPB Adjustment (−):
    * |final − submitted| jika (final − submitted) < 0
    */
   spb: number;
@@ -19,13 +19,13 @@ export type LhsStockRow = {
   manualDo: number;
   /** Relokasi GI — dikosongkan */
   relokasi: number;
-  /** DO MATIC = submitted qty SPB FINAL (non-FPPR) */
+  /** DO MATIC / SPB Submitted = submitted qty SPB FINAL (non-FPPR) */
   doMatic: number;
-  /** Add DO MATIC = Qty Adjustment (+) / item_qty_revision > 0 */
+  /** Add DO MATIC / SPB Adjustment (+) = item_qty_revision > 0 */
   addDoMatic: number;
   /** Input fisik — dikosongkan dulu */
   fisikAkhir: number | null;
-  /** META = SOH realtime (/on-hand-meta) — sama Good Prep (avail_to_reserve) */
+  /** META = SOH realtime; jika tidak ada → 0 */
   meta: number;
 };
 

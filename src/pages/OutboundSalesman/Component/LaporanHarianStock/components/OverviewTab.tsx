@@ -98,41 +98,6 @@ function OverviewTab({ rows, totals, isLoading }: Props) {
       isLoading={isLoading}
       emptyMessage="Tidak ada data untuk tanggal / cabang ini."
       minWidthClassName="min-w-[900px]"
-      footer={
-        rows.length > 0 ? (
-          <tfoot>
-            <tr className="bg-orange-500 text-white">
-              <td
-                colSpan={2}
-                className="px-4 py-3 text-xs font-bold uppercase tracking-wide"
-              >
-                Total All (Bks)
-              </td>
-              <td className="px-4 py-3 text-right font-bold tabular-nums">
-                {formatPack(totals.stockAwal, false)}
-              </td>
-              <td className="px-4 py-3 text-right font-bold tabular-nums">
-                {formatSigned(totals.totalTerima)}
-              </td>
-              <td className="px-4 py-3 text-right font-bold tabular-nums">
-                {formatSigned(-Math.abs(totals.totalKeluar))}
-              </td>
-              <td className="px-4 py-3 text-right font-bold tabular-nums">
-                {formatPack(totals.stockAkhir, false)}
-              </td>
-              <td className="px-4 py-3 text-right text-white/70">—</td>
-              <td className="px-4 py-3 text-right font-bold tabular-nums">
-                {formatPack(totals.meta, false)}
-              </td>
-              <td className="px-4 py-3 text-center">
-                <span className="inline-flex min-w-[2.5rem] items-center justify-center rounded-full bg-rose-700/90 px-2.5 py-0.5 text-xs font-bold text-white">
-                  {formatSigned(totals.variance)}
-                </span>
-              </td>
-            </tr>
-          </tfoot>
-        ) : undefined
-      }
     />
   );
 }

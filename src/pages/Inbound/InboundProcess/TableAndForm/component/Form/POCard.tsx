@@ -184,6 +184,12 @@ export default function POCard({
   const [loading, setLoading] = useState(false);
   /** Nomor PO/SO yang “memiliki” item saat ini — untuk deteksi ganti nomor */
   const boundDocNoRef = useRef<string>("");
+  /**
+   * Mode item:
+   * - true  → data PO/SO dari API ada → kunci Add Manual
+   * - false → API error / tidak ada data → Add Manual bebas
+   */
+  const [isApiItemsMode, setIsApiItemsMode] = useState(false);
 
   const {
     fields: itemFields,
@@ -243,15 +249,22 @@ export default function POCard({
   );
   const docMatchesBound =
     currentDocNo === String(boundDocNoRef.current || "").trim();
-  /** Blokir manual jika masih ada baris DB lama, atau item hasil search pada nomor yang sama */
+  /**
+   * Mode API (data PO/SO ada) → kunci Add Manual.
+   * Mode manual (error / tidak ada data) → Add Manual bebas.
+   */
   const cantAddManualAddItem =
     hasLegacyDbItems ||
-    (hasPoOrSoNumber && docMatchesBound && itemFields.length > 0);
+    (hasPoOrSoNumber &&
+      docMatchesBound &&
+      itemFields.length > 0 &&
+      isApiItemsMode);
 
   const posPath = `deliveryOrders.${doIndex}.pos.${posIndex}`;
 
   const clearPosItemsAndMeta = () => {
     replaceItems([]);
+    setIsApiItemsMode(false);
     setValue(`${posPath}.vendor_name` as any, "");
     setValue(`${posPath}.principal` as any, "");
     setValue(`${posPath}.vendor_id` as any, undefined);
@@ -297,6 +310,16 @@ export default function POCard({
     const initial = String(dataPO || currentDocNo || "").trim();
     if (initial) boundDocNoRef.current = initial;
   }, [dataPO, currentDocNo]);
+
+  // Item tersimpan (punya inbound_item_id) → mode API (kunci Add Manual)
+  useEffect(() => {
+    if (
+      itemFields.some((it: any) => Boolean((it as any).inbound_item_id))
+    ) {
+      setIsApiItemsMode(true);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- hydrate sekali saat mount
+  }, []);
 
   const isPOFieldDisabled =
     isDetailMode ||
@@ -385,9 +408,12 @@ export default function POCard({
       setValue(`${path}.total_line_items` as any, items.length);
       // Replace penuh dari API (qty & qty_plan ikut ter-reset) — tidak merge
       replaceItems(items);
+      // Ada item dari API → kunci manual; kosong → mode manual bebas
+      setIsApiItemsMode(items.length > 0);
       boundDocNoRef.current = String(poNo).trim();
     } catch (err: any) {
       clearPosItemsAndMeta();
+      setIsApiItemsMode(false);
       boundDocNoRef.current = String(poNo).trim();
       showErrorToast(
         err?.message ??
@@ -422,6 +448,7 @@ export default function POCard({
 
       if (!items || items.length === 0) {
         clearPosItemsAndMeta();
+        setIsApiItemsMode(false);
         boundDocNoRef.current = String(soNo).trim();
         showErrorToast(
           `Data SO ${soNo} tidak ditemukan atau item tidak terdaftar di master data. Form dikosongkan — silakan isi item manual jika perlu.`,
@@ -502,9 +529,11 @@ export default function POCard({
 
       // Replace penuh dari API — tidak merge
       replaceItems(items);
+      setIsApiItemsMode(true);
       boundDocNoRef.current = String(soNo).trim();
     } catch (err: any) {
       clearPosItemsAndMeta();
+      setIsApiItemsMode(false);
       boundDocNoRef.current = String(soNo).trim();
       showErrorToast(
         err?.message ??
@@ -646,7 +675,7 @@ export default function POCard({
                 title={
                   cantAddManualAddItem
                     ? "Item sudah terisi dari PO/SO. Hapus nomor atau item terlebih dahulu untuk input manual."
-                    : "Add Manual Item"
+                    : "Tambah item manual"
                 }
               >
                 + Add Manual Item
