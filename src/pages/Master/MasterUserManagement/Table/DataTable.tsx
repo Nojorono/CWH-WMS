@@ -50,10 +50,12 @@ const DataTable = () => {
   const [selectedOrganization, setSelectedOrganization] = useState("");
 
   useEffect(() => {
-    fetchAll();
-    fetchRoles();
-    fetchSubWarehouses();
-    fetchDepartement();
+    const ac = new AbortController();
+    void fetchAll({ signal: ac.signal });
+    void fetchRoles({ signal: ac.signal });
+    void fetchSubWarehouses({ signal: ac.signal });
+    void fetchDepartement({ signal: ac.signal });
+    return () => ac.abort();
   }, []);
 
   const IoList = useMemo(() => {

@@ -37,7 +37,9 @@ const InventoryVisibility: React.FC = () => {
   const [uomFilter, setUomFilter] = useState("");
 
   useEffect(() => {
-    fetchAll();
+    const ac = new AbortController();
+    void fetchAll({ signal: ac.signal });
+    return () => ac.abort();
   }, []);
 
   // UPDATE: Pengaman ekstra untuk membaca root wrapper payload API dengan aman
@@ -57,7 +59,11 @@ const InventoryVisibility: React.FC = () => {
 
   const skuOptions = useMemo(
     () =>
-      [...new Set((currentData?.items || []).map((item) => item.sku).filter(Boolean))]
+      [
+        ...new Set(
+          (currentData?.items || []).map((item) => item.sku).filter(Boolean),
+        ),
+      ]
         .sort((a, b) => a.localeCompare(b))
         .map((sku) => ({ value: sku, label: sku })),
     [currentData],
@@ -65,7 +71,11 @@ const InventoryVisibility: React.FC = () => {
 
   const uomOptions = useMemo(
     () =>
-      [...new Set((currentData?.items || []).map((item) => item.uom).filter(Boolean))]
+      [
+        ...new Set(
+          (currentData?.items || []).map((item) => item.uom).filter(Boolean),
+        ),
+      ]
         .sort((a, b) => a.localeCompare(b))
         .map((uom) => ({ value: uom, label: uom })),
     [currentData],
@@ -370,10 +380,7 @@ const InventoryVisibility: React.FC = () => {
             />
 
             <Select
-              options={[
-                { value: "", label: "All UOM" },
-                ...uomOptions,
-              ]}
+              options={[{ value: "", label: "All UOM" }, ...uomOptions]}
               value={uomFilter}
               onChange={(val) => setUomFilter(val || "")}
               placeholder="All UOM"

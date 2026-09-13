@@ -1,5 +1,9 @@
 import { create } from "zustand";
 import { showErrorToast, showSuccessToast } from "../../components/toast";
+import {
+    isRequestAborted,
+    RequestAbortedError,
+} from "../services/CreateCrudService";
 
 interface PaginationState {
     totalPages: number;
@@ -8,17 +12,32 @@ interface PaginationState {
     total: number;
 }
 
+type FetchSignalOptions = {
+    force?: boolean;
+    /** AbortController.signal — batalkan request saat unmount / pindah halaman */
+    signal?: AbortSignal;
+};
+
 interface CrudStoreOptions<TData, TCreate, TUpdate> {
     name: string;
     service: {
-        fetchAll: () => Promise<TData[]>;
-        fetchById: (id: any) => Promise<TData>;
+        fetchAll: (config?: { signal?: AbortSignal }) => Promise<TData[]>;
+        fetchById: (
+            id: any,
+            config?: { signal?: AbortSignal },
+        ) => Promise<TData>;
         create: (payload: TCreate) => Promise<TData>;
         createBulk?: (payload: { data: TCreate[] }) => Promise<TData[]>;
         update: (id: any, payload: TUpdate) => Promise<TData>;
         delete: (id: any) => Promise<boolean>;
-        fetchUsingParam: (param: any) => Promise<TData[]>;
-        fetchUsingPagination?: (params: any) => Promise<{
+        fetchUsingParam: (
+            param: any,
+            config?: { signal?: AbortSignal },
+        ) => Promise<TData[]>;
+        fetchUsingPagination?: (
+            params: any,
+            config?: { signal?: AbortSignal },
+        ) => Promise<{
             data: TData[];
             page: number;
             limit: number;
@@ -87,16 +106,27 @@ export const createCrudStore = <TData, TCreate, TUpdate>({
         /** Timestamp fetchAll sukses terakhir (untuk TTL) */
         listFetchedAt: number | null;
 
-        fetchAll: (options?: {
-            force?: boolean;
-        }) => Promise<{ success: boolean; message?: string }>;
-        fetchById: (id: any) => Promise<void>;
+        fetchAll: (options?: FetchSignalOptions) => Promise<{
+            success: boolean;
+            message?: string;
+            aborted?: boolean;
+        }>;
+        fetchById: (
+            id: any,
+            options?: { signal?: AbortSignal },
+        ) => Promise<void>;
         createData: (payload: TCreate) => Promise<{ success: boolean; message?: string }>;
         createBulkData?: (payload: { data: TCreate[] }) => Promise<{ success: boolean; message?: string }>;
         updateData: (id: any, payload: TUpdate) => Promise<{ success: boolean; message?: string }>;
         deleteData: (id: any) => Promise<void>;
-        fetchUsingParam: (param: any) => Promise<void>;
-        fetchUsingPagination?: (params: any) => Promise<void>;
+        fetchUsingParam: (
+            param: any,
+            options?: { signal?: AbortSignal },
+        ) => Promise<void>;
+        fetchUsingPagination?: (
+            params: any,
+            options?: { signal?: AbortSignal },
+        ) => Promise<void>;
 
         resetDetail: () => void;
         setCurrentId: (id: any) => void;
@@ -115,6 +145,7 @@ export const createCrudStore = <TData, TCreate, TUpdate>({
 
         fetchAll: async (options) => {
             const force = Boolean(options?.force);
+            const signal = options?.signal;
             const { hasFetchedAll, error, listFetchedAt } = get();
 
             // Skip network jika cache full-list masih fresh (kecuali force)
@@ -127,14 +158,20 @@ export const createCrudStore = <TData, TCreate, TUpdate>({
                 return { success: true, message: "cached" };
             }
 
-            if (!force && fetchAllInFlight) {
+            // Request dengan signal = dedicated (jangan join in-flight bersama)
+            // supaya abort satu halaman tidak membatalkan konsumen lain.
+            const useSharedInFlight = !signal;
+
+            if (useSharedInFlight && !force && fetchAllInFlight) {
                 return fetchAllInFlight;
             }
 
             const run = async () => {
                 set({ isLoading: true, error: null });
                 try {
-                    const data = await service.fetchAll();
+                    const data = await service.fetchAll(
+                        signal ? { signal } : undefined,
+                    );
                     set({
                         list: data,
                         hasFetchedAll: true,
@@ -142,6 +179,17 @@ export const createCrudStore = <TData, TCreate, TUpdate>({
                     });
                     return { success: true as const };
                 } catch (err: any) {
+                    if (
+                        isRequestAborted(err) ||
+                        err instanceof RequestAbortedError
+                    ) {
+                        return {
+                            success: false as const,
+                            aborted: true,
+                            message: "aborted",
+                        };
+                    }
+
                     const msg = err.message || `Failed to fetch ${name}`;
 
                     if (msg === "Organization ID is required") {
@@ -158,12 +206,14 @@ export const createCrudStore = <TData, TCreate, TUpdate>({
                 }
             };
 
-            fetchAllInFlight = run();
-            try {
+            if (useSharedInFlight) {
+                fetchAllInFlight = run().finally(() => {
+                    fetchAllInFlight = null;
+                }) as Promise<{ success: boolean; message?: string }>;
                 return await fetchAllInFlight;
-            } finally {
-                fetchAllInFlight = null;
             }
+
+            return await run();
         },
 
         invalidateList: () => {
@@ -180,10 +230,13 @@ export const createCrudStore = <TData, TCreate, TUpdate>({
             fetchAllInFlight = null;
         },
 
-        fetchUsingParam: async (param: any) => {
+        fetchUsingParam: async (param: any, options?: { signal?: AbortSignal }) => {
             set({ isLoading: true, error: null });
             try {
-                const data = await service.fetchUsingParam(param);
+                const data = await service.fetchUsingParam(
+                    param,
+                    options?.signal ? { signal: options.signal } : undefined,
+                );
                 // Param = filtered list — jangan anggap full fetchAll cached
                 set({
                     list: data,
@@ -191,6 +244,12 @@ export const createCrudStore = <TData, TCreate, TUpdate>({
                     listFetchedAt: null,
                 });
             } catch (err: any) {
+                if (
+                    isRequestAborted(err) ||
+                    err instanceof RequestAbortedError
+                ) {
+                    return;
+                }
                 const msg = err.message || `Failed to fetch ${name} using param`;
                 showErrorToast(msg);
                 set({ error: msg });
@@ -199,13 +258,19 @@ export const createCrudStore = <TData, TCreate, TUpdate>({
             }
         },
 
-        fetchUsingPagination: async (params: any) => {
+        fetchUsingPagination: async (
+            params: any,
+            options?: { signal?: AbortSignal },
+        ) => {
             if (!service.fetchUsingPagination) return;
 
             set({ isLoading: true, error: null });
 
             try {
-                const result = await service.fetchUsingPagination(params);
+                const result = await service.fetchUsingPagination(
+                    params,
+                    options?.signal ? { signal: options.signal } : undefined,
+                );
 
                 // 🧠 Defensive handling untuk nilai undefined/null
                 const data = Array.isArray(result?.data) ? result.data : [];
@@ -224,6 +289,12 @@ export const createCrudStore = <TData, TCreate, TUpdate>({
 
                 // Do not return any value to match the expected signature
             } catch (err: any) {
+                if (
+                    isRequestAborted(err) ||
+                    err instanceof RequestAbortedError
+                ) {
+                    return;
+                }
                 const msg = err.message || `Failed to fetch ${name} with pagination`;
                 console.error(`[${name}] Pagination Error:`, err);
                 showErrorToast(msg);
@@ -233,12 +304,21 @@ export const createCrudStore = <TData, TCreate, TUpdate>({
             }
         },
 
-        fetchById: async (id: any) => {
+        fetchById: async (id: any, options?: { signal?: AbortSignal }) => {
             set({ isLoading: true, error: null });
             try {
-                const detail = await service.fetchById(id);
+                const detail = await service.fetchById(
+                    id,
+                    options?.signal ? { signal: options.signal } : undefined,
+                );
                 set({ detail });
             } catch (err: any) {
+                if (
+                    isRequestAborted(err) ||
+                    err instanceof RequestAbortedError
+                ) {
+                    return;
+                }
                 const msg = err.message || `Failed to fetch ${name} by id`;
                 showErrorToast(msg);
                 set({ error: msg });

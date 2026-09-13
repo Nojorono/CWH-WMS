@@ -61,7 +61,9 @@ const AdjustTable = ({
 }: MenuTableProps) => {
   const navigate = useNavigate();
   const roleName = getCurrentRole() || "";
-  const { fetchUsingPagination, list, pagination, isLoading } = useStoreOutboundMemo();
+
+  const { fetchUsingPagination, list, pagination, isLoading } =
+    useStoreOutboundMemo();
 
   // 🔹 Sinkronisasi dengan URL Search Params
   const [searchParams, setSearchParams] = useSearchParams();
@@ -128,15 +130,21 @@ const AdjustTable = ({
   // 🔹 Fetch data setiap kali pagination atau filter berubah
   useEffect(() => {
     if (!fetchUsingPagination) return;
-    fetchUsingPagination({
-      page: currentPage,
-      limit: pageSize,
-      search: globalFilter || "",
-      status: filteredStatus || "",
-      type: filteredTypeOutbound || "",
-      has_do: filteredHasDO || "",
-      sortOrder: "DESC",
-    });
+
+    const ac = new AbortController();
+    void fetchUsingPagination(
+      {
+        page: currentPage,
+        limit: pageSize,
+        search: globalFilter || "",
+        status: filteredStatus || "",
+        type: filteredTypeOutbound || "",
+        has_do: filteredHasDO || "",
+        sortOrder: "DESC",
+      },
+      { signal: ac.signal },
+    );
+    return () => ac.abort();
   }, [
     fetchUsingPagination,
     currentPage,
@@ -160,36 +168,37 @@ const AdjustTable = ({
   };
 
   const handleDelete = async (id: string) => {
-  showConfirmDialog(
-    async () => {
-      try {
-        await axiosInstance.post(`outbound-memo/${id}/cancelled`);
-        showSuccessToast("Outbound memo berhasil dibatalkan");
+    showConfirmDialog(
+      async () => {
+        try {
+          await axiosInstance.post(`outbound-memo/${id}/cancelled`);
+          showSuccessToast("Outbound memo berhasil dibatalkan");
 
-        if (fetchUsingPagination) {
-          fetchUsingPagination({
-            page: currentPage,
-            limit: pageSize,
-            search: globalFilter || "",
-            status: filteredStatus || "",
-            sortOrder: "DESC",
-          });
+          if (fetchUsingPagination) {
+            fetchUsingPagination({
+              page: currentPage,
+              limit: pageSize,
+              search: globalFilter || "",
+              status: filteredStatus || "",
+              sortOrder: "DESC",
+            });
+          }
+        } catch (error: any) {
+          console.error("Error cancelling memo via axiosInstance:", error);
+          const errorMsg =
+            error.response?.data?.message || "Gagal membatalkan outbound memo";
+          showErrorToast(errorMsg);
         }
-      } catch (error: any) {
-        console.error("Error cancelling memo via axiosInstance:", error);
-        const errorMsg = error.response?.data?.message || "Gagal membatalkan outbound memo";
-        showErrorToast(errorMsg);
-      }
-    },
-    {
-      title: "Cancel Memo",
-      text: "Apakah Anda yakin ingin membatalkan memo ini?",
-      icon: "warning",
-      confirmButtonText: "Ya, Cancel Memo!",
-      cancelButtonText: "Tidak, Batalkan",
-    },
-  );
-};
+      },
+      {
+        title: "Cancel Memo",
+        text: "Apakah Anda yakin ingin membatalkan memo ini?",
+        icon: "warning",
+        confirmButtonText: "Ya, Cancel Memo!",
+        cancelButtonText: "Tidak, Batalkan",
+      },
+    );
+  };
 
   const canEditMemo = (memo: MemoData, roleName: string) => {
     if (roleName === "SUPERVISOR") return false;
@@ -308,7 +317,6 @@ const AdjustTable = ({
 
   return (
     <div className="flex flex-col gap-4">
-
       {isLoading && <ActIndicator />}
 
       <TableComponent

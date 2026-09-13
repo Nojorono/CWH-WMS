@@ -41,7 +41,7 @@ const AdjustTable = ({
 
   const refreshList = () => {
     if (!fetchUsingPagination) return;
-    fetchUsingPagination({
+    void fetchUsingPagination({
       page: pageIndex + 1,
       limit: pageSize,
       search: globalFilter || "",
@@ -49,15 +49,22 @@ const AdjustTable = ({
     });
   };
 
-  // 🔹 Fetch data setiap kali pagination / search berubah
+  // Fetch list — abort otomatis saat unmount / ganti filter/page (navigasi cepat)
   useEffect(() => {
     if (!fetchUsingPagination) return;
-    fetchUsingPagination({
-      page: pageIndex + 1,
-      limit: pageSize,
-      search: globalFilter || "",
-      status: filteredStatus || "",
-    });
+
+    const ac = new AbortController();
+    void fetchUsingPagination(
+      {
+        page: pageIndex + 1,
+        limit: pageSize,
+        search: globalFilter || "",
+        status: filteredStatus || "",
+      },
+      { signal: ac.signal },
+    );
+
+    return () => ac.abort();
   }, [fetchUsingPagination, pageIndex, pageSize, globalFilter, filteredStatus]);
 
   // 🔹 Kolom Table

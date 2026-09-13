@@ -17,11 +17,11 @@ import { usePersistAuthStore } from "../../../../API/store/AuthStore/PersistAuth
 const DataTable = () => {
   // Store Master Data Pallet & UOM
   const {
+    fetchAll: fetchPallet,
     list: pallet,
     createData,
     updateData,
     deleteData,
-    fetchAll: fetchPallet,
     isLoading,
   } = useStorePallet();
 
@@ -43,8 +43,15 @@ const DataTable = () => {
 
   // Ambil data dari backend saat komponen pertama kali dirender
   useEffect(() => {
-    fetchPallet();
-    fetchUom();
+    const ac = new AbortController();
+    void fetchPallet({ signal: ac.signal });
+    return () => ac.abort();
+  }, []);
+
+  useEffect(() => {
+    const ac = new AbortController();
+    void fetchUom({ signal: ac.signal });
+    return () => ac.abort();
   }, []);
 
   // Filter List IO berdasarkan hak akses Organisasi User (HO vs Cabang)

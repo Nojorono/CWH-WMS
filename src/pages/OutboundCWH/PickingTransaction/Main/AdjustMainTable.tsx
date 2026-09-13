@@ -108,13 +108,19 @@ const AdjustTableTransactionPicking = ({
 
   useEffect(() => {
     if (!fetchUsingPagination) return;
-    fetchUsingPagination({
-      page: currentPage,
-      limit: pageSize,
-      search: globalFilter || "",
-      status: filteredStatus || "",
-      outbound_type: filteredTypeOutbound || "",
-    });
+
+    const ac = new AbortController();
+    void fetchUsingPagination(
+      {
+        page: currentPage,
+        limit: pageSize,
+        search: globalFilter || "",
+        status: filteredStatus || "",
+        outbound_type: filteredTypeOutbound || "",
+      },
+      { signal: ac.signal },
+    );
+    return () => ac.abort();
   }, [
     fetchUsingPagination,
     currentPage,

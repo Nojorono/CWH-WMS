@@ -16,7 +16,7 @@ interface RoleStore {
     loading: boolean;
     error: string | null;
 
-    fetchRoles: () => Promise<void>;
+    fetchRoles: (options?: { signal?: AbortSignal }) => Promise<void>;
     fetchRoleById: (id: any) => Promise<Role>;
 
     createRole: (payload: RolePayload) => Promise<Result>;
@@ -24,19 +24,28 @@ interface RoleStore {
     deleteRole: (id: any) => Promise<Result>;
 }
 
+const isAbortError = (e: any) =>
+    e?.name === "CanceledError" ||
+    e?.name === "AbortError" ||
+    e?.code === "ERR_CANCELED";
+
 export const useRoleStore = create<RoleStore>((set) => ({
     roles: [],
     loading: false,
     error: null,
 
     /* ---------- queries ---------- */
-    fetchRoles: async () => {
+    fetchRoles: async (options) => {
         set({ loading: true, error: null });
         try {
-            const roles = await fetchAllRole();
+            const roles = await fetchAllRole(options);
 
             set({ roles, loading: false });
         } catch (e: any) {
+            if (isAbortError(e)) {
+                set({ loading: false });
+                return;
+            }
             set({ error: e.message, loading: false });
         }
     },
