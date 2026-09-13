@@ -59,12 +59,8 @@ const DataTable = () => {
         `${EndPoint}master-warehouse/locator?organization_code=${orgCode}`,
       );
 
-      console.log("response", response);
-
       if (response.data.success) {
         const rawData = response.data.data;
-        console.log("rawData", rawData);
-
         const groupedData = rawData.reduce((acc: any, curr: any) => {
           const subName = curr.Subinventory;
 

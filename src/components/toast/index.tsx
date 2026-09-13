@@ -5,53 +5,97 @@ import "react-toastify/dist/ReactToastify.css";
 
 const CustomToast: React.FC = () => {
   return (
-    <>
-      <ToastContainer style={{ zIndex: 10000 }} />
-    </>
+    <ToastContainer
+      position="top-right"
+      autoClose={5000}
+      hideProgressBar={false}
+      newestOnTop={false}
+      closeOnClick
+      rtl={false}
+      pauseOnFocusLoss
+      draggable
+      pauseOnHover
+      theme="light"
+      transition={Bounce}
+      style={{ zIndex: 9999, pointerEvents: "none" }}
+      toastStyle={{ pointerEvents: "auto" }}
+    />
   );
 };
 
 export const showToast = (message: string) => {
-  toast(message, {
-    position: "top-right",
-    autoClose: 5000,
-    hideProgressBar: false,
-    closeOnClick: true,
-    pauseOnHover: true,
-    draggable: true,
-    progress: undefined,
-    theme: "light",
-    transition: Bounce,
-  });
+  toast(message);
 };
 
 export const showErrorToast = (errorMessage: string) => {
-    toast.error(errorMessage, {
-        position: "top-right",
-        autoClose: errorMessage.includes("\n") ? 10000 : 5000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        progress: undefined,
-        theme: "dark",
-        transition: Bounce,
-        style: { zIndex: 9999, whiteSpace: "pre-line" },
-    });
-};
-
-export const showSuccessToast = (successMessage: string) => {
-  toast.success(successMessage, {
-    position: "top-right",
-    autoClose: 5000,
-    hideProgressBar: false,
-    closeOnClick: true,
-    pauseOnHover: true,
-    draggable: true,
-    progress: undefined,
-    theme: "light",
-    transition: Bounce,
+  toast.error(errorMessage, {
+    autoClose: errorMessage.includes("\n") ? 10000 : 5000,
+    theme: "dark",
+    style: { whiteSpace: "pre-line" },
   });
 };
 
+export const showSuccessToast = (successMessage: string) => {
+  toast.success(successMessage);
+};
+
 export default CustomToast;
+
+
+// // src/components/CustomToast.tsx
+// import React from "react";
+// import { ToastContainer, toast, Bounce } from "react-toastify";
+// import "react-toastify/dist/ReactToastify.css";
+
+// const CustomToast: React.FC = () => {
+//   return (
+//     <>
+//       <ToastContainer style={{ zIndex: 10000 }} />
+//     </>
+//   );
+// };
+
+// export const showToast = (message: string) => {
+//   toast(message, {
+//     position: "top-right",
+//     autoClose: 5000,
+//     hideProgressBar: false,
+//     closeOnClick: true,
+//     pauseOnHover: true,
+//     draggable: true,
+//     progress: undefined,
+//     theme: "light",
+//     transition: Bounce,
+//   });
+// };
+
+// export const showErrorToast = (errorMessage: string) => {
+//     toast.error(errorMessage, {
+//         position: "top-right",
+//         autoClose: errorMessage.includes("\n") ? 10000 : 5000,
+//         hideProgressBar: false,
+//         closeOnClick: true,
+//         pauseOnHover: true,
+//         draggable: true,
+//         progress: undefined,
+//         theme: "dark",
+//         transition: Bounce,
+//         style: { zIndex: 9999, whiteSpace: "pre-line" },
+//     });
+// };
+
+// export const showSuccessToast = (successMessage: string) => {
+//   toast.success(successMessage, {
+//     position: "top-right",
+//     autoClose: 5000,
+//     hideProgressBar: false,
+//     closeOnClick: true,
+//     pauseOnHover: true,
+//     draggable: true,
+//     progress: undefined,
+//     theme: "light",
+//     transition: Bounce,
+//   });
+// };
+
+// export default CustomToast;

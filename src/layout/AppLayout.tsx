@@ -31,18 +31,17 @@ const LayoutContent: React.FC = () => {
         </div>
       )}
 
-      {/* Main Content */}
+      {/* Main Content — flex-col: header tetap pendek, main yang mengisi sisa tinggi */}
       <div
         className={`
-          flex-1 overflow-x-hidden
-          transition-all duration-300 ease-in-out 
+          flex min-h-screen flex-1 flex-col overflow-x-hidden
+          transition-all duration-300 ease-in-out
           ${sidebarMargin}
         `}
       >
         <AppHeader />
-        {/* Atur padding atau max-width jika ingin benar-benar mentok ke pinggir layar */}
         <main
-          className={`p-4 mx-auto md:p-6 ${userRole === "GATE" ? "max-w-full" : "max-w-screen-2xl"}`}
+          className={`mx-auto w-full min-h-0 flex-1 p-4 md:p-6 ${userRole === "GATE" ? "max-w-full" : "max-w-screen-2xl"}`}
         >
           <Outlet />
         </main>

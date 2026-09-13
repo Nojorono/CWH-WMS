@@ -9,16 +9,19 @@ import { Link, useLocation } from "react-router";
 import { ChevronDownIcon, HorizontaLDots } from "../icons";
 import { useSidebar } from "../context/SidebarContext";
 import { useDynamicSidebarItems } from "./useDynamicSidebarItems";
-
-// IMPORT: Gunakan store persistent baru Anda
 import { usePersistAuthStore } from "../API/store/AuthStore/PersistAuthStore";
 
 const AppSidebar: React.FC = () => {
-  const { isExpanded, isMobileOpen, isHovered, setIsHovered } = useSidebar();
+  const {
+    isExpanded,
+    isMobileOpen,
+    isHovered,
+    setIsHovered,
+    closeMobileSidebar,
+  } = useSidebar();
   const location = useLocation();
   const { menuItems, settingsItems } = useDynamicSidebarItems();
 
-  // 1. AMBIL USER ROLE LANGSUNG DARI STORE ZUSTAND
   const user = usePersistAuthStore((state) => state.user);
   const userRole = user?.role?.name;
 
@@ -36,7 +39,6 @@ const AppSidebar: React.FC = () => {
     [location.pathname],
   );
 
-  // 2. OPTIMASI: Bungkus sort dengan useMemo agar tidak memicu infinite render loop
   const sortedMenuItems = useMemo(() => {
     return [...menuItems].sort((a, b) => {
       const isReportingA = a.path === "/reporting";
@@ -44,10 +46,8 @@ const AppSidebar: React.FC = () => {
 
       if (isReportingA && !isReportingB) return 1;
       if (!isReportingA && isReportingB) return -1;
-
       if (!a.subItems && b.subItems) return -1;
       if (a.subItems && !b.subItems) return 1;
-
       return 0;
     });
   }, [menuItems]);
@@ -60,30 +60,17 @@ const AppSidebar: React.FC = () => {
     });
   }, [settingsItems]);
 
-  const lastPathname = useRef(location.pathname);
+  /** Setelah pilih menu: tutup submenu agar minim over-klik cepat */
+  const closeAllSubmenus = useCallback(() => {
+    setOpenMainSubmenu(null);
+    setOpenSettingsSubmenu(null);
+    setIsHovered(false);
+    closeMobileSidebar();
+  }, [closeMobileSidebar, setIsHovered]);
 
-  // 3. EFFECT: Jalankan sinkronisasi path menu secara aman
   useEffect(() => {
-    if (lastPathname.current !== location.pathname) {
-      sortedMenuItems.forEach((nav, index) => {
-        nav.subItems?.forEach((sub) => {
-          if (isActive(sub.path)) {
-            setOpenMainSubmenu(index);
-          }
-        });
-      });
-
-      sortedSettingsItems.forEach((nav, index) => {
-        nav.subItems?.forEach((sub) => {
-          if (isActive(sub.path)) {
-            setOpenSettingsSubmenu(index);
-          }
-        });
-      });
-
-      lastPathname.current = location.pathname;
-    }
-  }, [location.pathname, isActive, sortedMenuItems, sortedSettingsItems]);
+    closeMobileSidebar();
+  }, [location.pathname, closeMobileSidebar]);
 
   useEffect(() => {
     const refs = [
@@ -107,8 +94,10 @@ const AppSidebar: React.FC = () => {
   const handleSubmenuToggle = (type: "main" | "settings", index: number) => {
     if (type === "main") {
       setOpenMainSubmenu((prev) => (prev === index ? null : index));
+      setOpenSettingsSubmenu(null);
     } else {
       setOpenSettingsSubmenu((prev) => (prev === index ? null : index));
+      setOpenMainSubmenu(null);
     }
   };
 
@@ -140,6 +129,7 @@ const AppSidebar: React.FC = () => {
             <li key={nav.name}>
               {nav.subItems ? (
                 <button
+                  type="button"
                   onClick={() => handleSubmenuToggle(type, index)}
                   className={`menu-item group ${isOpen ? "menu-item-active" : "menu-item-inactive"} ${
                     !isExpanded && !isHovered
@@ -165,6 +155,7 @@ const AppSidebar: React.FC = () => {
                 nav.path && (
                   <Link
                     to={nav.path}
+                    onClick={closeAllSubmenus}
                     className={`menu-item group ${isActive(nav.path) ? "menu-item-active" : "menu-item-inactive"}`}
                   >
                     <span
@@ -193,6 +184,7 @@ const AppSidebar: React.FC = () => {
                       <li key={sub.name}>
                         <Link
                           to={sub.path}
+                          onClick={closeAllSubmenus}
                           className={`menu-dropdown-item ${isActive(sub.path) ? "menu-dropdown-item-active" : "menu-dropdown-item-inactive"}`}
                         >
                           {sub.name}
@@ -219,7 +211,6 @@ const AppSidebar: React.FC = () => {
       onMouseEnter={() => !isExpanded && setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      {/* Logo Section */}
       <div
         className={`py-8 flex ${!isExpanded && !isHovered ? "lg:justify-center" : "justify-start"}`}
       >
@@ -252,7 +243,6 @@ const AppSidebar: React.FC = () => {
         </Link>
       </div>
 
-      {/* Main + Settings */}
       <div className="flex flex-col justify-between flex-1 overflow-y-auto duration-300 ease-linear no-scrollbar">
         <nav className="mb-6 flex flex-col flex-grow">
           <div className="flex flex-col gap-8 flex-grow">
