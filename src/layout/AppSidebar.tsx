@@ -302,31 +302,6 @@ const AppSidebar: React.FC = () => {
         </Link>
       </div>
 
-      {/* Activity indicator saat halaman dimuat */}
-      {isPageLoading && (
-        <div
-          className={`mb-4 flex items-center gap-3 rounded-xl border border-slate-200/80 bg-white/70 px-3.5 py-2.5 text-slate-700 backdrop-blur-md shadow-sm transition-all duration-300 dark:border-slate-800/80 dark:bg-slate-900/70 dark:text-slate-200 ${
-            !showLabels ? "justify-center px-2.5" : ""
-          }`}
-          role="status"
-          aria-live="polite"
-        >
-          {/* Spinner minimalis dua warna */}
-          <div className="relative flex h-4 w-4 shrink-0 items-center justify-center">
-            <span className="absolute h-full w-full rounded-full border-2 border-slate-200 dark:border-slate-700" />
-            <span className="h-4 w-4 animate-spin rounded-full border-2 border-slate-900 border-t-transparent dark:border-white dark:border-t-transparent" />
-          </div>
-
-          {showLabels && (
-            <div className="min-w-0">
-              <p className="text-xs font-medium tracking-wide text-slate-600 dark:text-slate-300">
-                Loading...
-              </p>
-            </div>
-          )}
-        </div>
-      )}
-
       <div className="flex flex-col justify-between flex-1 overflow-y-auto duration-300 ease-linear no-scrollbar">
         <nav className="mb-6 flex flex-col flex-grow">
           <div className="flex flex-col gap-8 flex-grow">
