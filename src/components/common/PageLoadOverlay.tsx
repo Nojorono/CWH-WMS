@@ -53,7 +53,7 @@ export default function PageLoadOverlay() {
 
         <div className="mt-2 text-center">
           <p className="text-sm font-semibold tracking-wide text-slate-700 dark:text-slate-200">
-            Memuat halaman…
+            Loading Page…
           </p>
           {targetLabel && (
             <p className="max-w-[200px] truncate text-xs text-slate-500 dark:text-slate-400">
