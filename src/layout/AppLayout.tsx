@@ -1,9 +1,11 @@
 import { useMemo } from "react";
 import { SidebarProvider, useSidebar } from "../context/SidebarContext";
+import { PageLoadGateProvider } from "../context/PageLoadGateContext";
 import { Outlet } from "react-router";
 import AppHeader from "./AppHeader";
 import Backdrop from "./Backdrop";
 import AppSidebar from "./AppSidebar";
+import PageLoadOverlay from "../components/common/PageLoadOverlay";
 import { usePersistAuthStore } from "../API/store/AuthStore/PersistAuthStore";
 
 const LayoutContent: React.FC = () => {
@@ -34,15 +36,17 @@ const LayoutContent: React.FC = () => {
       {/* Main Content — flex-col: header tetap pendek, main yang mengisi sisa tinggi */}
       <div
         className={`
-          flex min-h-screen flex-1 flex-col overflow-x-hidden
+          relative flex min-h-screen flex-1 flex-col overflow-x-hidden
           transition-all duration-300 ease-in-out
           ${sidebarMargin}
         `}
       >
         <AppHeader />
         <main
-          className={`mx-auto w-full min-h-0 flex-1 p-4 md:p-6 ${userRole === "GATE" ? "max-w-full" : "max-w-screen-2xl"}`}
+          className={`relative mx-auto w-full min-h-0 flex-1 p-4 md:p-6 ${userRole === "GATE" ? "max-w-full" : "max-w-screen-2xl"}`}
         >
+          {/* Overlay global — tidak perlu setting per halaman */}
+          <PageLoadOverlay />
           <Outlet />
         </main>
       </div>
@@ -52,7 +56,9 @@ const LayoutContent: React.FC = () => {
 
 const AppLayout: React.FC = () => (
   <SidebarProvider>
-    <LayoutContent />
+    <PageLoadGateProvider>
+      <LayoutContent />
+    </PageLoadGateProvider>
   </SidebarProvider>
 );
 

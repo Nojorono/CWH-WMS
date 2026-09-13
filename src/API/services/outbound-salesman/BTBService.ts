@@ -86,9 +86,12 @@ export const btbService = {
     return normalizeBTBResponse(response.data);
   },
 
-  getBTBLastDateInsert: async (): Promise<GetBTBResult> => {
+  getBTBLastDateInsert: async (options?: {
+    signal?: AbortSignal;
+  }): Promise<GetBTBResult> => {
     const response = await axiosInstance.get<BTBResponse>(
       "/btb/last-date-insert",
+      { signal: options?.signal },
     );
     return normalizeBTBResponse(response.data);
   },

@@ -5,11 +5,15 @@ import React, {
   useState,
   useMemo,
 } from "react";
-import { Link, useLocation } from "react-router";
+import { Link, useLocation, useNavigate } from "react-router";
 import { ChevronDownIcon, HorizontaLDots } from "../icons";
 import { useSidebar } from "../context/SidebarContext";
+import { usePageLoadGate } from "../context/PageLoadGateContext";
 import { useDynamicSidebarItems } from "./useDynamicSidebarItems";
 import { usePersistAuthStore } from "../API/store/AuthStore/PersistAuthStore";
+
+/** Trailing debounce: klik cepat hanya navigate ke path terakhir */
+const NAV_DEBOUNCE_MS = 220;
 
 const AppSidebar: React.FC = () => {
   const {
@@ -20,6 +24,8 @@ const AppSidebar: React.FC = () => {
     closeMobileSidebar,
   } = useSidebar();
   const location = useLocation();
+  const navigate = useNavigate();
+  const { isPageLoading, beginNavigation } = usePageLoadGate();
   const { menuItems, settingsItems } = useDynamicSidebarItems();
 
   const user = usePersistAuthStore((state) => state.user);
@@ -33,6 +39,9 @@ const AppSidebar: React.FC = () => {
     {},
   );
   const subMenuRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const navTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pendingPathRef = useRef<string | null>(null);
+  const lastNavAtRef = useRef(0);
 
   const isActive = useCallback(
     (path: string) => location.pathname === path,
@@ -68,6 +77,52 @@ const AppSidebar: React.FC = () => {
     closeMobileSidebar();
   }, [closeMobileSidebar, setIsHovered]);
 
+  const goToPath = useCallback(
+    (path: string) => {
+      if (!path || path === location.pathname) return;
+      beginNavigation(path);
+      lastNavAtRef.current = Date.now();
+      navigate(path);
+    },
+    [beginNavigation, location.pathname, navigate],
+  );
+
+  const handleNavClick = useCallback(
+    (e: React.MouseEvent, path: string) => {
+      e.preventDefault();
+      if (isPageLoading) return;
+
+      closeAllSubmenus();
+      if (!path) return;
+
+      const now = Date.now();
+      const rapid = now - lastNavAtRef.current < NAV_DEBOUNCE_MS;
+      pendingPathRef.current = path;
+      if (navTimerRef.current) clearTimeout(navTimerRef.current);
+
+      // Klik tunggal (tenang): navigate langsung. Klik cepat: tunggu path terakhir.
+      if (!rapid && path !== location.pathname) {
+        pendingPathRef.current = null;
+        goToPath(path);
+        return;
+      }
+
+      navTimerRef.current = setTimeout(() => {
+        const to = pendingPathRef.current;
+        pendingPathRef.current = null;
+        navTimerRef.current = null;
+        if (to) goToPath(to);
+      }, NAV_DEBOUNCE_MS);
+    },
+    [closeAllSubmenus, goToPath, isPageLoading, location.pathname],
+  );
+
+  useEffect(() => {
+    return () => {
+      if (navTimerRef.current) clearTimeout(navTimerRef.current);
+    };
+  }, []);
+
   useEffect(() => {
     closeMobileSidebar();
   }, [location.pathname, closeMobileSidebar]);
@@ -92,6 +147,7 @@ const AppSidebar: React.FC = () => {
   }, [openMainSubmenu, openSettingsSubmenu]);
 
   const handleSubmenuToggle = (type: "main" | "settings", index: number) => {
+    if (isPageLoading) return;
     if (type === "main") {
       setOpenMainSubmenu((prev) => (prev === index ? null : index));
       setOpenSettingsSubmenu(null);
@@ -101,6 +157,8 @@ const AppSidebar: React.FC = () => {
     }
   };
 
+  const showLabels = isExpanded || isHovered || isMobileOpen;
+
   const renderSection = (
     items: typeof menuItems,
     type: "main" | "settings",
@@ -109,16 +167,14 @@ const AppSidebar: React.FC = () => {
     <div>
       <h2
         className={`mb-4 text-xs uppercase flex leading-[20px] text-gray-400 ${
-          !isExpanded && !isHovered ? "lg:justify-center" : "justify-start"
+          !showLabels ? "lg:justify-center" : "justify-start"
         }`}
       >
-        {isExpanded || isHovered || isMobileOpen ? (
-          title
-        ) : (
-          <HorizontaLDots className="size-6" />
-        )}
+        {showLabels ? title : <HorizontaLDots className="size-6" />}
       </h2>
-      <ul className="flex flex-col gap-4">
+      <ul
+        className={`flex flex-col gap-4 ${isPageLoading ? "pointer-events-none opacity-45" : ""}`}
+      >
         {items.map((nav, index) => {
           const isOpen =
             type === "main"
@@ -130,22 +186,21 @@ const AppSidebar: React.FC = () => {
               {nav.subItems ? (
                 <button
                   type="button"
+                  disabled={isPageLoading}
                   onClick={() => handleSubmenuToggle(type, index)}
                   className={`menu-item group ${isOpen ? "menu-item-active" : "menu-item-inactive"} ${
-                    !isExpanded && !isHovered
-                      ? "lg:justify-center"
-                      : "lg:justify-start"
-                  }`}
+                    !showLabels ? "lg:justify-center" : "lg:justify-start"
+                  } ${isPageLoading ? "cursor-not-allowed" : ""}`}
                 >
                   <span
                     className={`menu-item-icon-size ${isOpen ? "menu-item-icon-active" : "menu-item-icon-inactive"}`}
                   >
                     {nav.icon}
                   </span>
-                  {(isExpanded || isHovered || isMobileOpen) && (
+                  {showLabels && (
                     <span className="menu-item-text">{nav.name}</span>
                   )}
-                  {(isExpanded || isHovered || isMobileOpen) && (
+                  {showLabels && (
                     <ChevronDownIcon
                       className={`ml-auto w-5 h-5 transition-transform duration-200 ${isOpen ? "rotate-180 text-brand-500" : ""}`}
                     />
@@ -155,21 +210,23 @@ const AppSidebar: React.FC = () => {
                 nav.path && (
                   <Link
                     to={nav.path}
-                    onClick={closeAllSubmenus}
-                    className={`menu-item group ${isActive(nav.path) ? "menu-item-active" : "menu-item-inactive"}`}
+                    aria-disabled={isPageLoading}
+                    tabIndex={isPageLoading ? -1 : undefined}
+                    onClick={(e) => handleNavClick(e, nav.path!)}
+                    className={`menu-item group ${isActive(nav.path) ? "menu-item-active" : "menu-item-inactive"} ${isPageLoading ? "cursor-not-allowed" : ""}`}
                   >
                     <span
                       className={`menu-item-icon-size ${isActive(nav.path) ? "menu-item-icon-active" : "menu-item-icon-inactive"}`}
                     >
                       {nav.icon}
                     </span>
-                    {(isExpanded || isHovered || isMobileOpen) && (
+                    {showLabels && (
                       <span className="menu-item-text">{nav.name}</span>
                     )}
                   </Link>
                 )
               )}
-              {nav.subItems && (isExpanded || isHovered || isMobileOpen) && (
+              {nav.subItems && showLabels && (
                 <div
                   ref={(el) => {
                     subMenuRefs.current[key] = el;
@@ -184,8 +241,10 @@ const AppSidebar: React.FC = () => {
                       <li key={sub.name}>
                         <Link
                           to={sub.path}
-                          onClick={closeAllSubmenus}
-                          className={`menu-dropdown-item ${isActive(sub.path) ? "menu-dropdown-item-active" : "menu-dropdown-item-inactive"}`}
+                          aria-disabled={isPageLoading}
+                          tabIndex={isPageLoading ? -1 : undefined}
+                          onClick={(e) => handleNavClick(e, sub.path)}
+                          className={`menu-dropdown-item ${isActive(sub.path) ? "menu-dropdown-item-active" : "menu-dropdown-item-inactive"} ${isPageLoading ? "cursor-not-allowed" : ""}`}
                         >
                           {sub.name}
                         </Link>
@@ -212,10 +271,10 @@ const AppSidebar: React.FC = () => {
       onMouseLeave={() => setIsHovered(false)}
     >
       <div
-        className={`py-8 flex ${!isExpanded && !isHovered ? "lg:justify-center" : "justify-start"}`}
+        className={`py-8 flex ${!showLabels ? "lg:justify-center" : "justify-start"}`}
       >
-        <Link to="">
-          {isExpanded || isHovered || isMobileOpen ? (
+        <Link to="" className={isPageLoading ? "pointer-events-none" : ""}>
+          {showLabels ? (
             <>
               <img
                 className="dark:hidden"
@@ -242,6 +301,31 @@ const AppSidebar: React.FC = () => {
           )}
         </Link>
       </div>
+
+      {/* Activity indicator saat halaman dimuat */}
+      {isPageLoading && (
+        <div
+          className={`mb-4 flex items-center gap-3 rounded-xl border border-slate-200/80 bg-white/70 px-3.5 py-2.5 text-slate-700 backdrop-blur-md shadow-sm transition-all duration-300 dark:border-slate-800/80 dark:bg-slate-900/70 dark:text-slate-200 ${
+            !showLabels ? "justify-center px-2.5" : ""
+          }`}
+          role="status"
+          aria-live="polite"
+        >
+          {/* Spinner minimalis dua warna */}
+          <div className="relative flex h-4 w-4 shrink-0 items-center justify-center">
+            <span className="absolute h-full w-full rounded-full border-2 border-slate-200 dark:border-slate-700" />
+            <span className="h-4 w-4 animate-spin rounded-full border-2 border-slate-900 border-t-transparent dark:border-white dark:border-t-transparent" />
+          </div>
+
+          {showLabels && (
+            <div className="min-w-0">
+              <p className="text-xs font-medium tracking-wide text-slate-600 dark:text-slate-300">
+                Loading...
+              </p>
+            </div>
+          )}
+        </div>
+      )}
 
       <div className="flex flex-col justify-between flex-1 overflow-y-auto duration-300 ease-linear no-scrollbar">
         <nav className="mb-6 flex flex-col flex-grow">

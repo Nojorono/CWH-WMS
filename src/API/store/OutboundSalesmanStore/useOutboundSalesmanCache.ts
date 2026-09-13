@@ -27,6 +27,11 @@ type GetStockOnHandParams = {
   date?: string;
 };
 
+type CacheFetchOptions = {
+  force?: boolean;
+  signal?: AbortSignal;
+};
+
 const CALLPLAN_TTL_MS = 3 * 60 * 1000;
 const BTB_TTL_MS = 2 * 60 * 1000;
 const SOH_TTL_MS = 2 * 60 * 1000;
@@ -65,21 +70,19 @@ type OutboundSalesmanCacheState = {
 
   getCallplans: (
     params: GetCallplansParams,
-    options?: { force?: boolean },
+    options?: CacheFetchOptions,
   ) => Promise<Callplan[]>;
 
-  getBtbLastDateInsert: (options?: {
-    force?: boolean;
-  }) => Promise<GetBTBResult>;
+  getBtbLastDateInsert: (options?: CacheFetchOptions) => Promise<GetBTBResult>;
 
   getStockOnHandCached: (
     params: GetStockOnHandParams,
-    options?: { force?: boolean },
+    options?: CacheFetchOptions,
   ) => Promise<StockOnHand[]>;
 
   getRealTimeSOHCached: (
     params: GetRealTimeSOHParams,
-    options?: { force?: boolean },
+    options?: CacheFetchOptions,
   ) => Promise<RealTimeSOHResult>;
 
   /** Hapus cache callplan untuk org+tanggal (semua status) */
@@ -98,6 +101,7 @@ const metaInFlight = new Map<string, Promise<RealTimeSOHResult>>();
 /**
  * Keyed cache Outbound Salesman (Fase 4b).
  * Share Callplan / BTB / SOH antar SPB, Rekap, LHS, Good Prep.
+ * Request dengan `signal` tidak ikut in-flight dedupe agar bisa di-abort per halaman.
  */
 export const useOutboundSalesmanCache = create<OutboundSalesmanCacheState>(
   (set, get) => ({
@@ -108,6 +112,7 @@ export const useOutboundSalesmanCache = create<OutboundSalesmanCacheState>(
 
     getCallplans: async (params, options) => {
       const force = Boolean(options?.force);
+      const signal = options?.signal;
       const key = buildCallplanCacheKey(params);
       const cached = get().callplansByKey[key];
 
@@ -115,11 +120,14 @@ export const useOutboundSalesmanCache = create<OutboundSalesmanCacheState>(
         return cached.data;
       }
 
-      const existing = callplanInFlight.get(key);
-      if (!force && existing) return existing;
+      if (!signal) {
+        const existing = callplanInFlight.get(key);
+        if (!force && existing) return existing;
+      }
 
       const run = (async () => {
-        const data = await callplanService.getCallplans(params);
+        const data = await callplanService.getCallplans(params, { signal });
+        if (signal?.aborted) return data;
         set((state) => ({
           callplansByKey: {
             ...state.callplansByKey,
@@ -128,6 +136,8 @@ export const useOutboundSalesmanCache = create<OutboundSalesmanCacheState>(
         }));
         return data;
       })();
+
+      if (signal) return run;
 
       callplanInFlight.set(key, run);
       try {
@@ -139,20 +149,25 @@ export const useOutboundSalesmanCache = create<OutboundSalesmanCacheState>(
 
     getBtbLastDateInsert: async (options) => {
       const force = Boolean(options?.force);
+      const signal = options?.signal;
       const cached = get().btbLastDateInsert;
 
       if (!force && cached && isFresh(cached.fetchedAt, BTB_TTL_MS)) {
         return cached.data;
       }
 
-      if (!force && btbInFlight) return btbInFlight;
+      if (!signal && !force && btbInFlight) return btbInFlight;
 
-      btbInFlight = (async () => {
-        const data = await btbService.getBTBLastDateInsert();
+      const run = (async () => {
+        const data = await btbService.getBTBLastDateInsert({ signal });
+        if (signal?.aborted) return data;
         set({ btbLastDateInsert: { data, fetchedAt: Date.now() } });
         return data;
       })();
 
+      if (signal) return run;
+
+      btbInFlight = run;
       try {
         return await btbInFlight;
       } finally {
@@ -162,6 +177,7 @@ export const useOutboundSalesmanCache = create<OutboundSalesmanCacheState>(
 
     getStockOnHandCached: async (params, options) => {
       const force = Boolean(options?.force);
+      const signal = options?.signal;
       const key = buildSohCacheKey(params);
       const cached = get().sohByKey[key];
 
@@ -169,11 +185,14 @@ export const useOutboundSalesmanCache = create<OutboundSalesmanCacheState>(
         return cached.data;
       }
 
-      const existing = sohInFlight.get(key);
-      if (!force && existing) return existing;
+      if (!signal) {
+        const existing = sohInFlight.get(key);
+        if (!force && existing) return existing;
+      }
 
       const run = (async () => {
-        const data = await getStockOnHand(params);
+        const data = await getStockOnHand(params, { signal });
+        if (signal?.aborted) return data;
         set((state) => ({
           sohByKey: {
             ...state.sohByKey,
@@ -182,6 +201,8 @@ export const useOutboundSalesmanCache = create<OutboundSalesmanCacheState>(
         }));
         return data;
       })();
+
+      if (signal) return run;
 
       sohInFlight.set(key, run);
       try {
@@ -193,6 +214,7 @@ export const useOutboundSalesmanCache = create<OutboundSalesmanCacheState>(
 
     getRealTimeSOHCached: async (params, options) => {
       const force = Boolean(options?.force);
+      const signal = options?.signal;
       const key = buildMetaCacheKey(params);
       const cached = get().metaByKey[key];
 
@@ -200,11 +222,16 @@ export const useOutboundSalesmanCache = create<OutboundSalesmanCacheState>(
         return cached.data;
       }
 
-      const existing = metaInFlight.get(key);
-      if (!force && existing) return existing;
+      if (!signal) {
+        const existing = metaInFlight.get(key);
+        if (!force && existing) return existing;
+      }
 
       const run = (async () => {
-        const data = await realTimeSOHService.getRealTimeSOH(params);
+        const data = await realTimeSOHService.getRealTimeSOH(params, {
+          signal,
+        });
+        if (signal?.aborted) return data;
         set((state) => ({
           metaByKey: {
             ...state.metaByKey,
@@ -213,6 +240,8 @@ export const useOutboundSalesmanCache = create<OutboundSalesmanCacheState>(
         }));
         return data;
       })();
+
+      if (signal) return run;
 
       metaInFlight.set(key, run);
       try {

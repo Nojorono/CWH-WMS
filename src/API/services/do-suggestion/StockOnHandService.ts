@@ -2,6 +2,7 @@ import dayjs from "dayjs";
 import axiosInstance from "../AxiosInstance";
 import { EndPoint } from "../../../utils/EndPoint";
 import { StockOnHand } from "../../types/stockOnHand";
+import { isRequestAborted } from "../../../DynamicAPI/services/CreateCrudService";
 
 // 1. Definisikan Interface Wrapper untuk response API Anda
 interface ApiResponse<T> {
@@ -19,7 +20,10 @@ interface GetStockParams {
     date?: string;
 }
 
-export const getStockOnHand = async (params: GetStockParams): Promise<StockOnHand[]> => {
+export const getStockOnHand = async (
+    params: GetStockParams,
+    options?: { signal?: AbortSignal },
+): Promise<StockOnHand[]> => {
 
     const sohDate =
         params.date && dayjs(params.date).isValid()
@@ -35,6 +39,7 @@ export const getStockOnHand = async (params: GetStockParams): Promise<StockOnHan
                     subinventory_code: params.subinventory_code,
                     date: sohDate,
                 },
+                signal: options?.signal,
             }
         );
 
@@ -75,6 +80,10 @@ export const getStockOnHand = async (params: GetStockParams): Promise<StockOnHan
         return cleanedData;
 
     } catch (error) {
+        // Abort saat pindah menu — bukan error, jangan log
+        if (isRequestAborted(error) || options?.signal?.aborted) {
+            throw error;
+        }
         console.error("Error fetching Stock On Hand:", error);
         throw error;
     }

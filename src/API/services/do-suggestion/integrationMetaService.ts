@@ -3,7 +3,8 @@ import axiosInstance from "../AxiosInstance";
 
 
 export const getMoveOrderIntegration = async (
-    params: MoveOrderIntegrationParams
+    params: MoveOrderIntegrationParams,
+    signal?: AbortSignal,
 ): Promise<MoveOrderIntegrationResponse> => {
     try {
         const response = await axiosInstance.get("/move-order-integration", {
@@ -14,6 +15,7 @@ export const getMoveOrderIntegration = async (
                 iface_status: params.iface_status,
                 source_system: params.source_system || "WMS",
             },
+            signal,
         });
 
         // Sesuaikan dengan struktur asli dari response JSON backend-mu
