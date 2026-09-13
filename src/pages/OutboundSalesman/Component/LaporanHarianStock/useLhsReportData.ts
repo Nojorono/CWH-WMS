@@ -285,6 +285,8 @@ export const useLhsReportData = (reportDate: string) => {
     context,
     rows,
     totals,
+    finalCallplans,
+    btbList,
     isLoading,
     error,
     refetch,

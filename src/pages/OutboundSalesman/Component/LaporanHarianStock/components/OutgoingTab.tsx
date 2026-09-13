@@ -53,8 +53,8 @@ function OutgoingTab({ lines, isLoading }: Props) {
       emptyMessage="Tidak ada pergerakan outgoing."
       footerNote={
         <p className="border-t border-slate-100 px-4 py-3 text-xs text-slate-400">
-          Source: Manual DO (FPPR submitted) · Relokasi · DO MATIC (submitted) ·
-          Add DO MATIC (adjustment +)
+          Source: Manual DO (FPPR) · Relokasi · SPB Submitted · SPB Adjustment
+          (+)
         </p>
       }
     />

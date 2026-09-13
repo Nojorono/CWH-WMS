@@ -11,7 +11,8 @@ type ExportLhsExcelParams = {
   fileSlug?: string;
 };
 
-const COLS = 18; // A..R
+/** A..Q (17 kolom) — Central+ASMO digabung 1 kolom */
+const COLS = 17;
 
 const borderThin = {
   top: { style: "thin", color: { rgb: "000000" } },
@@ -86,8 +87,12 @@ const setCell = (
 };
 
 /**
- * Export Laporan Harian Stock ke Excel (layout template, tanpa SR/NR).
- * Formula: Total Terima, Total Keluar, Stock Akhir, VAR (Fisik−Akhir), VAR (Fisik−META).
+ * Export Laporan Harian Stock ke Excel.
+ *
+ * Incoming: Central/ASMO (1 kolom) | SPB Adjustment (−) | BTB
+ * Outgoing: Manual DO | Relokasi | SPB Submitted | SPB Adjustment (+)
+ * VAR (akhir): META − STOCK AKHIR
+ * META: 0 jika SOH tidak ada
  */
 export const exportLhsExcel = ({
   rows,
@@ -127,7 +132,6 @@ export const exportLhsExcel = ({
   const h1 = 2;
   const h2 = 3;
 
-  // Group / single headers row 2
   const groupDefs: {
     c: number;
     label: string;
@@ -137,23 +141,20 @@ export const exportLhsExcel = ({
     { c: 0, label: "KODE", bg: COLORS.grey },
     { c: 1, label: "MATERIAL", bg: COLORS.grey },
     { c: 2, label: "STOCK AWAL", bg: COLORS.grey },
-    { c: 3, label: "Incoming", span: 4, bg: COLORS.red },
-    { c: 7, label: "TOTAL Terima", bg: COLORS.red },
-    { c: 8, label: "Outgoing", span: 4, bg: COLORS.blue },
-    { c: 12, label: "TOTAL Keluar", bg: COLORS.blue },
-    { c: 13, label: "STOCK AKHIR", bg: COLORS.grey },
-    { c: 14, label: "FISIK Akhir hari", bg: COLORS.yellow },
-    { c: 15, label: "VAR", bg: COLORS.cyan },
-    { c: 16, label: "META", bg: COLORS.yellow },
-    { c: 17, label: "VAR", bg: COLORS.cyan },
+    { c: 3, label: "Incoming", span: 3, bg: COLORS.red },
+    { c: 6, label: "TOTAL Terima", bg: COLORS.red },
+    { c: 7, label: "Outgoing", span: 4, bg: COLORS.blue },
+    { c: 11, label: "TOTAL Keluar", bg: COLORS.blue },
+    { c: 12, label: "STOCK AKHIR", bg: COLORS.grey },
+    { c: 13, label: "FISIK Akhir hari", bg: COLORS.yellow },
+    { c: 14, label: "VAR", bg: COLORS.cyan },
+    { c: 15, label: "META", bg: COLORS.yellow },
+    { c: 16, label: "VAR", bg: COLORS.cyan },
   ];
 
   groupDefs.forEach(({ c, label, span = 1, bg }) => {
     setCell(ws, h1, c, label, headerStyle(bg));
-    if (span === 1) {
-      // merge vertically with sub-header row
-      // filled below
-    } else {
+    if (span > 1) {
       for (let i = 1; i < span; i += 1) {
         setCell(ws, h1, c + i, "", headerStyle(bg));
       }
@@ -161,26 +162,25 @@ export const exportLhsExcel = ({
   });
 
   const subHeaders: { c: number; label: string; bg: string }[] = [
-    { c: 3, label: "Central\n(from CWH)", bg: COLORS.red },
-    { c: 4, label: "ASMO\n(Stock Cabang)", bg: COLORS.red },
-    { c: 5, label: "Retur", bg: COLORS.red },
-    { c: 6, label: "BTB", bg: COLORS.red },
-    { c: 8, label: "Manual DO\n(FPPR)", bg: COLORS.blue },
-    { c: 9, label: "Relokasi\n(GI)", bg: COLORS.blue },
-    { c: 10, label: "DO MATIC", bg: COLORS.blue },
-    { c: 11, label: "Add DO MATIC", bg: COLORS.blue },
+    { c: 3, label: "Central / ASMO", bg: COLORS.red },
+    { c: 4, label: "SPB Adjustment (−)", bg: COLORS.red },
+    { c: 5, label: "BTB", bg: COLORS.red },
+    { c: 7, label: "Manual DO\n(FPPR)", bg: COLORS.blue },
+    { c: 8, label: "Relokasi\n(GI)", bg: COLORS.blue },
+    { c: 9, label: "SPB Submitted", bg: COLORS.blue },
+    { c: 10, label: "SPB Adjustment (+)", bg: COLORS.blue },
   ];
 
-  // Empty sub cells for vertically-merged singles (will merge)
-  [0, 1, 2, 7, 12, 13, 14, 15, 16, 17].forEach((c) => {
+  // Empty sub cells for vertically-merged singles
+  [0, 1, 2, 6, 11, 12, 13, 14, 15, 16].forEach((c) => {
     const bg =
-      c === 7 || c === 3
+      c === 6
         ? COLORS.red
-        : c === 12 || c === 8
+        : c === 11
           ? COLORS.blue
-          : c === 14 || c === 16
+          : c === 13 || c === 15
             ? COLORS.yellow
-            : c === 15 || c === 17
+            : c === 14 || c === 16
               ? COLORS.cyan
               : COLORS.grey;
     setCell(ws, h2, c, "", headerStyle(bg));
@@ -192,20 +192,19 @@ export const exportLhsExcel = ({
 
   const merges: XLSX.Range[] = [
     { s: { r: 0, c: 0 }, e: { r: 0, c: COLS - 1 } },
-    // vertical merges for single columns
     { s: { r: h1, c: 0 }, e: { r: h2, c: 0 } },
     { s: { r: h1, c: 1 }, e: { r: h2, c: 1 } },
     { s: { r: h1, c: 2 }, e: { r: h2, c: 2 } },
-    { s: { r: h1, c: 7 }, e: { r: h2, c: 7 } },
+    { s: { r: h1, c: 6 }, e: { r: h2, c: 6 } },
+    { s: { r: h1, c: 11 }, e: { r: h2, c: 11 } },
     { s: { r: h1, c: 12 }, e: { r: h2, c: 12 } },
     { s: { r: h1, c: 13 }, e: { r: h2, c: 13 } },
     { s: { r: h1, c: 14 }, e: { r: h2, c: 14 } },
     { s: { r: h1, c: 15 }, e: { r: h2, c: 15 } },
     { s: { r: h1, c: 16 }, e: { r: h2, c: 16 } },
-    { s: { r: h1, c: 17 }, e: { r: h2, c: 17 } },
     // Incoming / Outgoing groups
-    { s: { r: h1, c: 3 }, e: { r: h1, c: 6 } },
-    { s: { r: h1, c: 8 }, e: { r: h1, c: 11 } },
+    { s: { r: h1, c: 3 }, e: { r: h1, c: 5 } },
+    { s: { r: h1, c: 7 }, e: { r: h1, c: 10 } },
   ];
   ws["!merges"] = merges;
 
@@ -218,71 +217,75 @@ export const exportLhsExcel = ({
     setCell(ws, r, 1, row.skuName, cellStyle({ align: "left" }));
     setCell(ws, r, 2, row.stockAwal, cellStyle());
 
-    // Central / ASMO kosong
+    // Central / ASMO — digabung 1 kolom (masih kosong / input manual)
     setCell(ws, r, 3, "", cellStyle());
-    setCell(ws, r, 4, "", cellStyle());
-    setCell(ws, r, 5, row.spb || "", cellStyle());
-    setCell(ws, r, 6, row.btb || "", cellStyle());
+    // SPB Adjustment (−) = Retur lama
+    setCell(ws, r, 4, row.spb || "", cellStyle());
+    setCell(ws, r, 5, row.btb || "", cellStyle());
 
-    // TOTAL Terima = Central + ASMO + Retur + BTB
+    // TOTAL Terima = Central/ASMO + SPB Adj (−) + BTB
     setCell(
       ws,
       r,
-      7,
+      6,
       null,
       cellStyle({ bold: true }),
-      `SUM(${colLetter(3)}${excelRow}:${colLetter(6)}${excelRow})`,
+      `SUM(${colLetter(3)}${excelRow}:${colLetter(5)}${excelRow})`,
     );
 
-    setCell(ws, r, 8, row.manualDo || "", cellStyle());
-    setCell(ws, r, 9, "", cellStyle()); // Relokasi kosong
-    setCell(ws, r, 10, row.doMatic || "", cellStyle());
-    setCell(ws, r, 11, row.addDoMatic || "", cellStyle());
+    setCell(ws, r, 7, row.manualDo || "", cellStyle());
+    setCell(ws, r, 8, "", cellStyle()); // Relokasi kosong
+    // SPB Submitted (= DO MATIC lama)
+    setCell(ws, r, 9, row.doMatic || "", cellStyle());
+    // SPB Adjustment (+) (= Add DO MATIC lama)
+    setCell(ws, r, 10, row.addDoMatic || "", cellStyle());
 
     // TOTAL Keluar
     setCell(
       ws,
       r,
-      12,
+      11,
       null,
       cellStyle({ bold: true }),
-      `SUM(${colLetter(8)}${excelRow}:${colLetter(11)}${excelRow})`,
+      `SUM(${colLetter(7)}${excelRow}:${colLetter(10)}${excelRow})`,
     );
 
     // STOCK AKHIR = Stock Awal + Total Terima − Total Keluar
     setCell(
       ws,
       r,
-      13,
+      12,
       null,
       cellStyle({ bold: true }),
-      `${colLetter(2)}${excelRow}+${colLetter(7)}${excelRow}-${colLetter(12)}${excelRow}`,
+      `${colLetter(2)}${excelRow}+${colLetter(6)}${excelRow}-${colLetter(11)}${excelRow}`,
     );
 
     // FISIK kosong
-    setCell(ws, r, 14, "", cellStyle({ bg: COLORS.yellow }));
+    setCell(ws, r, 13, "", cellStyle({ bg: COLORS.yellow }));
 
     // VAR = Fisik − Stock Akhir
     setCell(
       ws,
       r,
-      15,
+      14,
       null,
       cellStyle({ bg: COLORS.cyan, bold: true }),
-      `${colLetter(14)}${excelRow}-${colLetter(13)}${excelRow}`,
+      `${colLetter(13)}${excelRow}-${colLetter(12)}${excelRow}`,
     );
 
-    // META = SOH realtime saat generate
-    setCell(ws, r, 16, row.meta || "", cellStyle({ bg: COLORS.yellow }));
+    // META = SOH realtime; jika tidak ada → 0
+    const metaQty =
+      typeof row.meta === "number" && !Number.isNaN(row.meta) ? row.meta : 0;
+    setCell(ws, r, 15, metaQty, cellStyle({ bg: COLORS.yellow }));
 
-    // VAR = Fisik − META
+    // VAR = META − STOCK AKHIR  (ex: Q5−N5 pada layout lama)
     setCell(
       ws,
       r,
-      17,
+      16,
       null,
       cellStyle({ bg: COLORS.cyan, bold: true }),
-      `${colLetter(14)}${excelRow}-${colLetter(16)}${excelRow}`,
+      `${colLetter(15)}${excelRow}-${colLetter(12)}${excelRow}`,
     );
   });
 
@@ -300,8 +303,7 @@ export const exportLhsExcel = ({
   );
   setCell(ws, totalRow, 1, "", cellStyle({ bg: COLORS.total }));
 
-  // Sum value columns; formula columns also SUM of formula results
-  const sumCols = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17];
+  const sumCols = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16];
   sumCols.forEach((c) => {
     setCell(
       ws,
@@ -313,12 +315,11 @@ export const exportLhsExcel = ({
     );
   });
 
-  // Signature block
   const sigRow = totalRow + 3;
   setCell(ws, sigRow, 0, "Dibuat Oleh,", {
     font: { ...baseFont, bold: true },
   });
-  setCell(ws, sigRow, 8, "Warehouse", {
+  setCell(ws, sigRow, 7, "Warehouse", {
     font: { ...baseFont, bold: true },
   });
 
@@ -332,21 +333,20 @@ export const exportLhsExcel = ({
     { wch: 10 },
     { wch: 28 },
     { wch: 12 },
-    { wch: 12 },
-    { wch: 12 },
-    { wch: 10 },
-    { wch: 10 },
-    { wch: 12 },
-    { wch: 12 },
-    { wch: 11 },
-    { wch: 11 },
-    { wch: 12 },
-    { wch: 12 },
-    { wch: 12 },
-    { wch: 14 },
-    { wch: 10 },
-    { wch: 10 },
-    { wch: 10 },
+    { wch: 14 }, // Central / ASMO
+    { wch: 14 }, // SPB Adj (−)
+    { wch: 10 }, // BTB
+    { wch: 12 }, // TOTAL Terima
+    { wch: 12 }, // Manual DO
+    { wch: 11 }, // Relokasi
+    { wch: 13 }, // SPB Submitted
+    { wch: 14 }, // SPB Adj (+)
+    { wch: 12 }, // TOTAL Keluar
+    { wch: 12 }, // STOCK AKHIR
+    { wch: 14 }, // FISIK
+    { wch: 10 }, // VAR
+    { wch: 10 }, // META
+    { wch: 10 }, // VAR
   ];
 
   ws["!rows"] = [{ hpt: 22 }, { hpt: 18 }, { hpt: 22 }, { hpt: 32 }];
