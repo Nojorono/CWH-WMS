@@ -24,8 +24,12 @@ const assert200 = (statusCode: number, message = "Request failed") => {
 };
 
 /* ---------- queries ---------- */
-export const fetchAllRole = async (): Promise<Role[]> => {
-  const { data } = await axiosInstance.get("/roles");
+export const fetchAllRole = async (options?: {
+  signal?: AbortSignal;
+}): Promise<Role[]> => {
+  const { data } = await axiosInstance.get("/roles", {
+    signal: options?.signal,
+  });
 
   assert200(data.success === true ? 200 : 500, data.message);
 

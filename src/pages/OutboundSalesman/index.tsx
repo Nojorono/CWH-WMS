@@ -1,10 +1,23 @@
-import React, { useCallback, useState } from "react";
+import React, { lazy, Suspense, useCallback, useState } from "react";
 import SPBview from "./Component/SPB/SPBView";
-import CalculationView from "./Component/Calculation/CalculationView";
-import GoodPrepView from "./Component/GoodPreparation/GoodPrepView";
 import { Callplan } from "./types/CallplanTypes";
 import { OutboundSalesmanStep } from "./types/flow";
 import { showErrorToast } from "../../components/toast";
+import DeferredMount from "../../components/common/DeferredMount";
+
+/** Lazy: jangan parse Calculation/GoodPrep saat buka SPB Overview saja */
+const CalculationView = lazy(
+  () => import("./Component/Calculation/CalculationView"),
+);
+const GoodPrepView = lazy(
+  () => import("./Component/GoodPreparation/GoodPrepView"),
+);
+
+const StepFallback = () => (
+  <div className="flex min-h-[40vh] items-center justify-center">
+    <div className="h-10 w-10 animate-spin rounded-full border-4 border-orange-200 border-t-orange-500" />
+  </div>
+);
 
 /**
  * Outbound Salesman – clean step flow
@@ -26,7 +39,9 @@ function Index() {
       );
 
       if (submitted.length === 0) {
-        showErrorToast("Tidak ada SPB berstatus SUBMITTED yang siap untuk dikalkulasi.");
+        showErrorToast(
+          "Tidak ada SPB berstatus SUBMITTED yang siap untuk dikalkulasi.",
+        );
         return;
       }
 
@@ -49,7 +64,9 @@ function Index() {
         finalList.length > 0 ? finalList : source.length > 0 ? source : [];
 
       if (prepList.length === 0) {
-        showErrorToast("Tidak ada SPB FINAL yang siap untuk Print / perhitungan BTB.");
+        showErrorToast(
+          "Tidak ada SPB FINAL yang siap untuk Print / perhitungan BTB.",
+        );
         return;
       }
 
@@ -78,43 +95,48 @@ function Index() {
     setCurrentStep("SUBMITTED");
   }, []);
 
-  
   return (
-    <div className="relative min-h-screen bg-gray-50">
-      {isTransitioning && (
-        <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-white/80 backdrop-blur-sm">
-          <div className="mb-4 h-12 w-12 animate-spin rounded-full border-4 border-orange-500 border-t-transparent" />
-          <p className="font-semibold text-slate-700 text-center px-6">
-            {transitionLabel || "Memproses..."}
-          </p>
-        </div>
-      )}
+    <DeferredMount delayMs={180}>
+      <div className="relative min-h-screen bg-gray-50">
+        {isTransitioning && (
+          <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-white/80 backdrop-blur-sm">
+            <div className="mb-4 h-12 w-12 animate-spin rounded-full border-4 border-orange-500 border-t-transparent" />
+            <p className="px-6 text-center font-semibold text-slate-700">
+              {transitionLabel || "Memproses..."}
+            </p>
+          </div>
+        )}
 
-      {currentStep === "SUBMITTED" && (
-        <SPBview
-          onProceedToCalculation={handleProceedToCalculation}
-          onProceedToPreparation={handleProceedToPreparation}
-        />
-      )}
+        {currentStep === "SUBMITTED" && (
+          <SPBview
+            onProceedToCalculation={handleProceedToCalculation}
+            onProceedToPreparation={handleProceedToPreparation}
+          />
+        )}
 
-      {currentStep === "CALCULATION" && (
-        <CalculationView
-          callplans={callplansForCalc}
-          onBack={handleBackToSubmitted}
-          onProceedToPreparation={(calculated) =>
-            handleProceedToPreparation(calculated)
-          }
-        />
-      )}
+        {currentStep === "CALCULATION" && (
+          <Suspense fallback={<StepFallback />}>
+            <CalculationView
+              callplans={callplansForCalc}
+              onBack={handleBackToSubmitted}
+              onProceedToPreparation={(calculated) =>
+                handleProceedToPreparation(calculated)
+              }
+            />
+          </Suspense>
+        )}
 
-      {currentStep === "PREPARATION" && (
-        <GoodPrepView
-          callplans={callplansForPrep}
-          onBack={handleBackToSubmitted}
-          onCallplansUpdated={setCallplansForPrep}
-        />
-      )}
-    </div>
+        {currentStep === "PREPARATION" && (
+          <Suspense fallback={<StepFallback />}>
+            <GoodPrepView
+              callplans={callplansForPrep}
+              onBack={handleBackToSubmitted}
+              onCallplansUpdated={setCallplansForPrep}
+            />
+          </Suspense>
+        )}
+      </div>
+    </DeferredMount>
   );
 }
 

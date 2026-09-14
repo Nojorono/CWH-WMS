@@ -5,20 +5,29 @@ import React, {
   useState,
   useMemo,
 } from "react";
-import { Link, useLocation } from "react-router";
+import { Link, useLocation, useNavigate } from "react-router";
 import { ChevronDownIcon, HorizontaLDots } from "../icons";
 import { useSidebar } from "../context/SidebarContext";
+import { usePageLoadGate } from "../context/PageLoadGateContext";
 import { useDynamicSidebarItems } from "./useDynamicSidebarItems";
-
-// IMPORT: Gunakan store persistent baru Anda
 import { usePersistAuthStore } from "../API/store/AuthStore/PersistAuthStore";
 
+/** Trailing debounce: klik cepat hanya navigate ke path terakhir */
+const NAV_DEBOUNCE_MS = 220;
+
 const AppSidebar: React.FC = () => {
-  const { isExpanded, isMobileOpen, isHovered, setIsHovered } = useSidebar();
+  const {
+    isExpanded,
+    isMobileOpen,
+    isHovered,
+    setIsHovered,
+    closeMobileSidebar,
+  } = useSidebar();
   const location = useLocation();
+  const navigate = useNavigate();
+  const { isPageLoading, beginNavigation } = usePageLoadGate();
   const { menuItems, settingsItems } = useDynamicSidebarItems();
 
-  // 1. AMBIL USER ROLE LANGSUNG DARI STORE ZUSTAND
   const user = usePersistAuthStore((state) => state.user);
   const userRole = user?.role?.name;
 
@@ -30,13 +39,15 @@ const AppSidebar: React.FC = () => {
     {},
   );
   const subMenuRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const navTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pendingPathRef = useRef<string | null>(null);
+  const lastNavAtRef = useRef(0);
 
   const isActive = useCallback(
     (path: string) => location.pathname === path,
     [location.pathname],
   );
 
-  // 2. OPTIMASI: Bungkus sort dengan useMemo agar tidak memicu infinite render loop
   const sortedMenuItems = useMemo(() => {
     return [...menuItems].sort((a, b) => {
       const isReportingA = a.path === "/reporting";
@@ -44,10 +55,8 @@ const AppSidebar: React.FC = () => {
 
       if (isReportingA && !isReportingB) return 1;
       if (!isReportingA && isReportingB) return -1;
-
       if (!a.subItems && b.subItems) return -1;
       if (a.subItems && !b.subItems) return 1;
-
       return 0;
     });
   }, [menuItems]);
@@ -60,30 +69,63 @@ const AppSidebar: React.FC = () => {
     });
   }, [settingsItems]);
 
-  const lastPathname = useRef(location.pathname);
+  /** Setelah pilih menu: tutup submenu agar minim over-klik cepat */
+  const closeAllSubmenus = useCallback(() => {
+    setOpenMainSubmenu(null);
+    setOpenSettingsSubmenu(null);
+    setIsHovered(false);
+    closeMobileSidebar();
+  }, [closeMobileSidebar, setIsHovered]);
 
-  // 3. EFFECT: Jalankan sinkronisasi path menu secara aman
+  const goToPath = useCallback(
+    (path: string) => {
+      if (!path || path === location.pathname) return;
+      beginNavigation(path);
+      lastNavAtRef.current = Date.now();
+      navigate(path);
+    },
+    [beginNavigation, location.pathname, navigate],
+  );
+
+  const handleNavClick = useCallback(
+    (e: React.MouseEvent, path: string) => {
+      e.preventDefault();
+      if (isPageLoading) return;
+
+      closeAllSubmenus();
+      if (!path) return;
+
+      const now = Date.now();
+      const rapid = now - lastNavAtRef.current < NAV_DEBOUNCE_MS;
+      pendingPathRef.current = path;
+      if (navTimerRef.current) clearTimeout(navTimerRef.current);
+
+      // Klik tunggal (tenang): navigate langsung. Klik cepat: tunggu path terakhir.
+      if (!rapid && path !== location.pathname) {
+        pendingPathRef.current = null;
+        goToPath(path);
+        return;
+      }
+
+      navTimerRef.current = setTimeout(() => {
+        const to = pendingPathRef.current;
+        pendingPathRef.current = null;
+        navTimerRef.current = null;
+        if (to) goToPath(to);
+      }, NAV_DEBOUNCE_MS);
+    },
+    [closeAllSubmenus, goToPath, isPageLoading, location.pathname],
+  );
+
   useEffect(() => {
-    if (lastPathname.current !== location.pathname) {
-      sortedMenuItems.forEach((nav, index) => {
-        nav.subItems?.forEach((sub) => {
-          if (isActive(sub.path)) {
-            setOpenMainSubmenu(index);
-          }
-        });
-      });
+    return () => {
+      if (navTimerRef.current) clearTimeout(navTimerRef.current);
+    };
+  }, []);
 
-      sortedSettingsItems.forEach((nav, index) => {
-        nav.subItems?.forEach((sub) => {
-          if (isActive(sub.path)) {
-            setOpenSettingsSubmenu(index);
-          }
-        });
-      });
-
-      lastPathname.current = location.pathname;
-    }
-  }, [location.pathname, isActive, sortedMenuItems, sortedSettingsItems]);
+  useEffect(() => {
+    closeMobileSidebar();
+  }, [location.pathname, closeMobileSidebar]);
 
   useEffect(() => {
     const refs = [
@@ -105,12 +147,17 @@ const AppSidebar: React.FC = () => {
   }, [openMainSubmenu, openSettingsSubmenu]);
 
   const handleSubmenuToggle = (type: "main" | "settings", index: number) => {
+    if (isPageLoading) return;
     if (type === "main") {
       setOpenMainSubmenu((prev) => (prev === index ? null : index));
+      setOpenSettingsSubmenu(null);
     } else {
       setOpenSettingsSubmenu((prev) => (prev === index ? null : index));
+      setOpenMainSubmenu(null);
     }
   };
+
+  const showLabels = isExpanded || isHovered || isMobileOpen;
 
   const renderSection = (
     items: typeof menuItems,
@@ -120,16 +167,14 @@ const AppSidebar: React.FC = () => {
     <div>
       <h2
         className={`mb-4 text-xs uppercase flex leading-[20px] text-gray-400 ${
-          !isExpanded && !isHovered ? "lg:justify-center" : "justify-start"
+          !showLabels ? "lg:justify-center" : "justify-start"
         }`}
       >
-        {isExpanded || isHovered || isMobileOpen ? (
-          title
-        ) : (
-          <HorizontaLDots className="size-6" />
-        )}
+        {showLabels ? title : <HorizontaLDots className="size-6" />}
       </h2>
-      <ul className="flex flex-col gap-4">
+      <ul
+        className={`flex flex-col gap-4 ${isPageLoading ? "pointer-events-none opacity-45" : ""}`}
+      >
         {items.map((nav, index) => {
           const isOpen =
             type === "main"
@@ -140,22 +185,22 @@ const AppSidebar: React.FC = () => {
             <li key={nav.name}>
               {nav.subItems ? (
                 <button
+                  type="button"
+                  disabled={isPageLoading}
                   onClick={() => handleSubmenuToggle(type, index)}
                   className={`menu-item group ${isOpen ? "menu-item-active" : "menu-item-inactive"} ${
-                    !isExpanded && !isHovered
-                      ? "lg:justify-center"
-                      : "lg:justify-start"
-                  }`}
+                    !showLabels ? "lg:justify-center" : "lg:justify-start"
+                  } ${isPageLoading ? "cursor-not-allowed" : ""}`}
                 >
                   <span
                     className={`menu-item-icon-size ${isOpen ? "menu-item-icon-active" : "menu-item-icon-inactive"}`}
                   >
                     {nav.icon}
                   </span>
-                  {(isExpanded || isHovered || isMobileOpen) && (
+                  {showLabels && (
                     <span className="menu-item-text">{nav.name}</span>
                   )}
-                  {(isExpanded || isHovered || isMobileOpen) && (
+                  {showLabels && (
                     <ChevronDownIcon
                       className={`ml-auto w-5 h-5 transition-transform duration-200 ${isOpen ? "rotate-180 text-brand-500" : ""}`}
                     />
@@ -165,20 +210,23 @@ const AppSidebar: React.FC = () => {
                 nav.path && (
                   <Link
                     to={nav.path}
-                    className={`menu-item group ${isActive(nav.path) ? "menu-item-active" : "menu-item-inactive"}`}
+                    aria-disabled={isPageLoading}
+                    tabIndex={isPageLoading ? -1 : undefined}
+                    onClick={(e) => handleNavClick(e, nav.path!)}
+                    className={`menu-item group ${isActive(nav.path) ? "menu-item-active" : "menu-item-inactive"} ${isPageLoading ? "cursor-not-allowed" : ""}`}
                   >
                     <span
                       className={`menu-item-icon-size ${isActive(nav.path) ? "menu-item-icon-active" : "menu-item-icon-inactive"}`}
                     >
                       {nav.icon}
                     </span>
-                    {(isExpanded || isHovered || isMobileOpen) && (
+                    {showLabels && (
                       <span className="menu-item-text">{nav.name}</span>
                     )}
                   </Link>
                 )
               )}
-              {nav.subItems && (isExpanded || isHovered || isMobileOpen) && (
+              {nav.subItems && showLabels && (
                 <div
                   ref={(el) => {
                     subMenuRefs.current[key] = el;
@@ -193,7 +241,10 @@ const AppSidebar: React.FC = () => {
                       <li key={sub.name}>
                         <Link
                           to={sub.path}
-                          className={`menu-dropdown-item ${isActive(sub.path) ? "menu-dropdown-item-active" : "menu-dropdown-item-inactive"}`}
+                          aria-disabled={isPageLoading}
+                          tabIndex={isPageLoading ? -1 : undefined}
+                          onClick={(e) => handleNavClick(e, sub.path)}
+                          className={`menu-dropdown-item ${isActive(sub.path) ? "menu-dropdown-item-active" : "menu-dropdown-item-inactive"} ${isPageLoading ? "cursor-not-allowed" : ""}`}
                         >
                           {sub.name}
                         </Link>
@@ -219,12 +270,11 @@ const AppSidebar: React.FC = () => {
       onMouseEnter={() => !isExpanded && setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      {/* Logo Section */}
       <div
-        className={`py-8 flex ${!isExpanded && !isHovered ? "lg:justify-center" : "justify-start"}`}
+        className={`py-8 flex ${!showLabels ? "lg:justify-center" : "justify-start"}`}
       >
-        <Link to="">
-          {isExpanded || isHovered || isMobileOpen ? (
+        <Link to="" className={isPageLoading ? "pointer-events-none" : ""}>
+          {showLabels ? (
             <>
               <img
                 className="dark:hidden"
@@ -252,7 +302,6 @@ const AppSidebar: React.FC = () => {
         </Link>
       </div>
 
-      {/* Main + Settings */}
       <div className="flex flex-col justify-between flex-1 overflow-y-auto duration-300 ease-linear no-scrollbar">
         <nav className="mb-6 flex flex-col flex-grow">
           <div className="flex flex-col gap-8 flex-grow">

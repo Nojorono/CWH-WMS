@@ -113,7 +113,10 @@ export default function SPBView({
     return dayjs().format("DD MMM YYYY - HH:mm");
   }, [bypassActive, appliedBypassDate, appliedBypassTime]);
 
-  const fetchCallplans = async (options?: { force?: boolean }) => {
+  const fetchCallplans = async (options?: {
+    force?: boolean;
+    signal?: AbortSignal;
+  }) => {
     if (!organization_id) return;
 
     setIsLoading(true);
@@ -124,23 +127,34 @@ export default function SPBView({
           organizationId: organization_id,
           status: statusFilter,
         },
-        { force: options?.force },
+        { force: options?.force, signal: options?.signal },
       );
 
+      if (options?.signal?.aborted) return;
       setCallplans(data);
       setExpandedRows(data[0] ? { [data[0].id]: true } : {});
-    } catch (error) {
+    } catch (error: any) {
+      if (
+        options?.signal?.aborted ||
+        error?.name === "CanceledError" ||
+        error?.name === "AbortError" ||
+        error?.code === "ERR_CANCELED"
+      ) {
+        return;
+      }
       console.error("Error fetching callplans:", error);
       setCallplans([]);
       setExpandedRows({});
       showErrorToast("Gagal mengambil data callplan");
     } finally {
-      setIsLoading(false);
+      if (!options?.signal?.aborted) setIsLoading(false);
     }
   };
 
   useEffect(() => {
-    void fetchCallplans();
+    const ac = new AbortController();
+    void fetchCallplans({ signal: ac.signal });
+    return () => ac.abort();
   }, [organization_id, statusFilter, targetCallplanDate]);
 
   useEffect(() => {

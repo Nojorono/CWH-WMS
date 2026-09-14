@@ -35,14 +35,16 @@ export const callplanService = {
    * - dengan `status` → filter status
    * - tanpa `status` → semua SPB (FINAL, SUBMITTED, VOID, dll.)
    */
-  getCallplans: async ({
-    dateStart,
-    organizationId,
-    status,
-  }: GetCallplansParams): Promise<Callplan[]> => {
+  getCallplans: async (
+    { dateStart, organizationId, status }: GetCallplansParams,
+    options?: { signal?: AbortSignal },
+  ): Promise<Callplan[]> => {
     const response = await axiosInstance.get(
       `/do-suggestion/callplan/date-start/${dateStart}/organization/${organizationId}`,
-      status ? { params: { status } } : undefined,
+      {
+        ...(status ? { params: { status } } : {}),
+        signal: options?.signal,
+      },
     );
 
     return normalizeCallplans(response.data);

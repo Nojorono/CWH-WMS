@@ -68,7 +68,9 @@ export default function SPBTable({
   );
 
   useEffect(() => {
-    fetchItems();
+    const ac = new AbortController();
+    void fetchItems({ signal: ac.signal });
+    return () => ac.abort();
   }, [fetchItems]);
 
   const itemNameBySku = useMemo(() => {

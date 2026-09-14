@@ -15,6 +15,7 @@ import OverviewTab from "./components/OverviewTab";
 import IncomingTab from "./components/IncomingTab";
 import OutgoingTab from "./components/OutgoingTab";
 import ExportLhsExcelButton from "./components/ExportLhsExcelButton";
+import DeferredMount from "../../../../components/common/DeferredMount";
 
 dayjs.locale("id");
 
@@ -24,7 +25,7 @@ const TABS: { id: StockReportTab; label: string }[] = [
   { id: "outgoing", label: "Outgoing" },
 ];
 
-function LaporanHarianStock() {
+function LaporanHarianStockPage() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<StockReportTab>("overview");
 
@@ -199,6 +200,14 @@ function LaporanHarianStock() {
         )}
       </div>
     </div>
+  );
+}
+
+function LaporanHarianStock() {
+  return (
+    <DeferredMount delayMs={180}>
+      <LaporanHarianStockPage />
+    </DeferredMount>
   );
 }
 

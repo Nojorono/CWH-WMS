@@ -3,6 +3,7 @@ import dayjs from "dayjs";
 import { usePersistAuthStore } from "../../../../API/store/AuthStore/PersistAuthStore";
 import { useOutboundSalesmanCache } from "../../../../API/store/OutboundSalesmanStore/useOutboundSalesmanCache";
 import { useStoreItem } from "../../../../DynamicAPI/stores/Store/MasterStore";
+import { isRequestAborted } from "../../../../DynamicAPI/services/CreateCrudService";
 import { showErrorToast } from "../../../../components/toast";
 import { Callplan } from "../../types/CallplanTypes";
 import { BTB } from "../../types/BTBtypes";
@@ -96,11 +97,13 @@ export const useLhsReportData = (reportDate: string) => {
   );
 
   useEffect(() => {
-    fetchItems();
+    const ac = new AbortController();
+    void fetchItems({ signal: ac.signal });
+    return () => ac.abort();
   }, [fetchItems]);
 
   const refetch = useCallback(
-    async (options?: { force?: boolean }) => {
+    async (options?: { force?: boolean; signal?: AbortSignal }) => {
       if (!context.organizationId || !reportDate) {
         setFinalCallplans([]);
         setBtbList([]);
@@ -108,6 +111,7 @@ export const useLhsReportData = (reportDate: string) => {
         return;
       }
 
+      const signal = options?.signal;
       setIsLoading(true);
       setError(null);
 
@@ -130,18 +134,19 @@ export const useLhsReportData = (reportDate: string) => {
               organizationId: context.organizationId,
               status: "FINAL",
             },
-            { force },
+            { force, signal },
           ),
-          cache.getBtbLastDateInsert({ force }),
+          cache.getBtbLastDateInsert({ force, signal }),
           cache
             .getStockOnHandCached(
               {
                 organization_code: orgForSoh,
                 subinventory_code: SUBINVENTORY,
               },
-              { force },
+              { force, signal },
             )
             .catch((err) => {
+              if (isRequestAborted(err) || signal?.aborted) throw err;
               console.error("SOH Calculation gagal:", err);
               return [];
             }),
@@ -151,13 +156,16 @@ export const useLhsReportData = (reportDate: string) => {
                 organization_name: orgForSoh,
                 organization_code: orgForSoh,
               },
-              { force },
+              { force, signal },
             )
             .catch((err) => {
+              if (isRequestAborted(err) || signal?.aborted) throw err;
               console.error("SOH Realtime (META) gagal:", err);
               return { data: [], meta: null };
             }),
         ]);
+
+        if (signal?.aborted) return;
 
         const finalFiltered = filterCallplansByOrg(
           finalRaw,
@@ -239,7 +247,8 @@ export const useLhsReportData = (reportDate: string) => {
         setMetaByKey(metaMap);
         setNameByKey(names);
         setKodeByKey(kodes);
-      } catch (err) {
+      } catch (err: any) {
+        if (isRequestAborted(err) || signal?.aborted) return;
         console.error("Gagal load Laporan Harian Stock:", err);
         const message =
           err instanceof Error ? err.message : "Gagal memuat data laporan";
@@ -248,14 +257,16 @@ export const useLhsReportData = (reportDate: string) => {
         setFinalCallplans([]);
         setBtbList([]);
       } finally {
-        setIsLoading(false);
+        if (!signal?.aborted) setIsLoading(false);
       }
     },
     [context, reportDate, organizationName],
   );
 
   useEffect(() => {
-    void refetch();
+    const ac = new AbortController();
+    void refetch({ signal: ac.signal });
+    return () => ac.abort();
   }, [refetch]);
 
   const rows = useMemo(() => {

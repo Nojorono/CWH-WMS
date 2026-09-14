@@ -15,6 +15,7 @@ import {
 import { formatDateTimeIndo } from "../../../helper/FormatDateTime";
 import { useStoreItem } from "../../../DynamicAPI/stores/Store/MasterStore";
 import { showErrorToast, showSuccessToast } from "../../../components/toast";
+import DeferredMount from "../../../components/common/DeferredMount";
 
 // Komponen Badge dengan Pesan Informatif
 const StatusBadge = ({
@@ -55,7 +56,7 @@ const StatusBadge = ({
   );
 };
 
-const IntegrationMonitoringPage = () => {
+const IntegrationMonitoringPageInner = () => {
   const [page, setPage] = useState<number>(1);
   const [limit, setLimit] = useState<number>(10);
   const [statusFilter, setStatusFilter] = useState<
@@ -65,8 +66,10 @@ const IntegrationMonitoringPage = () => {
   const { list: itemList, fetchAll: fetchAllItem } = useStoreItem();
 
   useEffect(() => {
-    fetchAllItem();
-  }, []);
+    const ac = new AbortController();
+    void fetchAllItem({ signal: ac.signal });
+    return () => ac.abort();
+  }, [fetchAllItem]);
 
   const {
     data: response,
@@ -368,5 +371,11 @@ const IntegrationMonitoringPage = () => {
     </div>
   );
 };
+
+const IntegrationMonitoringPage = () => (
+  <DeferredMount delayMs={180}>
+    <IntegrationMonitoringPageInner />
+  </DeferredMount>
+);
 
 export default IntegrationMonitoringPage;

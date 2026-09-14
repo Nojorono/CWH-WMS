@@ -5,7 +5,7 @@ import { getMoveOrderIntegration } from "../../../../API/services/DOsuggestionSe
 export const useMoveOrderIntegration = (params: MoveOrderIntegrationParams) => {
   return useQuery({
     queryKey: ["move-order-integration", params],
-    queryFn: () => getMoveOrderIntegration(params),
+    queryFn: ({ signal }) => getMoveOrderIntegration(params, signal),
     placeholderData: keepPreviousData,
     refetchOnWindowFocus: false,
   });

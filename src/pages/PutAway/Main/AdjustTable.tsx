@@ -34,14 +34,21 @@ const AdjustTable = ({
   const [pageIndex, setPageIndex] = useState(0);
   const [pageSize, setPageSize] = useState(25);
 
-  // 🔹 Fetch data dari server (tanpa search server-side)
+  // Fetch list — abort saat unmount / ganti page/filter (test navigasi cepat)
   useEffect(() => {
     if (!fetchUsingPagination) return;
-    fetchUsingPagination({
-      page: pageIndex + 1, // jika backend 1-based
-      limit: pageSize,
-      status: filteredStatus || "",
-    });
+
+    const ac = new AbortController();
+    void fetchUsingPagination(
+      {
+        page: pageIndex + 1,
+        limit: pageSize,
+        status: filteredStatus || "",
+      },
+      { signal: ac.signal },
+    );
+
+    return () => ac.abort();
   }, [fetchUsingPagination, pageIndex, pageSize, filteredStatus]);
 
   const handleDetail = (data: MappedData) => {

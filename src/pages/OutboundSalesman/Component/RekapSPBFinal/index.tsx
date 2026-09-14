@@ -22,13 +22,13 @@ import {
   REKAP_DETAIL_SUMMARY_CARDS,
   REKAP_MASTER_COLUMNS,
 } from "./rekapSpbTableConfig";
-import { exportRekapSpbFinalExcel } from "./exportRekapSpbFinalExcel";
+import DeferredMount from "../../../../components/common/DeferredMount";
 
 dayjs.locale("id");
 
 const TODAY = () => dayjs().format("YYYY-MM-DD");
 
-function RekapSPBFinal() {
+function RekapSPBFinalPage() {
   const user = usePersistAuthStore((s) => s.user);
   const { list: itemList, fetchAll: fetchItems } = useStoreItem();
 
@@ -56,10 +56,15 @@ function RekapSPBFinal() {
   const flatpickrRef = useRef<flatpickr.Instance | null>(null);
 
   useEffect(() => {
-    fetchItems();
+    const ac = new AbortController();
+    void fetchItems({ signal: ac.signal });
+    return () => ac.abort();
   }, [fetchItems]);
 
-  const fetchFinalSpb = async (options?: { force?: boolean }) => {
+  const fetchFinalSpb = async (options?: {
+    force?: boolean;
+    signal?: AbortSignal;
+  }) => {
     if (!organizationId || !reportDate) {
       setCallplans([]);
       return;
@@ -73,22 +78,33 @@ function RekapSPBFinal() {
           organizationId: String(organizationId),
           status: "FINAL",
         },
-        { force: options?.force },
+        { force: options?.force, signal: options?.signal },
       );
+      if (options?.signal?.aborted) return;
       setCallplans(data);
       setExpandedRows(data[0] ? { [data[0].id]: true } : {});
-    } catch (err) {
+    } catch (err: any) {
+      if (
+        options?.signal?.aborted ||
+        err?.name === "CanceledError" ||
+        err?.name === "AbortError" ||
+        err?.code === "ERR_CANCELED"
+      ) {
+        return;
+      }
       console.error("Gagal load Rekap SPB Final:", err);
       setCallplans([]);
       setExpandedRows({});
       showErrorToast("Gagal mengambil data SPB FINAL");
     } finally {
-      setIsLoading(false);
+      if (!options?.signal?.aborted) setIsLoading(false);
     }
   };
 
   useEffect(() => {
-    void fetchFinalSpb();
+    const ac = new AbortController();
+    void fetchFinalSpb({ signal: ac.signal });
+    return () => ac.abort();
   }, [organizationId, reportDate]);
 
   useEffect(() => {
@@ -177,13 +193,21 @@ function RekapSPBFinal() {
     ? dayjs(reportDate).format("DD MMMM YYYY")
     : reportDate;
 
-  const handleExportExcel = () => {
-    exportRekapSpbFinalExcel({
-      callplans: sortedCallplans,
-      amoName,
-      reportDate,
-      itemList: Array.isArray(itemList) ? itemList : [],
-    });
+  const handleExportExcel = async () => {
+    try {
+      const { exportRekapSpbFinalExcel } = await import(
+        "./exportRekapSpbFinalExcel"
+      );
+      exportRekapSpbFinalExcel({
+        callplans: sortedCallplans,
+        amoName,
+        reportDate,
+        itemList: Array.isArray(itemList) ? itemList : [],
+      });
+    } catch (err) {
+      console.error("Export Rekap SPB Final gagal:", err);
+      showErrorToast("Gagal mengekspor Excel");
+    }
   };
 
   const handleEmailFas = () => {
@@ -330,6 +354,14 @@ function RekapSPBFinal() {
         </div>
       </div>
     </div>
+  );
+}
+
+function RekapSPBFinal() {
+  return (
+    <DeferredMount delayMs={180}>
+      <RekapSPBFinalPage />
+    </DeferredMount>
   );
 }
 

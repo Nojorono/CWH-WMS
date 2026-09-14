@@ -163,6 +163,7 @@ export const aggregateRealTimeSOH = (
 export const realTimeSOHService = {
   getRealTimeSOH: async (
     params: GetRealTimeSOHParams,
+    options?: { signal?: AbortSignal },
   ): Promise<RealTimeSOHResult> => {
     const organizationCode =
       params.organization_code || params.organization_name || "";
@@ -174,6 +175,7 @@ export const realTimeSOHService = {
     const response = await axiosInstance.get(REALTIME_SOH_PATH, {
       params: buildQueryParams(params),
       timeout: 90000,
+      signal: options?.signal,
     });
 
     return normalizeResponse(response.data);

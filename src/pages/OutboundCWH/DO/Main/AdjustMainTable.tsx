@@ -141,9 +141,10 @@ const MemoCell = ({
             const isSubdistMemo =
               isSubdistDo ||
               String(memo.type || "").toUpperCase() === "SUBDIST";
-            const soNumber = memo.so_number != null && memo.so_number !== ""
-              ? String(memo.so_number)
-              : null;
+            const soNumber =
+              memo.so_number != null && memo.so_number !== ""
+                ? String(memo.so_number)
+                : null;
 
             const totalSKU = pickings.length;
             const scannedSKUCount = pickings.filter((tp: any) => {
@@ -463,6 +464,7 @@ const AdjustTableDO = ({
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const user = usePersistAuthStore((state) => state.user);
+
   const { fetchUsingPagination, list, pagination, isLoading } =
     useStoreOutboundDeliveryOrder();
 
@@ -511,12 +513,18 @@ const AdjustTableDO = ({
 
   useEffect(() => {
     if (!fetchUsingPagination) return;
-    fetchUsingPagination({
-      page: currentPage,
-      limit: pageSize,
-      status: filteredStatus || "",
-      outbound_type: filteredTypeOutbound || "",
-    });
+
+    const ac = new AbortController();
+    void fetchUsingPagination(
+      {
+        page: currentPage,
+        limit: pageSize,
+        status: filteredStatus || "",
+        outbound_type: filteredTypeOutbound || "",
+      },
+      { signal: ac.signal },
+    );
+    return () => ac.abort();
   }, [
     fetchUsingPagination,
     currentPage,
