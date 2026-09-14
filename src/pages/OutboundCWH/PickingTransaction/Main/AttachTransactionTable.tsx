@@ -211,16 +211,16 @@
 //         </div>
 //       </div>
 
-      <TableComponent
-        data={tableData}
-        columns={columns as any}
-        pageSize={pageSize}
-        pageIndex={pageIndex}
-        totalPages={Math.max(1, Math.ceil(tableData.length / pageSize))}
-        onPageChange={handlePageChange}
-        onSelectionChange={handleSelectionChange}
-        selectColumn={false}
-      />
+//       <TableComponent
+//         data={tableData}
+//         columns={columns as any}
+//         pageSize={pageSize}
+//         pageIndex={pageIndex}
+//         totalPages={Math.max(1, Math.ceil(tableData.length / pageSize))}
+//         onPageChange={handlePageChange}
+//         onSelectionChange={handleSelectionChange}
+//         selectColumn={false}
+//       />
 
 //       {/* Modal Select Memo */}
 //       <ModalSelectMemo
@@ -241,3 +241,7 @@
 // };
 
 // export default AttachTransactionTable;
+
+export default function AttachTransactionTable() {
+  return null;
+}

@@ -1,5 +1,5 @@
 import dayjs from "dayjs";
-import { BTB, BTBDetail } from "../../types/BTBtypes";
+import { BTB, BTBDetail } from "../../../types/BTBtypes";
 
 /** Cocokkan org user/callplan ke field org di BTB (UUID / code / name). */
 export const matchesBtbOrganization = (
