@@ -72,8 +72,7 @@ const normalizePollPayload = (payload: any): PollResultView => {
         : [];
 
   const memos: PollMemoResult[] = rawMemos.map((memo: any) => ({
-    outbound_memo_id:
-      memo.outbound_memo_id ?? memo.memo_id ?? memo.id ?? null,
+    outbound_memo_id: memo.outbound_memo_id ?? memo.memo_id ?? memo.id ?? null,
     status: memo.status ?? null,
     reason: memo.reason ?? memo.message ?? null,
   }));
@@ -121,9 +120,12 @@ const normalizePollPayload = (payload: any): PollResultView => {
 
 const pollStatusClass = (status?: string | null) => {
   const s = (status || "").toUpperCase();
-  if (s === "S" || s === "SUCCESS") return "text-emerald-700 bg-emerald-50 border-emerald-200";
-  if (s === "E" || s === "ERROR") return "text-red-700 bg-red-50 border-red-200";
-  if (s === "U" || s === "PENDING") return "text-amber-700 bg-amber-50 border-amber-200";
+  if (s === "S" || s === "SUCCESS")
+    return "text-emerald-700 bg-emerald-50 border-emerald-200";
+  if (s === "E" || s === "ERROR")
+    return "text-red-700 bg-red-50 border-red-200";
+  if (s === "U" || s === "PENDING")
+    return "text-amber-700 bg-amber-50 border-amber-200";
   return "text-slate-600 bg-slate-50 border-slate-200";
 };
 
@@ -136,7 +138,9 @@ const pollStatusLabel = (status?: string | null) => {
 };
 
 const normalizeIfaceStatus = (status?: string | null) =>
-  String(status || "").trim().toUpperCase();
+  String(status || "")
+    .trim()
+    .toUpperCase();
 
 const isIfaceSuccess = (status?: string | null) => {
   const s = normalizeIfaceStatus(status);
@@ -160,11 +164,60 @@ const getCombinedIfaceStatus = (
   return "P";
 };
 
-const IRSOTable = ({
-  globalFilter,
-  setGlobalFilter,
-  filteredIO,
-}: any) => {
+/** Semua line harus iface_line_status_ir = S. Tanpa line / null → belum sukses. */
+const areAllLinesIrSuccess = (lines?: any[] | null) => {
+  if (!Array.isArray(lines) || lines.length === 0) return false;
+  return lines.every((line) => isIfaceSuccess(line?.iface_line_status_ir));
+};
+
+/**
+ * Integrasi sukses penuh:
+ * 1) semua line IR = S
+ * 2) baru cek header IR + IO + OI = S
+ */
+const isIntegrationFullySuccess = (row: any) => {
+  if (!areAllLinesIrSuccess(row?.lines)) return false;
+  return (
+    getCombinedIfaceStatus(
+      row?.iface_status_ir,
+      row?.iface_status_io,
+      row?.iface_status_oi,
+    ) === "S"
+  );
+};
+
+/** Status kolom: utamakan line dulu; header error tetap tampil E */
+const getRowIntegrationStatus = (row: any): "S" | "E" | "P" => {
+  const headerStatus = getCombinedIfaceStatus(
+    row?.iface_status_ir,
+    row?.iface_status_io,
+    row?.iface_status_oi,
+  );
+  if (headerStatus === "E") return "E";
+  if (!areAllLinesIrSuccess(row?.lines)) return "P";
+  return headerStatus;
+};
+
+const getLineIrStatusTone = (status?: string | null) => {
+  if (isIfaceSuccess(status)) {
+    return {
+      dot: "bg-green-500",
+      label: "Success",
+    };
+  }
+  if (isIfaceError(status)) {
+    return {
+      dot: "bg-red-500",
+      label: "Error",
+    };
+  }
+  return {
+    dot: "bg-amber-400",
+    label: status ? String(status).toUpperCase() : "No Status",
+  };
+};
+
+const IRSOTable = ({ globalFilter, setGlobalFilter, filteredIO }: any) => {
   const { fetchUsingPagination, list, pagination, isLoading } =
     useStoreIRIntegration();
   const [pageIndex, setPageIndex] = useState(0);
@@ -335,12 +388,7 @@ const IRSOTable = ({
         header: "Status",
         accessorKey: "iface_status_ir",
         cell: ({ row }) => {
-
-          const combinedStatus = getCombinedIfaceStatus(
-            row.original.iface_status_ir,
-            row.original.iface_status_io,
-            row.original.iface_status_oi,
-          ); 
+          const combinedStatus = getRowIntegrationStatus(row.original);
           return (
             <StatusBadge
               status={combinedStatus}
@@ -383,14 +431,28 @@ const IRSOTable = ({
         id: "actions",
         header: "Action",
         cell: ({ row }) => {
-          const outboundDoId = row.original?.outbound_do_id as string | undefined;
+          const outboundDoId = row.original?.outbound_do_id as
+            | string
+            | undefined;
           const isPolling = outboundDoId ? pollingMap[outboundDoId] : false;
-          const irStatus = String(row.original.iface_status_ir || "").toUpperCase();
-          const isIrSuccess = irStatus === "S" || irStatus === "SUCCESS";
-          const hasSoNumber = Boolean(
-            String(row.original.so_number || "").trim(),
-          );
-          const isPollLocked = isIrSuccess && hasSoNumber;
+          const linesOk = areAllLinesIrSuccess(row.original?.lines);
+          const headersOk =
+            getCombinedIfaceStatus(
+              row.original.iface_status_ir,
+              row.original.iface_status_io,
+              row.original.iface_status_oi,
+            ) === "S";
+          const isPollLocked = isIntegrationFullySuccess(row.original);
+
+          const lockTitle = !outboundDoId
+            ? "Outbound DO ID tidak tersedia"
+            : isPollLocked
+              ? "Line IR & header IR/IO/OI sudah SUCCESS — poll dikunci"
+              : !linesOk
+                ? "Line IR belum SUCCESS semua — poll masih diperlukan"
+                : !headersOk
+                  ? "Line sudah SUCCESS, header IR/IO/OI belum lengkap — poll masih diperlukan"
+                  : "Poll status IR/SO";
 
           return (
             <div onClick={(e) => e.stopPropagation()}>
@@ -403,15 +465,7 @@ const IRSOTable = ({
                 startIcon={
                   <FaSync className={isPolling ? "animate-spin" : ""} />
                 }
-                title={
-                  !outboundDoId
-                    ? "Outbound DO ID tidak tersedia"
-                    : isPollLocked
-                      ? "IR sudah SUCCESS dan SO number tersedia"
-                      : isIrSuccess && !hasSoNumber
-                        ? "IR SUCCESS tetapi SO number belum ada — poll masih diperlukan"
-                        : "Poll status IR/SO"
-                }
+                title={lockTitle}
               >
                 {isPollLocked
                   ? "Done"
@@ -453,8 +507,8 @@ const IRSOTable = ({
 
             {!pollResult ? (
               <p className="text-[12px] text-slate-400 italic">
-                Belum ada hasil poll. Klik tombol <b>Poll IR/SO</b> untuk melihat
-                status dan detail per memo.
+                Belum ada hasil poll. Klik tombol <b>Poll IR/SO</b> untuk
+                melihat status dan detail per memo.
               </p>
             ) : (
               <div className="space-y-3">
@@ -744,7 +798,7 @@ const IRSOTable = ({
                       Source IDs
                     </th>
                     <th className="px-4 py-2 text-left font-bold uppercase tracking-tighter">
-                      Sync Status (IR)
+                      Iface Line Status (IR)
                     </th>
                   </tr>
                 </thead>
@@ -788,23 +842,36 @@ const IRSOTable = ({
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-1.5">
-                          <div
-                            className={`w-2 h-2 rounded-full ${line.iface_line_status_ir === "S" ? "bg-green-500" : "bg-red-500"}`}
-                          ></div>
-                          <span className="text-[10px] font-bold text-slate-500 uppercase">
-                            {line.iface_line_status_ir === "S"
-                              ? "Success"
-                              : "Error"}
-                          </span>
+                          {(() => {
+                            const tone = getLineIrStatusTone(
+                              line.iface_line_status_ir,
+                            );
+                            return (
+                              <>
+                                <div
+                                  className={`w-2 h-2 rounded-full ${tone.dot}`}
+                                />
+                                <span className="text-[10px] font-bold text-slate-500 uppercase">
+                                  {tone.label}
+                                </span>
+                              </>
+                            );
+                          })()}
                         </div>
-                        {line.iface_line_message_ir && (
-                          <div
-                            className="text-[10px] text-red-500 italic mt-1 line-clamp-1"
-                            title={line.iface_line_message_ir}
-                          >
-                            {line.iface_line_message_ir}
-                          </div>
-                        )}
+                        <div
+                          className={`text-[10px] italic mt-1 line-clamp-1 ${
+                            line.iface_line_message_ir
+                              ? "text-red-500"
+                              : "text-slate-400"
+                          }`}
+                          title={
+                            line.iface_line_message_ir ||
+                            "No iface_line_message"
+                          }
+                        >
+                          {line.iface_line_message_ir ||
+                            "No iface_line_message"}
+                        </div>
                       </td>
                     </tr>
                   ))}
