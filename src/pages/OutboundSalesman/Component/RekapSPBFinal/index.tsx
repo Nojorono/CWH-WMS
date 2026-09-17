@@ -222,7 +222,7 @@ function RekapSPBFinalPage() {
           <div>
             <h1 className="mt-1 text-2xl font-bold tracking-tight text-slate-900">
               Rekap SPB Final{" "}
-              <span className="font-semibold text-slate-500">(Bungkus / Bks)</span>
+              <span className="font-semibold text-slate-500">(Bungkus / BKS)</span>
             </h1>
             <p className="mt-1 text-sm text-slate-500">
               {amoName} · {reportDateLabel}

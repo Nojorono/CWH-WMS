@@ -288,7 +288,7 @@ export const exportLhsDetailExcel = ({
   const merges: XLSX.Range[] = [];
 
   // ── Title / meta ──────────────────────────────────────────
-  setCell(ws, 0, 0, "Laporan Harian Stock Detail (Bungkus / Bks)", {
+  setCell(ws, 0, 0, "Laporan Stock Harian Detail (Bungkus / BKS)", {
     font: { ...baseFont, bold: true, sz: 14 },
     alignment: { horizontal: "left", vertical: "center" },
   });

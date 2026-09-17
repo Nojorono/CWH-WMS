@@ -115,23 +115,36 @@ export default function AdjustQtySPB({
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
-  /** Adjustment (−) tidak boleh melebihi qty submitted (|adj| ≤ qtySubmitted). */
-  const clampAdjustment = (item: AdjustQtyItem, raw: number) => {
-    if (Number.isNaN(raw)) return 0;
-    const submitted = Number(item.qtySubmitted) || 0;
-    if (raw < 0 && Math.abs(raw) > submitted) {
-      return -submitted;
+  /** Adjustment (−) tidak boleh membuat FINAL QTY BKB < 0 (min = −qtyAwal). */
+  const clampAdjustment = (
+    item: AdjustQtyItem,
+    raw: number,
+  ): { value: number; clamped: boolean } => {
+    if (Number.isNaN(raw)) return { value: 0, clamped: false };
+
+    const qtyFinal = Number(item.qtyAwal) || 0;
+    if (raw < 0 && Math.abs(raw) > qtyFinal) {
+      return { value: -qtyFinal, clamped: true };
     }
-    return raw;
+    return { value: raw, clamped: false };
   };
 
   const handleAdjustmentChange = (id: string, value: string) => {
     const numValue = value === "" || value === "-" ? 0 : Number(value);
+    const target = items.find((item) => item.id === id);
+    if (!target) return;
+
+    const { value: nextAdj, clamped } = clampAdjustment(target, numValue);
+    if (clamped) {
+      const qtyFinal = Number(target.qtyAwal) || 0;
+      showErrorToast(
+        `Adjustment (−) dibatasi: FINAL QTY tidak boleh < 0. Maksimal −${qtyFinal} untuk SKU ${target.sku}`,
+      );
+    }
+
     setItems((prevItems) =>
       prevItems.map((item) =>
-        item.id === id
-          ? { ...item, adjustment: clampAdjustment(item, numValue) }
-          : item,
+        item.id === id ? { ...item, adjustment: nextAdj } : item,
       ),
     );
   };
@@ -199,12 +212,13 @@ export default function AdjustQtySPB({
 
     const invalidMinus = items.find((item) => {
       const adj = Number(item.adjustment) || 0;
-      const submitted = Number(item.qtySubmitted) || 0;
-      return adj < 0 && Math.abs(adj) > submitted;
+      const qtyFinal = Number(item.qtyAwal) || 0;
+      return adj < 0 && qtyFinal + adj < 0;
     });
     if (invalidMinus) {
+      const qtyFinal = Number(invalidMinus.qtyAwal) || 0;
       showErrorToast(
-        `Adjustment (−) tidak boleh lebih dari Qty Submitted (${invalidMinus.qtySubmitted}) untuk SKU ${invalidMinus.sku}`,
+        `FINAL QTY BKB tidak boleh < 0. Adjustment (−) maksimal −${qtyFinal} untuk SKU ${invalidMinus.sku}`,
       );
       return;
     }
@@ -288,9 +302,9 @@ export default function AdjustQtySPB({
           type="number"
           value={item.adjustment === 0 ? "" : item.adjustment}
           placeholder="0"
-          min={-(Number(item.qtySubmitted) || 0)}
+          min={-(Number(item.qtyAwal) || 0)}
           onChange={(e) => handleAdjustmentChange(item.id, e.target.value)}
-          title={`Adjustment (−) maks. −${Number(item.qtySubmitted) || 0} (Qty Submitted)`}
+          title={`Adjustment (−) maks. −${Number(item.qtyAwal) || 0} agar FINAL QTY BKB ≥ 0`}
           className="w-20 rounded border-2 border-orange-300 py-1.5 text-center font-bold text-slate-800 outline-none transition-all focus:border-orange-500 focus:ring-2 focus:ring-orange-200"
         />
       ),

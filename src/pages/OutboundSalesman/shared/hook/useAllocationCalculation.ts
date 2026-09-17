@@ -1,6 +1,10 @@
 import { useMemo } from "react";
 import { resolveSku, safeParse } from "../utils/sku";
 import { GroupedSPBData } from "../types/GroupedSPBData";
+import {
+  resolveFpprTambahanQty,
+  resolveFpprTambahanStatus,
+} from "../../Component/Calculation/calculationMoType";
 
 type SkuMeta = {
     sku: string;
@@ -29,25 +33,32 @@ export type AllocationCalculationOptions = {
     shouldAllocate?: (salesman: any) => boolean;
 };
 
+/**
+ * FPPR Tambahan only:
+ * - lihat SOH per item
+ * - SOH == 0 → qty 0
+ * - SOH cukup → qty = suggestion
+ * - TANPA perhitungan contrib % (bukan proporsional antar SPB)
+ * FPPR Awal tidak masuk sini — ikut alokasi SOH + contrib.
+ */
 const passthroughDetail = (detail: any, sohMap: Record<string, number>) => {
     const sku = resolveSku(detail);
     const key = getItemKey(detail);
-    const submitted = safeParse(detail.item_qty_submitted);
+    const soh = sohMap[key] || 0;
+    const suggestion = safeParse(detail.item_qty_suggestion);
+    const qty = resolveFpprTambahanQty(detail, soh);
     const qtyBtb = safeParse(detail.qty_btb || 0);
 
     return {
         ...detail,
         resolved_sku: sku,
-        soh: sohMap[key] || 0,
-        contribution_percentage:
-            detail.contribution_percentage != null &&
-            detail.contribution_percentage !== ""
-                ? String(detail.contribution_percentage)
-                : "100.00",
-        allocation_status: "ORIGINAL",
-        item_qty_final: submitted,
+        soh,
+        contribution_percentage: "0.00",
+        allocation_status: resolveFpprTambahanStatus(suggestion, soh),
+        item_qty_submitted: qty,
+        item_qty_final: qty,
         qty_btb: qtyBtb,
-        prepared_qty: Math.max(0, submitted - qtyBtb),
+        prepared_qty: Math.max(0, qty - qtyBtb),
     };
 };
 

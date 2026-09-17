@@ -46,8 +46,12 @@ function LaporanHarianStockPage() {
   } = useLhsReportData(reportDate);
 
   const { incoming, outgoing } = useMemo(
-    () => buildMovementLines(rows),
-    [rows],
+    () =>
+      buildMovementLines(rows, {
+        finalCallplans,
+        btbList,
+      }),
+    [rows, finalCallplans, btbList],
   );
 
   return (
@@ -56,8 +60,8 @@ function LaporanHarianStockPage() {
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-slate-800 sm:text-3xl">
-            Laporan Harian Stock Gudang{" "}
-            <span className="font-semibold text-slate-500">(Bungkus / Bks)</span>
+            Laporan Stock Harian Gudang{" "}
+            <span className="font-semibold text-slate-500">(Bungkus / BKS)</span>
           </h1>
           <p className="mt-1 text-sm text-slate-500">
             {context.amoName} · {reportDateLabel}

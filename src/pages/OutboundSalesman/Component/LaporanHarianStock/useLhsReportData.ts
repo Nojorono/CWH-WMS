@@ -249,7 +249,7 @@ export const useLhsReportData = (reportDate: string) => {
         setKodeByKey(kodes);
       } catch (err: any) {
         if (isRequestAborted(err) || signal?.aborted) return;
-        console.error("Gagal load Laporan Harian Stock:", err);
+        console.error("Gagal load Laporan Stock Harian:", err);
         const message =
           err instanceof Error ? err.message : "Gagal memuat data laporan";
         setError(message);

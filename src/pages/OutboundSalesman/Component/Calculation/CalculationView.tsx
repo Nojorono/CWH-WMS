@@ -14,7 +14,10 @@ import { useAllocationCalculation } from "../../shared/hook/useAllocationCalcula
 import { useGetStockOnHand } from "../../shared/hook/useGetStockOnHand";
 import { Callplan } from "../../types/CallplanTypes";
 import { CalculationViewProps } from "../../types/flow";
-import { shouldApplyAllocationCalculation } from "./calculationMoType";
+import {
+  shouldApplyAllocationCalculation,
+  resolvePostQtyByMoType,
+} from "./calculationMoType";
 
 function StockCalculationView({
   callplans,
@@ -133,12 +136,11 @@ function StockCalculationView({
                 spb_number: salesman.spb_number,
                 lines: (salesman.details || []).map(
                   (detail: any, index: number) => {
-                    const useAllocation = shouldApplyAllocationCalculation(
+                    // FPPR Tambahan → suggestion; FPPR Awal / SPB → alokasi SOH
+                    const finalQty = resolvePostQtyByMoType(
                       salesman.mo_type,
+                      detail,
                     );
-                    const finalQty = useAllocation
-                      ? Number(detail.item_qty_final || 0)
-                      : Number(detail.item_qty_submitted || 0);
 
                     return {
                       id: detail.id,
@@ -172,10 +174,9 @@ function StockCalculationView({
             ...row,
             status: "FINAL",
             details: (row.details || []).map((d: any) => {
-              const useAllocation = shouldApplyAllocationCalculation(row.mo_type);
-              const finalQty = useAllocation
-                ? String(d.item_qty_final ?? 0)
-                : String(d.item_qty_submitted ?? 0);
+              const finalQty = String(
+                resolvePostQtyByMoType(row.mo_type, d),
+              );
 
               return {
                 ...d,
