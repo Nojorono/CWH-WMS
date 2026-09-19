@@ -1,12 +1,20 @@
 /** Status BTB dari API */
 export type BTBStatus = "DRAFT" | "APPLIED" | string;
 
+/** Tipe item BTB (Good Stock / Bandrol Stock) */
+export type BTBItemType = "GS" | "BS" | string;
+
 /** Baris detail item pada BTB (search / pagination) */
 export interface BTBDetail {
   id?: string;
   item_code: string;
   inventory_item_id: number;
   item_name: string;
+  item_number?: string | null;
+  type?: BTBItemType | null;
+  year?: number | null;
+  bandrol_price?: number | null;
+  bs_price?: number | null;
   btb_qty: number;
   btb_uom: string;
   created_by?: string;
@@ -39,7 +47,8 @@ export interface BTB {
  *   btb_number, btb_date, organization_code,
  *   call_plan_number, call_plan_start_date,
  *   sales_nik, sales_name, sales_spv_nik, sales_spv_name,
- *   btb_details: [...]
+ *   btb_details: [{ item_code, inventory_item_id, item_name, item_number,
+ *     type, year, bandrol_price, bs_price, btb_qty, btb_uom }]
  * }
  */
 export interface BTBSearchResult {
@@ -55,11 +64,11 @@ export interface BTBSearchResult {
   btb_details: BTBDetail[];
 }
 
-/** Query params search BTB — wajib: sales_nik, call_plan_number, call_plan_start_date */
+/** Query params search BTB — wajib: call_plan_number; opsional: sales_nik, call_plan_start_date */
 export interface SearchBTBParams {
-  sales_nik: string;
   call_plan_number: string;
-  call_plan_start_date: string;
+  sales_nik?: string;
+  call_plan_start_date?: string;
 }
 
 /** Detail item untuk POST /btb */
@@ -68,6 +77,11 @@ export interface CreateBTBDetailPayload {
   item_code: string;
   inventory_item_id: number;
   item_name: string;
+  item_number?: string | null;
+  type?: BTBItemType | null;
+  year?: number | null;
+  bandrol_price?: number | null;
+  bs_price?: number | null;
   btb_qty: number;
   btb_uom: string;
   created_by?: string;

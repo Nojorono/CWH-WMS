@@ -1,6 +1,6 @@
 import axios from "axios";
 import { DoSuggestionService } from "../../../../utils/EndPoint";
-import { BTBSearchResult, SearchBTBParams } from "./types";
+import { BTBDetail, BTBSearchResult, SearchBTBParams } from "./types";
 
 export type { SearchBTBParams, BTBSearchResult };
 
@@ -20,10 +20,38 @@ const BTB_SEARCH_HEADERS = {
 
 
 type ApiErrorBody = {
+  success?: boolean;
   message?: string | string[];
   error?: string;
   code?: string;
   statusCode?: number;
+};
+
+/** Error bisnis dari API search BTB (HTTP 200 dengan success:false) */
+export class BTBSearchApiError extends Error {
+  code?: string;
+
+  constructor(message: string, code?: string) {
+    super(message);
+    this.name = "BTBSearchApiError";
+    this.code = code;
+  }
+}
+
+const extractApiMessage = (
+  data: ApiErrorBody | undefined,
+  fallback: string,
+): string => {
+  if (Array.isArray(data?.message) && data.message.length > 0) {
+    return data.message.join("\n");
+  }
+  if (typeof data?.message === "string" && data.message.trim()) {
+    return data.message;
+  }
+  if (typeof data?.error === "string" && data.error.trim()) {
+    return data.error;
+  }
+  return fallback;
 };
 
 /** Normalisasi pesan error API (string | string[]) */
@@ -31,43 +59,48 @@ export const parseBTBApiError = (
   error: unknown,
   fallback = "Terjadi kesalahan saat mencari BTB",
 ): string => {
+  if (error instanceof BTBSearchApiError) return error.message;
+
   if (axios.isAxiosError(error)) {
     const data = error.response?.data as ApiErrorBody | undefined;
-
-    if (Array.isArray(data?.message) && data.message.length > 0) {
-      return data.message.join("\n");
-    }
-    if (typeof data?.message === "string" && data.message.trim()) {
-      return data.message;
-    }
-    if (typeof data?.error === "string" && data.error.trim()) {
-      return data.error;
-    }
-    return error.message || fallback;
+    return extractApiMessage(data, error.message || fallback);
   }
 
   if (error instanceof Error && error.message) return error.message;
   return fallback;
 };
 
-/** Bangun query — ketiga param wajib */
+/** Deteksi response bisnis gagal (success:false) meski HTTP 200 */
+const assertSearchBusinessSuccess = (payload: unknown) => {
+  if (!payload || typeof payload !== "object") return;
+
+  const res = payload as ApiErrorBody;
+  if (res.success !== false) return;
+
+  const message = extractApiMessage(
+    res,
+    "Gagal mencari BTB",
+  );
+  throw new BTBSearchApiError(message, res.code);
+};
+
+/** Bangun query — hanya kirim param yang terisi */
 const buildSearchParams = (
   params: SearchBTBParams,
-): Record<string, string> => ({
-  sales_nik: params.sales_nik.trim(),
-  call_plan_number: params.call_plan_number.trim(),
-  call_plan_start_date: params.call_plan_start_date.trim(),
-});
+): Record<string, string> => {
+  const query: Record<string, string> = {
+    call_plan_number: params.call_plan_number.trim(),
+  };
+  const salesNik = params.sales_nik?.trim();
+  const startDate = params.call_plan_start_date?.trim();
+  if (salesNik) query.sales_nik = salesNik;
+  if (startDate) query.call_plan_start_date = startDate;
+  return query;
+};
 
 const assertRequiredParams = (params: SearchBTBParams) => {
-  if (!params.sales_nik?.trim()) {
-    throw new Error("sales_nik wajib diisi");
-  }
   if (!params.call_plan_number?.trim()) {
     throw new Error("call_plan_number wajib diisi");
-  }
-  if (!params.call_plan_start_date?.trim()) {
-    throw new Error("call_plan_start_date wajib diisi");
   }
 };
 
@@ -98,6 +131,53 @@ const normalizeSearchResponse = (payload: unknown): BTBSearchResult | null => {
   return null;
 };
 
+const toNullableNumber = (value: unknown): number | null => {
+  if (value == null || value === "") return null;
+  const num = Number(value);
+  return Number.isFinite(num) ? num : null;
+};
+
+const toNullableString = (value: unknown): string | null => {
+  if (value == null) return null;
+  const text = String(value).trim();
+  return text ? text : null;
+};
+
+const normalizeDetail = (
+  detail?: Partial<BTBDetail> | null,
+): BTBDetail | null => {
+  if (!detail || typeof detail !== "object") return null;
+
+  const itemCode = String(detail.item_code || "").trim();
+  if (!itemCode) return null;
+
+  const inventoryItemId = Number(detail.inventory_item_id);
+  const btbQty = Number(detail.btb_qty);
+
+  return {
+    id: detail.id,
+    item_code: itemCode,
+    inventory_item_id: Number.isFinite(inventoryItemId) ? inventoryItemId : 0,
+    item_name: String(detail.item_name || "").trim(),
+    item_number: toNullableString(detail.item_number),
+    type: toNullableString(detail.type),
+    year: toNullableNumber(detail.year),
+    bandrol_price: toNullableNumber(detail.bandrol_price),
+    bs_price: toNullableNumber(detail.bs_price),
+    btb_qty: Number.isFinite(btbQty) ? btbQty : 0,
+    btb_uom: String(detail.btb_uom || "BKS").trim() || "BKS",
+    created_by: detail.created_by,
+    updated_by: detail.updated_by,
+  };
+};
+
+const normalizeDetails = (details: unknown): BTBDetail[] => {
+  if (!Array.isArray(details)) return [];
+  return details
+    .map((item) => normalizeDetail(item as Partial<BTBDetail>))
+    .filter((item): item is BTBDetail => item != null);
+};
+
 const normalizeItem = (
   item?: Partial<BTBSearchResult> | null,
 ): BTBSearchResult | null => {
@@ -113,14 +193,14 @@ const normalizeItem = (
     sales_name: item.sales_name ?? "",
     sales_spv_nik: item.sales_spv_nik ?? "",
     sales_spv_name: item.sales_spv_name ?? "",
-    btb_details: Array.isArray(item.btb_details) ? item.btb_details : [],
+    btb_details: normalizeDetails(item.btb_details),
   };
 };
 
 export const btbSearchService = {
   /**
    * GET /api/wms/v1/btb (via DoSuggestionService)
-   * Wajib: sales_nik, call_plan_number, call_plan_start_date
+   * Wajib: call_plan_number; opsional: sales_nik, call_plan_start_date
    * Headers: Content-Type, Accept, x-dms-app-id, x-dms-app-secret
    */
   searchBTB: async (
@@ -135,8 +215,21 @@ export const btbSearchService = {
         maxRedirects: 0,
       });
 
+      assertSearchBusinessSuccess(response.data);
       return normalizeSearchResponse(response.data);
     } catch (error) {
+      if (error instanceof BTBSearchApiError) throw error;
+
+      const data = axios.isAxiosError(error)
+        ? (error.response?.data as ApiErrorBody | undefined)
+        : undefined;
+      if (data?.success === false) {
+        throw new BTBSearchApiError(
+          extractApiMessage(data, "Gagal mencari BTB"),
+          data.code,
+        );
+      }
+
       const message = parseBTBApiError(error);
       console.error("[btbSearchService.searchBTB]", message, error);
       throw new Error(message);

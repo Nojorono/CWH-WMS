@@ -185,6 +185,9 @@ export const BTBservices = {
       }
 
       const normalized = normalizeBTBResponse(response.data);
+
+      console.log("normalized get BTB", normalized);
+      
       return ok(normalized, body?.message || "Berhasil mengambil data BTB");
     } catch (error) {
       const message = parseBTBServiceError(error, "Gagal mengambil data BTB");
