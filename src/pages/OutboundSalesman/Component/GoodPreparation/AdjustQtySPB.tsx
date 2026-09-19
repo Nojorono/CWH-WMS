@@ -395,8 +395,8 @@ export default function AdjustQtySPB({
           </div>
           <div className="text-right">
             <p className="mb-1 text-xs font-semibold text-slate-500">STATUS</p>
-            <span className="inline-block rounded px-4 py-1 text-sm font-bold text-orange-500">
-              {header?.status || "FINAL"}
+            <span className="inline-block rounded px-1 py-1 text-sm font-bold text-orange-500">
+              {header?.status}
             </span>
           </div>
           <button
