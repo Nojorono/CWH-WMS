@@ -12,6 +12,8 @@ export type AdjustQtyItem = {
   qtySuggestion: number;
   qtySubmitted: number;
   qtyAwal: number;
+  /** Stock On Hand per SKU (cabang) */
+  soh?: number;
   qtyRevision?: number | null;
   adjustment: number;
 };
@@ -259,6 +261,33 @@ export default function AdjustQtySPB({
       className: "text-slate-500",
     },
     {
+      header: "SOH",
+      key: "soh",
+      align: "center",
+      render: (item) => {
+        const soh = Number(item.soh);
+        const qtyFinal = Number(item.qtyAwal) || 0;
+        if (!Number.isFinite(soh)) {
+          return <span className="font-bold text-slate-400">-</span>;
+        }
+        const overSoh = qtyFinal > soh;
+        return (
+          <span
+            className={`font-bold ${
+              overSoh ? "text-amber-700" : "text-blue-700"
+            }`}
+            title={
+              overSoh
+                ? `Qty Final (${qtyFinal}) melebihi SOH (${soh})`
+                : `SOH tersedia: ${soh}`
+            }
+          >
+            {soh.toLocaleString("id-ID")}
+          </span>
+        );
+      },
+    },
+    {
       header: "QTY SUGGESTION",
       key: "qtySuggestion",
       align: "center",
@@ -276,6 +305,7 @@ export default function AdjustQtySPB({
       align: "center",
       className: "font-bold text-slate-800",
     },
+
     {
       header: "QTY REVISION",
       key: "qtyRevision",
@@ -339,7 +369,7 @@ export default function AdjustQtySPB({
 
   return (
     <div className="fixed inset-0 z-[15000] overflow-y-auto bg-slate-900/40 p-4 backdrop-blur-sm">
-      <div className="mx-auto max-w-6xl space-y-4 py-4 font-sans text-slate-800">
+      <div className="mx-auto max-w-[95vw] space-y-4 py-4 font-sans text-slate-800 xl:max-w-7xl">
         <div className="flex items-start justify-between rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
           <div>
             <p className="mb-1 text-xs font-semibold text-slate-500">
@@ -382,7 +412,9 @@ export default function AdjustQtySPB({
         <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
           <h2 className="mb-1 text-lg font-bold">
             Upload Form Approval SPV Sales{" "}
-            <span className="text-sm font-medium text-slate-400">(Opsional)</span>
+            <span className="text-sm font-medium text-slate-400">
+              (Opsional)
+            </span>
           </h2>
           <p className="mb-4 text-sm text-slate-500">
             Upload form approval opsional. Anda bisa langsung adjust qty tanpa

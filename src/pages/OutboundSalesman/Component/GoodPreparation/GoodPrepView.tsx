@@ -295,27 +295,44 @@ function GoodPrepView({
       itemList: Array.isArray(itemList) ? itemList : [],
     });
 
-  /** Ranking SPB saat search SKU: SKU match dengan Qty Final terbesar tampil di atas */
+  /**
+   * Urutan SPB:
+   * 1) masih bisa Adjust (belum integrate Meta) di atas
+   * 2) sudah tak bisa Adjust di bawah
+   * 3) dalam grup yang sama: SPB number
+   * Saat search SKU: Qty Final match terbesar tetap diprioritaskan dalam grup yang sama.
+   */
   const rankedEnrichedData = useMemo(() => {
     const keyword = String(globalFilter || "").trim().toLowerCase();
-    if (!keyword) return enrichedData;
 
-    const getMatchFinalQty = (doc: EnrichedCallplan) =>
-      (doc.details || []).reduce((sum, detail) => {
+    const getMatchFinalQty = (doc: EnrichedCallplan) => {
+      if (!keyword) return 0;
+      return (doc.details || []).reduce((sum, detail) => {
         const sku = String(detail.item_code || "").toLowerCase();
         if (!sku.includes(keyword)) return sum;
         const finalQty =
           Number(detail.item_qty_final ?? detail.item_qty_submitted ?? 0) || 0;
         return sum + finalQty;
       }, 0);
+    };
+
+    const getSpbKey = (doc: EnrichedCallplan) =>
+      String(doc.spb_number || doc.callplan_number || "");
 
     return [...enrichedData].sort((a, b) => {
-      const qtyA = getMatchFinalQty(a);
-      const qtyB = getMatchFinalQty(b);
-      if (qtyA !== qtyB) return qtyB - qtyA;
-      const spbA = String(a.spb_number || a.callplan_number || "");
-      const spbB = String(b.spb_number || b.callplan_number || "");
-      return spbA.localeCompare(spbB);
+      const aLocked = isSpbIntegratedToMeta(a) ? 1 : 0;
+      const bLocked = isSpbIntegratedToMeta(b) ? 1 : 0;
+      if (aLocked !== bLocked) return aLocked - bLocked;
+
+      if (keyword) {
+        const qtyA = getMatchFinalQty(a);
+        const qtyB = getMatchFinalQty(b);
+        if (qtyA !== qtyB) return qtyB - qtyA;
+      }
+
+      return getSpbKey(a).localeCompare(getSpbKey(b), undefined, {
+        numeric: true,
+      });
     });
   }, [enrichedData, globalFilter]);
 
@@ -324,6 +341,8 @@ function GoodPrepView({
     sohStatusCount,
     globalHasLessStock,
     branchLessStockSpbList,
+    branchOversoldSkus,
+    sohMap,
     singleIntegrateLines,
   } = useGoodPrepSoh({
     stockList: Array.isArray(stockList) ? stockList : [],
@@ -531,6 +550,8 @@ function GoodPrepView({
               row={row}
               globalFilter={globalFilter}
               isAdjustDisabled={isPrintDisabled}
+              needsAdjustSkus={branchOversoldSkus}
+              sohMap={sohMap}
               onSaveAdjustments={handleSaveAdjustments}
             />
           )}
@@ -596,6 +617,7 @@ function GoodPrepView({
         singleIntegrateLines={singleIntegrateLines}
         isSohLoading={isSohLoading}
         itemList={itemList}
+        sohMap={sohMap}
         onCloseIntegrate={closeIntegrateModal}
         onAdjustFromIntegrate={goToAdjustFromIntegrate}
         onProceedIntegrate={proceedIntegrate}

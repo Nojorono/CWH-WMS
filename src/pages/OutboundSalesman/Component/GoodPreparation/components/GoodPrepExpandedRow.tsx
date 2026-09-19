@@ -9,6 +9,9 @@ type GoodPrepExpandedRowProps = {
   row: EnrichedCallplan;
   globalFilter: string;
   isAdjustDisabled?: boolean;
+  /** SKU oversold vs Available SOH */
+  needsAdjustSkus?: Set<string>;
+  sohMap?: Map<string, number>;
   onSaveAdjustments: (
     callplanId: string,
     payload: {
@@ -22,6 +25,8 @@ export const GoodPrepExpandedRow = ({
   row,
   globalFilter,
   isAdjustDisabled = false,
+  needsAdjustSkus,
+  sohMap,
   onSaveAdjustments,
 }: GoodPrepExpandedRowProps) => {
   const isIntegrated = isSpbIntegratedToMeta(row);
@@ -66,6 +71,8 @@ export const GoodPrepExpandedRow = ({
         unmatchedDetails={row.unmatchedBTBDetails || []}
         isAdjustDisabled={adjustDisabled}
         adjustDisabledTitle={adjustDisabledTitle}
+        needsAdjustSkus={needsAdjustSkus}
+        sohMap={sohMap}
         onSaveAdjustments={onSaveAdjustments}
         highlightedSku={globalFilter}
         header={{

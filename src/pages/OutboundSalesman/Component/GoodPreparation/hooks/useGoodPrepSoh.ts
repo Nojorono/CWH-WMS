@@ -220,6 +220,8 @@ export const useGoodPrepSoh = ({
     sohStatusCount,
     globalHasLessStock,
     branchLessStockSpbList,
+    branchOversoldSkus,
+    sohMap,
     singleIntegrateLines,
   };
 };
