@@ -51,5 +51,7 @@ export type LhsMovementLine = {
   skuName: string;
   qty: number;
   source: string;
+  /** Tanggal sumber: callplan_date_start (SPB) atau btb_date (BTB) */
+  date?: string | null;
   group: "incoming" | "outgoing";
 };

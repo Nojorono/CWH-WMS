@@ -12,6 +12,8 @@ export type AdjustQtyItem = {
   qtySuggestion: number;
   qtySubmitted: number;
   qtyAwal: number;
+  /** Stock On Hand per SKU (cabang) */
+  soh?: number;
   qtyRevision?: number | null;
   adjustment: number;
 };
@@ -115,23 +117,36 @@ export default function AdjustQtySPB({
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
-  /** Adjustment (−) tidak boleh melebihi qty submitted (|adj| ≤ qtySubmitted). */
-  const clampAdjustment = (item: AdjustQtyItem, raw: number) => {
-    if (Number.isNaN(raw)) return 0;
-    const submitted = Number(item.qtySubmitted) || 0;
-    if (raw < 0 && Math.abs(raw) > submitted) {
-      return -submitted;
+  /** Adjustment (−) tidak boleh membuat FINAL QTY BKB < 0 (min = −qtyAwal). */
+  const clampAdjustment = (
+    item: AdjustQtyItem,
+    raw: number,
+  ): { value: number; clamped: boolean } => {
+    if (Number.isNaN(raw)) return { value: 0, clamped: false };
+
+    const qtyFinal = Number(item.qtyAwal) || 0;
+    if (raw < 0 && Math.abs(raw) > qtyFinal) {
+      return { value: -qtyFinal, clamped: true };
     }
-    return raw;
+    return { value: raw, clamped: false };
   };
 
   const handleAdjustmentChange = (id: string, value: string) => {
     const numValue = value === "" || value === "-" ? 0 : Number(value);
+    const target = items.find((item) => item.id === id);
+    if (!target) return;
+
+    const { value: nextAdj, clamped } = clampAdjustment(target, numValue);
+    if (clamped) {
+      const qtyFinal = Number(target.qtyAwal) || 0;
+      showErrorToast(
+        `Adjustment (−) dibatasi: FINAL QTY tidak boleh < 0. Maksimal −${qtyFinal} untuk SKU ${target.sku}`,
+      );
+    }
+
     setItems((prevItems) =>
       prevItems.map((item) =>
-        item.id === id
-          ? { ...item, adjustment: clampAdjustment(item, numValue) }
-          : item,
+        item.id === id ? { ...item, adjustment: nextAdj } : item,
       ),
     );
   };
@@ -199,12 +214,13 @@ export default function AdjustQtySPB({
 
     const invalidMinus = items.find((item) => {
       const adj = Number(item.adjustment) || 0;
-      const submitted = Number(item.qtySubmitted) || 0;
-      return adj < 0 && Math.abs(adj) > submitted;
+      const qtyFinal = Number(item.qtyAwal) || 0;
+      return adj < 0 && qtyFinal + adj < 0;
     });
     if (invalidMinus) {
+      const qtyFinal = Number(invalidMinus.qtyAwal) || 0;
       showErrorToast(
-        `Adjustment (−) tidak boleh lebih dari Qty Submitted (${invalidMinus.qtySubmitted}) untuk SKU ${invalidMinus.sku}`,
+        `FINAL QTY BKB tidak boleh < 0. Adjustment (−) maksimal −${qtyFinal} untuk SKU ${invalidMinus.sku}`,
       );
       return;
     }
@@ -245,6 +261,33 @@ export default function AdjustQtySPB({
       className: "text-slate-500",
     },
     {
+      header: "SOH",
+      key: "soh",
+      align: "center",
+      render: (item) => {
+        const soh = Number(item.soh);
+        const qtyFinal = Number(item.qtyAwal) || 0;
+        if (!Number.isFinite(soh)) {
+          return <span className="font-bold text-slate-400">-</span>;
+        }
+        const overSoh = qtyFinal > soh;
+        return (
+          <span
+            className={`font-bold ${
+              overSoh ? "text-amber-700" : "text-blue-700"
+            }`}
+            title={
+              overSoh
+                ? `Qty Final (${qtyFinal}) melebihi SOH (${soh})`
+                : `SOH tersedia: ${soh}`
+            }
+          >
+            {soh.toLocaleString("id-ID")}
+          </span>
+        );
+      },
+    },
+    {
       header: "QTY SUGGESTION",
       key: "qtySuggestion",
       align: "center",
@@ -262,6 +305,7 @@ export default function AdjustQtySPB({
       align: "center",
       className: "font-bold text-slate-800",
     },
+
     {
       header: "QTY REVISION",
       key: "qtyRevision",
@@ -288,9 +332,9 @@ export default function AdjustQtySPB({
           type="number"
           value={item.adjustment === 0 ? "" : item.adjustment}
           placeholder="0"
-          min={-(Number(item.qtySubmitted) || 0)}
+          min={-(Number(item.qtyAwal) || 0)}
           onChange={(e) => handleAdjustmentChange(item.id, e.target.value)}
-          title={`Adjustment (−) maks. −${Number(item.qtySubmitted) || 0} (Qty Submitted)`}
+          title={`Adjustment (−) maks. −${Number(item.qtyAwal) || 0} agar FINAL QTY BKB ≥ 0`}
           className="w-20 rounded border-2 border-orange-300 py-1.5 text-center font-bold text-slate-800 outline-none transition-all focus:border-orange-500 focus:ring-2 focus:ring-orange-200"
         />
       ),
@@ -325,7 +369,7 @@ export default function AdjustQtySPB({
 
   return (
     <div className="fixed inset-0 z-[15000] overflow-y-auto bg-slate-900/40 p-4 backdrop-blur-sm">
-      <div className="mx-auto max-w-6xl space-y-4 py-4 font-sans text-slate-800">
+      <div className="mx-auto max-w-[95vw] space-y-4 py-4 font-sans text-slate-800 xl:max-w-7xl">
         <div className="flex items-start justify-between rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
           <div>
             <p className="mb-1 text-xs font-semibold text-slate-500">
@@ -351,8 +395,8 @@ export default function AdjustQtySPB({
           </div>
           <div className="text-right">
             <p className="mb-1 text-xs font-semibold text-slate-500">STATUS</p>
-            <span className="inline-block rounded px-4 py-1 text-sm font-bold text-orange-500">
-              {header?.status || "FINAL"}
+            <span className="inline-block rounded px-1 py-1 text-sm font-bold text-orange-500">
+              {header?.status}
             </span>
           </div>
           <button
@@ -368,7 +412,9 @@ export default function AdjustQtySPB({
         <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
           <h2 className="mb-1 text-lg font-bold">
             Upload Form Approval SPV Sales{" "}
-            <span className="text-sm font-medium text-slate-400">(Opsional)</span>
+            <span className="text-sm font-medium text-slate-400">
+              (Opsional)
+            </span>
           </h2>
           <p className="mb-4 text-sm text-slate-500">
             Upload form approval opsional. Anda bisa langsung adjust qty tanpa

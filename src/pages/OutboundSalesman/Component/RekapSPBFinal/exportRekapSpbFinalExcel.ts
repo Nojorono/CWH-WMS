@@ -137,7 +137,7 @@ export const exportRekapSpbFinalExcel = ({
     : reportDate;
 
   // Row 0: title meta
-  setCell(ws, 0, 0, "Rekap SPB MATIC Final (Bungkus / Bks)", {
+  setCell(ws, 0, 0, "Rekap SPB MATIC Final (Bungkus / BKS)", {
     font: { ...baseFont, bold: true, sz: 13 },
     alignment: { horizontal: "left", vertical: "center" },
   });

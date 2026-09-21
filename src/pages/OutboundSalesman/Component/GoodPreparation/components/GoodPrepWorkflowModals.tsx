@@ -10,6 +10,7 @@ type GoodPrepWorkflowModalsProps = {
   singleIntegrateLines: SohCheckLine[];
   isSohLoading: boolean;
   itemList: any[] | undefined;
+  sohMap?: Map<string, number>;
   onCloseIntegrate: () => void;
   onAdjustFromIntegrate: () => void;
   onProceedIntegrate: () => Promise<void>;
@@ -27,6 +28,7 @@ export const GoodPrepWorkflowModals = ({
   singleIntegrateLines,
   isSohLoading,
   itemList,
+  sohMap,
   onCloseIntegrate,
   onAdjustFromIntegrate,
   onProceedIntegrate,
@@ -69,6 +71,10 @@ export const GoodPrepWorkflowModals = ({
             revisionRaw !== "" && !Number.isNaN(Number(revisionRaw))
               ? Number(revisionRaw)
               : null;
+          const sohKey =
+            d.inventory_item_id != null && String(d.inventory_item_id).trim() !== ""
+              ? String(d.inventory_item_id).trim()
+              : String(d.item_code || "").trim();
           return {
             id: String(d.id),
             name:
@@ -78,6 +84,7 @@ export const GoodPrepWorkflowModals = ({
             qtySuggestion: Number(d.item_qty_suggestion) || 0,
             qtySubmitted: Number(d.item_qty_submitted) || 0,
             qtyAwal: final,
+            soh: sohMap?.get(sohKey) ?? 0,
             qtyRevision,
             adjustment: 0,
           };

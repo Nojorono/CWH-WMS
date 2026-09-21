@@ -8,7 +8,7 @@ import { showErrorToast, showSuccessToast } from "../../../../components/toast";
 import { showConfirmDialog } from "../../../../components/swal-confirm";
 import { usePersistAuthStore } from "../../../../API/store/AuthStore/PersistAuthStore";
 import { createBTB } from "../services/BTBservice";
-import { applyBTB, searchBTB } from "../services/searchBTB";
+import { applyBTB, BTBSearchApiError, searchBTB } from "../services/searchBTB";
 import { BTBSearchResult, CreateBTBPayload } from "../services/types";
 import {
   BTB_SEARCH_DETAIL_COLUMNS,
@@ -62,25 +62,17 @@ const BtbSearch = () => {
   }, []);
 
   const handleSearch = async () => {
-    if (!salesNik.trim()) {
-      showErrorToast("Harap masukkan Sales NIK!");
-      return;
-    }
     if (!callPlanNumber.trim()) {
       showErrorToast("Harap masukkan Callplan Number!");
-      return;
-    }
-    if (!callPlanStartDate.trim()) {
-      showErrorToast("Harap masukkan Callplan Start Date!");
       return;
     }
 
     setIsLoading(true);
     try {
       const result = await searchBTB({
-        sales_nik: salesNik.trim(),
         call_plan_number: callPlanNumber.trim(),
-        call_plan_start_date: callPlanStartDate.trim(),
+        sales_nik: salesNik.trim() || undefined,
+        call_plan_start_date: callPlanStartDate.trim() || undefined,
       });
 
       if (!result) {
@@ -111,6 +103,25 @@ const BtbSearch = () => {
       setBtbDetail(result);
     } catch (error: unknown) {
       setBtbDetail(null);
+
+      if (
+        error instanceof BTBSearchApiError &&
+        error.code === "BTB_ALREADY_APPLIED"
+      ) {
+        await Swal.fire({
+          icon: "warning",
+          title: "BTB Sudah Applied",
+          text: error.message,
+          confirmButtonText: "Mengerti",
+          confirmButtonColor: "#F97316",
+          didOpen: () => {
+            const container = Swal.getContainer();
+            if (container) container.style.zIndex = "100000";
+          },
+        });
+        return;
+      }
+
       const message =
         error instanceof Error ? error.message : "Gagal mencari BTB";
       showErrorToast(message);
@@ -159,6 +170,11 @@ const BtbSearch = () => {
       item_code: item.item_code,
       inventory_item_id: item.inventory_item_id,
       item_name: item.item_name,
+      item_number: item.item_number ?? null,
+      type: item.type ?? null,
+      year: item.year ?? null,
+      bandrol_price: item.bandrol_price ?? null,
+      bs_price: item.bs_price ?? null,
       btb_qty: item.btb_qty,
       btb_uom: item.btb_uom,
       created_by: actorNik,
@@ -231,19 +247,6 @@ const BtbSearch = () => {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
               <label className="block text-sm font-semibold text-slate-600 mb-2">
-                Sales NIK *
-              </label>
-              <input
-                type="text"
-                value={salesNik}
-                onChange={(e) => setSalesNik(e.target.value)}
-                placeholder="Contoh: 230102.0016021"
-                className="w-full border border-slate-300 rounded-lg px-4 py-2.5 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 text-sm"
-                onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-semibold text-slate-600 mb-2">
                 Callplan Number *
               </label>
               <input
@@ -257,14 +260,27 @@ const BtbSearch = () => {
             </div>
             <div>
               <label className="block text-sm font-semibold text-slate-600 mb-2">
-                Callplan Start Date *
+                Sales NIK
+              </label>
+              <input
+                type="text"
+                value={salesNik}
+                onChange={(e) => setSalesNik(e.target.value)}
+                placeholder="Contoh: 230102.0016021"
+                className="w-full border border-slate-300 rounded-lg px-4 py-2.5 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 text-sm"
+                onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-slate-600 mb-2">
+                Callplan Start Date
               </label>
               <input
                 ref={dateInputRef}
                 type="text"
                 readOnly
                 defaultValue={callPlanStartDate}
-                placeholder="YYYY-MM-DD"
+                placeholder="YYYY-MM-DD (opsional)"
                 className="w-full cursor-pointer border border-slate-300 rounded-lg px-4 py-2.5 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 text-sm bg-white"
                 onFocus={() => flatpickrRef.current?.open()}
               />
@@ -313,8 +329,8 @@ const BtbSearch = () => {
           </div>
 
           <p className="text-xs text-slate-400">
-            Ketiga parameter wajib diisi untuk mencari BTB berdasarkan Sales
-            NIK, Callplan Number, dan tanggal mulai callplan.
+            Callplan Number wajib diisi. Sales NIK dan Callplan Start Date
+            bersifat opsional untuk mempersempit hasil pencarian.
           </p>
         </div>
 
@@ -341,8 +357,8 @@ const BtbSearch = () => {
               Belum ada data ditampilkan
             </h3>
             <p className="text-sm text-slate-400">
-              Isi Sales NIK, Callplan Number, dan Start Date, lalu klik 'Cari
-              BTB'.
+              Isi Callplan Number (wajib), lalu klik 'Cari BTB'. Sales NIK dan
+              Start Date opsional.
             </p>
           </div>
         )}

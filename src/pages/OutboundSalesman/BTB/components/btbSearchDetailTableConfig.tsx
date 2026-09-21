@@ -24,6 +24,11 @@ export const getAlignClass = (align: ColumnAlign = "left") => {
 export const getVisibleColumns = <T,>(columns: DynamicColumn<T>[]) =>
   columns.filter((col) => col.visible !== false);
 
+const formatPrice = (value: number | null | undefined) => {
+  if (value == null || !Number.isFinite(Number(value))) return "-";
+  return Number(value).toLocaleString("id-ID");
+};
+
 /**
  * Kolom detail item hasil search BTB.
  * Tambah/ubah/sembunyikan kolom cukup edit array ini.
@@ -37,6 +42,14 @@ export const BTB_SEARCH_DETAIL_COLUMNS: DynamicColumn<BTBDetail>[] = [
     getValue: (_row, index) => index + 1,
   },
   {
+    id: "type",
+    header: "Type",
+    widthClassName: "w-16",
+    align: "center",
+    cellClassName: "font-semibold",
+    getValue: (row) => row.type || "-",
+  },
+  {
     id: "item_name",
     header: "Item Name",
     cellClassName: "font-semibold",
@@ -47,6 +60,33 @@ export const BTB_SEARCH_DETAIL_COLUMNS: DynamicColumn<BTBDetail>[] = [
     header: "SKU",
     cellClassName: "text-slate-400",
     getValue: (row) => row.item_code || "-",
+  },
+  {
+    id: "item_number",
+    header: "Item Number",
+    cellClassName: "text-slate-500 text-xs",
+    getValue: (row) => row.item_number || "-",
+  },
+  {
+    id: "year",
+    header: "Year",
+    align: "center",
+    widthClassName: "w-16",
+    getValue: (row) => (row.year == null ? "-" : String(row.year)),
+  },
+  {
+    id: "bandrol_price",
+    header: "Bandrol",
+    align: "right",
+    cellClassName: "text-slate-600",
+    getValue: (row) => formatPrice(row.bandrol_price),
+  },
+  {
+    id: "bs_price",
+    header: "BS Price",
+    align: "right",
+    cellClassName: "text-slate-600",
+    getValue: (row) => formatPrice(row.bs_price),
   },
   {
     id: "btb_qty",

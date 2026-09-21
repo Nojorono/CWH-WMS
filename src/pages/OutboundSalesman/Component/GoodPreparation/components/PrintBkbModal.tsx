@@ -53,7 +53,7 @@ const formatDoDate = (value?: string | null) => {
   return `${parsed.format("DD-MMM-YY")} (${dayName})`;
 };
 
-/** Satuan tampilan BKB: Bal.Slop.Pack (case digabung ke Bal) */
+/** Satuan tampilan BKB: Bal.Pres.Bks (case digabung ke Bal) */
 const formatBalSlopPack = (
   qtyBks: number,
   master?: MasterItemForConversion | null,
@@ -153,8 +153,8 @@ export const PrintBkbModal = ({
 
     type SortableRow = BkbPrintRow & { _sortNick: string; _sortBrand: string };
 
-    // Sisa Barang = BTB; Perhitungan = Qty Submitted; Top Up = submitted − BTB
-    // Semua dikonversi Bal.Slop.Pack. ADJUSTMENT DO selalu kosong.
+    // Sisa Barang = BTB; Perhitungan = Qty Final; Top Up = submitted − BTB
+    // Semua dikonversi Bal.Pres.Bks. ADJUSTMENT DO selalu kosong.
     const matched: SortableRow[] = [];
     (data.details || []).forEach((item: any) => {
       const sku = String(item.item_code || "").trim();
@@ -162,7 +162,9 @@ export const PrintBkbModal = ({
       const master = findMasterItemBySkuAndInventory(masters, sku, invId);
       const btb = Number(item.qty_btb) || 0;
       const submitted = Number(item.item_qty_submitted) || 0;
-      if (submitted <= 0 && btb <= 0) return;
+      const finalQty =
+        Number(item.item_qty_final ?? item.item_qty_submitted) || 0;
+      if (finalQty <= 0 && submitted <= 0 && btb <= 0) return;
 
       const topUpQty = submitted - btb;
       const topUpFmt =
@@ -180,7 +182,7 @@ export const PrintBkbModal = ({
         sisaBarang: btb > 0 ? formatBalSlopPack(btb, master) : "",
         topUp: topUpFmt,
         perhitungan:
-          submitted > 0 ? formatBalSlopPack(submitted, master) : "",
+          finalQty > 0 ? formatBalSlopPack(finalQty, master) : "",
         diterimaDo: "",
         tambah: "",
         retur: "",
@@ -297,7 +299,7 @@ export const PrintBkbModal = ({
               <h2 className="text-base font-bold uppercase tracking-wide">
                 Bukti Kirim Barang ( BKB )
               </h2>
-              <p className="text-[11px]">Satuan ( Bal.Slop.Pack)</p>
+              <p className="text-[11px]">Satuan ( Bal.Pres.Bks)</p>
             </div>
 
             <div className="mb-3 flex justify-between gap-4 text-[11px]">

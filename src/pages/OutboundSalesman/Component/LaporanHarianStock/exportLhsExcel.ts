@@ -87,7 +87,7 @@ const setCell = (
 };
 
 /**
- * Export Laporan Harian Stock ke Excel.
+ * Export Laporan Stock Harian ke Excel.
  *
  * Incoming: Central/ASMO (1 kolom) | SPB Adjustment (−) | BTB
  * Outgoing: Manual DO | Relokasi | SPB Submitted | SPB Adjustment (+)
@@ -113,7 +113,7 @@ export const exportLhsExcel = ({
     ws,
     0,
     0,
-    "Laporan Harian Stock Gudang (Bungkus / Bks)",
+    "Laporan Stock Harian Gudang (Bungkus / BKS)",
     {
       font: { ...baseFont, bold: true, sz: 14 },
       alignment: { horizontal: "left", vertical: "center" },

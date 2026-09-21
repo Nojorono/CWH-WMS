@@ -101,54 +101,158 @@ export const sumRows = (rows: LhsStockComputed[]): LhsTotals =>
     },
   );
 
+type MasterItem = { sku?: string; description?: string };
+
+const resolveName = (
+  sku: string,
+  fallback: string,
+  itemList: MasterItem[] | undefined,
+) => {
+  const master = itemList?.find((m) => String(m.sku || "").trim() === sku);
+  return master?.description || fallback || sku;
+};
+
+/**
+ * Incoming SPB (Retur): final − submitted; hanya jika hasil negatif → |delta|.
+ */
+const calcSpbIncomingQty = (detail: Callplan["details"][number]): number => {
+  const submitted = Number(detail.item_qty_submitted) || 0;
+  const finalQty =
+    Number(detail.item_qty_final ?? detail.item_qty_submitted) || 0;
+  const delta = finalQty - submitted;
+  return delta < 0 ? Math.abs(delta) : 0;
+};
+
 /* ─── movement lines (Incoming / Outgoing tabs) ──────────── */
 
-/** Pecah agregat SKU → baris Incoming/Outgoing untuk tab V1 */
+type BuildMovementSources = {
+  finalCallplans?: Callplan[];
+  btbList?: BTB[];
+  itemList?: MasterItem[];
+};
+
+const toDateLabel = (raw?: string | null) => {
+  if (!raw) return null;
+  const d = String(raw).trim();
+  if (!d) return null;
+  // Simpan raw ISO/YYYY-MM-DD; format di UI
+  return d;
+};
+
+/** Pecah Incoming dari dokumen SPB/BTB (dengan tanggal); Outgoing dari agregat SKU */
 export const buildMovementLines = (
   rows: LhsStockComputed[],
+  sources?: BuildMovementSources,
 ): { incoming: LhsMovementLine[]; outgoing: LhsMovementLine[] } => {
   const incoming: LhsMovementLine[] = [];
   const outgoing: LhsMovementLine[] = [];
+  const itemList = sources?.itemList;
+
+  const pushOut = (
+    row: LhsStockComputed,
+    source: string,
+    qty: number,
+    date?: string | null,
+  ) => {
+    if (!qty) return;
+    outgoing.push({
+      id: `${row.id}-out-${source}`,
+      kode: row.kode,
+      skuName: row.skuName,
+      qty,
+      source,
+      date: date ?? null,
+      group: "outgoing",
+    });
+  };
+
+  // Incoming: detail per dokumen agar tanggal Callplan / BTB akurat
+  const callplans = sources?.finalCallplans;
+  const btbs = sources?.btbList;
+
+  if (Array.isArray(callplans) || Array.isArray(btbs)) {
+    (callplans || []).forEach((doc) => {
+      const callplanDate = toDateLabel(doc.callplan_date_start);
+      (doc.details || []).forEach((d, idx) => {
+        const qty = calcSpbIncomingQty(d);
+        if (!qty) return;
+        const sku = String(d.item_code || "").trim();
+        if (!sku) return;
+        const skuName = resolveName(sku, sku, itemList);
+        incoming.push({
+          id: `${doc.id || "spb"}-${d.id || idx}-in-spb`,
+          kode: sku,
+          skuName,
+          qty,
+          source: "SPB Adjustment (−)",
+          date: callplanDate,
+          group: "incoming",
+        });
+      });
+    });
+
+    (btbs || []).forEach((btb) => {
+      const btbDate = toDateLabel(btb.btb_date);
+      (btb.details || []).forEach((d, idx) => {
+        const qty = Number(d.btb_qty) || 0;
+        if (qty <= 0) return;
+        const sku = String(d.item_code || "").trim();
+        if (!sku) return;
+        const skuName = resolveName(
+          sku,
+          String(d.item_name || sku),
+          itemList,
+        );
+        incoming.push({
+          id: `${btb.id || "btb"}-${d.id || idx}-in-btb`,
+          kode: sku,
+          skuName,
+          qty,
+          source: "BTB",
+          date: btbDate,
+          group: "incoming",
+        });
+      });
+    });
+  } else {
+    // Fallback lama: agregat dari rows (tanpa tanggal dokumen)
+    rows.forEach((r) => {
+      if (r.spb) {
+        incoming.push({
+          id: `${r.id}-in-SPB Adjustment (−)`,
+          kode: r.kode,
+          skuName: r.skuName,
+          qty: r.spb,
+          source: "SPB Adjustment (−)",
+          date: null,
+          group: "incoming",
+        });
+      }
+      if (r.btb) {
+        incoming.push({
+          id: `${r.id}-in-BTB`,
+          kode: r.kode,
+          skuName: r.skuName,
+          qty: r.btb,
+          source: "BTB",
+          date: null,
+          group: "incoming",
+        });
+      }
+    });
+  }
 
   rows.forEach((r) => {
-    const pushIn = (source: string, qty: number) => {
-      if (!qty) return;
-      incoming.push({
-        id: `${r.id}-in-${source}`,
-        kode: r.kode,
-        skuName: r.skuName,
-        qty,
-        source,
-        group: "incoming",
-      });
-    };
-    const pushOut = (source: string, qty: number) => {
-      if (!qty) return;
-      outgoing.push({
-        id: `${r.id}-out-${source}`,
-        kode: r.kode,
-        skuName: r.skuName,
-        qty,
-        source,
-        group: "outgoing",
-      });
-    };
-
-    pushIn("SPB Adjustment (−)", r.spb);
-    pushIn("BTB", r.btb);
-
-    pushOut("Manual DO (FPPR Tambahan)", r.manualDo);
-    pushOut("Relokasi (GI)", r.relokasi);
-    pushOut("SPB Submitted", r.doMatic);
-    pushOut("SPB Adjustment (+)", r.addDoMatic);
+    pushOut(r, "Manual DO (FPPR Tambahan)", r.manualDo);
+    pushOut(r, "Relokasi (GI)", r.relokasi);
+    pushOut(r, "SPB Submitted", r.doMatic);
+    pushOut(r, "SPB Adjustment (+)", r.addDoMatic);
   });
 
   return { incoming, outgoing };
 };
 
 /* ─── build rows ─────────────────────────────────────────── */
-
-type MasterItem = { sku?: string; description?: string };
 
 type QtyMaps = {
   stockAwal: Map<string, number>;
@@ -212,25 +316,6 @@ const ensure = (
   return row;
 };
 
-const resolveName = (
-  sku: string,
-  fallback: string,
-  itemList: MasterItem[] | undefined,
-) => {
-  const master = itemList?.find((m) => String(m.sku || "").trim() === sku);
-  return master?.description || fallback || sku;
-};
-
-/**
- * Incoming SPB (Retur): final − submitted; hanya jika hasil negatif → |delta|.
- */
-const calcSpbIncomingQty = (detail: Callplan["details"][number]): number => {
-  const submitted = Number(detail.item_qty_submitted) || 0;
-  const finalQty = Number(detail.item_qty_final ?? detail.item_qty_submitted) || 0;
-  const delta = finalQty - submitted;
-  return delta < 0 ? Math.abs(delta) : 0;
-};
-
 export type BuildLhsRowsInput = {
   finalCallplans: Callplan[];
   btbList: BTB[];
@@ -242,7 +327,7 @@ export type BuildLhsRowsInput = {
 };
 
 /**
- * Agregasi per SKU untuk Laporan Harian Stock (flat, tanpa SR/NR).
+ * Agregasi per SKU untuk Laporan Stock Harian (flat, tanpa SR/NR).
  * Incoming = Retur/SPB (final−submitted jika −) + BTB.
  * Outgoing = Manual DO (FPPR submitted) + DO MATIC (submitted) + Add DO MATIC (revision +).
  */

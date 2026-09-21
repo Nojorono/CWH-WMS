@@ -113,6 +113,13 @@ export const BTB_LIST_DETAIL_COLUMNS: DynamicColumn<BTBDetail>[] = [
     getValue: (_row, index = 0) => index + 1,
   },
   {
+    id: "type",
+    header: "Type",
+    align: "center",
+    cellClassName: "font-semibold",
+    getValue: (row) => row.type || "-",
+  },
+  {
     id: "item_name",
     header: "Item Name",
     cellClassName: "font-semibold",
@@ -121,6 +128,18 @@ export const BTB_LIST_DETAIL_COLUMNS: DynamicColumn<BTBDetail>[] = [
     id: "item_code",
     header: "SKU",
     cellClassName: "text-slate-500",
+  },
+  {
+    id: "item_number",
+    header: "Item Number",
+    cellClassName: "text-slate-500 text-xs",
+    getValue: (row) => row.item_number || "-",
+  },
+  {
+    id: "year",
+    header: "Year",
+    align: "center",
+    getValue: (row) => (row.year == null ? "-" : String(row.year)),
   },
   {
     id: "btb_qty",

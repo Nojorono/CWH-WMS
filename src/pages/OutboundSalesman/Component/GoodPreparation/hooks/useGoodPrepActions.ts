@@ -140,7 +140,7 @@ export const useGoodPrepActions = ({
       await refetchPrepCallplans();
 
       showSuccessToast(
-        `Qty berhasil diupdate (${changedItems.length} item). Data GoodPrep telah disegarkan.`,
+        `Qty berhasil diupdate (${changedItems.length} item). Data GoodPrep telah direfresh.`,
       );
 
       // Jika Adjust dari alur Integrate Meta → buka ulang panel cek global

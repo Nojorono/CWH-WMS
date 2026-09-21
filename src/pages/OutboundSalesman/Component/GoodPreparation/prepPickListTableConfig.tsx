@@ -10,11 +10,14 @@ export type PickListRow = EnrichedDetail & {
   qtyRevision: number | null;
   btbQty: number;
   topUpQty: number;
+  /** SKU oversold vs Available SOH — perlu adjust qty */
+  needsAdjust?: boolean;
 };
 
 export type PickListCellContext = {
   index: number;
   isHighlighted: boolean;
+  needsAdjust?: boolean;
 };
 
 export type PrepPickListColumn = {
@@ -82,6 +85,11 @@ export const PREP_PICK_LIST_COLUMNS: PrepPickListColumn[] = [
     getValue: (row, ctx) => (
       <>
         {row.itemName}
+        {ctx.needsAdjust && (
+          <span className="ml-2 rounded border border-amber-400 bg-amber-100 px-1.5 py-0.5 text-[10px] font-bold uppercase text-amber-900">
+            Perlu Adjust
+          </span>
+        )}
         {ctx.isHighlighted && (
           <span className="ml-2 rounded border border-yellow-400 bg-yellow-200 px-1.5 py-0.5 text-[10px] font-bold uppercase text-yellow-900">
             match
@@ -164,6 +172,9 @@ export const getPickListRowClassName = (
   row: PickListRow,
   isHighlighted: boolean,
 ) => {
+  if (row.needsAdjust) {
+    return "bg-amber-50 ring-1 ring-amber-200 hover:bg-amber-100";
+  }
   if (isHighlighted) {
     return "bg-yellow-100 ring-1 ring-yellow-300 hover:bg-yellow-100";
   }

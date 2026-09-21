@@ -163,7 +163,7 @@ export const SKUSummaryPanel = ({
         </div>
 
         <div className="flex gap-2">
-          {["ALL", "AVAILABLE", "LESS_STOCK", "NO_STOCK"].map((tab) => (
+          {["ALL", "AVAILABLE", "NO_STOCK"].map((tab) => (
             <button
               key={tab}
               onClick={() => setFilter(tab)}
@@ -215,40 +215,64 @@ export const SKUSummaryPanel = ({
                 </div>
 
                 {/* Metrics Section */}
-                <div
-                  className={`grid gap-2 mt-3 pt-3 border-t border-slate-100 ${
-                    isLessStock ? "grid-cols-3" : "grid-cols-2"
-                  }`}
-                >
-                  <div>
-                    <p className="text-[9px] uppercase tracking-wider text-slate-400 font-medium">
-                      Stock on Hand
-                    </p>
-                    <p className="text-sm font-bold text-slate-800">
-                      {item.soh.toLocaleString()}
-                    </p>
-                  </div>
+                {(() => {
+                  const availableStock =
+                    Number(item.soh || 0) - Number(item.totalRequest || 0);
+                  const availableClass =
+                    availableStock < 0
+                      ? "text-red-600"
+                      : availableStock === 0
+                        ? "text-amber-700"
+                        : "text-emerald-700";
 
-                  <div className={isLessStock ? "" : "text-right"}>
-                    <p className="text-[9px] uppercase tracking-wider text-slate-400 font-medium">
-                      Total Qty SPB
-                    </p>
-                    <p className="text-sm font-bold text-slate-800">
-                      {item.totalRequest.toLocaleString()}
-                    </p>
-                  </div>
+                  return (
+                    <div
+                      className={`grid gap-2 mt-3 pt-3 border-t border-slate-100 ${
+                        isLessStock ? "grid-cols-2" : "grid-cols-3"
+                      }`}
+                    >
+                      <div>
+                        <p className="text-[9px] uppercase tracking-wider text-slate-400 font-medium">
+                          SOH
+                        </p>
+                        <p className="text-sm font-bold text-slate-800">
+                          {item.soh.toLocaleString()}
+                        </p>
+                      </div>
 
-                  {isLessStock && (
-                    <div className="text-right">
-                      <p className="text-[9px] uppercase tracking-wider text-amber-600 font-medium">
-                        Qty by Contrib
-                      </p>
-                      <p className="text-sm font-bold text-amber-700">
-                        {Number(item.totalQtyByContribute || 0).toLocaleString()}
-                      </p>
+                      <div className={isLessStock ? "text-right" : ""}>
+                        <p className="text-[9px] uppercase tracking-wider text-slate-400 font-medium">
+                          Total Qty SPB
+                        </p>
+                        <p className="text-sm font-bold text-slate-800">
+                          {item.totalRequest.toLocaleString()}
+                        </p>
+                      </div>
+
+                      {isLessStock && (
+                        <div>
+                          <p className="text-[9px] uppercase tracking-wider text-amber-600 font-medium">
+                            Qty by Contrib
+                          </p>
+                          <p className="text-sm font-bold text-amber-700">
+                            {Number(
+                              item.totalQtyByContribute || 0,
+                            ).toLocaleString()}
+                          </p>
+                        </div>
+                      )}
+
+                      <div className="text-right">
+                        <p className="text-[9px] uppercase tracking-wider text-slate-400 font-medium">
+                          Ending Stock
+                        </p>
+                        <p className={`text-sm font-bold ${availableClass}`}>
+                          {availableStock.toLocaleString()}
+                        </p>
+                      </div>
                     </div>
-                  )}
-                </div>
+                  );
+                })()}
               </div>
             );
           })}

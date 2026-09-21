@@ -11,6 +11,7 @@ import {
   type PickListRow,
 } from "./prepPickListTableConfig";
 import { EnrichedDetail } from "./types";
+import { getItemKey } from "./utils/getItemKey";
 
 const hasQtyRevision = (revision: string | number | null | undefined) => {
   if (revision === null || revision === undefined) return false;
@@ -26,6 +27,10 @@ type PrepDetailTableProps = {
   header?: AdjustQtyHeader;
   isAdjustDisabled?: boolean;
   adjustDisabledTitle?: string;
+  /** SKU (lowercase) yang oversold vs Available SOH — diurutkan atas + badge */
+  needsAdjustSkus?: Set<string> | string[];
+  /** Map inventory_item_id / sku → SOH qty */
+  sohMap?: Map<string, number>;
   onSaveAdjustments: (
     callplanId: string,
     payload: {
@@ -43,6 +48,8 @@ export const PrepDetailTable = ({
   header,
   isAdjustDisabled = false,
   adjustDisabledTitle,
+  needsAdjustSkus,
+  sohMap,
   onSaveAdjustments,
   highlightedSku,
 }: PrepDetailTableProps) => {
@@ -51,6 +58,14 @@ export const PrepDetailTable = ({
   const normalizedHighlightSku = String(highlightedSku || "")
     .trim()
     .toLowerCase();
+
+  const needsAdjustSet = useMemo(() => {
+    if (!needsAdjustSkus) return new Set<string>();
+    if (needsAdjustSkus instanceof Set) return needsAdjustSkus;
+    return new Set(
+      needsAdjustSkus.map((s) => String(s || "").trim().toLowerCase()).filter(Boolean),
+    );
+  }, [needsAdjustSkus]);
 
   const showQtyRevisionCol = useMemo(
     () => details.some((d) => hasQtyRevision(d.item_qty_revision)),
@@ -75,6 +90,7 @@ export const PrepDetailTable = ({
           ? Number(d.item_qty_revision)
           : null;
         const master = itemList?.find((m: any) => m.sku === d.item_code);
+        const skuKey = String(d.item_code || "").trim().toLowerCase();
         return {
           ...d,
           itemName: master?.description || d.item_code,
@@ -84,9 +100,15 @@ export const PrepDetailTable = ({
           btbQty: btb,
           /** (+) kurang → top up gudang, (−) lebih → sisa BTB dikembalikan */
           topUpQty: final - btb,
+          needsAdjust: needsAdjustSet.has(skuKey),
         };
       })
       .sort((a, b) => {
+        // SKU perlu adjust (oversold SOH) di atas
+        if (a.needsAdjust !== b.needsAdjust) {
+          return a.needsAdjust ? -1 : 1;
+        }
+
         if (normalizedHighlightSku) {
           const aMatch = String(a.item_code || "")
             .toLowerCase()
@@ -116,7 +138,13 @@ export const PrepDetailTable = ({
       .sort((a, b) => a.itemName.localeCompare(b.itemName));
 
     return { pickList: picked, excessList: excess };
-  }, [details, unmatchedDetails, itemList, normalizedHighlightSku]);
+  }, [
+    details,
+    unmatchedDetails,
+    itemList,
+    normalizedHighlightSku,
+    needsAdjustSet,
+  ]);
 
   return (
     <div className="grid grid-cols-1 gap-6 border-t bg-slate-50 p-4 lg:grid-cols-[minmax(0,1fr)_minmax(14rem,25rem)]">
@@ -181,7 +209,11 @@ export const PrepDetailTable = ({
                   const isHighlighted =
                     normalizedHighlightSku.length > 0 &&
                     itemSku.includes(normalizedHighlightSku);
-                  const ctx = { index: i, isHighlighted };
+                  const ctx = {
+                    index: i,
+                    isHighlighted,
+                    needsAdjust: Boolean(item.needsAdjust),
+                  };
 
                   return (
                     <tr
@@ -256,17 +288,24 @@ export const PrepDetailTable = ({
       <AdjustQtySPB
         isOpen={isAdjustOpen}
         header={header}
-        items={pickList.map((item) => ({
-          id: String(item.id),
-          name: item.itemName || item.item_code,
-          sku: item.item_code,
-          qtySuggestion:
-            Number(item.suggestionQty ?? item.item_qty_suggestion) || 0,
-          qtySubmitted: Number(item.item_qty_submitted) || 0,
-          qtyAwal: Number(item.finalQty) || 0,
-          qtyRevision: item.qtyRevision,
-          adjustment: 0,
-        }))}
+        items={pickList.map((item) => {
+          const sohKey = getItemKey({
+            inventory_item_id: item.inventory_item_id,
+            item_code: item.item_code,
+          });
+          return {
+            id: String(item.id),
+            name: item.itemName || item.item_code,
+            sku: item.item_code,
+            qtySuggestion:
+              Number(item.suggestionQty ?? item.item_qty_suggestion) || 0,
+            qtySubmitted: Number(item.item_qty_submitted) || 0,
+            qtyAwal: Number(item.finalQty) || 0,
+            soh: sohMap?.get(sohKey) ?? 0,
+            qtyRevision: item.qtyRevision,
+            adjustment: 0,
+          };
+        })}
         onClose={() => setIsAdjustOpen(false)}
         onSave={async ({ items: adjustedItems, approvalUrl }) => {
           try {

@@ -1,4 +1,5 @@
 import React from "react";
+import dayjs from "dayjs";
 import { LhsMovementLine } from "../types";
 import { formatPack } from "../logic";
 import LhsTable, { LhsColumn } from "./LhsTable";
@@ -6,6 +7,12 @@ import LhsTable, { LhsColumn } from "./LhsTable";
 type Props = {
   lines: LhsMovementLine[];
   isLoading?: boolean;
+};
+
+const formatMovementDate = (raw?: string | null) => {
+  if (!raw) return "—";
+  const d = dayjs(raw);
+  return d.isValid() ? d.format("YYYY-MM-DD") : String(raw);
 };
 
 function IncomingTab({ lines, isLoading }: Props) {
@@ -35,12 +42,21 @@ function IncomingTab({ lines, isLoading }: Props) {
     {
       id: "uom",
       header: "UOM",
-      cell: () => <span className="text-slate-500">Bks</span>,
+      cell: () => <span className="text-slate-500">BKS</span>,
     },
     {
       id: "source",
       header: "Source",
       cell: (row) => <span className="text-slate-600">{row.source}</span>,
+    },
+    {
+      id: "date",
+      header: "Date",
+      cell: (row) => (
+        <span className="tabular-nums text-slate-600">
+          {formatMovementDate(row.date)}
+        </span>
+      ),
     },
   ];
 
@@ -51,6 +67,11 @@ function IncomingTab({ lines, isLoading }: Props) {
       rowKey={(row) => row.id}
       isLoading={isLoading}
       emptyMessage="Tidak ada pergerakan incoming."
+      footerNote={
+        <p className="border-t border-slate-100 px-4 py-3 text-xs text-slate-400">
+          Tanggal: Callplan date (SPB) · BTB date (BTB)
+        </p>
+      }
     />
   );
 }
