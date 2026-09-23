@@ -5,7 +5,6 @@ import {
   FaCalendarAlt,
   FaEnvelope,
   FaFileExcel,
-  FaPaperPlane,
   FaSyncAlt,
 } from "react-icons/fa";
 import dayjs from "dayjs";
@@ -13,7 +12,7 @@ import "dayjs/locale/id";
 import { usePersistAuthStore } from "../../../../API/store/AuthStore/PersistAuthStore";
 import { useOutboundSalesmanCache } from "../../../../API/store/OutboundSalesmanStore/useOutboundSalesmanCache";
 import { useStoreItem } from "../../../../DynamicAPI/stores/Store/MasterStore";
-import { showErrorToast, showSuccessToast } from "../../../../components/toast";
+import { showErrorToast } from "../../../../components/toast";
 import { Callplan } from "../../types/CallplanTypes";
 import SPBTable from "../SPB/SPBTable";
 import { SortDirection, sortCallplans } from "../SPB/spbTableConfig";
@@ -23,6 +22,8 @@ import {
   REKAP_MASTER_COLUMNS,
 } from "./rekapSpbTableConfig";
 import DeferredMount from "../../../../components/common/DeferredMount";
+import { FasEmailModal } from "../FASmanagement/components/FasEmailModal";
+import { buildRekapSpbFinalExcelFile } from "./exportRekapSpbFinalExcel";
 
 dayjs.locale("id");
 
@@ -51,6 +52,7 @@ function RekapSPBFinalPage() {
   const [pageSize, setPageSize] = useState(10);
   const [sortKey, setSortKey] = useState("spb_number");
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
+  const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
 
   const dateInputRef = useRef<HTMLInputElement>(null);
   const flatpickrRef = useRef<flatpickr.Instance | null>(null);
@@ -211,9 +213,22 @@ function RekapSPBFinalPage() {
   };
 
   const handleEmailFas = () => {
-    showSuccessToast("Email to FAS — coming soon.");
+    if (!sortedCallplans.length) {
+      showErrorToast("Belum ada data SPB FINAL — kirim email diblokir");
+      return;
+    }
+    setIsEmailModalOpen(true);
   };
 
+  const buildEmailAttachment = () => {
+    const built = buildRekapSpbFinalExcelFile({
+      callplans: sortedCallplans,
+      amoName,
+      reportDate,
+      itemList: Array.isArray(itemList) ? itemList : [],
+    });
+    return built?.file ?? null;
+  };
 
   return (
     <div className="min-h-screen p-6 font-sans text-slate-800">
@@ -311,7 +326,8 @@ function RekapSPBFinalPage() {
               <button
                 type="button"
                 onClick={handleEmailFas}
-                className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50"
+                disabled={isLoading || sortedCallplans.length === 0}
+                className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 <FaEnvelope size={12} className="text-amber-500" />
                 Email to FAS
@@ -353,6 +369,17 @@ function RekapSPBFinalPage() {
           </div>
         </div>
       </div>
+
+      <FasEmailModal
+        isOpen={isEmailModalOpen}
+        onClose={() => setIsEmailModalOpen(false)}
+        organizationId={String(organizationId || "")}
+        amoName={amoName}
+        reportDate={reportDate}
+        reportDateLabel={reportDateLabel}
+        spbCount={sortedCallplans.length}
+        buildAttachment={buildEmailAttachment}
+      />
     </div>
   );
 }
