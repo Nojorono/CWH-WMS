@@ -1,8 +1,12 @@
 import { useCallback, useState } from "react";
 import Swal from "sweetalert2";
 import { showErrorToast, showSuccessToast } from "../../../../../components/toast";
-import { updateDO } from "../../../../../API/services/do-suggestion/postDOsuggestion";
+import {
+  updateDO,
+  updateDOStatus,
+} from "../../../../../API/services/do-suggestion/postDOsuggestion";
 import { DOSuggestionPayload } from "../../../../../API/types/DOsuggestion";
+import { usePersistAuthStore } from "../../../../../API/store/AuthStore/PersistAuthStore";
 import { integrateService } from "../../../Services/IntegrateService";
 import {
   integrateDmsService,
@@ -174,19 +178,25 @@ export const useGoodPrepActions = ({
     );
   };
 
-  /** Setelah DMS sukses: FINAL → COMPLETED via POST /do-suggestion (partial header). */
+  /** Setelah DMS sukses: FINAL → COMPLETED via POST /do-suggestion/update-status */
   const markSpbCompletedAfterDms = async (
     callplan: Callplan,
   ): Promise<boolean> => {
     const currentStatus = String(callplan.status || "").trim().toUpperCase();
     if (currentStatus !== "FINAL") return false;
 
-    const response = await updateDO({
+    const loginNik = String(
+      usePersistAuthStore.getState().user?.userDetail?.employee_id || "",
+    ).trim();
+    if (!loginNik) {
+      throw new Error("NIK user login tidak ditemukan untuk updated_by");
+    }
+
+    await updateDOStatus({
       id: callplan.id,
       status: "COMPLETED",
-      updated_by: callplan.updated_by || callplan.created_by,
+      updated_by: loginNik,
     });
-    console.log("response markSpbCompletedAfterDms", response);
     return true;
   };
 
