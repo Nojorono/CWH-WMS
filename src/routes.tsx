@@ -78,9 +78,11 @@ import {
   LaporanHarianStock,
   RekapSPBFinal,
   DownloadSJcabang,
+  IntegrationMonitoringPage,
+  OpeningStockUploadPage,
+  FASManagement,
 } from "./utils/PagesComponent";
-import IntegrationMonitoringPage from "./pages/DOsuggestionV1/IntegrationLog";
-import OpeningStockUploadPage from "./pages/OpeningStockBalance";
+
 
 const DefaultPage = () => (
   <div className="flex items-center justify-center h-full">
@@ -181,6 +183,7 @@ export function AppRoutes() {
       "/laporan_harian_stock": <LaporanHarianStock />,
       "/rekap_spb_final": <RekapSPBFinal />,
       "/download_sj_cabang": <DownloadSJcabang />,
+      "/fas_management": <FASManagement />,
     };
     return map[path] || <DefaultPage />;
   }

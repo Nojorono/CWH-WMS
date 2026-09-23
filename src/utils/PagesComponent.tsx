@@ -90,6 +90,7 @@ import LaporanHarianStock from "../pages/OutboundSalesman/Component/LaporanHaria
 import RekapSPBFinal from "../pages/OutboundSalesman/Component/RekapSPBFinal";
 import BTBPage from "../pages/OutboundSalesman/BTB/index";
 import DownloadSJcabang from "../pages/OutboundSalesman/Component/DownloadSJcabang";
+import FASManagement from "../pages/OutboundSalesman/Component/FASmanagement";
 
 export {
   // DASHBOARD
@@ -174,6 +175,7 @@ export {
   LaporanHarianStock,
   RekapSPBFinal,
   DownloadSJcabang,
+  FASManagement,
   // MainTabDOsgsReport,
 
   MoveOrderSelisih,
