@@ -211,7 +211,7 @@ function StockCalculationView({
     <div className="min-h-screen bg-[#F8FAFC] p-6 font-sans">
       <div className="mb-4">
         <h1 className="text-xl font-bold text-gray-800">
-          Stock on Hand & Calculation SPB
+          Stock Awal & Perhitungan SPB
         </h1>
         <p className="mt-2 text-xs text-slate-500">
           Memproses <strong>{callplans.length}</strong> SPB berstatus SUBMITTED

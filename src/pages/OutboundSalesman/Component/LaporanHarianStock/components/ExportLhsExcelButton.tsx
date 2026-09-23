@@ -1,30 +1,30 @@
 import React from "react";
 import { FaFileExcel } from "react-icons/fa";
-import { Callplan } from "../../../types/CallplanTypes";
-import { BTB } from "../../../types/BTBtypes";
+import type { LhsApiDetailData } from "../../../../API/services/outbound-salesman/LhsReportService";
 import { LhsStockComputed } from "../types";
 import { showErrorToast } from "../../../../../components/toast";
 
 type Props = {
   rows: LhsStockComputed[];
-  finalCallplans: Callplan[];
-  btbList: BTB[];
+  detail: LhsApiDetailData | null;
   amoName: string;
   reportDateLabel: string;
   disabled?: boolean;
+  /** Optional: re-fetch detail sebelum export */
+  fetchDetail?: () => Promise<LhsApiDetailData | null>;
 };
 
 /**
- * Tombol export Excel LHS Summary + Detail.
+ * Tombol export Excel LSH Summary + LSH Detail.
  * xlsx-js-style di-load dinamis saat klik (hindari freeze saat mount halaman).
  */
 function ExportLhsExcelButton({
   rows,
-  finalCallplans,
-  btbList,
+  detail,
   amoName,
   reportDateLabel,
   disabled,
+  fetchDetail,
 }: Props) {
   const noData = disabled || rows.length === 0;
   const [exporting, setExporting] = React.useState<"summary" | "detail" | null>(
@@ -39,17 +39,24 @@ function ExportLhsExcelButton({
         const { exportLhsExcel } = await import("../exportLhsExcel");
         exportLhsExcel({ rows, amoName, reportDateLabel });
       } else {
+        let detailPayload = detail;
+        if ((!detailPayload?.rows?.length || fetchDetail) && fetchDetail) {
+          detailPayload = await fetchDetail();
+        }
+        if (!detailPayload?.rows?.length && !detailPayload?.item_codes?.length) {
+          showErrorToast("Data detail LSH belum tersedia");
+          return;
+        }
         const { exportLhsDetailExcel } = await import("../exportLhsDetailExcel");
         exportLhsDetailExcel({
+          detail: detailPayload,
           rows,
-          finalCallplans,
-          btbList,
           amoName,
           reportDateLabel,
         });
       }
     } catch (err) {
-      console.error("Export LHS Excel gagal:", err);
+      console.error("Export LSH Excel gagal:", err);
       showErrorToast("Gagal mengekspor Excel");
     } finally {
       setExporting(null);
@@ -65,7 +72,7 @@ function ExportLhsExcelButton({
         className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
       >
         <FaFileExcel size={14} />
-        {exporting === "summary" ? "Menyiapkan…" : "Export Summary"}
+        {exporting === "summary" ? "Menyiapkan…" : "LSH Summary"}
       </button>
       <button
         type="button"
@@ -74,7 +81,7 @@ function ExportLhsExcelButton({
         className="inline-flex items-center gap-2 rounded-lg border border-emerald-600 bg-white px-4 py-2 text-sm font-semibold text-emerald-700 shadow-sm transition hover:bg-emerald-50 disabled:cursor-not-allowed disabled:opacity-60"
       >
         <FaFileExcel size={14} />
-        {exporting === "detail" ? "Menyiapkan…" : "Export Detail"}
+        {exporting === "detail" ? "Menyiapkan…" : "LSH Detail"}
       </button>
     </div>
   );

@@ -35,7 +35,7 @@ function OutgoingTab({ lines, isLoading }: Props) {
     {
       id: "uom",
       header: "UOM",
-      cell: () => <span className="text-slate-500">Bks</span>,
+      cell: () => <span className="text-slate-500">BKS</span>,
     },
     {
       id: "source",
@@ -53,8 +53,8 @@ function OutgoingTab({ lines, isLoading }: Props) {
       emptyMessage="Tidak ada pergerakan outgoing."
       footerNote={
         <p className="border-t border-slate-100 px-4 py-3 text-xs text-slate-400">
-          Source: Manual DO (FPPR) · Relokasi · SPB Submitted · SPB Adjustment
-          (+)
+          Source: FPPR Awal · FPPR Tambahan · SPB Adjustment (+)
+            (detail API + Adj (+) dari summary bila final &gt; submitted)
         </p>
       }
     />

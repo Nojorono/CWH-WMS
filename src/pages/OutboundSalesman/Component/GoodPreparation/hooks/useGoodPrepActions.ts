@@ -174,6 +174,22 @@ export const useGoodPrepActions = ({
     );
   };
 
+  /** Setelah DMS sukses: FINAL → COMPLETED via POST /do-suggestion (partial header). */
+  const markSpbCompletedAfterDms = async (
+    callplan: Callplan,
+  ): Promise<boolean> => {
+    const currentStatus = String(callplan.status || "").trim().toUpperCase();
+    if (currentStatus !== "FINAL") return false;
+
+    const response = await updateDO({
+      id: callplan.id,
+      status: "COMPLETED",
+      updated_by: callplan.updated_by || callplan.created_by,
+    });
+    console.log("response markSpbCompletedAfterDms", response);
+    return true;
+  };
+
   const handleIntegratePerSpb = async () => {
     if (!integrateTriggerSpb?.id) {
       showErrorToast("SPB target integrasi tidak ditemukan");
@@ -195,6 +211,19 @@ export const useGoodPrepActions = ({
         await integrateDmsService.integrateBkbFromCallplan(callplan);
       const dmsAlreadyIssued = Boolean(dmsResult?.alreadyIssued);
 
+      let statusMarkedCompleted = false;
+      try {
+        statusMarkedCompleted = await markSpbCompletedAfterDms(callplan);
+      } catch (statusError) {
+        const statusMessage =
+          statusError instanceof Error
+            ? statusError.message
+            : "Gagal update status SPB ke COMPLETED";
+        showErrorToast(
+          `Integrate DMS berhasil, tetapi status SPB ${spbLabel} gagal diubah ke COMPLETED: ${statusMessage}`,
+        );
+      }
+
       try {
         await integrateService.integrateToMetaGit(integrateTriggerSpb.id);
       } catch (metaError) {
@@ -214,8 +243,10 @@ export const useGoodPrepActions = ({
 
       showSuccessToast(
         dmsAlreadyIssued
-          ? `DMS sudah BKB_ISSUED, Integrate Meta berhasil untuk SPB ${spbLabel}`
-          : `Integrate DMS & Meta berhasil untuk SPB ${spbLabel}`,
+          ? `DMS sudah BKB_ISSUED, Integrate Meta berhasil untuk SPB ${spbLabel}${statusMarkedCompleted ? " (status → COMPLETED)" : ""
+          }`
+          : `Integrate DMS & Meta berhasil untuk SPB ${spbLabel}${statusMarkedCompleted ? " (status → COMPLETED)" : ""
+          }`,
       );
       await refetchPrepCallplans();
     } catch (error: unknown) {

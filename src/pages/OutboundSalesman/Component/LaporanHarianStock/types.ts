@@ -15,17 +15,17 @@ export type LhsStockRow = {
   spb: number;
   /** Incoming dari BTB (btb_qty) jika ada */
   btb: number;
-  /** Manual DO = FPPR Tambahan (submitted qty) */
+  /** FPPR Tambahan — submitted qty (mo_type FPPR Tambahan) */
   manualDo: number;
   /** Relokasi GI — dikosongkan */
   relokasi: number;
-  /** DO MATIC / SPB Submitted = submitted qty SPB FINAL (non-FPPR) */
+  /** FPPR Awal — submitted qty (mo_type FPPR Awal / SPB biasa) */
   doMatic: number;
-  /** Add DO MATIC / SPB Adjustment (+) = item_qty_revision > 0 */
+  /** SPB Adjustment (+) = max(0, qty_final − qty_submitted) */
   addDoMatic: number;
   /** Input fisik — dikosongkan dulu */
   fisikAkhir: number | null;
-  /** META = SOH realtime; jika tidak ada → 0 */
+  /** META = SOH pada `date` laporan */
   meta: number;
 };
 
@@ -33,7 +33,11 @@ export type LhsStockComputed = LhsStockRow & {
   totalTerima: number;
   totalKeluar: number;
   stockAkhir: number;
-  /** Fisik − Stock Akhir (fisik kosong = 0) */
+  /**
+   * Variance:
+   * - ada Fisik → Fisik − Stock Akhir
+   * - tanpa Fisik → META (SOH date) − Stock Akhir
+   */
   variance: number;
 };
 
@@ -41,7 +45,10 @@ export type LhsReportContext = {
   amoName: string;
   organizationId: string;
   organizationCode: string;
+  /** Tanggal laporan (SOH Meta) */
   reportDate: string;
+  /** Tanggal SOH untuk Stock Awal */
+  previousDate?: string | null;
 };
 
 /** Baris detail Incoming/Outgoing untuk tab V1 */

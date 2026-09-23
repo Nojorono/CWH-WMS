@@ -29,7 +29,7 @@ export const formatSigned = (n: number) => {
 /** Total Terima = SPB + BTB */
 export const calcTotalTerima = (row: LhsStockRow) => row.spb + row.btb;
 
-/** Total Keluar = Manual + Relokasi + DO MATIC + Add DO MATIC */
+/** Total Keluar = FPPR Tambahan + Relokasi + FPPR Awal + SPB Adjustment (+) */
 export const calcTotalKeluar = (row: LhsStockRow) =>
   row.manualDo + row.relokasi + row.doMatic + row.addDoMatic;
 
@@ -243,9 +243,9 @@ export const buildMovementLines = (
   }
 
   rows.forEach((r) => {
-    pushOut(r, "Manual DO (FPPR Tambahan)", r.manualDo);
+    pushOut(r, "FPPR Tambahan", r.manualDo);
     pushOut(r, "Relokasi (GI)", r.relokasi);
-    pushOut(r, "SPB Submitted", r.doMatic);
+    pushOut(r, "FPPR Awal", r.doMatic);
     pushOut(r, "SPB Adjustment (+)", r.addDoMatic);
   });
 
@@ -329,7 +329,7 @@ export type BuildLhsRowsInput = {
 /**
  * Agregasi per SKU untuk Laporan Stock Harian (flat, tanpa SR/NR).
  * Incoming = Retur/SPB (final−submitted jika −) + BTB.
- * Outgoing = Manual DO (FPPR submitted) + DO MATIC (submitted) + Add DO MATIC (revision +).
+ * Outgoing = FPPR Tambahan + Relokasi + FPPR Awal + SPB Adjustment (+).
  */
 export const buildLhsRows = ({
   finalCallplans,

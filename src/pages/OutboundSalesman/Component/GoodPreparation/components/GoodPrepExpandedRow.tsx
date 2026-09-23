@@ -8,7 +8,6 @@ import { AdjustQtyItem } from "../AdjustQtySPB";
 type GoodPrepExpandedRowProps = {
   row: EnrichedCallplan;
   globalFilter: string;
-  isAdjustDisabled?: boolean;
   /** SKU oversold vs Available SOH */
   needsAdjustSkus?: Set<string>;
   sohMap?: Map<string, number>;
@@ -24,18 +23,15 @@ type GoodPrepExpandedRowProps = {
 export const GoodPrepExpandedRow = ({
   row,
   globalFilter,
-  isAdjustDisabled = false,
   needsAdjustSkus,
   sohMap,
   onSaveAdjustments,
 }: GoodPrepExpandedRowProps) => {
-  const isIntegrated = isSpbIntegratedToMeta(row);
-  const adjustDisabled = isAdjustDisabled || isIntegrated;
-  const adjustDisabledTitle = isIntegrated
+  /** Adjust Qty: hanya dikunci jika sudah integrate Meta (`move_order_integration`) */
+  const adjustDisabled = isSpbIntegratedToMeta(row);
+  const adjustDisabledTitle = adjustDisabled
     ? "Tidak bisa Adjust — SPB sudah di-integrate ke Meta"
-    : isAdjustDisabled
-      ? "Tidak bisa Adjust — data BTB cabang belum tersedia"
-      : undefined;
+    : undefined;
 
   return (
     <div className="flex flex-col gap-4 border-b border-slate-200 bg-slate-50/50 p-2">

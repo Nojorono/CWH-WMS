@@ -377,6 +377,50 @@ function GoodPrepView({
     () => [
       { accessorKey: "spb_number", header: "SPB Number" },
       {
+        id: "meta_integration",
+        header: "Meta Integration",
+        cell: ({ row }) => {
+          const integrated = isSpbIntegratedToMeta(row.original);
+          return (
+            <span
+              className={`inline-flex items-center rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide ${
+                integrated
+                  ? "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200"
+                  : "bg-slate-100 text-slate-500 ring-1 ring-slate-200"
+              }`}
+              title={
+                integrated
+                  ? "Sudah di-integrate ke Meta"
+                  : "Belum di-integrate ke Meta"
+              }
+            >
+              {integrated ? "Sudah" : "Belum"}
+            </span>
+          );
+        },
+      },
+      {
+        id: "status",
+        header: "Status",
+        cell: ({ row }) => {
+          const status = String(row.original.status || "-").trim() || "-";
+          const upper = status.toUpperCase();
+          const statusClass =
+            upper === "COMPLETED"
+              ? "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200"
+              : upper === "FINAL"
+                ? "bg-blue-50 text-blue-700 ring-1 ring-blue-200"
+                : "bg-slate-100 text-slate-600 ring-1 ring-slate-200";
+          return (
+            <span
+              className={`inline-flex items-center rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide ${statusClass}`}
+            >
+              {status}
+            </span>
+          );
+        },
+      },
+      {
         accessorKey: "mo_type",
         header: "MO Type",
         cell: ({ row }) => row.original.mo_type?.trim() || "-",
@@ -549,7 +593,6 @@ function GoodPrepView({
             <GoodPrepExpandedRow
               row={row}
               globalFilter={globalFilter}
-              isAdjustDisabled={isPrintDisabled}
               needsAdjustSkus={branchOversoldSkus}
               sohMap={sohMap}
               onSaveAdjustments={handleSaveAdjustments}

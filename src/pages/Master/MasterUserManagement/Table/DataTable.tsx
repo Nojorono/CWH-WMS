@@ -65,6 +65,7 @@ const DataTable = () => {
       (io: any) => String(io?.id) === String(organizationId),
     );
   }, [globalIoList, user]);
+  
 
   const gateRoleId = useMemo(
     () => roles?.find((r: any) => r.name === "GATE")?.id,
@@ -264,7 +265,9 @@ const DataTable = () => {
         type: "select",
         options:
           IoList?.map((io: any) => ({
-            label: io.organization_name,
+            label: [io.organization_name, io.organization_code]
+              .filter(Boolean)
+              .join(" — "),
             value: io.id,
           })) || [],
         hiddenWhen: (values: any) => {
@@ -461,7 +464,9 @@ const DataTable = () => {
     return [
       { label: "All Organization", value: "" },
       ...IoList.map((io: any) => ({
-        label: io.organization_name,
+        label: [io.organization_name, io.organization_code]
+          .filter(Boolean)
+          .join(" — "),
         value: String(io.id),
       })),
     ];
@@ -473,9 +478,14 @@ const DataTable = () => {
         .map((user: any) => {
           const organizationId = user.userDetail?.organizationId ?? "";
 
-          const organizationName =
-            IoList.find((io: any) => String(io.id) === String(organizationId))
-              ?.organization_name ?? "-";
+          const matchedIo = IoList.find(
+            (io: any) => String(io.id) === String(organizationId),
+          );
+          const organizationName = matchedIo
+            ? [matchedIo.organization_name, matchedIo.organization_code]
+                .filter(Boolean)
+                .join(" — ")
+            : "-";
 
           return {
             ...user,

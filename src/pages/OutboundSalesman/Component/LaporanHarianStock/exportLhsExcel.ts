@@ -87,10 +87,10 @@ const setCell = (
 };
 
 /**
- * Export Laporan Stock Harian ke Excel.
+ * Export LSH Summary ke Excel.
  *
  * Incoming: Central/ASMO (1 kolom) | SPB Adjustment (−) | BTB
- * Outgoing: Manual DO | Relokasi | SPB Submitted | SPB Adjustment (+)
+ * Outgoing: FPPR Tambahan | Relokasi | FPPR Awal | SPB Adjustment (+)
  * VAR (akhir): META − STOCK AKHIR
  * META: 0 jika SOH tidak ada
  */
@@ -113,7 +113,7 @@ export const exportLhsExcel = ({
     ws,
     0,
     0,
-    "Laporan Stock Harian Gudang (Bungkus / BKS)",
+    "LSH Summary — Laporan Stock Harian Gudang (Bungkus / BKS)",
     {
       font: { ...baseFont, bold: true, sz: 14 },
       alignment: { horizontal: "left", vertical: "center" },
@@ -139,7 +139,7 @@ export const exportLhsExcel = ({
     bg: string;
   }[] = [
     { c: 0, label: "KODE", bg: COLORS.grey },
-    { c: 1, label: "MATERIAL", bg: COLORS.grey },
+    { c: 1, label: "SKU NAME", bg: COLORS.grey },
     { c: 2, label: "STOCK AWAL", bg: COLORS.grey },
     { c: 3, label: "Incoming", span: 3, bg: COLORS.red },
     { c: 6, label: "TOTAL Terima", bg: COLORS.red },
@@ -165,9 +165,9 @@ export const exportLhsExcel = ({
     { c: 3, label: "Central / ASMO", bg: COLORS.red },
     { c: 4, label: "SPB Adjustment (−)", bg: COLORS.red },
     { c: 5, label: "BTB", bg: COLORS.red },
-    { c: 7, label: "Manual DO\n(FPPR)", bg: COLORS.blue },
+    { c: 7, label: "FPPR Tambahan", bg: COLORS.blue },
     { c: 8, label: "Relokasi\n(GI)", bg: COLORS.blue },
-    { c: 9, label: "SPB Submitted", bg: COLORS.blue },
+    { c: 9, label: "FPPR Awal", bg: COLORS.blue },
     { c: 10, label: "SPB Adjustment (+)", bg: COLORS.blue },
   ];
 
@@ -235,9 +235,9 @@ export const exportLhsExcel = ({
 
     setCell(ws, r, 7, row.manualDo || "", cellStyle());
     setCell(ws, r, 8, "", cellStyle()); // Relokasi kosong
-    // SPB Submitted (= DO MATIC lama)
+    // FPPR Awal
     setCell(ws, r, 9, row.doMatic || "", cellStyle());
-    // SPB Adjustment (+) (= Add DO MATIC lama)
+    // SPB Adjustment (+)
     setCell(ws, r, 10, row.addDoMatic || "", cellStyle());
 
     // TOTAL Keluar
@@ -337,9 +337,9 @@ export const exportLhsExcel = ({
     { wch: 14 }, // SPB Adj (−)
     { wch: 10 }, // BTB
     { wch: 12 }, // TOTAL Terima
-    { wch: 12 }, // Manual DO
+    { wch: 12 }, // FPPR Tambahan
     { wch: 11 }, // Relokasi
-    { wch: 13 }, // SPB Submitted
+    { wch: 12 }, // FPPR Awal
     { wch: 14 }, // SPB Adj (+)
     { wch: 12 }, // TOTAL Keluar
     { wch: 12 }, // STOCK AKHIR
@@ -351,16 +351,16 @@ export const exportLhsExcel = ({
 
   ws["!rows"] = [{ hpt: 22 }, { hpt: 18 }, { hpt: 22 }, { hpt: 32 }];
 
-  XLSX.utils.book_append_sheet(wb, ws, "LHS");
+  XLSX.utils.book_append_sheet(wb, ws, "LSH Summary");
 
   const safeSlug =
     fileSlug ||
-    `${(amoName || "LHS").replace(/[^\w\-]+/g, "_")}_${reportDateLabel.replace(/[^\w\-]+/g, "_")}`;
+    `${(amoName || "LSH").replace(/[^\w\-]+/g, "_")}_${reportDateLabel.replace(/[^\w\-]+/g, "_")}`;
   const excelBuffer = XLSX.write(wb, { bookType: "xlsx", type: "array" });
   saveAs(
     new Blob([excelBuffer], {
       type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     }),
-    `Laporan_Harian_Stock_${safeSlug}.xlsx`,
+    `LSH_Summary_${safeSlug}.xlsx`,
   );
 };

@@ -6,12 +6,12 @@
  * | Aspek              | FPPR Awal                         | FPPR Tambahan                                      |
  * |--------------------|-----------------------------------|----------------------------------------------------|
  * | Constant           | FPPR_AWAL_MO_TYPE                 | FPPR_TAMBAHAN_MO_TYPE                              |
- * | Alokasi SOH        | YA + hitung contrib %             | LIHAT SOH, TANPA contrib                           |
- * | Sumber qty post    | hasil alokasi proporsional        | SOH==0 → 0; else min(suggestion, SOH)              |
- * | Jika SOH = 0       | final bisa 0                      | submitted & final = 0                              |
- * | Jika SOH cukup     | proporsional vs request           | submitted & final = suggestion                     |
- * | Status UI calc     | AVAILABLE / LESS / NO_STOCK       | NO_STOCK / AVAILABLE / LESS (tanpa contrib)        |
- * | LHS bucket         | SPB Submitted (non-FPPR tambahan) | Manual DO (FPPR Tambahan)                          |
+ * | Alokasi SOH        | YA + hitung contrib %             | TIDAK (qty = suggestion)                           |
+ * | Sumber qty post    | hasil alokasi proporsional        | = qty suggestion (tanpa SOH)                       |
+ * | Jika SOH = 0       | final bisa 0                      | tetap = suggestion                                 |
+ * | Jika SOH cukup     | proporsional vs request           | = suggestion                                       |
+ * | Status UI calc     | AVAILABLE / LESS / NO_STOCK       | status SOH informatif saja (qty tidak diubah)      |
+ * | LHS bucket         | FPPR Awal                         | FPPR Tambahan                                      |
  *
  * Helper tracing:
  *   classifyMoType(moType) → "FPPR_AWAL" | "FPPR_TAMBAHAN" | "OTHER"
@@ -55,7 +55,7 @@ export const classifyMoType = (
 
 /**
  * Apakah ikut alokasi SOH + perhitungan contrib % di Calculation?
- * - FPPR Tambahan → false (lihat SOH sendiri, tanpa contrib)
+ * - FPPR Tambahan → false (qty = suggestion, tanpa SOH)
  * - FPPR Awal + SPB lain → true
  */
 export const shouldApplyAllocationCalculation = (
@@ -63,25 +63,19 @@ export const shouldApplyAllocationCalculation = (
 ): boolean => !isFpprTambahanMoType(moType);
 
 /**
- * Qty submitted/final untuk FPPR Tambahan (tanpa contrib antar SPB):
- * - SOH <= 0 → 0
- * - SOH mencukupi (≥ suggestion) → suggestion
- * - SOH ada tapi kurang → ambil sisa SOH (min), tetap tanpa contrib
+ * Qty submitted/final untuk FPPR Tambahan:
+ * samakan dengan suggestion — tanpa kalkulasi / perbandingan SOH.
  */
 export const resolveFpprTambahanQty = (
   detail: {
     item_qty_suggestion?: string | number | null;
   },
-  soh: number,
+  _soh?: number,
 ): number => {
-  const suggestion = Number(detail?.item_qty_suggestion) || 0;
-  const available = Math.max(0, Number(soh) || 0);
-
-  if (available <= 0 || suggestion <= 0) return 0;
-  return Math.min(suggestion, available);
+  return Math.max(0, Number(detail?.item_qty_suggestion) || 0);
 };
 
-/** Status tampilan FPPR Tambahan (bukan hasil contrib pool) */
+/** Status tampilan FPPR Tambahan (info SOH saja; qty tidak dipengaruhi) */
 export const resolveFpprTambahanStatus = (
   suggestion: number,
   soh: number,
@@ -95,7 +89,7 @@ export const resolveFpprTambahanStatus = (
 
 /**
  * Resolve qty final untuk post Calculation, berdasarkan jenis mo_type.
- * - FPPR Tambahan → resolveFpprTambahanQty(detail, soh)
+ * - FPPR Tambahan → = suggestion (tanpa SOH)
  * - FPPR Awal & OTHER → allocatedFinalQty (hasil SOH allocation + contrib)
  */
 export const resolvePostQtyByMoType = (
@@ -107,12 +101,7 @@ export const resolvePostQtyByMoType = (
   },
 ): number => {
   if (isFpprTambahanMoType(moType)) {
-    // Setelah passthrough, item_qty_final sudah diisi; tetap re-check SOH aman
-    if (detail.item_qty_final != null && detail.item_qty_final !== "") {
-      const fromFinal = Number(detail.item_qty_final);
-      if (!Number.isNaN(fromFinal)) return fromFinal;
-    }
-    return resolveFpprTambahanQty(detail, Number(detail.soh) || 0);
+    return resolveFpprTambahanQty(detail);
   }
   // FPPR Awal & SPB biasa: pakai hasil alokasi
   return Number(detail?.item_qty_final) || 0;

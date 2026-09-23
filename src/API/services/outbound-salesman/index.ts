@@ -7,3 +7,4 @@ export * from "./BTBService";
 export * from "./IntegrateService";
 export * from "./IntegrateDMSservice";
 export * from "./RealTimeSOH";
+export * from "./LhsReportService";

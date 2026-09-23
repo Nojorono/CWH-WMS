@@ -165,7 +165,7 @@ export const PrepDetailTable = ({
             title={
               isAdjustDisabled
                 ? adjustDisabledTitle ||
-                  "Tidak bisa Adjust — data BTB cabang belum tersedia"
+                  "Tidak bisa Adjust — SPB sudah di-integrate ke Meta"
                 : undefined
             }
             className={`inline-flex items-center gap-1.5 rounded border px-2.5 py-1 text-[11px] font-bold uppercase transition-colors ${

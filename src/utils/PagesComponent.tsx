@@ -89,6 +89,7 @@ import MoveOrderSelisih from "../pages/MoveOrderSelisih";
 import LaporanHarianStock from "../pages/OutboundSalesman/Component/LaporanHarianStock";
 import RekapSPBFinal from "../pages/OutboundSalesman/Component/RekapSPBFinal";
 import BTBPage from "../pages/OutboundSalesman/BTB/index";
+import DownloadSJcabang from "../pages/OutboundSalesman/Component/DownloadSJcabang";
 
 export {
   // DASHBOARD
@@ -172,6 +173,7 @@ export {
   OutboundSalesman,
   LaporanHarianStock,
   RekapSPBFinal,
+  DownloadSJcabang,
   // MainTabDOsgsReport,
 
   MoveOrderSelisih,

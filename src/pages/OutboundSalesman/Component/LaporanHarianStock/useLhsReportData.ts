@@ -1,64 +1,30 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import dayjs from "dayjs";
 import { usePersistAuthStore } from "../../../../API/store/AuthStore/PersistAuthStore";
-import { useOutboundSalesmanCache } from "../../../../API/store/OutboundSalesmanStore/useOutboundSalesmanCache";
-import { useStoreItem } from "../../../../DynamicAPI/stores/Store/MasterStore";
+import {
+  lhsReportService,
+  type LhsApiDetailData,
+} from "../../../../API/services/outbound-salesman/LhsReportService";
 import { isRequestAborted } from "../../../../DynamicAPI/services/CreateCrudService";
 import { showErrorToast } from "../../../../components/toast";
-import { Callplan } from "../../types/CallplanTypes";
-import { BTB } from "../../types/BTBtypes";
+import { sumRows } from "./logic";
 import {
-  matchesBtbOrganization,
-  normalizeBtbForGoodPrep,
-} from "../GoodPreparation/utils/normalizeBtbForGoodPrep";
-import { getItemKey } from "../GoodPreparation/utils/getItemKey";
-import { buildLhsRows, computeRows, skuKey, sumRows } from "./logic";
-import { LhsReportContext } from "./types";
-
-const SUBINVENTORY = "KECIL";
-
-const filterCallplansByOrg = (
-  list: Callplan[],
-  organizationId: string,
-  organizationCode: string,
-) => {
-  const id = String(organizationId || "").trim().toLowerCase();
-  const code = String(organizationCode || "").trim().toLowerCase();
-  if (!id && !code) return list;
-
-  return list.filter((doc) => {
-    const candidates = [
-      doc.organization_id,
-      doc.organization?.id,
-      doc.organization?.organization_id,
-      doc.organization?.organization_code,
-      doc.organization?.organization_name,
-      doc.organization?.org_name,
-    ]
-      .filter(Boolean)
-      .map((v) => String(v).trim().toLowerCase());
-    return (
-      (id && candidates.includes(id)) || (code && candidates.includes(code))
-    );
-  });
-};
+  buildIncomingOutgoingLines,
+  mapLhsApiItemsToRows,
+} from "./mapLhsApi";
+import { LhsMovementLine, LhsReportContext, LhsStockComputed } from "./types";
 
 /**
- * Ambil data LHS 1 cabang (current date):
- * - Stock Awal: SOH Calculation
- * - META: SOH latest Good Prep
- * - Incoming: Retur/SPB (final−submitted jika −) + BTB
- * - Outgoing: Manual DO (FPPR submitted) + DO MATIC (submitted) + Add (revision +)
+ * LHS: GET /outbound-sales/report/lhs + /lhs/detail
+ * Query hanya `date` = hari ini (tanpa date picker).
  */
 export const useLhsReportData = (reportDate: string) => {
   const user = usePersistAuthStore((s) => s.user);
-  const { list: itemList, fetchAll: fetchItems } = useStoreItem();
 
   const organizationId =
     user?.userDetail?.organizationId ||
     user?.userDetail?.organization?.id ||
     "";
-  /** Samakan dengan CalculationView: SOH pakai organization_name */
   const organizationName =
     user?.userDetail?.organization?.organization_name ||
     user?.userDetail?.organization?.org_name ||
@@ -67,47 +33,35 @@ export const useLhsReportData = (reportDate: string) => {
     user?.userDetail?.organization?.organization_code ||
     organizationName ||
     "";
-  const amoName = organizationName || organizationCode || "—";
+
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [rows, setRows] = useState<LhsStockComputed[]>([]);
+  const [detail, setDetail] = useState<LhsApiDetailData | null>(null);
+  const [apiOrgName, setApiOrgName] = useState("");
+  const [apiDate, setApiDate] = useState(reportDate);
+  const [previousDate, setPreviousDate] = useState<string | null>(null);
+
+  const amoName = apiOrgName || organizationName || organizationCode || "—";
 
   const context: LhsReportContext = useMemo(
     () => ({
       amoName,
       organizationId: String(organizationId || ""),
       organizationCode: String(organizationCode || ""),
-      reportDate,
+      reportDate: apiDate || reportDate,
+      previousDate,
     }),
-    [amoName, organizationId, organizationCode, reportDate],
+    [amoName, organizationId, organizationCode, apiDate, reportDate, previousDate],
   );
-
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [finalCallplans, setFinalCallplans] = useState<Callplan[]>([]);
-  const [btbList, setBtbList] = useState<BTB[]>([]);
-  const [stockAwalByKey, setStockAwalByKey] = useState<Map<string, number>>(
-    () => new Map(),
-  );
-  const [metaByKey, setMetaByKey] = useState<Map<string, number>>(
-    () => new Map(),
-  );
-  const [nameByKey, setNameByKey] = useState<Map<string, string>>(
-    () => new Map(),
-  );
-  const [kodeByKey, setKodeByKey] = useState<Map<string, string>>(
-    () => new Map(),
-  );
-
-  useEffect(() => {
-    const ac = new AbortController();
-    void fetchItems({ signal: ac.signal });
-    return () => ac.abort();
-  }, [fetchItems]);
 
   const refetch = useCallback(
     async (options?: { force?: boolean; signal?: AbortSignal }) => {
-      if (!context.organizationId || !reportDate) {
-        setFinalCallplans([]);
-        setBtbList([]);
-        setError("Organisasi user tidak ditemukan.");
+      if (!reportDate) {
+        setRows([]);
+        setDetail(null);
+        setPreviousDate(null);
+        setError("Tanggal laporan tidak valid.");
         return;
       }
 
@@ -116,151 +70,41 @@ export const useLhsReportData = (reportDate: string) => {
       setError(null);
 
       try {
-        // Wajib organization_name — sama seperti CalculationView / useGetStockOnHand
-        const orgForSoh = organizationName || context.organizationCode;
-        if (!orgForSoh) {
-          throw new Error(
-            "organization_name tidak ditemukan untuk fetch Stock On Hand",
-          );
-        }
-
-        const cache = useOutboundSalesmanCache.getState();
-        const force = Boolean(options?.force);
-
-        const [finalRaw, btbRaw, sohCalc, sohMeta] = await Promise.all([
-          cache.getCallplans(
-            {
-              dateStart: reportDate,
-              organizationId: context.organizationId,
-              status: "FINAL",
-            },
-            { force, signal },
-          ),
-          cache.getBtbLastDateInsert({ force, signal }),
-          cache
-            .getStockOnHandCached(
-              {
-                organization_code: orgForSoh,
-                subinventory_code: SUBINVENTORY,
-              },
-              { force, signal },
-            )
-            .catch((err) => {
-              if (isRequestAborted(err) || signal?.aborted) throw err;
-              console.error("SOH Calculation gagal:", err);
-              return [];
-            }),
-          cache
-            .getRealTimeSOHCached(
-              {
-                organization_name: orgForSoh,
-                organization_code: orgForSoh,
-              },
-              { force, signal },
-            )
-            .catch((err) => {
-              if (isRequestAborted(err) || signal?.aborted) throw err;
-              console.error("SOH Realtime (META) gagal:", err);
-              return { data: [], meta: null };
-            }),
+        const [summary, detailRes] = await Promise.all([
+          lhsReportService.getSummary(reportDate, { signal }),
+          lhsReportService.getDetail(reportDate, { signal }).catch((err) => {
+            if (isRequestAborted(err) || signal?.aborted) throw err;
+            console.error("LHS detail gagal:", err);
+            return null;
+          }),
         ]);
 
         if (signal?.aborted) return;
 
-        const finalFiltered = filterCallplansByOrg(
-          finalRaw,
-          context.organizationId,
-          context.organizationCode,
+        setApiOrgName(String(summary.organization_name || "").trim());
+        setApiDate(String(summary.date || reportDate).trim() || reportDate);
+        setPreviousDate(
+          String(summary.previous_date || "").trim() ||
+            String(detailRes?.previous_date || "").trim() ||
+            null,
         );
-
-        // BTB: sama Good Prep — last-date-insert + filter org
-        const btbFiltered = normalizeBtbForGoodPrep(
-          (btbRaw.data || []).filter(
-            (row) =>
-              matchesBtbOrganization(row, context.organizationId) ||
-              matchesBtbOrganization(row, context.organizationCode) ||
-              matchesBtbOrganization(row, organizationName),
-          ),
-        );
-
-        const awalMap = new Map<string, number>();
-        const awalBySku = new Map<string, number>();
-        const metaMap = new Map<string, number>();
-        const metaBySku = new Map<string, number>();
-        const names = new Map<string, string>();
-        const kodes = new Map<string, string>();
-
-        sohCalc.forEach((item) => {
-          const sku = String(item.item_code || item.item_number || "").trim();
-          const invId = String(item.inventory_item_id || "").trim();
-          if (!sku && !invId) return;
-          const key = skuKey(sku, invId);
-          const qty = Number(item.quantity) || 0;
-          awalMap.set(key, qty);
-          if (sku) {
-            const s = sku.toUpperCase();
-            awalBySku.set(s, (awalBySku.get(s) || 0) + qty);
-          }
-          kodes.set(key, sku || invId);
-          names.set(key, item.item_description || sku || invId);
-        });
-
-        // META: agregasi sama Good Prep — key = inventory_item_id || item_code
-        // qty sudah di-normalize service ke avail_to_reserve (latest on-hand-meta)
-        (sohMeta.data || []).forEach((item) => {
-          const key = getItemKey(item);
-          if (!key) return;
-          const sku = String(
-            item.item_code || item.sku || item.item_number || "",
-          ).trim();
-          const invId = String(item.inventory_item_id || "").trim();
-          const qty = Number(item.quantity) || 0;
-
-          metaMap.set(key, (metaMap.get(key) || 0) + qty);
-          if (sku) {
-            const s = sku.toUpperCase();
-            metaBySku.set(s, (metaBySku.get(s) || 0) + qty);
-          }
-          // Juga index composite agar buildLhsRows bisa match
-          const composite = skuKey(sku, invId);
-          if (composite && composite !== key) {
-            metaMap.set(composite, (metaMap.get(composite) || 0) + qty);
-          }
-
-          if (!kodes.has(key)) kodes.set(key, sku || key);
-          if (!names.has(key)) {
-            names.set(key, item.item_description || sku || key);
-          }
-        });
-
-        // Merge fallback SKU ke map utama tanpa membuat baris dobel di builder
-        awalBySku.forEach((qty, sku) => {
-          if (!awalMap.has(sku)) awalMap.set(sku, qty);
-        });
-        metaBySku.forEach((qty, sku) => {
-          if (!metaMap.has(sku)) metaMap.set(sku, qty);
-        });
-
-        setFinalCallplans(finalFiltered);
-        setBtbList(btbFiltered);
-        setStockAwalByKey(awalMap);
-        setMetaByKey(metaMap);
-        setNameByKey(names);
-        setKodeByKey(kodes);
-      } catch (err: any) {
+        setRows(mapLhsApiItemsToRows(summary.items));
+        setDetail(detailRes);
+      } catch (err: unknown) {
         if (isRequestAborted(err) || signal?.aborted) return;
         console.error("Gagal load Laporan Stock Harian:", err);
         const message =
           err instanceof Error ? err.message : "Gagal memuat data laporan";
         setError(message);
         showErrorToast(message);
-        setFinalCallplans([]);
-        setBtbList([]);
+        setRows([]);
+        setDetail(null);
+        setPreviousDate(null);
       } finally {
         if (!signal?.aborted) setIsLoading(false);
       }
     },
-    [context, reportDate, organizationName],
+    [reportDate],
   );
 
   useEffect(() => {
@@ -269,41 +113,38 @@ export const useLhsReportData = (reportDate: string) => {
     return () => ac.abort();
   }, [refetch]);
 
-  const rows = useMemo(() => {
-    const built = buildLhsRows({
-      finalCallplans,
-      btbList,
-      stockAwalByKey,
-      metaByKey,
-      nameByKey,
-      kodeByKey,
-      itemList: Array.isArray(itemList) ? itemList : [],
-    });
-    return computeRows(built);
-  }, [
-    finalCallplans,
-    btbList,
-    stockAwalByKey,
-    metaByKey,
-    nameByKey,
-    kodeByKey,
-    itemList,
+  const { incoming, outgoing } = useMemo((): {
+    incoming: LhsMovementLine[];
+    outgoing: LhsMovementLine[];
+  } => buildIncomingOutgoingLines(detail, rows, reportDate), [
+    detail,
+    reportDate,
+    rows,
   ]);
 
   const totals = useMemo(() => sumRows(rows), [rows]);
+
+  const reportDateLabel = dayjs(context.reportDate).isValid()
+    ? dayjs(context.reportDate).format("DD MMMM YYYY")
+    : context.reportDate;
+  const previousDateLabel = context.previousDate
+    ? dayjs(context.previousDate).isValid()
+      ? dayjs(context.previousDate).format("DD MMMM YYYY")
+      : context.previousDate
+    : null;
 
   return {
     context,
     rows,
     totals,
-    finalCallplans,
-    btbList,
+    detail,
+    incoming,
+    outgoing,
     isLoading,
     error,
     refetch,
-    salesCount: finalCallplans.length,
-    reportDateLabel: dayjs(reportDate).isValid()
-      ? dayjs(reportDate).format("DD MMMM YYYY")
-      : reportDate,
+    salesCount: 0,
+    reportDateLabel,
+    previousDateLabel,
   };
 };
