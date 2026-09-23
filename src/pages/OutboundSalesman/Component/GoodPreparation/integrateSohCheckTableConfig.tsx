@@ -11,7 +11,7 @@ export type SohCheckLine = {
   qtySubmitted: number;
   qtySpb: number;
   soh: number;
-  status: "AVAILABLE" | "LESS_STOCK" | "NO_STOCK";
+  status: "AVAILABLE" | "LESS_STOCK" | "NO_STOCK" | "NOT_NEEDED";
 };
 
 export type ColumnAlign = "left" | "right" | "center";
@@ -70,6 +70,14 @@ const statusBadge = (status: SohCheckLine["status"]) => {
       badgeClass: "bg-rose-50 text-rose-700 ring-1 ring-inset ring-rose-600/20",
       rowClass:
         "bg-rose-50/30 hover:bg-rose-50/60 transition-colors duration-200",
+    };
+  }
+  if (status === "NOT_NEEDED") {
+    return {
+      label: "Not Needed",
+      badgeClass:
+        "bg-slate-50 text-slate-500 ring-1 ring-inset ring-slate-400/20",
+      rowClass: "hover:bg-slate-50/50 transition-colors duration-200",
     };
   }
   return {

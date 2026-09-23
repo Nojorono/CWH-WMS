@@ -6,6 +6,10 @@ import { getItemKey } from "../utils/getItemKey";
 
 type UseGoodPrepSohParams = {
   stockList: any[] | undefined;
+  /** SOH pagi (API /on-hand KECIL) — sama seperti Calculation */
+  morningStockList?: any[] | undefined;
+  /** Fallback waktu SOH real time dari meta API */
+  realtimeFetchedAt?: string | null;
   prepCallplans: Callplan[];
   itemList: any[] | undefined;
   enrichedData: EnrichedCallplan[];
@@ -14,6 +18,8 @@ type UseGoodPrepSohParams = {
 
 export const useGoodPrepSoh = ({
   stockList,
+  morningStockList,
+  realtimeFetchedAt,
   prepCallplans,
   itemList,
   enrichedData,
@@ -21,6 +27,9 @@ export const useGoodPrepSoh = ({
 }: UseGoodPrepSohParams) => {
   const skuSummary = useMemo(() => {
     const stockMap = new Map<string, number>();
+    const morningMap = new Map<string, number>();
+    const morningAtMap = new Map<string, string>();
+    const realtimeAtMap = new Map<string, string>();
     const metaMap = new Map<
       string,
       {
@@ -31,25 +40,65 @@ export const useGoodPrepSoh = ({
       }
     >();
 
+    const upsertMeta = (item: any, key: string) => {
+      if (metaMap.has(key)) return;
+      const sku = String(
+        item.sku || item.item_code || item.item_number || "",
+      ).trim();
+      metaMap.set(key, {
+        sku: sku || key,
+        item_code: String(item.item_code || sku || key),
+        item_description: String(
+          item.item_description || item.description || "-",
+        ),
+        createdAt: item.createdAt || item.created_at || null,
+      });
+    };
+
+    const pickLatestAt = (
+      map: Map<string, string>,
+      key: string,
+      item: any,
+    ) => {
+      const raw = String(
+        item.updatedAt ||
+          item.updated_at ||
+          item.createdAt ||
+          item.created_at ||
+          "",
+      ).trim();
+      if (!raw) return;
+      const prev = map.get(key);
+      if (!prev) {
+        map.set(key, raw);
+        return;
+      }
+      const prevTs = new Date(prev).getTime();
+      const nextTs = new Date(raw).getTime();
+      if (Number.isFinite(nextTs) && nextTs >= (Number.isFinite(prevTs) ? prevTs : 0)) {
+        map.set(key, raw);
+      }
+    };
+
     (Array.isArray(stockList) ? stockList : []).forEach((item: any) => {
       const key = getItemKey(item);
       if (!key) return;
       const qty = Number(item.quantity || 0);
       stockMap.set(key, (stockMap.get(key) || 0) + qty);
-      if (!metaMap.has(key)) {
-        const sku = String(
-          item.sku || item.item_code || item.item_number || "",
-        ).trim();
-        metaMap.set(key, {
-          sku: sku || key,
-          item_code: String(item.item_code || sku || key),
-          item_description: String(
-            item.item_description || item.description || "-",
-          ),
-          createdAt: item.createdAt || item.created_at || null,
-        });
-      }
+      upsertMeta(item, key);
+      pickLatestAt(realtimeAtMap, key, item);
     });
+
+    (Array.isArray(morningStockList) ? morningStockList : []).forEach(
+      (item: any) => {
+        const key = getItemKey(item);
+        if (!key) return;
+        const qty = Number(item.quantity || 0);
+        morningMap.set(key, (morningMap.get(key) || 0) + qty);
+        upsertMeta(item, key);
+        pickLatestAt(morningAtMap, key, item);
+      },
+    );
 
     const reqMap = new Map<string, number>();
     prepCallplans.forEach((cp) => {
@@ -78,19 +127,37 @@ export const useGoodPrepSoh = ({
       });
     });
 
-    const keys = [...new Set([...stockMap.keys(), ...reqMap.keys()])];
+    const keys = [
+      ...new Set([
+        ...stockMap.keys(),
+        ...morningMap.keys(),
+        ...reqMap.keys(),
+      ]),
+    ];
     return keys.map((key) => {
       const meta = metaMap.get(key);
+      const soh = stockMap.get(key) || 0; // real-time
+      const stockAwal = morningMap.get(key) || 0; // SOH pagi (Calculation API)
+      const stockAwalAt = morningAtMap.get(key) || null;
+      const sohAt =
+        realtimeAtMap.get(key) || realtimeFetchedAt || null;
       return {
         sku: meta?.sku || key,
         item_code: meta?.item_code || meta?.sku || key,
         item_description: meta?.item_description || "-",
         createdAt: meta?.createdAt || null,
-        soh: stockMap.get(key) || 0,
+        soh,
+        sohAt,
+        stockAwal,
+        stockAwalAt,
+        /** Stock Akhir = SOH Awal − SOH real time */
+        stockAkhir: stockAwal - soh,
+        /** Waktu snapshot yang dipakai hitung Stock Akhir */
+        stockAkhirAt: sohAt,
         totalRequest: reqMap.get(key) || 0, // Σ Final SPB belum integrate Meta
       };
     });
-  }, [stockList, prepCallplans, itemList]);
+  }, [stockList, morningStockList, prepCallplans, itemList, realtimeFetchedAt]);
 
   const sohStatusCount = useMemo(() => {
     let available = 0;

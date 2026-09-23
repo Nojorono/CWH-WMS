@@ -13,6 +13,11 @@ type SkuSummaryItem = {
   item_description: string;
   createdAt: string | null;
   soh: number;
+  sohAt?: string | null;
+  stockAwal?: number;
+  stockAwalAt?: string | null;
+  stockAkhir?: number;
+  stockAkhirAt?: string | null;
   totalRequest: number;
 };
 
@@ -103,7 +108,7 @@ export const GoodPrepSohSection = ({
                       Section SOH
                     </p>
                     <h2 className="mt-1 text-lg font-bold tracking-tight text-slate-800">
-                      Stock On Hand Monitoring
+                      Stock Real Time
                     </h2>
                     <p className="mt-1 text-[11px] text-slate-500">
                       Timestamp SOH:{" "}

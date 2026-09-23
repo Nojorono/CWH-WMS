@@ -11,6 +11,7 @@ type GoodPrepExpandedRowProps = {
   /** SKU oversold vs Available SOH */
   needsAdjustSkus?: Set<string>;
   sohMap?: Map<string, number>;
+  totalQtySpbMap?: Map<string, number>;
   onSaveAdjustments: (
     callplanId: string,
     payload: {
@@ -25,6 +26,7 @@ export const GoodPrepExpandedRow = ({
   globalFilter,
   needsAdjustSkus,
   sohMap,
+  totalQtySpbMap,
   onSaveAdjustments,
 }: GoodPrepExpandedRowProps) => {
   /** Adjust Qty: hanya dikunci jika sudah integrate Meta (`move_order_integration`) */
@@ -69,6 +71,7 @@ export const GoodPrepExpandedRow = ({
         adjustDisabledTitle={adjustDisabledTitle}
         needsAdjustSkus={needsAdjustSkus}
         sohMap={sohMap}
+        totalQtySpbMap={totalQtySpbMap}
         onSaveAdjustments={onSaveAdjustments}
         highlightedSku={globalFilter}
         header={{

@@ -77,6 +77,7 @@ import {
   MoveOrderSelisih,
   LaporanHarianStock,
   RekapSPBFinal,
+  DownloadSJcabang,
 } from "./utils/PagesComponent";
 import IntegrationMonitoringPage from "./pages/DOsuggestionV1/IntegrationLog";
 import OpeningStockUploadPage from "./pages/OpeningStockBalance";
@@ -179,6 +180,7 @@ export function AppRoutes() {
       "/move_order_selisih": <MoveOrderSelisih />,
       "/laporan_harian_stock": <LaporanHarianStock />,
       "/rekap_spb_final": <RekapSPBFinal />,
+      "/download_sj_cabang": <DownloadSJcabang />,
     };
     return map[path] || <DefaultPage />;
   }
