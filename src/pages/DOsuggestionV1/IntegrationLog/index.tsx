@@ -1,7 +1,10 @@
 import { useState, useMemo, useRef, useCallback, useEffect } from "react";
 import { ColumnDef } from "@tanstack/react-table";
 import { useMoveOrderIntegration } from "./hook/useMoveOrderIntegration";
-import { MoveOrderIntegrationHeader } from "../../../API/types/DOsuggestionIntegration";
+import {
+  MoveOrderIntegrationHeader,
+  MoveOrderIntegrationParams,
+} from "../../../API/types/DOsuggestionIntegration";
 import { pollMoveOrderIntegration } from "../../../API/services/DOsuggestionServices/integrationMetaService";
 import { DataTable } from "./component/Table";
 import {
@@ -17,7 +20,6 @@ import { useStoreItem } from "../../../DynamicAPI/stores/Store/MasterStore";
 import { showErrorToast, showSuccessToast } from "../../../components/toast";
 import DeferredMount from "../../../components/common/DeferredMount";
 
-// Komponen Badge dengan Pesan Informatif
 const StatusBadge = ({
   status,
   message,
@@ -62,6 +64,13 @@ const IntegrationMonitoringPageInner = () => {
   const [statusFilter, setStatusFilter] = useState<
     "INTEGRATED" | "ERROR" | "TIMEOUT" | ""
   >("");
+  const [skuFilter, setSkuFilter] = useState("");
+  const [spbFilter, setSpbFilter] = useState("");
+  const [salesFilter, setSalesFilter] = useState("");
+  /** Akumulasi opsi dropdown dari data yang pernah dimuat */
+  const [skuOptions, setSkuOptions] = useState<string[]>([]);
+  const [spbOptions, setSpbOptions] = useState<string[]>([]);
+  const [salesOptions, setSalesOptions] = useState<string[]>([]);
 
   const { list: itemList, fetchAll: fetchAllItem } = useStoreItem();
 
@@ -71,17 +80,27 @@ const IntegrationMonitoringPageInner = () => {
     return () => ac.abort();
   }, [fetchAllItem]);
 
+  useEffect(() => {
+    setPage(1);
+  }, [skuFilter, spbFilter, salesFilter, statusFilter]);
+
+  const integrationParams = useMemo<MoveOrderIntegrationParams>(
+    () => ({
+      page,
+      limit,
+      sortBy: "updatedAt",
+      sortOrder: "DESC",
+      iface_status: statusFilter || undefined,
+      source_system: "WMS",
+    }),
+    [page, limit, statusFilter],
+  );
+
   const {
     data: response,
     isLoading,
     refetch,
-  } = useMoveOrderIntegration({
-    page,
-    limit,
-    sortOrder: "DESC",
-    iface_status: statusFilter || undefined,
-    source_system: "WMS",
-  });
+  } = useMoveOrderIntegration(integrationParams);
 
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [pollingIds, setPollingIds] = useState<Record<string, boolean>>({});
@@ -159,11 +178,112 @@ const IntegrationMonitoringPageInner = () => {
     return map;
   }, [itemList]);
 
+  /** Opsi dropdown dari list data yang sudah dimuat (akumulasi antar halaman) */
+  useEffect(() => {
+    const list = response?.data || [];
+    if (!list.length) return;
+
+    const collator = new Intl.Collator("id", { sensitivity: "base" });
+    const mergeUnique = (prev: string[], next: string[]) => {
+      const set = new Set(prev);
+      next.forEach((v) => {
+        if (v) set.add(v);
+      });
+      return [...set].sort(collator.compare);
+    };
+
+    const nextSpbs: string[] = [];
+    const nextSales: string[] = [];
+    const nextSkus: string[] = [];
+
+    list.forEach((row) => {
+      const spb = String(row.request_number || "").trim();
+      if (spb) nextSpbs.push(spb);
+
+      const sales = String(row.description || "").trim();
+      if (sales) nextSales.push(sales);
+
+      (row.lines || []).forEach((line) => {
+        const invKey = String(line.inventory_item_id ?? "").trim();
+        const master = invKey ? itemByInventoryId.get(invKey) : undefined;
+        const sku = String(master?.sku || "").trim();
+        const itemNumber = String(master?.item_number || "").trim();
+        if (sku) nextSkus.push(sku);
+        else if (itemNumber) nextSkus.push(itemNumber);
+        else if (invKey) nextSkus.push(invKey);
+      });
+    });
+
+    setSpbOptions((prev) => mergeUnique(prev, nextSpbs));
+    setSalesOptions((prev) => mergeUnique(prev, nextSales));
+    setSkuOptions((prev) => mergeUnique(prev, nextSkus));
+  }, [response?.data, itemByInventoryId]);
+
+  /** Reset opsi saat ganti status (dataset beda) */
+  useEffect(() => {
+    setSkuOptions([]);
+    setSpbOptions([]);
+    setSalesOptions([]);
+    setSkuFilter("");
+    setSpbFilter("");
+    setSalesFilter("");
+  }, [statusFilter]);
+
+  /** Sort updatedAt DESC + filter client (SKU / SPB / Sales) */
+  const sortedData = useMemo(() => {
+    const list = [...(response?.data || [])];
+
+    const toTime = (row: MoveOrderIntegrationHeader) => {
+      const raw = String(
+        row.updatedAt ||
+          row.last_update_date ||
+          row.createdAt ||
+          row.creation_date ||
+          "",
+      ).trim();
+      if (!raw) return 0;
+      const normalized = raw.includes("T") ? raw : raw.replace(" ", "T");
+      const t = new Date(normalized).getTime();
+      return Number.isFinite(t) ? t : 0;
+    };
+
+    list.sort((a, b) => toTime(b) - toTime(a));
+
+    const skuQ = skuFilter.trim();
+    const spbQ = spbFilter.trim();
+    const salesQ = salesFilter.trim();
+
+    if (!skuQ && !spbQ && !salesQ) return list;
+
+    return list.filter((row) => {
+      if (spbQ && String(row.request_number || "").trim() !== spbQ) {
+        return false;
+      }
+
+      if (salesQ && String(row.description || "").trim() !== salesQ) {
+        return false;
+      }
+
+      if (skuQ) {
+        const hit = (row.lines || []).some((line) => {
+          const invKey = String(line.inventory_item_id ?? "").trim();
+          const master = invKey ? itemByInventoryId.get(invKey) : undefined;
+          const sku = String(master?.sku || "").trim();
+          const itemNumber = String(master?.item_number || "").trim();
+          return sku === skuQ || itemNumber === skuQ || invKey === skuQ;
+        });
+        if (!hit) return false;
+      }
+
+      return true;
+    });
+  }, [response?.data, skuFilter, spbFilter, salesFilter, itemByInventoryId]);
+
   const columns = useMemo<ColumnDef<MoveOrderIntegrationHeader>[]>(
     () => [
       {
         accessorKey: "request_number",
-        header: "Request Info",
+        header: "SPB / Request",
         cell: ({ row }) => (
           <div className="flex flex-col">
             <span className="font-bold text-slate-900">
@@ -175,16 +295,26 @@ const IntegrationMonitoringPageInner = () => {
           </div>
         ),
       },
-      { accessorKey: "description", header: "PIC / Deskripsi" },
       {
-        accessorKey: "creation_date",
-        header: "Waktu Proses",
-        cell: ({ row }) => (
-          <div className="flex items-center gap-1.5 text-slate-600">
-            <FaClock size={12} className="text-slate-400" />
-            {formatDateTimeIndo(row.original.creation_date)}
-          </div>
-        ),
+        accessorKey: "description",
+        header: "Nama Sales / PIC",
+      },
+      {
+        accessorKey: "updatedAt",
+        header: "Waktu Update",
+        cell: ({ row }) => {
+          const waktu =
+            row.original.updatedAt ||
+            row.original.last_update_date ||
+            row.original.createdAt ||
+            row.original.creation_date;
+          return (
+            <div className="flex items-center gap-1.5 text-slate-600">
+              <FaClock size={12} className="text-slate-400" />
+              {formatDateTimeIndo(waktu)}
+            </div>
+          );
+        },
       },
       {
         accessorKey: "iface_status",
@@ -239,53 +369,108 @@ const IntegrationMonitoringPageInner = () => {
   return (
     <div className="p-8 bg-slate-50 min-h-screen">
       <div className="max-w-7xl mx-auto space-y-6">
-        <div className="flex justify-between items-end">
+        <div className="flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-end">
           <div>
             <h1 className="text-2xl font-bold text-slate-900">
-              Monitoring Integrasi
+              Monitoring Integrasi Move Order
             </h1>
             <p className="text-sm text-slate-500">
               Pusat kontrol dan pantauan integraasi data ke Meta.
             </p>
           </div>
 
-          <div className="flex items-center gap-3">
-            {/* Tombol Refresh */}
-            <button
-              onClick={handleRefresh}
-              disabled={refreshBusy}
-              className={`flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-lg shadow-sm text-sm font-medium text-slate-700 hover:bg-slate-50 active:scale-95 transition-all duration-200 ${refreshBusy ? "opacity-50 cursor-not-allowed" : ""}`}
-            >
-              <FaSyncAlt
-                className={`transition-transform duration-500 ${refreshBusy ? "animate-spin" : ""}`}
-                size={14}
-              />
-              {refreshBusy ? "Memuat..." : "Refresh"}
-            </button>
+          <button
+            onClick={handleRefresh}
+            disabled={refreshBusy}
+            className={`flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-lg shadow-sm text-sm font-medium text-slate-700 hover:bg-slate-50 active:scale-95 transition-all duration-200 ${refreshBusy ? "opacity-50 cursor-not-allowed" : ""}`}
+          >
+            <FaSyncAlt
+              className={`transition-transform duration-500 ${refreshBusy ? "animate-spin" : ""}`}
+              size={14}
+            />
+            {refreshBusy ? "Memuat..." : "Refresh"}
+          </button>
+        </div>
 
-            {/* Filter */}
-            <div className="flex items-center gap-2 bg-white border border-slate-200 px-4 py-2 rounded-lg shadow-sm">
-              <FaFilter className="text-slate-400" size={14} />
-              <select
-                value={statusFilter}
-                onChange={(e) => {
-                  setStatusFilter(e.target.value as any);
-                  setPage(1);
-                }}
-                className="text-sm border-none bg-transparent focus:ring-0 cursor-pointer font-medium text-slate-700"
-              >
-                <option value="">Semua Status</option>
-                <option value="INTEGRATED">Berhasil</option>
-                <option value="ERROR">Gagal</option>
-                <option value="TIMEOUT">Timeout</option>
-              </select>
-            </div>
-          </div>
+        {/* Filters */}
+        <div className="grid grid-cols-1 gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:grid-cols-2 lg:grid-cols-4">
+          <label className="block">
+            <span className="mb-1.5 block text-[11px] font-semibold tracking-wide text-slate-500 uppercase">
+              SKU
+            </span>
+            <select
+              value={skuFilter}
+              onChange={(e) => setSkuFilter(e.target.value)}
+              className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-medium text-slate-700 outline-none focus:border-indigo-400 focus:bg-white focus:ring-1 focus:ring-indigo-400"
+            >
+              <option value="">Semua SKU</option>
+              {skuOptions.map((sku) => (
+                <option key={sku} value={sku}>
+                  {sku}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label className="block">
+            <span className="mb-1.5 block text-[11px] font-semibold tracking-wide text-slate-500 uppercase">
+              SPB Number
+            </span>
+            <select
+              value={spbFilter}
+              onChange={(e) => setSpbFilter(e.target.value)}
+              className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-medium text-slate-700 outline-none focus:border-indigo-400 focus:bg-white focus:ring-1 focus:ring-indigo-400"
+            >
+              <option value="">Semua SPB</option>
+              {spbOptions.map((spb) => (
+                <option key={spb} value={spb}>
+                  {spb}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label className="block">
+            <span className="mb-1.5 block text-[11px] font-semibold tracking-wide text-slate-500 uppercase">
+              Nama Sales
+            </span>
+            <select
+              value={salesFilter}
+              onChange={(e) => setSalesFilter(e.target.value)}
+              className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-medium text-slate-700 outline-none focus:border-indigo-400 focus:bg-white focus:ring-1 focus:ring-indigo-400"
+            >
+              <option value="">Semua Sales</option>
+              {salesOptions.map((sales) => (
+                <option key={sales} value={sales}>
+                  {sales}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label className="block">
+            <span className="mb-1.5 flex items-center gap-1.5 text-[11px] font-semibold tracking-wide text-slate-500 uppercase">
+              <FaFilter size={10} /> Status
+            </span>
+            <select
+              value={statusFilter}
+              onChange={(e) => {
+                setStatusFilter(e.target.value as typeof statusFilter);
+                setPage(1);
+              }}
+              className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-medium text-slate-700 outline-none focus:border-indigo-400 focus:bg-white focus:ring-1 focus:ring-indigo-400"
+            >
+              <option value="">Semua Status</option>
+              <option value="INTEGRATED">Berhasil</option>
+              <option value="ERROR">Gagal</option>
+              <option value="TIMEOUT">Timeout</option>
+            </select>
+          </label>
         </div>
 
         <DataTable
           columns={columns}
-          data={response?.data || []}
+          data={sortedData}
           isLoading={isLoading}
           pageIndex={page}
           pageSize={limit}
@@ -311,55 +496,55 @@ const IntegrationMonitoringPageInner = () => {
                       : undefined;
 
                     return (
-                    <div
-                      key={line.id}
-                      className="p-4 bg-white rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow"
-                    >
-                      <div className="flex justify-between items-start gap-3 mb-3">
-                        <div className="min-w-0">
-                          {master ? (
-                            <>
-                              <p className="text-sm font-bold text-slate-900 truncate">
-                                {master.sku}
-                              </p>
-                              <p className="text-[11px] font-medium text-slate-500 truncate">
-                                {master.item_number || "-"}
-                              </p>
-                              <p className="text-[10px] text-slate-400 truncate mt-0.5">
-                                {master.description}
-                              </p>
-                            </>
-                          ) : (
-                            <span className="text-[10px] font-bold bg-slate-100 px-2 py-0.5 rounded text-slate-600">
-                              ITEM ID: {line.inventory_item_id || "-"}
-                            </span>
-                          )}
-                          {master && (
-                            <span className="inline-block mt-1 text-[10px] font-medium text-slate-400">
-                              ID: {line.inventory_item_id}
-                            </span>
-                          )}
-                        </div>
-                        <span className="shrink-0 text-xs font-bold text-indigo-600">
-                          {line.quantity} {line.uom_code}
-                        </span>
-                      </div>
-                      <div className="space-y-1">
-                        <p className="text-xs text-slate-400">
-                          Subinventory:{" "}
-                          <span className="text-slate-700 font-medium">
-                            {line.from_subinventory_code} ➝{" "}
-                            {line.to_subinventory_code}
+                      <div
+                        key={line.id}
+                        className="p-4 bg-white rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow"
+                      >
+                        <div className="flex justify-between items-start gap-3 mb-3">
+                          <div className="min-w-0">
+                            {master ? (
+                              <>
+                                <p className="text-sm font-bold text-slate-900 truncate">
+                                  {master.sku}
+                                </p>
+                                <p className="text-[11px] font-medium text-slate-500 truncate">
+                                  {master.item_number || "-"}
+                                </p>
+                                <p className="text-[10px] text-slate-400 truncate mt-0.5">
+                                  {master.description}
+                                </p>
+                              </>
+                            ) : (
+                              <span className="text-[10px] font-bold bg-slate-100 px-2 py-0.5 rounded text-slate-600">
+                                ITEM ID: {line.inventory_item_id || "-"}
+                              </span>
+                            )}
+                            {master && (
+                              <span className="inline-block mt-1 text-[10px] font-medium text-slate-400">
+                                ID: {line.inventory_item_id}
+                              </span>
+                            )}
+                          </div>
+                          <span className="shrink-0 text-xs font-bold text-indigo-600">
+                            {line.quantity} {line.uom_code}
                           </span>
-                        </p>
-                        <div
-                          className={`text-[10px] font-semibold mt-2 pt-2 border-t ${line.iface_status === "SUCCESS" ? "text-emerald-600" : "text-red-600"}`}
-                        >
-                          {line.iface_status}{" "}
-                          {line.iface_message && `- ${line.iface_message}`}
+                        </div>
+                        <div className="space-y-1">
+                          <p className="text-xs text-slate-400">
+                            Subinventory:{" "}
+                            <span className="text-slate-700 font-medium">
+                              {line.from_subinventory_code} ➝{" "}
+                              {line.to_subinventory_code}
+                            </span>
+                          </p>
+                          <div
+                            className={`text-[10px] font-semibold mt-2 pt-2 border-t ${line.iface_status === "SUCCESS" ? "text-emerald-600" : "text-red-600"}`}
+                          >
+                            {line.iface_status}{" "}
+                            {line.iface_message && `- ${line.iface_message}`}
+                          </div>
                         </div>
                       </div>
-                    </div>
                     );
                   })}
                 </div>

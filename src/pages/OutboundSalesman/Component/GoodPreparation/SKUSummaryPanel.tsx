@@ -169,24 +169,6 @@ export const SKUSummaryPanel = ({
             </button>
           )}
         </div>
-
-        {/* <div className="flex gap-2">
-          {(["ALL", "AVAILABLE", "LESS_STOCK", "NO_STOCK"] as const).map(
-            (tab) => (
-            <button
-              key={tab}
-              onClick={() => setFilter(tab)}
-              className={`rounded-lg border px-3 py-1.5 text-[10px] font-bold transition-all ${
-                filter === tab
-                  ? "bg-slate-800 text-white"
-                  : "border-slate-200 bg-white text-slate-600"
-              }`}
-            >
-              {tab.replace("_", " ")}
-            </button>
-          ),
-          )}
-        </div> */}
       </div>
 
       <div className="pb-2">
@@ -238,22 +220,22 @@ export const SKUSummaryPanel = ({
 
                   <div className="min-w-0">
                     <p className="text-[10px] font-semibold tracking-wider text-slate-500 uppercase">
-                      Stock Akhir
+                      Remaining Stock
                     </p>
                     <p
                       className={`text-xl font-extrabold leading-tight tabular-nums ${
-                        Number(item.stockAkhir ?? 0) < 0
+                        Number(item.soh ?? 0) - Number(item.totalRequest ?? 0) <
+                        0
                           ? "text-red-600"
                           : "text-slate-900"
                       }`}
                     >
-                      {Number(
-                        item.stockAkhir ??
-                          Number(item.stockAwal ?? 0) - Number(item.soh ?? 0),
+                      {(
+                        Number(item.soh ?? 0) - Number(item.totalRequest ?? 0)
                       ).toLocaleString()}
                     </p>
                     <p className="mt-0.5 truncate text-[10px] leading-tight text-slate-500">
-                      {formatStockAt(item.stockAkhirAt || item.sohAt) || "-"}
+                      {formatStockAt(item.sohAt) || "-"}
                     </p>
                   </div>
 

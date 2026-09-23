@@ -1,4 +1,4 @@
-// ============================================================================
+﻿// ============================================================================
 // TYPES UNTUK DATA INTEGRASI MOVE ORDER (META ORACLE / WMS)
 // ============================================================================
 
@@ -196,8 +196,15 @@ export interface MoveOrderIntegrationResponse {
 export interface MoveOrderIntegrationParams {
     page: number;
     limit: number;
+    sortBy?: string;
     sortOrder?: "ASC" | "DESC";
-    iface_status?: any
+    iface_status?: any;
     source_system?: string;
     search?: string;
+    /** Filter SPB / request number */
+    request_number?: string;
+    /** Filter nama sales / PIC (description) */
+    description?: string;
+    /** Filter SKU di lines */
+    sku?: string;
 }
