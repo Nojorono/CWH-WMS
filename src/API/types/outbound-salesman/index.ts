@@ -4,3 +4,4 @@
 export * from "./CallplanTypes";
 export * from "./BTBtypes";
 export * from "./RealTimeSOHTypes";
+export * from "./OnHandLocatorTypes";

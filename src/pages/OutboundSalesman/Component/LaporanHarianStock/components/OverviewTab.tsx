@@ -8,9 +8,26 @@ type Props = {
   rows: LhsStockComputed[];
   totals: LhsTotals;
   isLoading?: boolean;
+  /** Tanggal SOH Stock Awal (previous_date) */
+  previousDateLabel?: string | null;
+  /** Tanggal SOH META (date) */
+  reportDateLabel?: string | null;
 };
 
-function OverviewTab({ rows, totals, isLoading }: Props) {
+function OverviewTab({
+  rows,
+  totals,
+  isLoading,
+  previousDateLabel,
+  reportDateLabel,
+}: Props) {
+  const stockAwalHeader = previousDateLabel
+    ? `Stock Awal (SOH ${previousDateLabel})`
+    : "Stock Awal";
+  const metaHeader = reportDateLabel
+    ? `META (SOH ${reportDateLabel})`
+    : "META";
+
   const columns: LhsColumn<LhsStockComputed>[] = [
     {
       id: "kode",
@@ -26,7 +43,7 @@ function OverviewTab({ rows, totals, isLoading }: Props) {
     },
     {
       id: "stockAwal",
-      header: "Stock Awal",
+      header: stockAwalHeader,
       align: "right",
       cell: (row) => (
         <span className="tabular-nums text-slate-700">
@@ -67,14 +84,8 @@ function OverviewTab({ rows, totals, isLoading }: Props) {
       ),
     },
     {
-      id: "fisik",
-      header: "Fisik",
-      align: "right",
-      cell: () => <span className="tabular-nums text-slate-300">—</span>,
-    },
-    {
       id: "meta",
-      header: "META",
+      header: metaHeader,
       align: "right",
       cell: (row) => (
         <span className="tabular-nums text-slate-700">
@@ -84,7 +95,7 @@ function OverviewTab({ rows, totals, isLoading }: Props) {
     },
     {
       id: "variance",
-      header: "Variance",
+      header: "Variance (META − Akhir)",
       align: "center",
       cell: (row) => <VarianceBadge value={row.variance} />,
     },

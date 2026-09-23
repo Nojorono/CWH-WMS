@@ -35,9 +35,8 @@ export type AllocationCalculationOptions = {
 
 /**
  * FPPR Tambahan only:
- * - lihat SOH per item
- * - SOH == 0 → qty 0
- * - SOH cukup → qty = suggestion
+ * - qty submitted & final = suggestion
+ * - TANPA kalkulasi / perbandingan SOH
  * - TANPA perhitungan contrib % (bukan proporsional antar SPB)
  * FPPR Awal tidak masuk sini — ikut alokasi SOH + contrib.
  */
@@ -46,7 +45,7 @@ const passthroughDetail = (detail: any, sohMap: Record<string, number>) => {
     const key = getItemKey(detail);
     const soh = sohMap[key] || 0;
     const suggestion = safeParse(detail.item_qty_suggestion);
-    const qty = resolveFpprTambahanQty(detail, soh);
+    const qty = resolveFpprTambahanQty(detail);
     const qtyBtb = safeParse(detail.qty_btb || 0);
 
     return {

@@ -15,6 +15,7 @@ import { showErrorToast, showSuccessToast } from "../../../../components/toast";
 import { BaseTable } from "../../shared/component/BaseTable";
 import { PrintAllSKU } from "../../shared/component/PrintAllSKU";
 import { useRealTimeSOH } from "../../hook/useRealTimeSOH";
+import { useGetStockOnHand } from "../../shared/hook/useGetStockOnHand";
 import { GoodPrepViewProps } from "../../types/flow";
 import { LoadingOverlay } from "./LoadingOverlay";
 import { EnrichedCallplan, isSpbIntegratedToMeta } from "./types";
@@ -70,6 +71,13 @@ function GoodPrepView({
 
   const { data: stockList, meta: sohMeta, isLoading: isSohLoading } =
     useRealTimeSOH(organization_name ? { organization_name } : null);
+
+  /** SOH pagi — API sama dengan Calculation Page (`/on-hand` sub KECIL) */
+  const { data: morningStockList, isLoading: isMorningSohLoading } =
+    useGetStockOnHand({
+      org: String(organization_name || ""),
+      sub: "KECIL",
+    });
 
   const sohFetchedAtLabel = useMemo(() => {
     const raw = String(sohMeta?.timestamp || sohMeta?.fetchedAt || "");
@@ -346,11 +354,26 @@ function GoodPrepView({
     singleIntegrateLines,
   } = useGoodPrepSoh({
     stockList: Array.isArray(stockList) ? stockList : [],
+    morningStockList: Array.isArray(morningStockList) ? morningStockList : [],
+    realtimeFetchedAt: String(sohMeta?.timestamp || sohMeta?.fetchedAt || "") || null,
     prepCallplans,
     itemList,
     enrichedData,
     integrateTriggerSpb,
   });
+
+  /** sku lowercase → Σ Qty Final SPB cabang (belum Meta) */
+  const totalQtySpbMap = useMemo(() => {
+    const map = new Map<string, number>();
+    skuSummary.forEach((s) => {
+      const key = String(s.item_code || s.sku || "")
+        .trim()
+        .toLowerCase();
+      if (!key) return;
+      map.set(key, Number(s.totalRequest) || 0);
+    });
+    return map;
+  }, [skuSummary]);
 
   const handleFocusSpbFromAlert = (spbNumber: string) => {
     if (!spbNumber) return;
@@ -376,6 +399,50 @@ function GoodPrepView({
   const columns: ColumnDef<EnrichedCallplan>[] = useMemo(
     () => [
       { accessorKey: "spb_number", header: "SPB Number" },
+      {
+        id: "meta_integration",
+        header: "Meta Integration",
+        cell: ({ row }) => {
+          const integrated = isSpbIntegratedToMeta(row.original);
+          return (
+            <span
+              className={`inline-flex items-center rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide ${
+                integrated
+                  ? "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200"
+                  : "bg-slate-100 text-slate-500 ring-1 ring-slate-200"
+              }`}
+              title={
+                integrated
+                  ? "Sudah di-integrate ke Meta"
+                  : "Belum di-integrate ke Meta"
+              }
+            >
+              {integrated ? "Sudah" : "Belum"}
+            </span>
+          );
+        },
+      },
+      {
+        id: "status",
+        header: "Status",
+        cell: ({ row }) => {
+          const status = String(row.original.status || "-").trim() || "-";
+          const upper = status.toUpperCase();
+          const statusClass =
+            upper === "COMPLETED"
+              ? "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200"
+              : upper === "FINAL"
+                ? "bg-blue-50 text-blue-700 ring-1 ring-blue-200"
+                : "bg-slate-100 text-slate-600 ring-1 ring-slate-200";
+          return (
+            <span
+              className={`inline-flex items-center rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide ${statusClass}`}
+            >
+              {status}
+            </span>
+          );
+        },
+      },
       {
         accessorKey: "mo_type",
         header: "MO Type",
@@ -528,7 +595,7 @@ function GoodPrepView({
 
       <GoodPrepSohSection
         sohFetchedAtLabel={sohFetchedAtLabel}
-        isSohLoading={isSohLoading}
+        isSohLoading={isSohLoading || isMorningSohLoading}
         sohStatusCount={sohStatusCount}
         skuSummary={skuSummary}
         globalHasLessStock={globalHasLessStock}
@@ -549,9 +616,9 @@ function GoodPrepView({
             <GoodPrepExpandedRow
               row={row}
               globalFilter={globalFilter}
-              isAdjustDisabled={isPrintDisabled}
               needsAdjustSkus={branchOversoldSkus}
               sohMap={sohMap}
+              totalQtySpbMap={totalQtySpbMap}
               onSaveAdjustments={handleSaveAdjustments}
             />
           )}
@@ -618,6 +685,8 @@ function GoodPrepView({
         isSohLoading={isSohLoading}
         itemList={itemList}
         sohMap={sohMap}
+        totalQtySpbMap={totalQtySpbMap}
+        needsAdjustSkus={branchOversoldSkus}
         onCloseIntegrate={closeIntegrateModal}
         onAdjustFromIntegrate={goToAdjustFromIntegrate}
         onProceedIntegrate={proceedIntegrate}

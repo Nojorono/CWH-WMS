@@ -28,6 +28,8 @@ const STATUS_OPTIONS = [
   { value: "FINAL", label: "FINAL" },
   { value: "VOID", label: "VOID" },
   { value: "VOID_NEED_ACTION", label: "VOID_NEED_ACTION" },
+  { value: "COMPLETED", label: "COMPLETED" },
+
 ];
 
 const getInitialBypassState = () => {

@@ -77,9 +77,13 @@ import {
   MoveOrderSelisih,
   LaporanHarianStock,
   RekapSPBFinal,
+  DownloadSJcabang,
+  IntegrationMonitoringPage,
+  OpeningStockUploadPage,
+  FASManagement,
+  RealTimeVsCanvasGIT,
 } from "./utils/PagesComponent";
-import IntegrationMonitoringPage from "./pages/DOsuggestionV1/IntegrationLog";
-import OpeningStockUploadPage from "./pages/OpeningStockBalance";
+
 
 const DefaultPage = () => (
   <div className="flex items-center justify-center h-full">
@@ -179,6 +183,9 @@ export function AppRoutes() {
       "/move_order_selisih": <MoveOrderSelisih />,
       "/laporan_harian_stock": <LaporanHarianStock />,
       "/rekap_spb_final": <RekapSPBFinal />,
+      "/download_sj_cabang": <DownloadSJcabang />,
+      "/fas_management": <FASManagement />,
+      "/real_time_vs_canvas_git" : <RealTimeVsCanvasGIT />,
     };
     return map[path] || <DefaultPage />;
   }

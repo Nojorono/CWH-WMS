@@ -75,7 +75,8 @@ const statusBadge = (status: SohCheckLine["status"]) => {
   if (status === "NOT_NEEDED") {
     return {
       label: "Not Needed",
-      badgeClass: "bg-slate-100 text-slate-600 ring-1 ring-inset ring-slate-400/20",
+      badgeClass:
+        "bg-slate-50 text-slate-500 ring-1 ring-inset ring-slate-400/20",
       rowClass: "hover:bg-slate-50/50 transition-colors duration-200",
     };
   }

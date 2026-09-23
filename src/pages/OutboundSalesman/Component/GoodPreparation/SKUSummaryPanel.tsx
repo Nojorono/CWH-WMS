@@ -1,7 +1,6 @@
 import dayjs from "dayjs";
 import React, { useMemo, useState } from "react";
 import { FaRotate } from "react-icons/fa6";
-import { formatDateTimeIndo } from "../../../../helper/FormatDateTime";
 
 export type SkuSummaryFilter = "ALL" | "AVAILABLE" | "LESS_STOCK" | "NO_STOCK";
 
@@ -74,6 +73,13 @@ const getItemCardConfig = (item: any) => {
     descriptionClass: "text-slate-800 font-semibold",
     showDate: true,
   };
+};
+
+const formatStockAt = (raw: string | null | undefined) => {
+  if (!raw) return null;
+  const parsed = dayjs(raw);
+  if (!parsed.isValid()) return String(raw);
+  return parsed.format("DD MMM YYYY HH:mm");
 };
 
 export const SKUSummaryPanel = ({
@@ -183,8 +189,8 @@ export const SKUSummaryPanel = ({
         </div> */}
       </div>
 
-      <div className="overflow-x-auto pb-4">
-        <div className="custom-scrollbar flex max-h-70 flex-wrap gap-3 overflow-y-auto pr-2">
+      <div className="pb-2">
+        <div className="custom-scrollbar grid max-h-[28rem] grid-cols-1 gap-3 overflow-y-auto pr-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
           {filteredData.map((item) => {
             const config = getItemCardConfig(item);
 
@@ -192,47 +198,71 @@ export const SKUSummaryPanel = ({
               <div
                 key={item.sku}
                 onClick={() => handleCardClick(item.sku)}
-                className={`w-72 cursor-pointer rounded-xl border p-4 shadow-sm transition-all duration-200 hover:scale-[1.02] hover:shadow-md ${config.cardClass}`}
+                className={`cursor-pointer rounded-xl border p-3.5 shadow-sm transition-all duration-200 hover:shadow-md ${config.cardClass}`}
               >
-                <div className="mb-4 flex items-start justify-between">
-                  <div className="mr-2 flex w-full flex-col truncate">
-                    <span className="text-[14px] font-bold tracking-wider text-slate-500 uppercase">
-                      {item.sku}
-                    </span>
-
-                    <span
-                      className={`truncate text-[11px] leading-tight ${config.descriptionClass}`}
-                    >
-                      {config.description}
-                    </span>
-
-                    {config.showDate && item.createdAt && (
-                      <span className="mt-1 text-[10px] text-slate-500">
-                        Created at{" "}
-                        <span className="font-medium">
-                          {formatDateTimeIndo(item.createdAt)}
-                        </span>
-                      </span>
-                    )}
-                  </div>
+                <div className="mb-2.5 min-w-0">
+                  <p className="truncate text-base font-extrabold tracking-wide text-slate-800 uppercase">
+                    {item.sku}
+                  </p>
+                  <p
+                    className={`mt-0.5 line-clamp-2 text-xs leading-snug ${config.descriptionClass}`}
+                  >
+                    {config.description}
+                  </p>
                 </div>
 
-                <div className="mt-3 grid grid-cols-2 gap-2 border-t border-slate-100 pt-3">
-                  <div>
-                    <p className="text-[9px] font-medium tracking-wider text-slate-400 uppercase">
-                      Stock on Hand
+                <div className="grid grid-cols-2 gap-x-3 gap-y-2.5 border-t border-slate-200/80 pt-2.5">
+                  <div className="min-w-0">
+                    <p className="text-[10px] font-bold tracking-wider text-orange-500 uppercase">
+                      Stock Awal
                     </p>
-                    <p className="text-sm font-bold text-slate-800">
-                      {item.soh.toLocaleString()}
+                    <p className="text-xl font-extrabold leading-tight text-slate-900 tabular-nums">
+                      {Number(item.stockAwal ?? 0).toLocaleString()}
+                    </p>
+                    <p className="mt-0.5 truncate text-[10px] leading-tight text-slate-500">
+                      {formatStockAt(item.stockAwalAt) || "-"}
                     </p>
                   </div>
 
-                  <div className="text-right">
-                    <p className="text-[9px] font-medium tracking-wider text-slate-400 uppercase">
+                  <div className="min-w-0 text-right">
+                    <p className="text-[10px] font-semibold tracking-wider text-slate-500 uppercase">
+                      Stock Real Time
+                    </p>
+                    <p className="text-xl font-extrabold leading-tight text-slate-900 tabular-nums">
+                      {Number(item.soh ?? 0).toLocaleString()}
+                    </p>
+                    <p className="mt-0.5 truncate text-[10px] leading-tight text-slate-500">
+                      {formatStockAt(item.sohAt) || "-"}
+                    </p>
+                  </div>
+
+                  <div className="min-w-0">
+                    <p className="text-[10px] font-semibold tracking-wider text-slate-500 uppercase">
+                      Stock Akhir
+                    </p>
+                    <p
+                      className={`text-xl font-extrabold leading-tight tabular-nums ${
+                        Number(item.stockAkhir ?? 0) < 0
+                          ? "text-red-600"
+                          : "text-slate-900"
+                      }`}
+                    >
+                      {Number(
+                        item.stockAkhir ??
+                          Number(item.stockAwal ?? 0) - Number(item.soh ?? 0),
+                      ).toLocaleString()}
+                    </p>
+                    <p className="mt-0.5 truncate text-[10px] leading-tight text-slate-500">
+                      {formatStockAt(item.stockAkhirAt || item.sohAt) || "-"}
+                    </p>
+                  </div>
+
+                  <div className="min-w-0 text-right">
+                    <p className="text-[10px] font-semibold tracking-wider text-slate-500 uppercase">
                       Total Qty SPB
                     </p>
-                    <p className="text-sm font-bold text-slate-800">
-                      {item.totalRequest.toLocaleString()}
+                    <p className="text-xl font-extrabold leading-tight text-slate-900 tabular-nums">
+                      {Number(item.totalRequest ?? 0).toLocaleString()}
                     </p>
                   </div>
                 </div>

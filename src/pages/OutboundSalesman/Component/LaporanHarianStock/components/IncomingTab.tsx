@@ -69,7 +69,8 @@ function IncomingTab({ lines, isLoading }: Props) {
       emptyMessage="Tidak ada pergerakan incoming."
       footerNote={
         <p className="border-t border-slate-100 px-4 py-3 text-xs text-slate-400">
-          Tanggal: Callplan date (SPB) · BTB date (BTB)
+          Source: BTB (detail API) + SPB Adjustment (−) jika qty_final &lt;
+          qty_submitted
         </p>
       }
     />

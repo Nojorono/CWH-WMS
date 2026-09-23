@@ -55,6 +55,27 @@ export const updateDO = async (payload: any) => {
     }
 };
 
+/** POST /do-suggestion/update-status — update status header saja */
+export type UpdateDOStatusPayload = {
+    id: string;
+    status: string;
+    updated_by: string;
+};
+
+export const updateDOStatus = async (payload: UpdateDOStatusPayload) => {
+    try {
+        const response = await axiosInstance.post(
+            "do-suggestion/update-status",
+            payload,
+        );
+        return response.data;
+    } catch (error) {
+        const message = getErrorMessage(error);
+        console.error("Gagal update status DO Suggestion:", message);
+        throw new Error(message);
+    }
+};
+
 export const updateBatchDO = async (payload: any) => {
     try {
         const response = await axiosInstance.post(

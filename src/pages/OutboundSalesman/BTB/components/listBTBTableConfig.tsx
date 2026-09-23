@@ -38,6 +38,11 @@ export const resolveCellValue = <T,>(
 
 const statusBadgeClass = () => "bg-blue-50 text-blue-700";
 
+const formatPrice = (value: number | null | undefined) => {
+  if (value == null || !Number.isFinite(Number(value))) return "-";
+  return Number(value).toLocaleString("id-ID");
+};
+
 /**
  * Kolom master List BTB.
  * Tambah/kurang kolom cukup edit array ini (atau set visible: false).
@@ -56,11 +61,6 @@ export const createBtbListMasterColumns = (
     id: "btb_number",
     header: "BTB Number",
     cellClassName: "font-semibold text-slate-800",
-  },
-  {
-    id: "call_plan_number",
-    header: "Call Plan Number",
-    cellClassName: "text-slate-600",
   },
   {
     id: "btb_date",
@@ -140,6 +140,20 @@ export const BTB_LIST_DETAIL_COLUMNS: DynamicColumn<BTBDetail>[] = [
     header: "Year",
     align: "center",
     getValue: (row) => (row.year == null ? "-" : String(row.year)),
+  },
+  {
+    id: "bandrol_price",
+    header: "Bandrol",
+    align: "right",
+    cellClassName: "text-slate-600",
+    getValue: (row) => formatPrice(row.bandrol_price),
+  },
+  {
+    id: "bs_price",
+    header: "BS Price",
+    align: "right",
+    cellClassName: "text-slate-600",
+    getValue: (row) => formatPrice(row.bs_price),
   },
   {
     id: "btb_qty",

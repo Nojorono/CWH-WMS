@@ -89,18 +89,18 @@ const resolveItemName = (
 };
 
 /**
- * Export Rekap SPB FINAL — matrix SPB × SKU (qty = item_qty_final).
- * Satuan: Bungkus / Bks.
+ * Build workbook Rekap SPB FINAL → { blob, fileName } (tanpa download).
+ * Return null jika data kosong / tidak ada SKU.
  */
-export const exportRekapSpbFinalExcel = ({
+export const buildRekapSpbFinalExcelFile = ({
   callplans,
   amoName,
   reportDate,
   itemList,
-}: ExportParams) => {
+}: ExportParams): { blob: Blob; fileName: string; file: File } | null => {
   if (!callplans.length) {
     showErrorToast("Tidak ada data untuk diexport!");
-    return;
+    return null;
   }
 
   const skuMap = new Map<string, SkuColumn>();
@@ -123,7 +123,7 @@ export const exportRekapSpbFinalExcel = ({
 
   if (!skuColumns.length) {
     showErrorToast("Tidak ada SKU pada data SPB FINAL!");
-    return;
+    return null;
   }
 
   const fixedCols = 4; // SPB Number, Status, ID Sales, Nama Salesman
@@ -269,11 +269,24 @@ export const exportRekapSpbFinalExcel = ({
 
   const safeAmo = (amoName || "AMO").replace(/[^\w\-]+/g, "_");
   const safeDate = reportDate.replace(/[^\w\-]+/g, "_");
+  const fileName = `Rekap_SPB_Final_${safeAmo}_${safeDate}.xlsx`;
   const buffer = XLSX.write(wb, { bookType: "xlsx", type: "array" });
-  saveAs(
-    new Blob([buffer], {
-      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-    }),
-    `Rekap_SPB_Final_${safeAmo}_${safeDate}.xlsx`,
-  );
+  const blob = new Blob([buffer], {
+    type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  });
+  const file = new File([blob], fileName, {
+    type: blob.type,
+  });
+
+  return { blob, fileName, file };
+};
+
+/**
+ * Export Rekap SPB FINAL — matrix SPB × SKU (qty = item_qty_final).
+ * Satuan: Bungkus / Bks.
+ */
+export const exportRekapSpbFinalExcel = (params: ExportParams) => {
+  const built = buildRekapSpbFinalExcelFile(params);
+  if (!built) return;
+  saveAs(built.blob, built.fileName);
 };

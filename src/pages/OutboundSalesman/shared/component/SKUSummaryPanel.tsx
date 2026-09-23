@@ -232,20 +232,11 @@ export const SKUSummaryPanel = ({
                       }`}
                     >
                       <div>
-                        <p className="text-[9px] uppercase tracking-wider text-slate-400 font-medium">
-                          SOH
+                        <p className="text-[9px] uppercase tracking-wider text-orange-500 font-bold">
+                          Stock Awal
                         </p>
                         <p className="text-sm font-bold text-slate-800">
                           {item.soh.toLocaleString()}
-                        </p>
-                      </div>
-
-                      <div className={isLessStock ? "text-right" : ""}>
-                        <p className="text-[9px] uppercase tracking-wider text-slate-400 font-medium">
-                          Total Qty SPB
-                        </p>
-                        <p className="text-sm font-bold text-slate-800">
-                          {item.totalRequest.toLocaleString()}
                         </p>
                       </div>
 
@@ -262,14 +253,6 @@ export const SKUSummaryPanel = ({
                         </div>
                       )}
 
-                      <div className="text-right">
-                        <p className="text-[9px] uppercase tracking-wider text-slate-400 font-medium">
-                          Ending Stock
-                        </p>
-                        <p className={`text-sm font-bold ${availableClass}`}>
-                          {availableStock.toLocaleString()}
-                        </p>
-                      </div>
                     </div>
                   );
                 })()}

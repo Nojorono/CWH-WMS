@@ -1,8 +1,12 @@
 import { useCallback, useState } from "react";
 import Swal from "sweetalert2";
 import { showErrorToast, showSuccessToast } from "../../../../../components/toast";
-import { updateDO } from "../../../../../API/services/do-suggestion/postDOsuggestion";
+import {
+  updateDO,
+  updateDOStatus,
+} from "../../../../../API/services/do-suggestion/postDOsuggestion";
 import { DOSuggestionPayload } from "../../../../../API/types/DOsuggestion";
+import { usePersistAuthStore } from "../../../../../API/store/AuthStore/PersistAuthStore";
 import { integrateService } from "../../../Services/IntegrateService";
 import {
   integrateDmsService,
@@ -174,6 +178,28 @@ export const useGoodPrepActions = ({
     );
   };
 
+  /** Setelah DMS sukses: FINAL → COMPLETED via POST /do-suggestion/update-status */
+  const markSpbCompletedAfterDms = async (
+    callplan: Callplan,
+  ): Promise<boolean> => {
+    const currentStatus = String(callplan.status || "").trim().toUpperCase();
+    if (currentStatus !== "FINAL") return false;
+
+    const loginNik = String(
+      usePersistAuthStore.getState().user?.userDetail?.employee_id || "",
+    ).trim();
+    if (!loginNik) {
+      throw new Error("NIK user login tidak ditemukan untuk updated_by");
+    }
+
+    await updateDOStatus({
+      id: callplan.id,
+      status: "COMPLETED",
+      updated_by: loginNik,
+    });
+    return true;
+  };
+
   const handleIntegratePerSpb = async () => {
     if (!integrateTriggerSpb?.id) {
       showErrorToast("SPB target integrasi tidak ditemukan");
@@ -195,6 +221,19 @@ export const useGoodPrepActions = ({
         await integrateDmsService.integrateBkbFromCallplan(callplan);
       const dmsAlreadyIssued = Boolean(dmsResult?.alreadyIssued);
 
+      let statusMarkedCompleted = false;
+      try {
+        statusMarkedCompleted = await markSpbCompletedAfterDms(callplan);
+      } catch (statusError) {
+        const statusMessage =
+          statusError instanceof Error
+            ? statusError.message
+            : "Gagal update status SPB ke COMPLETED";
+        showErrorToast(
+          `Integrate DMS berhasil, tetapi status SPB ${spbLabel} gagal diubah ke COMPLETED: ${statusMessage}`,
+        );
+      }
+
       try {
         await integrateService.integrateToMetaGit(integrateTriggerSpb.id);
       } catch (metaError) {
@@ -214,8 +253,10 @@ export const useGoodPrepActions = ({
 
       showSuccessToast(
         dmsAlreadyIssued
-          ? `DMS sudah BKB_ISSUED, Integrate Meta berhasil untuk SPB ${spbLabel}`
-          : `Integrate DMS & Meta berhasil untuk SPB ${spbLabel}`,
+          ? `DMS sudah BKB_ISSUED, Integrate Meta berhasil untuk SPB ${spbLabel}${statusMarkedCompleted ? " (status → COMPLETED)" : ""
+          }`
+          : `Integrate DMS & Meta berhasil untuk SPB ${spbLabel}${statusMarkedCompleted ? " (status → COMPLETED)" : ""
+          }`,
       );
       await refetchPrepCallplans();
     } catch (error: unknown) {

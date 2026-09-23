@@ -11,6 +11,8 @@ type GoodPrepWorkflowModalsProps = {
   isSohLoading: boolean;
   itemList: any[] | undefined;
   sohMap?: Map<string, number>;
+  totalQtySpbMap?: Map<string, number>;
+  needsAdjustSkus?: Set<string>;
   onCloseIntegrate: () => void;
   onAdjustFromIntegrate: () => void;
   onProceedIntegrate: () => Promise<void>;
@@ -29,6 +31,8 @@ export const GoodPrepWorkflowModals = ({
   isSohLoading,
   itemList,
   sohMap,
+  totalQtySpbMap,
+  needsAdjustSkus,
   onCloseIntegrate,
   onAdjustFromIntegrate,
   onProceedIntegrate,
@@ -75,6 +79,7 @@ export const GoodPrepWorkflowModals = ({
             d.inventory_item_id != null && String(d.inventory_item_id).trim() !== ""
               ? String(d.inventory_item_id).trim()
               : String(d.item_code || "").trim();
+          const skuKey = String(d.item_code || "").trim().toLowerCase();
           return {
             id: String(d.id),
             name:
@@ -85,6 +90,8 @@ export const GoodPrepWorkflowModals = ({
             qtySubmitted: Number(d.item_qty_submitted) || 0,
             qtyAwal: final,
             soh: sohMap?.get(sohKey) ?? 0,
+            totalQtySpb: totalQtySpbMap?.get(skuKey) ?? 0,
+            needsAdjust: Boolean(needsAdjustSkus?.has(skuKey)),
             qtyRevision,
             adjustment: 0,
           };

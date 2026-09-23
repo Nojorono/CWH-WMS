@@ -349,19 +349,19 @@ export const PrintBkbModal = ({
                     Informasi WH
                   </th>
                   <th colSpan={2} className={thBase}>
-                    DO MATIC
+                    SPB
                   </th>
                   <th colSpan={3} className={thBase}>
                     ADJUSMENT DO
                   </th>
                 </tr>
                 <tr>
-                  <th className={thBase}>Sisa Barang</th>
+                  <th className={thBase}>BTB</th>
                   <th className={thBase}>Top up</th>
-                  <th className={thBase}>Perhitungan</th>
+                  <th className={thBase}>Qty Final</th>
                   <th className={thBase}>Diterima</th>
                   <th className={thBase}>Tambah</th>
-                  <th className={thBase}>Retur</th>
+                  <th className={thBase}>Kurang</th>
                   <th className={thBase}>Diterima</th>
                 </tr>
               </thead>

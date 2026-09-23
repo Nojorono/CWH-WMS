@@ -31,6 +31,8 @@ type PrepDetailTableProps = {
   needsAdjustSkus?: Set<string> | string[];
   /** Map inventory_item_id / sku → SOH qty */
   sohMap?: Map<string, number>;
+  /** Map sku (lowercase) → Σ Qty Final SPB cabang belum Meta */
+  totalQtySpbMap?: Map<string, number>;
   onSaveAdjustments: (
     callplanId: string,
     payload: {
@@ -50,6 +52,7 @@ export const PrepDetailTable = ({
   adjustDisabledTitle,
   needsAdjustSkus,
   sohMap,
+  totalQtySpbMap,
   onSaveAdjustments,
   highlightedSku,
 }: PrepDetailTableProps) => {
@@ -165,7 +168,7 @@ export const PrepDetailTable = ({
             title={
               isAdjustDisabled
                 ? adjustDisabledTitle ||
-                  "Tidak bisa Adjust — data BTB cabang belum tersedia"
+                  "Tidak bisa Adjust — SPB sudah di-integrate ke Meta"
                 : undefined
             }
             className={`inline-flex items-center gap-1.5 rounded border px-2.5 py-1 text-[11px] font-bold uppercase transition-colors ${
@@ -293,6 +296,7 @@ export const PrepDetailTable = ({
             inventory_item_id: item.inventory_item_id,
             item_code: item.item_code,
           });
+          const skuKey = String(item.item_code || "").trim().toLowerCase();
           return {
             id: String(item.id),
             name: item.itemName || item.item_code,
@@ -302,6 +306,8 @@ export const PrepDetailTable = ({
             qtySubmitted: Number(item.item_qty_submitted) || 0,
             qtyAwal: Number(item.finalQty) || 0,
             soh: sohMap?.get(sohKey) ?? 0,
+            totalQtySpb: totalQtySpbMap?.get(skuKey) ?? 0,
+            needsAdjust: Boolean(item.needsAdjust),
             qtyRevision: item.qtyRevision,
             adjustment: 0,
           };

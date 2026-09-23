@@ -14,6 +14,10 @@ export type AdjustQtyItem = {
   qtyAwal: number;
   /** Stock On Hand per SKU (cabang) */
   soh?: number;
+  /** Σ Qty Final seluruh SPB belum Meta untuk SKU ini (cabang) */
+  totalQtySpb?: number;
+  /** SKU oversold vs SOH cabang — perlu dikurangi */
+  needsAdjust?: boolean;
   qtyRevision?: number | null;
   adjustment: number;
 };
@@ -84,10 +88,17 @@ export default function AdjustQtySPB({
     if (isOpen) {
       isSavedRef.current = false;
       setItems(
-        sourceItems.map((item) => ({
-          ...item,
-          adjustment: Number(item.adjustment) || 0,
-        })),
+        sourceItems
+          .map((item) => ({
+            ...item,
+            adjustment: Number(item.adjustment) || 0,
+          }))
+          .sort((a, b) => {
+            if (Boolean(a.needsAdjust) !== Boolean(b.needsAdjust)) {
+              return a.needsAdjust ? -1 : 1;
+            }
+            return String(a.name || "").localeCompare(String(b.name || ""));
+          }),
       );
       setApprovalFile(null);
       setApprovalUrl(null);
@@ -253,6 +264,16 @@ export default function AdjustQtySPB({
       key: "name",
       align: "left",
       className: "font-bold text-slate-800",
+      render: (item) => (
+        <span className="inline-flex flex-wrap items-center gap-1.5">
+          <span>{item.name}</span>
+          {item.needsAdjust && (
+            <span className="rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-800 ring-1 ring-amber-300">
+              Perlu Adjust
+            </span>
+          )}
+        </span>
+      ),
     },
     {
       header: "SKU",
@@ -266,11 +287,11 @@ export default function AdjustQtySPB({
       align: "center",
       render: (item) => {
         const soh = Number(item.soh);
-        const qtyFinal = Number(item.qtyAwal) || 0;
+        const totalSpb = Number(item.totalQtySpb) || 0;
         if (!Number.isFinite(soh)) {
           return <span className="font-bold text-slate-400">-</span>;
         }
-        const overSoh = qtyFinal > soh;
+        const overSoh = item.needsAdjust || totalSpb > soh;
         return (
           <span
             className={`font-bold ${
@@ -278,11 +299,33 @@ export default function AdjustQtySPB({
             }`}
             title={
               overSoh
-                ? `Qty Final (${qtyFinal}) melebihi SOH (${soh})`
+                ? `Total Qty SPB (${totalSpb}) melebihi SOH (${soh})`
                 : `SOH tersedia: ${soh}`
             }
           >
             {soh.toLocaleString("id-ID")}
+          </span>
+        );
+      },
+    },
+    {
+      header: "TOTAL QTY SPB",
+      key: "totalQtySpb",
+      align: "center",
+      render: (item) => {
+        const totalSpb = Number(item.totalQtySpb) || 0;
+        const soh = Number(item.soh);
+        const overSoh =
+          item.needsAdjust ||
+          (Number.isFinite(soh) && totalSpb > soh);
+        return (
+          <span
+            className={`font-bold ${
+              overSoh ? "text-amber-700" : "text-slate-800"
+            }`}
+            title="Σ Qty Final seluruh SPB cabang (belum Meta) untuk SKU ini"
+          >
+            {totalSpb.toLocaleString("id-ID")}
           </span>
         );
       },
@@ -369,7 +412,7 @@ export default function AdjustQtySPB({
 
   return (
     <div className="fixed inset-0 z-[15000] overflow-y-auto bg-slate-900/40 p-4 backdrop-blur-sm">
-      <div className="mx-auto max-w-[95vw] space-y-4 py-4 font-sans text-slate-800 xl:max-w-7xl">
+      <div className="mx-auto w-full max-w-[96vw] space-y-4 py-4 font-sans text-slate-800">
         <div className="flex items-start justify-between rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
           <div>
             <p className="mb-1 text-xs font-semibold text-slate-500">
@@ -506,7 +549,14 @@ export default function AdjustQtySPB({
                   </tr>
                 ) : (
                   items.map((item, index) => (
-                    <tr key={item.id} className="hover:bg-slate-50/50">
+                    <tr
+                      key={item.id}
+                      className={
+                        item.needsAdjust
+                          ? "bg-amber-50/80 hover:bg-amber-100/70"
+                          : "hover:bg-slate-50/50"
+                      }
+                    >
                       {tableColumns.map((col) => (
                         <td
                           key={`${item.id}-${col.key}`}
