@@ -14,7 +14,7 @@ export type {
   RealTimeSOHResult,
 };
 
-const REALTIME_SOH_PATH = "/outbound-sales/on-hand-meta";
+const REALTIME_SOH_PATH = "outbound-sales/on-hand-meta";
 const SUBINVENTORY_CODE = "KECIL";
 
 const buildQueryParams = (
@@ -51,10 +51,11 @@ const normalizeItem = (raw: any): RealTimeSOHItem | null => {
       ? quantityQty
       : 0;
 
-  return {
-    id: pick("id", "ID") != null ? String(pick("id", "ID")) : undefined,
-    sku: pick("sku", "SKU", "item_code", "ITEM_CODE", "item_number", "ITEM_NUMBER"),
-    item_code: pick(
+  const toStr = (v: unknown) =>
+    v != null && String(v).trim() !== "" ? String(v).trim() : undefined;
+
+  const itemCode = toStr(
+    pick(
       "item_code",
       "ITEM_CODE",
       "sku",
@@ -62,24 +63,41 @@ const normalizeItem = (raw: any): RealTimeSOHItem | null => {
       "item_number",
       "ITEM_NUMBER",
     ),
-    item_number: pick("item_number", "ITEM_NUMBER"),
-    item_description: pick(
-      "item_description",
-      "ITEM_DESCRIPTION",
-      "description",
-      "item_name",
-      "ITEM_NAME",
+  );
+  const inventoryItemId = pick(
+    "inventory_item_id",
+    "INVENTORY_ITEM_ID",
+    "inventoryid",
+    "item_id",
+  );
+
+  // Tanpa identitas item → skip (hindari row kosong di dashboard)
+  if (!itemCode && (inventoryItemId == null || String(inventoryItemId).trim() === "")) {
+    return null;
+  }
+
+  return {
+    id: pick("id", "ID") != null ? String(pick("id", "ID")) : undefined,
+    sku: toStr(pick("sku", "SKU", "item_code", "ITEM_CODE")),
+    item_code: itemCode,
+    item_number: toStr(pick("item_number", "ITEM_NUMBER")),
+    item_description: toStr(
+      pick(
+        "item_description",
+        "ITEM_DESCRIPTION",
+        "description",
+        "item_name",
+        "ITEM_NAME",
+      ),
     ),
-    inventory_item_id: pick(
-      "inventory_item_id",
-      "INVENTORY_ITEM_ID",
-      "inventoryid",
-      "item_id",
+    inventory_item_id: inventoryItemId,
+    organization_code: toStr(
+      pick("organization_code", "ORGANIZATION_CODE"),
     ),
-    organization_code: pick("organization_code", "ORGANIZATION_CODE"),
     organization_id: pick("organization_id", "ORGANIZATION_ID"),
     subinventory_code:
-      pick("subinventory_code", "SUBINVENTORY_CODE") || SUBINVENTORY_CODE,
+      toStr(pick("subinventory_code", "SUBINVENTORY_CODE")) ||
+      SUBINVENTORY_CODE,
     quantity: normalizedQty,
     avail_to_reserve:
       pick("avail_to_reserve", "AVAIL_TO_RESERVE") != null
