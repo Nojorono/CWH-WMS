@@ -334,6 +334,54 @@ export const buildIncomingOutgoingLines = (
   return { incoming, outgoing: outgoingFinal };
 };
 
+/**
+ * Overview Outgoing (FE): agregat qty dari tab Outgoing per SKU,
+ * lalu hitung ulang Stock Akhir & Variance.
+ * Summary API `outgoing` sering 0 meski detail FPPR Awal ada.
+ */
+export const applyFeOutgoingToOverviewRows = (
+  rows: LhsStockComputed[],
+  outgoingLines: LhsMovementLine[],
+): LhsStockComputed[] => {
+  if (!rows.length) return rows;
+
+  const outBySku = new Map<string, number>();
+  outgoingLines.forEach((line) => {
+    const key = String(line.kode || "")
+      .trim()
+      .toUpperCase();
+    if (!key) return;
+    const qty = Math.abs(Number(line.qty) || 0);
+    if (qty <= 0) return;
+    outBySku.set(key, (outBySku.get(key) || 0) + qty);
+  });
+
+  // Tidak ada movement outgoing → biarkan summary API
+  if (outBySku.size === 0) return rows;
+
+  return rows.map((row) => {
+    const key = String(row.kode || "")
+      .trim()
+      .toUpperCase();
+    // Hanya override SKU yang punya baris di tab Outgoing
+    if (!outBySku.has(key)) return row;
+
+    const totalKeluar = outBySku.get(key) || 0;
+    const stockAkhir = row.stockAwal + row.totalTerima - totalKeluar;
+    const variance =
+      row.fisikAkhir != null
+        ? row.fisikAkhir - stockAkhir
+        : row.meta - stockAkhir;
+
+    return {
+      ...row,
+      totalKeluar,
+      stockAkhir,
+      variance,
+    };
+  });
+};
+
 /** Fallback tab: 1 baris per SKU dari agregat summary */
 export const buildMovementLinesFromSummary = (
   rows: LhsStockComputed[],

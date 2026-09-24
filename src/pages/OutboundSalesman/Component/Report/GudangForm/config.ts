@@ -16,15 +16,26 @@ export type GudangFormConfig = {
 
 export const GUDANG_FORM_CONFIG: Record<GudangFormVariant, GudangFormConfig> = {
   permintaan: {
-    previewTitle: "Preview Permintaan Ke Gudang Utama",
+    previewTitle: "Preview Permintaan Ke Gudang Utama (FPPR Awal)",
     formTitle: "Form PERMINTAAN ke Gudang Utama",
     dateLabel: "Hari / Tanggal permintaan",
-    groupHeader: "Form PERMINTAAN ke Gudang Utama",
+    groupHeader: "Form PERMINTAAN ke Gudang Utama (FPPR Awal)",
     finalDoLabel: "Final DO",
     deltaLabel: "Top Up",
-    emptyText: "Tidak ada data permintaan",
+    emptyText: "Tidak ada data permintaan FPPR Awal",
     accentClass: "text-blue-500",
     deltaBoldClass: "text-blue-600",
+  },
+  permintaan_do_manual: {
+    previewTitle: "Preview Permintaan DO Manual (FPPR Tambahan)",
+    formTitle: "Form PERMINTAAN DO Manual (FPPR Tambahan)",
+    dateLabel: "Hari / Tanggal permintaan",
+    groupHeader: "Form PERMINTAAN DO Manual (FPPR Tambahan)",
+    finalDoLabel: "Final DO",
+    deltaLabel: "Top Up",
+    emptyText: "Tidak ada data permintaan FPPR Tambahan",
+    accentClass: "text-indigo-500",
+    deltaBoldClass: "text-indigo-600",
   },
   retur: {
     previewTitle: "Preview Form Retur ke Gudang Utama",

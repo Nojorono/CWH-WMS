@@ -9,6 +9,10 @@ import {
   convertTopUpBksToCaseBalSlopPack,
   findMasterItemBySkuAndInventory,
 } from "../../Report/hook/SKUconvertion";
+import {
+  isFpprAwalMoType,
+  isFpprTambahanMoType,
+} from "../../Calculation/calculationMoType";
 import { EnrichedCallplan } from "../types";
 
 /** Line BTB ekstra ke Form Retur: orphan (tanpa SPB) atau SKU BTB unmatched SPB */
@@ -68,7 +72,10 @@ export const useGoodPrepReportRows = ({
   // Form Retur pakai report/retur bila disediakan; selain itu fallback enrichedData
   const returSource = returEnrichedData ?? enrichedData;
 
-  const permintaanReportRows = useMemo((): PermintaanBarangRow[] => {
+  const buildPermintaanRows = (
+    docs: EnrichedCallplan[],
+    includeDoc: (doc: EnrichedCallplan) => boolean,
+  ): PermintaanBarangRow[] => {
     const summary: Record<
       string,
       {
@@ -81,7 +88,9 @@ export const useGoodPrepReportRows = ({
       }
     > = {};
 
-    enrichedData.forEach((doc) => {
+    docs.forEach((doc) => {
+      if (!includeDoc(doc)) return;
+
       doc.details.forEach((d) => {
         const submitted = Number(d.item_qty_submitted) || 0;
         const btb = Number(d.qty_btb) || 0;
@@ -118,7 +127,25 @@ export const useGoodPrepReportRows = ({
       .filter((row) => Number(row.finalDo) > 0 && Number(row.qtyDelta) >= 0)
       .map((row) => withUomConversion(row, itemList))
       .sort((a, b) => a.name.localeCompare(b.name));
-  }, [enrichedData, itemList]);
+  };
+
+  /** Form Permintaan Gudang — hanya FPPR Awal */
+  const permintaanReportRows = useMemo(
+    (): PermintaanBarangRow[] =>
+      buildPermintaanRows(enrichedData, (doc) =>
+        isFpprAwalMoType(doc.mo_type),
+      ),
+    [enrichedData, itemList],
+  );
+
+  /** Form Permintaan DO Manual — hanya FPPR Tambahan */
+  const permintaanDoManualReportRows = useMemo(
+    (): PermintaanBarangRow[] =>
+      buildPermintaanRows(enrichedData, (doc) =>
+        isFpprTambahanMoType(doc.mo_type),
+      ),
+    [enrichedData, itemList],
+  );
 
   const returReportRows = useMemo((): ReturBarangRow[] => {
     const summary: Record<
@@ -294,5 +321,10 @@ export const useGoodPrepReportRows = ({
       .sort((a, b) => a.name.localeCompare(b.name));
   }, [enrichedData, itemList]);
 
-  return { permintaanReportRows, returReportRows, tambahanReportRows };
+  return {
+    permintaanReportRows,
+    permintaanDoManualReportRows,
+    returReportRows,
+    tambahanReportRows,
+  };
 };

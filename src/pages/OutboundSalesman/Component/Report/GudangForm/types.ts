@@ -1,4 +1,8 @@
-export type GudangFormVariant = "permintaan" | "retur" | "tambahan";
+export type GudangFormVariant =
+  | "permintaan"
+  | "permintaan_do_manual"
+  | "retur"
+  | "tambahan";
 
 /** Row seragam untuk Form Permintaan / Retur / Tambahan */
 export type GudangFormRow = {

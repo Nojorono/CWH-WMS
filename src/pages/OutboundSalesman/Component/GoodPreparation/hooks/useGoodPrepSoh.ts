@@ -150,9 +150,9 @@ export const useGoodPrepSoh = ({
         sohAt,
         stockAwal,
         stockAwalAt,
-        /** Stock Akhir = SOH Awal − SOH real time */
-        stockAkhir: stockAwal - soh,
-        /** Waktu snapshot yang dipakai hitung Stock Akhir */
+        /** Stock Akhir = Stock Real Time − Total Qty SPB */
+        stockAkhir: soh - (reqMap.get(key) || 0),
+        /** Waktu snapshot SOH real time */
         stockAkhirAt: sohAt,
         totalRequest: reqMap.get(key) || 0, // Σ Final SPB belum integrate Meta
       };

@@ -12,12 +12,15 @@ type GoodPrepReportModalsProps = {
   organizationName: string;
   targetDate: string;
   isPermintaanOpen: boolean;
+  isPermintaanDoManualOpen: boolean;
   isReturOpen: boolean;
   isTambahanOpen: boolean;
   permintaanReportRows: GudangFormRow[];
+  permintaanDoManualReportRows: GudangFormRow[];
   returReportRows: GudangFormRow[];
   tambahanReportRows: GudangFormRow[];
   onClosePermintaan: () => void;
+  onClosePermintaanDoManual: () => void;
   onCloseRetur: () => void;
   onCloseTambahan: () => void;
   /** Sumber Form Retur (report/retur + enrich BTB) */
@@ -35,12 +38,15 @@ export const GoodPrepReportModals = ({
   organizationName,
   targetDate,
   isPermintaanOpen,
+  isPermintaanDoManualOpen,
   isReturOpen,
   isTambahanOpen,
   permintaanReportRows,
+  permintaanDoManualReportRows,
   returReportRows,
   tambahanReportRows,
   onClosePermintaan,
+  onClosePermintaanDoManual,
   onCloseRetur,
   onCloseTambahan,
   returEnrichedData,
@@ -142,6 +148,17 @@ export const GoodPrepReportModals = ({
           formDate={today}
           doDate={targetDate}
           rows={permintaanReportRows}
+        />
+      )}
+
+      {isPermintaanDoManualOpen && (
+        <GudangFormModal
+          variant="permintaan_do_manual"
+          onClose={onClosePermintaanDoManual}
+          organizationName={organizationName}
+          formDate={today}
+          doDate={targetDate}
+          rows={permintaanDoManualReportRows}
         />
       )}
 

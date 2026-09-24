@@ -9,6 +9,7 @@ import { isRequestAborted } from "../../../../DynamicAPI/services/CreateCrudServ
 import { showErrorToast } from "../../../../components/toast";
 import { sumRows } from "./logic";
 import {
+  applyFeOutgoingToOverviewRows,
   buildIncomingOutgoingLines,
   mapLhsApiItemsToRows,
 } from "./mapLhsApi";
@@ -122,7 +123,13 @@ export const useLhsReportData = (reportDate: string) => {
     rows,
   ]);
 
-  const totals = useMemo(() => sumRows(rows), [rows]);
+  /** Overview: pakai agregat Outgoing dari detail (FE), bukan field API yang sering 0 */
+  const overviewRows = useMemo(
+    () => applyFeOutgoingToOverviewRows(rows, outgoing),
+    [rows, outgoing],
+  );
+
+  const totals = useMemo(() => sumRows(overviewRows), [overviewRows]);
 
   const reportDateLabel = dayjs(context.reportDate).isValid()
     ? dayjs(context.reportDate).format("DD MMMM YYYY")
@@ -135,7 +142,7 @@ export const useLhsReportData = (reportDate: string) => {
 
   return {
     context,
-    rows,
+    rows: overviewRows,
     totals,
     detail,
     incoming,

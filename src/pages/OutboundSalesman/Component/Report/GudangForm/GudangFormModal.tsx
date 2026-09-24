@@ -34,7 +34,12 @@ const CONFIRM_COPY: Record<
   { title: string; text: string; confirmText: string }
 > = {
   permintaan: {
-    title: "Konfirmasi Print Form Permintaan?",
+    title: "Konfirmasi Print Form Permintaan (FPPR Awal)?",
+    text: "Akan mencetak form dan mengunduh PDF backup secara otomatis. Lanjutkan?",
+    confirmText: "Ya, Print",
+  },
+  permintaan_do_manual: {
+    title: "Konfirmasi Print Form Permintaan DO Manual (FPPR Tambahan)?",
     text: "Akan mencetak form dan mengunduh PDF backup secara otomatis. Lanjutkan?",
     confirmText: "Ya, Print",
   },

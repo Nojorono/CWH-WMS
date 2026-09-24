@@ -62,6 +62,8 @@ function GoodPrepView({
   const [globalFilter, setGlobalFilter] = useState("");
   const [isPrintAllOpen, setIsPrintAllOpen] = useState(false);
   const [isPermintaanOpen, setIsPermintaanOpen] = useState(false);
+  const [isPermintaanDoManualOpen, setIsPermintaanDoManualOpen] =
+    useState(false);
   const [isReturOpen, setIsReturOpen] = useState(false);
   const [isTambahanOpen, setIsTambahanOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -295,8 +297,12 @@ function GoodPrepView({
     return lines;
   }, [btbWithoutSpbSales, returEnrichedData, enrichedData]);
 
-  const { permintaanReportRows, returReportRows, tambahanReportRows } =
-    useGoodPrepReportRows({
+  const {
+    permintaanReportRows,
+    permintaanDoManualReportRows,
+    returReportRows,
+    tambahanReportRows,
+  } = useGoodPrepReportRows({
       enrichedData,
       returEnrichedData,
       orphanBtbLines: returExtraBtbLines,
@@ -404,6 +410,7 @@ function GoodPrepView({
         header: "Meta Integration",
         cell: ({ row }) => {
           const integrated = isSpbIntegratedToMeta(row.original);
+          console.log("row.original", row.original);
           return (
             <span
               className={`inline-flex items-center rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide ${
@@ -625,10 +632,17 @@ function GoodPrepView({
           headerActions={
             <GoodPrepHeaderActions
               isPrintDisabled={isPrintDisabled}
+              hasPermintaanData={permintaanReportRows.length > 0}
+              hasPermintaanDoManualData={
+                permintaanDoManualReportRows.length > 0
+              }
               hasReturData={returReportRows.length > 0}
               hasTambahanData={tambahanReportRows.length > 0}
               onExportSummary={handleExportSummary}
               onOpenPermintaan={() => setIsPermintaanOpen(true)}
+              onOpenPermintaanDoManual={() =>
+                setIsPermintaanDoManualOpen(true)
+              }
               onOpenRetur={() => setIsReturOpen(true)}
               onOpenTambahan={() => setIsTambahanOpen(true)}
             />
@@ -660,12 +674,15 @@ function GoodPrepView({
         organizationName={String(organization_name || "-")}
         targetDate={targetDate}
         isPermintaanOpen={isPermintaanOpen}
+        isPermintaanDoManualOpen={isPermintaanDoManualOpen}
         isReturOpen={isReturOpen}
         isTambahanOpen={isTambahanOpen}
         permintaanReportRows={permintaanReportRows}
+        permintaanDoManualReportRows={permintaanDoManualReportRows}
         returReportRows={returReportRows}
         tambahanReportRows={tambahanReportRows}
         onClosePermintaan={() => setIsPermintaanOpen(false)}
+        onClosePermintaanDoManual={() => setIsPermintaanDoManualOpen(false)}
         onCloseRetur={() => setIsReturOpen(false)}
         onCloseTambahan={() => setIsTambahanOpen(false)}
         returEnrichedData={returEnrichedData}

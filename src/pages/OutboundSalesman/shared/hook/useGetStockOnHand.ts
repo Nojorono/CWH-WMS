@@ -5,6 +5,8 @@ import { getStockOnHand } from "../../../../API/services/do-suggestion/StockOnHa
 export const useGetStockOnHand = (params: {
   org: string;
   sub: string;
+  /** YYYY-MM-DD — ikut filter user; kosong = hari ini (default service) */
+  date?: string;
 }) => {
   const { sohData, isLoadingSoh, setSohData, setIsLoadingSoh } = useStockStore();
 
@@ -16,6 +18,7 @@ export const useGetStockOnHand = (params: {
         const result = await getStockOnHand({
           organization_code: params.org,
           subinventory_code: params.sub,
+          date: params.date,
         });
 
         setSohData(result);
@@ -30,7 +33,7 @@ export const useGetStockOnHand = (params: {
     if (params.org) {
       fetchData();
     }
-  }, [params.org, params.sub, setSohData, setIsLoadingSoh]);
+  }, [params.org, params.sub, params.date, setSohData, setIsLoadingSoh]);
 
   return { data: sohData, isLoading: isLoadingSoh };
 };
