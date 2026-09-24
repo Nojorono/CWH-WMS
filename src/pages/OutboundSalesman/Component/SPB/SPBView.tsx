@@ -12,7 +12,7 @@ import { showConfirmDialog } from "../../../../components/swal-confirm";
 import Select from "../../../../components/form/Select";
 import SPBTable from "./SPBTable";
 import { SortDirection, sortCallplans } from "./spbTableConfig";
-import { getSpbOverviewNavLock } from "./spbOverviewAccessRules";
+import { getSpbOverviewNavLock, SPB_OVERVIEW_ACCESS } from "./spbOverviewAccessRules";
 import {
   FPPR_AWAL_MO_TYPE,
   FPPR_TAMBAHAN_MO_TYPE,
@@ -106,6 +106,14 @@ export default function SPBView({
 
   const [bypassActive, setBypassActive] = useState(
     () => localStorage.getItem("OSM_BYPASS_ACTIVE") === "true",
+  );
+
+  /** Bypass rahasia Calculation di backdate — Ctrl+B (session saja) */
+  const [calcBackdateBypass, setCalcBackdateBypass] = useState(
+    () =>
+      sessionStorage.getItem(
+        SPB_OVERVIEW_ACCESS.CALC_BACKDATE_BYPASS_SESSION_KEY,
+      ) === "true",
   );
 
   const bypassDateTimeRef = useRef<HTMLInputElement>(null);
@@ -224,12 +232,58 @@ export default function SPBView({
 
   /**
    * Lock navigasi backdate — aturan di:
-   * ./spbOverviewAccessRules.ts  (SPB_OVERVIEW_ACCESS / getSpbOverviewNavLock)
+   * ./spbOverviewAccessRules.ts
+   * Bypass Calculation backdate: Ctrl+B
    */
   const navLock = useMemo(
-    () => getSpbOverviewNavLock({ callplanDate: targetCallplanDate }),
-    [targetCallplanDate],
+    () =>
+      getSpbOverviewNavLock({
+        callplanDate: targetCallplanDate,
+        bypassBackdateCalculation: calcBackdateBypass,
+      }),
+    [targetCallplanDate, calcBackdateBypass],
   );
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      // Ctrl+B (Windows/Linux) — toggle bypass Calculation backdate
+      if (!(event.ctrlKey && !event.metaKey && !event.altKey && !event.shiftKey)) {
+        return;
+      }
+      if (event.key.toLowerCase() !== "b") return;
+
+      const target = event.target as HTMLElement | null;
+      const tag = String(target?.tagName || "").toUpperCase();
+      if (
+        tag === "INPUT" ||
+        tag === "TEXTAREA" ||
+        tag === "SELECT" ||
+        target?.isContentEditable
+      ) {
+        return;
+      }
+
+      event.preventDefault();
+      setCalcBackdateBypass((prev) => {
+        const next = !prev;
+        sessionStorage.setItem(
+          SPB_OVERVIEW_ACCESS.CALC_BACKDATE_BYPASS_SESSION_KEY,
+          String(next),
+        );
+        if (next) {
+          showSuccessToast(
+            "Bypass aktif: Calculation & Finalize diizinkan untuk backdate.",
+          );
+        } else {
+          showSuccessToast("Bypass Calculation backdate dimatikan.");
+        }
+        return next;
+      });
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, []);
 
   const canProceedToCalculation =
     statusFilter === "SUBMITTED" &&
@@ -489,6 +543,11 @@ export default function SPBView({
               {navLock.lockCalculation && (
                 <p className="max-w-sm text-right text-[14px] font-medium text-amber-700">
                   Backdate: Calculation dikunci — Good Prep tetap boleh.
+                </p>
+              )}
+              {navLock.isBackdate && navLock.calculationBypassActive && (
+                <p className="max-w-sm text-right text-[11px] font-medium text-emerald-700">
+                  Bypass Calculation backdate aktif (Ctrl+B untuk matikan).
                 </p>
               )}
               <div className="flex items-center gap-2">
