@@ -252,33 +252,6 @@ export default function SPBView({
               SPB Overview
             </h1>
           </div>
-
-          {/* Quick Info Badges */}
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2.5 rounded-xl border border-slate-200/80 bg-white px-3.5 py-2 shadow-sm">
-              <FaClock className="text-slate-400" size={14} />
-              <div>
-                <div className="text-[10px] font-semibold tracking-wider text-slate-400 uppercase">
-                  {bypassActive ? "Selected Time" : "Current Time"}
-                </div>
-                <div className="text-xs font-bold text-slate-700">
-                  {displayCurrentTime}
-                </div>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2.5 rounded-xl border border-indigo-100 bg-indigo-50/50 px-3.5 py-2 shadow-sm">
-              <FaCalendarAlt className="text-indigo-500" size={14} />
-              <div>
-                <div className="text-[10px] font-semibold tracking-wider text-indigo-400 uppercase">
-                  Target Date
-                </div>
-                <div className="text-xs font-bold text-indigo-700">
-                  {targetCallplanDate}
-                </div>
-              </div>
-            </div>
-          </div>
         </div>
 
         {/* Date Selector Bypass Section */}

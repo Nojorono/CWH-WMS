@@ -307,7 +307,7 @@ function StockCalculationView({
             setGlobalFilter={setGlobalFilter}
             columns={[
               { accessorKey: "spb_number", header: "SPB Number" },
-              { accessorKey: "mo_type", header: "MO Type" },
+              { accessorKey: "mo_type", header: "FPPR Type" },
               { accessorKey: "sales_name", header: "Nama Sales" },
               { accessorKey: "sales_nik", header: "NIK Sales" },
               {

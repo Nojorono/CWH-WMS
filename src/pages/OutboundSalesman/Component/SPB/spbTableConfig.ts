@@ -54,7 +54,7 @@ export const SPB_MASTER_COLUMNS: DynamicColumn<Callplan>[] = [
   },
   {
     id: "mo_type",
-    header: "MO Type",
+    header: "FPPR Type",
     sortable: true,
     cellClassName: "text-gray-600",
     getValue: (row) => row.mo_type?.trim() || "-",
@@ -88,17 +88,6 @@ export const SPB_MASTER_COLUMNS: DynamicColumn<Callplan>[] = [
     header: "Total SKU",
     cellClassName: "text-gray-800",
     getValue: (row) => row.details?.length || 0,
-  },
-  {
-    id: "callplan_date_start",
-    header: "Start Date",
-    sortable: true,
-    cellClassName: "text-gray-600",
-  },
-  {
-    id: "callplan_date_end",
-    header: "End Date",
-    cellClassName: "text-gray-600",
   },
   {
     id: "status",

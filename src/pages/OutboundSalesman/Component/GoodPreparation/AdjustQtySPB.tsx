@@ -331,13 +331,13 @@ export default function AdjustQtySPB({
       },
     },
     {
-      header: "QTY SUGGESTION",
+      header: "QTY DMS",
       key: "qtySuggestion",
       align: "center",
       className: "font-bold text-slate-800",
     },
     {
-      header: "QTY SUBMITTED",
+      header: "QTY CALCULATED",
       key: "qtySubmitted",
       align: "center",
       className: "font-bold text-slate-800",
@@ -503,7 +503,7 @@ export default function AdjustQtySPB({
             </div>
             <div className="flex space-x-6 text-sm">
               <p className="text-slate-600">
-                Total Qty Suggestion:{" "}
+                Total Qty DMS:{" "}
                 <span className="font-bold text-slate-800">
                   {totalQtySuggestion}
                 </span>

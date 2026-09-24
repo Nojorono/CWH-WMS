@@ -1,6 +1,10 @@
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import Swal from "sweetalert2";
-import { showErrorToast, showSuccessToast } from "../../../../../components/toast";
+import {
+  showErrorToast,
+  showSuccessToast,
+  showToast,
+} from "../../../../../components/toast";
 import {
   updateDO,
   updateDOStatus,
@@ -20,20 +24,45 @@ type UseGoodPrepActionsParams = {
   prepCallplans: Callplan[];
   enrichedData: EnrichedCallplan[];
   refetchPrepCallplans: () => Promise<Callplan[]>;
+  /** Form Retur pakai sumber terpisah (report/retur) — wajib di-refresh setelah Adjust */
+  refetchReturSource?: () => Promise<unknown>;
+  /** Patch lokal detail setelah Adjust agar Form langsung ter-update */
+  applyLocalDetailPatch?: (
+    callplanId: string,
+    lines: Array<{
+      id: string;
+      item_qty_revision: number;
+      item_qty_final: number;
+    }>,
+  ) => void;
 };
+
+type StatusStepResult =
+  | { kind: "completed" }
+  | { kind: "skipped"; currentStatus: string }
+  | { kind: "failed"; message: string };
 
 export const useGoodPrepActions = ({
   prepCallplans,
   enrichedData,
   refetchPrepCallplans,
+  refetchReturSource,
+  applyLocalDetailPatch,
 }: UseGoodPrepActionsParams) => {
   const [isSavingAdjust, setIsSavingAdjust] = useState(false);
   const [isIntegrating, setIsIntegrating] = useState(false);
+  const [integratingStep, setIntegratingStep] = useState<string>("");
+  const isIntegratingRef = useRef(false);
   const [isIntegrateModalOpen, setIsIntegrateModalOpen] = useState(false);
   const [integrateTriggerSpb, setIntegrateTriggerSpb] =
     useState<EnrichedCallplan | null>(null);
   const [adjustFromIntegrate, setAdjustFromIntegrate] =
     useState<EnrichedCallplan | null>(null);
+
+  const waitBetweenIntegrateSteps = (ms = 3000) =>
+    new Promise<void>((resolve) => {
+      window.setTimeout(resolve, ms);
+    });
 
   const handleSaveAdjustments = async (
     callplanId: string,
@@ -61,7 +90,7 @@ export const useGoodPrepActions = ({
 
     const confirm = await Swal.fire({
       title: "Konfirmasi Perubahan Qty?",
-      text: `${changedItems.length} item akan diupdate ke server, lalu data GoodPrep di-refresh.`,
+      text: `${changedItems.length} item akan diupdate ke server, lalu Form Retur / Form Tambahan di-refresh.`,
       icon: "warning",
       showCancelButton: true,
       confirmButtonText: "Ya, Simpan",
@@ -141,10 +170,27 @@ export const useGoodPrepActions = ({
       };
 
       await updateDO(updatePayload);
-      await refetchPrepCallplans();
+
+      const localPatchLines = lines.map((line) => ({
+        id: line.id,
+        item_qty_revision: line.item_qty_revision,
+        item_qty_final: line.item_qty_final,
+      }));
+
+      // 1) Patch lokal dulu → Form Tambahan (+) & Form Retur (-) langsung update
+      applyLocalDetailPatch?.(callplanId, localPatchLines);
+
+      // 2) Sync server: prep callplans + report/retur
+      await Promise.all([
+        refetchPrepCallplans(),
+        refetchReturSource?.() ?? Promise.resolve(),
+      ]);
+
+      // 3) Re-apply patch jika refetch masih stale (lag BE)
+      applyLocalDetailPatch?.(callplanId, localPatchLines);
 
       showSuccessToast(
-        `Qty berhasil diupdate (${changedItems.length} item). Data GoodPrep telah direfresh.`,
+        `Qty berhasil diupdate (${changedItems.length} item).\nForm Retur / Form Tambahan ikut di-refresh.`,
       );
 
       // Jika Adjust dari alur Integrate Meta → buka ulang panel cek global
@@ -181,9 +227,14 @@ export const useGoodPrepActions = ({
   /** Setelah DMS sukses: FINAL → COMPLETED via POST /do-suggestion/update-status */
   const markSpbCompletedAfterDms = async (
     callplan: Callplan,
-  ): Promise<boolean> => {
+  ): Promise<StatusStepResult> => {
     const currentStatus = String(callplan.status || "").trim().toUpperCase();
-    if (currentStatus !== "FINAL") return false;
+    if (currentStatus !== "FINAL") {
+      return {
+        kind: "skipped",
+        currentStatus: currentStatus || "(kosong)",
+      };
+    }
 
     const loginNik = String(
       usePersistAuthStore.getState().user?.userDetail?.employee_id || "",
@@ -197,10 +248,12 @@ export const useGoodPrepActions = ({
       status: "COMPLETED",
       updated_by: loginNik,
     });
-    return true;
+    return { kind: "completed" };
   };
 
   const handleIntegratePerSpb = async () => {
+    if (isIntegratingRef.current) return;
+
     if (!integrateTriggerSpb?.id) {
       showErrorToast("SPB target integrasi tidak ditemukan");
       return;
@@ -215,25 +268,68 @@ export const useGoodPrepActions = ({
     const spbLabel =
       integrateTriggerSpb.spb_number || integrateTriggerSpb.callplan_number;
 
+    isIntegratingRef.current = true;
     setIsIntegrating(true);
+    setIntegratingStep("1/3 Mengirim ke DMS...");
     try {
+      // Urutan sync via await: DMS → jeda → COMPLETED → jeda → Meta
       const dmsResult =
         await integrateDmsService.integrateBkbFromCallplan(callplan);
       const dmsAlreadyIssued = Boolean(dmsResult?.alreadyIssued);
+      const dmsStatusLabel = String(dmsResult?.status || "")
+        .trim()
+        .toUpperCase();
+      const dmsSummary = dmsAlreadyIssued
+        ? `Sudah ada di DMS (${dmsStatusLabel || "BKB_ISSUED/RECEIVED"}) — dianggap sukses`
+        : "Integrasi BKB baru ke DMS berhasil";
 
-      let statusMarkedCompleted = false;
+      showSuccessToast(
+        `[1/3] Integrate DMS — SPB ${spbLabel}\n${dmsSummary}${
+          dmsResult?.message ? `\nDetail: ${dmsResult.message}` : ""
+        }`,
+      );
+
+      setIntegratingStep("Jeda 3 detik sebelum update status SPB...");
+      await waitBetweenIntegrateSteps(3000);
+
+      let statusResult: StatusStepResult = {
+        kind: "skipped",
+        currentStatus: String(callplan.status || "").trim() || "(kosong)",
+      };
+      setIntegratingStep("2/3 Update status SPB → COMPLETED...");
       try {
-        statusMarkedCompleted = await markSpbCompletedAfterDms(callplan);
+        statusResult = await markSpbCompletedAfterDms(callplan);
+        if (statusResult.kind === "completed") {
+          showSuccessToast(
+            `[2/3] Update Status — SPB ${spbLabel}\nStatus berhasil diubah: FINAL → COMPLETED.`,
+          );
+        } else if (statusResult.kind === "skipped") {
+          showToast(
+            `[2/3] Update Status — SPB ${spbLabel}\nDilewati: status saat ini "${statusResult.currentStatus}" (bukan FINAL).\nLanjut ke Integrate Meta.`,
+          );
+        }
       } catch (statusError) {
         const statusMessage =
           statusError instanceof Error
             ? statusError.message
             : "Gagal update status SPB ke COMPLETED";
+        statusResult = { kind: "failed", message: statusMessage };
         showErrorToast(
-          `Integrate DMS berhasil, tetapi status SPB ${spbLabel} gagal diubah ke COMPLETED: ${statusMessage}`,
+          `[2/3] Update Status GAGAL — SPB ${spbLabel}\n${statusMessage}\nLanjut ke Integrate Meta.`,
         );
       }
 
+      const statusSummary =
+        statusResult.kind === "completed"
+          ? "FINAL → COMPLETED berhasil"
+          : statusResult.kind === "skipped"
+            ? `Dilewati (status: ${statusResult.currentStatus})`
+            : `Gagal: ${statusResult.message}`;
+
+      setIntegratingStep("Jeda 3 detik sebelum Integrate Meta...");
+      await waitBetweenIntegrateSteps(3000);
+
+      setIntegratingStep("3/3 Mengirim Integrate Meta...");
       try {
         await integrateService.integrateToMetaGit(integrateTriggerSpb.id);
       } catch (metaError) {
@@ -244,31 +340,28 @@ export const useGoodPrepActions = ({
           (metaError as Error)?.message ||
           "Gagal melakukan Integrate Meta";
         showErrorToast(
-          dmsAlreadyIssued
-            ? `DMS sudah BKB_ISSUED, tetapi Meta gagal untuk SPB ${spbLabel}: ${message}`
-            : `Integrate DMS berhasil, tetapi Meta gagal untuk SPB ${spbLabel}: ${message}`,
+          `[3/3] Integrate Meta GAGAL — SPB ${spbLabel}\n${message}\n\nRingkasan:\n• DMS: ${dmsSummary}\n• Status: ${statusSummary}\n• Meta: GAGAL`,
         );
         return;
       }
 
       showSuccessToast(
-        dmsAlreadyIssued
-          ? `DMS sudah BKB_ISSUED, Integrate Meta berhasil untuk SPB ${spbLabel}${statusMarkedCompleted ? " (status → COMPLETED)" : ""
-          }`
-          : `Integrate DMS & Meta berhasil untuk SPB ${spbLabel}${statusMarkedCompleted ? " (status → COMPLETED)" : ""
-          }`,
+        `[3/3] Integrate Meta BERHASIL — SPB ${spbLabel}\n\nRingkasan:\n• DMS: ${dmsSummary}\n• Status: ${statusSummary}\n• Meta: Berhasil`,
       );
       await refetchPrepCallplans();
     } catch (error: unknown) {
       showErrorToast(
-        `Integrate DMS gagal untuk SPB ${spbLabel}: ${parseIntegrateDmsError(error)}`,
+        `[1/3] Integrate DMS GAGAL — SPB ${spbLabel}\n${parseIntegrateDmsError(error)}\n\nProses dihentikan.\nUpdate status SPB & Integrate Meta tidak dijalankan.`,
       );
     } finally {
+      isIntegratingRef.current = false;
       setIsIntegrating(false);
+      setIntegratingStep("");
     }
   };
 
   const openIntegrateModal = useCallback((row: EnrichedCallplan) => {
+    if (isIntegratingRef.current) return;
     setIntegrateTriggerSpb(row);
     setIsIntegrateModalOpen(true);
   }, []);
@@ -301,6 +394,7 @@ export const useGoodPrepActions = ({
   };
 
   const proceedIntegrate = async () => {
+    if (isIntegratingRef.current) return;
     setIsIntegrateModalOpen(false);
     await handleIntegratePerSpb();
     setIntegrateTriggerSpb(null);
@@ -328,6 +422,7 @@ export const useGoodPrepActions = ({
   return {
     isSavingAdjust,
     isIntegrating,
+    integratingStep,
     isIntegrateModalOpen,
     integrateTriggerSpb,
     adjustFromIntegrate,

@@ -57,11 +57,43 @@ export const useGoodPrepCallplans = ({
     return fresh;
   };
 
+  /** Patch lokal segera setelah Adjust — Form Tambahan/Retur update tanpa tunggu refetch */
+  const applyLocalDetailPatch = (
+    callplanId: string,
+    lines: Array<{
+      id: string;
+      item_qty_revision: number;
+      item_qty_final: number;
+    }>,
+  ) => {
+    const lineMap = new Map(lines.map((line) => [String(line.id), line]));
+    setPrepCallplans((prev) => {
+      const next = prev.map((cp) => {
+        if (cp.id !== callplanId) return cp;
+        return {
+          ...cp,
+          details: (cp.details || []).map((detail) => {
+            const upd = lineMap.get(String(detail.id));
+            if (!upd) return detail;
+            return {
+              ...detail,
+              item_qty_revision: String(upd.item_qty_revision),
+              item_qty_final: String(upd.item_qty_final),
+            };
+          }),
+        };
+      });
+      onCallplansUpdated?.(next);
+      return next;
+    });
+  };
+
   return {
     prepCallplans,
     targetDate,
     btbDateLabel,
     salesNikList,
     refetchPrepCallplans,
+    applyLocalDetailPatch,
   };
 };

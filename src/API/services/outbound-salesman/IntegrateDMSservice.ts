@@ -161,7 +161,7 @@ export const parseIntegrateDmsError = (
 };
 
 /**
- * CONFLICT + BKB_ISSUED = SPB sudah pernah issue BKB di DMS.
+ * CONFLICT + (BKB_ISSUED | RECEIVED) = SPB sudah pernah issue / sudah RECEIVED di DMS.
  * Dianggap sukses agar alur lanjut ke Integrate Meta.
  */
 export const isDmsBkbAlreadyIssued = (error: unknown): boolean => {
@@ -175,7 +175,10 @@ export const isDmsBkbAlreadyIssued = (error: unknown): boolean => {
         ? data.message.join(" ")
         : String(data.message || "");
 
-    return code === "CONFLICT" && /BKB_ISSUED/i.test(message);
+    if (code !== "CONFLICT") return false;
+
+    // Sudah BKB_ISSUED atau sudah RECEIVED di DMS → lanjut Meta
+    return /BKB_ISSUED/i.test(message) || /\bRECEIVED\b/i.test(message);
 };
 
 const toNumber = (value: unknown, fallback = 0): number => {
@@ -317,7 +320,7 @@ export const integrateDmsService = {
                 debugIntegrateDms("POST error", error);
             }
 
-            // Sudah pernah BKB di DMS → anggap sukses, lanjut ke Meta
+            // Sudah pernah BKB / sudah RECEIVED di DMS → anggap sukses, lanjut ke Meta
             if (isDmsBkbAlreadyIssued(error)) {
                 const data = axios.isAxiosError(error)
                     ? (error.response?.data as DmsApiErrorBody | undefined)
@@ -326,15 +329,20 @@ export const integrateDmsService = {
                     ? data.message.join(", ")
                     : String(
                           data?.message ||
-                              "SPB already BKB_ISSUED on DMS",
+                              "SPB already BKB_ISSUED/RECEIVED on DMS",
                       );
 
-                debugIntegrateDms("POST already issued — treat as success", {
-                    message,
-                });
+                const isReceived = /\bRECEIVED\b/i.test(message);
+
+                debugIntegrateDms(
+                    isReceived
+                        ? "POST already RECEIVED — treat as success"
+                        : "POST already issued — treat as success",
+                    { message },
+                );
 
                 return {
-                    status: "BKB_ISSUED",
+                    status: isReceived ? "RECEIVED" : "BKB_ISSUED",
                     message,
                     alreadyIssued: true,
                 };

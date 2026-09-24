@@ -27,6 +27,7 @@ type IntegrateSOHCheckModalProps = {
   salesName?: string;
   lines: SohCheckLine[];
   isSohLoading?: boolean;
+  isIntegrating?: boolean;
   onClose: () => void;
   onAdjust: () => void;
   onProceed: () => void;
@@ -40,6 +41,7 @@ export default function IntegrateSOHCheckModal({
   salesName,
   lines,
   isSohLoading,
+  isIntegrating = false,
   onClose,
   onAdjust,
   onProceed,
@@ -102,7 +104,7 @@ export default function IntegrateSOHCheckModal({
 
   const handleProceedClick = async () => {
     // Guard: ada LESS_STOCK → jangan lanjut
-    if (hasLessStock) return;
+    if (hasLessStock || isSohLoading || isIntegrating) return;
 
     const spbLabel = isGlobal
       ? `Semua SPB (${spbCount})`
@@ -128,7 +130,7 @@ export default function IntegrateSOHCheckModal({
     });
 
     // Tidak → stay di modal cek integrasi
-    if (!confirm.isConfirmed) return;
+    if (!confirm.isConfirmed || isIntegrating) return;
     onProceed();
   };
 
@@ -308,7 +310,8 @@ export default function IntegrateSOHCheckModal({
           <button
             type="button"
             onClick={onClose}
-            className="rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-600 shadow-sm transition-all hover:bg-slate-50 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-200 focus:ring-offset-1"
+            disabled={isIntegrating}
+            className="rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-600 shadow-sm transition-all hover:bg-slate-50 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-200 focus:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50"
           >
             Kembali
           </button>
@@ -316,7 +319,8 @@ export default function IntegrateSOHCheckModal({
           <button
             type="button"
             onClick={onAdjust}
-            className="inline-flex items-center gap-2 rounded-xl bg-amber-500 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-amber-600 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2"
+            disabled={isIntegrating}
+            className="inline-flex items-center gap-2 rounded-xl bg-amber-500 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-amber-600 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:shadow-none"
           >
             <FaEdit size={14} />
             Adjust Qty SPB
@@ -325,19 +329,30 @@ export default function IntegrateSOHCheckModal({
           <button
             type="button"
             onClick={handleProceedClick}
-            disabled={isSohLoading || hasLessStock}
+            disabled={isSohLoading || hasLessStock || isIntegrating}
             title={
-              hasLessStock
-                ? "Ada SKU Less Stock — wajib Adjust Qty dulu"
-                : undefined
+              isIntegrating
+                ? "Integrasi sedang diproses"
+                : hasLessStock
+                  ? "Ada SKU Less Stock — wajib Adjust Qty dulu"
+                  : undefined
             }
             className="group inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:shadow-none"
           >
-            Lanjut Integrate Meta & DMS
-            <FaArrowRight
-              size={12}
-              className="transition-transform group-hover:translate-x-0.5"
-            />
+            {isIntegrating ? (
+              <>
+                <FaSpinner className="animate-spin" size={14} />
+                Sedang Integrasi...
+              </>
+            ) : (
+              <>
+                Lanjut Integrate Meta & DMS
+                <FaArrowRight
+                  size={12}
+                  className="transition-transform group-hover:translate-x-0.5"
+                />
+              </>
+            )}
           </button>
         </div>
       </div>

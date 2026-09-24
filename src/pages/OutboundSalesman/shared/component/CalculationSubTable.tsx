@@ -88,7 +88,7 @@ export const CalculationSubTable = ({
               <tr>
                 <th className="px-5 py-3">SKU</th>
                 <th className="px-5 py-3 text-right">Stock on Hand</th>
-                <th className="px-5 py-3 text-right">Qty Suggestion</th>
+                <th className="px-5 py-3 text-right">Qty DMS</th>
                 <th className="px-5 py-3 text-right">Contrib %</th>
                 <th className="px-5 py-3 text-right">Status</th>
                 <th className="px-5 py-3 text-right">Final Qty</th>

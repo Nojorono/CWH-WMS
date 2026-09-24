@@ -100,14 +100,14 @@ export const PREP_PICK_LIST_COLUMNS: PrepPickListColumn[] = [
   },
   {
     id: "qty_suggestion",
-    header: "Qty Suggestion",
+    header: "Qty DMS",
     align: "center",
     getCellClassName: (row) => qtyCellClass(row),
     getValue: (row) => row.item_qty_suggestion,
   },
   {
     id: "qty_submitted",
-    header: "Qty Submitted",
+    header: "Qty Calculated",
     align: "center",
     getCellClassName: (row) => qtyCellClass(row),
     getValue: (row) => row.item_qty_submitted,
@@ -121,7 +121,7 @@ export const PREP_PICK_LIST_COLUMNS: PrepPickListColumn[] = [
   },
   {
     id: "qty_revision",
-    header: "Qty Revision",
+    header: "Qty Adjustment",
     align: "center",
     headerClassName: "text-orange-600",
     // visibility dikontrol via getVisiblePickListColumns({ showQtyRevision })

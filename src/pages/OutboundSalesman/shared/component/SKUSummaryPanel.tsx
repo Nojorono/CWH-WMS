@@ -163,7 +163,7 @@ export const SKUSummaryPanel = ({
         </div>
 
         <div className="flex gap-2">
-          {["ALL", "AVAILABLE", "NO_STOCK"].map((tab) => (
+          {["AVAILABLE", "NO_STOCK"].map((tab) => (
             <button
               key={tab}
               onClick={() => setFilter(tab)}
@@ -205,7 +205,7 @@ export const SKUSummaryPanel = ({
 
                     {config.showDate && item.createdAt && (
                       <span className="mt-1 text-[10px] text-slate-500">
-                        Created at{" "}
+                        Stock Meta diambil pada{" "}
                         <span className="font-medium">
                           {formatDateTimeIndo(item.createdAt)}
                         </span>

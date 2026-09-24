@@ -93,6 +93,7 @@ function GoodPrepView({
     prepCallplans,
     targetDate,
     refetchPrepCallplans,
+    applyLocalDetailPatch,
   } = useGoodPrepCallplans({
     callplans,
     organizationId: organization_id,
@@ -132,6 +133,7 @@ function GoodPrepView({
 
   const {
     isIntegrating,
+    integratingStep,
     isIntegrateModalOpen,
     integrateTriggerSpb,
     adjustFromIntegrate,
@@ -146,6 +148,8 @@ function GoodPrepView({
     prepCallplans,
     enrichedData,
     refetchPrepCallplans,
+    refetchReturSource,
+    applyLocalDetailPatch,
   });
 
   const aggregatedPickList = useMemo(() => {
@@ -406,30 +410,6 @@ function GoodPrepView({
     () => [
       { accessorKey: "spb_number", header: "SPB Number" },
       {
-        id: "meta_integration",
-        header: "Meta Integration",
-        cell: ({ row }) => {
-          const integrated = isSpbIntegratedToMeta(row.original);
-          console.log("row.original", row.original);
-          return (
-            <span
-              className={`inline-flex items-center rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide ${
-                integrated
-                  ? "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200"
-                  : "bg-slate-100 text-slate-500 ring-1 ring-slate-200"
-              }`}
-              title={
-                integrated
-                  ? "Sudah di-integrate ke Meta"
-                  : "Belum di-integrate ke Meta"
-              }
-            >
-              {integrated ? "Sudah" : "Belum"}
-            </span>
-          );
-        },
-      },
-      {
         id: "status",
         header: "Status",
         cell: ({ row }) => {
@@ -452,22 +432,19 @@ function GoodPrepView({
       },
       {
         accessorKey: "mo_type",
-        header: "MO Type",
+        header: "FPPR Type",
         cell: ({ row }) => row.original.mo_type?.trim() || "-",
       },
       { accessorKey: "sales_name", header: "Sales Name" },
       { accessorKey: "sales_nik", header: "Sales NIK" },
-      { accessorKey: "callplan_date_start", header: "Start Date" },
-      { accessorKey: "callplan_date_end", header: "End Date" },
       {
         id: "action",
         header: "Action",
         cell: ({ row }) => {
           const rowData = row.original;
           const isAlreadyIntegrated = isSpbIntegratedToMeta(rowData);
-          const isActionsLocked = isPrintDisabled;
           const isIntegrateDisabled =
-            isActionsLocked || globalHasLessStock || isAlreadyIntegrated;
+            globalHasLessStock || isAlreadyIntegrated || isIntegrating;
           const actionList = [
             {
               label: "Print BKB",
@@ -476,19 +453,19 @@ function GoodPrepView({
                 setSelectedToPrint(rowData);
                 setIsModalOpen(true);
               },
-              disabled: isActionsLocked,
-              className: isActionsLocked ? "text-slate-400" : "text-blue-600",
+              disabled: isPrintDisabled || isIntegrating,
+              className:
+                isPrintDisabled || isIntegrating
+                  ? "text-slate-400"
+                  : "text-blue-600",
             },
             {
-              label: "Integrate Meta & DMS",
+              label: isIntegrating
+                ? "Integrasi sedang diproses..."
+                : "Integrate Meta & DMS",
               icon: FaSyncAlt,
               onClick: () => {
-                if (isActionsLocked) {
-                  showErrorToast(
-                    "Tidak bisa proses — data BTB cabang belum tersedia",
-                  );
-                  return;
-                }
+                if (isIntegrating) return;
                 if (isAlreadyIntegrated) {
                   showErrorToast(
                     "Dokumen SPB sudah berhasil di-integrasikan sebelumnya",
@@ -514,7 +491,7 @@ function GoodPrepView({
         },
       },
     ],
-    [isPrintDisabled, globalHasLessStock, openIntegrateModal],
+    [isPrintDisabled, globalHasLessStock, isIntegrating, openIntegrateModal],
   );
 
   const handleExportSummary = () => {
@@ -568,7 +545,8 @@ function GoodPrepView({
         title={isIntegrating ? "Integrate Meta & DMS" : "Sinkronisasi Data"}
         subtitle={
           isIntegrating
-            ? `Mengirim SPB ${integrateTriggerSpb?.spb_number || integrateTriggerSpb?.callplan_number || "-"} ke Meta & DMS...`
+            ? integratingStep ||
+              `Mengirim SPB ${integrateTriggerSpb?.spb_number || integrateTriggerSpb?.callplan_number || "-"} ke Meta & DMS...`
             : undefined
         }
       />
@@ -700,6 +678,7 @@ function GoodPrepView({
         adjustFromIntegrate={adjustFromIntegrate}
         singleIntegrateLines={singleIntegrateLines}
         isSohLoading={isSohLoading}
+        isIntegrating={isIntegrating}
         itemList={itemList}
         sohMap={sohMap}
         totalQtySpbMap={totalQtySpbMap}

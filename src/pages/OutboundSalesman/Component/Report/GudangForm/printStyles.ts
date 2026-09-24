@@ -14,10 +14,16 @@ export const GUDANG_FORM_PRINT_PAGE_STYLE = `
     }
     .gudang-form-sheet {
       width: 100%;
+      color: #000 !important;
+    }
+    .gudang-form-sheet,
+    .gudang-form-sheet * {
+      color: #000 !important;
     }
     .gudang-form-table {
       -webkit-print-color-adjust: exact !important;
       print-color-adjust: exact !important;
+      color: #000 !important;
     }
     .gudang-form-table thead {
       display: table-header-group;
