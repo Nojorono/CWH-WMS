@@ -11,8 +11,12 @@ import {
 } from "../../Report/hook/SKUconvertion";
 import { useStoreItem } from "../../../../../DynamicAPI/stores/Store/MasterStore";
 import { showErrorToast } from "../../../../../components/toast";
-import { downloadElementAsA4Pdf } from "../../Report/utils/downloadElementAsA4Pdf";
-import { BKB_PRINT_PAGE_STYLE } from "../../Report/GudangForm/printStyles";
+import { downloadSheetsAsPdf } from "../../Report/utils/downloadElementAsA4Pdf";
+import {
+  BKB_CONTINUOUS_FORM_HEIGHT_MM,
+  BKB_CONTINUOUS_FORM_WIDTH_MM,
+  BKB_PRINT_PAGE_STYLE,
+} from "../../Report/GudangForm/printStyles";
 
 type PrintBkbModalProps = {
   isOpen: boolean;
@@ -71,9 +75,46 @@ const formatBalSlopPack = (
 };
 
 const thBase =
-  "border border-dashed border-black px-1 py-0.5 text-center text-[10px] font-bold leading-tight";
+  "border border-dashed border-black px-0.5 py-0.5 text-center text-[14px] font-bold leading-none text-black";
+/** Header kolom ADJUSTMENT DO */
+const thAdj =
+  "border border-dashed border-black px-0.5 py-0.5 text-center text-[12px] font-bold leading-none text-black";
 const tdBase =
-  "border border-dashed border-black px-1 py-0.5 text-[10px] leading-tight";
+  "border border-dashed border-black px-0.5 py-0.5 text-[10px] leading-none text-black";
+/** NICK — naming bisa panjang */
+const tdNick =
+  "border border-dashed border-black px-0.5 py-0.5 text-center text-[15px] font-bold leading-tight text-black break-words";
+/** SKU / Brand — lebih sempit */
+const tdSku =
+  "border border-dashed border-black px-0.5 py-0.5 text-center text-[15px] font-bold leading-tight text-black break-words";
+/** Qty WH / SPB */
+const tdQty =
+  "border border-dashed border-black px-0.5 py-0.5 text-center text-[15px] font-bold leading-tight tabular-nums text-black";
+/** Qty ADJUSTMENT DO (isian manual) */
+const tdAdj =
+  "border border-dashed border-black px-0.5 py-0.5 text-center text-[15px] font-bold leading-tight text-black";
+
+/** Maks SKU per lembar Continuous Form (harus muat 1 halaman fisik) */
+const SKU_PER_PAGE = 30;
+
+const chunkRows = <T,>(items: T[], size: number): T[][] => {
+  if (!items.length) return [[]];
+  const pages: T[][] = [];
+  for (let i = 0; i < items.length; i += size) {
+    pages.push(items.slice(i, i + size));
+  }
+  return pages;
+};
+
+/** Tampilkan NICK ulang di awal tiap lembar (dan saat ganti nick) */
+const withPageNickVisibility = (pageRows: BkbPrintRow[]): BkbPrintRow[] => {
+  let prevNick = "";
+  return pageRows.map((row) => {
+    const showNick = row.nick !== prevNick;
+    prevNick = row.nick;
+    return { ...row, showNick };
+  });
+};
 
 export const PrintBkbModal = ({
   isOpen,
@@ -100,7 +141,7 @@ export const PrintBkbModal = ({
 
     const confirm = await Swal.fire({
       title: "Konfirmasi Print BKB?",
-      text: "Akan mencetak BKB (A4) dan mengunduh PDF backup secara otomatis. Lanjutkan?",
+      text: "Akan mencetak BKB ke Continuous Form Applied 3 (9.5\" × 11\") dan mengunduh PDF backup. Lanjutkan?",
       icon: "warning",
       showCancelButton: true,
       confirmButtonText: "Ya, Print",
@@ -129,11 +170,18 @@ export const PrintBkbModal = ({
         /[^\w.\-]+/g,
         "_",
       );
-      // Dialog print + unduh PDF berjalan paralel
+      // Dialog print + unduh PDF (1 lembar HTML = 1 halaman PDF)
       handlePrint();
-      await downloadElementAsA4Pdf(el, `BKB_${spb}_${stamp}`, {
-        orientation: "landscape",
+      const sheets = Array.from(
+        el.querySelectorAll<HTMLElement>(".bkb-print-sheet"),
+      );
+      await downloadSheetsAsPdf(sheets, `BKB_${spb}_${stamp}`, {
+        orientation: "portrait",
         marginMm: 8,
+        pageSizeMm: [
+          BKB_CONTINUOUS_FORM_WIDTH_MM,
+          BKB_CONTINUOUS_FORM_HEIGHT_MM,
+        ],
       });
     } catch (error) {
       console.error("Gagal unduh PDF BKB:", error);
@@ -234,6 +282,11 @@ export const PrintBkbModal = ({
     });
   }, [isOpen, data, unmatchBTB, itemList]);
 
+  const pageChunks = useMemo(() => {
+    const chunks = chunkRows(rows, SKU_PER_PAGE);
+    return chunks.map((chunk) => withPageNickVisibility(chunk));
+  }, [rows]);
+
   if (!isOpen || !data) return null;
 
   const orgName =
@@ -242,6 +295,167 @@ export const PrintBkbModal = ({
     "-";
   const doDate =
     data.callplan_date_start || data.spb_date || data.preparation_date;
+  const totalPages = pageChunks.length;
+  const printedAt = dayjs().format("DD-MMM-YYYY HH:mm:ss");
+
+  const renderFormHeader = (pageIndex: number) => (
+    <>
+      <div className="mb-3 text-center text-black">
+        <h2 className="text-[14px] font-bold uppercase tracking-wide text-black">
+          Bukti Kirim Barang ( BKB )
+        </h2>
+        <p className="text-[13px] font-semibold text-black">
+          Satuan ( Bal.Pres.Bks)
+        </p>
+        {totalPages > 1 && (
+          <p className="text-[11px] font-bold text-black">
+            Halaman {pageIndex + 1} / {totalPages}
+          </p>
+        )}
+      </div>
+
+      <div className="mb-5 flex justify-between gap-3 text-[12px] text-black">
+        <div className="space-y-0">
+          <div className="grid grid-cols-[92px_10px_1fr]">
+            <span className="font-semibold">AMO</span>
+            <span>:</span>
+            <span className="font-bold text-black">{orgName}</span>
+          </div>
+          <div className="grid grid-cols-[92px_10px_1fr]">
+            <span className="font-semibold">ID SALES</span>
+            <span>:</span>
+            <span className="font-bold text-black">
+              {data.sales_nik || "-"}
+            </span>
+          </div>
+          <div className="grid grid-cols-[92px_10px_1fr]">
+            <span className="font-semibold">Nama Sales</span>
+            <span>:</span>
+            <span className="font-bold text-black">
+              {data.sales_name || "-"}
+            </span>
+          </div>
+          <div className="grid grid-cols-[92px_10px_1fr]">
+            <span className="font-semibold">SPB Number</span>
+            <span>:</span>
+            <span className="break-all font-bold text-black">
+              {data.spb_number || "-"}
+            </span>
+          </div>
+        </div>
+
+        <div className="text-right">
+          <div className="inline-grid grid-cols-[64px_10px_1fr] text-left text-[12px] text-black">
+            <span className="font-semibold">Tgl DO</span>
+            <span>:</span>
+            <span className="font-bold text-black">
+              {formatDoDate(doDate)}
+            </span>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+
+  const renderTable = (pageRows: BkbPrintRow[]) => (
+    <table className="w-full border-collapse text-black table-fixed">
+      <colgroup>
+        {/* NICK — naming lebih panjang, kolom lebih lebar */}
+        <col style={{ width: "15%" }} />
+        {/* BRAND — lebih sempit */}
+        <col style={{ width: "9%" }} />
+        {/* BTB / Top up / Qty Final / Diterima SPB */}
+        <col style={{ width: "12%" }} />
+        <col style={{ width: "12%" }} />
+        <col style={{ width: "12%" }} />
+        <col style={{ width: "11%" }} />
+        {/* ADJUSTMENT: Tambah / Kurang / Diterima */}
+        <col style={{ width: "10%" }} />
+        <col style={{ width: "10%" }} />
+        <col style={{ width: "12%" }} />
+      </colgroup>
+      <thead>
+        <tr>
+          <th rowSpan={2} className={thBase}>
+            NICK
+          </th>
+          <th rowSpan={2} className={thBase}>
+            BRAND
+          </th>
+          <th colSpan={2} className={thBase}>
+            Informasi WH
+          </th>
+          <th colSpan={2} className={thBase}>
+            SPB
+          </th>
+          <th colSpan={3} className={thBase}>
+            ADJUSMENT DO
+          </th>
+        </tr>
+        <tr>
+          <th className={thBase}>BTB</th>
+          <th className={thBase}>Top up</th>
+          <th className={thBase}>Qty Final</th>
+          <th className={thBase}>Diterima</th>
+          <th className={thAdj}>Tambah</th>
+          <th className={thAdj}>Kurang</th>
+          <th className={thAdj}>Diterima</th>
+        </tr>
+      </thead>
+      <tbody>
+        {pageRows.length === 0 ? (
+          <tr>
+            <td colSpan={9} className={`${tdBase} py-4 text-center italic`}>
+              Tidak ada item
+            </td>
+          </tr>
+        ) : (
+          pageRows.map((row) => (
+            <tr key={row.id} className="break-inside-avoid">
+              <td className={tdNick}>{row.showNick ? row.nick : ""}</td>
+              <td className={tdSku}>{row.brand}</td>
+              <td className={tdQty}>{row.sisaBarang}</td>
+              <td className={tdQty}>{row.topUp}</td>
+              <td className={tdQty}>{row.perhitungan}</td>
+              <td className={tdQty}>{row.diterimaDo}</td>
+              <td className={tdAdj}>{row.tambah}</td>
+              <td className={tdAdj}>{row.retur}</td>
+              <td className={tdAdj}>{row.diterimaAdj}</td>
+            </tr>
+          ))
+        )}
+      </tbody>
+    </table>
+  );
+
+  const renderFooter = () => (
+    <>
+      <div className="mt-10 grid grid-cols-3 gap-3 text-center text-[12px] text-black">
+        <div>
+          <p className="mb-10 text-[12px] font-bold text-black">Warehouse</p>
+          <p className="text-[11px]">(--------------------)</p>
+   
+        </div>
+        <div>
+          <p className="mb-10 text-[12px] font-bold text-black">Salesman</p>
+          <p className="text-[11px]">(--------------------)</p>
+  
+        </div>
+        <div>
+          <p className=" text-[10px] font-bold text-black">
+            * Jika ada adjusment
+          </p>
+          <p className="mb-6 text-[12px] font-bold text-black">Supervisor</p>
+          <p className="text-[11px]">(--------------------)</p>
+        </div>
+      </div>
+
+      <div className="mt-2 flex justify-between text-[12px] font-semibold text-black">
+        <span>WMS-SYSTEM // CONTINUOUS FORM APPLIED 3</span>
+        <span>Printed: {printedAt}</span>
+      </div>
+    </>
+  );
 
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-sm print:hidden">
@@ -260,6 +474,11 @@ export const PrintBkbModal = ({
           <h3 className="flex items-center gap-2 text-sm font-semibold text-slate-800">
             <FaPrint className="text-orange-500" />
             Preview Bukti Kirim Barang (BKB)
+            {totalPages > 1 && (
+              <span className="rounded bg-slate-200 px-2 py-0.5 text-[11px] font-medium text-slate-600">
+                {rows.length} SKU · {totalPages} lembar
+              </span>
+            )}
           </h3>
           <div className="flex items-center gap-2">
             <button
@@ -292,144 +511,27 @@ export const PrintBkbModal = ({
         <div className="flex-1 overflow-auto bg-slate-200 p-4">
           <div
             ref={printRef}
-            className="mx-auto w-full max-w-[1100px] bg-white p-4 text-black print:max-w-none print:p-0"
-            style={{ fontFamily: "Consolas, 'Courier New', monospace" }}
+            className="bkb-print-root mx-auto w-full max-w-[910px] print:max-w-none"
+            style={{
+              fontFamily: "Consolas, 'Courier New', monospace",
+              color: "#000000",
+            }}
           >
-            <div className="mb-3 text-center">
-              <h2 className="text-base font-bold uppercase tracking-wide">
-                Bukti Kirim Barang ( BKB )
-              </h2>
-              <p className="text-[11px]">Satuan ( Bal.Pres.Bks)</p>
-            </div>
-
-            <div className="mb-3 flex justify-between gap-4 text-[11px]">
-              <div className="space-y-0.5">
-                <div className="grid grid-cols-[88px_10px_1fr]">
-                  <span>AMO</span>
-                  <span>:</span>
-                  <span className="font-semibold">{orgName}</span>
+            {pageChunks.map((pageRows, pageIndex) => {
+              const isLast = pageIndex === totalPages - 1;
+              return (
+                <div
+                  key={`bkb-page-${pageIndex}`}
+                  className={`bkb-print-sheet bg-white p-3 text-black print:p-0 ${
+                    isLast ? "" : "bkb-page-break mb-4 print:mb-0"
+                  }`}
+                >
+                  {renderFormHeader(pageIndex)}
+                  {renderTable(pageRows)}
+                  {isLast ? renderFooter() : null}
                 </div>
-                <div className="grid grid-cols-[88px_10px_1fr]">
-                  <span>ID SALES</span>
-                  <span>:</span>
-                  <span className="font-semibold">{data.sales_nik || "-"}</span>
-                </div>
-                <div className="grid grid-cols-[88px_10px_1fr]">
-                  <span>Nama Sales</span>
-                  <span>:</span>
-                  <span className="font-semibold">{data.sales_name || "-"}</span>
-                </div>
-                <div className="grid grid-cols-[88px_10px_1fr]">
-                  <span>SPB Number</span>
-                  <span>:</span>
-                  <span className="font-semibold break-all">
-                    {data.spb_number || "-"}
-                  </span>
-                </div>
-              </div>
-              <div className="text-right">
-                <div className="inline-grid grid-cols-[64px_10px_1fr] text-left">
-                  <span>Tgl DO</span>
-                  <span>:</span>
-                  <span className="font-semibold">{formatDoDate(doDate)}</span>
-                </div>
-              </div>
-            </div>
-
-            <table className="w-full border-collapse">
-              <thead>
-                <tr>
-                  <th rowSpan={2} className={`${thBase} w-14`}>
-                    NICK
-                  </th>
-                  <th rowSpan={2} className={`${thBase} w-16`}>
-                    BRAND
-                  </th>
-                  <th colSpan={2} className={thBase}>
-                    Informasi WH
-                  </th>
-                  <th colSpan={2} className={thBase}>
-                    SPB
-                  </th>
-                  <th colSpan={3} className={thBase}>
-                    ADJUSMENT DO
-                  </th>
-                </tr>
-                <tr>
-                  <th className={thBase}>BTB</th>
-                  <th className={thBase}>Top up</th>
-                  <th className={thBase}>Qty Final</th>
-                  <th className={thBase}>Diterima</th>
-                  <th className={thBase}>Tambah</th>
-                  <th className={thBase}>Kurang</th>
-                  <th className={thBase}>Diterima</th>
-                </tr>
-              </thead>
-              <tbody>
-                {rows.length === 0 ? (
-                  <tr>
-                    <td
-                      colSpan={9}
-                      className={`${tdBase} py-4 text-center italic`}
-                    >
-                      Tidak ada item
-                    </td>
-                  </tr>
-                ) : (
-                  rows.map((row) => (
-                      <tr key={row.id} className="break-inside-avoid">
-                        <td className={`${tdBase} text-center font-semibold`}>
-                          {row.showNick ? row.nick : ""}
-                        </td>
-                        <td className={`${tdBase} text-center font-semibold`}>
-                          {row.brand}
-                        </td>
-                        <td className={`${tdBase} text-center`}>
-                          {row.sisaBarang}
-                        </td>
-                        <td className={`${tdBase} text-center`}>{row.topUp}</td>
-                        <td className={`${tdBase} text-center`}>
-                          {row.perhitungan}
-                        </td>
-                        <td className={`${tdBase} text-center`}>
-                          {row.diterimaDo}
-                        </td>
-                        <td className={`${tdBase} text-center`}>{row.tambah}</td>
-                        <td className={`${tdBase} text-center`}>{row.retur}</td>
-                        <td className={`${tdBase} text-center`}>
-                          {row.diterimaAdj}
-                        </td>
-                      </tr>
-                    ))
-                )}
-              </tbody>
-            </table>
-
-            <div className="mt-8 grid grid-cols-3 gap-4 text-center text-[11px]">
-              <div>
-                <p className="mb-10 font-semibold">Warehouse</p>
-                <p>--------------------</p>
-                <p>( &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; )</p>
-              </div>
-              <div>
-                <p className="mb-10 font-semibold">Salesman</p>
-                <p>--------------------</p>
-                <p>( &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; )</p>
-              </div>
-              <div>
-                <p className="mb-1 text-[10px] font-semibold text-red-600 print:text-red-600">
-                  * Jika ada adjusment
-                </p>
-                <p className="mb-10 font-semibold">Supervisor</p>
-                <p>--------------------</p>
-                <p>( &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; )</p>
-              </div>
-            </div>
-
-            <div className="mt-6 flex justify-between text-[9px] text-slate-600">
-              <span>WMS-SYSTEM // PRINT_PREVIEW_MODE</span>
-              <span>Printed: {dayjs().format("DD-MMM-YYYY HH:mm:ss")}</span>
-            </div>
+              );
+            })}
           </div>
         </div>
       </div>
