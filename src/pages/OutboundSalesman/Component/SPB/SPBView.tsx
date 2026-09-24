@@ -32,7 +32,10 @@ const STATUS_OPTIONS = [
   { value: "COMPLETED", label: "COMPLETED" },
 ];
 
-/** Query ke-3 fetch SPB: mo_type */
+/**
+ * Query ke-3 fetch SPB: mo_type — HANYA dipakai saat status = SUBMITTED.
+ * FINAL / VOID / COMPLETED / dll → tanpa mo_type (semua tipe campur).
+ */
 const MO_TYPE_OPTIONS = [
   { value: FPPR_AWAL_MO_TYPE, label: "FPPR Awal" },
   { value: FPPR_TAMBAHAN_MO_TYPE, label: "FPPR Tambahan" },
@@ -126,6 +129,8 @@ export default function SPBView({
     return H_PLUS_1();
   }, [bypassActive, appliedBypassDate]);
 
+  const isSubmittedStatus = statusFilter === "SUBMITTED";
+
   const fetchCallplans = async (options?: {
     force?: boolean;
     signal?: AbortSignal;
@@ -134,12 +139,16 @@ export default function SPBView({
 
     setIsLoading(true);
     try {
+      // mo_type hanya untuk SUBMITTED (pisah Calculation vs Finalize).
+      // FINAL / VOID / COMPLETED / dll → semua tipe FPPR (campur).
       const data = await useOutboundSalesmanCache.getState().getCallplans(
         {
           dateStart: targetCallplanDate,
           organizationId: organization_id,
           status: statusFilter,
-          mo_type: moTypeFilter,
+          ...(isSubmittedStatus && moTypeFilter
+            ? { mo_type: moTypeFilter }
+            : {}),
         },
         { force: options?.force, signal: options?.signal },
       );
@@ -169,7 +178,13 @@ export default function SPBView({
     const ac = new AbortController();
     void fetchCallplans({ signal: ac.signal });
     return () => ac.abort();
-  }, [organization_id, statusFilter, moTypeFilter, targetCallplanDate]);
+    // moTypeFilter hanya mempengaruhi fetch saat status SUBMITTED
+  }, [
+    organization_id,
+    statusFilter,
+    targetCallplanDate,
+    isSubmittedStatus ? moTypeFilter : null,
+  ]);
 
   useEffect(() => {
     if (!bypassDateTimeRef.current) return;
@@ -509,16 +524,26 @@ export default function SPBView({
 
               <div className="flex items-center gap-2 text-xs text-slate-600">
                 <span className="font-medium">FPPR Type:</span>
-                <Select
-                  options={MO_TYPE_OPTIONS}
-                  value={moTypeFilter}
-                  onChange={(value) =>
-                    setMoTypeFilter(String(value || FPPR_AWAL_MO_TYPE))
-                  }
-                  placeholder="Pilih FPPR Type"
-                  width="180px"
-                  className="text-xs"
-                />
+                {isSubmittedStatus ? (
+                  <Select
+                    options={MO_TYPE_OPTIONS}
+                    value={moTypeFilter}
+                    onChange={(value) =>
+                      setMoTypeFilter(String(value || FPPR_AWAL_MO_TYPE))
+                    }
+                    placeholder="Pilih FPPR Type"
+                    width="180px"
+                    className="text-xs"
+                    disabled={isFinalizingTambahan}
+                  />
+                ) : (
+                  <span
+                    className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-500"
+                    title="Status selain SUBMITTED menampilkan semua tipe FPPR (sudah lewat Calculation/Finalize)"
+                  >
+                    Semua FPPR
+                  </span>
+                )}
               </div>
 
               <button
@@ -547,7 +572,7 @@ export default function SPBView({
               )}
               {navLock.isBackdate && navLock.calculationBypassActive && (
                 <p className="max-w-sm text-right text-[11px] font-medium text-emerald-700">
-                  Bypass Calculation backdate aktif (Ctrl+B untuk matikan).
+                  Bypass Calculation backdate aktif.
                 </p>
               )}
               <div className="flex items-center gap-2">
