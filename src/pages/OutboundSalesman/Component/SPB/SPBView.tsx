@@ -1,25 +1,25 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import flatpickr from "flatpickr";
 import "flatpickr/dist/flatpickr.min.css";
-import {
-  FaSyncAlt,
-  FaArrowRight,
-  FaCalendarAlt,
-  FaClock,
-  FaFilter,
-  FaCheckCircle,
-  FaFileAlt,
-} from "react-icons/fa";
+import { FaSyncAlt, FaArrowRight, FaFilter, FaCheckCircle } from "react-icons/fa";
 import { usePersistAuthStore } from "../../../../API/store/AuthStore/PersistAuthStore";
 import { useOutboundSalesmanCache } from "../../../../API/store/OutboundSalesmanStore/useOutboundSalesmanCache";
 import { Callplan } from "../../types/CallplanTypes";
 import { SPBViewProps } from "../../types/flow";
 import dayjs from "dayjs";
-import { showErrorToast } from "../../../../components/toast";
+import { showErrorToast, showSuccessToast } from "../../../../components/toast";
+import { showConfirmDialog } from "../../../../components/swal-confirm";
 import Select from "../../../../components/form/Select";
 import SPBTable from "./SPBTable";
 import { SortDirection, sortCallplans } from "./spbTableConfig";
 import { getSpbOverviewNavLock } from "./spbOverviewAccessRules";
+import {
+  FPPR_AWAL_MO_TYPE,
+  FPPR_TAMBAHAN_MO_TYPE,
+  isFpprAwalMoType,
+  isFpprTambahanMoType,
+} from "../Calculation/calculationMoType";
+import { finalizeFpprTambahanSpb } from "./finalizeFpprTambahan";
 
 const TODAY = () => dayjs().format("YYYY-MM-DD");
 const H_PLUS_1 = () => dayjs().add(1, "day").format("YYYY-MM-DD");
@@ -30,6 +30,12 @@ const STATUS_OPTIONS = [
   { value: "VOID", label: "VOID" },
   { value: "VOID_NEED_ACTION", label: "VOID_NEED_ACTION" },
   { value: "COMPLETED", label: "COMPLETED" },
+];
+
+/** Query ke-3 fetch SPB: mo_type */
+const MO_TYPE_OPTIONS = [
+  { value: FPPR_AWAL_MO_TYPE, label: "FPPR Awal" },
+  { value: FPPR_TAMBAHAN_MO_TYPE, label: "FPPR Tambahan" },
 ];
 
 const getInitialBypassState = () => {
@@ -58,6 +64,13 @@ export default function SPBView({
   const [callplans, setCallplans] = useState<Callplan[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [statusFilter, setStatusFilter] = useState("SUBMITTED");
+  const [moTypeFilter, setMoTypeFilter] = useState(FPPR_AWAL_MO_TYPE);
+  const [isFinalizingTambahan, setIsFinalizingTambahan] = useState(false);
+  const [finalizeProgress, setFinalizeProgress] = useState({
+    current: 0,
+    total: 0,
+  });
+  const isFinalizingRef = useRef(false);
   const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>({});
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
@@ -91,11 +104,6 @@ export default function SPBView({
     return localStorage.getItem("OSM_BYPASS_DATETIME")?.split(" ")[0] || "";
   });
 
-  const [appliedBypassTime, setAppliedBypassTime] = useState(() => {
-    if (localStorage.getItem("OSM_BYPASS_ACTIVE") !== "true") return "";
-    return localStorage.getItem("OSM_BYPASS_DATETIME")?.split(" ")[1] || "";
-  });
-
   const [bypassActive, setBypassActive] = useState(
     () => localStorage.getItem("OSM_BYPASS_ACTIVE") === "true",
   );
@@ -110,15 +118,6 @@ export default function SPBView({
     return H_PLUS_1();
   }, [bypassActive, appliedBypassDate]);
 
-  const displayCurrentTime = useMemo(() => {
-    if (bypassActive && appliedBypassDate && appliedBypassTime) {
-      return dayjs(`${appliedBypassDate} ${appliedBypassTime}`).format(
-        "DD MMM YYYY - HH:mm",
-      );
-    }
-    return dayjs().format("DD MMM YYYY - HH:mm");
-  }, [bypassActive, appliedBypassDate, appliedBypassTime]);
-
   const fetchCallplans = async (options?: {
     force?: boolean;
     signal?: AbortSignal;
@@ -132,6 +131,7 @@ export default function SPBView({
           dateStart: targetCallplanDate,
           organizationId: organization_id,
           status: statusFilter,
+          mo_type: moTypeFilter,
         },
         { force: options?.force, signal: options?.signal },
       );
@@ -161,7 +161,7 @@ export default function SPBView({
     const ac = new AbortController();
     void fetchCallplans({ signal: ac.signal });
     return () => ac.abort();
-  }, [organization_id, statusFilter, targetCallplanDate]);
+  }, [organization_id, statusFilter, moTypeFilter, targetCallplanDate]);
 
   useEffect(() => {
     if (!bypassDateTimeRef.current) return;
@@ -196,7 +196,6 @@ export default function SPBView({
       `${draftBypassDate} ${draftBypassTime}`,
     );
     setAppliedBypassDate(draftBypassDate);
-    setAppliedBypassTime(draftBypassTime);
     setBypassActive(true);
   };
 
@@ -207,7 +206,6 @@ export default function SPBView({
     localStorage.removeItem("OSM_BYPASS_DATETIME");
     setBypassActive(false);
     setAppliedBypassDate("");
-    setAppliedBypassTime("");
     setDraftBypassDate(resetDate);
     setDraftBypassTime(resetTime);
     flatpickrRef.current?.setDate(resetDate, false);
@@ -235,14 +233,93 @@ export default function SPBView({
 
   const canProceedToCalculation =
     statusFilter === "SUBMITTED" &&
+    isFpprAwalMoType(moTypeFilter) &&
     submittedCount > 0 &&
     !isLoading &&
+    !isFinalizingTambahan &&
     !navLock.lockCalculation;
+
+  const canFinalizeTambahan =
+    statusFilter === "SUBMITTED" &&
+    isFpprTambahanMoType(moTypeFilter) &&
+    submittedCount > 0 &&
+    !isLoading &&
+    !isFinalizingTambahan &&
+    !navLock.lockCalculation;
+
   const canProceedToPreparation =
     statusFilter === "FINAL" &&
     finalCount > 0 &&
     !isLoading &&
+    !isFinalizingTambahan &&
     !navLock.lockGoodPrep;
+
+  const handleFinalizeFpprTambahan = () => {
+    if (isFinalizingRef.current || !canFinalizeTambahan) return;
+
+    if (navLock.lockCalculation) {
+      showErrorToast(
+        navLock.reason ||
+          "Finalize FPPR Tambahan dikunci untuk tanggal backdate.",
+      );
+      return;
+    }
+
+    const targets = callplans.filter(
+      (cp) =>
+        String(cp.status || "").toUpperCase() === "SUBMITTED" &&
+        isFpprTambahanMoType(cp.mo_type),
+    );
+
+    if (targets.length === 0) {
+      showErrorToast(
+        "Tidak ada SPB FPPR Tambahan berstatus SUBMITTED untuk di-finalize.",
+      );
+      return;
+    }
+
+    showConfirmDialog(
+      async () => {
+        if (isFinalizingRef.current) return;
+        isFinalizingRef.current = true;
+        setIsFinalizingTambahan(true);
+        setFinalizeProgress({ current: 0, total: 0 });
+
+        try {
+          const finalized = await finalizeFpprTambahanSpb(targets, {
+            onProgress: setFinalizeProgress,
+          });
+
+          showSuccessToast(
+            `${finalized.length} SPB FPPR Tambahan berhasil di-finalize (FINAL).`,
+          );
+
+          useOutboundSalesmanCache
+            .getState()
+            .invalidateCallplans(organization_id, targetCallplanDate);
+
+          onProceedToPreparation(finalized);
+        } catch (error) {
+          console.error("Finalize FPPR Tambahan gagal:", error);
+          showErrorToast(
+            error instanceof Error
+              ? error.message
+              : "Gagal finalize SPB FPPR Tambahan",
+          );
+        } finally {
+          isFinalizingRef.current = false;
+          setIsFinalizingTambahan(false);
+          setFinalizeProgress({ current: 0, total: 0 });
+        }
+      },
+      {
+        title: "Finalize FPPR Tambahan?",
+        text: `${targets.length} SPB akan di-set Qty Submitted = Qty Final = Suggestion, status → FINAL (tanpa Calculation/SOH), lalu lanjut ke Goods Preparation.`,
+        confirmButtonText: "Ya, Finalize & Lanjut Good Prep",
+        cancelButtonText: "Batal",
+      },
+    );
+  };
 
   const sortedCallplans = useMemo(
     () => sortCallplans(callplans, sortKey, sortDirection),
@@ -258,10 +335,27 @@ export default function SPBView({
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [statusFilter, pageSize, totalItems, sortKey, sortDirection]);
+  }, [statusFilter, moTypeFilter, pageSize, totalItems, sortKey, sortDirection]);
 
   return (
-    <div className="min-h-screen p-6 text-slate-800 font-sans">
+    <div className="relative min-h-screen p-6 text-slate-800 font-sans">
+      {isFinalizingTambahan && (
+        <div className="fixed inset-0 z-[200] flex flex-col items-center justify-center bg-white/80 backdrop-blur-sm">
+          <div className="mb-4 h-12 w-12 animate-spin rounded-full border-4 border-emerald-500 border-t-transparent" />
+          <p className="px-6 text-center text-sm font-semibold text-slate-700">
+            Finalize FPPR Tambahan…
+          </p>
+          {finalizeProgress.total > 0 && (
+            <p className="mt-1 text-xs text-slate-500">
+              Batch {finalizeProgress.current} / {finalizeProgress.total}
+            </p>
+          )}
+          <p className="mt-2 max-w-sm text-center text-[11px] text-slate-400">
+            Qty Submitted &amp; Final = Suggestion · Status → FINAL
+          </p>
+        </div>
+      )}
+
       <div className="mx-auto max-w-7xl space-y-6">
         {/* Header & Meta Bar */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -342,8 +436,8 @@ export default function SPBView({
         <div className="rounded-2xl border border-slate-200/80 bg-white shadow-sm">
           {/* Table Control Header */}
           <div className="flex flex-col gap-4 border-b border-slate-100 p-5 sm:flex-row sm:items-center sm:justify-between">
-            {/* Filter Status */}
-            <div className="flex items-center gap-3">
+            {/* Filter Status + MO Type */}
+            <div className="flex flex-wrap items-center gap-3">
               <div className="flex items-center gap-2 text-xs text-slate-600">
                 <FaFilter size={11} className="text-slate-400" />
                 <span className="font-medium">Status:</span>
@@ -359,9 +453,23 @@ export default function SPBView({
                 />
               </div>
 
+              <div className="flex items-center gap-2 text-xs text-slate-600">
+                <span className="font-medium">MO Type:</span>
+                <Select
+                  options={MO_TYPE_OPTIONS}
+                  value={moTypeFilter}
+                  onChange={(value) =>
+                    setMoTypeFilter(String(value || FPPR_AWAL_MO_TYPE))
+                  }
+                  placeholder="Pilih MO Type"
+                  width="180px"
+                  className="text-xs"
+                />
+              </div>
+
               <button
                 onClick={() => void fetchCallplans({ force: true })}
-                disabled={isLoading}
+                disabled={isLoading || isFinalizingTambahan}
                 className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50 active:scale-95 disabled:opacity-50"
               >
                 <FaSyncAlt
@@ -384,7 +492,8 @@ export default function SPBView({
                 </p>
               )}
               <div className="flex items-center gap-2">
-                {statusFilter === "SUBMITTED" && (
+                {statusFilter === "SUBMITTED" &&
+                  isFpprAwalMoType(moTypeFilter) && (
                   <button
                     type="button"
                     onClick={() => {
@@ -407,6 +516,33 @@ export default function SPBView({
                   >
                     <span>Lanjut ke Calculation</span>
                     <FaArrowRight size={11} />
+                  </button>
+                )}
+
+                {statusFilter === "SUBMITTED" &&
+                  isFpprTambahanMoType(moTypeFilter) && (
+                  <button
+                    type="button"
+                    onClick={handleFinalizeFpprTambahan}
+                    disabled={!canFinalizeTambahan}
+                    title={
+                      navLock.lockCalculation
+                        ? navLock.reason || undefined
+                        : "Finalize tanpa Calculation/SOH — Qty = Suggestion, status FINAL"
+                    }
+                    className="flex items-center gap-2 rounded-xl bg-amber-600 px-4 py-2.5 text-xs font-semibold text-white shadow-sm transition hover:bg-amber-700 active:scale-95 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400 disabled:shadow-none"
+                  >
+                    {isFinalizingTambahan ? (
+                      <>
+                        <FaSyncAlt size={11} className="animate-spin" />
+                        <span>Sedang Finalize…</span>
+                      </>
+                    ) : (
+                      <>
+                        <FaCheckCircle size={11} />
+                        <span>Finalize SPB (tanpa kalkulasi)</span>
+                      </>
+                    )}
                   </button>
                 )}
 

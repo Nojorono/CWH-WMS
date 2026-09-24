@@ -6,6 +6,11 @@ export interface GetCallplansParams {
   organizationId: string;
   /** Jika diisi, filter status. Jika di-omit → Get All SPB tanpa filter status. */
   status?: string;
+  /**
+   * Filter mo_type (query ke-3 selain date + status).
+   * Contoh: "FPPR Awal" | "FPPR Tambahan"
+   */
+  mo_type?: string;
 }
 
 /** Ambil array Callplan dari berbagai bentuk response API */
@@ -32,17 +37,23 @@ const normalizeCallplans = (payload: unknown): Callplan[] => {
 export const callplanService = {
   /**
    * GET /do-suggestion/callplan/date-start/:date/organization/:orgId
+   * Query: status?, mo_type?
    * - dengan `status` → filter status
-   * - tanpa `status` → semua SPB (FINAL, SUBMITTED, VOID, dll.)
+   * - dengan `mo_type` → filter FPPR Awal / FPPR Tambahan
+   * - tanpa keduanya → semua SPB tanggal+org
    */
   getCallplans: async (
-    { dateStart, organizationId, status }: GetCallplansParams,
+    { dateStart, organizationId, status, mo_type }: GetCallplansParams,
     options?: { signal?: AbortSignal },
   ): Promise<Callplan[]> => {
+    const params: Record<string, string> = {};
+    if (status) params.status = status;
+    if (mo_type) params.mo_type = mo_type;
+
     const response = await axiosInstance.get(
       `/do-suggestion/callplan/date-start/${dateStart}/organization/${organizationId}`,
       {
-        ...(status ? { params: { status } } : {}),
+        ...(Object.keys(params).length > 0 ? { params } : {}),
         signal: options?.signal,
       },
     );

@@ -4,6 +4,7 @@ import { Callplan } from "./types/CallplanTypes";
 import { OutboundSalesmanStep } from "./types/flow";
 import { showErrorToast } from "../../components/toast";
 import DeferredMount from "../../components/common/DeferredMount";
+import { isFpprAwalMoType } from "./Component/Calculation/calculationMoType";
 
 /** Lazy: jangan parse Calculation/GoodPrep saat buka SPB Overview saja */
 const CalculationView = lazy(
@@ -21,8 +22,9 @@ const StepFallback = () => (
 
 /**
  * Outbound Salesman – clean step flow
- * - SUBMITTED → Calculation (SOH + rumus)
- * - FINAL     → Goods Preparation langsung (Print + BTB)
+ * - FPPR Awal SUBMITTED → Calculation (SOH + rumus)
+ * - FPPR Tambahan SUBMITTED → Finalize langsung (qty=suggestion, FINAL) → Good Prep
+ * - FINAL → Goods Preparation
  */
 function Index() {
   const [currentStep, setCurrentStep] =
@@ -34,18 +36,20 @@ function Index() {
 
   const handleProceedToCalculation = useCallback(
     async (callplans: Callplan[]) => {
-      const submitted = callplans.filter(
-        (cp) => String(cp.status || "").toUpperCase() === "SUBMITTED",
+      const submittedAwal = callplans.filter(
+        (cp) =>
+          String(cp.status || "").toUpperCase() === "SUBMITTED" &&
+          isFpprAwalMoType(cp.mo_type),
       );
 
-      if (submitted.length === 0) {
+      if (submittedAwal.length === 0) {
         showErrorToast(
-          "Tidak ada SPB berstatus SUBMITTED yang siap untuk dikalkulasi.",
+          "Tidak ada SPB FPPR Awal berstatus SUBMITTED untuk Calculation. FPPR Tambahan pakai Finalize (tanpa kalkulasi).",
         );
         return;
       }
 
-      setCallplansForCalc(submitted);
+      setCallplansForCalc(submittedAwal);
       setCurrentStep("CALCULATION");
     },
     [],
