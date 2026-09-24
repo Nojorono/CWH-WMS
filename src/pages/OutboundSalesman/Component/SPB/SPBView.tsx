@@ -1,14 +1,14 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import flatpickr from "flatpickr";
 import "flatpickr/dist/flatpickr.min.css";
-import { 
-  FaSyncAlt, 
-  FaArrowRight, 
-  FaCalendarAlt, 
-  FaClock, 
-  FaFilter, 
-  FaCheckCircle, 
-  FaFileAlt 
+import {
+  FaSyncAlt,
+  FaArrowRight,
+  FaCalendarAlt,
+  FaClock,
+  FaFilter,
+  FaCheckCircle,
+  FaFileAlt,
 } from "react-icons/fa";
 import { usePersistAuthStore } from "../../../../API/store/AuthStore/PersistAuthStore";
 import { useOutboundSalesmanCache } from "../../../../API/store/OutboundSalesmanStore/useOutboundSalesmanCache";
@@ -19,6 +19,7 @@ import { showErrorToast } from "../../../../components/toast";
 import Select from "../../../../components/form/Select";
 import SPBTable from "./SPBTable";
 import { SortDirection, sortCallplans } from "./spbTableConfig";
+import { getSpbOverviewNavLock } from "./spbOverviewAccessRules";
 
 const TODAY = () => dayjs().format("YYYY-MM-DD");
 const H_PLUS_1 = () => dayjs().add(1, "day").format("YYYY-MM-DD");
@@ -29,7 +30,6 @@ const STATUS_OPTIONS = [
   { value: "VOID", label: "VOID" },
   { value: "VOID_NEED_ACTION", label: "VOID_NEED_ACTION" },
   { value: "COMPLETED", label: "COMPLETED" },
-
 ];
 
 const getInitialBypassState = () => {
@@ -67,7 +67,11 @@ export default function SPBView({
   const [draftBypassDate, setDraftBypassDate] = useState(() => {
     if (localStorage.getItem("OSM_BYPASS_ACTIVE") === "true") {
       const saved = localStorage.getItem("OSM_BYPASS_DATETIME")?.split(" ")[0];
-      if (saved && /^\d{4}-\d{2}-\d{2}$/.test(saved) && dayjs(saved).isValid()) {
+      if (
+        saved &&
+        /^\d{4}-\d{2}-\d{2}$/.test(saved) &&
+        dayjs(saved).isValid()
+      ) {
         return saved;
       }
     }
@@ -93,7 +97,7 @@ export default function SPBView({
   });
 
   const [bypassActive, setBypassActive] = useState(
-    () => localStorage.getItem("OSM_BYPASS_ACTIVE") === "true"
+    () => localStorage.getItem("OSM_BYPASS_ACTIVE") === "true",
   );
 
   const bypassDateTimeRef = useRef<HTMLInputElement>(null);
@@ -109,7 +113,7 @@ export default function SPBView({
   const displayCurrentTime = useMemo(() => {
     if (bypassActive && appliedBypassDate && appliedBypassTime) {
       return dayjs(`${appliedBypassDate} ${appliedBypassTime}`).format(
-        "DD MMM YYYY - HH:mm"
+        "DD MMM YYYY - HH:mm",
       );
     }
     return dayjs().format("DD MMM YYYY - HH:mm");
@@ -189,7 +193,7 @@ export default function SPBView({
     localStorage.setItem("OSM_BYPASS_ACTIVE", "true");
     localStorage.setItem(
       "OSM_BYPASS_DATETIME",
-      `${draftBypassDate} ${draftBypassTime}`
+      `${draftBypassDate} ${draftBypassTime}`,
     );
     setAppliedBypassDate(draftBypassDate);
     setAppliedBypassTime(draftBypassTime);
@@ -214,20 +218,35 @@ export default function SPBView({
   };
 
   const submittedCount = callplans.filter(
-    (cp) => String(cp.status || "").toUpperCase() === "SUBMITTED"
+    (cp) => String(cp.status || "").toUpperCase() === "SUBMITTED",
   ).length;
   const finalCount = callplans.filter(
-    (cp) => String(cp.status || "").toUpperCase() === "FINAL"
+    (cp) => String(cp.status || "").toUpperCase() === "FINAL",
   ).length;
 
+  /**
+   * Lock navigasi backdate — aturan di:
+   * ./spbOverviewAccessRules.ts  (SPB_OVERVIEW_ACCESS / getSpbOverviewNavLock)
+   */
+  const navLock = useMemo(
+    () => getSpbOverviewNavLock({ callplanDate: targetCallplanDate }),
+    [targetCallplanDate],
+  );
+
   const canProceedToCalculation =
-    statusFilter === "SUBMITTED" && submittedCount > 0 && !isLoading;
+    statusFilter === "SUBMITTED" &&
+    submittedCount > 0 &&
+    !isLoading &&
+    !navLock.lockCalculation;
   const canProceedToPreparation =
-    statusFilter === "FINAL" && finalCount > 0 && !isLoading;
+    statusFilter === "FINAL" &&
+    finalCount > 0 &&
+    !isLoading &&
+    !navLock.lockGoodPrep;
 
   const sortedCallplans = useMemo(
     () => sortCallplans(callplans, sortKey, sortDirection),
-    [callplans, sortKey, sortDirection]
+    [callplans, sortKey, sortDirection],
   );
 
   const totalItems = sortedCallplans.length;
@@ -244,7 +263,6 @@ export default function SPBView({
   return (
     <div className="min-h-screen p-6 text-slate-800 font-sans">
       <div className="mx-auto max-w-7xl space-y-6">
-        
         {/* Header & Meta Bar */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
@@ -268,7 +286,9 @@ export default function SPBView({
                 {bypassActive ? (
                   <>
                     Tanggal aktif untuk fetch data SPB:{" "}
-                    <strong className="text-slate-700">{targetCallplanDate}</strong>
+                    <strong className="text-slate-700">
+                      {targetCallplanDate}
+                    </strong>
                     {draftBypassDate !== appliedBypassDate && (
                       <span className="ml-1 text-amber-600">
                         (Draft belum diterapkan: {draftBypassDate})
@@ -278,7 +298,9 @@ export default function SPBView({
                 ) : (
                   <>
                     Menampilkan target otomatis H+1:{" "}
-                    <strong className="text-slate-700">{targetCallplanDate}</strong>
+                    <strong className="text-slate-700">
+                      {targetCallplanDate}
+                    </strong>
                   </>
                 )}
               </p>
@@ -318,10 +340,8 @@ export default function SPBView({
 
         {/* Main Content Area: Toolbar & Table */}
         <div className="rounded-2xl border border-slate-200/80 bg-white shadow-sm">
-          
           {/* Table Control Header */}
           <div className="flex flex-col gap-4 border-b border-slate-100 p-5 sm:flex-row sm:items-center sm:justify-between">
-            
             {/* Filter Status */}
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-2 text-xs text-slate-600">
@@ -330,7 +350,9 @@ export default function SPBView({
                 <Select
                   options={STATUS_OPTIONS}
                   value={statusFilter}
-                  onChange={(value) => setStatusFilter(String(value || "SUBMITTED"))}
+                  onChange={(value) =>
+                    setStatusFilter(String(value || "SUBMITTED"))
+                  }
                   placeholder="Pilih status"
                   width="200px"
                   className="text-xs"
@@ -342,36 +364,78 @@ export default function SPBView({
                 disabled={isLoading}
                 className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50 active:scale-95 disabled:opacity-50"
               >
-                <FaSyncAlt size={12} className={isLoading ? "animate-spin text-indigo-600" : "text-slate-400"} />
+                <FaSyncAlt
+                  size={12}
+                  className={
+                    isLoading
+                      ? "animate-spin text-indigo-600"
+                      : "text-slate-400"
+                  }
+                />
                 Refresh
               </button>
             </div>
 
-            {/* Dynamic Next Action Button */}
-            <div className="flex items-center gap-2">
-              {statusFilter === "SUBMITTED" && (
-                <button
-                  type="button"
-                  onClick={() => onProceedToCalculation(callplans)}
-                  disabled={!canProceedToCalculation}
-                  className="flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-xs font-semibold text-white shadow-sm transition hover:bg-indigo-700 active:scale-95 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400 disabled:shadow-none"
-                >
-                  <span>Lanjut ke Calculation</span>
-                  <FaArrowRight size={11} />
-                </button>
+            {/* Dynamic Next Action Button — lock rule: spbOverviewAccessRules.ts */}
+            <div className="flex flex-col items-end gap-1.5">
+              {navLock.lockCalculation && (
+                <p className="max-w-sm text-right text-[14px] font-medium text-amber-700">
+                  Backdate: Calculation dikunci — Good Prep tetap boleh.
+                </p>
               )}
+              <div className="flex items-center gap-2">
+                {statusFilter === "SUBMITTED" && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (navLock.lockCalculation) {
+                        showErrorToast(
+                          navLock.reason ||
+                            "Calculation dikunci untuk tanggal backdate.",
+                        );
+                        return;
+                      }
+                      onProceedToCalculation(callplans);
+                    }}
+                    disabled={!canProceedToCalculation}
+                    title={
+                      navLock.lockCalculation
+                        ? navLock.reason || undefined
+                        : undefined
+                    }
+                    className="flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-xs font-semibold text-white shadow-sm transition hover:bg-indigo-700 active:scale-95 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400 disabled:shadow-none"
+                  >
+                    <span>Lanjut ke Calculation</span>
+                    <FaArrowRight size={11} />
+                  </button>
+                )}
 
-              {statusFilter === "FINAL" && (
-                <button
-                  type="button"
-                  onClick={() => onProceedToPreparation(callplans)}
-                  disabled={!canProceedToPreparation}
-                  className="flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-xs font-semibold text-white shadow-sm transition hover:bg-emerald-700 active:scale-95 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400 disabled:shadow-none"
-                >
-                  <span>Lanjut ke Goods Preparation</span>
-                  <FaArrowRight size={11} />
-                </button>
-              )}
+                {statusFilter === "FINAL" && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (navLock.lockGoodPrep) {
+                        showErrorToast(
+                          navLock.reason ||
+                            "Good Prep dikunci untuk tanggal backdate.",
+                        );
+                        return;
+                      }
+                      onProceedToPreparation(callplans);
+                    }}
+                    disabled={!canProceedToPreparation}
+                    title={
+                      navLock.lockGoodPrep
+                        ? navLock.reason || undefined
+                        : undefined
+                    }
+                    className="flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-xs font-semibold text-white shadow-sm transition hover:bg-emerald-700 active:scale-95 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400 disabled:shadow-none"
+                  >
+                    <span>Lanjut ke Goods Preparation</span>
+                    <FaArrowRight size={11} />
+                  </button>
+                )}
+              </div>
             </div>
           </div>
 
@@ -403,9 +467,7 @@ export default function SPBView({
             />
           </div>
         </div>
-
       </div>
     </div>
   );
 }
-

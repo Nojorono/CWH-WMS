@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ColumnDef } from "@tanstack/react-table";
 import dayjs from "dayjs";
 import {
@@ -151,6 +151,38 @@ function GoodPrepView({
     refetchReturSource,
     applyLocalDetailPatch,
   });
+
+  /** Setelah Adjust sukses: reset filter SPB → kembali ke ALL list */
+  const handleSaveAdjustmentsAndShowAll = useCallback(
+    async (
+      callplanId: string,
+      payload: {
+        items: Parameters<typeof handleSaveAdjustments>[1]["items"];
+        approvalUrl: string | null;
+      },
+    ) => {
+      const saved = await handleSaveAdjustments(callplanId, payload);
+      if (saved) {
+        setGlobalFilter("");
+      }
+      return saved;
+    },
+    [handleSaveAdjustments],
+  );
+
+  const saveAdjustFromIntegrateAndShowAll = useCallback(
+    async (payload: {
+      items: Parameters<typeof saveAdjustFromIntegrate>[0]["items"];
+      approvalUrl: string | null;
+    }) => {
+      const saved = await saveAdjustFromIntegrate(payload);
+      if (saved) {
+        setGlobalFilter("");
+      }
+      return saved;
+    },
+    [saveAdjustFromIntegrate],
+  );
 
   const aggregatedPickList = useMemo(() => {
     const summary: Record<
@@ -604,7 +636,7 @@ function GoodPrepView({
               needsAdjustSkus={branchOversoldSkus}
               sohMap={sohMap}
               totalQtySpbMap={totalQtySpbMap}
-              onSaveAdjustments={handleSaveAdjustments}
+              onSaveAdjustments={handleSaveAdjustmentsAndShowAll}
             />
           )}
           headerActions={
@@ -687,7 +719,7 @@ function GoodPrepView({
         onAdjustFromIntegrate={goToAdjustFromIntegrate}
         onProceedIntegrate={proceedIntegrate}
         onCloseAdjust={closeAdjustBackToIntegrate}
-        onSaveAdjust={saveAdjustFromIntegrate}
+        onSaveAdjust={saveAdjustFromIntegrateAndShowAll}
       />
     </div>
   );
