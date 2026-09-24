@@ -73,12 +73,6 @@ const IntegrationMonitoringPageInner = () => {
     "INTEGRATED" | "ERROR" | "TIMEOUT" | ""
   >("");
   const [skuFilter, setSkuFilter] = useState("");
-  const [spbFilter, setSpbFilter] = useState("");
-  const [salesFilter, setSalesFilter] = useState("");
-  /** Akumulasi opsi dropdown dari data yang pernah dimuat */
-  const [skuOptions, setSkuOptions] = useState<string[]>([]);
-  const [spbOptions, setSpbOptions] = useState<string[]>([]);
-  const [salesOptions, setSalesOptions] = useState<string[]>([]);
 
   const { list: itemList, fetchAll: fetchAllItem } = useStoreItem();
 
@@ -90,7 +84,7 @@ const IntegrationMonitoringPageInner = () => {
 
   useEffect(() => {
     setPage(1);
-  }, [skuFilter, spbFilter, salesFilter, statusFilter]);
+  }, [skuFilter, statusFilter]);
 
   const integrationParams = useMemo<MoveOrderIntegrationParams>(
     () => ({
@@ -186,58 +180,31 @@ const IntegrationMonitoringPageInner = () => {
     return map;
   }, [itemList]);
 
-  /** Opsi dropdown dari list data yang sudah dimuat (akumulasi antar halaman) */
-  useEffect(() => {
-    const list = response?.data || [];
-    if (!list.length) return;
+  /** LOV SKU dari Master Item */
+  const skuSelectOptions = useMemo(() => {
+    const collator = new Intl.Collator("id", {
+      sensitivity: "base",
+      numeric: true,
+    });
+    const seen = new Set<string>();
+    const options: { value: string; label: string }[] = [];
 
-    const collator = new Intl.Collator("id", { sensitivity: "base" });
-    const mergeUnique = (prev: string[], next: string[]) => {
-      const set = new Set(prev);
-      next.forEach((v) => {
-        if (v) set.add(v);
-      });
-      return [...set].sort(collator.compare);
-    };
-
-    const nextSpbs: string[] = [];
-    const nextSales: string[] = [];
-    const nextSkus: string[] = [];
-
-    list.forEach((row) => {
-      const spb = String(row.request_number || "").trim();
-      if (spb) nextSpbs.push(spb);
-
-      const sales = String(row.description || "").trim();
-      if (sales) nextSales.push(sales);
-
-      (row.lines || []).forEach((line) => {
-        const invKey = String(line.inventory_item_id ?? "").trim();
-        const master = invKey ? itemByInventoryId.get(invKey) : undefined;
-        const sku = String(master?.sku || "").trim();
-        const itemNumber = String(master?.item_number || "").trim();
-        if (sku) nextSkus.push(sku);
-        else if (itemNumber) nextSkus.push(itemNumber);
-        else if (invKey) nextSkus.push(invKey);
+    (Array.isArray(itemList) ? itemList : []).forEach((item) => {
+      const sku = String(item.sku || "").trim();
+      if (!sku || seen.has(sku)) return;
+      seen.add(sku);
+      const desc = String(item.description || "").trim();
+      options.push({
+        value: sku,
+        label: desc ? `${sku} — ${desc}` : sku,
       });
     });
 
-    setSpbOptions((prev) => mergeUnique(prev, nextSpbs));
-    setSalesOptions((prev) => mergeUnique(prev, nextSales));
-    setSkuOptions((prev) => mergeUnique(prev, nextSkus));
-  }, [response?.data, itemByInventoryId]);
+    options.sort((a, b) => collator.compare(a.value, b.value));
+    return [{ value: "", label: "Semua SKU" }, ...options];
+  }, [itemList]);
 
-  /** Reset opsi saat ganti status (dataset beda) */
-  useEffect(() => {
-    setSkuOptions([]);
-    setSpbOptions([]);
-    setSalesOptions([]);
-    setSkuFilter("");
-    setSpbFilter("");
-    setSalesFilter("");
-  }, [statusFilter]);
-
-  /** Sort updatedAt DESC + filter client (SKU / SPB / Sales) */
+  /** Sort updatedAt DESC + filter client by SKU (Master Item) */
   const sortedData = useMemo(() => {
     const list = [...(response?.data || [])];
 
@@ -258,58 +225,18 @@ const IntegrationMonitoringPageInner = () => {
     list.sort((a, b) => toTime(b) - toTime(a));
 
     const skuQ = skuFilter.trim();
-    const spbQ = spbFilter.trim();
-    const salesQ = salesFilter.trim();
+    if (!skuQ) return list;
 
-    if (!skuQ && !spbQ && !salesQ) return list;
-
-    return list.filter((row) => {
-      if (spbQ && String(row.request_number || "").trim() !== spbQ) {
-        return false;
-      }
-
-      if (salesQ && String(row.description || "").trim() !== salesQ) {
-        return false;
-      }
-
-      if (skuQ) {
-        const hit = (row.lines || []).some((line) => {
-          const invKey = String(line.inventory_item_id ?? "").trim();
-          const master = invKey ? itemByInventoryId.get(invKey) : undefined;
-          const sku = String(master?.sku || "").trim();
-          const itemNumber = String(master?.item_number || "").trim();
-          return sku === skuQ || itemNumber === skuQ || invKey === skuQ;
-        });
-        if (!hit) return false;
-      }
-
-      return true;
-    });
-  }, [response?.data, skuFilter, spbFilter, salesFilter, itemByInventoryId]);
-
-  const skuSelectOptions = useMemo(
-    () => [
-      { value: "", label: "Semua SKU" },
-      ...skuOptions.map((sku) => ({ value: sku, label: sku })),
-    ],
-    [skuOptions],
-  );
-
-  const spbSelectOptions = useMemo(
-    () => [
-      { value: "", label: "Semua SPB" },
-      ...spbOptions.map((spb) => ({ value: spb, label: spb })),
-    ],
-    [spbOptions],
-  );
-
-  const salesSelectOptions = useMemo(
-    () => [
-      { value: "", label: "Semua Sales" },
-      ...salesOptions.map((sales) => ({ value: sales, label: sales })),
-    ],
-    [salesOptions],
-  );
+    return list.filter((row) =>
+      (row.lines || []).some((line) => {
+        const invKey = String(line.inventory_item_id ?? "").trim();
+        const master = invKey ? itemByInventoryId.get(invKey) : undefined;
+        const sku = String(master?.sku || "").trim();
+        const itemNumber = String(master?.item_number || "").trim();
+        return sku === skuQ || itemNumber === skuQ;
+      }),
+    );
+  }, [response?.data, skuFilter, itemByInventoryId]);
 
   const columns = useMemo<ColumnDef<MoveOrderIntegrationHeader>[]>(
     () => [
@@ -424,8 +351,8 @@ const IntegrationMonitoringPageInner = () => {
           </button>
         </div>
 
-        {/* Filters — react-select (Select component) */}
-        <div className="grid grid-cols-1 gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:grid-cols-2 lg:grid-cols-4">
+        {/* Filters: SKU (Master Item) + Status */}
+        <div className="grid grid-cols-1 gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:grid-cols-2">
           <label className="block">
             <span className="mb-1.5 block text-[11px] font-semibold tracking-wide text-slate-500 uppercase">
               SKU
@@ -435,34 +362,6 @@ const IntegrationMonitoringPageInner = () => {
               value={skuFilter}
               onChange={(value) => setSkuFilter(String(value || ""))}
               placeholder="Semua SKU"
-              width="100%"
-              className="w-full"
-            />
-          </label>
-
-          <label className="block">
-            <span className="mb-1.5 block text-[11px] font-semibold tracking-wide text-slate-500 uppercase">
-              SPB Number
-            </span>
-            <Select
-              options={spbSelectOptions}
-              value={spbFilter}
-              onChange={(value) => setSpbFilter(String(value || ""))}
-              placeholder="Semua SPB"
-              width="100%"
-              className="w-full"
-            />
-          </label>
-
-          <label className="block">
-            <span className="mb-1.5 block text-[11px] font-semibold tracking-wide text-slate-500 uppercase">
-              Nama Sales
-            </span>
-            <Select
-              options={salesSelectOptions}
-              value={salesFilter}
-              onChange={(value) => setSalesFilter(String(value || ""))}
-              placeholder="Semua Sales"
               width="100%"
               className="w-full"
             />
