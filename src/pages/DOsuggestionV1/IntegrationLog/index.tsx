@@ -19,6 +19,14 @@ import { formatDateTimeIndo } from "../../../helper/FormatDateTime";
 import { useStoreItem } from "../../../DynamicAPI/stores/Store/MasterStore";
 import { showErrorToast, showSuccessToast } from "../../../components/toast";
 import DeferredMount from "../../../components/common/DeferredMount";
+import Select from "../../../components/form/Select";
+
+const STATUS_FILTER_OPTIONS = [
+  { value: "", label: "Semua Status" },
+  { value: "INTEGRATED", label: "Berhasil" },
+  { value: "ERROR", label: "Gagal" },
+  { value: "TIMEOUT", label: "Timeout" },
+];
 
 const StatusBadge = ({
   status,
@@ -279,6 +287,30 @@ const IntegrationMonitoringPageInner = () => {
     });
   }, [response?.data, skuFilter, spbFilter, salesFilter, itemByInventoryId]);
 
+  const skuSelectOptions = useMemo(
+    () => [
+      { value: "", label: "Semua SKU" },
+      ...skuOptions.map((sku) => ({ value: sku, label: sku })),
+    ],
+    [skuOptions],
+  );
+
+  const spbSelectOptions = useMemo(
+    () => [
+      { value: "", label: "Semua SPB" },
+      ...spbOptions.map((spb) => ({ value: spb, label: spb })),
+    ],
+    [spbOptions],
+  );
+
+  const salesSelectOptions = useMemo(
+    () => [
+      { value: "", label: "Semua Sales" },
+      ...salesOptions.map((sales) => ({ value: sales, label: sales })),
+    ],
+    [salesOptions],
+  );
+
   const columns = useMemo<ColumnDef<MoveOrderIntegrationHeader>[]>(
     () => [
       {
@@ -392,79 +424,67 @@ const IntegrationMonitoringPageInner = () => {
           </button>
         </div>
 
-        {/* Filters */}
+        {/* Filters — react-select (Select component) */}
         <div className="grid grid-cols-1 gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:grid-cols-2 lg:grid-cols-4">
           <label className="block">
             <span className="mb-1.5 block text-[11px] font-semibold tracking-wide text-slate-500 uppercase">
               SKU
             </span>
-            <select
+            <Select
+              options={skuSelectOptions}
               value={skuFilter}
-              onChange={(e) => setSkuFilter(e.target.value)}
-              className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-medium text-slate-700 outline-none focus:border-indigo-400 focus:bg-white focus:ring-1 focus:ring-indigo-400"
-            >
-              <option value="">Semua SKU</option>
-              {skuOptions.map((sku) => (
-                <option key={sku} value={sku}>
-                  {sku}
-                </option>
-              ))}
-            </select>
+              onChange={(value) => setSkuFilter(String(value || ""))}
+              placeholder="Semua SKU"
+              width="100%"
+              className="w-full"
+            />
           </label>
 
           <label className="block">
             <span className="mb-1.5 block text-[11px] font-semibold tracking-wide text-slate-500 uppercase">
               SPB Number
             </span>
-            <select
+            <Select
+              options={spbSelectOptions}
               value={spbFilter}
-              onChange={(e) => setSpbFilter(e.target.value)}
-              className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-medium text-slate-700 outline-none focus:border-indigo-400 focus:bg-white focus:ring-1 focus:ring-indigo-400"
-            >
-              <option value="">Semua SPB</option>
-              {spbOptions.map((spb) => (
-                <option key={spb} value={spb}>
-                  {spb}
-                </option>
-              ))}
-            </select>
+              onChange={(value) => setSpbFilter(String(value || ""))}
+              placeholder="Semua SPB"
+              width="100%"
+              className="w-full"
+            />
           </label>
 
           <label className="block">
             <span className="mb-1.5 block text-[11px] font-semibold tracking-wide text-slate-500 uppercase">
               Nama Sales
             </span>
-            <select
+            <Select
+              options={salesSelectOptions}
               value={salesFilter}
-              onChange={(e) => setSalesFilter(e.target.value)}
-              className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-medium text-slate-700 outline-none focus:border-indigo-400 focus:bg-white focus:ring-1 focus:ring-indigo-400"
-            >
-              <option value="">Semua Sales</option>
-              {salesOptions.map((sales) => (
-                <option key={sales} value={sales}>
-                  {sales}
-                </option>
-              ))}
-            </select>
+              onChange={(value) => setSalesFilter(String(value || ""))}
+              placeholder="Semua Sales"
+              width="100%"
+              className="w-full"
+            />
           </label>
 
           <label className="block">
             <span className="mb-1.5 flex items-center gap-1.5 text-[11px] font-semibold tracking-wide text-slate-500 uppercase">
               <FaFilter size={10} /> Status
             </span>
-            <select
+            <Select
+              options={STATUS_FILTER_OPTIONS}
               value={statusFilter}
-              onChange={(e) => {
-                setStatusFilter(e.target.value as typeof statusFilter);
+              onChange={(value) => {
+                setStatusFilter(
+                  (String(value || "") as typeof statusFilter) || "",
+                );
                 setPage(1);
               }}
-              className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-medium text-slate-700 outline-none focus:border-indigo-400 focus:bg-white focus:ring-1 focus:ring-indigo-400"
-            >
-              <option value="">Semua Status</option>
-              <option value="INTEGRATED">Berhasil</option>
-              <option value="ERROR">Gagal</option>
-              <option value="TIMEOUT">Timeout</option>
-            </select>
+              placeholder="Semua Status"
+              width="100%"
+              className="w-full"
+            />
           </label>
         </div>
 

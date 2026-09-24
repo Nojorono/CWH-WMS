@@ -17,8 +17,8 @@ dayjs.locale("id");
 
 const TABS: { id: StockReportTab; label: string }[] = [
   { id: "overview", label: "Overview" },
-  { id: "incoming", label: "Incoming" },
-  { id: "outgoing", label: "Outgoing" },
+  // { id: "incoming", label: "Incoming" },
+  // { id: "outgoing", label: "Outgoing" },
 ];
 
 function LaporanHarianStockPage() {
