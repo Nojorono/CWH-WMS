@@ -36,18 +36,18 @@ function StockCalculationView({
   const [isInserting, setIsInserting] = useState(false);
   const [progress, setProgress] = useState({ current: 0, total: 0 });
 
-  /** Tanggal callplan dari filter SPB Overview (yang dipilih user) */
+  /** Tanggal callplan dari filter SPB Overview (display saja) */
   const targetDate = useMemo(
     () =>
       callplans[0]?.callplan_date_start || dayjs().format("YYYY-MM-DD"),
     [callplans],
   );
 
-  /** SOH Gudang Kecil — tanggal ikut filter Overview, bukan hari ini */
+  /** SOH Gudang Kecil — selalu tanggal hari ini */
   const { data: stockList, isLoading: isSohLoading } = useGetStockOnHand({
     org: String(organization_name),
     sub: "KECIL",
-    date: targetDate,
+    date: dayjs().format("YYYY-MM-DD"),
   });
 
   /**
@@ -239,7 +239,7 @@ function StockCalculationView({
               Menarik & mengalkulasi Stock On Hand tanggal:
             </span>
             <span className="rounded border border-orange-200 bg-white px-2 py-0.5 text-sm font-bold text-orange-900">
-              {targetDate}
+              {dayjs().format("YYYY-MM-DD")}
             </span>
           </div>
           <p className="mt-4 max-w-xs text-center text-sm text-slate-500">
