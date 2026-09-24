@@ -260,7 +260,9 @@ export default function SPBTable({
                         className="border-t border-gray-100 bg-white px-8 py-6"
                       >
                         <div className="mb-6 flex gap-4">
-                          {summaryCards.map((card) => {
+                          {summaryCards
+                            .filter((card) => card.visible?.(row) !== false)
+                            .map((card) => {
                             const isBlue = card.tone === "blue";
                             return (
                               <div

@@ -243,16 +243,6 @@ function RekapSPBFinalPage() {
               {amoName} · {reportDateLabel}
             </p>
           </div>
-
-          <div className="flex items-center gap-2.5 rounded-xl border border-indigo-100 bg-indigo-50/50 px-3.5 py-2 shadow-sm">
-            <FaCalendarAlt className="text-indigo-500" size={14} />
-            <div>
-              <div className="text-[10px] font-semibold uppercase tracking-wider text-indigo-400">
-                Tanggal Callplan
-              </div>
-              <div className="text-xs font-bold text-indigo-700">{reportDate}</div>
-            </div>
-          </div>
         </div>
 
         <div className="relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm">
