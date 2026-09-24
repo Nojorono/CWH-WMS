@@ -454,14 +454,14 @@ export default function SPBView({
               </div>
 
               <div className="flex items-center gap-2 text-xs text-slate-600">
-                <span className="font-medium">MO Type:</span>
+                <span className="font-medium">FPPR Type:</span>
                 <Select
                   options={MO_TYPE_OPTIONS}
                   value={moTypeFilter}
                   onChange={(value) =>
                     setMoTypeFilter(String(value || FPPR_AWAL_MO_TYPE))
                   }
-                  placeholder="Pilih MO Type"
+                  placeholder="Pilih FPPR Type"
                   width="180px"
                   className="text-xs"
                 />
