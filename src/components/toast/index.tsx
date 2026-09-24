@@ -36,7 +36,10 @@ export const showErrorToast = (errorMessage: string) => {
 };
 
 export const showSuccessToast = (successMessage: string) => {
-  toast.success(successMessage);
+  toast.success(successMessage, {
+    autoClose: successMessage.includes("\n") ? 10000 : 5000,
+    style: { whiteSpace: "pre-line" },
+  });
 };
 
 export default CustomToast;

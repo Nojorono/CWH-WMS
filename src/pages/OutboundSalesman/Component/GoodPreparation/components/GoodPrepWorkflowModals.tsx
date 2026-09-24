@@ -9,6 +9,7 @@ type GoodPrepWorkflowModalsProps = {
   adjustFromIntegrate: EnrichedCallplan | null;
   singleIntegrateLines: SohCheckLine[];
   isSohLoading: boolean;
+  isIntegrating?: boolean;
   itemList: any[] | undefined;
   sohMap?: Map<string, number>;
   totalQtySpbMap?: Map<string, number>;
@@ -29,6 +30,7 @@ export const GoodPrepWorkflowModals = ({
   adjustFromIntegrate,
   singleIntegrateLines,
   isSohLoading,
+  isIntegrating = false,
   itemList,
   sohMap,
   totalQtySpbMap,
@@ -51,6 +53,7 @@ export const GoodPrepWorkflowModals = ({
         salesName={integrateTriggerSpb?.sales_name}
         lines={singleIntegrateLines}
         isSohLoading={isSohLoading}
+        isIntegrating={isIntegrating}
         onClose={onCloseIntegrate}
         onAdjust={onAdjustFromIntegrate}
         onProceed={onProceedIntegrate}

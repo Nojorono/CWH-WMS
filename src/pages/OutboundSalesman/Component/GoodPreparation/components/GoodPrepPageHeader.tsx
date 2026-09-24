@@ -29,9 +29,9 @@ export const GoodPrepPageHeader = ({
             <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-slate-600">
               Callplan Date: {targetDate}
             </span>
-            <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-emerald-700">
+            {/* <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-emerald-700">
               BTB sync untuk Print & Top Up
-            </span>
+            </span> */}
           </div>
         </div>
         <button

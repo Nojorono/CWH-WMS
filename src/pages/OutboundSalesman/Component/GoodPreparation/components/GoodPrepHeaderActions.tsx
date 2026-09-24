@@ -55,7 +55,7 @@ export const GoodPrepHeaderActions = ({
               : "border border-slate-300 bg-white text-slate-600 hover:bg-slate-50"
           }`}
         >
-          <FaFileAlt /> Form Permintaan Gudang (FPPR Awal)
+          <FaFileAlt /> Form Permintaan Barang (FPPR Awal)
         </button>
 
         <button
@@ -66,7 +66,7 @@ export const GoodPrepHeaderActions = ({
             isPrintDisabled
               ? "Dikunci — data BTB cabang belum tersedia"
               : !hasPermintaanDoManualData
-                ? "Tidak ada data Form Permintaan DO Manual (FPPR Tambahan)"
+                ? "Tidak ada data Form Permintaan Barang (FPPR Tambahan)"
                 : undefined
           }
           className={`flex items-center gap-2 rounded-lg px-4 py-2 text-xs font-semibold shadow-sm transition-colors ${
@@ -75,7 +75,7 @@ export const GoodPrepHeaderActions = ({
               : "border border-indigo-300 bg-white text-indigo-600 hover:bg-indigo-50"
           }`}
         >
-          <FaFileAlt /> Form Permintaan DO Manual (FPPR Tambahan)
+          <FaFileAlt /> Form Permintaan Barang (FPPR Tambahan)
         </button>
 
         <button
@@ -86,7 +86,7 @@ export const GoodPrepHeaderActions = ({
             isPrintDisabled
               ? "Dikunci — data BTB cabang belum tersedia"
               : !hasReturData
-                ? "Tidak ada data Form Retur"
+                ? "Tidak ada data Form Pengembalian"
                 : undefined
           }
           className={`flex items-center gap-2 rounded-lg px-4 py-2 text-xs font-semibold shadow-sm transition-colors ${
@@ -95,7 +95,7 @@ export const GoodPrepHeaderActions = ({
               : "border border-red-300 bg-white text-red-600 hover:bg-red-50"
           }`}
         >
-          <FaFileAlt /> Form Retur
+          <FaFileAlt /> Form Pengembalian
         </button>
 
         <button

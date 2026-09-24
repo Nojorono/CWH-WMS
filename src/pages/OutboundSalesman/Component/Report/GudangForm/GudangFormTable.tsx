@@ -28,6 +28,7 @@ const getSkuNameTextClass = (name: string) => {
 };
 
 export const GudangFormTable = ({ config, rows }: GudangFormTableProps) => {
+  // Jumlah: hanya Total Bks (Sisa / Final DO / Delta). Konversi Dus/Bal/Pres/Bks tidak dijumlah.
   const totals = useMemo(() => {
     return rows.reduce(
       (acc, row) => ({
@@ -38,20 +39,12 @@ export const GudangFormTable = ({ config, rows }: GudangFormTableProps) => {
         hasSisa: acc.hasSisa || row.sisaBarang !== null,
         finalDo: acc.finalDo + (Number(row.finalDo) || 0),
         qtyDelta: acc.qtyDelta + (Number(row.qtyDelta) || 0),
-        caseQty: acc.caseQty + (Number(row.caseQty) || 0),
-        balQty: acc.balQty + (Number(row.balQty) || 0),
-        slopQty: acc.slopQty + (Number(row.slopQty) || 0),
-        packQty: acc.packQty + (Number(row.packQty) || 0),
       }),
       {
         sisaBarang: null as number | null,
         hasSisa: false,
         finalDo: 0,
         qtyDelta: 0,
-        caseQty: 0,
-        balQty: 0,
-        slopQty: 0,
-        packQty: 0,
       },
     );
   }, [rows]);
@@ -113,7 +106,7 @@ export const GudangFormTable = ({ config, rows }: GudangFormTableProps) => {
           <tr>
             <td
               colSpan={9}
-              className={`${td} p-4 text-center italic text-slate-400`}
+              className={`${td} p-4 text-center italic text-black`}
             >
               {config.emptyText}
             </td>
@@ -123,38 +116,34 @@ export const GudangFormTable = ({ config, rows }: GudangFormTableProps) => {
             const skuName = row.name || "-";
             return (
               <tr key={`${row.code}-${idx}`} className="break-inside-avoid">
-                <td className={`${td} break-all`}>{row.code || "-"}</td>
-                <td className={`${td} align-middle`}>
+                <td className={`${td} break-all text-black`}>{row.code || "-"}</td>
+                <td className={`${td} align-middle text-black`}>
                   <span
-                    className={`block break-words ${getSkuNameTextClass(skuName)}`}
+                    className={`block break-words text-black ${getSkuNameTextClass(skuName)}`}
                     title={skuName}
                   >
                     {skuName}
                   </span>
                 </td>
-                <td
-                  className={`${td} text-center ${
-                    row.sisaBarang === null ? "text-slate-400" : "text-blue-600"
-                  }`}
-                >
+                <td className={`${td} text-center text-black`}>
                   {formatQty(row.sisaBarang)}
                 </td>
-                <td className={`${td} text-center text-blue-600`}>
+                <td className={`${td} text-center text-black`}>
                   {formatQty(row.finalDo)}
                 </td>
-                <td className={`${td} text-center ${config.deltaBoldClass}`}>
+                <td className={`${td} text-center text-black ${config.deltaBoldClass}`}>
                   {formatQty(row.qtyDelta)}
                 </td>
-                <td className={`${td} text-center`}>
+                <td className={`${td} text-center text-black`}>
                   {formatQty(row.caseQty ?? null)}
                 </td>
-                <td className={`${td} text-center`}>
+                <td className={`${td} text-center text-black`}>
                   {formatQty(row.balQty ?? null)}
                 </td>
-                <td className={`${td} text-center`}>
+                <td className={`${td} text-center text-black`}>
                   {formatQty(row.slopQty ?? null)}
                 </td>
-                <td className={`${td} text-center`}>
+                <td className={`${td} text-center text-black`}>
                   {formatQty(row.packQty ?? null)}
                 </td>
               </tr>
@@ -163,36 +152,22 @@ export const GudangFormTable = ({ config, rows }: GudangFormTableProps) => {
         )}
 
         <tr className="break-inside-avoid">
-          <td colSpan={2} className={`${td} font-bold uppercase`}>
+          <td colSpan={2} className={`${td} font-bold uppercase text-black`}>
             Jumlah
           </td>
-          <td
-            className={`${td} text-center font-bold ${
-              sisaTotal === null ? "text-slate-400" : "text-blue-600"
-            }`}
-          >
+          <td className={`${td} text-center font-bold text-black`}>
             {formatQty(sisaTotal)}
           </td>
-          <td className={`${td} text-center font-bold text-blue-600`}>
+          <td className={`${td} text-center font-bold text-black`}>
             {formatQty(totals.finalDo)}
           </td>
-          <td
-            className={`${td} text-center font-bold ${config.deltaBoldClass}`}
-          >
+          <td className={`${td} text-center font-bold text-black ${config.deltaBoldClass}`}>
             {formatQty(totals.qtyDelta)}
           </td>
-          <td className={`${td} text-center font-bold`}>
-            {formatQty(totals.caseQty || null)}
-          </td>
-          <td className={`${td} text-center font-bold`}>
-            {formatQty(totals.balQty || null)}
-          </td>
-          <td className={`${td} text-center font-bold`}>
-            {formatQty(totals.slopQty || null)}
-          </td>
-          <td className={`${td} text-center font-bold`}>
-            {formatQty(totals.packQty || null)}
-          </td>
+          <td className={`${td} text-center font-bold text-black`}>-</td>
+          <td className={`${td} text-center font-bold text-black`}>-</td>
+          <td className={`${td} text-center font-bold text-black`}>-</td>
+          <td className={`${td} text-center font-bold text-black`}>-</td>
         </tr>
       </tbody>
     </table>

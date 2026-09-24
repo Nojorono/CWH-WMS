@@ -63,7 +63,7 @@ function RekapSPBFinalPage() {
     return () => ac.abort();
   }, [fetchItems]);
 
-  const fetchFinalSpb = async (options?: {
+  const fetchCompletedSpb = async (options?: {
     force?: boolean;
     signal?: AbortSignal;
   }) => {
@@ -78,7 +78,7 @@ function RekapSPBFinalPage() {
         {
           dateStart: reportDate,
           organizationId: String(organizationId),
-          status: "FINAL",
+          status: "COMPLETED",
         },
         { force: options?.force, signal: options?.signal },
       );
@@ -94,10 +94,10 @@ function RekapSPBFinalPage() {
       ) {
         return;
       }
-      console.error("Gagal load Rekap SPB Final:", err);
+      console.error("Gagal load Rekap SPB COMPLETED:", err);
       setCallplans([]);
       setExpandedRows({});
-      showErrorToast("Gagal mengambil data SPB FINAL");
+      showErrorToast("Gagal mengambil data SPB COMPLETED");
     } finally {
       if (!options?.signal?.aborted) setIsLoading(false);
     }
@@ -105,7 +105,7 @@ function RekapSPBFinalPage() {
 
   useEffect(() => {
     const ac = new AbortController();
-    void fetchFinalSpb({ signal: ac.signal });
+    void fetchCompletedSpb({ signal: ac.signal });
     return () => ac.abort();
   }, [organizationId, reportDate]);
 
@@ -207,14 +207,14 @@ function RekapSPBFinalPage() {
         itemList: Array.isArray(itemList) ? itemList : [],
       });
     } catch (err) {
-      console.error("Export Rekap SPB Final gagal:", err);
+      console.error("Export Rekap SPB COMPLETED gagal:", err);
       showErrorToast("Gagal mengekspor Excel");
     }
   };
 
   const handleEmailFas = () => {
     if (!sortedCallplans.length) {
-      showErrorToast("Belum ada data SPB FINAL — kirim email diblokir");
+      showErrorToast("Belum ada data SPB COMPLETED — kirim email diblokir");
       return;
     }
     setIsEmailModalOpen(true);
@@ -236,7 +236,7 @@ function RekapSPBFinalPage() {
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="mt-1 text-2xl font-bold tracking-tight text-slate-900">
-              Rekap SPB Final{" "}
+              Rekap SPB COMPLETED{" "}
               <span className="font-semibold text-slate-500">(Bungkus / BKS)</span>
             </h1>
             <p className="mt-1 text-sm text-slate-500">
@@ -265,7 +265,7 @@ function RekapSPBFinalPage() {
                 </h3>
               </div>
               <p className="text-xs text-slate-500">
-                Menampilkan SPB status <strong>FINAL</strong> untuk tanggal:{" "}
+                Menampilkan SPB status <strong>COMPLETED</strong> untuk tanggal:{" "}
                 <strong className="text-slate-700">{reportDate}</strong>
                 {draftDate !== reportDate && (
                   <span className="ml-1 text-amber-600">
@@ -306,11 +306,11 @@ function RekapSPBFinalPage() {
           <div className="flex flex-col gap-4 border-b border-slate-100 p-5 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex flex-wrap items-center gap-2">
               <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-700">
-                FINAL · {totalItems} SPB
+                COMPLETED · {totalItems} SPB
               </span>
               <button
                 type="button"
-                onClick={() => void fetchFinalSpb({ force: true })}
+                onClick={() => void fetchCompletedSpb({ force: true })}
                 disabled={isLoading}
                 className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50 active:scale-95 disabled:opacity-50"
               >
@@ -348,7 +348,7 @@ function RekapSPBFinalPage() {
             <SPBTable
               data={paginatedCallplans}
               isLoading={isLoading}
-              statusFilter="FINAL"
+              statusFilter="COMPLETED"
               expandedRows={expandedRows}
               onToggleRow={toggleRow}
               currentPage={safeCurrentPage}

@@ -45,6 +45,7 @@ export const buildCallplanCacheKey = (params: GetCallplansParams) =>
     String(params.organizationId || "").trim(),
     String(params.dateStart || "").trim(),
     String(params.status || "ALL").trim().toUpperCase(),
+    String(params.mo_type || "ALL").trim().toUpperCase(),
   ].join("|");
 
 const buildSohCacheKey = (params: GetStockOnHandParams) =>

@@ -89,7 +89,7 @@ const resolveItemName = (
 };
 
 /**
- * Build workbook Rekap SPB FINAL → { blob, fileName } (tanpa download).
+ * Build workbook Rekap SPB COMPLETED → { blob, fileName } (tanpa download).
  * Return null jika data kosong / tidak ada SKU.
  */
 export const buildRekapSpbFinalExcelFile = ({
@@ -122,7 +122,7 @@ export const buildRekapSpbFinalExcelFile = ({
   );
 
   if (!skuColumns.length) {
-    showErrorToast("Tidak ada SKU pada data SPB FINAL!");
+    showErrorToast("Tidak ada SKU pada data SPB COMPLETED!");
     return null;
   }
 
@@ -137,7 +137,7 @@ export const buildRekapSpbFinalExcelFile = ({
     : reportDate;
 
   // Row 0: title meta
-  setCell(ws, 0, 0, "Rekap SPB MATIC Final (Bungkus / BKS)", {
+  setCell(ws, 0, 0, "Rekap SPB MATIC COMPLETED (Bungkus / BKS)", {
     font: { ...baseFont, bold: true, sz: 13 },
     alignment: { horizontal: "left", vertical: "center" },
   });
@@ -204,7 +204,7 @@ export const buildRekapSpbFinalExcelFile = ({
       ws,
       r,
       1,
-      String(doc.status || "FINAL").toUpperCase(),
+      String(doc.status || "COMPLETED").toUpperCase(),
       cellStyle({ align: "center" }),
     );
     setCell(ws, r, 2, doc.sales_nik || "—", cellStyle({ align: "center" }));
@@ -265,11 +265,11 @@ export const buildRekapSpbFinalExcelFile = ({
 
   ws["!rows"] = [{ hpt: 22 }, { hpt: 20 }, { hpt: 18 }];
 
-  XLSX.utils.book_append_sheet(wb, ws, "Rekap SPB Final");
+  XLSX.utils.book_append_sheet(wb, ws, "Rekap SPB COMPLETED");
 
   const safeAmo = (amoName || "AMO").replace(/[^\w\-]+/g, "_");
   const safeDate = reportDate.replace(/[^\w\-]+/g, "_");
-  const fileName = `Rekap_SPB_Final_${safeAmo}_${safeDate}.xlsx`;
+  const fileName = `Rekap_SPB_COMPLETED_${safeAmo}_${safeDate}.xlsx`;
   const buffer = XLSX.write(wb, { bookType: "xlsx", type: "array" });
   const blob = new Blob([buffer], {
     type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
@@ -282,7 +282,7 @@ export const buildRekapSpbFinalExcelFile = ({
 };
 
 /**
- * Export Rekap SPB FINAL — matrix SPB × SKU (qty = item_qty_final).
+ * Export Rekap SPB COMPLETED — matrix SPB × SKU (qty = item_qty_final).
  * Satuan: Bungkus / Bks.
  */
 export const exportRekapSpbFinalExcel = (params: ExportParams) => {

@@ -72,6 +72,19 @@ export const useGoodPrepReportRows = ({
   // Form Retur pakai report/retur bila disediakan; selain itu fallback enrichedData
   const returSource = returEnrichedData ?? enrichedData;
 
+  // Form Retur: gabung report/retur + Good Prep (enrichedData).
+  // enrichedData diutamakan untuk id yang sama → Adjust (-) langsung terlihat tanpa nunggu API retur.
+  const returMergedSource = useMemo(() => {
+    const byId = new Map<string, EnrichedCallplan>();
+    returSource.forEach((doc) => {
+      if (doc?.id) byId.set(String(doc.id), doc);
+    });
+    enrichedData.forEach((doc) => {
+      if (doc?.id) byId.set(String(doc.id), doc);
+    });
+    return Array.from(byId.values());
+  }, [returSource, enrichedData]);
+
   const buildPermintaanRows = (
     docs: EnrichedCallplan[],
     includeDoc: (doc: EnrichedCallplan) => boolean,
@@ -82,7 +95,7 @@ export const useGoodPrepReportRows = ({
         code: string;
         name: string;
         inventoryItemId: string;
-        sisaBarang: number;
+        sisaBarang: number | null;
         finalDo: number;
         qtyDelta: number;
       }
@@ -107,7 +120,6 @@ export const useGoodPrepReportRows = ({
         const itemName = master?.description || d.itemName || sku;
 
         if (summary[key]) {
-          summary[key].sisaBarang += btb;
           summary[key].finalDo += submitted;
           summary[key].qtyDelta += qtyDelta;
         } else {
@@ -115,7 +127,8 @@ export const useGoodPrepReportRows = ({
             code: sku,
             name: itemName,
             inventoryItemId: String(invId),
-            sisaBarang: btb,
+            // Form Permintaan: Sisa Barang di-strip (selalu "-")
+            sisaBarang: null,
             finalDo: submitted,
             qtyDelta,
           };
@@ -129,7 +142,7 @@ export const useGoodPrepReportRows = ({
       .sort((a, b) => a.name.localeCompare(b.name));
   };
 
-  /** Form Permintaan Gudang — hanya FPPR Awal */
+  /** Form Permintaan Barang — hanya FPPR Awal */
   const permintaanReportRows = useMemo(
     (): PermintaanBarangRow[] =>
       buildPermintaanRows(enrichedData, (doc) =>
@@ -160,8 +173,8 @@ export const useGoodPrepReportRows = ({
       }
     > = {};
 
-    // Form Retur: API /do-suggestion/report/retur (+ enrich BTB)
-    returSource.forEach((doc) => {
+    // Form Retur: API report/retur + overlay Good Prep (revision Adjust terbaru)
+    returMergedSource.forEach((doc) => {
       const docStatus = String(doc.status || "").toUpperCase();
       // VOID = belum integrate Meta; VOID_NEED_ACTION = sudah integrate lalu di-VOID
       // Isi data sama → handling retur sama
@@ -269,7 +282,7 @@ export const useGoodPrepReportRows = ({
       .filter((row) => Number(row.qtyDelta) > 0)
       .map((row) => withUomConversion(row, itemList))
       .sort((a, b) => a.name.localeCompare(b.name));
-  }, [returSource, orphanBtbLines, itemList]);
+  }, [returMergedSource, orphanBtbLines, itemList]);
 
   const tambahanReportRows = useMemo((): TambahanBarangRow[] => {
     const summary: Record<
