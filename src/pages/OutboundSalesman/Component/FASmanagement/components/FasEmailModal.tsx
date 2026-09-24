@@ -27,7 +27,7 @@ export type FasEmailModalProps = {
 };
 
 const buildDefaultSubject = (amoName: string, reportDateLabel: string) =>
-  `Rekap SPB Final ${amoName} — ${reportDateLabel}`;
+  `Rekap SPB COMPLETED ${amoName} — ${reportDateLabel}`;
 
 const buildDefaultText = (
   amoName: string,
@@ -37,9 +37,9 @@ const buildDefaultText = (
   [
     "Yth. Tim FAS,",
     "",
-    `Terlampir Rekap SPB Final untuk cabang ${amoName}.`,
+    `Terlampir Rekap SPB COMPLETED untuk cabang ${amoName}.`,
     `Tanggal callplan: ${reportDateLabel}`,
-    `Jumlah SPB FINAL: ${spbCount}`,
+    `Jumlah SPB COMPLETED: ${spbCount}`,
     "",
     "Mohon ditindaklanjuti.",
     "",
@@ -52,10 +52,10 @@ const buildDefaultHtml = (
   spbCount: number,
 ) =>
   `<p>Yth. Tim FAS,</p>
-<p>Terlampir <b>Rekap SPB Final</b> untuk cabang <b>${amoName}</b>.</p>
+<p>Terlampir <b>Rekap SPB COMPLETED</b> untuk cabang <b>${amoName}</b>.</p>
 <ul>
   <li>Tanggal callplan: <b>${reportDateLabel}</b></li>
-  <li>Jumlah SPB FINAL: <b>${spbCount}</b></li>
+  <li>Jumlah SPB COMPLETED: <b>${spbCount}</b></li>
 </ul>
 <p>Mohon ditindaklanjuti.</p>
 <p>Terima kasih.</p>`;
@@ -89,7 +89,7 @@ export const FasEmailModal = ({
     setToEmails([]);
     setCcEmails([]);
     setUseHtml(false);
-    setAttachmentName(`Rekap_SPB_Final_${amoName}_${reportDateLabel}.xlsx`);
+    setAttachmentName(`Rekap_SPB_COMPLETED_${amoName}_${reportDateLabel}.xlsx`);
 
     if (!organizationId) {
       setFasUsers([]);
@@ -180,7 +180,7 @@ export const FasEmailModal = ({
     try {
       const file = await buildAttachment();
       if (!file) {
-        showErrorToast("Gagal membuat lampiran Excel Rekap SPB Final");
+        showErrorToast("Gagal membuat lampiran Excel Rekap SPB COMPLETED");
         return;
       }
       setAttachmentName(file.name);
@@ -194,7 +194,7 @@ export const FasEmailModal = ({
         files: [file],
       });
 
-      showSuccessToast("Email Rekap SPB Final berhasil dikirim ke FAS");
+      showSuccessToast("Email Rekap SPB COMPLETED berhasil dikirim ke FAS");
       onClose();
     } catch (error) {
       showErrorToast(parseFasEmailError(error));
@@ -218,7 +218,7 @@ export const FasEmailModal = ({
                 Email to FAS
               </p>
               <h3 className="text-lg font-bold text-slate-800">
-                Kirim Rekap SPB Final
+                Kirim Rekap SPB COMPLETED
               </h3>
               <p className="text-xs text-slate-500">
                 {amoName} · {reportDateLabel} · {spbCount} SPB
@@ -242,7 +242,7 @@ export const FasEmailModal = ({
               Lampiran otomatis
             </div>
             <p className="mt-1">
-              {attachmentName || "Rekap SPB Final (.xlsx) akan digenerate saat kirim"}
+              {attachmentName || "Rekap SPB COMPLETED (.xlsx) akan digenerate saat kirim"}
             </p>
           </div>
 

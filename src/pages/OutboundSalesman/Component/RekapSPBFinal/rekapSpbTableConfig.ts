@@ -4,7 +4,7 @@ import {
   SummaryCardConfig,
 } from "../SPB/spbTableConfig";
 
-/** Master columns — tanpa Action (Rekap FINAL read-only) */
+/** Master columns — tanpa Action (Rekap COMPLETED read-only) */
 export const REKAP_MASTER_COLUMNS: DynamicColumn<Callplan>[] = [
   {
     id: "callplan_number",
