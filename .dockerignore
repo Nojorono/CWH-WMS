@@ -4,5 +4,16 @@ build
 .git
 .gitignore
 *.md
-.env.local
-.env.developmentnpm
+.vscode
+.idea
+.DS_Store
+*.log
+
+# Jangan bake env lokal ke image — nilai production lewat build args
+.env
+.env.*
+!.env.prod.example
+
+Dockerfile
+docker-compose*.yml
+scripts

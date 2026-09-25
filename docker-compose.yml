@@ -4,13 +4,22 @@ services:
       context: .
       dockerfile: Dockerfile
       args:
-        - VITE_API_ENDPOINT=${VITE_API_ENDPOINT:-http://localhost:9004}
-        - VITE_S3_ENDPOINT=${VITE_S3_ENDPOINT:-}
+        VITE_ENV: ${VITE_ENV:-production}
+        VITE_API_ENDPOINT: ${VITE_API_ENDPOINT}
+        VITE_S3_ENDPOINT: ${VITE_S3_ENDPOINT:-}
+        VITE_SERVER47: ${VITE_SERVER47:-}
+        VITE_META_SERVICE: ${VITE_META_SERVICE:-}
+        VITE_DO_SUGGESTION_SERVICE: ${VITE_DO_SUGGESTION_SERVICE:-}
+        VITE_DMS_APP_ID: ${VITE_DMS_APP_ID:-}
+        VITE_DMS_APP_SECRET: ${VITE_DMS_APP_SECRET:-}
+        VITE_SNOWFLAKE_API_URL: ${VITE_SNOWFLAKE_API_URL:-}
+        VITE_SNOWFLAKE_TOKEN: ${VITE_SNOWFLAKE_TOKEN:-}
     image: frontend-wms:latest
     container_name: frontend-wms
     restart: unless-stopped
+    # Bind localhost saja — akses publik lewat Nginx host
     ports:
-      - "3002:80"
+      - "127.0.0.1:3002:80"
     networks:
       - wms-network
     healthcheck:
@@ -23,4 +32,3 @@ services:
 networks:
   wms-network:
     driver: bridge
-
