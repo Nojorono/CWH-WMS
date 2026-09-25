@@ -1,7 +1,7 @@
 import axios from "axios";
 import axiosInstance from "../../../../../DynamicAPI/AxiosInstance";
 
-const EMAIL_SEND_UPLOAD_PATH = "email/send-upload";
+const EMAIL_SEND_UPLOAD_PATH = "email/send-upload-resend";
 
 export type SendEmailUploadParams = {
   to: string[];
@@ -41,7 +41,7 @@ export const parseFasEmailError = (
 };
 
 /**
- * POST /email/send-upload (multipart/form-data)
+ * POST /email/send-upload-resend (multipart/form-data)
  * via axiosInstance (service-wms)
  */
 export const fasEmailService = {
