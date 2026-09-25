@@ -76,6 +76,7 @@ export const GoodPrepReportModals = ({
 
   const handleBeforeReturPrint = useCallback(
     async (setProgress: (text: string) => void) => {
+
       try {
         await runGudangPrintMarkUpdates({
           mode: "retur",
