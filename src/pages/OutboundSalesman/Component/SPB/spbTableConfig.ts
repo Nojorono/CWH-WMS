@@ -24,6 +24,8 @@ export type SummaryCardConfig = {
   label: string;
   unit?: string;
   tone?: "default" | "blue";
+  /** false → sembunyikan card untuk row ini (default: selalu tampil) */
+  visible?: (row: Callplan) => boolean;
   getValue: (row: Callplan) => ReactNode;
 };
 
@@ -125,21 +127,34 @@ export const SPB_DETAIL_COLUMNS: DynamicColumn<CallplanDetail>[] = [
   },
   {
     id: "item_qty_suggestion",
-    header: "Qty Suggestion",
+    header: "Qty DMS",
     align: "right",
     cellClassName: "font-bold text-gray-800",
   },
   {
     id: "item_qty_submitted",
-    header: "Qty Submitted",
+    header: "Qty Calculated",
     align: "right",
     cellClassName: "font-bold text-slate-700",
     getValue: (row) =>
       row.item_qty_submitted === null ||
-      row.item_qty_submitted === undefined ||
-      String(row.item_qty_submitted).trim() === ""
+        row.item_qty_submitted === undefined ||
+        String(row.item_qty_submitted).trim() === ""
         ? "-"
         : row.item_qty_submitted,
+  },
+  {
+    id: "item_qty_revision",
+    header: "Qty Adjustment",
+    align: "right",
+    cellClassName: "font-bold text-amber-700",
+    getValue: (row) => {
+      const raw = String(row.item_qty_revision ?? "").trim();
+      if (!raw || Number.isNaN(Number(raw))) return "-";
+      const value = Number(raw);
+      if (value === 0) return "0";
+      return value > 0 ? `+${value}` : String(value);
+    },
   },
   {
     id: "item_qty_final",
@@ -148,8 +163,8 @@ export const SPB_DETAIL_COLUMNS: DynamicColumn<CallplanDetail>[] = [
     cellClassName: "font-bold text-indigo-700",
     getValue: (row) =>
       row.item_qty_final === null ||
-      row.item_qty_final === undefined ||
-      String(row.item_qty_final).trim() === ""
+        row.item_qty_final === undefined ||
+        String(row.item_qty_final).trim() === ""
         ? "-"
         : row.item_qty_final,
   },
@@ -168,20 +183,36 @@ export const SPB_DETAIL_COLUMNS: DynamicColumn<CallplanDetail>[] = [
 export const SPB_DETAIL_SUMMARY_CARDS: SummaryCardConfig[] = [
   {
     id: "total_sku",
-    label: "Total SKU SPB",
+    label: "Total SKU",
     unit: "Item",
     tone: "default",
     getValue: (row) => row.details?.length || 0,
   },
   {
     id: "total_qty",
-    label: "Total Qty SPB",
+    label: "Total Qty DMS",
     unit: "BKS",
     tone: "blue",
     getValue: (row) =>
       (
         row.details?.reduce(
           (acc, curr) => acc + Number(curr.item_qty_suggestion || 0),
+          0,
+        ) || 0
+      ).toLocaleString("id-ID"),
+  },
+  {
+    id: "total_qty_final",
+    label: "Total Qty Final",
+    unit: "BKS",
+    tone: "blue",
+    // Hanya setelah Calculation/Finalize (bukan SUBMITTED)
+    visible: (row) =>
+      String(row.status || "").trim().toUpperCase() !== "SUBMITTED",
+    getValue: (row) =>
+      (
+        row.details?.reduce(
+          (acc, curr) => acc + Number(curr.item_qty_final || 0),
           0,
         ) || 0
       ).toLocaleString("id-ID"),

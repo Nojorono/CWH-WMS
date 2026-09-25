@@ -8,6 +8,8 @@ export interface GetCallplansParams {
   status?: string;
   /**
    * Filter mo_type (query ke-3 selain date + status).
+   * Dipakai terutama untuk status SUBMITTED (FPPR Awal vs Tambahan).
+   * FINAL / VOID / dll biasanya di-omit → semua tipe.
    * Contoh: "FPPR Awal" | "FPPR Tambahan"
    */
   mo_type?: string;
