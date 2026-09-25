@@ -1,6 +1,6 @@
 import React from "react";
 import { FaFileExcel } from "react-icons/fa";
-import type { LhsApiDetailData } from "../../../../API/services/outbound-salesman/LhsReportService";
+import type { LhsApiDetailData } from "../../../../../API/services/outbound-salesman/LhsReportService";
 import { LhsStockComputed } from "../types";
 import { showErrorToast } from "../../../../../components/toast";
 
